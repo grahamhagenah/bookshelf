@@ -4,7 +4,8 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function seed() {
-  const email = "rachel@remix.run";
+  const email = "rachel2@remix.run";
+  const secondEmail = "graham2@remix.run";
 
   // cleanup the existing database
   await prisma.user.delete({ where: { email } }).catch(() => {
@@ -12,10 +13,11 @@ async function seed() {
   });
 
   const hashedPassword = await bcrypt.hash("racheliscool", 10);
+  const secondHashedPassword = await bcrypt.hash("grahamiscool", 10);
 
   const user = await prisma.user.create({
     data: {
-      email,
+      email: email,
       password: {
         create: {
           hash: hashedPassword,
@@ -24,7 +26,44 @@ async function seed() {
     },
   });
 
-  await prisma.note.create({
+  const secondUser = await prisma.user.create({
+    data: {
+      email: secondEmail,
+      password: {
+        create: {
+          hash: secondHashedPassword,
+        },
+      },
+    },
+  });
+
+  // // Establish friendships
+  // await prisma.user.update({
+  //   where: { id: user.id },
+  //   data: {
+  //     followedBy: {
+  //       create: [{ id: secondUser.id }]
+  //       },
+  //     following: {
+  //       create: [{ id: user.id }]
+  //       },
+  //     },
+  //   })
+
+  //   await prisma.user.update({
+  //     where: { id: secondUser.id },
+  //     data: {
+  //       followedBy: {
+  //         create: [{ id: user.id }]
+  //         },
+  //       following: {
+  //         create: [{ id: user.id }]
+  //         },
+  //       },
+  //     })
+  
+
+  await prisma.book.create({
     data: {
       title: "My first note",
       body: "Hello, world!",
@@ -32,11 +71,19 @@ async function seed() {
     },
   });
 
-  await prisma.note.create({
+  await prisma.book.create({
     data: {
       title: "My second note",
       body: "Hello, world!",
       userId: user.id,
+    },
+  });
+
+  await prisma.book.create({
+    data: {
+      title: "My second note",
+      body: "Hello, world!",
+      userId: secondUser.id,
     },
   });
 
