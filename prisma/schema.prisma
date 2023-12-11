@@ -43,6 +43,7 @@ model Note {
 
 model Book {
   id    String @id @default(cuid())
+  cover String
   title String
   body  String
 

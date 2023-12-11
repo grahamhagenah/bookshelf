@@ -37,6 +37,7 @@ export default function BookDetailsPage() {
   return (
     <div>
       <h3 className="text-2xl font-bold">{data.book.title}</h3>
+      <img src={data.book.cover}></img>
       <p className="py-6">{data.book.body}</p>
       <hr className="my-4" />
       <Form method="post">

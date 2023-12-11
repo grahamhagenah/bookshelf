@@ -33,9 +33,9 @@ export default function BooksPage() {
         </Form>
       </header>
 
-      <main className="flex h-full bg-white">
-        <div className="h-full w-80 border-r bg-gray-50">
-          <Link to="new" className="block p-4 text-xl text-blue-500">
+      <main>
+        <div>
+          <Link to="/books/new" className="block p-4 text-xl text-blue-500">
             + New Book
           </Link>
 
@@ -47,23 +47,15 @@ export default function BooksPage() {
             <ol>
               {data.bookListItems.map((book) => (
                 <li key={book.id}>
-                  <NavLink
-                    className={({ isActive }) =>
-                      `block border-b p-4 text-xl ${isActive ? "bg-white" : ""}`
-                    }
-                    to={book.id}
-                  >
-                    📝 {book.title}
+                  <NavLink to={book.id}>
+                    <img src={book.cover}></img>
                   </NavLink>
                 </li>
               ))}
             </ol>
           )}
         </div>
-
-        <div className="flex-1 p-6">
-          <Outlet />
-        </div>
+        <Outlet />
       </main>
     </div>
   );

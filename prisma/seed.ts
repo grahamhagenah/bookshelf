@@ -4,8 +4,8 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function seed() {
-  const email = "rachel2@remix.run";
-  const secondEmail = "graham2@remix.run";
+  const email = "rachel31@remix.run";
+  const secondEmail = "graham31@remix.run";
 
   // cleanup the existing database
   await prisma.user.delete({ where: { email } }).catch(() => {
@@ -36,37 +36,13 @@ async function seed() {
       },
     },
   });
-
-  // // Establish friendships
-  // await prisma.user.update({
-  //   where: { id: user.id },
-  //   data: {
-  //     followedBy: {
-  //       create: [{ id: secondUser.id }]
-  //       },
-  //     following: {
-  //       create: [{ id: user.id }]
-  //       },
-  //     },
-  //   })
-
-  //   await prisma.user.update({
-  //     where: { id: secondUser.id },
-  //     data: {
-  //       followedBy: {
-  //         create: [{ id: user.id }]
-  //         },
-  //       following: {
-  //         create: [{ id: user.id }]
-  //         },
-  //       },
-  //     })
   
 
   await prisma.book.create({
     data: {
       title: "My first note",
       body: "Hello, world!",
+      cover: "https://m.media-amazon.com/images/W/MEDIAX_792452-T1/images/I/41-yZIthD3L._SY445_SX342_.jpg",
       userId: user.id,
     },
   });
@@ -75,6 +51,7 @@ async function seed() {
     data: {
       title: "My second note",
       body: "Hello, world!",
+      cover: "https://m.media-amazon.com/images/W/MEDIAX_792452-T1/images/I/41-yZIthD3L._SY445_SX342_.jpg",
       userId: user.id,
     },
   });
@@ -83,6 +60,7 @@ async function seed() {
     data: {
       title: "My second note",
       body: "Hello, world!",
+      cover: "https://m.media-amazon.com/images/W/MEDIAX_792452-T1/images/I/41-yZIthD3L._SY445_SX342_.jpg",
       userId: secondUser.id,
     },
   });

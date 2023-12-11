@@ -11,23 +11,31 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const formData = await request.formData();
   const title = formData.get("title");
+  const cover = formData.get("cover");
   const body = formData.get("body");
 
   if (typeof title !== "string" || title.length === 0) {
     return json(
-      { errors: { body: null, title: "Title is required" } },
+      { errors: { body: null, title: "Title is required", cover: null } },
       { status: 400 },
     );
   }
 
   if (typeof body !== "string" || body.length === 0) {
     return json(
-      { errors: { body: "Body is required", title: null } },
+      { errors: { body: "Body is required", title: null, cover: null } },
       { status: 400 },
     );
   }
 
-  const book = await createBook({ body, title, userId });
+  if (typeof cover !== "string" || cover.length === 0) {
+    return json(
+      { errors: { body: null, title: null, cover: "Cover is required" } },
+      { status: 400 },
+    );
+  }
+
+  const book = await createBook({ body, title, cover, userId });
 
   return redirect(`/books/${book.id}`);
 };
@@ -36,12 +44,15 @@ export default function NewBookPage() {
   const actionData = useActionData<typeof action>();
   const titleRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (actionData?.errors?.title) {
       titleRef.current?.focus();
     } else if (actionData?.errors?.body) {
       bodyRef.current?.focus();
+    } else if (actionData?.errors?.cover) {
+      coverRef.current?.focus();
     }
   }, [actionData]);
 
@@ -71,6 +82,26 @@ export default function NewBookPage() {
         {actionData?.errors?.title ? (
           <div className="pt-1 text-red-700" id="title-error">
             {actionData.errors.title}
+          </div>
+        ) : null}
+      </div>
+
+      <div>
+        <label className="flex w-full flex-col gap-1">
+          <span>Cover URL: </span>
+          <input
+           ref={coverRef}
+            name="cover"
+            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
+            aria-invalid={actionData?.errors?.cover ? true : undefined}
+            aria-errormessage={
+              actionData?.errors?.cover ? "cover-error" : undefined
+            }
+          />
+        </label>
+        {actionData?.errors?.cover ? (
+          <div className="pt-1 text-red-700" id="cover-error">
+            {actionData.errors.cover}
           </div>
         ) : null}
       </div>
