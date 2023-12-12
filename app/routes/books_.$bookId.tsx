@@ -35,20 +35,24 @@ export default function BookDetailsPage() {
   const data = useLoaderData<typeof loader>();
 
   return (
-    <div>
-      <h3 className="text-2xl font-bold">{data.book.title}</h3>
-      <img src={data.book.cover}></img>
-      <p className="py-6">{data.book.body}</p>
-      <hr className="my-4" />
-      <Form method="post">
-        <button
-          type="submit"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-        >
-          Delete
-        </button>
-      </Form>
-    </div>
+    <main id="book-details">
+      <section className="book-cover">
+        <img className="rounded-md shadow-md" src={data.book.cover}></img>
+      </section>
+      <section>
+        <h3 className="text-5xl font-bold">{data.book.title}</h3>
+        <p className="summary py-6">{data.book.body}</p>
+        <hr className="my-4" />
+        <Form method="post">
+          <button
+            type="submit"
+            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+          >
+            Delete
+          </button>
+        </Form>
+      </section>
+    </main>
   );
 }
 

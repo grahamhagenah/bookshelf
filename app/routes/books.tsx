@@ -18,37 +18,25 @@ export default function BooksPage() {
 
   return (
     <div className="flex h-full min-h-screen flex-col">
-      <header className="flex items-center justify-between bg-slate-800 p-4 text-white">
-        <h1 className="text-3xl font-bold">
-          <Link to=".">Lend</Link>
-        </h1>
-        <p>{user.email}</p>
-        <Form action="/logout" method="post">
-          <button
-            type="submit"
-            className="rounded bg-slate-600 px-4 py-2 text-blue-100 hover:bg-blue-500 active:bg-blue-600"
-          >
-            Logout
-          </button>
-        </Form>
-      </header>
-
       <main>
         <div>
           <Link to="/books/new" className="block p-4 text-xl text-blue-500">
             + New Book
           </Link>
-
-          <hr />
-
           {data.bookListItems.length === 0 ? (
             <p className="p-4">No books yet</p>
           ) : (
-            <ol>
+            <ol className="grid grid-cols-8 gap-4">
               {data.bookListItems.map((book) => (
                 <li key={book.id}>
                   <NavLink to={book.id}>
-                    <img src={book.cover}></img>
+                    {book.cover ? (  
+                      <img className="w-full rounded-md shadow-md" src={book.cover}></img> 
+                    ): ( 
+                      <article className="no-cover rounded-md shadow-md">
+                        <h3>{book.title}</h3>
+                      </article>
+                    )}
                   </NavLink>
                 </li>
               ))}

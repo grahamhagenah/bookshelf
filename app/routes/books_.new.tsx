@@ -28,7 +28,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  if (typeof cover !== "string" || cover.length === 0) {
+  if (typeof cover !== "string") {
     return json(
       { errors: { body: null, title: null, cover: "Cover is required" } },
       { status: 400 },
