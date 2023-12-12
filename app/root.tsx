@@ -36,7 +36,7 @@ export default function App() {
         <Links />
       </head>
       <body className="h-full">
-        <header className="flex items-center justify-between py-4">
+        <header className="w-full flex items-center justify-between">
           <h1 className="text-3xl font-bold">
             <Link to="/books">Lend</Link>
           </h1>

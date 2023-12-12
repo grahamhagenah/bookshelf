@@ -36,8 +36,14 @@ export default function BookDetailsPage() {
 
   return (
     <main id="book-details">
-      <section className="book-cover">
-        <img className="rounded-md shadow-md" src={data.book.cover}></img>
+      <section>
+        <div className="book-cover">
+          <img className="rounded-md shadow-md" src={data.book.cover}></img>
+          <div className="button-group">
+            <button className="shadow-sm">Borrow</button>
+            <button className="shadow-sm">Add to your shelf</button>
+          </div>
+        </div>
       </section>
       <section>
         <h3 className="text-5xl font-bold">{data.book.title}</h3>
