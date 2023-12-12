@@ -4,7 +4,6 @@ import { Form, Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
 
 import { getBookListItems } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
-import { useUser } from "~/utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -14,13 +13,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function BooksPage() {
   const data = useLoaderData<typeof loader>();
-  const user = useUser();
 
   return (
     <div className="flex h-full min-h-screen flex-col">
       <main>
         <div>
-          <Link to="/books/new" className="block p-4 text-xl text-blue-500">
+          <Link to="/books/new" className="inline-block p-4 text-xl text-blue-500">
             + New Book
           </Link>
           {data.bookListItems.length === 0 ? (

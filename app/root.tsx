@@ -1,6 +1,7 @@
 import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
+import Header from './components/header'
 import {
   Links,
   LiveReload,
@@ -36,19 +37,7 @@ export default function App() {
         <Links />
       </head>
       <body className="h-full">
-        <header className="w-full flex items-center justify-between">
-          <h1 className="text-3xl font-bold">
-            <Link to="/books">Lend</Link>
-          </h1>
-          <Form action="/logout" method="post">
-            <button
-              type="submit"
-              className="rounded bg-slate-600 px-4 py-2 text-blue-100 hover:bg-blue-500 active:bg-blue-600"
-            >
-              Logout
-            </button>
-          </Form>
-        </header>
+        <Header />
         <Outlet />
         <ScrollRestoration />
         <Scripts />

@@ -7,6 +7,27 @@ body {
   padding: 2rem;
 }
 
+.search-container {
+  position: relative;
+  width: 300px;
+}
+
+#search-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+}
+
+#suggestions-container {
+  position: absolute;
+  width: 100%;
+  overflow-y: auto;
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  background-color: #fff;
+}
+
 .no-cover {
   text-align: center;
   display: flex;
