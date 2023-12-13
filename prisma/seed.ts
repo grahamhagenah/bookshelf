@@ -41,6 +41,7 @@ async function seed() {
   await prisma.book.create({
     data: {
       title: "My first note",
+      author: "Hello",
       body: "Hello, world!",
       cover: "https://m.media-amazon.com/images/W/MEDIAX_792452-T1/images/I/41-yZIthD3L._SY445_SX342_.jpg",
       userId: user.id,
@@ -49,19 +50,11 @@ async function seed() {
 
   await prisma.book.create({
     data: {
-      title: "My second note",
+      title: "My first note",
+      author: "Hello",
       body: "Hello, world!",
       cover: "https://m.media-amazon.com/images/W/MEDIAX_792452-T1/images/I/41-yZIthD3L._SY445_SX342_.jpg",
       userId: user.id,
-    },
-  });
-
-  await prisma.book.create({
-    data: {
-      title: "My second note",
-      body: "Hello, world!",
-      cover: "https://m.media-amazon.com/images/W/MEDIAX_792452-T1/images/I/41-yZIthD3L._SY445_SX342_.jpg",
-      userId: secondUser.id,
     },
   });
 

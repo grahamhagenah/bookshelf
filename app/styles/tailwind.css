@@ -7,6 +7,10 @@ body {
   padding: 2rem;
 }
 
+main {
+  margin-top: 4rem;
+}
+
 .search-container {
   position: relative;
   width: 300px;
@@ -26,6 +30,14 @@ body {
   border-top: none;
   border-radius: 0 0 5px 5px;
   background-color: #fff;
+}
+
+#search-results li {
+  padding: 2rem;
+}
+
+#search-results h3 {
+  font-size: 22px;
 }
 
 .no-cover {

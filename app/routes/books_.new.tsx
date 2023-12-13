@@ -14,27 +14,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const cover = formData.get("cover");
   const body = formData.get("body");
 
-  if (typeof title !== "string" || title.length === 0) {
-    return json(
-      { errors: { body: null, title: "Title is required", cover: null } },
-      { status: 400 },
-    );
-  }
-
-  if (typeof body !== "string" || body.length === 0) {
-    return json(
-      { errors: { body: "Body is required", title: null, cover: null } },
-      { status: 400 },
-    );
-  }
-
-  if (typeof cover !== "string") {
-    return json(
-      { errors: { body: null, title: null, cover: "Cover is required" } },
-      { status: 400 },
-    );
-  }
-
   const book = await createBook({ body, title, cover, userId });
 
   return redirect(`/books/${book.id}`);

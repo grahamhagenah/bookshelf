@@ -31,17 +31,21 @@ export function getBookCovers({ userId }: { userId: User["id"] }) {
   });
 }
 
+type BookInput = Pick<Book, "title" | "author" | "body" | "cover">;
+
 export function createBook({
-  body,
   title,
+  author,
+  body,
   cover,
   userId,
-}: Pick<Book, "body" | "title" | "cover"> & {
+}: BookInput & {
   userId: User["id"];
 }) {
   return prisma.book.create({
     data: {
       title,
+      author,
       body,
       cover,
       user: {
