@@ -46,11 +46,18 @@ main {
   flex-direction: column;
   justify-content: center;
   height: 100%;
-  background: aquamarine;
+  background: rgb(205, 205, 205);
+  min-height: 325px;
+  padding: 2rem;
+}
+
+#logo {
+  max-width: 150px;
+  padding: 10px;
 }
 
 .no-cover h3 {
-  font-size: 30px;
+  font-size: 25px;
 }
 
 #book-details button {

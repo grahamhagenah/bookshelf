@@ -1,31 +1,25 @@
 
 import { Form, Link } from "@remix-run/react";
 import { useNavigate } from "@remix-run/react";
-import type { ActionFunctionArgs } from "@remix-run/node";
 import { useState } from 'react';
-
-export const action = async ({ request }: ActionFunctionArgs) => {
-
-  const formData = await request.formData();
-  const query = formData.get("query");
-
-  // return redirect(`/search/?query=${query}`);
-};
+import logo from "~/images/logo-alt.svg";
 
 export default function Header() {
 
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     navigate(`/search?query=${query}`);
-  };
+  }
 
   return (
     <header className="w-full flex items-center justify-between">
       <h1 className="text-3xl font-bold">
-        <Link to="/books">Lend</Link>
+        <Link to="/books">
+          <img id="logo" src={logo}/>
+        </Link>
       </h1>
       <form onSubmit={handleSubmit}>
         <input

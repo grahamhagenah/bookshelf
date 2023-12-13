@@ -35,13 +35,8 @@ export default function Search() {
 
   const results = useLoaderData();
 
-  console.log(results.docs[0])
-
   return (
     <div className="search-container">
-      <form>
-        <input id="search-input" type="text" name="query" placeholder="Search books..." />
-      </form>
       <ul id="search-results">
         {results ? results.docs.map((book, index) => 
           <li key={index}>
@@ -52,6 +47,7 @@ export default function Search() {
               <p>OLID: {book.olid}</p>
               <input type="hidden" name="title" value={book.title} />
               <input type="hidden" name="author" value={book.author_name} />
+              {book.first_sentence ? <input type="hidden" name="first_sentence" value={book.first_sentence[0]} /> : null}
               <input type="hidden" name="first_sentence" value={book.first_sentence} />
               <button type="submit">Add book</button>
             </Form>
