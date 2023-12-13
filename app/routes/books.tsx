@@ -21,7 +21,7 @@ export default function BooksPage() {
         ) : (
           <ol className="grid grid-cols-8 gap-4">
             {data.bookListItems.map((book) => (
-              <li key={book.id}>
+              <li key={book.id} className="cover-wrapper">
                 <NavLink to={book.id}>
                   {book.cover ? (  
                     <img className="w-full rounded-md shadow-md" src={book.cover}></img> 
