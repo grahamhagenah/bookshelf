@@ -4,9 +4,6 @@ import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import { getBookListItems } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
 import ProgressiveImage from "react-progressive-graceful-image";
-import Search from "~/components/search"
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { createBook } from "~/models/book.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
