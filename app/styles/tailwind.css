@@ -1,14 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-
 body {
   padding: 2rem;
+  font-family: 'Ubuntu', sans-serif;
+}
+
+h1, h2, h3 {
+  font-family: 'Ubuntu', sans-serif;
 }
 
 main {
   margin-top: 4rem;
+  padding-bottom: 4rem;
 }
 
 .search-container {
@@ -40,17 +47,6 @@ main {
   font-size: 22px;
 }
 
-.no-cover {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  height: 100%;
-  background: rgb(205, 205, 205);
-  min-height: 325px;
-  padding: 2rem;
-}
-
 #logo {
   max-width: 150px;
   padding: 10px;
@@ -58,15 +54,51 @@ main {
 
 .cover-wrapper {
   position: relative;
-  overflow: hidden;
   width: 100%;
-  max-height: 340px;
+  height: 340px;
 }
 
 .cover-wrapper img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+#intro {
+  text-align: center;
+  margin-top: 5rem;
+}
+
+h1, h2 {
+
+}
+
+.intro-wrapper {
+  margin: 0 auto;
+}
+
+.primary-search {
+  background: #f6f6f6;
+  display: flex;
+  margin: 0 3rem;
+}
+
+.primary-search:hover {
+  background: #e8e8e8;
+}
+
+.primary-search input {
+  background: transparent;
+  padding: 10px;
+  min-width: 250px;
+}
+
+.primary-search button {
+  padding: 0 15px;
+}
+
+.primary-search button:active {
+  background: #d6d6d6;
 }
 
 .no-cover h3 {

@@ -34,6 +34,8 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 export default function BookDetailsPage() {
   const data = useLoaderData<typeof loader>();
 
+  console.log(data.book)
+
   return (
     <main id="book-details">
       <section>
@@ -47,6 +49,7 @@ export default function BookDetailsPage() {
       </section>
       <section>
         <h3 className="text-5xl font-bold">{data.book.title}</h3>
+        <p className="author py-6">{data.book.author}</p>
         <p className="summary py-6">{data.book.body}</p>
         <hr className="my-4" />
         <Form method="post">

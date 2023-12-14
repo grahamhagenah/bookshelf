@@ -1,7 +1,6 @@
-import { LoaderFunction, json, redirect } from "@remix-run/node"; // or cloudflare/deno
+import { json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import React, { useState } from 'react';
-import { Form, useActionData } from "@remix-run/react";
+import { Form } from "@remix-run/react";
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { createBook } from "~/models/book.server";
 import { requireUserId } from "~/session.server";

@@ -1,8 +1,12 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Form, Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
+import { json } from "@remix-run/node";
+import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import { getBookListItems } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
+import ProgressiveImage from "react-progressive-graceful-image";
+import Search from "~/components/search"
+import type { ActionFunctionArgs } from "@remix-run/node";
+import { createBook } from "~/models/book.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -13,23 +17,29 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function BooksPage() {
   const data = useLoaderData<typeof loader>();
 
+  const dominantImageColor = '#D4F5FF'
+
   return (
     <div className="flex h-full min-h-screen flex-col">
       <main>
         {data.bookListItems.length === 0 ? (
-          <p className="p-4">No books yet</p>
-        ) : (
-          <ol className="grid grid-cols-8 gap-4">
+          <section id="intro" className="flex content-center flex-wrap items-center">
+            <div className="intro-wrapper">
+              <h2 className="text-6xl font-semibold">Welcome to <strong>Lend</strong></h2>
+              <p className="max-w-md mx-auto mt-10 text-xl">Add books to your library by searching titles, authors, or anything else in the search form.</p>
+            </div>
+          </section>
+          ) : (
+          <ol className="grid grid-cols-8 gap-5">
             {data.bookListItems.map((book) => (
               <li key={book.id} className="cover-wrapper">
                 <NavLink to={book.id}>
-                  {book.cover ? (  
-                    <img className="w-full rounded-md shadow-md" src={book.cover}></img> 
-                  ): ( 
-                    <article className="no-cover rounded-md shadow-md">
-                      <h3>{book.title}</h3>
-                    </article>
-                  )}
+                  <ProgressiveImage delay={500} src={book.cover} placeholder="">
+                    {(src, loading) => {
+                      return loading ? <div className="rounded-lg" style={{ opacity: 0.5, backgroundColor: dominantImageColor, height: 340, width: 214 }}/> 
+                      : <img height="340" className="rounded-lg shadow-xl book-cover" src={src} alt={book.title} />;
+                    }}
+                  </ProgressiveImage>
                 </NavLink>
               </li>
             ))}

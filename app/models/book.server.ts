@@ -10,7 +10,7 @@ export function getBook({
   userId: User["id"];
 }) {
   return prisma.book.findFirst({
-    select: { id: true, body: true, title: true, cover: true },
+    select: { id: true, body: true, author: true, title: true, cover: true },
     where: { id, userId },
   });
 }
@@ -19,14 +19,6 @@ export function getBookListItems({ userId }: { userId: User["id"] }) {
   return prisma.book.findMany({
     where: { userId },
     select: { id: true, title: true, cover: true },
-    orderBy: { updatedAt: "desc" },
-  });
-}
-
-export function getBookCovers({ userId }: { userId: User["id"] }) {
-  return prisma.book.findMany({
-    where: { userId },
-    select: { id: true, cover: true },
     orderBy: { updatedAt: "desc" },
   });
 }
