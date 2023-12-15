@@ -47,6 +47,28 @@ main {
   padding: 2rem;
 }
 
+.primary-search > svg {
+  height: 100%;
+  margin: auto 10px;
+}
+
+.card-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.card-wrapper .MuiSvgIcon-root {
+  font-size: 50px;
+}
+
+.card-wrapper li {
+  background-color: #f6f6f6;
+  border-radius: 10px;
+  padding: 2rem;
+  margin: 2rem;
+  max-width: 250px;
+}
+
 #search-results h3 {
   font-size: 22px;
 }

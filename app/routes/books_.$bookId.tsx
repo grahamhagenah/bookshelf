@@ -34,8 +34,6 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 export default function BookDetailsPage() {
   const data = useLoaderData<typeof loader>();
 
-  console.log(data.book)
-
   return (
     <main id="book-details">
       <section>

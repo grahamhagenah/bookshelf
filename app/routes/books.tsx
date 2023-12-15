@@ -4,6 +4,11 @@ import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import { getBookListItems } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
 import ProgressiveImage from "react-progressive-graceful-image";
+import { prisma } from "~/db.server";
+import { createBook } from "~/models/book.server";
+import GroupIcon from '@mui/icons-material/Group';
+import SearchIcon from '@mui/icons-material/Search';
+import ImportContactsIcon from '@mui/icons-material/ImportContacts';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -27,8 +32,21 @@ export default function BooksPage() {
       {data.data.bookListItems.length === 0 ? (
         <section id="intro" className="mt-5">
           <div className="intro-wrapper">
-            <h2 className="text-6xl font-semibold">This is your <strong>lending library</strong></h2>
-            <p className="max-w-md mx-auto mt-10 text-xl">Add books to your shelf by searching titles, authors, or anything else in the search form.</p>
+            <h2 className="text-6xl font-semibold mt-5">This is your <strong>lending library</strong></h2>
+            <ol className="card-wrapper mx-auto mt-10 text-xl">
+              <li>
+                <SearchIcon />
+                <p className="mt-5">Search for books by author or title</p>
+              </li>
+              <li>
+                <GroupIcon />
+                <p className="mt-5">Add friends to see their books</p>
+              </li>
+              <li>
+                <ImportContactsIcon />
+                <p className="mt-5">Start borrowing and lending</p>
+              </li>
+            </ol>
           </div>
         </section>
         ) : (

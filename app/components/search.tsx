@@ -1,5 +1,6 @@
 import { useNavigate } from "@remix-run/react";
 import { useState } from 'react';
+import SearchIcon from '@mui/icons-material/Search';
 
 export default function Search() {
 
@@ -8,14 +9,17 @@ export default function Search() {
 
   const handleSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
-    navigate(`/search?query=${query}`);
+    if(query !== ''){
+      navigate(`/search?query=${query}`);
+    }
   }
-
+  
   return (
     <form className="primary-search rounded-lg" onSubmit={handleSubmit}>
+      <SearchIcon />
       <input
         type="text"
-        placeholder="Search for books..."
+        placeholder={"Search for books..."}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />

@@ -13,13 +13,11 @@ import Search from "./search"
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const user = await getUserById({ userId });
   return user;
 }
-
 
 export default function Header() {
 
@@ -27,13 +25,13 @@ export default function Header() {
 
   return (
     <header className="w-full flex items-center justify-between">
+      <Link to="/books">
+        <img id="logo" src={logo} alt="Lend"/>
+      </Link>
       <div className="flex">
-        <Link to="/books">
-          <img id="logo" src={logo} alt="Lend"/>
-        </Link>
+        {data.user && <Search />}
+        <PositionedMenu/>
       </div>
-      {data.user && <Search />}
-      <PositionedMenu/>
     </header>
 )}
 
