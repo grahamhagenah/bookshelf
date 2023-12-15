@@ -8,7 +8,7 @@
     "dev:serve": "binode --require ./mocks -- @remix-run/serve:remix-serve ./build/index.js",
     "format": "prettier --write .",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
-    "setup": "prisma generate && prisma migrate deploy && prisma db push",
+    "setup": "prisma db push",
     "start": "remix-serve ./build/index.js",
     "start:mocks": "binode --require ./mocks -- @remix-run/serve:remix-serve ./build/index.js",
     "test": "vitest",
