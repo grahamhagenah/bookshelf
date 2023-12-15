@@ -5,21 +5,21 @@ import { getBookListItems } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
 import ProgressiveImage from "react-progressive-graceful-image";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const userId = await requireUserId(request);
-  const bookListItems = await getBookListItems({ userId });
-  return json({ bookListItems });
-}
+// export const loader = async ({ request }: LoaderFunctionArgs) => {
+//   const userId = await requireUserId(request);
+//   const bookListItems = await getBookListItems({ userId });
+//   return json({ bookListItems });
+// }
 
 export default function BooksPage() {
-  const data = useLoaderData<typeof loader>();
+  // const data = useLoaderData<typeof loader>();
 
   const dominantImageColor = '#D4F5FF'
 
   return (
     <div className="flex h-full min-h-screen flex-col">
       <main>
-        {data.bookListItems.length === 0 ? (
+        {/* {data.bookListItems.length === 0 ? (
           <section id="intro" className="flex content-center flex-wrap items-center">
             <div className="intro-wrapper">
               <h2 className="text-6xl font-semibold">Welcome to <strong>Lend</strong></h2>
@@ -27,8 +27,8 @@ export default function BooksPage() {
             </div>
           </section>
           ) : (
-          <ol className="grid grid-cols-8 gap-5">
-            {data.bookListItems.map((book) => (
+          <ol className="grid grid-cols-8 gap-5"> */}
+            {/* {data.bookListItems.map((book) => (
               <li key={book.id} className="cover-wrapper">
                 <NavLink to={book.id}>
                   <ProgressiveImage delay={500} src={book.cover} placeholder="">
@@ -39,9 +39,9 @@ export default function BooksPage() {
                   </ProgressiveImage>
                 </NavLink>
               </li>
-            ))}
-          </ol>
-        )}
+            ))} */}
+          {/* </ol> */}
+        {/* )} */}
         <Outlet />
       </main>
     </div>
