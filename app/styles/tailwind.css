@@ -52,8 +52,13 @@ main {
 }
 
 #logo {
-  max-width: 150px;
-  padding: 10px;
+  max-width: 170px;
+  padding-left: 10px;
+}
+
+.stretched-link::after {
+  content: "";
+  @apply z-10 absolute inset-0 bg-transparent pointer-events-auto;
 }
 
 .cover-wrapper {

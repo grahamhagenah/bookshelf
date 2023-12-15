@@ -1,7 +1,7 @@
 
 import { Form, Link } from "@remix-run/react";
-import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
-import logo from "~/images/logo-alt-2.svg";
+import { useLoaderData } from "@remix-run/react";
+import logo from "~/images/logo-circle.svg";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireUserId } from "~/session.server";
 import * as React from 'react';
@@ -91,7 +91,7 @@ function PositionedMenu() {
         <MenuItem onClick={handleClose}>My account</MenuItem>
         <MenuItem onClick={handleClose}>
           <Form action="/logout" method="post">
-            <button type="submit">
+            <button className="stretched-link" type="submit">
               Logout
             </button>
           </Form>
