@@ -1,7 +1,7 @@
 
 import { Form, Link } from "@remix-run/react";
 import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
-import logo from "~/images/logo-alt.svg";
+import logo from "~/images/logo-alt-2.svg";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireUserId } from "~/session.server";
 import * as React from 'react';
@@ -10,6 +10,8 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { getUserById } from "~/models/user.server";
 import Search from "./search"
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -20,20 +22,31 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 
 export default function Header() {
-  
+
+  const data = useLoaderData<typeof loader>();
+
   return (
     <header className="w-full flex items-center justify-between">
-      <h1 className="text-3xl font-bold">
+      <div className="flex">
         <Link to="/books">
           <img id="logo" src={logo} alt="Lend"/>
         </Link>
-      </h1>
-      <div className="flex">
-        <Search />
+      </div>
+      {data.user && <Search />}
       <PositionedMenu/>
-    </div>
     </header>
 )}
+
+const theme = createTheme({
+  palette: {
+    blue: {
+      main: '#000000',
+      light: '#E9DB5D',
+      dark: '#A29415',
+      contrastText: '#242105',
+    },
+  },
+});
 
 function PositionedMenu() {
   const data = useLoaderData<typeof loader>();
@@ -47,15 +60,17 @@ function PositionedMenu() {
   };
 
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <Button
         id="demo-positioned-button"
+        color="blue"
         aria-controls={open ? 'demo-positioned-menu' : undefined}
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
       >
-        {data.user ? data.user.firstname: "hello"}
+        <AccountCircleIcon className="mr-2" />
+        {data.user ? data.user.firstname: "Log In"}
       </Button>
       <Menu
         id="demo-positioned-menu"
@@ -82,6 +97,6 @@ function PositionedMenu() {
           </Form>
         </MenuItem>
       </Menu>
-    </>
+    </ThemeProvider>
   );
 }

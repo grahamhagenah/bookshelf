@@ -23,6 +23,10 @@ main {
   width: 300px;
 }
 
+#demo-positioned-button {
+  font-family: 'Ubuntu', sans-serif;
+}
+
 #search-input {
   width: 100%;
   padding: 10px;
@@ -65,7 +69,7 @@ main {
 
 #intro {
   text-align: center;
-  margin-top: 5rem;
+  margin-top: 8rem;
 }
 
 h1, h2 {

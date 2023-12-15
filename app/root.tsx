@@ -7,8 +7,6 @@ import {
   LiveReload,
   Meta,
   Outlet,
-  Form,
-  Link,
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
@@ -28,6 +26,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function App() {
+
   return (
     <html lang="en" className="h-full">
       <head>
