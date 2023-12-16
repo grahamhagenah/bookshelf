@@ -50,6 +50,7 @@ main {
 .primary-search > svg {
   height: 100%;
   margin: auto 10px;
+  position: absolute;
 }
 
 .card-wrapper {
@@ -90,8 +91,8 @@ main {
 
 #logo img {
   display: inline-block;
-  width: 65px;
-  padding: 0.5rem;
+  width: 40px;
+  margin: 0 10px;
 }
 
 .stretched-link::after {
@@ -127,6 +128,7 @@ h1, h2 {
   background: #f6f6f6;
   display: flex;
   margin: 0 3rem;
+  position: relative;
 }
 
 .primary-search:hover {
@@ -135,8 +137,9 @@ h1, h2 {
 
 .primary-search input {
   background: transparent;
-  padding: 10px;
-  min-width: 250px;
+  padding: 10px 10px 10px 50px;
+  min-width: 275px;
+  border-radius: 8px 0 0 8px;
 }
 
 .primary-search button {

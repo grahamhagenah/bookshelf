@@ -1,7 +1,7 @@
 
 import { Form, Link } from "@remix-run/react";
 import { useLoaderData } from "@remix-run/react";
-import logo from "~/images/logo-circle-alt.svg";
+import logo from "~/images/logo-square.svg";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireUserId } from "~/session.server";
 import * as React from 'react';

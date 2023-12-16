@@ -10,7 +10,7 @@ export default function Search() {
   const handleSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     if(query !== ''){
-      navigate(`/search?query=${query}`);
+      navigate(`/search?q=${query}`);
     }
   }
   

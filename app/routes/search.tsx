@@ -10,7 +10,7 @@ export async function loader({ request }) {
 
   const url = new URL(request.url)
   const queryParams = url.searchParams
-  const queryValue = queryParams.get('query')
+  const queryValue = queryParams.get('q')
   const res = await fetch(`https://openlibrary.org/search.json?q=${queryValue}&limit=10`)
   return json(await res.json())
 }
