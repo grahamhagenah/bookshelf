@@ -1,7 +1,7 @@
 
 import { Form, Link } from "@remix-run/react";
 import { useLoaderData } from "@remix-run/react";
-import logo from "~/images/logo-circle.svg";
+import logo from "~/images/logo-circle-alt.svg";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireUserId } from "~/session.server";
 import * as React from 'react';
@@ -25,8 +25,9 @@ export default function Header() {
 
   return (
     <header className="w-full flex items-center justify-between">
-      <Link to="/books">
-        <img id="logo" src={logo} alt="Lend"/>
+      <Link id="logo" to="/books">
+        <img src={logo} alt="Lend"/>
+        <h1 className="text-4xl font-semibold">Lend</h1>
       </Link>
       <div className="flex">
         {data.user && <Search />}
