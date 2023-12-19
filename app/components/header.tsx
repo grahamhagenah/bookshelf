@@ -1,7 +1,7 @@
 
 import { Form, Link } from "@remix-run/react";
 import { useLoaderData } from "@remix-run/react";
-import logo from "~/images/logo-square.svg";
+import logo from "~/images/logo.svg";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireUserId } from "~/session.server";
 import * as React from 'react';
@@ -9,9 +9,13 @@ import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { getUserById } from "~/models/user.server";
+import Badge from '@mui/material/Badge';
 import Search from "./search"
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { useNavigate } from "@remix-run/react";
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import IconButton from '@mui/material/IconButton';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -26,7 +30,7 @@ export default function Header() {
   return (
     <header className="w-full flex items-center justify-between">
       <Link id="logo" to="/books">
-        <img src={logo} alt="Lend"/>
+        <img src={logo} className="rounded-lg" alt="Lend"/>
         <h1 className="text-4xl font-semibold">Lend</h1>
       </Link>
       <div className="flex">
@@ -48,18 +52,67 @@ const theme = createTheme({
 });
 
 function PositionedMenu() {
+
   const data = useLoaderData<typeof loader>();
+
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
+
   const handleClose = () => {
     setAnchorEl(null);
+    setAnchorNotification(null);
+  };
+
+  const [anchorNotification, setAnchorNotification] = React.useState<null | HTMLElement>(null);
+  const openNotifications = Boolean(anchorNotification);
+
+  const handleClickNotification = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorNotification(event.currentTarget);
   };
 
   return (
     <ThemeProvider theme={theme}>
+      <IconButton 
+         id="demo-positioned-button-notifications"
+         color="blue"
+         margin="1rem"
+         aria-controls={openNotifications ? 'demo-positioned-menu-notifications' : undefined}
+         aria-haspopup="true"
+         aria-expanded={openNotifications ? 'true' : undefined}
+         onClick={handleClickNotification}
+         style={{ width: "auto", height:"100%", margin:"0 1rem" }}>
+        <Badge badgeContent={17} color="error">
+          <NotificationsIcon />
+        </Badge>
+      </IconButton>
+      <Menu
+        id="demo-positioned-menu-notifications"
+        aria-labelledby="demo-positioned-button-notifications"
+        anchorEl={anchorNotification}
+        open={openNotifications}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+      >
+         <MenuItem onClick={handleClose}>
+          <a href="/books">
+            <button className="stretched-link">
+              Requests go here
+            </button>
+          </a>
+        </MenuItem>
+      </Menu>
+
       <Button
         id="demo-positioned-button"
         color="blue"
@@ -78,7 +131,7 @@ function PositionedMenu() {
         open={open}
         onClose={handleClose}
         anchorOrigin={{
-          vertical: 'top',
+          vertical: 'bottom',
           horizontal: 'left',
         }}
         transformOrigin={{
@@ -86,8 +139,27 @@ function PositionedMenu() {
           horizontal: 'left',
         }}
       >
-        <MenuItem onClick={handleClose}>Profile</MenuItem>
-        <MenuItem onClick={handleClose}>My account</MenuItem>
+        <MenuItem onClick={handleClose}>
+          <a href="/books">
+            <button className="stretched-link">
+              My Library
+            </button>
+          </a>
+        </MenuItem>
+        <MenuItem onClick={handleClose}>
+          <Form action="/books" method="post">
+            <button className="stretched-link" type="submit">
+              Account Settings
+            </button>
+          </Form>
+        </MenuItem>
+        <MenuItem onClick={handleClose}>
+          <a href="/friends">
+            <button className="stretched-link">
+              Friends
+            </button>
+          </a>
+        </MenuItem>
         <MenuItem onClick={handleClose}>
           <Form action="/logout" method="post">
             <button className="stretched-link" type="submit">

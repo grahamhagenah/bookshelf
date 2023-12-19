@@ -1,4 +1,4 @@
-import type { Password, User } from "@prisma/client";
+import type { Password, User, Notification } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "~/db.server";
@@ -11,6 +11,16 @@ export async function getUserById(id: User["id"]) {
 
 export async function getUserByEmail(email: User["email"]) {
   return prisma.user.findUnique({ where: { email } });
+}
+
+export async function createNotification(userId: User["id"], friendId: string, typeOf: string) {
+  return prisma.notification.create({
+    data: {
+      userId: userId,
+      friendId: friendId,
+      typeOf: typeOf,
+    },
+  });
 }
 
 export async function createUser(email: User["email"], password: string,  firstname: string, surname: string) {
