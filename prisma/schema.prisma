@@ -20,8 +20,8 @@ model User {
 
   books     Book[]
 
-  notificationsSent     Notification[] @relation("notificationsSent")
-  notificationsReceived Notification[] @relation("notificationsReceived")
+  notificationsSent     Notification[] @relation("sender")
+  notificationsReceived Notification[] @relation("receiver")
 
   followedBy User[]  @relation("UserFollows")
   following  User[]  @relation("UserFollows")
@@ -49,17 +49,15 @@ model Book {
 }
 
 model Notification {
-  id  String @id @default(cuid())
+  id        String @id @default(cuid())
 
-  user     User     @relation("notificationsSent", fields: [userId], references: [id])
-  friend   User     @relation("notificationsReceived", fields: [id], references: [id])
-
-  typeOf   String
+  sender     User     @relation("sender", fields: [senderId], references: [id])
+  receiver   User     @relation("receiver", fields: [receiverId], references: [id])
   
-  userId   String
-  friendId String
+  senderId     String
+  receiverId String
 
-  @@index([userId], name: "user_id_index")
-  @@index([friendId], name: "friend_id_index")
+  @@index([senderId], name: "sender_id_index")
+  @@index([receiverId], name: "receiver_id_index")
 
 }

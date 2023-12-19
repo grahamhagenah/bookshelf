@@ -9,6 +9,7 @@ import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { getUserById } from "~/models/user.server";
+import { getNotifications, createFriendship } from "~/models/user.server"; 
 import Badge from '@mui/material/Badge';
 import Search from "./search"
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -20,7 +21,17 @@ import IconButton from '@mui/material/IconButton';
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const user = await getUserById({ userId });
-  return user;
+
+  return {user};
+}
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const userId = await requireUserId(request);
+  const formData = await request.formData();
+  const friendId = formData.get("friendId");
+  const friend = await getUserById({ friendId });
+
+  await createFriendship(userId, friendId)
 }
 
 export default function Header() {
@@ -55,9 +66,12 @@ function PositionedMenu() {
 
   const data = useLoaderData<typeof loader>();
 
+    // console.log(data.notifications)
+    console.log(data.user?.notificationsReceived)
+
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
-  
+
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -74,8 +88,11 @@ function PositionedMenu() {
     setAnchorNotification(event.currentTarget);
   };
 
+  
+
   return (
     <ThemeProvider theme={theme}>
+      <h2>{data.user?.email}</h2>
       <IconButton 
          id="demo-positioned-button-notifications"
          color="blue"
@@ -85,7 +102,7 @@ function PositionedMenu() {
          aria-expanded={openNotifications ? 'true' : undefined}
          onClick={handleClickNotification}
          style={{ width: "auto", height:"100%", margin:"0 1rem" }}>
-        <Badge badgeContent={17} color="error">
+        <Badge badgeContent={data.user?.notificationsReceived.length} color="error">
           <NotificationsIcon />
         </Badge>
       </IconButton>
@@ -104,13 +121,17 @@ function PositionedMenu() {
           horizontal: 'left',
         }}
       >
-         <MenuItem onClick={handleClose}>
-          <a href="/books">
-            <button className="stretched-link">
-              Requests go here
-            </button>
-          </a>
+      {data.user?.notificationsReceived.map((notification) => (
+        <MenuItem key={notification.id} className="notifications">
+            Friend request from {notification.friendId}
+            <form>
+              <input type="hidden" name="friendId" value={notification.friendId} />
+              <button type="submit">
+                Accept
+              </button>
+            </form>
         </MenuItem>
+      ))}
       </Menu>
 
       <Button

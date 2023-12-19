@@ -6,19 +6,53 @@ import { prisma } from "~/db.server";
 export type { User } from "@prisma/client";
 
 export async function getUserById(id: User["id"]) {
-  return prisma.user.findUnique({ where: { id } });
+  return prisma.user.findUnique({ 
+    where: { id } ,
+    select: { id: true, email: true, firstname: true, surname: true, notificationsSent: true, notificationsReceived: true }
+  });
 }
 
 export async function getUserByEmail(email: User["email"]) {
-  return prisma.user.findUnique({ where: { email } });
+  return prisma.user.findUnique({ 
+    where: { email },
+    select: { id: true }
+  });
 }
 
-export async function createNotification(userId: User["id"], friendId: string, typeOf: string) {
+// export async function getNotifications({ userId }: { userId: User["id"] }) {
+//   return prisma.notification.findMany({
+//     where: { userId },
+//     select: { id: true, user: true, friend: true, friendId: true }
+//   });
+// }
+
+export async function getNotifications({ userId }: { userId: User["id"] }) {
+  return prisma.notification.findMany({
+    where: { userId },
+    select: { id: true, user: true, friend: true, friendId: true }
+  });
+}
+
+
+export async function createNotification(senderId, receiverId) {
   return prisma.notification.create({
     data: {
-      userId: userId,
-      friendId: friendId,
-      typeOf: typeOf,
+      receiver: {
+        connect: { id: receiverId },
+      },
+      sender: {
+        connect: { id: senderId },
+      },
+    },
+    select: { id: true, sender: true, receiver: true, senderId: true, receiverId: true }
+  })
+}
+
+export async function createFriendship(userId: User["id"], friendId: User["id"]) {
+  return prisma.user.update({
+    where: { userId },
+    data: {
+      followedBy: friendId
     },
   });
 }
