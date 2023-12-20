@@ -8,7 +8,7 @@ export type { User } from "@prisma/client";
 export async function getUserById(id: User["id"]) {
   return prisma.user.findUnique({ 
     where: { id } ,
-    select: { id: true, email: true, firstname: true, surname: true, notificationsSent: true, notificationsReceived: true }
+    select: { id: true, email: true, firstname: true, surname: true, notificationsSent: true, notificationsReceived: true, following: true }
   });
 }
 
@@ -19,13 +19,6 @@ export async function getUserByEmail(email: User["email"]) {
   });
 }
 
-// export async function getNotifications({ userId }: { userId: User["id"] }) {
-//   return prisma.notification.findMany({
-//     where: { userId },
-//     select: { id: true, user: true, friend: true, friendId: true }
-//   });
-// }
-
 export async function getNotifications({ userId }: { userId: User["id"] }) {
   return prisma.notification.findMany({
     where: { userId },
@@ -33,8 +26,7 @@ export async function getNotifications({ userId }: { userId: User["id"] }) {
   });
 }
 
-
-export async function createNotification(senderId, receiverId) {
+export async function createNotification(senderId: User["id"], receiverId: User["id"], senderName: String) {
   return prisma.notification.create({
     data: {
       receiver: {
@@ -43,19 +35,39 @@ export async function createNotification(senderId, receiverId) {
       sender: {
         connect: { id: senderId },
       },
+      senderName: senderName,
     },
-    select: { id: true, sender: true, receiver: true, senderId: true, receiverId: true }
+    select: { id: true, sender: true, receiver: true, senderId: true, receiverId: true}
   })
 }
 
 export async function createFriendship(userId: User["id"], friendId: User["id"]) {
-  return prisma.user.update({
-    where: { userId },
+
+  await prisma.user.update({
+    where: { id: userId },
     data: {
-      followedBy: friendId
+      following: {
+        connect: { id: friendId },
+      },
+      followedBy: {
+        connect: { id: friendId },
+      },
+    },
+  });
+
+  await prisma.user.update({
+    where: { id: friendId },
+    data: {
+      following: {
+        connect: { id: userId },
+      },
+      followedBy: {
+        connect: { id: userId },
+      },
     },
   });
 }
+
 
 export async function createUser(email: User["email"], password: string,  firstname: string, surname: string) {
   const hashedPassword = await bcrypt.hash(password, 10);

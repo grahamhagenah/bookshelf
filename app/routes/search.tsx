@@ -33,8 +33,6 @@ export default function Search() {
 
   const results = useLoaderData();
 
-  console.log(results.docs)
-
   return (
     <div id="search-container">
       <ul className="search-results mb-4">

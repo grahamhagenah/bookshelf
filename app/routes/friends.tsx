@@ -1,28 +1,33 @@
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-} from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { requireUserId } from "~/session.server";
+import { useLoaderData } from "@remix-run/react";
+import { redirect } from "@remix-run/node";
+import { getUserById } from "~/models/user.server";
+import { Form, useActionData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef } from "react";
-import { getUserByEmail, createNotification } from "~/models/user.server";
+import { createNotification } from "~/models/user.server";
+import { getUserId } from "~/session.server";
 
-import { verifyLogin } from "~/models/user.server";
-import { createUserSession, getUserId } from "~/session.server";
-import { safeRedirect, validateEmail } from "~/utils";
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const userId = await requireUserId(request);
+  const user = await getUserById(userId);
+  return {user};
+}
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 
   const senderId = await getUserId(request);
-
+  const user = await getUserById(senderId);
+  const senderName = user.firstname + " " + user.surname 
   const formData = await request.formData();
-  const email = formData.get("email");
   const receiverId = formData.get("id");
   
-  await createNotification(senderId, receiverId);
+  await createNotification(senderId, receiverId, senderName);
 
   return redirect(`/books`);
 };
+
 
 export default function Friends() {
   const [searchParams] = useSearchParams();
@@ -31,6 +36,8 @@ export default function Friends() {
   const emailRef = useRef<HTMLInputElement>(null);
   const IdRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+
+  const data = useLoaderData<typeof loader>();
 
   useEffect(() => {
     if (actionData?.errors?.email) {
@@ -44,6 +51,15 @@ export default function Friends() {
     <div className="flex h-4/6 flex-col justify-center">
       <div className="mx-auto w-full max-w-md px-8">
         <h1 className="text-4xl mb-5">Friends</h1>
+        <ul className="friend-list my-5 text-xl">
+        {data ? data.user.following.map((user, index) => 
+          <li key={index}>
+            <p>{user.firstname + " " + user.surname}</p>
+          </li>
+        )
+        : null }
+        </ul>
+        <h2 className="text-md mb-5">Add More Friends using the form below</h2>
         <Form method="post" className="space-y-6">
           <div>
           <label
@@ -98,6 +114,8 @@ export default function Friends() {
           <input type="hidden" name="redirectTo" value={redirectTo} />
           <button
             type="submit"
+            name="_action" 
+            value="ADD"
             className="w-full rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
           >
             Add Friend

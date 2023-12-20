@@ -1,37 +1,27 @@
 
 import { Form, Link } from "@remix-run/react";
+import { prisma } from "~/db.server";
 import { useLoaderData } from "@remix-run/react";
 import logo from "~/images/logo.svg";
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs  } from "@remix-run/node";
 import { requireUserId } from "~/session.server";
 import * as React from 'react';
 import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { getUserById } from "~/models/user.server";
-import { getNotifications, createFriendship } from "~/models/user.server"; 
 import Badge from '@mui/material/Badge';
 import Search from "./search"
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { useNavigate } from "@remix-run/react";
+import {createTheme, ThemeProvider } from '@mui/material/styles';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import IconButton from '@mui/material/IconButton';
 
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const user = await getUserById({ userId });
-
+  const user = await getUserById(userId);
   return {user};
-}
-
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const userId = await requireUserId(request);
-  const formData = await request.formData();
-  const friendId = formData.get("friendId");
-  const friend = await getUserById({ friendId });
-
-  await createFriendship(userId, friendId)
 }
 
 export default function Header() {
@@ -66,9 +56,6 @@ function PositionedMenu() {
 
   const data = useLoaderData<typeof loader>();
 
-    // console.log(data.notifications)
-    console.log(data.user?.notificationsReceived)
-
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -88,11 +75,8 @@ function PositionedMenu() {
     setAnchorNotification(event.currentTarget);
   };
 
-  
-
   return (
     <ThemeProvider theme={theme}>
-      <h2>{data.user?.email}</h2>
       <IconButton 
          id="demo-positioned-button-notifications"
          color="blue"
@@ -123,17 +107,20 @@ function PositionedMenu() {
       >
       {data.user?.notificationsReceived.map((notification) => (
         <MenuItem key={notification.id} className="notifications">
-            Friend request from {notification.friendId}
-            <form>
-              <input type="hidden" name="friendId" value={notification.friendId} />
-              <button type="submit">
-                Accept
-              </button>
-            </form>
+            <p></p>
+            <Form method="post" action="/notifications">
+              <input type="hidden" name="senderId" value={notification.senderId} />
+              <button className="block" type="submit">Accept friend request from <strong>{" " + notification.senderName + " "}</strong></button>
+            </Form>
         </MenuItem>
       ))}
+      <MenuItem className="notifications">
+        <form method="post" action="/notifications">
+          <input type="hidden" />
+          <button className="block" type="submit">Clear all notifications</button>
+        </form>
+        </MenuItem>
       </Menu>
-
       <Button
         id="demo-positioned-button"
         color="blue"

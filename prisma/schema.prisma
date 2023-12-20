@@ -53,8 +53,10 @@ model Notification {
 
   sender     User     @relation("sender", fields: [senderId], references: [id])
   receiver   User     @relation("receiver", fields: [receiverId], references: [id])
+
+  senderName String
   
-  senderId     String
+  senderId   String
   receiverId String
 
   @@index([senderId], name: "sender_id_index")
