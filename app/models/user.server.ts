@@ -19,14 +19,7 @@ export async function getUserByEmail(email: User["email"]) {
   });
 }
 
-export async function getNotifications({ userId }: { userId: User["id"] }) {
-  return prisma.notification.findMany({
-    where: { userId },
-    select: { id: true, user: true, friend: true, friendId: true }
-  });
-}
-
-export async function createNotification(senderId: User["id"], receiverId: User["id"], senderName: String) {
+export async function createNotification(senderId: User["id"], receiverId: User["id"], senderName: string) {
   return prisma.notification.create({
     data: {
       receiver: {

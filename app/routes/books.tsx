@@ -1,28 +1,30 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import { getBookListItems } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
 import ProgressiveImage from "react-progressive-graceful-image";
-import { createBook } from "~/models/book.server";
 import GroupIcon from '@mui/icons-material/Group';
 import SearchIcon from '@mui/icons-material/Search';
 import ImportContactsIcon from '@mui/icons-material/ImportContacts';
+import { getUserById } from "~/models/user.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
+  const user = await getUserById(userId)
   const bookListItems = await getBookListItems({ userId });
 
   const data = {
-    userId,
+    user,
     bookListItems,
   };
 
-  return json({data});
+  return ({data});
 }
 
 export default function BooksPage() {
   const data = useLoaderData<typeof loader>();
+
+  console.log(data.data)
 
   const dominantImageColor = '#D4F5FF'
 

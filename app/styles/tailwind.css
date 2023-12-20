@@ -23,10 +23,6 @@ main {
   width: 300px;
 }
 
-#demo-positioned-button {
-  font-family: 'Ubuntu', sans-serif;
-}
-
 #search-input {
   width: 100%;
   padding: 10px;
@@ -93,6 +89,12 @@ main {
   display: inline-block;
   width: 40px;
   margin: 0 8px;
+}
+
+#account-menu-button {
+  color: black;
+  font-weight: 600;
+  font-family: 'Ubuntu', sans-serif;
 }
 
 .stretched-link::after {
