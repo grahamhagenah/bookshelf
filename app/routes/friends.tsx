@@ -54,7 +54,9 @@ export default function Friends() {
         <ul className="friend-list my-5 text-xl">
         {data ? data.user.following.map((user, index) => 
           <li key={index}>
-            <p>{user.firstname + " " + user.surname}</p>
+              <a href={`/friends/${user.id}`}>
+                <p>{user.firstname + " " + user.surname}</p>
+              </a>
           </li>
         )
         : null }
