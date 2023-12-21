@@ -16,7 +16,7 @@ export default function Library() {
     <main className="h-4/6 flex flex-col justify-center">
         <section id="intro">
           <div className="intro-wrapper">
-            <h2 className="text-6xl font-semibold mt-5">This is your <strong>lending library</strong></h2>
+            <h1 className="text-6xl font-semibold mt-5">This is your <strong>lending library</strong></h1>
             <ol className="card-wrapper mx-auto mt-10 text-xl">
               <li>
                 <SearchIcon />

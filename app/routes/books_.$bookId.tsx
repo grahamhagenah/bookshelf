@@ -4,6 +4,8 @@ import { Form, isRouteErrorResponse, useLoaderData, useRouteError} from "@remix-
 import invariant from "tiny-invariant";
 import { deleteBook, getBook } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
+import { Link } from "@remix-run/react";
+import { useLocation } from "@remix-run/react";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -15,6 +17,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
   return json({ book });
 };
+
+export const handle = {
+  breadcrumb: () => <Link to={useLocation().pathname}>Book</Link>
+}
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);

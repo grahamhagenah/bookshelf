@@ -3,8 +3,14 @@ import invariant from "tiny-invariant";
 import { getUserById } from "~/models/user.server";
 import Library from "~/components/library";
 import { getBookListItems } from "~/models/book.server";
-import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
+import { Link } from "@remix-run/react";
+import { useParams } from "@remix-run/react";
+import { useLocation } from "@remix-run/react";
 
+export const handle = {
+  breadcrumb: () => <Link to={useLocation().pathname}>Friend</Link>
+}
+  
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   invariant(params.friendId, "friendId not found");
   const friendId = params.friendId

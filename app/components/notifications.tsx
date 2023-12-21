@@ -32,19 +32,19 @@ export default function Notifications() {
   };
 
   return (
-    <>
+    <a href="/notifications">
       <IconButton 
          id="button-notifications"
-         aria-controls={open ? 'button-notifications' : undefined}
-         aria-haspopup="true"
-         aria-expanded={open ? 'true' : undefined}
-         onClick={handleClick}
+        //  aria-controls={open ? 'button-notifications' : undefined}
+        //  aria-haspopup="true"
+        //  aria-expanded={open ? 'true' : undefined}
+        //  onClick={handleClick}
          style={{ width: "auto", height:"100%", margin:"0 1rem", color: 'black' }}>
         <Badge badgeContent={data.user?.notificationsReceived.length} color="error">
           <NotificationsIcon style={{ fontSize: 30 }} />
         </Badge>
       </IconButton>
-      <Menu
+      {/* <Menu
         id="menu-notifications"
         aria-labelledby="menu-notifications"
         anchorEl={anchor}
@@ -66,7 +66,7 @@ export default function Notifications() {
           </a>
         </MenuItem>
       ))}
-      </Menu>
-    </>
+      </Menu> */}
+    </a>
   );
 }

@@ -7,6 +7,7 @@ import { Form, useActionData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 import { createNotification } from "~/models/user.server";
 import { getUserId } from "~/session.server";
+import Layout from "~/components / Layout/Layout";
 
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -48,82 +49,79 @@ export default function Friends() {
   }, [actionData]);
 
   return (
-    <div className="flex h-4/6 flex-col justify-center">
-      <div className="mx-auto w-full max-w-md px-8">
-        <h1 className="text-4xl mb-5">Friends</h1>
-        <ul className="friend-list my-5 text-xl">
-        {data ? data.user.following.map((user, index) => 
-          <li key={index}>
-              <a href={`/friends/${user.id}`}>
-                <p>{user.firstname + " " + user.surname}</p>
-              </a>
-          </li>
-        )
-        : null }
-        </ul>
-        <h2 className="text-md mb-5">Add More Friends using the form below</h2>
-        <Form method="post" className="space-y-6">
-          <div>
-          <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              ID
-            </label>
-            <div className="mt-1">
-              <input
-                ref={IdRef}
-                id="id"
-                required
-                // eslint-disable-next-line jsx-a11y/no-autofocus
-                autoFocus={true}
-                name="id"
-                type="text"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
-              />
-              {actionData?.errors?.email ? (
-                <div className="pt-1 text-red-700" id="email-error">
-                  {actionData.errors.email}
-                </div>
-              ) : null}
-            </div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email address
-            </label>
-            <div className="mt-1">
-              <input
-                ref={emailRef}
-                id="email"
-                // eslint-disable-next-line jsx-a11y/no-autofocus
-                autoFocus={true}
-                name="email"
-                type="text"
-                autoComplete="email"
-                aria-invalid={actionData?.errors?.email ? true : undefined}
-                aria-describedby="email-error"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
-              />
-              {actionData?.errors?.email ? (
-                <div className="pt-1 text-red-700" id="email-error">
-                  {actionData.errors.email}
-                </div>
-              ) : null}
-            </div>
-          </div>
-          <input type="hidden" name="redirectTo" value={redirectTo} />
-          <button
-            type="submit"
-            name="_action" 
-            value="ADD"
-            className="w-full rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+    <Layout title="Friends">
+      <ul className="friend-list my-5 text-xl">
+      {data ? data.user.following.map((user, index) => 
+        <li key={index}>
+          <a href={`/friends/${user.id}`}>
+            <p>{user.firstname + " " + user.surname}</p>
+          </a>
+        </li>
+      )
+      : null }
+      </ul>
+      <h2 className="text-md mb-5">Add More Friends using the form below</h2>
+      <Form method="post" className="space-y-6">
+        <div>
+        <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700"
           >
-            Add Friend
-          </button>
-        </Form>
-      </div>
-    </div>
+            ID
+          </label>
+          <div className="mt-1">
+            <input
+              ref={IdRef}
+              id="id"
+              required
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus={true}
+              name="id"
+              type="text"
+              className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+            />
+            {actionData?.errors?.email ? (
+              <div className="pt-1 text-red-700" id="email-error">
+                {actionData.errors.email}
+              </div>
+            ) : null}
+          </div>
+          {/* <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Email address
+          </label>
+          <div className="mt-1">
+            <input
+              ref={emailRef}
+              id="email"
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus={true}
+              name="email"
+              type="text"
+              autoComplete="email"
+              aria-invalid={actionData?.errors?.email ? true : undefined}
+              aria-describedby="email-error"
+              className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+            />
+            {actionData?.errors?.email ? (
+              <div className="pt-1 text-red-700" id="email-error">
+                {actionData.errors.email}
+              </div>
+            ) : null}
+          </div> */}
+        </div>
+        <input type="hidden" name="redirectTo" value={redirectTo} />
+        <button
+          type="submit"
+          name="_action" 
+          value="ADD"
+          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+        >
+          Add Friend
+        </button>
+      </Form>
+    </Layout>
   );
 }

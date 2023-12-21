@@ -19,6 +19,14 @@ export async function getUserByEmail(email: User["email"]) {
   });
 }
 
+export async function deleteNotification(notificationId: Notification["id"]) {
+  return prisma.notification.delete({
+    where: { 
+      id: notificationId 
+    }
+  })
+}
+
 export async function createNotification(senderId: User["id"], receiverId: User["id"], senderName: string) {
   return prisma.notification.create({
     data: {

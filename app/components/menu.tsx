@@ -7,8 +7,11 @@ import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { getUserById } from "~/models/user.server";
-import {createTheme, ThemeProvider } from '@mui/material/styles';
+import ImportContactsIcon from '@mui/icons-material/ImportContacts';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import SettingsIcon from '@mui/icons-material/Settings';
+import GroupIcon from '@mui/icons-material/Group';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -60,19 +63,22 @@ export default function PositionedMenu() {
       >
         <MenuItem onClick={handleClose}>
           <a href="/books">
+            <ImportContactsIcon className="mr-2 mb-1" />
             <button className="stretched-link">
               My Library
             </button>
           </a>
         </MenuItem>
         <MenuItem onClick={handleClose}>
-          <Form action="/books" method="post">
-            <button className="stretched-link" type="submit">
+          <a href="/account">
+            <SettingsIcon className="mr-2 mb-1" />
+            <button className="stretched-link">
               Account Settings
             </button>
-          </Form>
+          </a>
         </MenuItem>
         <MenuItem onClick={handleClose}>
+          <GroupIcon className="mr-2 mb-1" />
           <a href="/friends">
             <button className="stretched-link">
               Friends
@@ -81,6 +87,7 @@ export default function PositionedMenu() {
         </MenuItem>
         <MenuItem onClick={handleClose}>
           <Form action="/logout" method="post">
+            <LogoutIcon className="mr-2 mb-1" />
             <button className="stretched-link" type="submit">
               Logout
             </button>

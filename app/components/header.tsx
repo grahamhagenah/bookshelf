@@ -8,10 +8,10 @@ import { getUserById } from "~/models/user.server";
 import Search from "./search"
 import PositionedMenu from './menu'
 import Notifications from './notifications'
+import { useMatches } from "@remix-run/react";
 
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  // Add logic to determine whether or not there is a "friednId param"
   const userId = await requireUserId(request);
   const user = await getUserById(userId);
   return {user};
@@ -19,17 +19,30 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export default function Header() {
 
+  const matches = useMatches();
   const data = useLoaderData<typeof loader>();
-
-  console.log(data.user)
 
   return (
     <header className="w-full flex items-center justify-between">
-      <Link id="logo" to="/books">
-        <img src={logo} className="rounded-lg" alt="Lend"/>
-        <h1 className="text-4xl font-semibold">Lend</h1>
-      </Link>
-      <h2 className="text-4xl font-semibold">{data.user.firstname}</h2>
+      <div className="flex w-full">
+        <Link id="logo" to="/books">
+          <img src={logo} className="rounded-lg" alt="Lend"/>
+          <h1 className="text-3xl font-medium">Lend</h1>
+        </Link>
+        {/* <ol>
+          {matches
+            .filter(
+              (match) =>
+                match.handle && match.handle.breadcrumb
+            )
+            .map((match, index) => (
+              <li key={index}>
+                {match.handle.breadcrumb(match)}
+              </li>
+            ))}
+          </ol> */}
+      </div>
+      {/* <h2 className="text-4xl font-semibold">{data.user.firstname}</h2> */}
       <div className="flex">
         {data.user && <Search />}
         {data.user && <Notifications />}

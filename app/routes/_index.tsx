@@ -4,6 +4,10 @@ import { useOptionalUser } from "~/utils";
 
 export const meta: MetaFunction = () => [{ title: "Lend Books" }];
 
+export const handle = {
+  breadcrumb: () => <Link to="/">Home</Link>,
+};
+
 export default function Index() {
   const user = useOptionalUser();
   return (
@@ -19,21 +23,21 @@ export default function Index() {
         {user ? (
           <Link
             to="/books"
-            className="flex items-center justify-center rounded-md border border-transparent bg-white px-4 py-3 text-base font-medium text-black-700 shadow-sm hover:bg-black-50 sm:px-8"
+            className="flex items-center justify-center rounded border bg-white px-4 py-3 text-base font-medium text-black-700 shadow-sm hover:bg-black-50 sm:px-8 hover:bg-slate-50 focus:bg-slate-100"
           >
-            View Books for {user.email}
+            View Books for {user.firstname}
           </Link>
         ) : (
           <div className="space-y-4 sm:mx-auto sm:inline-grid sm:grid-cols-2 sm:gap-5 sm:space-y-0">
             <Link
               to="/join"
-              className="flex items-center justify-center rounded-md border bg-white px-4 py-3 text-base font-medium text-black-700 shadow-sm hover:bg-black-50 sm:px-8"
+              className="flex items-center justify-center rounded border bg-white px-4 py-3 text-base font-medium text-black-700 shadow-sm hover:bg-black-50 sm:px-8 hover:bg-slate-50 focus:bg-slate-100"
             >
               Sign up
             </Link>
             <Link
               to="/login"
-              className="flex items-center justify-center rounded-md bg-blue-500 px-4 py-3 font-medium text-white hover:bg-black-600"
+              className="flex items-center justify-center rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
             >
               Log In
             </Link>
