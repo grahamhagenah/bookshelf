@@ -15,7 +15,7 @@ export default function Search() {
   }
   
   return (
-    <form className="primary-search rounded-lg" onSubmit={handleSubmit}>
+    <form className="primary-search rounded-lg relative md:flex mt-4 md:mt-0 justify-between" onSubmit={handleSubmit}>
       <SearchIcon />
       <input
         type="text"

@@ -23,30 +23,19 @@ export default function Header() {
   const data = useLoaderData<typeof loader>();
 
   return (
-    <header className="w-full flex items-center justify-between">
-      <div className="flex w-full">
+    <header className="w-full md:flex items-center justify-between">
+      <div className="md:flex w-full">
         <Link id="logo" to="/books">
           <img src={logo} className="rounded-lg" alt="Lend"/>
           <h1 className="text-3xl font-medium">Lend</h1>
         </Link>
-        {/* <ol>
-          {matches
-            .filter(
-              (match) =>
-                match.handle && match.handle.breadcrumb
-            )
-            .map((match, index) => (
-              <li key={index}>
-                {match.handle.breadcrumb(match)}
-              </li>
-            ))}
-          </ol> */}
       </div>
-      {/* <h2 className="text-4xl font-semibold">{data.user.firstname}</h2> */}
-      <div className="flex">
+      <div className="md:flex">
         {data.user && <Search />}
-        {data.user && <Notifications />}
-        <PositionedMenu/>
+        <div className="absolute top-0 right-0 p-1 md:relative md:p-0 whitespace-nowrap mt-4 md:mt-0"> 
+          {data.user && <Notifications />}
+          <PositionedMenu/>
+        </div>
       </div>
     </header>
 )}

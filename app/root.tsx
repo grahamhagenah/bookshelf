@@ -28,7 +28,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="p-2 mt-4 md:p-5 md:mt-0">
         <Header /> 
         <Outlet />
         <ScrollRestoration />

@@ -35,8 +35,8 @@ export default function Library() {
         </section>
       </main>
       ) : (
-      <main>
-        <ol className="grid grid-cols-8 gap-5">
+      <main className="mt-8 md:mt-8">
+        <ol className="grid grid-cols-2 gap-4 md:grid-cols-8 md:gap-5">
           {matches[1].data.data.bookListItems.map((book) => (
             <li key={book.id} className="cover-wrapper">
               <NavLink to={book.id}>

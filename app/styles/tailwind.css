@@ -5,17 +5,11 @@
 @tailwind utilities;
 
 body {
-  padding: 1.5rem;
   font-family: 'Ubuntu', sans-serif;
 }
 
 h1, h2, h3 {
   font-family: 'Ubuntu', sans-serif;
-}
-
-main {
-  margin-top: 4rem;
-  padding-bottom: 4rem;
 }
 
 .search-container {
@@ -94,13 +88,6 @@ button#demo-customized-button {
   margin: 0 8px;
 }
 
-#account-menu-button {
-  color: black;
-  font-weight: 600;
-  font-family: 'Ubuntu', sans-serif;
-  min-width: 120px;
-}
-
 .stretched-link::after {
   content: "";
   @apply z-10 absolute inset-0 bg-transparent pointer-events-auto;
@@ -128,7 +115,6 @@ button#demo-customized-button {
 .primary-search {
   background: #f6f6f6;
   display: flex;
-  margin: 0 3rem;
   position: relative;
 }
 
@@ -139,7 +125,6 @@ button#demo-customized-button {
 .primary-search input {
   background: transparent;
   padding: 10px 10px 10px 50px;
-  min-width: 275px;
   border-radius: 8px 0 0 8px;
 }
 

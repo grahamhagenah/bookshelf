@@ -44,7 +44,7 @@ export default function PositionedMenu() {
         onClick={handleClick}
       >
         <AccountCircleIcon style={{ fontSize: 30, color: 'black' }}  className="mr-2" />
-        {data.user ? data.user.firstname: <span>Log In</span>}
+        {data.user ? data.user.firstname: <span className="whitespace-nowrap">Log In</span>}
       </Button>
       <Menu
         id="account-menu"
