@@ -10,7 +10,8 @@ import PositionedMenu from './menu'
 import Notifications from './notifications'
 
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+  // Add logic to determine whether or not there is a "friednId param"
   const userId = await requireUserId(request);
   const user = await getUserById(userId);
   return {user};
@@ -18,7 +19,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function Header() {
 
-  const user = useLoaderData<typeof loader>();
+  const data = useLoaderData<typeof loader>();
+
+  console.log(data.user)
 
   return (
     <header className="w-full flex items-center justify-between">
@@ -26,9 +29,10 @@ export default function Header() {
         <img src={logo} className="rounded-lg" alt="Lend"/>
         <h1 className="text-4xl font-semibold">Lend</h1>
       </Link>
+      <h2 className="text-4xl font-semibold">{data.user.firstname}</h2>
       <div className="flex">
-        {user && <Search />}
-        {user && <Notifications />}
+        {data.user && <Search />}
+        {data.user && <Notifications />}
         <PositionedMenu/>
       </div>
     </header>

@@ -6,7 +6,6 @@ import { getBookListItems } from "~/models/book.server";
 import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  // const userId = await requireUserId(request);
   invariant(params.friendId, "friendId not found");
   const friendId = params.friendId
 
@@ -28,7 +27,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 
 export default function FriendsBookPage() {
-  
+
   return (
     <Library />
   )

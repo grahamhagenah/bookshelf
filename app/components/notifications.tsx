@@ -60,19 +60,12 @@ export default function Notifications() {
         }}
       >
       {data.user?.notificationsReceived.map((notification) => (
-        <MenuItem key={notification.id} className="notifications">
-          <form method="post" action="/notifications">
-            <input type="hidden" name="senderId" value={notification.senderId} />
-            <button className="block" type="submit">Accept friend request from <strong>{" " + notification.senderName + " "}</strong></button>
-          </form>
+        <MenuItem key={notification.id}>
+          <a href="/notifications">
+            <p><strong>{notification.senderName + " "}</strong> sent a friend request</p>
+          </a>
         </MenuItem>
       ))}
-      <MenuItem className="notifications">
-        <form method="post" action="/notifications">
-          <input type="hidden" />
-          <button className="block" type="submit">Clear all notifications</button>
-        </form>
-        </MenuItem>
       </Menu>
     </>
   );
