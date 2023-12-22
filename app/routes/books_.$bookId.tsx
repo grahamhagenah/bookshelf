@@ -4,8 +4,9 @@ import { Form, isRouteErrorResponse, useLoaderData, useRouteError} from "@remix-
 import invariant from "tiny-invariant";
 import { deleteBook, getBook } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
-import { Link } from "@remix-run/react";
-import { useLocation } from "@remix-run/react";
+
+// In order to allow book.id pages on friends shelves, you need to replace UserId in some circumstances
+// You may need to make a generic book detail page too 
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -17,10 +18,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
   return json({ book });
 };
-
-export const handle = {
-  breadcrumb: () => <Link to={useLocation().pathname}>Book</Link>
-}
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -39,10 +36,7 @@ export default function BookDetailsPage() {
       <section>
         <div className="book-cover">
           <img className="rounded-md shadow-md" src={data.book.cover}></img>
-          <div className="button-group">
-            <button className="shadow-sm">Borrow</button>
-            <button className="shadow-sm">Add to your shelf</button>
-          </div>
+          <button className="rounded border w-full mt-8 bg-white px-4 py-3 text-base font-medium text-black-700 shadow-sm hover:bg-black-50 sm:px-8 hover:bg-slate-50 focus:bg-slate-100">Request Book</button>
         </div>
       </section>
       <section>

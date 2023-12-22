@@ -7,7 +7,7 @@ import { requireUserId } from "~/session.server";
 
 // Make GET request to Open Library API
 export async function loader({ request }) {
-
+  
   const url = new URL(request.url)
   const queryParams = url.searchParams
   const queryValue = queryParams.get('q')

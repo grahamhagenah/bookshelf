@@ -13,7 +13,7 @@ import IconButton from '@mui/material/IconButton';
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const user = await getUserById(userId);
-  return {user};
+  return user;
 }
 
 export default function Notifications() {

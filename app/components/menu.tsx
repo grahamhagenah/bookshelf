@@ -12,6 +12,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 import GroupIcon from '@mui/icons-material/Group';
 import LogoutIcon from '@mui/icons-material/Logout';
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -66,6 +67,14 @@ export default function PositionedMenu() {
             <ImportContactsIcon className="mr-2 mb-1" />
             <button className="stretched-link">
               My Library
+            </button>
+          </a>
+        </MenuItem>
+        <MenuItem onClick={handleClose}>
+          <a href="/search">
+            <ManageSearchIcon className="mr-2 mb-1" />
+            <button className="stretched-link">
+             Book Search 
             </button>
           </a>
         </MenuItem>

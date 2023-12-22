@@ -34,11 +34,11 @@ export default function Library() {
         </section>
       </main>
       ) : (
-      <main className="mt-8 md:mt-8">
-        <ol className="grid grid-cols-2 gap-4 md:grid-cols-8 md:gap-5">
+      <main className="mt-8 md:mt-24">
+        <ol className="grid grid-cols-2 gap-4 sm::grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8">
           {matches[1].data.data.bookListItems.map((book) => (
             <li key={book.id} className="cover-wrapper">
-              <NavLink to={book.id}>
+              <NavLink to={`/books/${book.id}`}>
                 <ProgressiveImage src={book.cover} placeholder="">
                   {(src, loading) => {
                     return loading ? <div className="rounded-lg" style={{ opacity: 0.5, backgroundColor: '#D4F5FF', height: 340, width: 214 }}/> 

@@ -9,14 +9,14 @@ export async function getUserById(id: User["id"]) {
   return prisma.user.findUnique({ 
     where: { id } ,
     select: { id: true, email: true, firstname: true, surname: true, notificationsSent: true, notificationsReceived: true, following: true }
-  });
+  })
 }
 
 export async function getUserByEmail(email: User["email"]) {
   return prisma.user.findUnique({ 
     where: { email },
     select: { id: true }
-  });
+  })
 }
 
 export async function deleteNotification(notificationId: Notification["id"]) {
