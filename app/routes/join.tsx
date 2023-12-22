@@ -90,8 +90,9 @@ export default function Join() {
   }, [actionData]);
 
   return (
-    <Layout title="">
-      <Form method="post" className="space-y-6">
+    <div className="flex h-5/6 flex-col justify-center">
+      <div className="mx-auto w-full max-w-md px-8">
+        <Form method="post" className="space-y-6">
         <div>
             <label
               htmlFor="firstname"
@@ -224,6 +225,7 @@ export default function Join() {
           </div>
         </div>
       </Form>
-    </Layout>
+    </div>
+  </div>
   );
 }
