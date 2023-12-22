@@ -29,6 +29,7 @@
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.15.0",
+    "@mui/styles": "^5.15.1",
     "@prisma/client": "^4.16.2",
     "@remix-run/css-bundle": "*",
     "@remix-run/node": "*",

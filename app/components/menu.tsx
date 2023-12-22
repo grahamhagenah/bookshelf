@@ -36,7 +36,7 @@ export default function PositionedMenu() {
 
   return (
     <>
-      <Button
+      <Button sx={{ fontWeight: 'bold', textTransform: 'capitalize', letterSpacing: '1px', color: 'black' }}
         id="account-menu-button"
         aria-controls={open ? 'demo-positioned-menu' : undefined}
         aria-haspopup="true"
