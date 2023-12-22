@@ -1,8 +1,8 @@
 const Layout =({children, title}) =>{
     return(
-      <main className="w-full p-0 md:w-8/12 mx-auto md:p-8 md:mt-24">
+      <main className="w-full p-0 mt-16 md:w-8/12 mx-auto md:p-8 md:mt-24">
         {title && 
-          <h1 className="text-3xl md:text-5xl font-bold mb-24">{title}</h1>
+          <h1 className="text-4xl p-4 mb-8 md:text-5xl font-bold md:mb-24">{title}</h1>
         }       
         {children}
       </main>

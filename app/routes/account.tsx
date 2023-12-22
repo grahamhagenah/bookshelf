@@ -49,11 +49,11 @@ export default function Account() {
 
   return (
     <Layout title="Account Settings">
-      <div className="flex gap-16">
-        <section className="w-1/2">
+      <div className="block md:flex gap-16">
+        <section className="w-full p-4 md:w-1/2">
           To do: Add account details here
         </section>
-        <section className="w-1/2">
+        <section className="w-full p-4 md:w-1/2">
           <Form method="post" className="space-y-6 border shadow-sm rounded-lg p-12 w-full mb-16">
             <h2 className="text-3xl font-semibold mb-5">Update your email address</h2>
             <p className="pb-8">Your email address is your primary identifier. It allows friends to find you and for you to log into your account.</p>

@@ -52,10 +52,10 @@ export default function Friends() {
 
   return (
     <Layout title="Friends">
-      <div className="flex gap-16">
-      <section className="w-1/2">
+      <div className="block md:flex gap-16">
+      <section className="w-full p-4 md:w-1/2">
         {data.user.following.length > 1 ? 
-          <h2>You have <span className="font-semibold pb-8">{data.user.following.length}</span> friends</h2>
+          <h2>You have <span className="font-semibold pb-16">{data.user.following.length}</span> friends</h2>
           : null }
           <ul className="friend-list my-5 text-xl">
           {data.user.following.length > 0 ? 
@@ -75,8 +75,8 @@ export default function Friends() {
           }
           </ul>
         </section>
-        <section className="w-1/2">
-          <Form method="post" className="space-y-6 border shadow-sm rounded-lg p-12 w-full mb-16">
+        <section className="w-full p-4 md:w-1/2">
+          <Form method="post" className="space-y-6 border shadow-sm rounded-lg p-8 md:p-12 w-full mb-16">
             <h2 className="text-3xl font-semibold mb-5">Add friends by email</h2>
             <p className="pb-8">Once a friend accepts your request, you can view their library, adn they can view yours. You'll be allowed to request their books dependant on availability.</p>
               <label

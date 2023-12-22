@@ -11,7 +11,7 @@ export async function loader({ request }) {
   const url = new URL(request.url)
   const queryParams = url.searchParams
   const queryValue = queryParams.get('q')
-  const res = await fetch(`https://openlibrary.org/search.json?q=${queryValue}&limit=10`)
+  const res = await fetch(`https://openlibrary.org/search.json?q=${queryValue}&limit=10&mode=everything&lang=en`)
   return json(await res.json())
 }
 
@@ -34,19 +34,19 @@ export default function Search() {
   const results = useLoaderData();
 
   return (
-    <div id="search-container">
+    <div id="search-container" className="w-1/2 mx-auto">
       <ul className="search-results mb-4">
         {results ? results.docs.map((book, index) => 
           <li key={index}>
-            <Form method="post">
-              <section>
+            <Form method="post" className="grid grid-cols-1 md:grid-cols-[1fr,3fr]">
+              <section className="w-full p-4">
                   <div className="book-cover">
                   <img className="rounded-md shadow-md" src={"https://covers.openlibrary.org/b/id/" + book.cover_i + "-M.jpg"}></img>
                 </div>
               </section>
-              <section>
+              <section className="w-full p-4">
                 <h3 className="text-4xl font-bold">{book.title}</h3>
-                <p className="author py-6">{book.author_name}</p>
+                <h4 className="text-3xl py-6">{book.author_name}</h4>
                 <p className="summary py-6">{book.first_sentence ? book.first_sentence[0] : ''}</p>
                 <input type="hidden" name="title" value={book.title} />
                 <input type="hidden" name="author" value={book.author_name} />

@@ -36,7 +36,8 @@ export default function BookDetailsPage() {
       <section>
         <div className="book-cover">
           <img className="rounded-md shadow-md" src={data.book.cover}></img>
-          <button className="rounded border w-full mt-8 bg-white px-4 py-3 text-base font-medium text-black-700 shadow-sm hover:bg-black-50 sm:px-8 hover:bg-slate-50 focus:bg-slate-100">Request Book</button>
+          <p>To do: allow books to be borrowed</p>
+          <button className="disabled rounded border w-full mt-8 bg-white px-4 py-3 text-base font-medium text-black-700 shadow-sm hover:bg-black-50 sm:px-8 hover:bg-slate-50 focus:bg-slate-100">Request Book</button>
         </div>
       </section>
       <section>
