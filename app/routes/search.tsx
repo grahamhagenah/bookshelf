@@ -46,10 +46,10 @@ export default function Search() {
               </section>
               <section>
                 <h3 className="text-4xl font-bold">{book.title}</h3>
-                <p className="author py-6">{(book.author_name.length > 1) ? book.author_name[0] : book.author_name}</p>
+                <p className="author py-6">{book.author_name}</p>
                 <p className="summary py-6">{book.first_sentence ? book.first_sentence[0] : ''}</p>
                 <input type="hidden" name="title" value={book.title} />
-                <input type="hidden" name="author" value={(book.author_name.length > 1) ? book.author_name[0] : book.author_name} />
+                <input type="hidden" name="author" value={book.author_name} />
                 <input type="hidden" name="cover" value={book.cover_i} />
                 <input type="hidden" name="body" value={book.first_sentence ? book.first_sentence[0] : ''} />
                 <button className="w-half rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400" type="submit">Add book to shelf</button>
