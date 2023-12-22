@@ -26,8 +26,8 @@ export default function Header() {
     <header className="w-full md:flex items-center justify-between">
       <div className="md:flex w-full">
         <Link id="logo" to="/books">
-          <img src={logo} className="rounded-lg" alt="Lend"/>
-          <h1 className="text-3xl font-medium">Lend</h1>
+          <img src={logo} className="rounded-md" alt="Lend"/>
+          <h1 className="text-3xl font-semibold">Lend</h1>
         </Link>
       </div>
       <div className="md:flex">

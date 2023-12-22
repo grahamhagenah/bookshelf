@@ -12,9 +12,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function Account() {
 
+  const data = useLoaderData<typeof loader>();
+
+  console.log(data)
+
   return (
     <Layout title="Account Settings">
       <p>Account forms</p>
+      <p>User ID: {data.user.id}</p>
     </Layout>
   )
 }

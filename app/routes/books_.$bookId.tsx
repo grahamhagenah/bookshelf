@@ -47,7 +47,7 @@ export default function BookDetailsPage() {
       </section>
       <section>
         <h3 className="text-5xl font-bold">{data.book.title}</h3>
-        <p className="author py-6">{data.book.author}</p>
+        <h4 className="text-4xl author py-6">{data.book.author}</h4>
         <p className="summary py-6">{data.book.body}</p>
         <hr className="my-4" />
         <Form method="post">
