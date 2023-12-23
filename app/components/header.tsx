@@ -22,7 +22,7 @@ export default function Header() {
   const data = useLoaderData<typeof loader>();
 
   return (
-    <header className="w-full flex items-center justify-between shadow-sm px-8 py-2">
+    <header className="w-full flex items-center justify-between shadow-sm px-4 md:px-8 py-2">
       <div className="inline-block md:flex">
         <Link id="logo" to="/books">
           <img src={logo} className="rounded-md" alt="Lend"/>
