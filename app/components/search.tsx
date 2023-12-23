@@ -15,16 +15,16 @@ export default function Search() {
   }
   
   return (
-    <form className="primary-search w-96 rounded-lg relative md:flex mt-4 md:mt-0 justify-between md:mr-3" onSubmit={handleSubmit}>
+    <form className="primary-search relative w-96 relative md:flex mt-4 md:mt-0 justify-between md:mr-3" onSubmit={handleSubmit}>
       <SearchIcon />
       <input
-        className="w-full"
+        className="w-full rounded-lg border-2 p-2 pl-12"
         type="text"
         placeholder={"Add books to your library..."}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-    <button type="submit" className="rounded-lg">Search</button>
+    <button type="submit" className="h-full hover:text-cyan-800 rounded-r-lg active:bg-sky-100 absolute right-0 my-auto">Search</button>
   </form>
   )
 }

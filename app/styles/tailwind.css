@@ -83,7 +83,7 @@ button#demo-customized-button {
 
 #logo img {
   display: inline-block;
-  width: 35px;
+  width: 30px;
   margin: 0 8px;
 }
 
@@ -113,28 +113,18 @@ button#demo-customized-button {
 }
 
 .primary-search {
-  background: #f6f6f6;
   display: flex;
   position: relative;
 }
 
-.primary-search:hover {
-  background: #e8e8e8;
-}
-
 .primary-search input {
   background: transparent;
-  padding: 10px 10px 10px 50px;
-  border-radius: 8px 0 0 8px;
 }
 
 .primary-search button {
   padding: 0 15px;
 }
 
-.primary-search button:active {
-  background: #d6d6d6;
-}
 
 .no-cover h3 {
   font-size: 25px;

@@ -22,19 +22,21 @@ export default function Header() {
   const data = useLoaderData<typeof loader>();
 
   return (
-    <header className="w-full flex items-center justify-between">
+    <header className="w-full flex items-center justify-between shadow-sm px-8 py-2">
       <div className="inline-block md:flex">
         <Link id="logo" to="/books">
           <img src={logo} className="rounded-md" alt="Lend"/>
-          <h1 className="text-3xl font-semibold">Lend</h1>
+          <h1 className="text-3xl font-medium">Lend</h1>
         </Link>
       </div>
-      <div className="hidden md:inline-block">
-        {data.user && <Search />}
-      </div>
-      <div className="inline-block md:relative whitespace-nowrap"> 
-        {data.user && <Notifications />}
-        <PositionedMenu />
+      <div>
+        <div className="hidden md:inline-block">
+          {data.user && <Search />}
+        </div>
+        <div className="inline-block md:relative whitespace-nowrap"> 
+          {data.user && <Notifications />}
+          <PositionedMenu />
+        </div>
       </div>
     </header>
 )}
