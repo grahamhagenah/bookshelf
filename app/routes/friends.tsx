@@ -52,18 +52,17 @@ export default function Friends() {
 
   return (
     <Layout title="Friends">
-      <div className="block md:flex gap-16">
-      <section className="w-full p-4 md:w-1/2">
+      <section className="p-4">
         {data.user.following.length > 1 ? 
           <h2>You have <span className="font-semibold pb-16">{data.user.following.length}</span> friends</h2>
           : null }
-          <ul className="friend-list my-5 text-xl">
+          <ul className="friend-list my-5 text-xl mt-16">
           {data.user.following.length > 0 ? 
             data.user.following.map((user, index) => 
-              <li key={index} className="first:pt-0 border-b-2 py-8 last:border-none">
+              <li key={index} className="first:pt-0 border-b-2 py-4 last:border-none">
                 <a href={`/friends/${user.id}`}>
-                  <h3 className="text-2xl font-medium mb-1">{user.firstname + " " + user.surname}</h3>
-                  <p className="text font-regular">{user.email}</p>
+                  <h3 className="text-xl font-medium mb-1">{user.firstname + " " + user.surname}</h3>
+                  <p className="font-regular">{user.email}</p>
                 </a>
               </li>
             )
@@ -75,8 +74,8 @@ export default function Friends() {
           }
           </ul>
         </section>
-        <section className="w-full p-4 md:w-1/2">
-          <Form method="post" className="space-y-6 border shadow-sm rounded-lg p-8 md:p-12 w-full mb-16">
+        <section className="p-4">
+          <Form method="post" className="w-3/4 space-y-6 border shadow-sm rounded-lg p-8 md:p-12 w-full mb-16">
             <h2 className="text-3xl font-semibold mb-5">Add friends by email</h2>
             <p className="pb-8">Once a friend accepts your request, you can view their library, and they can view yours. You'll be allowed to request their books dependent on availability.</p>
               <label
@@ -115,7 +114,6 @@ export default function Friends() {
             </button>
           </Form>
         </section>
-      </div>
     </Layout>
   );
 }

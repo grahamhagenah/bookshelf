@@ -32,7 +32,7 @@ export default function BookDetailsPage() {
   const data = useLoaderData<typeof loader>();
 
   return (
-    <main className="grid grid-cols-1 md:grid-cols-[1fr,2fr] gap-4 md:gap-16 p-8 w-full lg:w-3/4 xl:w-1/2 mx-auto mt-4 md:mt-24">
+    <main className="grid grid-cols-1 md:grid-cols-[1fr,2fr] gap-4 md:gap-16 p-8 w-full lg:w-3/4 xl:w-1/2 mx-auto mt-4 md:mt-12">
       <section className="order-2 md:order-1">
         <div className="book-cover p-8 md:p-0">
           <img className="rounded-md shadow-md" height="330" width="200" src={data.book.cover}></img>

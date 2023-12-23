@@ -49,51 +49,49 @@ export default function Account() {
 
   return (
     <Layout title="Account Settings">
-      <div className="block md:flex gap-16">
-        <section className="w-full p-4 md:w-1/2">
-          To do: Add account details here
-        </section>
-        <section className="w-full p-4 md:w-1/2">
-          <Form method="post" className="space-y-6 border shadow-sm rounded-lg p-12 w-full mb-16">
-            <h2 className="text-3xl font-semibold mb-5">Update your email address</h2>
-            <p className="pb-8">Your email address is your primary identifier. It allows friends to find you and for you to log into your account.</p>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Email address
-              </label>
-              <div className="mt-1">
-                <input
-                  ref={emailRef}
-                  id="email"
-                  // eslint-disable-next-line jsx-a11y/no-autofocus
-                  autoFocus={true}
-                  name="email"
-                  type="text"
-                  autoComplete="email"
-                  aria-invalid={actionData?.errors?.email ? true : undefined}
-                  aria-describedby="email-error"
-                  className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
-                />
-                {actionData?.errors?.email ? (
-                  <div className="pt-1 text-red-700" id="email-error">
-                    {actionData.errors.email}
-                  </div>
-                ) : null}
-              </div>
-            <input type="hidden" name="redirectTo" value={redirectTo} />
-            <button
-              type="submit"
-              name="_action" 
-              value="ADD"
-              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+      <section className="p-4">
+        To do: Add account details here
+      </section>
+      <section className="p-4">
+        <Form method="post" className="space-y-6 border shadow-sm rounded-lg p-12 md:w-3/4 mb-12">
+          <h2 className="text-3xl font-semibold mb-5">Update your email address</h2>
+          <p className="pb-8">Your email address is your primary identifier. It allows friends to find you and for you to log into your account.</p>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
             >
-              Update information
-            </button>
-          </Form>
-        </section>
-      </div>
+              Email address
+            </label>
+            <div className="mt-1">
+              <input
+                ref={emailRef}
+                id="email"
+                // eslint-disable-next-line jsx-a11y/no-autofocus
+                autoFocus={true}
+                name="email"
+                type="text"
+                autoComplete="email"
+                aria-invalid={actionData?.errors?.email ? true : undefined}
+                aria-describedby="email-error"
+                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+              />
+              {actionData?.errors?.email ? (
+                <div className="pt-1 text-red-700" id="email-error">
+                  {actionData.errors.email}
+                </div>
+              ) : null}
+            </div>
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+          <button
+            type="submit"
+            name="_action" 
+            value="ADD"
+            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+          >
+            Update information
+          </button>
+        </Form>
+      </section>
     </Layout>
   )
 }

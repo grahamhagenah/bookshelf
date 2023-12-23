@@ -42,7 +42,7 @@ export default function Library() {
                 <ProgressiveImage src={book.cover} placeholder="">
                   {(src, loading) => {
                     return loading ? <div className="rounded-lg" style={{ opacity: 0.5, backgroundColor: '#D4F5FF', height: 330, width: 200 }}/> 
-                    : <img height="340" className="rounded-lg shadow-xl book-cover" src={src} alt={book.title} />;
+                    : <img height="330" width="200" className="rounded-lg shadow-xl book-cover" src={src} alt={book.title} />;
                   }}
                 </ProgressiveImage>
               </NavLink>
