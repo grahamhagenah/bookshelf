@@ -78,7 +78,7 @@ export default function Friends() {
         <section className="w-full p-4 md:w-1/2">
           <Form method="post" className="space-y-6 border shadow-sm rounded-lg p-8 md:p-12 w-full mb-16">
             <h2 className="text-3xl font-semibold mb-5">Add friends by email</h2>
-            <p className="pb-8">Once a friend accepts your request, you can view their library, adn they can view yours. You'll be allowed to request their books dependant on availability.</p>
+            <p className="pb-8">Once a friend accepts your request, you can view their library, and they can view yours. You'll be allowed to request their books dependent on availability.</p>
               <label
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700"
