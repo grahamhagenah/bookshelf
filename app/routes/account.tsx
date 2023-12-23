@@ -50,12 +50,12 @@ export default function Account() {
   return (
     <Layout title="Account Settings">
       <section className="p-4">
-        To do: Add account details here
+        To do: Add account details here and get form working
       </section>
-      <section className="p-4">
-        <Form method="post" className="space-y-6 border shadow-sm rounded-lg p-12 md:w-3/4 mb-12">
+      <section className="p-4 md:w-3/4">
+        <Form method="post" className="space-y-6 border shadow-sm rounded-lg p-8 mb-12">
           <h2 className="text-3xl font-semibold mb-5">Update your email address</h2>
-          <p className="pb-8">Your email address is your primary identifier. It allows friends to find you and for you to log into your account.</p>
+          <p className="pb-8">Your email address is your primary identifier. It is your login credential and allows friends to find you.</p>
             <label
               htmlFor="email"
               className="block text-sm font-medium text-gray-700"

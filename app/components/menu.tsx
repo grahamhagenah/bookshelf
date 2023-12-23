@@ -49,6 +49,7 @@ export default function PositionedMenu() {
       </Button>
       <Menu
         id="account-menu"
+        disableScrollLock={ true }
         aria-labelledby="account-menu"
         anchorEl={anchorEl}
         open={open}

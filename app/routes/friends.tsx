@@ -59,7 +59,7 @@ export default function Friends() {
           <ul className="friend-list my-5 text-xl mt-16">
           {data.user.following.length > 0 ? 
             data.user.following.map((user, index) => 
-              <li key={index} className="first:pt-0 border-b-2 py-4 last:border-none">
+              <li key={index} className="first:pt-0 border-b-2 py-4 px-4 last:border-none">
                 <a href={`/friends/${user.id}`}>
                   <h3 className="text-xl font-medium mb-1">{user.firstname + " " + user.surname}</h3>
                   <p className="font-regular">{user.email}</p>
@@ -74,15 +74,16 @@ export default function Friends() {
           }
           </ul>
         </section>
-        <section className="p-4">
-          <Form method="post" className="w-3/4 space-y-6 border shadow-sm rounded-lg p-8 md:p-12 w-full mb-16">
-            <h2 className="text-3xl font-semibold mb-5">Add friends by email</h2>
+        <section className="md:w-3/4 p-4">
+          <Form method="post" className="space-y-6 border shadow-sm rounded-lg p-8 md:p-12 w-full mb-16">
+            <h2 className="text-3xl font-semibold mb-5">Add friends</h2>
+            <p>If you know someone who <strong>already has an account</strong>, add them by their email address.</p>
             <p className="pb-8">Once a friend accepts your request, you can view their library, and they can view yours. You'll be allowed to request their books dependent on availability.</p>
               <label
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700"
               >
-                Email address
+                Username or Email address
               </label>
               <div className="mt-1">
                 <input
