@@ -32,17 +32,17 @@ export default function BookDetailsPage() {
   const data = useLoaderData<typeof loader>();
 
   return (
-    <main id="book-details">
-      <section>
-        <div className="book-cover">
-          <img className="rounded-md shadow-md" src={data.book.cover}></img>
+    <main className="grid grid-cols-1 md:grid-cols-[1fr,2fr] gap-4 md:gap-16 p-8 w-full lg:w-3/4 xl:w-1/2 mx-auto mt-4 md:mt-24">
+      <section className="order-2 md:order-1">
+        <div className="book-cover p-8 md:p-0">
+          <img className="rounded-md shadow-md" height="330" width="200" src={data.book.cover}></img>
+          <button className="disabled mb-4 rounded border w-full mt-8 bg-white px-4 py-3 text-base font-medium text-black-700 shadow-sm hover:bg-black-50 sm:px-8 hover:bg-slate-50 focus:bg-slate-100">Request Book</button>
           <p>To do: allow books to be borrowed</p>
-          <button className="disabled rounded border w-full mt-8 bg-white px-4 py-3 text-base font-medium text-black-700 shadow-sm hover:bg-black-50 sm:px-8 hover:bg-slate-50 focus:bg-slate-100">Request Book</button>
         </div>
       </section>
-      <section>
-        <h3 className="text-5xl font-bold">{data.book.title}</h3>
-        <h4 className="text-4xl author py-6">{data.book.author}</h4>
+      <section className="order-1 md:order-2">
+        <h3 className="text-4xl md:text-5xl font-bold">{data.book.title}</h3>
+        <h4 className="text-3xl md:text-4xl author py-6">{data.book.author}</h4>
         <p className="summary py-6">{data.book.body}</p>
         <hr className="my-4" />
         <Form method="post">
