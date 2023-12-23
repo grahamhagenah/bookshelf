@@ -39,7 +39,7 @@ export default function Notifications() {
 
   return (
     <Layout title="Notifications">
-      <ul className="notifications">
+      <ul className="notifications md:w-3/4">
       {data.user?.notificationsReceived > 0 ?
         data.user?.notificationsReceived.map((notification) => (
           <li key={notification.id} className="my-1 bg-stone-50 rounded-lg p-5">

@@ -13,6 +13,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import GroupIcon from '@mui/icons-material/Group';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
+import { shadows } from '@mui/system';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -50,6 +51,7 @@ export default function PositionedMenu() {
       <Menu
         id="account-menu"
         disableScrollLock={ true }
+        sx={{ boxShadow: 1 }}
         aria-labelledby="account-menu"
         anchorEl={anchorEl}
         open={open}

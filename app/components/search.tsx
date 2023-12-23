@@ -18,7 +18,7 @@ export default function Search() {
     <form className="primary-search relative w-96 relative md:flex mt-4 md:mt-0 justify-between md:mr-3" onSubmit={handleSubmit}>
       <SearchIcon />
       <input
-        className="w-full rounded-lg border-2 p-2 pl-12"
+        className="w-full rounded-lg border-2 p-2 pl-10 pr-20"
         type="text"
         placeholder={"Add books to your library..."}
         value={query}
