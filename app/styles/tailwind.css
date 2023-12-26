@@ -65,17 +65,17 @@ button#demo-customized-button {
   height: 100%;
 }
 
-#logo:hover h1 {
-  color: #5288c7;
+#logo:hover {
+  cursor: pointer;
 }
 
 #logo h1 {
   display: inline-block;
 }
 
-#logo img {
+#logo {
   display: inline-block;
-  width: 30px;
+  width: 42px;
   margin: 0 8px;
 }
 

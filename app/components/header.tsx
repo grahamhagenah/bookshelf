@@ -23,12 +23,9 @@ export default function Header() {
 
   return (
     <header className="w-full flex items-center justify-between shadow-sm px-4 md:px-8 py-2">
-      <div className="inline-block md:flex">
-        <Link id="logo" to="/books">
-          <img src={logo} className="rounded-md" alt="Lend"/>
-          <h1 className="text-3xl font-medium">Lend</h1>
-        </Link>
-      </div>
+      <a id="logo" href="/books">
+        <img src={logo} className="rounded-md" alt="Lend"/>
+      </a>
       <div>
         <div className="hidden md:inline-block">
           {data.user && <Search />}
