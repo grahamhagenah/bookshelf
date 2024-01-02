@@ -35,14 +35,14 @@ export default function Library() {
       </main>
       ) : (
       <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8">
-        <ol className="grid grid-cols-2 gap-4 sm::grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8">
+        <ol className="grid grid-cols-2 gap-4 sm::grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
           {matches[1].data.data.bookListItems.map((book) => (
             <li key={book.id} className="cover-wrapper">
               <NavLink to={`/books/${book.id}`}>
                 <ProgressiveImage src={book.cover} placeholder="">
                   {(src, loading) => {
-                    return loading ? <div className="rounded-lg" style={{ opacity: 0.5, backgroundColor: '#D4F5FF', height: 330, width: 200 }}/> 
-                    : <img height="330" width="200" className="rounded-lg shadow-xl book-cover" src={src} alt={book.title} />;
+                    return loading ? <div className="rounded-lg" style={{ opacity: 0.5, backgroundColor: '#D4F5FF', height: 320 }}/> 
+                    : <img height="320" className="rounded-lg shadow-xl book-cover h-80" src={src} alt={book.title} />;
                   }}
                 </ProgressiveImage>
               </NavLink>

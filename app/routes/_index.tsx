@@ -16,14 +16,14 @@ export default function Index() {
       <h1 className="text-center text-6xl font-extrabold tracking-tight sm:text-8xl lg:text-9xl">
         Lend
       </h1>
-      <p className="mx-auto mt-6 max-w-lg text-center text-xl text-white sm:max-w-3xl">
+      <p className="mx-auto text-center mt-6 mb-24 max-w-lg text-left text-black text-xl text-white sm:max-w-3xl">
         Represent your library digitally, and let your friends borrow your books.
       </p>
-      <div className="mx-auto mt-10 max-w-sm sm:flex sm:max-w-none sm:justify-center">
+      <div className="mt-10 max-w-sm sm:flex sm:max-w-none sm:justify-center">
         {user ? (
           <Link
             to="/books"
-            className="flex items-center justify-center rounded border bg-white px-4 py-3 text-base font-medium text-black-700 shadow-sm hover:bg-black-50 sm:px-8 hover:bg-slate-50 focus:bg-slate-100"
+            className="flex items-left justify-center rounded border bg-white px-4 py-3 text-base font-medium text-black-700 shadow-sm hover:bg-black-50 sm:px-8 hover:bg-slate-50 focus:bg-slate-100"
           >
             View Books for {user.firstname}
           </Link>
@@ -43,7 +43,7 @@ export default function Index() {
             </Link>
           </div>
         )}
-      </div>
+        </div>
       </section>
     </main>
   );

@@ -21,7 +21,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const title = formData.get("title");
   const author = formData.get("author");
-  const cover = "https://covers.openlibrary.org/b/id/" + formData.get("cover") + "-L.jpg"
+  const cover = "https://covers.openlibrary.org/b/id/" + formData.get("cover") + "-M.jpg"
   const body = formData.get("body");
 
   await createBook({ title, author, body, cover, userId });
