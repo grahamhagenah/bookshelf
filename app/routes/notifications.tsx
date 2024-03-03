@@ -39,8 +39,8 @@ export default function Notifications() {
 
   return (
     <Layout title="Notifications">
-      <ul className="notifications md:w-3/4">
-      {data.user?.notificationsReceived > 0 ?
+      <ul className="notifications">
+      {data.user?.notificationsReceived.length > 0 ?
         data.user?.notificationsReceived.map((notification) => (
           <li key={notification.id} className="my-1 bg-stone-50 rounded-lg p-5">
             <form method="post" className="flex justify-between items-center">
