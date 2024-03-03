@@ -52,7 +52,7 @@ export default function Friends() {
 
   return (
     <Layout title="Friends">
-      <section className="p-4">
+      <section className="p-4 m-4">
         {data.user.following.length > 1 ? 
           <h2>You have <span className="font-semibold pb-16">{data.user.following.length}</span> friends</h2>
           : null }
@@ -74,7 +74,7 @@ export default function Friends() {
           }
           </ul>
         </section>
-        <section className="md:w-3/4 p-4">
+        <section className="p-4">
           <Form method="post" className="space-y-6 border shadow-sm rounded-lg p-8 md:p-12 w-full mb-16">
             <h2 className="text-3xl font-semibold mb-5">Add friends</h2>
             <p>If you know someone who <strong>already has an account</strong>, add them by their email address.</p>
