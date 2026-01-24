@@ -3,7 +3,6 @@ import ProgressiveImage from "react-progressive-graceful-image";
 import GroupIcon from '@mui/icons-material/Group';
 import SearchIcon from '@mui/icons-material/Search';
 import ImportContactsIcon from '@mui/icons-material/ImportContacts';
-import { useMatches } from "@remix-run/react";
 
 interface Book {
   id: string;
@@ -13,17 +12,11 @@ interface Book {
   isLending?: boolean;
 }
 
-interface RouteData {
-  data: {
-    bookListItems: Book[];
-  };
+interface LibraryProps {
+  bookListItems: Book[];
 }
 
-export default function Library() {
-
-  const matches = useMatches();
-  const routeData = matches[1]?.data as RouteData | undefined;
-  const bookListItems = routeData?.data?.bookListItems ?? [];
+export default function Library({ bookListItems }: LibraryProps) {
 
   return (
     <>

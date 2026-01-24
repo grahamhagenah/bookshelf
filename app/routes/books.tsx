@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import { json } from "@remix-run/node";
+import { Link, useLoaderData } from "@remix-run/react";
 import { getBookListItems, getBorrowedBooks } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
 import { getUserById } from "~/models/user.server";
@@ -28,17 +29,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }));
   const bookListItems = [...ownedWithFlag, ...borrowedWithFlag];
 
-  const data = {
-    user,
-    bookListItems,
-  };
-
-  return ({data});
+  return json({ user, bookListItems });
 }
 
 export default function BooksPage() {
+  const data = useLoaderData<typeof loader>();
 
   return (
-    <Library />
+    <Library bookListItems={data.bookListItems} />
   );
 }

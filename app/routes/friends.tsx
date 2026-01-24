@@ -81,10 +81,9 @@ export default function Friends() {
           <ul className="friend-list my-5 text-xl mt-16">
           {following.length > 0 ?
             following.map((user, index) => {
-              const slug = `${user.firstname}-${user.surname}`.toLowerCase().replace(/\s+/g, '-');
               return (
                 <li key={index} className="first:pt-0 border-b-2 py-4 px-4 last:border-none">
-                  <a href={`/friends/${slug}`}>
+                  <a href={`/friend/${user.id}`}>
                     <h3 className="text-xl font-medium mb-1">{user.firstname + " " + user.surname}</h3>
                     <p className="font-regular">{user.email}</p>
                   </a>

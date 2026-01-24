@@ -20,17 +20,17 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const isBorrower = book.borrowerId === userId;
   const isBorrowed = book.borrowerId !== null;
 
+  const currentUser = await getUserById(userId);
+
   // If not the owner, check if the owner is a friend or borrower
   if (!isOwner && !isBorrower) {
-    const currentUser = await getUserById(userId);
-    const isFriend = currentUser?.following.some(friend => friend.id === book.userId) ?? false;
+    const followingIds = currentUser?.following?.map(friend => friend.id) ?? [];
+    const isFriend = followingIds.includes(book.userId);
 
     if (!isFriend) {
       throw new Response("Not Found", { status: 404 });
     }
   }
-
-  const currentUser = await getUserById(userId);
 
   return json({ book, isOwner, isBorrowed, isBorrower, currentUser });
 };

@@ -48,30 +48,29 @@ export function generateUserSlug(firstname: string, surname: string): string {
 }
 
 export async function getUserBySlug(slug: string) {
-  // Parse the slug back into firstname and surname
-  const parts = slug.split('-');
-  if (parts.length < 2) return null;
-
-  const firstname = parts[0];
-  const surname = parts.slice(1).join('-');
-
-  // Try to find a user matching the slug pattern (case-insensitive for SQLite)
+  // Fetch all users and find the one whose generated slug matches
   const users = await prisma.user.findMany({
     select: {
       id: true,
       email: true,
       firstname: true,
       surname: true,
-      following: true
+      following: {
+        select: {
+          id: true,
+          email: true,
+          firstname: true,
+          surname: true,
+        }
+      }
     }
   });
 
-  // Filter case-insensitively
-  const matchingUser = users.find(
-    user =>
-      user.firstname.toLowerCase() === firstname.toLowerCase() &&
-      user.surname.toLowerCase() === surname.toLowerCase()
-  );
+  // Find user by comparing generated slugs
+  const matchingUser = users.find(user => {
+    const userSlug = `${user.firstname}-${user.surname}`.toLowerCase().replace(/\s+/g, '-');
+    return userSlug === slug.toLowerCase();
+  });
 
   return matchingUser || null;
 }
