@@ -1,7 +1,6 @@
 
 import { Link } from "@remix-run/react";
 import { useLoaderData } from "@remix-run/react";
-import logo from "~/images/logo.svg";
 import type { LoaderFunctionArgs  } from "@remix-run/node";
 import { requireUserId } from "~/session.server";
 import { getUserById } from "~/models/user.server";
@@ -23,8 +22,8 @@ export default function Header() {
 
   return (
     <header className="w-full flex items-center justify-between shadow-sm px-4 md:px-8 py-2">
-      <a id="logo" href="/books">
-        <img src={logo} className="rounded-md" alt="Lend"/>
+      <a id="logo" href="/books" className="text-3xl">
+        📚
       </a>
       <div>
         <div className="hidden md:inline-block">
