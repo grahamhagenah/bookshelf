@@ -15,12 +15,19 @@ export function getBook({
   });
 }
 
+export function getBookById(id: Book["id"]) {
+  return prisma.book.findUnique({
+    select: { id: true, body: true, author: true, title: true, cover: true, userId: true, borrowerId: true },
+    where: { id },
+  });
+}
+
 export function getBookListItems(userId: User["id"]) {
   return prisma.book.findMany({
     where: {
-      userId: userId, // Replace with the actual variable holding the userId you want to search for
+      userId: userId,
     },
-    select: { id: true, title: true, cover: true, userId: true },
+    select: { id: true, title: true, cover: true, userId: true, borrowerId: true },
     orderBy: { updatedAt: "desc" },
   });
 }
@@ -72,5 +79,27 @@ export function deleteBook({
 }: Pick<Book, "id"> & { userId: User["id"] }) {
   return prisma.book.deleteMany({
     where: { id, userId },
+  });
+}
+
+export function lendBook(bookId: Book["id"], borrowerId: User["id"]) {
+  return prisma.book.update({
+    where: { id: bookId },
+    data: { borrowerId },
+  });
+}
+
+export function returnBook(bookId: Book["id"]) {
+  return prisma.book.update({
+    where: { id: bookId },
+    data: { borrowerId: null },
+  });
+}
+
+export function getBorrowedBooks(userId: User["id"]) {
+  return prisma.book.findMany({
+    where: { borrowerId: userId },
+    select: { id: true, title: true, cover: true, userId: true, borrowerId: true },
+    orderBy: { updatedAt: "desc" },
   });
 }

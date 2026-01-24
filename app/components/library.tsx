@@ -9,6 +9,8 @@ interface Book {
   id: string;
   title: string;
   cover: string;
+  isBorrowed?: boolean;
+  isLending?: boolean;
 }
 
 interface RouteData {
@@ -51,14 +53,24 @@ export default function Library() {
       <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8">
         <ol className="grid grid-cols-2 gap-4 sm::grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
           {bookListItems.map((book) => (
-            <li key={book.id} className="cover-wrapper">
+            <li key={book.id} className="cover-wrapper relative">
               <NavLink to={`/books/${book.id}`}>
                 <ProgressiveImage src={book.cover} placeholder="">
                   {(src, loading) => {
-                    return loading ? <div className="rounded-lg" style={{ opacity: 0.5, backgroundColor: '#D4F5FF', height: 320 }}/> 
+                    return loading ? <div className="rounded-lg" style={{ opacity: 0.5, backgroundColor: '#D4F5FF', height: 320 }}/>
                     : <img height="320" className="rounded-lg shadow-xl book-cover h-80" src={src} alt={book.title} />;
                   }}
                 </ProgressiveImage>
+                {book.isBorrowed && (
+                  <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full shadow">
+                    Borrowed
+                  </span>
+                )}
+                {book.isLending && (
+                  <span className="absolute top-2 right-2 bg-amber-500 text-white text-xs px-2 py-1 rounded-full shadow">
+                    Lending
+                  </span>
+                )}
               </NavLink>
             </li>
           ))}

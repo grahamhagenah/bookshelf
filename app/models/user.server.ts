@@ -6,9 +6,26 @@ import { prisma } from "~/db.server";
 export type { User } from "@prisma/client";
 
 export async function getUserById(id: User["id"]) {
-  return prisma.user.findUnique({ 
+  return prisma.user.findUnique({
     where: { id } ,
-    select: { id: true, email: true, firstname: true, surname: true, notificationsSent: true, notificationsReceived: true, following: true }
+    select: {
+      id: true,
+      email: true,
+      firstname: true,
+      surname: true,
+      notificationsSent: true,
+      notificationsReceived: {
+        select: {
+          id: true,
+          type: true,
+          senderId: true,
+          senderName: true,
+          bookId: true,
+          bookTitle: true,
+        }
+      },
+      following: true
+    }
   })
 }
 
@@ -30,6 +47,7 @@ export async function deleteNotification(notificationId: Notification["id"]) {
 export async function createNotification(senderId: User["id"], receiverId: User["id"], senderName: string) {
   return prisma.notification.create({
     data: {
+      type: "FRIEND_REQUEST",
       receiver: {
         connect: { id: receiverId },
       },
@@ -39,6 +57,54 @@ export async function createNotification(senderId: User["id"], receiverId: User[
       senderName: senderName,
     },
     select: { id: true, sender: true, receiver: true, senderId: true, receiverId: true}
+  })
+}
+
+export async function createBookRequestNotification(
+  senderId: User["id"],
+  receiverId: User["id"],
+  senderName: string,
+  bookId: string,
+  bookTitle: string
+) {
+  return prisma.notification.create({
+    data: {
+      type: "BOOK_REQUEST",
+      receiver: {
+        connect: { id: receiverId },
+      },
+      sender: {
+        connect: { id: senderId },
+      },
+      senderName: senderName,
+      book: {
+        connect: { id: bookId },
+      },
+      bookTitle: bookTitle,
+    },
+    select: { id: true, sender: true, receiver: true, senderId: true, receiverId: true, bookId: true, bookTitle: true }
+  })
+}
+
+export async function createBookApprovedNotification(
+  senderId: User["id"],
+  receiverId: User["id"],
+  senderName: string,
+  bookTitle: string
+) {
+  return prisma.notification.create({
+    data: {
+      type: "BOOK_APPROVED",
+      receiver: {
+        connect: { id: receiverId },
+      },
+      sender: {
+        connect: { id: senderId },
+      },
+      senderName: senderName,
+      bookTitle: bookTitle,
+    },
+    select: { id: true, sender: true, receiver: true, senderId: true, receiverId: true, bookTitle: true }
   })
 }
 

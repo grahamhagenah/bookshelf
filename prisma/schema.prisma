@@ -19,6 +19,7 @@ model User {
   password  Password?
 
   books     Book[]
+  borrowedBooks Book[] @relation("borrowedBooks")
 
   notificationsSent     Notification[] @relation("sender")
   notificationsReceived Notification[] @relation("receiver")
@@ -46,20 +47,29 @@ model Book {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String
+
+  borrower   User?   @relation("borrowedBooks", fields: [borrowerId], references: [id])
+  borrowerId String?
+
+  notifications Notification[]
 }
 
 model Notification {
   id        String @id @default(cuid())
+  type      String @default("FRIEND_REQUEST")
 
   sender     User     @relation("sender", fields: [senderId], references: [id])
   receiver   User     @relation("receiver", fields: [receiverId], references: [id])
 
   senderName String
-  
+
   senderId   String
   receiverId String
 
+  book       Book?   @relation(fields: [bookId], references: [id])
+  bookId     String?
+  bookTitle  String?
+
   @@index([senderId], name: "sender_id_index")
   @@index([receiverId], name: "receiver_id_index")
-
 }
