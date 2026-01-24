@@ -8,6 +8,7 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -62,6 +63,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Handle book approved notification (just dismiss it)
   if (notificationType === "BOOK_APPROVED") {
+    if (formData.get("dismiss") === "true") {
+      await deleteNotification(notificationId);
+    }
+  }
+
+  // Handle book returned notification (just dismiss it)
+  if (notificationType === "BOOK_RETURNED") {
     if (formData.get("dismiss") === "true") {
       await deleteNotification(notificationId);
     }
@@ -123,6 +131,20 @@ export default function Notifications() {
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="BOOK_APPROVED" />
           <p><CheckCircleIcon className="mr-4 mb-1 text-green-600"/><strong>{notification.senderName}</strong> approved your request for <strong>{notification.bookTitle}</strong></p>
+          <div>
+            <button className="mx-1 w-half rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="dismiss" value="true">Dismiss</button>
+          </div>
+        </form>
+      );
+    }
+
+    if (notificationType === "BOOK_RETURNED") {
+      return (
+        <form method="post" className="flex justify-between items-center">
+          <input type="hidden" name="senderId" value={notification.senderId} />
+          <input type="hidden" name="notificationId" value={notification.id} />
+          <input type="hidden" name="notificationType" value="BOOK_RETURNED" />
+          <p><KeyboardReturnIcon className="mr-4 mb-1 text-amber-600"/><strong>{notification.senderName}</strong> returned <strong>{notification.bookTitle}</strong></p>
           <div>
             <button className="mx-1 w-half rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="dismiss" value="true">Dismiss</button>
           </div>

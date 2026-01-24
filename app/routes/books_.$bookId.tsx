@@ -3,7 +3,7 @@ import { json, redirect } from "@remix-run/node";
 import { Form, isRouteErrorResponse, useLoaderData, useRouteError, useNavigation, useActionData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 import { deleteBook, getBookById, returnBook } from "~/models/book.server";
-import { getUserById, createBookRequestNotification } from "~/models/user.server";
+import { getUserById, createBookRequestNotification, createBookReturnedNotification } from "~/models/user.server";
 import { requireUserId } from "~/session.server";
 import ProgressiveImage from "react-progressive-graceful-image";
 
@@ -88,6 +88,19 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     if (book.borrowerId !== userId) {
       throw new Response("Unauthorized", { status: 403 });
     }
+
+    const currentUser = await getUserById(userId);
+    if (!currentUser) {
+      throw new Response("User not found", { status: 404 });
+    }
+
+    const senderName = `${currentUser.firstname} ${currentUser.surname}`;
+    await createBookReturnedNotification(
+      userId,
+      book.userId,
+      senderName,
+      book.title
+    );
 
     await returnBook(book.id);
     return redirect("/books");

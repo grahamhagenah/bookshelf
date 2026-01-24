@@ -108,6 +108,28 @@ export async function createBookApprovedNotification(
   })
 }
 
+export async function createBookReturnedNotification(
+  senderId: User["id"],
+  receiverId: User["id"],
+  senderName: string,
+  bookTitle: string
+) {
+  return prisma.notification.create({
+    data: {
+      type: "BOOK_RETURNED",
+      receiver: {
+        connect: { id: receiverId },
+      },
+      sender: {
+        connect: { id: senderId },
+      },
+      senderName: senderName,
+      bookTitle: bookTitle,
+    },
+    select: { id: true, sender: true, receiver: true, senderId: true, receiverId: true, bookTitle: true }
+  })
+}
+
 export async function createFriendship(userId: User["id"], friendId: User["id"]) {
 
   await prisma.user.update({
