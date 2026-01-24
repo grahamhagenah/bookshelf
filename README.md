@@ -2,6 +2,8 @@
 
 A social book-sharing app where you can build your personal library and share books with friends.
 
+![Bookshelf preview](bookshelf-preview.webp)
+
 ## Features
 
 - **Personal Library** — Search for books via Open Library and add them to your collection
