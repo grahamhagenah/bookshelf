@@ -24,16 +24,56 @@ export async function getUserById(id: User["id"]) {
           bookTitle: true,
         }
       },
-      following: true
+      following: {
+        select: {
+          id: true,
+          email: true,
+          firstname: true,
+          surname: true,
+        }
+      }
     }
   })
 }
 
 export async function getUserByEmail(email: User["email"]) {
-  return prisma.user.findUnique({ 
+  return prisma.user.findUnique({
     where: { email },
     select: { id: true }
   })
+}
+
+export function generateUserSlug(firstname: string, surname: string): string {
+  return `${firstname}-${surname}`.toLowerCase().replace(/\s+/g, '-');
+}
+
+export async function getUserBySlug(slug: string) {
+  // Parse the slug back into firstname and surname
+  const parts = slug.split('-');
+  if (parts.length < 2) return null;
+
+  const firstname = parts[0];
+  const surname = parts.slice(1).join('-');
+
+  // Try to find a user matching the slug pattern (case-insensitive for SQLite)
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      firstname: true,
+      surname: true,
+      following: true
+    }
+  });
+
+  // Filter case-insensitively
+  const matchingUser = users.find(
+    user =>
+      user.firstname.toLowerCase() === firstname.toLowerCase() &&
+      user.surname.toLowerCase() === surname.toLowerCase()
+  );
+
+  return matchingUser || null;
 }
 
 export async function deleteNotification(notificationId: Notification["id"]) {

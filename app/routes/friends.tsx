@@ -80,14 +80,17 @@ export default function Friends() {
           : null }
           <ul className="friend-list my-5 text-xl mt-16">
           {following.length > 0 ?
-            following.map((user, index) => 
-              <li key={index} className="first:pt-0 border-b-2 py-4 px-4 last:border-none">
-                <a href={`/friends/${user.id}`}>
-                  <h3 className="text-xl font-medium mb-1">{user.firstname + " " + user.surname}</h3>
-                  <p className="font-regular">{user.email}</p>
-                </a>
-              </li>
-            )
+            following.map((user, index) => {
+              const slug = `${user.firstname}-${user.surname}`.toLowerCase().replace(/\s+/g, '-');
+              return (
+                <li key={index} className="first:pt-0 border-b-2 py-4 px-4 last:border-none">
+                  <a href={`/friends/${slug}`}>
+                    <h3 className="text-xl font-medium mb-1">{user.firstname + " " + user.surname}</h3>
+                    <p className="font-regular">{user.email}</p>
+                  </a>
+                </li>
+              );
+            })
           : 
             <li>
               <h3 className="text-3xl font-regular mb-8">You have no friends :(</h3>
