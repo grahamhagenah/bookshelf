@@ -1,30 +1,54 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { requireUserId } from "~/session.server";
+import { json, redirect } from "@remix-run/node";
+import { requireUserId, getUserId } from "~/session.server";
 import { useLoaderData } from "@remix-run/react";
-import { redirect } from "@remix-run/node";
-import { getUserById } from "~/models/user.server";
+import { getUserById, createNotification, getUserByEmail } from "~/models/user.server";
 import { Form, useActionData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef } from "react";
-import { createNotification } from "~/models/user.server";
-import { getUserId } from "~/session.server";
-import { getUserByEmail } from "~/models/user.server";
 import Layout from "~/components / Layout/Layout";
 
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const user = await getUserById(userId);
-  return {user};
-}
+  return { user };
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-
   const senderId = await getUserId(request);
+  if (!senderId) {
+    return json(
+      { errors: { email: "You must be logged in" } },
+      { status: 401 }
+    );
+  }
+
   const user = await getUserById(senderId);
-  const senderName = user.firstname + " " + user.surname 
+  if (!user) {
+    return json(
+      { errors: { email: "User not found" } },
+      { status: 404 }
+    );
+  }
+
+  const senderName = user.firstname + " " + user.surname;
   const formData = await request.formData();
   const email = formData.get("email");
-  const receiver = await getUserByEmail(email)
+
+  if (typeof email !== "string" || email.length === 0) {
+    return json(
+      { errors: { email: "Email is required" } },
+      { status: 400 }
+    );
+  }
+
+  const receiver = await getUserByEmail(email);
+  if (!receiver) {
+    return json(
+      { errors: { email: "No user found with this email" } },
+      { status: 404 }
+    );
+  }
 
   await createNotification(senderId, receiver.id, senderName);
 
@@ -39,26 +63,24 @@ export default function Friends() {
   const redirectTo = searchParams.get("redirectTo") || "/books";
   const actionData = useActionData<typeof action>();
   const emailRef = useRef<HTMLInputElement>(null);
-  const IdRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (actionData?.errors?.email) {
       emailRef.current?.focus();
-    } else if (actionData?.errors?.password) {
-      passwordRef.current?.focus();
     }
   }, [actionData]);
+
+  const following = data.user?.following ?? [];
 
   return (
     <Layout title="Friends">
       <section className="p-4 m-4">
-        {data.user.following.length > 1 ? 
-          <h2>You have <span className="font-semibold pb-16">{data.user.following.length}</span> friends</h2>
+        {following.length > 1 ?
+          <h2>You have <span className="font-semibold pb-16">{following.length}</span> friends</h2>
           : null }
           <ul className="friend-list my-5 text-xl mt-16">
-          {data.user.following.length > 0 ? 
-            data.user.following.map((user, index) => 
+          {following.length > 0 ?
+            following.map((user, index) => 
               <li key={index} className="first:pt-0 border-b-2 py-4 px-4 last:border-none">
                 <a href={`/friends/${user.id}`}>
                   <h3 className="text-xl font-medium mb-1">{user.firstname + " " + user.surname}</h3>

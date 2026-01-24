@@ -1,29 +1,38 @@
 import { useLoaderData } from "@remix-run/react";
 import { requireUserId } from "~/session.server";
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { getUserById } from "~/models/user.server";
+import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import { getUserById, getUserByEmail } from "~/models/user.server";
 import Layout from "~/components / Layout/Layout";
 import { Form, useActionData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef } from "react";
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { getUserId } from "~/session.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const user = await getUserById(userId);
-  return {user};
-}
+  return { user };
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-
-  const senderId = await getUserId(request);
-  const user = await getUserById(senderId);
-  const senderName = user.firstname + " " + user.surname 
   const formData = await request.formData();
   const email = formData.get("email");
-  const receiver = await getUserByEmail(email)
 
-  return null
+  if (typeof email !== "string" || email.length === 0) {
+    return json(
+      { errors: { email: "Email is required" } },
+      { status: 400 }
+    );
+  }
+
+  const existingUser = await getUserByEmail(email);
+  if (!existingUser) {
+    return json(
+      { errors: { email: "No user found with this email" } },
+      { status: 400 }
+    );
+  }
+
+  return json({ errors: null });
 };
 
 
@@ -35,14 +44,10 @@ export default function Account() {
   const redirectTo = searchParams.get("redirectTo") || "/books";
   const actionData = useActionData<typeof action>();
   const emailRef = useRef<HTMLInputElement>(null);
-  const IdRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (actionData?.errors?.email) {
       emailRef.current?.focus();
-    } else if (actionData?.errors?.password) {
-      passwordRef.current?.focus();
     }
   }, [actionData]);
 

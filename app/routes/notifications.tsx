@@ -16,21 +16,23 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-
   const userId = await requireUserId(request);
   const formData = await request.formData();
   const senderId = formData.get("senderId");
-  const notificationId = formData.get("notificationId")
+  const notificationId = formData.get("notificationId");
 
-  if(formData.get("friend_request") === "accept"){
-    await createFriendship(userId, senderId)
-    await deleteNotification(notificationId)
-  }
-  else if(formData.get("friend_request") === "decline") {
-    await deleteNotification(notificationId)
+  if (typeof senderId !== "string" || typeof notificationId !== "string") {
+    return null;
   }
 
-  return null
+  if (formData.get("friend_request") === "accept") {
+    await createFriendship(userId, senderId);
+    await deleteNotification(notificationId);
+  } else if (formData.get("friend_request") === "decline") {
+    await deleteNotification(notificationId);
+  }
+
+  return null;
 };
 
 export default function Notifications() {
@@ -40,8 +42,8 @@ export default function Notifications() {
   return (
     <Layout title="Notifications">
       <ul className="notifications">
-      {data.user?.notificationsReceived.length > 0 ?
-        data.user?.notificationsReceived.map((notification) => (
+      {(data.user?.notificationsReceived?.length ?? 0) > 0 ?
+        data.user?.notificationsReceived?.map((notification) => (
           <li key={notification.id} className="my-1 bg-stone-50 rounded-lg p-5">
             <form method="post" className="flex justify-between items-center">
               <input type="hidden" name="senderId" value={notification.senderId} />

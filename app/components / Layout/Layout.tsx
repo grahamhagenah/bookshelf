@@ -1,4 +1,9 @@
-const Layout =({children, title}) =>{
+interface LayoutProps {
+  children: React.ReactNode;
+  title?: string;
+}
+
+const Layout = ({ children, title }: LayoutProps) => {
     return(
       <main className="w-full p-0 mt-16 md:w-1/2 mx-auto md:p-8 md:mt-12">
         {title && 

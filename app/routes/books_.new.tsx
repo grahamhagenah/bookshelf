@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 import { createBook } from "~/models/book.server";
@@ -13,7 +13,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const cover = formData.get("cover");
   const body = formData.get("body");
 
-  const book = await createBook({ body, title, cover, userId });
+  if (typeof title !== "string" || title.length === 0) {
+    return json(
+      { errors: { title: "Title is required", body: null, cover: null } },
+      { status: 400 }
+    );
+  }
+
+  if (typeof body !== "string" || body.length === 0) {
+    return json(
+      { errors: { title: null, body: "Body is required", cover: null } },
+      { status: 400 }
+    );
+  }
+
+  if (typeof cover !== "string" || cover.length === 0) {
+    return json(
+      { errors: { title: null, body: null, cover: "Cover URL is required" } },
+      { status: 400 }
+    );
+  }
+
+  const book = await createBook({ body, title, cover, author: "", userId });
 
   return redirect(`/books/${book.id}`);
 };

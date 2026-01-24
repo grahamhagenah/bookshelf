@@ -26,23 +26,37 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const password = formData.get("password");
   const redirectTo = safeRedirect(formData.get("redirectTo"), "/");
 
+  if (typeof firstname !== "string" || firstname.length === 0) {
+    return json(
+      { errors: { firstname: "First name is required", surname: null, email: null, password: null } },
+      { status: 400 },
+    );
+  }
+
+  if (typeof surname !== "string" || surname.length === 0) {
+    return json(
+      { errors: { firstname: null, surname: "Last name is required", email: null, password: null } },
+      { status: 400 },
+    );
+  }
+
   if (!validateEmail(email)) {
     return json(
-      { errors: { email: "Email is invalid", password: null } },
+      { errors: { firstname: null, surname: null, email: "Email is invalid", password: null } },
       { status: 400 },
     );
   }
 
   if (typeof password !== "string" || password.length === 0) {
     return json(
-      { errors: { email: null, password: "Password is required" } },
+      { errors: { firstname: null, surname: null, email: null, password: "Password is required" } },
       { status: 400 },
     );
   }
 
   if (password.length < 8) {
     return json(
-      { errors: { email: null, password: "Password is too short" } },
+      { errors: { firstname: null, surname: null, email: null, password: "Password is too short" } },
       { status: 400 },
     );
   }
@@ -52,6 +66,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json(
       {
         errors: {
+          firstname: null,
+          surname: null,
           email: "A user already exists with this email",
           password: null,
         },

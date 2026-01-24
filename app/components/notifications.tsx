@@ -40,7 +40,7 @@ export default function Notifications() {
         //  aria-expanded={open ? 'true' : undefined}
         //  onClick={handleClick}
          style={{ width: "auto", height:"100%", margin:"0 1rem", color: 'black' }}>
-        <Badge badgeContent={data.user?.notificationsReceived.length} color="error">
+        <Badge badgeContent={data?.notificationsReceived?.length ?? 0} color="error">
           <NotificationsIcon style={{ fontSize: 30 }} />
         </Badge>
       </IconButton>

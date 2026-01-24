@@ -5,13 +5,27 @@ import SearchIcon from '@mui/icons-material/Search';
 import ImportContactsIcon from '@mui/icons-material/ImportContacts';
 import { useMatches } from "@remix-run/react";
 
+interface Book {
+  id: string;
+  title: string;
+  cover: string;
+}
+
+interface RouteData {
+  data: {
+    bookListItems: Book[];
+  };
+}
+
 export default function Library() {
 
   const matches = useMatches();
+  const routeData = matches[1]?.data as RouteData | undefined;
+  const bookListItems = routeData?.data?.bookListItems ?? [];
 
   return (
     <>
-    {matches[1].data.data.bookListItems.length === 0 ? (
+    {bookListItems.length === 0 ? (
     <main className="md:h-4/6 flex flex-col justify-center">
         <section id="intro">
           <div className="intro-wrapper">
@@ -36,7 +50,7 @@ export default function Library() {
       ) : (
       <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8">
         <ol className="grid grid-cols-2 gap-4 sm::grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
-          {matches[1].data.data.bookListItems.map((book) => (
+          {bookListItems.map((book) => (
             <li key={book.id} className="cover-wrapper">
               <NavLink to={`/books/${book.id}`}>
                 <ProgressiveImage src={book.cover} placeholder="">
