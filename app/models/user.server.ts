@@ -218,6 +218,37 @@ export async function deleteUserByEmail(email: User["email"]) {
   return prisma.user.delete({ where: { email } });
 }
 
+export async function searchUsers(query: string, currentUserId: string) {
+  // Fetch all users except current user
+  const users = await prisma.user.findMany({
+    where: {
+      id: { not: currentUserId },
+    },
+    select: {
+      id: true,
+      firstname: true,
+      surname: true,
+      email: true,
+    },
+  });
+
+  // Filter by firstname, surname, or email containing query (case-insensitive)
+  const lowerQuery = query.toLowerCase();
+  const matches = users.filter((user) => {
+    const firstname = user.firstname?.toLowerCase() || "";
+    const surname = user.surname?.toLowerCase() || "";
+    const email = user.email.toLowerCase();
+    return (
+      firstname.includes(lowerQuery) ||
+      surname.includes(lowerQuery) ||
+      email.includes(lowerQuery)
+    );
+  });
+
+  // Return top 10 matches
+  return matches.slice(0, 10);
+}
+
 export async function verifyLogin(
   email: User["email"],
   password: Password["hash"],
