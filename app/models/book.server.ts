@@ -17,7 +17,34 @@ export function getBook({
 
 export function getBookById(id: Book["id"]) {
   return prisma.book.findUnique({
-    select: { id: true, body: true, author: true, title: true, cover: true, userId: true, borrowerId: true },
+    select: {
+      id: true,
+      body: true,
+      author: true,
+      title: true,
+      cover: true,
+      datePublished: true,
+      pageCount: true,
+      subjects: true,
+      publisher: true,
+      openLibraryKey: true,
+      userId: true,
+      borrowerId: true,
+      borrower: {
+        select: {
+          id: true,
+          firstname: true,
+          surname: true,
+        }
+      },
+      user: {
+        select: {
+          id: true,
+          firstname: true,
+          surname: true,
+        }
+      }
+    },
     where: { id },
   });
 }
@@ -47,13 +74,24 @@ export function getBookListItems(userId: User["id"]) {
 //   }
 // }
 
-type BookInput = Pick<Book, "title" | "author" | "body" | "cover">;
+type BookInput = Pick<Book, "title" | "author" | "body" | "cover"> & {
+  datePublished?: string | null;
+  pageCount?: number | null;
+  subjects?: string | null;
+  publisher?: string | null;
+  openLibraryKey?: string | null;
+};
 
 export function createBook({
   title,
   author,
   body,
   cover,
+  datePublished,
+  pageCount,
+  subjects,
+  publisher,
+  openLibraryKey,
   userId,
 }: BookInput & {
   userId: User["id"];
@@ -64,6 +102,11 @@ export function createBook({
       author,
       body,
       cover,
+      datePublished,
+      pageCount,
+      subjects,
+      publisher,
+      openLibraryKey,
       user: {
         connect: {
           id: userId,
@@ -93,6 +136,23 @@ export function returnBook(bookId: Book["id"]) {
   return prisma.book.update({
     where: { id: bookId },
     data: { borrowerId: null },
+  });
+}
+
+export function updateBookMetadata(
+  bookId: Book["id"],
+  data: {
+    datePublished?: string | null;
+    pageCount?: number | null;
+    subjects?: string | null;
+    publisher?: string | null;
+    openLibraryKey?: string | null;
+    body?: string;
+  }
+) {
+  return prisma.book.update({
+    where: { id: bookId },
+    data,
   });
 }
 

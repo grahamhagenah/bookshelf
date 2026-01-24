@@ -2,7 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, isRouteErrorResponse, useLoaderData, useRouteError, useNavigation, useActionData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { deleteBook, getBookById, returnBook } from "~/models/book.server";
+import { deleteBook, getBookById, returnBook, updateBookMetadata } from "~/models/book.server";
 import { getUserById, createBookRequestNotification, createBookReturnedNotification } from "~/models/user.server";
 import { requireUserId } from "~/session.server";
 import ProgressiveImage from "react-progressive-graceful-image";
@@ -106,16 +106,58 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     return redirect("/books");
   }
 
+  if (intent === "refresh") {
+    // Only owner can refresh metadata
+    if (book.userId !== userId) {
+      throw new Response("Unauthorized", { status: 403 });
+    }
+
+    // Search Open Library for this book
+    const searchQuery = encodeURIComponent(`${book.title} ${book.author}`);
+    const fields = [
+      'title',
+      'author_name',
+      'first_sentence',
+      'first_publish_year',
+      'number_of_pages_median',
+      'subject',
+      'publisher',
+      'key'
+    ].join(',');
+
+    const res = await fetch(
+      `https://openlibrary.org/search.json?q=${searchQuery}&limit=1&fields=${fields}`
+    );
+    const data = await res.json();
+
+    if (data.docs && data.docs.length > 0) {
+      const bookData = data.docs[0];
+      await updateBookMetadata(book.id, {
+        datePublished: bookData.first_publish_year?.toString() || null,
+        pageCount: bookData.number_of_pages_median || null,
+        subjects: bookData.subject?.slice(0, 5).join(", ") || null,
+        publisher: bookData.publisher?.[0] || null,
+        openLibraryKey: bookData.key || null,
+        body: bookData.first_sentence?.[0] || book.body,
+      });
+      return json({ refreshed: true, message: "Book info updated from Open Library!" });
+    }
+
+    return json({ refreshed: false, message: "Could not find book on Open Library." });
+  }
+
   return null;
 };
 
 export default function BookDetailsPage() {
   const data = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>();
+  const actionData = useActionData<typeof action>() as { success?: boolean; refreshed?: boolean; message?: string } | null;
   const navigation = useNavigation();
 
   const isSubmitting = navigation.state === "submitting" && navigation.formData?.get("intent") === "request";
+  const isRefreshing = navigation.state === "submitting" && navigation.formData?.get("intent") === "refresh";
   const requestSent = actionData?.success === true;
+  const refreshResult = actionData?.refreshed !== undefined ? actionData : null;
 
   const canRequestBook = !data.isOwner && !data.isBorrowed && !data.isBorrower;
   const showBorrowedStatus = data.isBorrowed;
@@ -168,20 +210,104 @@ export default function BookDetailsPage() {
       </section>
       <section className="order-1 md:order-2">
         <h3 className="text-4xl md:text-5xl font-bold">{data.book.title}</h3>
-        <h4 className="text-3xl md:text-4xl author py-6">{data.book.author}</h4>
-        <p className="summary py-6">{data.book.body}</p>
+        <h4 className="text-3xl md:text-4xl author py-4">{data.book.author}</h4>
+
+        <div className="flex flex-wrap gap-x-6 gap-y-2 py-4 text-sm text-gray-600">
+          {data.book.datePublished && (
+            <div>
+              <span className="font-semibold">Published:</span> {data.book.datePublished}
+            </div>
+          )}
+          {data.book.pageCount && (
+            <div>
+              <span className="font-semibold">Pages:</span> {data.book.pageCount}
+            </div>
+          )}
+          {data.book.publisher && (
+            <div>
+              <span className="font-semibold">Publisher:</span> {data.book.publisher}
+            </div>
+          )}
+          {!data.isOwner && data.book.user && (
+            <div>
+              <span className="font-semibold">Owner:</span> {data.book.user.firstname} {data.book.user.surname}
+            </div>
+          )}
+        </div>
+
+        {data.book.subjects && (
+          <div className="py-2">
+            <div className="flex flex-wrap gap-2">
+              {data.book.subjects.split(", ").map((subject, index) => (
+                <span
+                  key={index}
+                  className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full"
+                >
+                  {subject}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {data.isOwner && data.isBorrowed && data.book.borrower && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 my-4">
+            <span className="font-semibold text-amber-800">Currently lent to:</span>{" "}
+            <span className="text-amber-700">{data.book.borrower.firstname} {data.book.borrower.surname}</span>
+          </div>
+        )}
+
+        <div className="py-4">
+          <h5 className="font-semibold text-lg mb-2">Description</h5>
+          <p className="summary text-gray-700 leading-relaxed">{data.book.body || "No description available."}</p>
+        </div>
+
+        {data.book.openLibraryKey && (
+          <div className="py-2">
+            <a
+              href={`https://openlibrary.org${data.book.openLibraryKey}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 text-sm"
+            >
+              View on Open Library
+            </a>
+          </div>
+        )}
+
         {data.isOwner && (
           <>
             <hr className="my-4" />
-            <Form method="post">
-              <input type="hidden" name="intent" value="delete" />
-              <button
-                type="submit"
-                className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-              >
-                Delete
-              </button>
-            </Form>
+            <div className="flex flex-wrap gap-3 items-center">
+              <Form method="post">
+                <input type="hidden" name="intent" value="refresh" />
+                <button
+                  type="submit"
+                  disabled={isRefreshing}
+                  className={`rounded px-4 py-2 text-white ${
+                    isRefreshing
+                      ? "bg-gray-400 cursor-wait"
+                      : "bg-green-600 hover:bg-green-700 focus:bg-green-800"
+                  }`}
+                >
+                  {isRefreshing ? "Refreshing..." : "Refresh from Open Library"}
+                </button>
+              </Form>
+              <Form method="post">
+                <input type="hidden" name="intent" value="delete" />
+                <button
+                  type="submit"
+                  className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600 focus:bg-red-400"
+                >
+                  Delete
+                </button>
+              </Form>
+            </div>
+            {refreshResult && (
+              <p className={`mt-3 text-sm ${refreshResult.refreshed ? "text-green-600" : "text-amber-600"}`}>
+                {refreshResult.message}
+              </p>
+            )}
           </>
         )}
       </section>
