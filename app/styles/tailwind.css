@@ -56,10 +56,6 @@ h1, h2, h3 {
   font-size: 22px;
 }
 
-#logo {
-  display: flex;
-  align-items: center;
-}
 
 button#demo-customized-button {
   height: 100%;
@@ -74,8 +70,9 @@ button#demo-customized-button {
 }
 
 #logo {
-  display: inline-block;
-  width: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   margin: 0 8px;
 }
 
