@@ -146,9 +146,15 @@ export default function Friends() {
             following.map((user, index) => {
               return (
                 <li key={index} className="first:pt-0 border-b-2 py-4 px-4 last:border-none">
-                  <a href={`/friend/${user.id}`}>
-                    <h3 className="text-xl font-medium mb-1">{user.firstname + " " + user.surname}</h3>
-                    <p className="font-regular">{user.email}</p>
+                  <a href={`/friend/${user.id}`} className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-lg flex-shrink-0">
+                      {(user.firstname?.[0] || "").toUpperCase()}
+                      {(user.surname?.[0] || "").toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-medium mb-1">{user.firstname + " " + user.surname}</h3>
+                      <p className="font-regular text-gray-600">{user.email}</p>
+                    </div>
                   </a>
                 </li>
               );
