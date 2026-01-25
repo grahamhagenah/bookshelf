@@ -1,6 +1,6 @@
 import { json, redirect } from "@remix-run/node";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useSearchParams, useNavigation } from "@remix-run/react";
+import { useLoaderData, useSearchParams, useNavigation, Link } from "@remix-run/react";
 import { Form } from "@remix-run/react";
 import { createBook } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
@@ -48,16 +48,27 @@ const LANGUAGES = [
   { code: "pol", label: "Polish" },
 ];
 
+const RESULTS_PER_PAGE = 20;
+
 // Make GET request to Open Library API
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const query = url.searchParams.get("q") || "";
   const searchType = url.searchParams.get("type") || "all";
   const language = url.searchParams.get("lang") || "";
+  const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
 
   // Return empty results if no query
   if (!query.trim()) {
-    return json({ docs: [], numFound: 0, query: "", searchType, language } as OpenLibraryResponse & { query: string; searchType: string; language: string });
+    return json({
+      docs: [],
+      numFound: 0,
+      query: "",
+      searchType,
+      language,
+      page: 1,
+      totalPages: 0,
+    });
   }
 
   // Explicitly request the fields we need
@@ -98,12 +109,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
       searchQuery = `q=${encodeURIComponent(fullQuery)}`;
   }
 
+  const offset = (page - 1) * RESULTS_PER_PAGE;
+
   const res = await fetch(
-    `https://openlibrary.org/search.json?${searchQuery}&limit=20&fields=${fields}`
+    `https://openlibrary.org/search.json?${searchQuery}&limit=${RESULTS_PER_PAGE}&offset=${offset}&fields=${fields}`
   );
   const data = await res.json() as OpenLibraryResponse;
 
-  return json({ ...data, query, searchType, language });
+  const totalPages = Math.ceil(data.numFound / RESULTS_PER_PAGE);
+
+  return json({ ...data, query, searchType, language, page, totalPages });
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -146,6 +161,50 @@ export default function Search() {
   const currentQuery = searchParams.get("q") || "";
   const currentType = searchParams.get("type") || "all";
   const currentLang = searchParams.get("lang") || "";
+  const currentPage = data.page || 1;
+  const totalPages = data.totalPages || 0;
+
+  // Build URL for a specific page while preserving other params
+  const getPageUrl = (page: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", page.toString());
+    return `/search?${params.toString()}`;
+  };
+
+  // Generate page numbers to show
+  const getPageNumbers = () => {
+    const pages: (number | "...")[] = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible + 2) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      // Always show first page
+      pages.push(1);
+
+      if (currentPage > 3) {
+        pages.push("...");
+      }
+
+      // Pages around current
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (currentPage < totalPages - 2) {
+        pages.push("...");
+      }
+
+      // Always show last page
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
 
   return (
     <>
@@ -232,6 +291,11 @@ export default function Search() {
                 )}
                 {currentLang && (
                   <span> in <span className="font-semibold">{LANGUAGES.find(l => l.code === currentLang)?.label}</span></span>
+                )}
+                {totalPages > 1 && (
+                  <span className="ml-2 text-gray-500">
+                    (Page {currentPage} of {totalPages.toLocaleString()})
+                  </span>
                 )}
               </p>
             )}
@@ -335,6 +399,65 @@ export default function Search() {
             );
           })}
         </ul>
+
+        {/* Pagination */}
+        {totalPages > 1 && data.query && (
+          <nav className="flex justify-center items-center gap-2 py-8" aria-label="Pagination">
+            {/* Previous Button */}
+            {currentPage > 1 ? (
+              <Link
+                to={getPageUrl(currentPage - 1)}
+                className="px-3 py-2 rounded border hover:bg-gray-100"
+                aria-label="Previous page"
+              >
+                Previous
+              </Link>
+            ) : (
+              <span className="px-3 py-2 rounded border text-gray-300 cursor-not-allowed">
+                Previous
+              </span>
+            )}
+
+            {/* Page Numbers */}
+            <div className="flex gap-1">
+              {getPageNumbers().map((page, index) =>
+                page === "..." ? (
+                  <span key={`ellipsis-${index}`} className="px-3 py-2">
+                    ...
+                  </span>
+                ) : (
+                  <Link
+                    key={page}
+                    to={getPageUrl(page)}
+                    className={`px-3 py-2 rounded border ${
+                      page === currentPage
+                        ? "bg-blue-500 text-white border-blue-500"
+                        : "hover:bg-gray-100"
+                    }`}
+                    aria-current={page === currentPage ? "page" : undefined}
+                  >
+                    {page}
+                  </Link>
+                )
+              )}
+            </div>
+
+            {/* Next Button */}
+            {currentPage < totalPages ? (
+              <Link
+                to={getPageUrl(currentPage + 1)}
+                className="px-3 py-2 rounded border hover:bg-gray-100"
+                aria-label="Next page"
+              >
+                Next
+              </Link>
+            ) : (
+              <span className="px-3 py-2 rounded border text-gray-300 cursor-not-allowed">
+                Next
+              </span>
+            )}
+          </nav>
+        )}
       </div>
     </>
   );
