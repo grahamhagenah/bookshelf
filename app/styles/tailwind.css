@@ -47,11 +47,6 @@ h1, h2, h3 {
   font-size: 50px;
 }
 
-.card-wrapper li {
-  background-color: #f6f6f6;
-  padding: 2.5rem 2rem;
-}
-
 #search-results h3 {
   font-size: 22px;
 }
