@@ -1,4 +1,4 @@
-import { NavLink } from "@remix-run/react";
+import { NavLink, Link } from "@remix-run/react";
 import ProgressiveImage from "react-progressive-graceful-image";
 import GroupIcon from '@mui/icons-material/Group';
 import SearchIcon from '@mui/icons-material/Search';
@@ -38,16 +38,26 @@ export default function Library({ bookListItems }: LibraryProps) {
             <h1 className="text-4xl md:text-6xl font-semibold mt-5">This is your <strong>lending library</strong></h1>
             <ol className="card-wrapper md:flex justify-center mx-auto mt-10 text-xl md:w-3/4">
               <li className="md:w-1/3 m-4 xl:m-8 rounded-xl">
-                <SearchIcon />
-                <p className="mt-5">Search for books by author or title</p>
+                <Link
+                  to="/search"
+                  className="block p-6 rounded-xl border-2 border-transparent hover:border-blue-200 hover:bg-blue-50 transition-colors"
+                >
+                  <SearchIcon fontSize="large" className="text-blue-500" />
+                  <p className="mt-5">Search for books by author or title</p>
+                </Link>
               </li>
               <li className="md:w-1/3 m-4 xl:m-8 rounded-xl">
-                <GroupIcon />
-                <p className="mt-5">Add friends to see their books</p>
+                <Link
+                  to="/friends"
+                  className="block p-6 rounded-xl border-2 border-transparent hover:border-blue-200 hover:bg-blue-50 transition-colors"
+                >
+                  <GroupIcon fontSize="large" className="text-blue-500" />
+                  <p className="mt-5">Add friends to see their books</p>
+                </Link>
               </li>
-              <li className="md:w-1/3 m-4 xl:m-8 rounded-xl">
-                <ImportContactsIcon />
-                <p className="mt-5">Start borrowing and lending</p>
+              <li className="md:w-1/3 m-4 xl:m-8 rounded-xl p-6">
+                <ImportContactsIcon fontSize="large" className="text-gray-400" />
+                <p className="mt-5 text-gray-500">Start borrowing and lending</p>
               </li>
             </ol>
           </div>
