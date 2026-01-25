@@ -43,6 +43,22 @@ export async function getUserByEmail(email: User["email"]) {
   })
 }
 
+export async function updateUser(
+  id: User["id"],
+  data: { email?: string; firstname?: string; surname?: string }
+) {
+  return prisma.user.update({
+    where: { id },
+    data,
+    select: {
+      id: true,
+      email: true,
+      firstname: true,
+      surname: true,
+    },
+  });
+}
+
 export function generateUserSlug(firstname: string, surname: string): string {
   return `${firstname}-${surname}`.toLowerCase().replace(/\s+/g, '-');
 }
