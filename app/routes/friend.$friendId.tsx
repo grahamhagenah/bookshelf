@@ -5,12 +5,18 @@ import { getUserById } from "~/models/user.server";
 import Library from "~/components/library";
 import { getBookListItems } from "~/models/book.server";
 import { Link, useLoaderData } from "@remix-run/react";
-import { useLocation } from "@remix-run/react";
 import { requireUserId } from "~/session.server";
+import Breadcrumbs from "~/components/breadcrumbs";
+
+type LoaderData = {
+  friendName: string;
+};
 
 export const handle = {
-  breadcrumb: () => <Link to={useLocation().pathname}>Friend</Link>
-}
+  breadcrumb: (data: LoaderData) => (
+    <span>{data?.friendName || "Friend"}</span>
+  ),
+};
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const currentUserId = await requireUserId(request);
@@ -45,6 +51,7 @@ export default function FriendsBookPage() {
 
   return (
     <>
+      <Breadcrumbs />
       <div className="bg-blue-50 border-b border-blue-200 px-4 md:px-8 py-3">
         <p className="text-blue-800 text-center">
           Viewing <span className="font-semibold">{data.friendName}</span>&apos;s bookshelf

@@ -1,11 +1,26 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form, isRouteErrorResponse, useLoaderData, useRouteError, useNavigation, useActionData } from "@remix-run/react";
+import { Form, isRouteErrorResponse, Link, useLoaderData, useRouteError, useNavigation, useActionData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 import { deleteBook, getBookById, returnBook, updateBookMetadata } from "~/models/book.server";
 import { getUserById, createBookRequestNotification, createBookReturnedNotification } from "~/models/user.server";
 import { requireUserId } from "~/session.server";
 import ProgressiveImage from "react-progressive-graceful-image";
+import Breadcrumbs from "~/components/breadcrumbs";
+
+type LoaderData = {
+  book: {
+    title: string;
+  };
+};
+
+export const handle = {
+  breadcrumb: (data: LoaderData) => (
+    <Link to="." className="hover:text-gray-900">
+      {data?.book?.title || "Book"}
+    </Link>
+  ),
+};
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -163,6 +178,8 @@ export default function BookDetailsPage() {
   const showBorrowedStatus = data.isBorrowed;
 
   return (
+    <>
+    <Breadcrumbs />
     <main className="grid grid-cols-1 md:grid-cols-[1fr,2fr] gap-4 md:gap-16 p-8 w-full lg:w-3/4 xl:w-1/2 mx-auto mt-4 md:mt-12">
       <section className="order-2 md:order-1">
         <div className="book-cover p-8 md:p-0">
@@ -312,6 +329,7 @@ export default function BookDetailsPage() {
         )}
       </section>
     </main>
+    </>
   );
 }
 

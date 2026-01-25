@@ -1,52 +1,51 @@
-import * as React from 'react';
-import { emphasize, styled } from '@mui/material/styles';
-import Breadcrumbs from '@mui/material/Breadcrumbs';
-import Chip from '@mui/material/Chip';
+import { Link, useMatches } from "@remix-run/react";
 import HomeIcon from '@mui/icons-material/Home';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
-const StyledBreadcrumb = styled(Chip)(({ theme }) => {
-  const backgroundColor =
-    theme.palette.mode === 'light'
-      ? theme.palette.grey[100]
-      : theme.palette.grey[800];
-  return {
-    backgroundColor,
-    height: theme.spacing(3),
-    color: theme.palette.text.primary,
-    fontWeight: theme.typography.fontWeightRegular,
-    '&:hover, &:focus': {
-      backgroundColor: emphasize(backgroundColor, 0.06),
-    },
-    '&:active': {
-      boxShadow: theme.shadows[1],
-      backgroundColor: emphasize(backgroundColor, 0.12),
-    },
+interface BreadcrumbMatch {
+  id: string;
+  pathname: string;
+  handle?: {
+    breadcrumb?: (data: unknown) => React.ReactNode;
   };
-}) as typeof Chip; // TypeScript only: need a type cast here because https://github.com/Microsoft/TypeScript/issues/26591
-
-function handleClick(event: React.MouseEvent<Element, MouseEvent>) {
-  event.preventDefault();
-  console.info('You clicked a breadcrumb.');
+  data: unknown;
 }
 
-export default function CustomizedBreadcrumbs() {
+export default function Breadcrumbs() {
+  const matches = useMatches() as BreadcrumbMatch[];
+
+  const breadcrumbs = matches
+    .filter((match) => match.handle?.breadcrumb)
+    .map((match) => ({
+      id: match.id,
+      breadcrumb: match.handle!.breadcrumb!(match.data),
+    }));
+
+  if (breadcrumbs.length === 0) {
+    return null;
+  }
+
   return (
-    <div role="presentation" onClick={handleClick}>
-      <Breadcrumbs aria-label="breadcrumb">
-        <StyledBreadcrumb
-          component="a"
-          href="#"
-          label="Home"
-          icon={<HomeIcon fontSize="small" />}
-        />
-        <StyledBreadcrumb component="a" href="#" label="Catalog" />
-        <StyledBreadcrumb
-          label="Accessories"
-          deleteIcon={<ExpandMoreIcon />}
-          onDelete={handleClick}
-        />
-      </Breadcrumbs>
-    </div>
+    <nav aria-label="Breadcrumb" className="px-4 md:px-8 py-3">
+      <ol className="flex items-center gap-1 text-sm text-gray-600">
+        <li>
+          <Link
+            to="/books"
+            className="flex items-center gap-1 hover:text-gray-900 transition-colors"
+          >
+            <HomeIcon fontSize="small" />
+            <span className="sr-only">Home</span>
+          </Link>
+        </li>
+        {breadcrumbs.map((crumb, index) => (
+          <li key={crumb.id} className="flex items-center gap-1">
+            <ChevronRightIcon fontSize="small" className="text-gray-400" />
+            <span className={index === breadcrumbs.length - 1 ? "font-medium text-gray-900" : "hover:text-gray-900"}>
+              {crumb.breadcrumb}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }

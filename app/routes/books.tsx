@@ -5,6 +5,7 @@ import { getBookListItems, getBorrowedBooks } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
 import { getUserById } from "~/models/user.server";
 import Library from "~/components/library";
+import Breadcrumbs from "~/components/breadcrumbs";
 
 export const handle = {
   breadcrumb: () => <Link to="/books">Books</Link>,
@@ -36,6 +37,9 @@ export default function BooksPage() {
   const data = useLoaderData<typeof loader>();
 
   return (
-    <Library bookListItems={data.bookListItems} />
+    <>
+      <Breadcrumbs />
+      <Library bookListItems={data.bookListItems} />
+    </>
   );
 }
