@@ -4,6 +4,17 @@ import GroupIcon from '@mui/icons-material/Group';
 import SearchIcon from '@mui/icons-material/Search';
 import ImportContactsIcon from '@mui/icons-material/ImportContacts';
 
+// Generate a consistent color based on a string hash
+function getColorFromString(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  // Use hue from hash, with pleasant saturation and lightness
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 40%, 80%)`;
+}
+
 interface Book {
   id: string;
   title: string;
@@ -50,8 +61,17 @@ export default function Library({ bookListItems }: LibraryProps) {
               <NavLink to={`/books/${book.id}`}>
                 <ProgressiveImage src={book.cover} placeholder="">
                   {(src, loading) => {
-                    return loading ? <div className="rounded-lg" style={{ opacity: 0.5, backgroundColor: '#D4F5FF', height: 320 }}/>
-                    : <img height="320" className="rounded-lg shadow-xl book-cover h-80" src={src} alt={book.title} />;
+                    return loading ? (
+                      <div
+                        className="rounded-lg"
+                        style={{
+                          backgroundColor: getColorFromString(book.cover || book.id),
+                          height: 320,
+                        }}
+                      />
+                    ) : (
+                      <img height="320" className="rounded-lg shadow-xl book-cover h-80" src={src} alt={book.title} />
+                    );
                   }}
                 </ProgressiveImage>
                 {book.isBorrowed && (
