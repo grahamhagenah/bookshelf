@@ -27,6 +27,7 @@
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@flydotio/litestream": "^1.0.1",
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.15.0",
     "@mui/styles": "^5.15.1",
@@ -96,5 +97,8 @@
   },
   "prisma": {
     "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
+  },
+  "dockerfile": {
+    "litestream": true
   }
 }
