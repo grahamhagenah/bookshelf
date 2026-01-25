@@ -11,15 +11,33 @@ import Breadcrumbs from "~/components/breadcrumbs";
 type LoaderData = {
   book: {
     title: string;
+    user?: {
+      id: string;
+      firstname: string;
+      surname: string;
+    };
   };
+  isOwner: boolean;
 };
 
 export const handle = {
-  breadcrumb: (data: LoaderData) => (
-    <Link to="." className="hover:text-gray-900">
-      {data?.book?.title || "Book"}
-    </Link>
-  ),
+  breadcrumbs: (data: LoaderData) => {
+    const crumbs: { label: string; href?: string }[] = [];
+
+    // If viewing a friend's book, add Friends and friend name
+    if (!data?.isOwner && data?.book?.user) {
+      crumbs.push({ label: "Friends", href: "/friends" });
+      crumbs.push({
+        label: `${data.book.user.firstname} ${data.book.user.surname}`,
+        href: `/friend/${data.book.user.id}`,
+      });
+    }
+
+    // Always add the book title
+    crumbs.push({ label: data?.book?.title || "Book" });
+
+    return crumbs;
+  },
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {

@@ -1,11 +1,16 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { requireUserId, getUserId } from "~/session.server";
-import { useLoaderData, useFetcher } from "@remix-run/react";
+import { useLoaderData, useFetcher, Link } from "@remix-run/react";
 import { getUserById, createNotification, getUserByEmail } from "~/models/user.server";
 import { Form, useActionData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import Layout from "~/components / Layout/Layout";
+import Breadcrumbs from "~/components/breadcrumbs";
+
+export const handle = {
+  breadcrumb: () => <Link to="/friends">Friends</Link>,
+};
 
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -129,6 +134,8 @@ export default function Friends() {
   const isSearching = searchFetcher.state === "loading";
 
   return (
+    <>
+    <Breadcrumbs />
     <Layout title="Friends">
       <section className="p-4 m-4">
         {following.length > 1 ?
@@ -267,5 +274,6 @@ export default function Friends() {
           </details>
         </section>
     </Layout>
+    </>
   );
 }

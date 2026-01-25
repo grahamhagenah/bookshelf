@@ -13,9 +13,10 @@ type LoaderData = {
 };
 
 export const handle = {
-  breadcrumb: (data: LoaderData) => (
-    <span>{data?.friendName || "Friend"}</span>
-  ),
+  breadcrumbs: (data: LoaderData) => [
+    { label: "Friends", href: "/friends" },
+    { label: data?.friendName || "Friend" },
+  ],
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
