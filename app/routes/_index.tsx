@@ -2,7 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { useOptionalUser } from "~/utils";
 
-export const meta: MetaFunction = () => [{ title: "Checkout" }];
+export const meta: MetaFunction = () => [{ title: "Stacks" }];
 
 export const handle = {
   breadcrumb: () => <Link to="/">Home</Link>,
@@ -14,7 +14,7 @@ export default function Index() {
     <main className="flex flex-col justify-center h-4/6">
       <section>
       <h1 className="text-center text-6xl font-extrabold tracking-tight sm:text-8xl lg:text-9xl">
-        Checkout
+        Stacks
       </h1>
       <p className="mx-auto text-center mt-6 mb-24 max-w-lg text-left text-black text-xl text-white sm:max-w-3xl">
         Represent your library digitally, and let your friends borrow your books.

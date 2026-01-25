@@ -2,7 +2,7 @@ import { useMatches } from "@remix-run/react";
 import Search from "./search"
 import PositionedMenu from './menu'
 import Notifications from './notifications'
-import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 
 interface RootLoaderData {
   user: {
@@ -18,8 +18,8 @@ export default function Header() {
   return (
     <header className="w-full flex items-center justify-between shadow-sm px-4 md:px-8 py-2">
       <a id="logo" href="/books" className="flex items-center gap-2 text-2xl font-semibold">
-        <ShoppingCartCheckoutIcon fontSize="large" />
-        <span>Checkout</span>
+        <LibraryBooksIcon fontSize="large" />
+        <span>Stacks</span>
       </a>
       <div>
         <div className="hidden md:inline-block">
