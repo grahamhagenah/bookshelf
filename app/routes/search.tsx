@@ -74,22 +74,28 @@ export async function loader({ request }: LoaderFunctionArgs) {
     "language",
   ].join(",");
 
+  // Build the query with language filter if specified
+  // Open Library uses "language:code" syntax within the query
+  let fullQuery = query;
+  if (language) {
+    fullQuery = `${query} language:${language}`;
+  }
+
   // Build search query based on type
   let searchQuery = "";
   switch (searchType) {
     case "title":
-      searchQuery = `title=${encodeURIComponent(query)}`;
+      searchQuery = `title=${encodeURIComponent(fullQuery)}`;
       break;
     case "author":
-      searchQuery = `author=${encodeURIComponent(query)}`;
+      // For author search, we need to handle language differently
+      // since language:xxx doesn't work well with author= parameter
+      searchQuery = language
+        ? `q=${encodeURIComponent(`author:${query} language:${language}`)}`
+        : `author=${encodeURIComponent(query)}`;
       break;
     default:
-      searchQuery = `q=${encodeURIComponent(query)}`;
-  }
-
-  // Add language filter if specified
-  if (language) {
-    searchQuery += `&language=${language}`;
+      searchQuery = `q=${encodeURIComponent(fullQuery)}`;
   }
 
   const res = await fetch(
