@@ -36,28 +36,33 @@ export default function Library({ bookListItems }: LibraryProps) {
         <section id="intro">
           <div className="intro-wrapper">
             <h1 className="text-4xl md:text-6xl font-semibold mt-5">This is your <strong>lending library</strong></h1>
-            <ol className="card-wrapper md:flex justify-center mx-auto mt-10 text-xl md:w-3/4">
-              <li className="md:w-1/3 m-4 xl:m-8 rounded-xl">
+            <ol className="card-wrapper md:flex justify-center mx-auto mt-10 text-xl md:w-3/4 gap-4 xl:gap-8">
+              <li className="md:w-1/3">
                 <Link
                   to="/search"
-                  className="block p-6 rounded-xl border-2 border-transparent hover:border-blue-200 hover:bg-blue-50 transition-colors"
+                  className="block h-full p-6 m-4 md:m-0 rounded-xl border-2 border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-colors"
                 >
                   <SearchIcon fontSize="large" className="text-blue-500" />
                   <p className="mt-5">Search for books by author or title</p>
                 </Link>
               </li>
-              <li className="md:w-1/3 m-4 xl:m-8 rounded-xl">
+              <li className="md:w-1/3">
                 <Link
                   to="/friends"
-                  className="block p-6 rounded-xl border-2 border-transparent hover:border-blue-200 hover:bg-blue-50 transition-colors"
+                  className="block h-full p-6 m-4 md:m-0 rounded-xl border-2 border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-colors"
                 >
                   <GroupIcon fontSize="large" className="text-blue-500" />
                   <p className="mt-5">Add friends to see their books</p>
                 </Link>
               </li>
-              <li className="md:w-1/3 m-4 xl:m-8 rounded-xl p-6">
-                <ImportContactsIcon fontSize="large" className="text-gray-400" />
-                <p className="mt-5 text-gray-500">Start borrowing and lending</p>
+              <li className="md:w-1/3">
+                <Link
+                  to="/friends"
+                  className="block h-full p-6 m-4 md:m-0 rounded-xl border-2 border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                >
+                  <ImportContactsIcon fontSize="large" className="text-blue-500" />
+                  <p className="mt-5">Start borrowing and lending</p>
+                </Link>
               </li>
             </ol>
           </div>
