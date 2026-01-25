@@ -4,11 +4,16 @@ import { requireUserId } from "~/session.server";
 import { createFriendship, getUserById, deleteNotification, createBookApprovedNotification } from "~/models/user.server";
 import { lendBook } from "~/models/book.server";
 import Layout from "~/components / Layout/Layout";
+import Breadcrumbs from "~/components/breadcrumbs";
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
+
+export const handle = {
+  breadcrumb: () => <span>Notifications</span>,
+};
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -156,6 +161,8 @@ export default function Notifications() {
   };
 
   return (
+    <>
+    <Breadcrumbs />
     <Layout title="Notifications">
       <ul className="notifications">
       {(data.user?.notificationsReceived?.length ?? 0) > 0 ?
@@ -171,5 +178,6 @@ export default function Notifications() {
         </li>}
       </ul>
     </Layout>
+    </>
   )
 }

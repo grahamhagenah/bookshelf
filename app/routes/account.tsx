@@ -4,8 +4,13 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { getUserById, getUserByEmail, updateUser } from "~/models/user.server";
 import Layout from "~/components / Layout/Layout";
+import Breadcrumbs from "~/components/breadcrumbs";
 import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef } from "react";
+
+export const handle = {
+  breadcrumb: () => <span>Account</span>,
+};
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -76,6 +81,8 @@ export default function Account() {
   }, [actionData]);
 
   return (
+    <>
+    <Breadcrumbs />
     <Layout title="Account Settings">
       <section className="p-4 m-4">
         <div className="border shadow-sm rounded-lg p-8 mb-8">
@@ -196,5 +203,6 @@ export default function Account() {
         </Form>
       </section>
     </Layout>
+    </>
   );
 }

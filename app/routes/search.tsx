@@ -4,6 +4,11 @@ import { useLoaderData } from "@remix-run/react";
 import { Form } from "@remix-run/react";
 import { createBook } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
+import Breadcrumbs from "~/components/breadcrumbs";
+
+export const handle = {
+  breadcrumb: () => <span>Search</span>,
+};
 
 interface OpenLibraryBook {
   title: string;
@@ -81,7 +86,9 @@ export default function Search() {
   const results = useLoaderData<typeof loader>();
 
   return (
-    <div id="search-container" className="w-3/4 lg:w-1/2 mx-auto">
+    <>
+    <Breadcrumbs />
+    <div id="search-container" className="w-3/4 lg:w-1/2 mx-auto mt-4">
       <ul className="search-results mb-4">
         {results?.docs?.map((book, index) => {
           const subjectsPreview = book.subject?.slice(0, 3).join(", ") ?? "";
@@ -141,5 +148,6 @@ export default function Search() {
         })}
       </ul>
     </div>
+    </>
   );
 }
