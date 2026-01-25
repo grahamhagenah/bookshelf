@@ -1,7 +1,8 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { requireUserId } from "~/session.server";
-import { createFriendship, getUserById, deleteNotification, createBookApprovedNotification } from "~/models/user.server";
+import { createFriendship, getUserById, markNotificationAsRead, createBookApprovedNotification, getNotificationHistory } from "~/models/user.server";
 import { lendBook } from "~/models/book.server";
 import Layout from "~/components / Layout/Layout";
 import Breadcrumbs from "~/components/breadcrumbs";
@@ -10,6 +11,7 @@ import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
+import HistoryIcon from '@mui/icons-material/History';
 
 export const handle = {
   breadcrumb: () => <span>Notifications</span>,
@@ -18,8 +20,9 @@ export const handle = {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const user = await getUserById(userId);
-  return {user};
-}
+  const history = await getNotificationHistory(userId, 10);
+  return json({ user, history });
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -35,9 +38,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Handle friend request
   if (formData.get("friend_request") === "accept") {
     await createFriendship(userId, senderId);
-    await deleteNotification(notificationId);
+    await markNotificationAsRead(notificationId, "accepted");
   } else if (formData.get("friend_request") === "decline") {
-    await deleteNotification(notificationId);
+    await markNotificationAsRead(notificationId, "declined");
   }
 
   // Handle book request
@@ -60,23 +63,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         await createBookApprovedNotification(userId, senderId, senderName, bookTitle);
       }
 
-      await deleteNotification(notificationId);
+      await markNotificationAsRead(notificationId, "approved");
     } else if (formData.get("book_request") === "decline") {
-      await deleteNotification(notificationId);
+      await markNotificationAsRead(notificationId, "declined");
     }
   }
 
   // Handle book approved notification (just dismiss it)
   if (notificationType === "BOOK_APPROVED") {
     if (formData.get("dismiss") === "true") {
-      await deleteNotification(notificationId);
+      await markNotificationAsRead(notificationId, "dismissed");
     }
   }
 
   // Handle book returned notification (just dismiss it)
   if (notificationType === "BOOK_RETURNED") {
     if (formData.get("dismiss") === "true") {
-      await deleteNotification(notificationId);
+      await markNotificationAsRead(notificationId, "dismissed");
     }
   }
 
@@ -160,24 +163,112 @@ export default function Notifications() {
     return null;
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
+  const getHistoryIcon = (type: string) => {
+    switch (type) {
+      case "FRIEND_REQUEST":
+        return <PersonAddIcon className="mr-3 text-gray-400" />;
+      case "BOOK_REQUEST":
+        return <MenuBookIcon className="mr-3 text-gray-400" />;
+      case "BOOK_APPROVED":
+        return <CheckCircleIcon className="mr-3 text-gray-400" />;
+      case "BOOK_RETURNED":
+        return <KeyboardReturnIcon className="mr-3 text-gray-400" />;
+      default:
+        return <HistoryIcon className="mr-3 text-gray-400" />;
+    }
+  };
+
+  const getHistoryText = (notification: {
+    type: string;
+    senderName: string;
+    bookTitle?: string | null;
+    actionTaken?: string | null;
+  }) => {
+    const action = notification.actionTaken || "actioned";
+
+    switch (notification.type) {
+      case "FRIEND_REQUEST":
+        return (
+          <>
+            <strong>{notification.senderName}</strong> friend request — <span className="text-gray-500">{action}</span>
+          </>
+        );
+      case "BOOK_REQUEST":
+        return (
+          <>
+            <strong>{notification.senderName}</strong> requested <strong>{notification.bookTitle}</strong> — <span className="text-gray-500">{action}</span>
+          </>
+        );
+      case "BOOK_APPROVED":
+        return (
+          <>
+            <strong>{notification.senderName}</strong> approved <strong>{notification.bookTitle}</strong> — <span className="text-gray-500">{action}</span>
+          </>
+        );
+      case "BOOK_RETURNED":
+        return (
+          <>
+            <strong>{notification.senderName}</strong> returned <strong>{notification.bookTitle}</strong> — <span className="text-gray-500">{action}</span>
+          </>
+        );
+      default:
+        return <span>Notification — {action}</span>;
+    }
+  };
+
   return (
     <>
     <Breadcrumbs />
     <Layout title="Notifications">
+      {/* Active Notifications */}
       <ul className="notifications">
-      {(data.user?.notificationsReceived?.length ?? 0) > 0 ?
-        data.user?.notificationsReceived?.map((notification) => (
-          <li key={notification.id} className="my-1 bg-stone-50 rounded-lg p-5">
-            {renderNotification(notification)}
+        {(data.user?.notificationsReceived?.length ?? 0) > 0 ?
+          data.user?.notificationsReceived?.map((notification) => (
+            <li key={notification.id} className="my-1 bg-stone-50 rounded-lg p-5">
+              {renderNotification(notification)}
+            </li>
+          ))
+          :
+          <li className="my-1 bg-stone-50 rounded-lg p-5">
+            <HourglassTopIcon className="mb-1 mr-3"/>
+            <h2 className="inline">You don't have any new notifications</h2>
           </li>
-        ))
-        :
-        <li className="my-1 bg-stone-50 rounded-lg p-5">
-          <HourglassTopIcon className="mb-1 mr-3"/>
-          <h2 className="inline">You dont have any notifications just yet, but keep waiting...</h2>
-        </li>}
+        }
       </ul>
+
+      {/* Notification History */}
+      {data.history && data.history.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <HistoryIcon />
+            Recent Activity
+          </h2>
+          <ul className="space-y-2">
+            {data.history.map((notification) => (
+              <li key={notification.id} className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg text-gray-600">
+                <div className="flex items-center">
+                  {getHistoryIcon(notification.type)}
+                  <span>{getHistoryText(notification)}</span>
+                </div>
+                <span className="text-sm text-gray-400">
+                  {formatDate(notification.createdAt)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </Layout>
     </>
-  )
+  );
 }

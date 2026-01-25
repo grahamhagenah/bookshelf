@@ -15,6 +15,8 @@ export async function getUserById(id: User["id"]) {
       surname: true,
       notificationsSent: true,
       notificationsReceived: {
+        where: { read: false },
+        orderBy: { createdAt: "desc" },
         select: {
           id: true,
           type: true,
@@ -22,6 +24,7 @@ export async function getUserById(id: User["id"]) {
           senderName: true,
           bookId: true,
           bookTitle: true,
+          createdAt: true,
         }
       },
       following: {
@@ -93,10 +96,41 @@ export async function getUserBySlug(slug: string) {
 
 export async function deleteNotification(notificationId: Notification["id"]) {
   return prisma.notification.delete({
-    where: { 
-      id: notificationId 
+    where: {
+      id: notificationId
     }
   })
+}
+
+export async function markNotificationAsRead(notificationId: Notification["id"], actionTaken: string) {
+  return prisma.notification.update({
+    where: { id: notificationId },
+    data: {
+      read: true,
+      actionTaken,
+    },
+  });
+}
+
+export async function getNotificationHistory(userId: string, limit: number = 10) {
+  return prisma.notification.findMany({
+    where: {
+      receiverId: userId,
+      read: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    select: {
+      id: true,
+      type: true,
+      senderId: true,
+      senderName: true,
+      bookId: true,
+      bookTitle: true,
+      actionTaken: true,
+      createdAt: true,
+    },
+  });
 }
 
 export async function createNotification(senderId: User["id"], receiverId: User["id"], senderName: string) {

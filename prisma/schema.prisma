@@ -75,6 +75,10 @@ model Notification {
   bookId     String?
   bookTitle  String?
 
+  read        Boolean  @default(false)
+  actionTaken String?
+  createdAt   DateTime @default(now())
+
   @@index([senderId], name: "sender_id_index")
   @@index([receiverId], name: "receiver_id_index")
 }
