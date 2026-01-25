@@ -214,12 +214,12 @@ export default function BookDetailsPage() {
             <button
               type="submit"
               disabled={isSubmitting || requestSent}
-              className={`mb-4 rounded border w-full mt-8 px-4 py-3 text-base font-medium shadow-sm ${
+              className={`mb-4 rounded border-2 w-full mt-8 px-4 py-3 text-base font-medium ${
                 requestSent
-                  ? "bg-green-100 text-green-700 cursor-default"
+                  ? "border-green-500 text-green-600 bg-green-50 cursor-default"
                   : isSubmitting
-                  ? "bg-gray-100 text-gray-500 cursor-wait"
-                  : "bg-white text-black-700 hover:bg-slate-50 focus:bg-slate-100"
+                  ? "border-gray-300 text-gray-400 cursor-wait"
+                  : "border-blue-500 text-blue-600 hover:bg-blue-50 focus:bg-blue-100"
               }`}
             >
               {requestSent ? "Request Sent" : isSubmitting ? "Requesting..." : "Request Book"}
@@ -231,7 +231,7 @@ export default function BookDetailsPage() {
             <input type="hidden" name="intent" value="return" />
             <button
               type="submit"
-              className="mb-4 rounded border w-full mt-8 bg-amber-500 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-amber-600 focus:bg-amber-700"
+              className="mb-4 rounded border-2 border-amber-500 w-full mt-8 px-4 py-3 text-base font-medium text-amber-600 hover:bg-amber-50 focus:bg-amber-100"
             >
               Return Book
             </button>
@@ -319,10 +319,10 @@ export default function BookDetailsPage() {
                 <button
                   type="submit"
                   disabled={isRefreshing}
-                  className={`rounded px-4 py-2 text-white ${
+                  className={`rounded border-2 px-4 py-2 ${
                     isRefreshing
-                      ? "bg-gray-400 cursor-wait"
-                      : "bg-green-600 hover:bg-green-700 focus:bg-green-800"
+                      ? "border-gray-300 text-gray-400 cursor-wait"
+                      : "border-green-600 text-green-600 hover:bg-green-50 focus:bg-green-100"
                   }`}
                 >
                   {isRefreshing ? "Refreshing..." : "Refresh from Open Library"}
@@ -332,7 +332,7 @@ export default function BookDetailsPage() {
                 <input type="hidden" name="intent" value="delete" />
                 <button
                   type="submit"
-                  className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600 focus:bg-red-400"
+                  className="rounded border-2 border-red-500 px-4 py-2 text-red-500 hover:bg-red-50 focus:bg-red-100"
                 >
                   Delete
                 </button>
