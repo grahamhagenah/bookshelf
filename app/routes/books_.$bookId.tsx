@@ -2,11 +2,31 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, isRouteErrorResponse, Link, useLoaderData, useRouteError, useNavigation, useActionData } from "@remix-run/react";
 import invariant from "tiny-invariant";
+import { useState } from "react";
 import { deleteBook, getBookById, returnBook, updateBookMetadata } from "~/models/book.server";
 import { getUserById, createBookRequestNotification, createBookReturnedNotification } from "~/models/user.server";
 import { requireUserId } from "~/session.server";
-import ProgressiveImage from "react-progressive-graceful-image";
 import Breadcrumbs from "~/components/breadcrumbs";
+
+function BookCover({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className="relative">
+      {!loaded && (
+        <div className="absolute inset-0 rounded-lg bg-blue-100 opacity-50" style={{ height: 384 }} />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        className={`rounded-lg shadow-xl book-cover h-96 ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+        onLoad={() => setLoaded(true)}
+      />
+    </div>
+  );
+}
 
 type LoaderData = {
   book: {
@@ -201,12 +221,7 @@ export default function BookDetailsPage() {
     <main className="grid grid-cols-1 md:grid-cols-[1fr,2fr] gap-4 md:gap-16 p-8 w-full lg:w-3/4 xl:w-1/2 mx-auto mt-4 md:mt-12">
       <section className="order-2 md:order-1">
         <div className="book-cover p-8 md:p-0">
-          <ProgressiveImage src={data.book.cover} placeholder="">
-            {(src, loading) => {
-              return loading ? <div className="rounded-lg" style={{ opacity: 0.5, backgroundColor: '#D4F5FF', height: 384 }}/>
-              : <img height="384" className="rounded-lg shadow-xl book-cover h-96" src={src} alt={data.book.title} />;
-            }}
-          </ProgressiveImage>
+          <BookCover src={data.book.cover} alt={data.book.title} />
         </div>
         {canRequestBook && (
           <Form method="post">

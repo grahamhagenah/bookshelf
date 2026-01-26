@@ -6,12 +6,7 @@ import { createFriendship, getUserById, markNotificationAsRead, createBookApprov
 import { lendBook } from "~/models/book.server";
 import Layout from "~/components / Layout/Layout";
 import Breadcrumbs from "~/components/breadcrumbs";
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import HourglassTopIcon from '@mui/icons-material/HourglassTop';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
-import HistoryIcon from '@mui/icons-material/History';
+import { PersonAddIcon, HourglassIcon, MenuBookIcon, CheckCircleIcon, KeyboardReturnIcon, HistoryIcon } from "~/components/icons";
 
 export const handle = {
   breadcrumb: () => <span>Notifications</span>,
@@ -242,7 +237,7 @@ export default function Notifications() {
           </ul>
         ) : (
           <div className="flex items-center gap-3 text-gray-500 py-4">
-            <HourglassTopIcon />
+            <HourglassIcon />
             <span>No new notifications</span>
           </div>
         )}

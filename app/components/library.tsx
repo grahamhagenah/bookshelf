@@ -1,11 +1,6 @@
 import { NavLink, Link } from "@remix-run/react";
 import { useState, useLayoutEffect, useEffect } from "react";
-import ProgressiveImage from "react-progressive-graceful-image";
-import GroupIcon from '@mui/icons-material/Group';
-import SearchIcon from '@mui/icons-material/Search';
-import ImportContactsIcon from '@mui/icons-material/ImportContacts';
-import ViewModuleIcon from '@mui/icons-material/ViewModule';
-import ViewListIcon from '@mui/icons-material/ViewList';
+import { GroupIcon, SearchIcon, BookIcon, GridViewIcon, ListViewIcon } from './icons';
 
 // Generate a consistent color based on a string hash
 function getColorFromString(str: string): string {
@@ -31,6 +26,43 @@ interface Book {
 
 interface LibraryProps {
   bookListItems: Book[];
+}
+
+// Simple progressive image component with native lazy loading
+function BookCover({ src, alt, className, style }: { src: string; alt: string; className?: string; style?: React.CSSProperties }) {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+  const placeholderColor = getColorFromString(src || alt);
+
+  if (error) {
+    return (
+      <div
+        className={className}
+        style={{ ...style, backgroundColor: placeholderColor }}
+      />
+    );
+  }
+
+  return (
+    <div className="relative" style={style}>
+      {!loaded && (
+        <div
+          className={`absolute inset-0 ${className}`}
+          style={{ backgroundColor: placeholderColor }}
+        />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        className={`${className} ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+        style={style}
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+      />
+    </div>
+  );
 }
 
 export default function Library({ bookListItems }: LibraryProps) {
@@ -69,7 +101,7 @@ export default function Library({ bookListItems }: LibraryProps) {
                   to="/search"
                   className="block h-full p-6 m-4 md:m-0 rounded-xl border-2 border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-colors"
                 >
-                  <SearchIcon fontSize="large" className="text-blue-500" />
+                  <SearchIcon size={32} className="text-blue-500" />
                   <p className="mt-5">Search for books by author or title</p>
                 </Link>
               </li>
@@ -78,7 +110,7 @@ export default function Library({ bookListItems }: LibraryProps) {
                   to="/friends"
                   className="block h-full p-6 m-4 md:m-0 rounded-xl border-2 border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-colors"
                 >
-                  <GroupIcon fontSize="large" className="text-blue-500" />
+                  <GroupIcon size={32} className="text-blue-500" />
                   <p className="mt-5">Add friends to see their books</p>
                 </Link>
               </li>
@@ -87,7 +119,7 @@ export default function Library({ bookListItems }: LibraryProps) {
                   to="/friends"
                   className="block h-full p-6 m-4 md:m-0 rounded-xl border-2 border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-colors"
                 >
-                  <ImportContactsIcon fontSize="large" className="text-blue-500" />
+                  <BookIcon size={32} className="text-blue-500" />
                   <p className="mt-5">Start borrowing and lending</p>
                 </Link>
               </li>
@@ -112,7 +144,7 @@ export default function Library({ bookListItems }: LibraryProps) {
               }`}
               title="Cover view"
             >
-              <ViewModuleIcon sx={{ fontSize: 18 }} />
+              <GridViewIcon size={18} />
             </button>
             <button
               onClick={() => handleViewChange("list")}
@@ -123,7 +155,7 @@ export default function Library({ bookListItems }: LibraryProps) {
               }`}
               title="List view"
             >
-              <ViewListIcon sx={{ fontSize: 18 }} />
+              <ListViewIcon size={18} />
             </button>
           </div>
         </div>
@@ -134,21 +166,11 @@ export default function Library({ bookListItems }: LibraryProps) {
             {bookListItems.map((book) => (
               <li key={book.id} className="cover-wrapper relative">
                 <NavLink to={`/books/${book.id}`}>
-                  <ProgressiveImage src={book.cover} placeholder="">
-                    {(src, loading) => {
-                      return loading ? (
-                        <div
-                          className="rounded-lg"
-                          style={{
-                            backgroundColor: getColorFromString(book.cover || book.id),
-                            height: 320,
-                          }}
-                        />
-                      ) : (
-                        <img height="320" className="rounded-lg shadow-xl book-cover h-80" src={src} alt={book.title} />
-                      );
-                    }}
-                  </ProgressiveImage>
+                  <BookCover
+                    src={book.cover}
+                    alt={book.title}
+                    className="rounded-lg shadow-xl book-cover h-80 w-full object-cover"
+                  />
                   {book.isBorrowed && (
                     <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full shadow">
                       Borrowed
@@ -174,24 +196,11 @@ export default function Library({ bookListItems }: LibraryProps) {
                   to={`/books/${book.id}`}
                   className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
                 >
-                  <ProgressiveImage src={book.cover} placeholder="">
-                    {(src, loading) => {
-                      return loading ? (
-                        <div
-                          className="rounded w-12 h-16 flex-shrink-0"
-                          style={{
-                            backgroundColor: getColorFromString(book.cover || book.id),
-                          }}
-                        />
-                      ) : (
-                        <img
-                          className="rounded shadow w-12 h-16 object-cover flex-shrink-0"
-                          src={src}
-                          alt={book.title}
-                        />
-                      );
-                    }}
-                  </ProgressiveImage>
+                  <BookCover
+                    src={book.cover}
+                    alt={book.title}
+                    className="rounded shadow w-12 h-16 object-cover flex-shrink-0"
+                  />
                   <div className="flex-grow min-w-0">
                     <p className="truncate">
                       <span className="font-medium text-gray-900">{book.title}</span>

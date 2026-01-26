@@ -5,7 +5,7 @@ import { Form } from "@remix-run/react";
 import { createBook } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
 import Breadcrumbs from "~/components/breadcrumbs";
-import SearchIcon from '@mui/icons-material/Search';
+import { SearchIcon } from "~/components/icons";
 
 export const handle = {
   breadcrumb: () => <span>Search</span>,
@@ -215,7 +215,9 @@ export default function Search() {
           <div className="flex flex-col gap-4">
             {/* Search Input */}
             <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <SearchIcon size={20} />
+              </div>
               <input
                 type="text"
                 name="q"
@@ -305,7 +307,7 @@ export default function Search() {
         {/* Empty State */}
         {!data.query && (
           <div className="text-center py-16">
-            <SearchIcon style={{ fontSize: 64 }} className="text-gray-300 mb-4" />
+            <SearchIcon size={64} className="text-gray-300 mb-4 mx-auto" />
             <h2 className="text-2xl font-semibold text-gray-700 mb-2">Search for Books</h2>
             <p className="text-gray-500 max-w-md mx-auto">
               Enter a book title, author name, or keywords to search the Open Library database

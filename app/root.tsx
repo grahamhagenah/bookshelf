@@ -9,8 +9,10 @@ import stylesheet from "~/styles/tailwind.css";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
-  { rel: "globalStyles", href: stylesheet },
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
+  // Preconnect to Open Library for faster cover image loads
+  { rel: "preconnect", href: "https://covers.openlibrary.org" },
+  { rel: "dns-prefetch", href: "https://covers.openlibrary.org" },
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

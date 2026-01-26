@@ -1,6 +1,5 @@
 import { Link, useMatches } from "@remix-run/react";
-import HomeIcon from '@mui/icons-material/Home';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { HomeIcon, ChevronRightIcon } from './icons';
 
 interface BreadcrumbItem {
   label: React.ReactNode;
@@ -55,7 +54,7 @@ export default function Breadcrumbs() {
             to="/books"
             className="flex items-center gap-1 hover:text-gray-900 transition-colors"
           >
-            <HomeIcon fontSize="small" />
+            <HomeIcon size={18} />
             <span className="sr-only">Home</span>
           </Link>
         </li>
@@ -63,7 +62,7 @@ export default function Breadcrumbs() {
           const isLast = index === allBreadcrumbs.length - 1;
           return (
             <li key={crumb.id} className="flex items-center gap-1">
-              <ChevronRightIcon fontSize="small" className="text-gray-400" />
+              <ChevronRightIcon size={18} className="text-gray-400" />
               {isLast ? (
                 <span className="font-medium text-gray-900">{crumb.label}</span>
               ) : crumb.href ? (
