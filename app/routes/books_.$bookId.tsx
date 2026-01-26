@@ -12,16 +12,16 @@ function BookCover({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <div className="relative">
+    <div className="relative inline-block">
       {!loaded && (
-        <div className="absolute inset-0 rounded-lg bg-blue-100 opacity-50" style={{ height: 384 }} />
+        <div className="rounded-lg bg-blue-100 opacity-50" style={{ width: 256, height: 384 }} />
       )}
       <img
         src={src}
         alt={alt}
         loading="lazy"
         decoding="async"
-        className={`rounded-lg shadow-xl book-cover h-96 ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+        className={`rounded-lg shadow-xl h-96 ${loaded ? 'opacity-100' : 'opacity-0'} ${!loaded ? 'absolute top-0 left-0' : ''} transition-opacity duration-300`}
         onLoad={() => setLoaded(true)}
       />
     </div>
