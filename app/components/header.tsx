@@ -21,14 +21,10 @@ export default function Header() {
         <BookStackIcon size={32} />
         <span>Stacks</span>
       </a>
-      <div>
-        <div className="hidden md:inline-block">
-          {user && <Search />}
-        </div>
-        <div className="inline-block md:relative whitespace-nowrap">
-          {user && <Notifications />}
-          <PositionedMenu />
-        </div>
+      <div className="flex items-center">
+        {user && <Search />}
+        {user && <Notifications />}
+        <PositionedMenu />
       </div>
     </header>
   );
