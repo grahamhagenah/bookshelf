@@ -59,6 +59,16 @@ export function getBookListItems(userId: User["id"]) {
   });
 }
 
+export function getPublicBookListItems(userId: User["id"]) {
+  return prisma.book.findMany({
+    where: {
+      userId: userId,
+    },
+    select: { id: true, title: true, cover: true, author: true },
+    orderBy: { updatedAt: "desc" },
+  });
+}
+
 // export function getBooksByUserId(userId) {
 //   try {
 //     const books = await prisma.book.findMany({

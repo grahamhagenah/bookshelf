@@ -2,11 +2,11 @@ import { useLoaderData } from "@remix-run/react";
 import { requireUserId } from "~/session.server";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { getUserById, getUserByEmail, updateUser } from "~/models/user.server";
+import { getUserById, getUserByEmail, updateUser, generateShareToken, revokeShareToken } from "~/models/user.server";
 import Layout from "~/components / Layout/Layout";
 import Breadcrumbs from "~/components/breadcrumbs";
 import { Form, useActionData } from "@remix-run/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const handle = {
   breadcrumb: () => <span>Account</span>,
@@ -15,13 +15,28 @@ export const handle = {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const user = await getUserById(userId);
-  return { user };
+  const url = new URL(request.url);
+  const origin = url.origin;
+  return { user, origin };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   const formData = await request.formData();
+  const intent = formData.get("intent");
 
+  // Handle share token actions
+  if (intent === "generateShareToken") {
+    await generateShareToken(userId);
+    return json({ errors: null, success: false, shareAction: "generated" });
+  }
+
+  if (intent === "revokeShareToken") {
+    await revokeShareToken(userId);
+    return json({ errors: null, success: false, shareAction: "revoked" });
+  }
+
+  // Handle profile update
   const firstname = formData.get("firstname");
   const surname = formData.get("surname");
   const email = formData.get("email");
@@ -65,10 +80,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function Account() {
   const data = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const [copied, setCopied] = useState(false);
 
   const firstnameRef = useRef<HTMLInputElement>(null);
   const surnameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
+
+  const shareUrl = data.user?.shareToken
+    ? `${data.origin}/share/${data.user.shareToken}`
+    : null;
+
+  const handleCopy = async () => {
+    if (shareUrl) {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (actionData?.errors?.firstname) {
@@ -101,6 +129,54 @@ export default function Account() {
               <dd className="text-lg">{data.user?.following.length || 0}</dd>
             </div>
           </dl>
+        </div>
+
+        <div className="border shadow-sm rounded-lg p-8">
+          <h2 className="text-2xl font-semibold mb-2">Share Your Bookshelf</h2>
+          <p className="text-gray-600 mb-6">
+            Anyone with this link can view your bookshelf without logging in.
+          </p>
+
+          {shareUrl ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={shareUrl}
+                  className="flex-1 rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+                >
+                  {copied ? "Copied!" : "Copy Link"}
+                </button>
+                <Form method="post">
+                  <input type="hidden" name="intent" value="revokeShareToken" />
+                  <button
+                    type="submit"
+                    className="rounded border border-red-500 px-4 py-2 text-red-500 hover:bg-red-50"
+                  >
+                    Revoke Access
+                  </button>
+                </Form>
+              </div>
+            </div>
+          ) : (
+            <Form method="post">
+              <input type="hidden" name="intent" value="generateShareToken" />
+              <button
+                type="submit"
+                className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+              >
+                Generate Share Link
+              </button>
+            </Form>
+          )}
         </div>
       </section>
 

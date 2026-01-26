@@ -13,6 +13,7 @@ export async function getUserById(id: User["id"]) {
       email: true,
       firstname: true,
       surname: true,
+      shareToken: true,
       notificationsSent: true,
       notificationsReceived: {
         where: { read: false },
@@ -297,6 +298,33 @@ export async function searchUsers(query: string, currentUserId: string) {
 
   // Return top 10 matches
   return matches.slice(0, 10);
+}
+
+export async function generateShareToken(userId: string): Promise<string> {
+  const token = crypto.randomUUID();
+  await prisma.user.update({
+    where: { id: userId },
+    data: { shareToken: token },
+  });
+  return token;
+}
+
+export async function getUserByShareToken(token: string) {
+  return prisma.user.findUnique({
+    where: { shareToken: token },
+    select: {
+      id: true,
+      firstname: true,
+      surname: true,
+    },
+  });
+}
+
+export async function revokeShareToken(userId: string) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { shareToken: null },
+  });
 }
 
 export async function verifyLogin(
