@@ -1,11 +1,11 @@
-import { json, redirect } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useSearchParams, useNavigation, Link } from "@remix-run/react";
+import { useLoaderData, useSearchParams, useNavigation, Link, useFetcher } from "@remix-run/react";
 import { Form } from "@remix-run/react";
-import { createBook } from "~/models/book.server";
-import { requireUserId } from "~/session.server";
+import { createBook, getUserLibraryKeys, bookExistsInLibrary } from "~/models/book.server";
+import { requireUserId, getUserId } from "~/session.server";
 import Breadcrumbs from "~/components/breadcrumbs";
-import { SearchIcon } from "~/components/icons";
+import { SearchIcon, CheckCircleIcon } from "~/components/icons";
 
 export const handle = {
   breadcrumb: () => <span>Search</span>,
@@ -51,11 +51,15 @@ const RESULTS_PER_PAGE = 20;
 
 // Make GET request to Open Library API
 export async function loader({ request }: LoaderFunctionArgs) {
+  const userId = await getUserId(request);
   const url = new URL(request.url);
   const query = url.searchParams.get("q") || "";
   const searchType = url.searchParams.get("type") || "all";
   const language = url.searchParams.get("lang") || "";
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+
+  // Get user's existing library keys to show which books are already added
+  const libraryKeys = userId ? await getUserLibraryKeys(userId) : [];
 
   // Return empty results if no query
   if (!query.trim()) {
@@ -67,6 +71,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       language,
       page: 1,
       totalPages: 0,
+      libraryKeys,
     });
   }
 
@@ -116,7 +121,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const totalPages = Math.ceil(data.numFound / RESULTS_PER_PAGE);
 
-  return json({ ...data, query, searchType, language, page, totalPages });
+  return json({ ...data, query, searchType, language, page, totalPages, libraryKeys });
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -132,6 +137,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const subjects = formData.get("subjects");
   const publisher = formData.get("publisher");
   const openLibraryKey = formData.get("openLibraryKey");
+
+  // Check if book already exists in user's library
+  if (typeof openLibraryKey === "string" && openLibraryKey.length > 0) {
+    const exists = await bookExistsInLibrary(userId, openLibraryKey);
+    if (exists) {
+      return json({ success: false, alreadyExists: true, addedKey: openLibraryKey });
+    }
+  }
 
   // Fetch description from Open Library Works API
   let description = "";
@@ -165,8 +178,97 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     userId,
   });
 
-  return redirect(`/books`);
+  return json({ success: true, addedKey: openLibraryKey });
 };
+
+function SearchResultItem({ book, isInLibrary }: { book: OpenLibraryBook; isInLibrary: boolean }) {
+  const fetcher = useFetcher<{ success: boolean; alreadyExists?: boolean; addedKey: string }>();
+  const isAdding = fetcher.state === "submitting";
+  const isAdded = fetcher.data?.success === true;
+  const alreadyInLibrary = isInLibrary || fetcher.data?.alreadyExists === true;
+  const subjectsPreview = book.subject?.slice(0, 3).join(", ") ?? "";
+
+  return (
+    <li className="border-b border-gray-200 last:border-0 py-4">
+      <fetcher.Form method="post" className="flex gap-4">
+        <div className="flex-shrink-0">
+          {book.cover_i ? (
+            <img
+              className="rounded-md shadow-md w-24 h-36 object-cover"
+              src={`https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`}
+              alt={book.title}
+            />
+          ) : (
+            <div className="w-24 h-36 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
+              No Cover
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-xl font-bold truncate">{book.title}</h3>
+          <h4 className="text-base text-gray-700">
+            {book.author_name?.join(", ") ?? "Unknown Author"}
+          </h4>
+
+          <div className="flex flex-wrap gap-3 text-sm text-gray-600 py-1">
+            {book.first_publish_year && (
+              <span>{book.first_publish_year}</span>
+            )}
+            {book.number_of_pages_median && (
+              <span>{book.number_of_pages_median} pages</span>
+            )}
+            {book.publisher?.[0] && (
+              <span className="truncate max-w-[200px]">{book.publisher[0]}</span>
+            )}
+          </div>
+
+          {subjectsPreview && (
+            <p className="text-sm text-gray-500 truncate">{subjectsPreview}</p>
+          )}
+
+          <input type="hidden" name="title" value={book.title ?? ""} />
+          <input type="hidden" name="author" value={book.author_name?.[0] ?? ""} />
+          <input type="hidden" name="cover" value={book.cover_i ?? ""} />
+          <input type="hidden" name="datePublished" value={book.first_publish_year?.toString() ?? ""} />
+          <input type="hidden" name="pageCount" value={book.number_of_pages_median?.toString() ?? ""} />
+          <input type="hidden" name="subjects" value={book.subject?.slice(0, 5).join(", ") ?? ""} />
+          <input type="hidden" name="publisher" value={book.publisher?.[0] ?? ""} />
+          <input type="hidden" name="openLibraryKey" value={book.key ?? ""} />
+
+          <button
+            type="submit"
+            disabled={isAdding || isAdded || alreadyInLibrary}
+            className={`rounded px-3 py-1.5 text-sm mt-2 inline-flex items-center gap-1.5 ${
+              isAdded
+                ? "bg-green-500 text-white cursor-default"
+                : alreadyInLibrary
+                ? "bg-gray-200 text-gray-500 cursor-default"
+                : isAdding
+                ? "bg-gray-400 text-white cursor-wait"
+                : "bg-blue-500 text-white hover:bg-blue-600 focus:bg-blue-400"
+            }`}
+          >
+            {isAdded ? (
+              <>
+                <CheckCircleIcon size={16} />
+                Added to Library
+              </>
+            ) : alreadyInLibrary ? (
+              <>
+                <CheckCircleIcon size={16} />
+                In Library
+              </>
+            ) : isAdding ? (
+              "Adding..."
+            ) : (
+              "Add to Library"
+            )}
+          </button>
+        </div>
+      </fetcher.Form>
+    </li>
+  );
+}
 
 export default function Search() {
   const data = useLoaderData<typeof loader>();
@@ -346,66 +448,9 @@ export default function Search() {
 
         {/* Results List */}
         <ul className="search-results mb-4">
-          {data.docs.map((book, index) => {
-            const subjectsPreview = book.subject?.slice(0, 3).join(", ") ?? "";
-            return (
-              <li key={index} className="border-b border-gray-200 last:border-0 py-4">
-                <Form method="post" className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    {book.cover_i ? (
-                      <img
-                        className="rounded-md shadow-md w-24 h-36 object-cover"
-                        src={`https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`}
-                        alt={book.title}
-                      />
-                    ) : (
-                      <div className="w-24 h-36 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
-                        No Cover
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-bold truncate">{book.title}</h3>
-                    <h4 className="text-base text-gray-700">
-                      {book.author_name?.join(", ") ?? "Unknown Author"}
-                    </h4>
-
-                    <div className="flex flex-wrap gap-3 text-sm text-gray-600 py-1">
-                      {book.first_publish_year && (
-                        <span>{book.first_publish_year}</span>
-                      )}
-                      {book.number_of_pages_median && (
-                        <span>{book.number_of_pages_median} pages</span>
-                      )}
-                      {book.publisher?.[0] && (
-                        <span className="truncate max-w-[200px]">{book.publisher[0]}</span>
-                      )}
-                    </div>
-
-                    {subjectsPreview && (
-                      <p className="text-sm text-gray-500 truncate">{subjectsPreview}</p>
-                    )}
-
-                    <input type="hidden" name="title" value={book.title ?? ""} />
-                    <input type="hidden" name="author" value={book.author_name?.[0] ?? ""} />
-                    <input type="hidden" name="cover" value={book.cover_i ?? ""} />
-                    <input type="hidden" name="datePublished" value={book.first_publish_year?.toString() ?? ""} />
-                    <input type="hidden" name="pageCount" value={book.number_of_pages_median?.toString() ?? ""} />
-                    <input type="hidden" name="subjects" value={book.subject?.slice(0, 5).join(", ") ?? ""} />
-                    <input type="hidden" name="publisher" value={book.publisher?.[0] ?? ""} />
-                    <input type="hidden" name="openLibraryKey" value={book.key ?? ""} />
-
-                    <button
-                      className="rounded bg-blue-500 px-3 py-1.5 text-sm text-white hover:bg-blue-600 focus:bg-blue-400 mt-2"
-                      type="submit"
-                    >
-                      Add to Library
-                    </button>
-                  </div>
-                </Form>
-              </li>
-            );
-          })}
+          {data.docs.map((book, index) => (
+            <SearchResultItem key={book.key || index} book={book} isInLibrary={book.key ? data.libraryKeys.includes(book.key) : false} />
+          ))}
         </ul>
 
         {/* Pagination */}

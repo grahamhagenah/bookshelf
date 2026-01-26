@@ -184,3 +184,19 @@ export async function getBookStats(userId: User["id"]) {
 
   return { totalBooks, borrowedBooks, lentBooks };
 }
+
+export async function getUserLibraryKeys(userId: User["id"]) {
+  const books = await prisma.book.findMany({
+    where: { userId },
+    select: { openLibraryKey: true },
+  });
+  return books.map((b) => b.openLibraryKey).filter(Boolean) as string[];
+}
+
+export async function bookExistsInLibrary(userId: User["id"], openLibraryKey: string) {
+  const book = await prisma.book.findFirst({
+    where: { userId, openLibraryKey },
+    select: { id: true },
+  });
+  return book !== null;
+}
