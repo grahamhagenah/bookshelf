@@ -155,7 +155,7 @@ export default function Library({ bookListItems }: LibraryProps) {
                     </span>
                   )}
                   {book.isLending && (
-                    <span className="absolute top-2 right-2 bg-amber-500 text-white text-xs px-2 py-1 rounded-full shadow">
+                    <span className="absolute top-2 right-2 bg-orange-600 text-white text-xs px-2 py-1 rounded-full shadow">
                       Lending
                     </span>
                   )}
@@ -193,10 +193,12 @@ export default function Library({ bookListItems }: LibraryProps) {
                     }}
                   </ProgressiveImage>
                   <div className="flex-grow min-w-0">
-                    <h3 className="font-medium text-gray-900 truncate">{book.title}</h3>
-                    {book.author && (
-                      <p className="text-sm text-gray-500 truncate">{book.author}</p>
-                    )}
+                    <p className="truncate">
+                      <span className="font-medium text-gray-900">{book.title}</span>
+                      {book.author && (
+                        <span className="text-gray-400"> · <span className="text-gray-500">{book.author}</span></span>
+                      )}
+                    </p>
                   </div>
                   {book.isBorrowed && (
                     <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full flex-shrink-0">
@@ -204,7 +206,7 @@ export default function Library({ bookListItems }: LibraryProps) {
                     </span>
                   )}
                   {book.isLending && (
-                    <span className="bg-amber-500 text-white text-xs px-2 py-1 rounded-full flex-shrink-0">
+                    <span className="bg-orange-600 text-white text-xs px-2 py-1 rounded-full flex-shrink-0">
                       Lending
                     </span>
                   )}

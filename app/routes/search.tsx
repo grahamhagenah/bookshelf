@@ -128,7 +128,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const title = formData.get("title");
   const author = formData.get("author");
   const coverId = formData.get("cover");
-  const cover = "https://covers.openlibrary.org/b/id/" + (coverId ?? "") + "-M.jpg";
+  const cover = "https://covers.openlibrary.org/b/id/" + (coverId ?? "") + "-L.jpg";
   const body = formData.get("body");
   const datePublished = formData.get("datePublished");
   const pageCount = formData.get("pageCount");
@@ -336,7 +336,7 @@ export default function Search() {
                       {book.cover_i ? (
                         <img
                           className="rounded-md shadow-md"
-                          src={`https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`}
+                          src={`https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`}
                           alt={book.title}
                         />
                       ) : (
