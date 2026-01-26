@@ -14,14 +14,14 @@ function BookCover({ src, alt }: { src: string; alt: string }) {
   return (
     <div className="relative inline-block">
       {!loaded && (
-        <div className="rounded-lg bg-blue-100 opacity-50" style={{ width: 256, height: 384 }} />
+        <div className="rounded-lg bg-blue-100 opacity-50" style={{ width: 200, height: 300 }} />
       )}
       <img
         src={src}
         alt={alt}
         loading="lazy"
         decoding="async"
-        className={`rounded-lg shadow-xl h-96 ${loaded ? 'opacity-100' : 'opacity-0'} ${!loaded ? 'absolute top-0 left-0' : ''} transition-opacity duration-300`}
+        className={`rounded-lg shadow-xl h-[300px] ${loaded ? 'opacity-100' : 'opacity-0'} ${!loaded ? 'absolute top-0 left-0' : ''} transition-opacity duration-300`}
         onLoad={() => setLoaded(true)}
       />
     </div>
@@ -170,7 +170,6 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     const fields = [
       'title',
       'author_name',
-      'first_sentence',
       'first_publish_year',
       'number_of_pages_median',
       'subject',
@@ -185,13 +184,32 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
     if (data.docs && data.docs.length > 0) {
       const bookData = data.docs[0];
+
+      // Fetch description from Works API
+      let description = book.body;
+      if (bookData.key) {
+        try {
+          const workRes = await fetch(`https://openlibrary.org${bookData.key}.json`);
+          if (workRes.ok) {
+            const workData = await workRes.json();
+            if (typeof workData.description === "string") {
+              description = workData.description;
+            } else if (workData.description?.value) {
+              description = workData.description.value;
+            }
+          }
+        } catch {
+          // Keep existing description if fetch fails
+        }
+      }
+
       await updateBookMetadata(book.id, {
         datePublished: bookData.first_publish_year?.toString() || null,
         pageCount: bookData.number_of_pages_median || null,
         subjects: bookData.subject?.slice(0, 5).join(", ") || null,
         publisher: bookData.publisher?.[0] || null,
         openLibraryKey: bookData.key || null,
-        body: bookData.first_sentence?.[0] || book.body,
+        body: description,
       });
       return json({ refreshed: true, message: "Book info updated from Open Library!" });
     }
@@ -218,8 +236,8 @@ export default function BookDetailsPage() {
   return (
     <>
     <Breadcrumbs />
-    <main className="flex flex-col md:flex-row gap-8 md:gap-10 p-8 w-full lg:w-3/4 xl:w-2/3 mx-auto mt-4 md:mt-12">
-      <section className="order-2 md:order-1 md:w-1/3 flex-shrink-0">
+    <main className="flex flex-col md:flex-row gap-8 md:gap-12 p-8 w-full max-w-5xl mx-auto mt-4 md:mt-12">
+      <section className="order-2 md:order-1 flex-shrink-0">
         <div className="book-cover p-8 md:p-0">
           <BookCover src={data.book.cover} alt={data.book.title} />
         </div>

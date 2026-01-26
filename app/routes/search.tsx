@@ -15,7 +15,6 @@ interface OpenLibraryBook {
   title: string;
   author_name?: string[];
   cover_i?: number;
-  first_sentence?: string[];
   first_publish_year?: number;
   number_of_pages_median?: number;
   subject?: string[];
@@ -76,7 +75,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     "title",
     "author_name",
     "cover_i",
-    "first_sentence",
     "first_publish_year",
     "number_of_pages_median",
     "subject",
@@ -129,17 +127,35 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const author = formData.get("author");
   const coverId = formData.get("cover");
   const cover = "https://covers.openlibrary.org/b/id/" + (coverId ?? "") + "-L.jpg";
-  const body = formData.get("body");
   const datePublished = formData.get("datePublished");
   const pageCount = formData.get("pageCount");
   const subjects = formData.get("subjects");
   const publisher = formData.get("publisher");
   const openLibraryKey = formData.get("openLibraryKey");
 
+  // Fetch description from Open Library Works API
+  let description = "";
+  if (typeof openLibraryKey === "string" && openLibraryKey.length > 0) {
+    try {
+      const workRes = await fetch(`https://openlibrary.org${openLibraryKey}.json`);
+      if (workRes.ok) {
+        const workData = await workRes.json();
+        // Description can be a string or an object with a "value" property
+        if (typeof workData.description === "string") {
+          description = workData.description;
+        } else if (workData.description?.value) {
+          description = workData.description.value;
+        }
+      }
+    } catch {
+      // Silently fail - we'll just have no description
+    }
+  }
+
   await createBook({
     title: typeof title === "string" ? title : "",
     author: typeof author === "string" ? author : "",
-    body: typeof body === "string" ? body : "",
+    body: description,
     cover,
     datePublished: typeof datePublished === "string" && datePublished.length > 0 ? datePublished : null,
     pageCount: typeof pageCount === "string" && pageCount.length > 0 ? parseInt(pageCount, 10) : null,
@@ -331,58 +347,46 @@ export default function Search() {
           {data.docs.map((book, index) => {
             const subjectsPreview = book.subject?.slice(0, 3).join(", ") ?? "";
             return (
-              <li key={index} className="border-b border-gray-200 last:border-0">
-                <Form method="post" className="grid grid-cols-1 md:grid-cols-[1fr,3fr]">
-                  <section className="w-full p-4">
-                    <div className="book-cover">
-                      {book.cover_i ? (
-                        <img
-                          className="rounded-md shadow-md"
-                          src={`https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`}
-                          alt={book.title}
-                        />
-                      ) : (
-                        <div className="w-full h-48 bg-gray-200 rounded-md flex items-center justify-center text-gray-400">
-                          No Cover
-                        </div>
-                      )}
-                    </div>
-                  </section>
-                  <section className="w-full p-4">
-                    <h3 className="text-2xl md:text-3xl font-bold">{book.title}</h3>
-                    <h4 className="text-lg md:text-xl py-2 text-gray-700">
+              <li key={index} className="border-b border-gray-200 last:border-0 py-4">
+                <Form method="post" className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    {book.cover_i ? (
+                      <img
+                        className="rounded-md shadow-md w-24 h-36 object-cover"
+                        src={`https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`}
+                        alt={book.title}
+                      />
+                    ) : (
+                      <div className="w-24 h-36 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
+                        No Cover
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-bold truncate">{book.title}</h3>
+                    <h4 className="text-base text-gray-700">
                       {book.author_name?.join(", ") ?? "Unknown Author"}
                     </h4>
 
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600 py-2">
+                    <div className="flex flex-wrap gap-3 text-sm text-gray-600 py-1">
                       {book.first_publish_year && (
-                        <span>Published: {book.first_publish_year}</span>
+                        <span>{book.first_publish_year}</span>
                       )}
                       {book.number_of_pages_median && (
                         <span>{book.number_of_pages_median} pages</span>
                       )}
                       {book.publisher?.[0] && (
-                        <span>{book.publisher[0]}</span>
-                      )}
-                      {book.language && book.language.length > 0 && (
-                        <span className="bg-gray-100 px-2 py-0.5 rounded">
-                          {book.language.slice(0, 3).join(", ")}
-                        </span>
+                        <span className="truncate max-w-[200px]">{book.publisher[0]}</span>
                       )}
                     </div>
 
                     {subjectsPreview && (
-                      <p className="text-sm text-gray-500 py-1">{subjectsPreview}</p>
+                      <p className="text-sm text-gray-500 truncate">{subjectsPreview}</p>
                     )}
-
-                    <p className="summary py-4 text-gray-700">
-                      {book.first_sentence ? book.first_sentence[0] : "No description available."}
-                    </p>
 
                     <input type="hidden" name="title" value={book.title ?? ""} />
                     <input type="hidden" name="author" value={book.author_name?.[0] ?? ""} />
                     <input type="hidden" name="cover" value={book.cover_i ?? ""} />
-                    <input type="hidden" name="body" value={book.first_sentence?.[0] ?? ""} />
                     <input type="hidden" name="datePublished" value={book.first_publish_year?.toString() ?? ""} />
                     <input type="hidden" name="pageCount" value={book.number_of_pages_median?.toString() ?? ""} />
                     <input type="hidden" name="subjects" value={book.subject?.slice(0, 5).join(", ") ?? ""} />
@@ -390,12 +394,12 @@ export default function Search() {
                     <input type="hidden" name="openLibraryKey" value={book.key ?? ""} />
 
                     <button
-                      className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+                      className="rounded bg-blue-500 px-3 py-1.5 text-sm text-white hover:bg-blue-600 focus:bg-blue-400 mt-2"
                       type="submit"
                     >
                       Add to Library
                     </button>
-                  </section>
+                  </div>
                 </Form>
               </li>
             );
