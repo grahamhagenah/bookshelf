@@ -218,8 +218,8 @@ export default function BookDetailsPage() {
   return (
     <>
     <Breadcrumbs />
-    <main className="grid grid-cols-1 md:grid-cols-[1fr,2fr] gap-4 md:gap-16 p-8 w-full lg:w-3/4 xl:w-1/2 mx-auto mt-4 md:mt-12">
-      <section className="order-2 md:order-1">
+    <main className="flex flex-col md:flex-row gap-8 md:gap-16 p-8 w-full lg:w-3/4 xl:w-2/3 mx-auto mt-4 md:mt-12">
+      <section className="order-2 md:order-1 md:w-1/3 flex-shrink-0">
         <div className="book-cover p-8 md:p-0">
           <BookCover src={data.book.cover} alt={data.book.title} />
         </div>
@@ -258,7 +258,7 @@ export default function BookDetailsPage() {
           </p>
         )}
       </section>
-      <section className="order-1 md:order-2">
+      <section className="order-1 md:order-2 flex-1">
         <h3 className="text-4xl md:text-5xl font-bold">{data.book.title}</h3>
         <h4 className="text-3xl md:text-4xl author py-4">{data.book.author}</h4>
 
