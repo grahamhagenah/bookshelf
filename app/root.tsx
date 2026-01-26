@@ -15,6 +15,7 @@ export const meta: MetaFunction = () => [
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
+  { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
   // Preconnect to Open Library for faster cover image loads
   { rel: "preconnect", href: "https://covers.openlibrary.org" },
   { rel: "dns-prefetch", href: "https://covers.openlibrary.org" },

@@ -75,7 +75,6 @@ export default function PositionedMenu() {
           <Form action="/logout" method="post">
             <button
               type="submit"
-              onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2 w-full hover:bg-gray-100 transition-colors text-left"
             >
               <LogoutIcon size={20} />

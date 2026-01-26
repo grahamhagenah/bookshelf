@@ -225,9 +225,11 @@ export default function Search() {
   return (
     <>
       <Breadcrumbs />
-      <div id="search-container" className="w-11/12 md:w-3/4 lg:w-2/3 mx-auto mt-4">
+      <main className="w-full max-w-4xl mx-auto px-4 py-8 md:px-8 md:py-12">
+        <h1 className="text-3xl md:text-4xl font-bold mb-8">Search</h1>
+
         {/* Search Form */}
-        <Form method="get" className="bg-white border rounded-lg shadow-sm p-6 mb-8">
+        <Form method="get" className="border rounded-lg p-6 mb-8">
           <div className="flex flex-col gap-4">
             {/* Search Input */}
             <div className="relative">
@@ -254,7 +256,7 @@ export default function Search() {
                   id="type"
                   name="type"
                   defaultValue={currentType}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-10 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">All Fields</option>
                   <option value="title">Title</option>
@@ -271,7 +273,7 @@ export default function Search() {
                   id="lang"
                   name="lang"
                   defaultValue={currentLang}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-10 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {LANGUAGES.map((lang) => (
                     <option key={lang.code} value={lang.code}>
@@ -286,7 +288,7 @@ export default function Search() {
                 <button
                   type="submit"
                   disabled={isSearching}
-                  className="w-full sm:w-auto px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:bg-blue-400 disabled:bg-gray-400"
+                  className="w-full sm:w-auto h-10 px-6 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:bg-blue-400 disabled:bg-gray-400"
                 >
                   {isSearching ? "Searching..." : "Search"}
                 </button>
@@ -464,7 +466,7 @@ export default function Search() {
             )}
           </nav>
         )}
-      </div>
+      </main>
     </>
   );
 }

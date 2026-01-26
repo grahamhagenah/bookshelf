@@ -91,36 +91,63 @@ export default function Library({ bookListItems }: LibraryProps) {
   return (
     <>
     {bookListItems.length === 0 ? (
-    <main className="md:h-4/6 flex flex-col justify-center">
-        <section id="intro">
-          <div className="intro-wrapper">
-            <h1 className="text-4xl md:text-6xl font-semibold mt-5">This is your <strong>lending library</strong></h1>
-            <ol className="card-wrapper md:flex justify-center mx-auto mt-10 text-xl md:w-3/4 gap-4 xl:gap-8">
-              <li className="md:w-1/3">
+    <main className="min-h-[calc(100vh-60px)]">
+        <section className="flex flex-col items-center justify-center min-h-[calc(100vh-60px)] px-4 py-12">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4">
+              Welcome to your <span className="text-blue-600">lending library</span>
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Build your personal book collection, connect with friends, and share the joy of reading together.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg border p-8 max-w-3xl w-full">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Here's how it works</h2>
+            <ol className="space-y-4">
+              <li>
                 <Link
                   to="/search"
-                  className="block h-full p-6 m-4 md:m-0 rounded-xl border-2 border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                  className="flex items-center gap-4 p-4 rounded-xl border-2 border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-all group"
                 >
-                  <SearchIcon size={32} className="text-blue-500" />
-                  <p className="mt-5">Search for books by author or title</p>
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl group-hover:bg-blue-200 transition-colors">
+                    1
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg text-gray-800">Add books to your library</h3>
+                    <p className="text-gray-600">Search for books by title or author and add them to your collection</p>
+                  </div>
+                  <SearchIcon size={32} className="text-blue-400 group-hover:text-blue-600 transition-colors" />
                 </Link>
               </li>
-              <li className="md:w-1/3">
+              <li>
                 <Link
                   to="/friends"
-                  className="block h-full p-6 m-4 md:m-0 rounded-xl border-2 border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                  className="flex items-center gap-4 p-4 rounded-xl border-2 border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-all group"
                 >
-                  <GroupIcon size={32} className="text-blue-500" />
-                  <p className="mt-5">Add friends to see their books</p>
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl group-hover:bg-blue-200 transition-colors">
+                    2
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg text-gray-800">Connect with friends</h3>
+                    <p className="text-gray-600">Find friends by email and see what books they have available</p>
+                  </div>
+                  <GroupIcon size={32} className="text-blue-400 group-hover:text-blue-600 transition-colors" />
                 </Link>
               </li>
-              <li className="md:w-1/3">
+              <li>
                 <Link
-                  to="/friends"
-                  className="block h-full p-6 m-4 md:m-0 rounded-xl border-2 border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                  to="/account"
+                  className="flex items-center gap-4 p-4 rounded-xl border-2 border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-all group"
                 >
-                  <BookIcon size={32} className="text-blue-500" />
-                  <p className="mt-5">Start borrowing and lending</p>
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl group-hover:bg-blue-200 transition-colors">
+                    3
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg text-gray-800">Share your bookshelf</h3>
+                    <p className="text-gray-600">Generate a public link so anyone can browse your collection</p>
+                  </div>
+                  <BookIcon size={32} className="text-blue-400 group-hover:text-blue-600 transition-colors" />
                 </Link>
               </li>
             </ol>

@@ -3,6 +3,7 @@ import { requireUserId } from "~/session.server";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { getUserById, getUserByEmail, updateUser, generateShareToken, revokeShareToken } from "~/models/user.server";
+import { getBookStats } from "~/models/book.server";
 import Layout from "~/components / Layout/Layout";
 import Breadcrumbs from "~/components/breadcrumbs";
 import { Form, useActionData } from "@remix-run/react";
@@ -14,10 +15,13 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const user = await getUserById(userId);
+  const [user, bookStats] = await Promise.all([
+    getUserById(userId),
+    getBookStats(userId),
+  ]);
   const url = new URL(request.url);
   const origin = url.origin;
-  return { user, origin };
+  return { user, origin, bookStats };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -128,6 +132,24 @@ export default function Account() {
             <dd className="text-lg">{data.user?.following.length || 0}</dd>
           </div>
         </dl>
+
+        <div className="mt-6 pt-6 border-t">
+          <h3 className="text-sm font-medium text-gray-500 mb-3">Library Stats</h3>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <dd className="text-2xl font-semibold text-gray-900">{data.bookStats.totalBooks}</dd>
+              <dt className="text-sm text-gray-500">Books</dt>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-3">
+              <dd className="text-2xl font-semibold text-blue-600">{data.bookStats.borrowedBooks}</dd>
+              <dt className="text-sm text-gray-500">Borrowed</dt>
+            </div>
+            <div className="bg-amber-50 rounded-lg p-3">
+              <dd className="text-2xl font-semibold text-amber-600">{data.bookStats.lentBooks}</dd>
+              <dt className="text-sm text-gray-500">Lent Out</dt>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="border rounded-lg p-6">

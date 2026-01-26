@@ -174,3 +174,13 @@ export function getBorrowedBooks(userId: User["id"]) {
     orderBy: { updatedAt: "desc" },
   });
 }
+
+export async function getBookStats(userId: User["id"]) {
+  const [totalBooks, borrowedBooks, lentBooks] = await Promise.all([
+    prisma.book.count({ where: { userId } }),
+    prisma.book.count({ where: { borrowerId: userId } }),
+    prisma.book.count({ where: { userId, borrowerId: { not: null } } }),
+  ]);
+
+  return { totalBooks, borrowedBooks, lentBooks };
+}
