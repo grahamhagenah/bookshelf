@@ -68,7 +68,6 @@ button#demo-customized-button {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 0 8px;
 }
 
 .stretched-link::after {
