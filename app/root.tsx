@@ -1,11 +1,16 @@
 import { cssBundleHref } from "@remix-run/css-bundle";
-import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
+import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import Header from './components/header'
 import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration,
 } from "@remix-run/react";
 import { getUser } from "~/session.server";
 import stylesheet from "~/styles/tailwind.css";
+
+export const meta: MetaFunction = () => [
+  { title: "Stacks - Your Lending Library" },
+  { name: "description", content: "Share and borrow books with friends" },
+];
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
