@@ -2,7 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { requireUserId, getUserId } from "~/session.server";
 import { useLoaderData, useFetcher, Link } from "@remix-run/react";
-import { getUserById, createNotification, getUserByEmail } from "~/models/user.server";
+import { getUserById, createNotification, getUserByEmail, getSuggestedFriends, getPendingFriendRequests } from "~/models/user.server";
 import { Form, useActionData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import Layout from "~/components / Layout/Layout";
@@ -15,8 +15,12 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const user = await getUserById(userId);
-  return { user };
+  const [user, suggestedFriends, pendingRequests] = await Promise.all([
+    getUserById(userId),
+    getSuggestedFriends(userId, 5),
+    getPendingFriendRequests(userId),
+  ]);
+  return { user, suggestedFriends, pendingRequests };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -130,6 +134,9 @@ export default function Friends() {
   };
 
   const following = data.user?.following ?? [];
+  const suggestedFriends = data.suggestedFriends ?? [];
+  const pendingRequests = data.pendingRequests ?? [];
+  const pendingUserIds = new Set(pendingRequests.map((r) => r.receiver.id));
   const searchResults = searchQuery.length >= 2 ? (searchFetcher.data || []) : [];
   const isSearching = searchFetcher.state === "loading";
 
@@ -139,9 +146,11 @@ export default function Friends() {
     <Layout title="Friends">
       <section className="border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">Your Friends</h2>
-        {following.length > 0 ? (
+        {following.length > 0 || pendingRequests.length > 0 ? (
           <>
-            <p className="text-gray-600 mb-4">You have {following.length} friend{following.length !== 1 ? 's' : ''}</p>
+            {following.length > 0 && (
+              <p className="text-gray-600 mb-4">You have {following.length} friend{following.length !== 1 ? 's' : ''}</p>
+            )}
             <ul className="divide-y">
               {following.map((user, index) => (
                 <li key={index} className="py-3 first:pt-0 last:pb-0">
@@ -157,6 +166,23 @@ export default function Friends() {
                   </a>
                 </li>
               ))}
+              {pendingRequests.map((request) => (
+                <li key={request.id} className="py-3 first:pt-0 last:pb-0">
+                  <div className="flex items-center gap-3 -mx-2 px-2 py-2">
+                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-semibold text-sm flex-shrink-0">
+                      {(request.receiver.firstname?.[0] || "").toUpperCase()}
+                      {(request.receiver.surname?.[0] || "").toUpperCase()}
+                    </div>
+                    <div className="flex-grow">
+                      <h3 className="font-medium">{request.receiver.firstname} {request.receiver.surname}</h3>
+                      <p className="text-sm text-gray-500">{request.receiver.email}</p>
+                    </div>
+                    <span className="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full flex-shrink-0">
+                      Pending
+                    </span>
+                  </div>
+                </li>
+              ))}
             </ul>
           </>
         ) : (
@@ -166,6 +192,42 @@ export default function Friends() {
           </div>
         )}
       </section>
+
+      {suggestedFriends.filter((user) => !pendingUserIds.has(user.id)).length > 0 && (
+        <section className="border rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-2">Suggested Friends</h2>
+          <p className="text-gray-600 mb-4">People who recently joined Stacks</p>
+          <ul className="divide-y">
+            {suggestedFriends
+              .filter((user) => !sentRequests.has(user.id) && !pendingUserIds.has(user.id))
+              .map((user) => (
+                <li key={user.id} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-semibold text-sm flex-shrink-0">
+                      {(user.firstname?.[0] || "").toUpperCase()}
+                      {(user.surname?.[0] || "").toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className="font-medium">{user.firstname} {user.surname}</h3>
+                      <p className="text-sm text-gray-500">New member</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSendRequest(user.id)}
+                    disabled={requestFetcher.state !== "idle"}
+                    className="rounded bg-blue-500 px-3 py-1.5 text-sm text-white hover:bg-blue-600 disabled:opacity-50"
+                  >
+                    Send Request
+                  </button>
+                </li>
+              ))}
+            {suggestedFriends.filter((user) => !sentRequests.has(user.id) && !pendingUserIds.has(user.id)).length === 0 && (
+              <li className="py-3 text-gray-500">You've sent requests to all suggested friends</li>
+            )}
+          </ul>
+        </section>
+      )}
 
       <section className="border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-2">Find Friends</h2>
@@ -200,28 +262,37 @@ export default function Friends() {
                 <ul className="divide-y">
                   {searchResults
                     .filter((user) => !sentRequests.has(user.id))
-                    .map((user) => (
-                      <li key={user.id} className="p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium text-sm">
-                            {(user.firstname?.[0] || "").toUpperCase()}
-                            {(user.surname?.[0] || "").toUpperCase()}
+                    .map((user) => {
+                      const isPending = pendingUserIds.has(user.id);
+                      return (
+                        <li key={user.id} className="p-3 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm ${isPending ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
+                              {(user.firstname?.[0] || "").toUpperCase()}
+                              {(user.surname?.[0] || "").toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-medium">{user.firstname} {user.surname}</p>
+                              <p className="text-sm text-gray-500">{user.email}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium">{user.firstname} {user.surname}</p>
-                            <p className="text-sm text-gray-500">{user.email}</p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleSendRequest(user.id)}
-                          disabled={requestFetcher.state !== "idle"}
-                          className="rounded bg-blue-500 px-3 py-1.5 text-sm text-white hover:bg-blue-600 disabled:opacity-50"
-                        >
-                          Send Request
-                        </button>
-                      </li>
-                    ))}
+                          {isPending ? (
+                            <span className="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full">
+                              Pending
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleSendRequest(user.id)}
+                              disabled={requestFetcher.state !== "idle"}
+                              className="rounded bg-blue-500 px-3 py-1.5 text-sm text-white hover:bg-blue-600 disabled:opacity-50"
+                            >
+                              Send Request
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
                   {searchResults.filter((user) => !sentRequests.has(user.id)).length === 0 && (
                     <li className="p-3 text-gray-500">Request sent to all matching users</li>
                   )}

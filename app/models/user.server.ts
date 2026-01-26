@@ -47,6 +47,18 @@ export async function getUserByEmail(email: User["email"]) {
   })
 }
 
+export async function getUserEmailById(id: User["id"]) {
+  return prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      email: true,
+      firstname: true,
+      surname: true,
+    }
+  })
+}
+
 export async function updateUser(
   id: User["id"],
   data: { email?: string; firstname?: string; surname?: string }
@@ -325,6 +337,67 @@ export async function revokeShareToken(userId: string) {
     where: { id: userId },
     data: { shareToken: null },
   });
+}
+
+export async function getPendingFriendRequests(userId: string) {
+  // Get friend requests sent by this user that haven't been accepted yet
+  const pendingRequests = await prisma.notification.findMany({
+    where: {
+      senderId: userId,
+      type: "FRIEND_REQUEST",
+      OR: [
+        { read: false },
+        { actionTaken: null },
+      ],
+    },
+    select: {
+      id: true,
+      receiverId: true,
+      createdAt: true,
+      receiver: {
+        select: {
+          id: true,
+          firstname: true,
+          surname: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return pendingRequests;
+}
+
+export async function getSuggestedFriends(userId: string, limit: number = 5) {
+  // Get the current user's friend list
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      following: { select: { id: true } },
+    },
+  });
+
+  const friendIds = currentUser?.following.map((f) => f.id) || [];
+
+  // Get recently joined users, excluding current user and existing friends
+  const suggestedUsers = await prisma.user.findMany({
+    where: {
+      id: {
+        notIn: [userId, ...friendIds],
+      },
+    },
+    select: {
+      id: true,
+      firstname: true,
+      surname: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+
+  return suggestedUsers;
 }
 
 export async function verifyLogin(

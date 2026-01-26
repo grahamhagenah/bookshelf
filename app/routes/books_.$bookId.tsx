@@ -4,7 +4,8 @@ import { Form, isRouteErrorResponse, Link, useLoaderData, useRouteError, useNavi
 import invariant from "tiny-invariant";
 import { useState } from "react";
 import { deleteBook, getBookById, returnBook, updateBookMetadata } from "~/models/book.server";
-import { getUserById, createBookRequestNotification, createBookReturnedNotification } from "~/models/user.server";
+import { getUserById, getUserEmailById, createBookRequestNotification, createBookReturnedNotification } from "~/models/user.server";
+import { sendBookRequestEmail } from "~/email.server";
 import { requireUserId } from "~/session.server";
 import Breadcrumbs from "~/components/breadcrumbs";
 
@@ -132,6 +133,17 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       book.id,
       book.title
     );
+
+    // Send email notification to book owner
+    const bookOwner = await getUserEmailById(book.userId);
+    if (bookOwner) {
+      await sendBookRequestEmail({
+        toEmail: bookOwner.email,
+        toName: bookOwner.firstname || "there",
+        requesterName: senderName,
+        bookTitle: book.title,
+      });
+    }
 
     return json({ success: true, message: "Book request sent!" });
   }
