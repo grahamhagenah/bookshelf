@@ -30,6 +30,7 @@ export function getBookById(id: Book["id"]) {
       openLibraryKey: true,
       userId: true,
       borrowerId: true,
+      borrowedAt: true,
       borrower: {
         select: {
           id: true,
@@ -138,14 +139,14 @@ export function deleteBook({
 export function lendBook(bookId: Book["id"], borrowerId: User["id"]) {
   return prisma.book.update({
     where: { id: bookId },
-    data: { borrowerId },
+    data: { borrowerId, borrowedAt: new Date() },
   });
 }
 
 export function returnBook(bookId: Book["id"]) {
   return prisma.book.update({
     where: { id: bookId },
-    data: { borrowerId: null },
+    data: { borrowerId: null, borrowedAt: null },
   });
 }
 

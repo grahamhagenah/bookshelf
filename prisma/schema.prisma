@@ -56,6 +56,7 @@ model Book {
 
   borrower   User?   @relation("borrowedBooks", fields: [borrowerId], references: [id])
   borrowerId String?
+  borrowedAt DateTime?
 
   notifications Notification[]
 }

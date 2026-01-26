@@ -242,15 +242,35 @@ export default function BookDetailsPage() {
           </Form>
         )}
         {data.isBorrower && (
-          <Form method="post">
-            <input type="hidden" name="intent" value="return" />
-            <button
-              type="submit"
-              className="mb-4 rounded border-2 border-amber-500 w-full mt-8 px-4 py-3 text-base font-medium text-amber-600 hover:bg-amber-50 focus:bg-amber-100"
-            >
-              Return Book
-            </button>
-          </Form>
+          <>
+            {data.book.user && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-8">
+                <p className="text-blue-800 text-sm">
+                  <span className="font-semibold">Borrowed from:</span>{" "}
+                  {data.book.user.firstname} {data.book.user.surname}
+                </p>
+                {data.book.borrowedAt && (
+                  <p className="text-blue-700 text-sm mt-1">
+                    <span className="font-semibold">Since:</span>{" "}
+                    {new Date(data.book.borrowedAt).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                )}
+              </div>
+            )}
+            <Form method="post">
+              <input type="hidden" name="intent" value="return" />
+              <button
+                type="submit"
+                className={`mb-4 rounded border-2 border-amber-500 w-full ${data.book.user ? 'mt-4' : 'mt-8'} px-4 py-3 text-base font-medium text-amber-600 hover:bg-amber-50 focus:bg-amber-100`}
+              >
+                Return Book
+              </button>
+            </Form>
+          </>
         )}
         {showBorrowedStatus && !data.isBorrower && (
           <p className="mt-8 text-center text-gray-600">
@@ -302,8 +322,20 @@ export default function BookDetailsPage() {
 
         {data.isOwner && data.isBorrowed && data.book.borrower && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 my-4">
-            <span className="font-semibold text-amber-800">Currently lent to:</span>{" "}
-            <span className="text-amber-700">{data.book.borrower.firstname} {data.book.borrower.surname}</span>
+            <p className="text-amber-800">
+              <span className="font-semibold">Currently lent to:</span>{" "}
+              <span className="text-amber-700">{data.book.borrower.firstname} {data.book.borrower.surname}</span>
+            </p>
+            {data.book.borrowedAt && (
+              <p className="text-amber-700 text-sm mt-1">
+                <span className="font-semibold">Since:</span>{" "}
+                {new Date(data.book.borrowedAt).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
+            )}
           </div>
         )}
 
