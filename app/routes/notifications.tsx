@@ -230,43 +230,44 @@ export default function Notifications() {
     <>
     <Breadcrumbs />
     <Layout title="Notifications">
-      {/* Active Notifications */}
-      <ul className="notifications">
-        {(data.user?.notificationsReceived?.length ?? 0) > 0 ?
-          data.user?.notificationsReceived?.map((notification) => (
-            <li key={notification.id} className="my-1 bg-stone-50 rounded-lg p-5">
-              {renderNotification(notification)}
-            </li>
-          ))
-          :
-          <li className="my-1 bg-stone-50 rounded-lg p-5">
-            <HourglassTopIcon className="mb-1 mr-3"/>
-            <h2 className="inline">You don't have any new notifications</h2>
-          </li>
-        }
-      </ul>
+      <section className="border rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">New</h2>
+        {(data.user?.notificationsReceived?.length ?? 0) > 0 ? (
+          <ul className="space-y-3">
+            {data.user?.notificationsReceived?.map((notification) => (
+              <li key={notification.id} className="bg-gray-50 rounded-lg p-4">
+                {renderNotification(notification)}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="flex items-center gap-3 text-gray-500 py-4">
+            <HourglassTopIcon />
+            <span>No new notifications</span>
+          </div>
+        )}
+      </section>
 
-      {/* Notification History */}
       {data.history && data.history.length > 0 && (
-        <div className="mt-12">
+        <section className="border rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <HistoryIcon />
+            <HistoryIcon className="text-gray-400" />
             Recent Activity
           </h2>
           <ul className="space-y-2">
             {data.history.map((notification) => (
-              <li key={notification.id} className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg text-gray-600">
+              <li key={notification.id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg text-gray-600 text-sm">
                 <div className="flex items-center">
                   {getHistoryIcon(notification.type)}
                   <span>{getHistoryText(notification)}</span>
                 </div>
-                <span className="text-sm text-gray-400">
+                <span className="text-gray-400 ml-4 flex-shrink-0">
                   {formatDate(notification.createdAt)}
                 </span>
               </li>
             ))}
           </ul>
-        </div>
+        </section>
       )}
     </Layout>
     </>

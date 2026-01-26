@@ -111,79 +111,75 @@ export default function Account() {
   return (
     <>
     <Breadcrumbs />
-    <Layout title="Account Settings">
-      <section className="p-4 m-4">
-        <div className="border shadow-sm rounded-lg p-8 mb-8">
-          <h2 className="text-2xl font-semibold mb-6">Account Details</h2>
-          <dl className="space-y-4">
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Name</dt>
-              <dd className="text-lg">{data.user?.firstname} {data.user?.surname}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Email</dt>
-              <dd className="text-lg">{data.user?.email}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Friends</dt>
-              <dd className="text-lg">{data.user?.following.length || 0}</dd>
-            </div>
-          </dl>
-        </div>
-
-        <div className="border shadow-sm rounded-lg p-8">
-          <h2 className="text-2xl font-semibold mb-2">Share Your Bookshelf</h2>
-          <p className="text-gray-600 mb-6">
-            Anyone with this link can view your bookshelf without logging in.
-          </p>
-
-          {shareUrl ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={shareUrl}
-                  className="flex-1 rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-                >
-                  {copied ? "Copied!" : "Copy Link"}
-                </button>
-                <Form method="post">
-                  <input type="hidden" name="intent" value="revokeShareToken" />
-                  <button
-                    type="submit"
-                    className="rounded border border-red-500 px-4 py-2 text-red-500 hover:bg-red-50"
-                  >
-                    Revoke Access
-                  </button>
-                </Form>
-              </div>
-            </div>
-          ) : (
-            <Form method="post">
-              <input type="hidden" name="intent" value="generateShareToken" />
-              <button
-                type="submit"
-                className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-              >
-                Generate Share Link
-              </button>
-            </Form>
-          )}
-        </div>
+    <Layout title="Account">
+      <section className="border rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Account Details</h2>
+        <dl className="space-y-3">
+          <div>
+            <dt className="text-sm font-medium text-gray-500">Name</dt>
+            <dd className="text-lg">{data.user?.firstname} {data.user?.surname}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-gray-500">Email</dt>
+            <dd className="text-lg">{data.user?.email}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-gray-500">Friends</dt>
+            <dd className="text-lg">{data.user?.following.length || 0}</dd>
+          </div>
+        </dl>
       </section>
 
-      <section className="p-4 m-4">
-        <Form method="post" className="space-y-6 border shadow-sm rounded-lg p-8 mb-12">
-          <h2 className="text-2xl font-semibold mb-2">Update Profile</h2>
-          <p className="text-gray-600 pb-4">Change your name or email address below.</p>
+      <section className="border rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-2">Share Your Bookshelf</h2>
+        <p className="text-gray-600 mb-4">
+          Anyone with this link can view your bookshelf without logging in.
+        </p>
+
+        {shareUrl ? (
+          <div className="space-y-4">
+            <input
+              type="text"
+              readOnly
+              value={shareUrl}
+              className="w-full rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm"
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+              >
+                {copied ? "Copied!" : "Copy Link"}
+              </button>
+              <Form method="post">
+                <input type="hidden" name="intent" value="revokeShareToken" />
+                <button
+                  type="submit"
+                  className="rounded border border-red-500 px-4 py-2 text-red-500 hover:bg-red-50"
+                >
+                  Revoke Access
+                </button>
+              </Form>
+            </div>
+          </div>
+        ) : (
+          <Form method="post">
+            <input type="hidden" name="intent" value="generateShareToken" />
+            <button
+              type="submit"
+              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+            >
+              Generate Share Link
+            </button>
+          </Form>
+        )}
+      </section>
+
+      <section className="border rounded-lg p-6">
+        <Form method="post" className="space-y-4">
+          <h2 className="text-xl font-semibold mb-2">Update Profile</h2>
+          <p className="text-gray-600">Change your name or email address below.</p>
 
           {actionData?.success && (
             <div className="p-3 rounded bg-green-100 text-green-800">
