@@ -58,7 +58,7 @@ export default function FriendsBookPage() {
           Viewing <span className="font-semibold">{data.friendName}</span>&apos;s bookshelf
         </p>
       </div>
-      <Library bookListItems={data.bookListItems} />
+      <Library bookListItems={data.bookListItems} ownerName={data.friendName} />
     </>
   );
 }

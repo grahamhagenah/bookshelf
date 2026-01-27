@@ -26,5 +26,5 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 export default function PublicSharePage() {
   const data = useLoaderData<typeof loader>();
 
-  return <Library bookListItems={data.bookListItems} />;
+  return <Library bookListItems={data.bookListItems} ownerName={data.ownerName} />;
 }

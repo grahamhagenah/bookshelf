@@ -26,6 +26,7 @@ interface Book {
 
 interface LibraryProps {
   bookListItems: Book[];
+  ownerName?: string; // If provided, this is someone else's library (friend or public)
 }
 
 // Simple progressive image component with native lazy loading
@@ -65,7 +66,7 @@ function BookCover({ src, alt, className, style }: { src: string; alt: string; c
   );
 }
 
-export default function Library({ bookListItems }: LibraryProps) {
+export default function Library({ bookListItems, ownerName }: LibraryProps) {
   const [viewMode, setViewMode] = useState<ViewMode | null>(null);
   const isHydrated = viewMode !== null;
 
@@ -90,8 +91,24 @@ export default function Library({ bookListItems }: LibraryProps) {
 
   return (
     <>
-    {bookListItems.length === 0 ? (
-    <main className="min-h-[calc(100vh-60px)]">
+    {bookListItems.length === 0 && ownerName ? (
+      // Empty state for viewing someone else's library
+      <main className="min-h-[calc(100vh-60px)]">
+        <section className="flex flex-col items-center justify-center min-h-[calc(100vh-60px)] px-4 py-12">
+          <div className="text-center">
+            <BookIcon size={64} className="mx-auto text-gray-300 mb-6" />
+            <h1 className="text-2xl md:text-3xl font-semibold text-gray-700 mb-2">
+              No books yet
+            </h1>
+            <p className="text-gray-500">
+              {ownerName} hasn&apos;t added any books to their library.
+            </p>
+          </div>
+        </section>
+      </main>
+    ) : bookListItems.length === 0 ? (
+      // Empty state for own library - show onboarding
+      <main className="min-h-[calc(100vh-60px)]">
         <section className="flex flex-col items-center justify-center min-h-[calc(100vh-60px)] px-4 py-12">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4">
@@ -103,7 +120,7 @@ export default function Library({ bookListItems }: LibraryProps) {
           </div>
 
           <div className="bg-white rounded-2xl shadow-lg border p-8 max-w-3xl w-full">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Here's how it works</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Here&apos;s how it works</h2>
             <ol className="space-y-4">
               <li>
                 <Link
