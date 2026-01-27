@@ -37,11 +37,11 @@ export default function Header() {
   return (
     <header className="w-full flex items-center justify-between shadow-sm px-4 md:px-8 py-2 bg-white dark:bg-gray-950 dark:shadow-gray-900">
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-        <a id="logo" href={user ? "/books" : "/"} className="flex items-center gap-2 text-2xl font-semibold flex-shrink-0 group">
+        <a id="logo" href={user ? "/books" : "/"} className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0 group">
           <span className="transition-transform duration-200 group-hover:rotate-[-8deg]">
             <BookStackIcon size={32} />
           </span>
-          <span className="hidden sm:inline">Stacks</span>
+          <span className="text-xl sm:text-2xl">Stacks</span>
         </a>
         {libraryOwnerName && (
           <span className="hidden sm:inline text-sm text-gray-500 dark:text-gray-400 border-l border-gray-300 dark:border-gray-600 pl-3 truncate">
