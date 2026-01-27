@@ -14,6 +14,10 @@ interface ShareLoaderData {
   ownerName: string;
 }
 
+interface FriendLoaderData {
+  friendName: string;
+}
+
 export default function Header() {
   const matches = useMatches();
   const rootData = matches.find(m => m.id === "root")?.data as RootLoaderData | undefined;
@@ -23,6 +27,13 @@ export default function Header() {
   const shareMatch = matches.find(m => m.id === "routes/share.$token");
   const shareData = shareMatch?.data as ShareLoaderData | undefined;
 
+  // Check if we're on a friend's library page
+  const friendMatch = matches.find(m => m.id === "routes/friend.$friendId");
+  const friendData = friendMatch?.data as FriendLoaderData | undefined;
+
+  // Get the library owner's name (from either share or friend page)
+  const libraryOwnerName = shareData?.ownerName || friendData?.friendName;
+
   return (
     <header className="w-full flex items-center justify-between shadow-sm px-4 md:px-8 py-2">
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -30,10 +41,10 @@ export default function Header() {
           <BookStackIcon size={32} />
           <span className="hidden sm:inline">Stacks</span>
         </a>
-        {shareData?.ownerName && (
+        {libraryOwnerName && (
           <span className="text-xs sm:text-sm text-gray-500 sm:border-l sm:border-gray-300 sm:pl-3 truncate">
-            <span className="sm:hidden">{shareData.ownerName}</span>
-            <span className="hidden sm:inline">{shareData.ownerName}&apos;s library</span>
+            <span className="sm:hidden">{libraryOwnerName}</span>
+            <span className="hidden sm:inline">{libraryOwnerName}&apos;s library</span>
           </span>
         )}
       </div>

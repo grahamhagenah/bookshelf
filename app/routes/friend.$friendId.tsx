@@ -53,11 +53,6 @@ export default function FriendsBookPage() {
   return (
     <>
       <Breadcrumbs />
-      <div className="bg-blue-50 border-b border-blue-200 px-4 md:px-8 py-3">
-        <p className="text-blue-800 text-center">
-          Viewing <span className="font-semibold">{data.friendName}</span>&apos;s bookshelf
-        </p>
-      </div>
       <Library bookListItems={data.bookListItems} ownerName={data.friendName} />
     </>
   );
