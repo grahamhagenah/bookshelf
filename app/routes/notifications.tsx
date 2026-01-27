@@ -97,14 +97,17 @@ export default function Notifications() {
 
     if (notificationType === "FRIEND_REQUEST") {
       return (
-        <form method="post" className="flex justify-between items-center">
+        <form method="post" className="space-y-3">
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="FRIEND_REQUEST" />
-          <p><PersonAddIcon className="mr-4 mb-1"/><strong>{notification.senderName + " "}</strong> sent a friend request</p>
-          <div>
-            <button className="mx-1 w-half rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400" type="submit" name="friend_request" value="accept">Accept</button>
-            <button className="mx-1 w-half rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="friend_request" value="decline">Decline</button>
+          <p className="flex items-start gap-3">
+            <PersonAddIcon className="flex-shrink-0 mt-0.5" />
+            <span><strong>{notification.senderName}</strong> sent a friend request</span>
+          </p>
+          <div className="flex gap-2">
+            <button className="flex-1 sm:flex-none rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400" type="submit" name="friend_request" value="accept">Accept</button>
+            <button className="flex-1 sm:flex-none rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="friend_request" value="decline">Decline</button>
           </div>
         </form>
       );
@@ -112,16 +115,19 @@ export default function Notifications() {
 
     if (notificationType === "BOOK_REQUEST") {
       return (
-        <form method="post" className="flex justify-between items-center">
+        <form method="post" className="space-y-3">
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="BOOK_REQUEST" />
           <input type="hidden" name="bookId" value={notification.bookId || ""} />
           <input type="hidden" name="bookTitle" value={notification.bookTitle || ""} />
-          <p><MenuBookIcon className="mr-4 mb-1"/><strong>{notification.senderName}</strong> wants to borrow <strong>{notification.bookTitle}</strong></p>
-          <div>
-            <button className="mx-1 w-half rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400" type="submit" name="book_request" value="approve">Approve</button>
-            <button className="mx-1 w-half rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="book_request" value="decline">Decline</button>
+          <p className="flex items-start gap-3">
+            <MenuBookIcon className="flex-shrink-0 mt-0.5" />
+            <span><strong>{notification.senderName}</strong> wants to borrow <strong>{notification.bookTitle}</strong></span>
+          </p>
+          <div className="flex gap-2">
+            <button className="flex-1 sm:flex-none rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400" type="submit" name="book_request" value="approve">Approve</button>
+            <button className="flex-1 sm:flex-none rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="book_request" value="decline">Decline</button>
           </div>
         </form>
       );
@@ -129,13 +135,16 @@ export default function Notifications() {
 
     if (notificationType === "BOOK_APPROVED") {
       return (
-        <form method="post" className="flex justify-between items-center">
+        <form method="post" className="space-y-3">
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="BOOK_APPROVED" />
-          <p><CheckCircleIcon className="mr-4 mb-1 text-green-600"/><strong>{notification.senderName}</strong> approved your request for <strong>{notification.bookTitle}</strong></p>
-          <div>
-            <button className="mx-1 w-half rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="dismiss" value="true">Dismiss</button>
+          <p className="flex items-start gap-3">
+            <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-600" />
+            <span><strong>{notification.senderName}</strong> approved your request for <strong>{notification.bookTitle}</strong></span>
+          </p>
+          <div className="flex gap-2">
+            <button className="flex-1 sm:flex-none rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="dismiss" value="true">Dismiss</button>
           </div>
         </form>
       );
@@ -143,13 +152,16 @@ export default function Notifications() {
 
     if (notificationType === "BOOK_RETURNED") {
       return (
-        <form method="post" className="flex justify-between items-center">
+        <form method="post" className="space-y-3">
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="BOOK_RETURNED" />
-          <p><KeyboardReturnIcon className="mr-4 mb-1 text-amber-600"/><strong>{notification.senderName}</strong> returned <strong>{notification.bookTitle}</strong></p>
-          <div>
-            <button className="mx-1 w-half rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="dismiss" value="true">Dismiss</button>
+          <p className="flex items-start gap-3">
+            <KeyboardReturnIcon className="flex-shrink-0 mt-0.5 text-amber-600" />
+            <span><strong>{notification.senderName}</strong> returned <strong>{notification.bookTitle}</strong></span>
+          </p>
+          <div className="flex gap-2">
+            <button className="flex-1 sm:flex-none rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="dismiss" value="true">Dismiss</button>
           </div>
         </form>
       );
@@ -225,7 +237,7 @@ export default function Notifications() {
     <>
     <Breadcrumbs />
     <Layout title="Notifications">
-      <section className="border rounded-lg p-6">
+      <section className="border rounded-lg p-4 sm:p-6">
         <h2 className="text-xl font-semibold mb-4">New</h2>
         {(data.user?.notificationsReceived?.length ?? 0) > 0 ? (
           <ul className="space-y-3">
@@ -244,19 +256,19 @@ export default function Notifications() {
       </section>
 
       {data.history && data.history.length > 0 && (
-        <section className="border rounded-lg p-6">
+        <section className="border rounded-lg p-4 sm:p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <HistoryIcon className="text-gray-400" />
             Recent Activity
           </h2>
           <ul className="space-y-2">
             {data.history.map((notification) => (
-              <li key={notification.id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg text-gray-600 text-sm">
-                <div className="flex items-center">
-                  {getHistoryIcon(notification.type)}
+              <li key={notification.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 py-3 px-3 bg-gray-50 rounded-lg text-gray-600 text-sm">
+                <div className="flex items-start sm:items-center gap-3">
+                  <span className="flex-shrink-0">{getHistoryIcon(notification.type)}</span>
                   <span>{getHistoryText(notification)}</span>
                 </div>
-                <span className="text-gray-400 ml-4 flex-shrink-0">
+                <span className="text-gray-400 text-xs sm:text-sm flex-shrink-0 ml-7 sm:ml-0">
                   {formatDate(notification.createdAt)}
                 </span>
               </li>
