@@ -53,6 +53,9 @@ export default function FriendsBookPage() {
   return (
     <>
       <Breadcrumbs />
+      <div className="sm:hidden px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
+        {data.friendName}&apos;s library
+      </div>
       <Library bookListItems={data.bookListItems} ownerName={data.friendName} />
     </>
   );

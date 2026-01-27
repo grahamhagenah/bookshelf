@@ -42,9 +42,8 @@ export default function Header() {
           <span className="hidden sm:inline">Stacks</span>
         </a>
         {libraryOwnerName && (
-          <span className="text-xs sm:text-sm text-gray-500 sm:border-l sm:border-gray-300 sm:pl-3 truncate">
-            <span className="sm:hidden">{libraryOwnerName}</span>
-            <span className="hidden sm:inline">{libraryOwnerName}&apos;s library</span>
+          <span className="hidden sm:inline text-sm text-gray-500 border-l border-gray-300 pl-3 truncate">
+            {libraryOwnerName}&apos;s library
           </span>
         )}
       </div>
