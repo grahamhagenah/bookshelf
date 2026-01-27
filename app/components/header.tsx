@@ -49,7 +49,7 @@ export default function Header() {
         )}
       </div>
       <div className="flex items-center flex-shrink-0">
-        {user && <Search />}
+        {user && <div className="hidden sm:block"><Search /></div>}
         {user && <Notifications />}
         <PositionedMenu />
       </div>
