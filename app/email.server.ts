@@ -97,3 +97,96 @@ You're receiving this email because someone requested to borrow a book from your
     return { success: false, error: String(error) };
   }
 }
+
+export async function sendPasswordResetEmail({
+  toEmail,
+  toName,
+  tempPassword,
+}: {
+  toEmail: string;
+  toName: string;
+  tempPassword: string;
+}) {
+  if (!resend) {
+    console.log("Email not sent (RESEND_API_KEY not configured):", {
+      to: toEmail,
+      subject: "Your Temporary Password",
+      tempPassword,
+    });
+    return { success: false, error: "Email service not configured" };
+  }
+
+  const loginUrl = `${APP_URL}/login`;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: toEmail,
+      subject: "Your Temporary Password - Stacks",
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">Stacks</h1>
+            </div>
+
+            <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+              <h2 style="color: #1f2937; margin-top: 0;">Hi ${toName},</h2>
+
+              <p style="color: #4b5563; font-size: 16px;">
+                You requested a password reset for your Stacks account. Here's your temporary password:
+              </p>
+
+              <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                <p style="font-size: 24px; font-weight: 600; color: #1f2937; margin: 0; font-family: monospace; letter-spacing: 2px;">
+                  ${tempPassword}
+                </p>
+              </div>
+
+              <p style="color: #4b5563; font-size: 16px;">
+                Use this password to log in, then change it to something memorable in your Account settings.
+              </p>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${loginUrl}" style="display: inline-block; background: #3b82f6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                  Log In
+                </a>
+              </div>
+
+              <p style="color: #6b7280; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                If you didn't request this password reset, please ignore this email. Your password will remain unchanged unless you use the temporary password above.
+              </p>
+            </div>
+          </body>
+        </html>
+      `,
+      text: `Hi ${toName},
+
+You requested a password reset for your Stacks account. Here's your temporary password:
+
+${tempPassword}
+
+Use this password to log in, then change it to something memorable in your Account settings.
+
+Log in at: ${loginUrl}
+
+If you didn't request this password reset, please ignore this email. Your password will remain unchanged unless you use the temporary password above.`,
+    });
+
+    if (error) {
+      console.error("Failed to send password reset email:", error);
+      return { success: false, error: error.message };
+    }
+
+    console.log("Password reset email sent successfully:", data?.id);
+    return { success: true, id: data?.id };
+  } catch (error) {
+    console.error("Error sending password reset email:", error);
+    return { success: false, error: String(error) };
+  }
+}

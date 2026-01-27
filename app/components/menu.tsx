@@ -1,11 +1,12 @@
 import { Form, useMatches } from "@remix-run/react";
 import { useState, useRef, useEffect } from 'react';
-import { BookIcon, UserIcon, SettingsIcon, GroupIcon, LogoutIcon, SearchIcon } from './icons';
+import { BookIcon, UserIcon, SettingsIcon, GroupIcon, LogoutIcon, SearchIcon, DashboardIcon } from './icons';
 
 interface RootLoaderData {
   user: {
     id: string;
     firstname: string;
+    isAdmin?: boolean;
   } | null;
 }
 
@@ -31,18 +32,18 @@ export default function PositionedMenu() {
     <div className="relative inline-block" ref={menuRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-2 font-semibold hover:bg-gray-100 rounded-lg transition-colors"
+        className="flex items-center gap-2 px-3 py-2 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
       >
         <UserIcon size={28} />
         <span>{user ? user.firstname : "Log In"}</span>
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border py-1 z-50">
+        <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-950 rounded-lg shadow-lg border dark:border-gray-800 py-1 z-50">
           <a
             href="/books"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <BookIcon size={20} />
             <span>My Library</span>
@@ -50,7 +51,7 @@ export default function PositionedMenu() {
           <a
             href="/search"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <SearchIcon size={20} />
             <span>Book Search</span>
@@ -58,7 +59,7 @@ export default function PositionedMenu() {
           <a
             href="/account"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <SettingsIcon size={20} />
             <span>Account Settings</span>
@@ -66,16 +67,26 @@ export default function PositionedMenu() {
           <a
             href="/friends"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <GroupIcon size={20} />
             <span>Friends</span>
           </a>
-          <div className="border-t my-1" />
+          {user?.isAdmin && (
+            <a
+              href="/dashboard"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-blue-600 dark:text-blue-400"
+            >
+              <DashboardIcon size={20} />
+              <span>Dashboard</span>
+            </a>
+          )}
+          <div className="border-t dark:border-gray-800 my-1" />
           <Form action="/logout" method="post">
             <button
               type="submit"
-              className="flex items-center gap-3 px-4 py-2 w-full hover:bg-gray-100 transition-colors text-left"
+              className="flex items-center gap-3 px-4 py-2 w-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
             >
               <LogoutIcon size={20} />
               <span>Logout</span>

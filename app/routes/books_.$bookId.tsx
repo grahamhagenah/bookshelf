@@ -312,7 +312,7 @@ export default function BookDetailsPage() {
         <h3 className="text-4xl md:text-5xl font-bold">{data.book.title}</h3>
         <h4 className="text-3xl md:text-4xl author py-4">{data.book.author}</h4>
 
-        <div className="flex flex-wrap gap-x-6 gap-y-2 py-4 text-sm text-gray-600">
+        <div className="flex flex-wrap gap-x-6 gap-y-2 py-4 text-sm text-gray-600 dark:text-gray-400">
           {data.book.datePublished && (
             <div>
               <span className="font-semibold">Published:</span> {data.book.datePublished}
@@ -341,7 +341,7 @@ export default function BookDetailsPage() {
               {data.book.subjects.split(", ").map((subject, index) => (
                 <span
                   key={index}
-                  className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full"
+                  className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-3 py-1 rounded-full"
                 >
                   {subject}
                 </span>
@@ -371,7 +371,7 @@ export default function BookDetailsPage() {
 
         <div className="py-4">
           <h5 className="font-semibold text-lg mb-2">Description</h5>
-          <p className="summary text-gray-700 leading-relaxed">{data.book.body || "No description available."}</p>
+          <p className="summary text-gray-700 dark:text-gray-300 leading-relaxed">{data.book.body || "No description available."}</p>
         </div>
 
         {data.book.openLibraryKey && (

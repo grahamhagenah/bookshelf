@@ -14,6 +14,8 @@ export async function getUserById(id: User["id"]) {
       firstname: true,
       surname: true,
       shareToken: true,
+      isAdmin: true,
+      darkMode: true,
       notificationsSent: true,
       notificationsReceived: {
         where: { read: false },
@@ -339,6 +341,37 @@ export async function revokeShareToken(userId: string) {
   });
 }
 
+export async function toggleDarkMode(userId: string, enabled: boolean) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { darkMode: enabled },
+  });
+}
+
+export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+  const userWithPassword = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { password: true },
+  });
+
+  if (!userWithPassword || !userWithPassword.password) {
+    return { success: false, error: "User not found" };
+  }
+
+  const isValid = await bcrypt.compare(currentPassword, userWithPassword.password.hash);
+  if (!isValid) {
+    return { success: false, error: "Current password is incorrect" };
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await prisma.password.update({
+    where: { userId },
+    data: { hash: hashedPassword },
+  });
+
+  return { success: true };
+}
+
 export async function getPendingFriendRequests(userId: string) {
   // Get friend requests sent by this user that haven't been accepted yet
   const pendingRequests = await prisma.notification.findMany({
@@ -398,6 +431,75 @@ export async function getSuggestedFriends(userId: string, limit: number = 5) {
   });
 
   return suggestedUsers;
+}
+
+export async function resetPassword(email: string) {
+  // Normalize email to lowercase for consistent lookup
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const user = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+    include: { password: true },
+  });
+
+  if (!user || !user.password) {
+    return { success: false, error: "User not found" };
+  }
+
+  // Generate a random alphanumeric temporary password (no special characters)
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let tempPassword = '';
+  for (let i = 0; i < 12; i++) {
+    tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+
+  const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+  await prisma.password.update({
+    where: { userId: user.id },
+    data: { hash: hashedPassword },
+  });
+
+  return {
+    success: true,
+    tempPassword,
+    userName: user.firstname || "User",
+  };
+}
+
+export async function isUserAdmin(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isAdmin: true },
+  });
+  return user?.isAdmin ?? false;
+}
+
+export async function getAllUsersWithStats() {
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      firstname: true,
+      surname: true,
+      isAdmin: true,
+      createdAt: true,
+      books: { select: { id: true } },
+      following: { select: { id: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return users.map((user) => ({
+    id: user.id,
+    email: user.email,
+    firstname: user.firstname,
+    surname: user.surname,
+    isAdmin: user.isAdmin,
+    createdAt: user.createdAt,
+    bookCount: user.books.length,
+    friendCount: user.following.length,
+  }));
 }
 
 export async function verifyLogin(

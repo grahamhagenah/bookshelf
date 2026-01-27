@@ -40,7 +40,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const user = await verifyLogin(email, password);
+  // Normalize email for consistent lookup
+  const normalizedEmail = email.toLowerCase().trim();
+  const user = await verifyLogin(normalizedEmail, password);
 
   if (!user) {
     return json(
@@ -108,12 +110,20 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Password
+              </label>
+              <Link
+                to="/forgot-password"
+                className="text-sm text-blue-500 hover:text-blue-600"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <div className="mt-1">
               <input
                 id="password"

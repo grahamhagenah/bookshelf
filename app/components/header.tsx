@@ -35,14 +35,14 @@ export default function Header() {
   const libraryOwnerName = shareData?.ownerName || friendData?.friendName;
 
   return (
-    <header className="w-full flex items-center justify-between shadow-sm px-4 md:px-8 py-2">
+    <header className="w-full flex items-center justify-between shadow-sm px-4 md:px-8 py-2 bg-white dark:bg-gray-950 dark:shadow-gray-900">
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <a id="logo" href={user ? "/books" : "/"} className="flex items-center gap-2 text-2xl font-semibold flex-shrink-0">
           <BookStackIcon size={32} />
           <span className="hidden sm:inline">Stacks</span>
         </a>
         {libraryOwnerName && (
-          <span className="hidden sm:inline text-sm text-gray-500 border-l border-gray-300 pl-3 truncate">
+          <span className="hidden sm:inline text-sm text-gray-500 dark:text-gray-400 border-l border-gray-300 dark:border-gray-600 pl-3 truncate">
             {libraryOwnerName}&apos;s library
           </span>
         )}

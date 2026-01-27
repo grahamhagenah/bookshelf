@@ -15,7 +15,7 @@ export default function Notifications() {
   return (
     <a
       href="/notifications"
-      className="relative inline-flex items-center justify-center w-10 h-10 mx-2 hover:bg-gray-100 rounded-full transition-colors"
+      className="relative inline-flex items-center justify-center w-10 h-10 mx-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-700 dark:text-gray-200"
     >
       <BellIcon size={24} />
       {notificationCount > 0 && (

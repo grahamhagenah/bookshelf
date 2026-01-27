@@ -2,7 +2,7 @@ import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import Header from './components/header'
-import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration,
+import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData,
 } from "@remix-run/react";
 import { getUser } from "~/session.server";
 import stylesheet from "~/styles/tailwind.css";
@@ -26,18 +26,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function App() {
-
+  const { user } = useLoaderData<typeof loader>();
+  const isDarkMode = user?.darkMode ?? false;
 
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className={`h-full ${isDarkMode ? "dark" : ""}`}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <Meta />
         <Links />
       </head>
-      <body className="h-full">
-        <Header /> 
+      <body className="h-full bg-white dark:bg-black text-gray-900 dark:text-gray-100 transition-colors">
+        <Header />
         <Outlet />
         <ScrollRestoration />
         <Scripts />

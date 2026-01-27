@@ -2,7 +2,7 @@ import { useLoaderData } from "@remix-run/react";
 import { requireUserId } from "~/session.server";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { getUserById, getUserByEmail, updateUser, generateShareToken, revokeShareToken } from "~/models/user.server";
+import { getUserById, getUserByEmail, updateUser, generateShareToken, revokeShareToken, changePassword, toggleDarkMode } from "~/models/user.server";
 import { getBookStats } from "~/models/book.server";
 import Layout from "~/components / Layout/Layout";
 import Breadcrumbs from "~/components/breadcrumbs";
@@ -32,12 +32,53 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Handle share token actions
   if (intent === "generateShareToken") {
     await generateShareToken(userId);
-    return json({ errors: null, success: false, shareAction: "generated" });
+    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: false, shareAction: "generated" });
   }
 
   if (intent === "revokeShareToken") {
     await revokeShareToken(userId);
-    return json({ errors: null, success: false, shareAction: "revoked" });
+    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: false, shareAction: "revoked" });
+  }
+
+  // Handle dark mode toggle
+  if (intent === "toggleDarkMode") {
+    const enabled = formData.get("darkMode") === "true";
+    await toggleDarkMode(userId, enabled);
+    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: false });
+  }
+
+  // Handle password change
+  if (intent === "changePassword") {
+    const currentPassword = formData.get("currentPassword");
+    const newPassword = formData.get("newPassword");
+    const confirmPassword = formData.get("confirmPassword");
+
+    const passwordErrors: { currentPassword?: string; newPassword?: string; confirmPassword?: string } = {};
+
+    if (typeof currentPassword !== "string" || currentPassword.length === 0) {
+      passwordErrors.currentPassword = "Current password is required";
+    }
+
+    if (typeof newPassword !== "string" || newPassword.length < 8) {
+      passwordErrors.newPassword = "New password must be at least 8 characters";
+    }
+
+    if (newPassword !== confirmPassword) {
+      passwordErrors.confirmPassword = "Passwords do not match";
+    }
+
+    if (Object.keys(passwordErrors).length > 0) {
+      return json({ errors: null, passwordErrors, success: false, passwordSuccess: false }, { status: 400 });
+    }
+
+    const result = await changePassword(userId, currentPassword as string, newPassword as string);
+
+    if (!result.success) {
+      passwordErrors.currentPassword = result.error;
+      return json({ errors: null, passwordErrors, success: false, passwordSuccess: false }, { status: 400 });
+    }
+
+    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: true });
   }
 
   // Handle profile update
@@ -62,14 +103,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (Object.keys(errors).length > 0) {
-    return json({ errors, success: false }, { status: 400 });
+    return json({ errors, passwordErrors: null, success: false, passwordSuccess: false }, { status: 400 });
   }
 
   // Check if email is already taken by another user
   const existingUser = await getUserByEmail(email as string);
   if (existingUser && existingUser.id !== userId) {
     errors.email = "This email is already in use";
-    return json({ errors, success: false }, { status: 400 });
+    return json({ errors, passwordErrors: null, success: false, passwordSuccess: false }, { status: 400 });
   }
 
   await updateUser(userId, {
@@ -78,7 +119,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     email: (email as string).trim(),
   });
 
-  return json({ errors: null, success: true });
+  return json({ errors: null, passwordErrors: null, success: true, passwordSuccess: false });
 };
 
 export default function Account() {
@@ -150,6 +191,32 @@ export default function Account() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="border rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-2">Appearance</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          Customize how Stacks looks on your device.
+        </p>
+        <Form method="post" className="flex items-center justify-between">
+          <input type="hidden" name="intent" value="toggleDarkMode" />
+          <input type="hidden" name="darkMode" value={data.user?.darkMode ? "false" : "true"} />
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium">Dark Mode</span>
+          </div>
+          <button
+            type="submit"
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              data.user?.darkMode ? "bg-blue-500" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                data.user?.darkMode ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </Form>
       </section>
 
       <section className="border rounded-lg p-6">
@@ -293,6 +360,102 @@ export default function Account() {
             className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
           >
             Save changes
+          </button>
+        </Form>
+      </section>
+
+      <section className="border rounded-lg p-6">
+        <Form method="post" className="space-y-4">
+          <input type="hidden" name="intent" value="changePassword" />
+          <h2 className="text-xl font-semibold mb-2">Change Password</h2>
+          <p className="text-gray-600">Update your password to keep your account secure.</p>
+
+          {actionData?.passwordSuccess && (
+            <div className="p-3 rounded bg-green-100 text-green-800">
+              Your password has been changed successfully.
+            </div>
+          )}
+
+          <div>
+            <label
+              htmlFor="currentPassword"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Current password
+            </label>
+            <div className="mt-1">
+              <input
+                id="currentPassword"
+                name="currentPassword"
+                type="password"
+                autoComplete="current-password"
+                aria-invalid={actionData?.passwordErrors?.currentPassword ? true : undefined}
+                aria-describedby="currentPassword-error"
+                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+              />
+              {actionData?.passwordErrors?.currentPassword && (
+                <div className="pt-1 text-red-700" id="currentPassword-error">
+                  {actionData.passwordErrors.currentPassword}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="newPassword"
+              className="block text-sm font-medium text-gray-700"
+            >
+              New password
+            </label>
+            <div className="mt-1">
+              <input
+                id="newPassword"
+                name="newPassword"
+                type="password"
+                autoComplete="new-password"
+                aria-invalid={actionData?.passwordErrors?.newPassword ? true : undefined}
+                aria-describedby="newPassword-error"
+                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+              />
+              {actionData?.passwordErrors?.newPassword && (
+                <div className="pt-1 text-red-700" id="newPassword-error">
+                  {actionData.passwordErrors.newPassword}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Confirm new password
+            </label>
+            <div className="mt-1">
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                aria-invalid={actionData?.passwordErrors?.confirmPassword ? true : undefined}
+                aria-describedby="confirmPassword-error"
+                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+              />
+              {actionData?.passwordErrors?.confirmPassword && (
+                <div className="pt-1 text-red-700" id="confirmPassword-error">
+                  {actionData.passwordErrors.confirmPassword}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+          >
+            Change Password
           </button>
         </Form>
       </section>

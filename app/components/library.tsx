@@ -178,13 +178,13 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
       <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8">
         {/* View Toggle - Fixed bottom right */}
         <div className="fixed bottom-4 right-4 z-50">
-          <div className="inline-flex rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 p-0.5 shadow-sm">
+          <div className="inline-flex rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 p-0.5 shadow-sm">
             <button
               onClick={() => handleViewChange("cover")}
               className={`w-8 h-8 rounded-full transition-colors flex items-center justify-center ${
                 viewMode === "cover"
-                  ? "bg-gray-200 text-gray-700"
-                  : "text-gray-400 hover:text-gray-600"
+                  ? "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                  : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               }`}
               title="Cover view"
             >
@@ -194,8 +194,8 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
               onClick={() => handleViewChange("list")}
               className={`w-8 h-8 rounded-full transition-colors flex items-center justify-center ${
                 viewMode === "list"
-                  ? "bg-gray-200 text-gray-700"
-                  : "text-gray-400 hover:text-gray-600"
+                  ? "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                  : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               }`}
               title="List view"
             >
@@ -238,7 +238,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
               <li key={book.id}>
                 <NavLink
                   to={`/books/${book.id}`}
-                  className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
+                  className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors border border-gray-100 dark:border-gray-800"
                 >
                   <BookCover
                     src={book.cover}
@@ -247,9 +247,9 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                   />
                   <div className="flex-grow min-w-0">
                     <p className="truncate">
-                      <span className="font-medium text-gray-900">{book.title}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{book.title}</span>
                       {book.author && (
-                        <span className="text-gray-400"> · <span className="text-gray-500">{book.author}</span></span>
+                        <span className="text-gray-400 dark:text-gray-500"> · <span className="text-gray-500 dark:text-gray-400">{book.author}</span></span>
                       )}
                     </p>
                   </div>

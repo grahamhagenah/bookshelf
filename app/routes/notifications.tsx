@@ -97,15 +97,15 @@ export default function Notifications() {
 
     if (notificationType === "FRIEND_REQUEST") {
       return (
-        <form method="post" className="space-y-3">
+        <form method="post" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="FRIEND_REQUEST" />
-          <p className="flex items-start gap-3">
-            <PersonAddIcon className="flex-shrink-0 mt-0.5" />
+          <p className="flex items-start sm:items-center gap-3">
+            <PersonAddIcon className="flex-shrink-0" />
             <span><strong>{notification.senderName}</strong> sent a friend request</span>
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <button className="flex-1 sm:flex-none rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400" type="submit" name="friend_request" value="accept">Accept</button>
             <button className="flex-1 sm:flex-none rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="friend_request" value="decline">Decline</button>
           </div>
@@ -115,17 +115,17 @@ export default function Notifications() {
 
     if (notificationType === "BOOK_REQUEST") {
       return (
-        <form method="post" className="space-y-3">
+        <form method="post" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="BOOK_REQUEST" />
           <input type="hidden" name="bookId" value={notification.bookId || ""} />
           <input type="hidden" name="bookTitle" value={notification.bookTitle || ""} />
-          <p className="flex items-start gap-3">
-            <MenuBookIcon className="flex-shrink-0 mt-0.5" />
+          <p className="flex items-start sm:items-center gap-3">
+            <MenuBookIcon className="flex-shrink-0" />
             <span><strong>{notification.senderName}</strong> wants to borrow <strong>{notification.bookTitle}</strong></span>
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <button className="flex-1 sm:flex-none rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400" type="submit" name="book_request" value="approve">Approve</button>
             <button className="flex-1 sm:flex-none rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="book_request" value="decline">Decline</button>
           </div>
@@ -135,15 +135,15 @@ export default function Notifications() {
 
     if (notificationType === "BOOK_APPROVED") {
       return (
-        <form method="post" className="space-y-3">
+        <form method="post" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="BOOK_APPROVED" />
-          <p className="flex items-start gap-3">
-            <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-600" />
+          <p className="flex items-start sm:items-center gap-3">
+            <CheckCircleIcon className="flex-shrink-0 text-green-600" />
             <span><strong>{notification.senderName}</strong> approved your request for <strong>{notification.bookTitle}</strong></span>
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <button className="flex-1 sm:flex-none rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="dismiss" value="true">Dismiss</button>
           </div>
         </form>
@@ -152,15 +152,15 @@ export default function Notifications() {
 
     if (notificationType === "BOOK_RETURNED") {
       return (
-        <form method="post" className="space-y-3">
+        <form method="post" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="BOOK_RETURNED" />
-          <p className="flex items-start gap-3">
-            <KeyboardReturnIcon className="flex-shrink-0 mt-0.5 text-amber-600" />
+          <p className="flex items-start sm:items-center gap-3">
+            <KeyboardReturnIcon className="flex-shrink-0 text-amber-600" />
             <span><strong>{notification.senderName}</strong> returned <strong>{notification.bookTitle}</strong></span>
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <button className="flex-1 sm:flex-none rounded bg-slate-600 px-4 py-2 text-white hover:bg-slate-800 focus:bg-slate-900" type="submit" name="dismiss" value="true">Dismiss</button>
           </div>
         </form>
