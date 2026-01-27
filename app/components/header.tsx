@@ -37,8 +37,10 @@ export default function Header() {
   return (
     <header className="w-full flex items-center justify-between shadow-sm px-4 md:px-8 py-2 bg-white dark:bg-gray-950 dark:shadow-gray-900">
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-        <a id="logo" href={user ? "/books" : "/"} className="flex items-center gap-2 text-2xl font-semibold flex-shrink-0">
-          <BookStackIcon size={32} />
+        <a id="logo" href={user ? "/books" : "/"} className="flex items-center gap-2 text-2xl font-semibold flex-shrink-0 group">
+          <span className="transition-transform duration-200 group-hover:rotate-[-8deg]">
+            <BookStackIcon size={32} />
+          </span>
           <span className="hidden sm:inline">Stacks</span>
         </a>
         {libraryOwnerName && (
