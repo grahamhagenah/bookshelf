@@ -2,7 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, isRouteErrorResponse, Link, useLoaderData, useRouteError, useNavigation, useActionData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { deleteBook, getBookById, returnBook, updateBookMetadata, getLendingHistory } from "~/models/book.server";
 import { getUserById, getUserEmailById, createBookRequestNotification, createBookReturnedNotification, createNotification, createOverdueReminderNotification } from "~/models/user.server";
 import { sendBookRequestEmail } from "~/email.server";
@@ -334,12 +334,13 @@ export default function BookDetailsPage() {
   const friendRequestSent = actionData?.friendRequestSent === true;
   const reminderSent = actionData?.reminderSent === true;
   const refreshResult = actionData?.refreshed !== undefined ? actionData : null;
-  const editResult = actionData?.edited !== undefined ? actionData : null;
 
   // Close edit mode after successful save
-  if (editResult?.edited && isEditing && navigation.state === "idle") {
-    setIsEditing(false);
-  }
+  useEffect(() => {
+    if (actionData?.edited && navigation.state === "idle") {
+      setIsEditing(false);
+    }
+  }, [actionData?.edited, navigation.state]);
 
   const canRequestBook = !data.isOwner && !data.isBorrowed && !data.isBorrower && data.isFriend;
   const needsFriendship = !data.isOwner && !data.isFriend;
