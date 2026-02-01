@@ -31,6 +31,7 @@ export function getBookById(id: Book["id"]) {
       userId: true,
       borrowerId: true,
       borrowedAt: true,
+      dueDate: true,
       borrower: {
         select: {
           id: true,
@@ -43,6 +44,7 @@ export function getBookById(id: Book["id"]) {
           id: true,
           firstname: true,
           surname: true,
+          shareToken: true,
         }
       }
     },
@@ -137,16 +139,20 @@ export function deleteBook({
 }
 
 export function lendBook(bookId: Book["id"], borrowerId: User["id"]) {
+  const borrowedAt = new Date();
+  const dueDate = new Date(borrowedAt);
+  dueDate.setDate(dueDate.getDate() + 28); // 4 weeks
+
   return prisma.book.update({
     where: { id: bookId },
-    data: { borrowerId, borrowedAt: new Date() },
+    data: { borrowerId, borrowedAt, dueDate },
   });
 }
 
 export function returnBook(bookId: Book["id"]) {
   return prisma.book.update({
     where: { id: bookId },
-    data: { borrowerId: null, borrowedAt: null },
+    data: { borrowerId: null, borrowedAt: null, dueDate: null },
   });
 }
 
@@ -199,4 +205,72 @@ export async function bookExistsInLibrary(userId: User["id"], openLibraryKey: st
     select: { id: true },
   });
   return book !== null;
+}
+
+export async function getOverdueBooks() {
+  const now = new Date();
+  return prisma.book.findMany({
+    where: {
+      borrowerId: { not: null },
+      dueDate: { lt: now },
+    },
+    select: {
+      id: true,
+      title: true,
+      dueDate: true,
+      borrowerId: true,
+      userId: true,
+      user: {
+        select: {
+          id: true,
+          firstname: true,
+          surname: true,
+        },
+      },
+      borrower: {
+        select: {
+          id: true,
+          firstname: true,
+          surname: true,
+        },
+      },
+    },
+  });
+}
+
+export async function getBooksNearDue(daysUntilDue: number = 3) {
+  const now = new Date();
+  const threshold = new Date(now);
+  threshold.setDate(threshold.getDate() + daysUntilDue);
+
+  return prisma.book.findMany({
+    where: {
+      borrowerId: { not: null },
+      dueDate: {
+        gt: now,
+        lte: threshold,
+      },
+    },
+    select: {
+      id: true,
+      title: true,
+      dueDate: true,
+      borrowerId: true,
+      userId: true,
+      user: {
+        select: {
+          id: true,
+          firstname: true,
+          surname: true,
+        },
+      },
+      borrower: {
+        select: {
+          id: true,
+          firstname: true,
+          surname: true,
+        },
+      },
+    },
+  });
 }

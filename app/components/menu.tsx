@@ -6,7 +6,9 @@ interface RootLoaderData {
   user: {
     id: string;
     firstname: string;
+    surname: string;
     isAdmin?: boolean;
+    profileEmoji?: string | null;
   } | null;
 }
 
@@ -32,10 +34,18 @@ export default function PositionedMenu() {
     <div className="relative inline-block" ref={menuRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-2 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+        className="flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
       >
-        <UserIcon size={28} />
-        <span>{user ? user.firstname : "Log In"}</span>
+        {user?.profileEmoji ? (
+          <span className="text-xl">{user.profileEmoji}</span>
+        ) : user ? (
+          <span className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold text-xs">
+            {user.firstname?.[0]?.toUpperCase()}{user.surname?.[0]?.toUpperCase()}
+          </span>
+        ) : (
+          <UserIcon size={20} />
+        )}
+        <span className="hidden md:inline">{user ? user.firstname : "Log In"}</span>
       </button>
 
       {open && (

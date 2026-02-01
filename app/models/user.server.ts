@@ -16,6 +16,8 @@ export async function getUserById(id: User["id"]) {
       shareToken: true,
       isAdmin: true,
       darkMode: true,
+      profileEmoji: true,
+      emailNotifications: true,
       notificationsSent: true,
       notificationsReceived: {
         where: { read: false },
@@ -36,6 +38,13 @@ export async function getUserById(id: User["id"]) {
           email: true,
           firstname: true,
           surname: true,
+          profileEmoji: true,
+          _count: {
+            select: { books: true }
+          }
+        },
+        orderBy: {
+          books: { _count: 'desc' }
         }
       }
     }
@@ -57,13 +66,14 @@ export async function getUserEmailById(id: User["id"]) {
       email: true,
       firstname: true,
       surname: true,
+      emailNotifications: true,
     }
   })
 }
 
 export async function updateUser(
   id: User["id"],
-  data: { email?: string; firstname?: string; surname?: string }
+  data: { email?: string; firstname?: string; surname?: string; profileEmoji?: string | null }
 ) {
   return prisma.user.update({
     where: { id },
@@ -73,6 +83,7 @@ export async function updateUser(
       email: true,
       firstname: true,
       surname: true,
+      profileEmoji: true,
     },
   });
 }
@@ -234,6 +245,32 @@ export async function createBookReturnedNotification(
   })
 }
 
+export async function createOverdueReminderNotification(
+  ownerId: User["id"],
+  borrowerId: User["id"],
+  ownerName: string,
+  bookId: string,
+  bookTitle: string
+) {
+  return prisma.notification.create({
+    data: {
+      type: "OVERDUE_REMINDER",
+      receiver: {
+        connect: { id: borrowerId },
+      },
+      sender: {
+        connect: { id: ownerId },
+      },
+      senderName: ownerName,
+      book: {
+        connect: { id: bookId },
+      },
+      bookTitle: bookTitle,
+    },
+    select: { id: true, senderId: true, receiverId: true, bookId: true, bookTitle: true }
+  })
+}
+
 export async function createFriendship(userId: User["id"], friendId: User["id"]) {
 
   await prisma.user.update({
@@ -348,6 +385,13 @@ export async function toggleDarkMode(userId: string, enabled: boolean) {
   });
 }
 
+export async function toggleEmailNotifications(userId: string, enabled: boolean) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { emailNotifications: enabled },
+  });
+}
+
 export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
   const userWithPassword = await prisma.user.findUnique({
     where: { id: userId },
@@ -370,6 +414,34 @@ export async function changePassword(userId: string, currentPassword: string, ne
   });
 
   return { success: true };
+}
+
+export async function getPendingBookRequests(userId: string) {
+  // Get book requests sent by this user that haven't been responded to yet
+  const pendingRequests = await prisma.notification.findMany({
+    where: {
+      senderId: userId,
+      type: "BOOK_REQUEST",
+      read: false,
+    },
+    select: {
+      id: true,
+      receiverId: true,
+      createdAt: true,
+      bookId: true,
+      bookTitle: true,
+      receiver: {
+        select: {
+          id: true,
+          firstname: true,
+          surname: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return pendingRequests;
 }
 
 export async function getPendingFriendRequests(userId: string) {

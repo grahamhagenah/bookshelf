@@ -4,7 +4,7 @@ import { Form, isRouteErrorResponse, Link, useLoaderData, useRouteError, useNavi
 import invariant from "tiny-invariant";
 import { useState } from "react";
 import { deleteBook, getBookById, returnBook, updateBookMetadata } from "~/models/book.server";
-import { getUserById, getUserEmailById, createBookRequestNotification, createBookReturnedNotification } from "~/models/user.server";
+import { getUserById, getUserEmailById, createBookRequestNotification, createBookReturnedNotification, createNotification, createOverdueReminderNotification } from "~/models/user.server";
 import { sendBookRequestEmail } from "~/email.server";
 import { requireUserId } from "~/session.server";
 import Breadcrumbs from "~/components/breadcrumbs";
@@ -75,18 +75,19 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const isBorrowed = book.borrowerId !== null;
 
   const currentUser = await getUserById(userId);
+  const followingIds = currentUser?.following?.map(friend => friend.id) ?? [];
+  const isFriend = followingIds.includes(book.userId);
 
-  // If not the owner, check if the owner is a friend or borrower
-  if (!isOwner && !isBorrower) {
-    const followingIds = currentUser?.following?.map(friend => friend.id) ?? [];
-    const isFriend = followingIds.includes(book.userId);
-
-    if (!isFriend) {
+  // If not the owner, check if the owner is a friend, borrower, or has public sharing
+  if (!isOwner && !isBorrower && !isFriend) {
+    // Check if owner has public sharing enabled
+    const ownerHasPublicSharing = book.user?.shareToken !== null;
+    if (!ownerHasPublicSharing) {
       throw new Response("Not Found", { status: 404 });
     }
   }
 
-  return json({ book, isOwner, isBorrowed, isBorrower, currentUser });
+  return json({ book, isOwner, isBorrowed, isBorrower, isFriend, currentUser });
 };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
@@ -134,9 +135,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       book.title
     );
 
-    // Send email notification to book owner
+    // Send email notification to book owner (if they have email notifications enabled)
     const bookOwner = await getUserEmailById(book.userId);
-    if (bookOwner) {
+    if (bookOwner && bookOwner.emailNotifications) {
       await sendBookRequestEmail({
         toEmail: bookOwner.email,
         toName: bookOwner.firstname || "there",
@@ -169,6 +170,51 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
     await returnBook(book.id);
     return redirect("/books");
+  }
+
+  if (intent === "friendRequest") {
+    // Can't send friend request to yourself
+    if (book.userId === userId) {
+      throw new Response("Cannot send friend request to yourself", { status: 400 });
+    }
+
+    const currentUser = await getUserById(userId);
+    if (!currentUser) {
+      throw new Response("User not found", { status: 404 });
+    }
+
+    const senderName = `${currentUser.firstname} ${currentUser.surname}`;
+    await createNotification(userId, book.userId, senderName);
+
+    return json({ friendRequestSent: true, message: "Friend request sent!" });
+  }
+
+  if (intent === "sendReminder") {
+    // Only owner can send reminder
+    if (book.userId !== userId) {
+      throw new Response("Unauthorized", { status: 403 });
+    }
+
+    // Book must be borrowed
+    if (!book.borrowerId) {
+      throw new Response("Book is not currently borrowed", { status: 400 });
+    }
+
+    const currentUser = await getUserById(userId);
+    if (!currentUser) {
+      throw new Response("User not found", { status: 404 });
+    }
+
+    const ownerName = `${currentUser.firstname} ${currentUser.surname}`;
+    await createOverdueReminderNotification(
+      userId,
+      book.borrowerId,
+      ownerName,
+      book.id,
+      book.title
+    );
+
+    return json({ reminderSent: true, message: "Reminder sent!" });
   }
 
   if (intent === "refresh") {
@@ -234,16 +280,20 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
 export default function BookDetailsPage() {
   const data = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>() as { success?: boolean; refreshed?: boolean; message?: string } | null;
+  const actionData = useActionData<typeof action>() as { success?: boolean; refreshed?: boolean; friendRequestSent?: boolean; reminderSent?: boolean; message?: string } | null;
   const navigation = useNavigation();
 
   const isSubmitting = navigation.state === "submitting" && navigation.formData?.get("intent") === "request";
   const isRefreshing = navigation.state === "submitting" && navigation.formData?.get("intent") === "refresh";
+  const isSendingFriendRequest = navigation.state === "submitting" && navigation.formData?.get("intent") === "friendRequest";
+  const isSendingReminder = navigation.state === "submitting" && navigation.formData?.get("intent") === "sendReminder";
   const requestSent = actionData?.success === true;
+  const friendRequestSent = actionData?.friendRequestSent === true;
+  const reminderSent = actionData?.reminderSent === true;
   const refreshResult = actionData?.refreshed !== undefined ? actionData : null;
 
-  const canRequestBook = !data.isOwner && !data.isBorrowed && !data.isBorrower;
-  const showBorrowedStatus = data.isBorrowed;
+  const canRequestBook = !data.isOwner && !data.isBorrowed && !data.isBorrower && data.isFriend;
+  const needsFriendship = !data.isOwner && !data.isFriend;
 
   return (
     <>
@@ -271,22 +321,78 @@ export default function BookDetailsPage() {
             </button>
           </Form>
         )}
+        {needsFriendship && data.book.user && (
+          <div className="mt-8 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <p className="text-amber-800 dark:text-amber-200 text-sm mb-3">
+              Add <span className="font-semibold">{data.book.user.firstname} {data.book.user.surname}</span> as a friend to borrow their books.
+            </p>
+            <Form method="post">
+              <input type="hidden" name="intent" value="friendRequest" />
+              <button
+                type="submit"
+                disabled={isSendingFriendRequest || friendRequestSent}
+                className={`rounded w-full px-4 py-2 text-sm font-medium ${
+                  friendRequestSent
+                    ? "bg-green-500 text-white cursor-default"
+                    : isSendingFriendRequest
+                    ? "bg-gray-300 text-gray-500 cursor-wait"
+                    : "bg-amber-500 text-white hover:bg-amber-600"
+                }`}
+              >
+                {friendRequestSent ? "Friend Request Sent!" : isSendingFriendRequest ? "Sending..." : "Send Friend Request"}
+              </button>
+            </Form>
+          </div>
+        )}
         {data.isBorrower && (
           <>
             {data.book.user && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-8">
-                <p className="text-blue-800 text-sm">
+              <div className={`border rounded-lg p-4 mt-8 ${
+                data.book.dueDate && new Date(data.book.dueDate) < new Date()
+                  ? "bg-red-50 border-red-200"
+                  : "bg-blue-50 border-blue-200"
+              }`}>
+                <p className={`text-sm ${
+                  data.book.dueDate && new Date(data.book.dueDate) < new Date()
+                    ? "text-red-800"
+                    : "text-blue-800"
+                }`}>
                   <span className="font-semibold">Borrowed from:</span>{" "}
                   {data.book.user.firstname} {data.book.user.surname}
                 </p>
                 {data.book.borrowedAt && (
-                  <p className="text-blue-700 text-sm mt-1">
+                  <p className={`text-sm mt-1 ${
+                    data.book.dueDate && new Date(data.book.dueDate) < new Date()
+                      ? "text-red-700"
+                      : "text-blue-700"
+                  }`}>
                     <span className="font-semibold">Since:</span>{" "}
                     {new Date(data.book.borrowedAt).toLocaleDateString("en-US", {
                       month: "long",
                       day: "numeric",
                       year: "numeric",
                     })}
+                  </p>
+                )}
+                {data.book.dueDate && (
+                  <p className={`text-sm mt-1 font-semibold ${
+                    new Date(data.book.dueDate) < new Date()
+                      ? "text-red-700"
+                      : "text-blue-700"
+                  }`}>
+                    {new Date(data.book.dueDate) < new Date() ? (
+                      <>Overdue! Was due {new Date(data.book.dueDate).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}</>
+                    ) : (
+                      <>Due: {new Date(data.book.dueDate).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}</>
+                    )}
                   </p>
                 )}
               </div>
@@ -301,11 +407,6 @@ export default function BookDetailsPage() {
               </button>
             </Form>
           </>
-        )}
-        {showBorrowedStatus && !data.isBorrower && (
-          <p className="mt-8 text-center text-gray-600">
-            This book is currently borrowed
-          </p>
         )}
       </section>
       <section className="order-1 md:order-2 flex-1">
@@ -350,24 +451,60 @@ export default function BookDetailsPage() {
           </div>
         )}
 
-        {data.isOwner && data.isBorrowed && data.book.borrower && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 my-4">
-            <p className="text-amber-800">
-              <span className="font-semibold">Currently lent to:</span>{" "}
-              <span className="text-amber-700">{data.book.borrower.firstname} {data.book.borrower.surname}</span>
-            </p>
-            {data.book.borrowedAt && (
-              <p className="text-amber-700 text-sm mt-1">
-                <span className="font-semibold">Since:</span>{" "}
-                {new Date(data.book.borrowedAt).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+        {data.isOwner && data.isBorrowed && data.book.borrower && (() => {
+          const dueDate = data.book.dueDate ? new Date(data.book.dueDate) : null;
+          const now = new Date();
+          const isOverdue = dueDate && dueDate < now;
+          const daysLeft = dueDate ? Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+          return (
+            <div className={`border rounded-lg p-4 my-4 ${isOverdue ? "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800" : "bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800"}`}>
+              <p className={isOverdue ? "text-red-800 dark:text-red-200" : "text-amber-800 dark:text-amber-200"}>
+                <span className="font-semibold">Currently lent to:</span>{" "}
+                <span className={isOverdue ? "text-red-700 dark:text-red-300" : "text-amber-700 dark:text-amber-300"}>{data.book.borrower.firstname} {data.book.borrower.surname}</span>
               </p>
-            )}
-          </div>
-        )}
+              {data.book.borrowedAt && (
+                <p className={`text-sm mt-1 ${isOverdue ? "text-red-700 dark:text-red-300" : "text-amber-700 dark:text-amber-300"}`}>
+                  <span className="font-semibold">Since:</span>{" "}
+                  {new Date(data.book.borrowedAt).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
+              )}
+              {dueDate && (
+                <p className={`text-sm mt-1 font-semibold ${isOverdue ? "text-red-700 dark:text-red-300" : "text-amber-700 dark:text-amber-300"}`}>
+                  {isOverdue ? (
+                    <>Overdue by {Math.abs(daysLeft!)} {Math.abs(daysLeft!) === 1 ? "day" : "days"}</>
+                  ) : daysLeft !== null && daysLeft <= 3 ? (
+                    <>Due in {daysLeft} {daysLeft === 1 ? "day" : "days"} — reminder will be sent</>
+                  ) : (
+                    <>Due in {daysLeft} days ({dueDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })})</>
+                  )}
+                </p>
+              )}
+              <Form method="post" className="mt-3">
+                <input type="hidden" name="intent" value="sendReminder" />
+                <button
+                  type="submit"
+                  disabled={isSendingReminder || reminderSent}
+                  className={`text-sm px-3 py-1.5 rounded ${
+                    reminderSent
+                      ? "bg-green-500 text-white cursor-default"
+                      : isSendingReminder
+                      ? "bg-gray-300 text-gray-500 cursor-wait"
+                      : isOverdue
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-amber-600 text-white hover:bg-amber-700"
+                  }`}
+                >
+                  {reminderSent ? "Reminder Sent!" : isSendingReminder ? "Sending..." : "Send Return Reminder"}
+                </button>
+              </Form>
+            </div>
+          );
+        })()}
 
         <div className="py-4">
           <h5 className="font-semibold text-lg mb-2">Description</h5>

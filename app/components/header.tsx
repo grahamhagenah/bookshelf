@@ -2,6 +2,7 @@ import { useMatches } from "@remix-run/react";
 import Search from "./search"
 import PositionedMenu from './menu'
 import Notifications from './notifications'
+import FriendsDropdown from './friends-dropdown'
 import { BookStackIcon } from './icons';
 
 interface RootLoaderData {
@@ -52,6 +53,7 @@ export default function Header() {
       <div className="flex items-center flex-shrink-0">
         {user && <div className="hidden sm:block"><Search /></div>}
         {user && <Notifications />}
+        {user && <FriendsDropdown />}
         <PositionedMenu />
       </div>
     </header>

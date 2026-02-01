@@ -154,14 +154,20 @@ export default function Friends() {
             <ul className="divide-y">
               {following.map((user, index) => (
                 <li key={index} className="py-3 first:pt-0 last:pb-0">
-                  <a href={`/friend/${user.id}`} className="flex items-center gap-3 hover:bg-gray-50 -mx-2 px-2 py-2 rounded-lg transition-colors">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm flex-shrink-0">
-                      {(user.firstname?.[0] || "").toUpperCase()}
-                      {(user.surname?.[0] || "").toUpperCase()}
+                  <a href={`/friend/${user.id}`} className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 -mx-2 px-2 py-2 rounded-lg transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold text-sm flex-shrink-0">
+                      {user.profileEmoji ? (
+                        <span className="text-xl">{user.profileEmoji}</span>
+                      ) : (
+                        <>
+                          {(user.firstname?.[0] || "").toUpperCase()}
+                          {(user.surname?.[0] || "").toUpperCase()}
+                        </>
+                      )}
                     </div>
                     <div>
                       <h3 className="font-medium">{user.firstname} {user.surname}</h3>
-                      <p className="text-sm text-gray-500">{user.email}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                     </div>
                   </a>
                 </li>

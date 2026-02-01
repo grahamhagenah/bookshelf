@@ -8,13 +8,15 @@ generator client {
 }
 
 model User {
-  id         String  @id @default(cuid())
-  email      String  @unique
-  firstname  String
-  surname    String
-  shareToken String? @unique
-  isAdmin    Boolean @default(false)
-  darkMode   Boolean @default(false)
+  id                 String  @id @default(cuid())
+  email              String  @unique
+  firstname          String
+  surname            String
+  shareToken         String? @unique
+  isAdmin            Boolean @default(false)
+  darkMode           Boolean @default(false)
+  profileEmoji       String?
+  emailNotifications Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -59,6 +61,7 @@ model Book {
   borrower   User?   @relation("borrowedBooks", fields: [borrowerId], references: [id])
   borrowerId String?
   borrowedAt DateTime?
+  dueDate    DateTime?
 
   notifications Notification[]
 }

@@ -48,11 +48,11 @@ export default function Breadcrumbs() {
 
   return (
     <nav aria-label="Breadcrumb" className="px-4 md:px-8 py-3">
-      <ol className="flex items-center gap-1 text-sm text-gray-600">
+      <ol className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
         <li>
           <Link
             to="/books"
-            className="flex items-center gap-1 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
           >
             <HomeIcon size={18} />
             <span className="sr-only">Home</span>
@@ -62,15 +62,15 @@ export default function Breadcrumbs() {
           const isLast = index === allBreadcrumbs.length - 1;
           return (
             <li key={crumb.id} className="flex items-center gap-1">
-              <ChevronRightIcon size={18} className="text-gray-400" />
+              <ChevronRightIcon size={18} className="text-gray-400 dark:text-gray-500" />
               {isLast ? (
-                <span className="font-medium text-gray-900">{crumb.label}</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{crumb.label}</span>
               ) : crumb.href ? (
-                <Link to={crumb.href} className="hover:text-gray-900">
+                <Link to={crumb.href} className="hover:text-gray-900 dark:hover:text-gray-100">
                   {crumb.label}
                 </Link>
               ) : (
-                <span className="hover:text-gray-900">{crumb.label}</span>
+                <span>{crumb.label}</span>
               )}
             </li>
           );

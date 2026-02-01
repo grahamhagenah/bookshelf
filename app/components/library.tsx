@@ -2,6 +2,12 @@ import { NavLink, Link } from "@remix-run/react";
 import { useState, useLayoutEffect, useEffect } from "react";
 import { GroupIcon, SearchIcon, BookIcon, GridViewIcon, ListViewIcon } from './icons';
 
+// Convert Open Library cover URL to different size
+// Sizes: S (small ~50px), M (medium ~180px), L (large ~300px)
+function getCoverUrl(url: string, size: "S" | "M" | "L" = "M"): string {
+  return url.replace(/-[SML]\.jpg$/, `-${size}.jpg`);
+}
+
 // Generate a consistent color based on a string hash
 function getColorFromString(str: string): string {
   let hash = 0;
@@ -45,10 +51,10 @@ function BookCover({ src, alt, className, style }: { src: string; alt: string; c
   }
 
   return (
-    <div className="relative" style={style}>
+    <div className={`relative ${className}`} style={style}>
       {!loaded && (
         <div
-          className={`absolute inset-0 ${className}`}
+          className="absolute inset-0 rounded-lg"
           style={{ backgroundColor: placeholderColor }}
         />
       )}
@@ -57,8 +63,7 @@ function BookCover({ src, alt, className, style }: { src: string; alt: string; c
         alt={alt}
         loading="lazy"
         decoding="async"
-        className={`${className} ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
-        style={style}
+        className={`w-full h-full object-cover rounded-lg ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
         onLoad={() => setLoaded(true)}
         onError={() => setError(true)}
       />
@@ -206,14 +211,14 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
 
         {/* Cover View */}
         {viewMode === "cover" && (
-          <ol className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
+          <ol className="grid grid-cols-3 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
             {bookListItems.map((book) => (
               <li key={book.id} className="cover-wrapper relative">
                 <NavLink to={`/books/${book.id}`}>
                   <BookCover
-                    src={book.cover}
+                    src={getCoverUrl(book.cover, "M")}
                     alt={book.title}
-                    className="rounded-lg shadow-xl book-cover h-80 w-full object-cover"
+                    className="shadow-xl book-cover w-full aspect-[2/3]"
                   />
                   {book.isBorrowed && (
                     <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full shadow">
@@ -241,9 +246,9 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                   className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors border border-gray-100 dark:border-gray-800"
                 >
                   <BookCover
-                    src={book.cover}
+                    src={getCoverUrl(book.cover, "S")}
                     alt={book.title}
-                    className="rounded shadow w-12 h-16 object-cover flex-shrink-0"
+                    className="shadow w-12 h-16 flex-shrink-0"
                   />
                   <div className="flex-grow min-w-0">
                     <p className="truncate">

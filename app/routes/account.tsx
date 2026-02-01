@@ -2,7 +2,7 @@ import { useLoaderData } from "@remix-run/react";
 import { requireUserId } from "~/session.server";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { getUserById, getUserByEmail, updateUser, generateShareToken, revokeShareToken, changePassword, toggleDarkMode } from "~/models/user.server";
+import { getUserById, getUserByEmail, updateUser, generateShareToken, revokeShareToken, changePassword, toggleDarkMode, toggleEmailNotifications } from "~/models/user.server";
 import { getBookStats } from "~/models/book.server";
 import Layout from "~/components / Layout/Layout";
 import Breadcrumbs from "~/components/breadcrumbs";
@@ -32,19 +32,35 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Handle share token actions
   if (intent === "generateShareToken") {
     await generateShareToken(userId);
-    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: false, shareAction: "generated" });
+    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: false, emojiSuccess: false, shareAction: "generated" });
   }
 
   if (intent === "revokeShareToken") {
     await revokeShareToken(userId);
-    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: false, shareAction: "revoked" });
+    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: false, emojiSuccess: false, shareAction: "revoked" });
   }
 
   // Handle dark mode toggle
   if (intent === "toggleDarkMode") {
     const enabled = formData.get("darkMode") === "true";
     await toggleDarkMode(userId, enabled);
-    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: false });
+    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: false, emojiSuccess: false });
+  }
+
+  // Handle email notifications toggle
+  if (intent === "toggleEmailNotifications") {
+    const enabled = formData.get("emailNotifications") === "true";
+    await toggleEmailNotifications(userId, enabled);
+    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: false, emojiSuccess: false });
+  }
+
+  // Handle profile emoji update
+  if (intent === "updateProfileEmoji") {
+    const emoji = formData.get("emoji");
+    await updateUser(userId, {
+      profileEmoji: emoji === "" ? null : (emoji as string),
+    });
+    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: false, emojiSuccess: true });
   }
 
   // Handle password change
@@ -68,17 +84,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     if (Object.keys(passwordErrors).length > 0) {
-      return json({ errors: null, passwordErrors, success: false, passwordSuccess: false }, { status: 400 });
+      return json({ errors: null, passwordErrors, success: false, passwordSuccess: false, emojiSuccess: false }, { status: 400 });
     }
 
     const result = await changePassword(userId, currentPassword as string, newPassword as string);
 
     if (!result.success) {
       passwordErrors.currentPassword = result.error;
-      return json({ errors: null, passwordErrors, success: false, passwordSuccess: false }, { status: 400 });
+      return json({ errors: null, passwordErrors, success: false, passwordSuccess: false, emojiSuccess: false }, { status: 400 });
     }
 
-    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: true });
+    return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: true, emojiSuccess: false });
   }
 
   // Handle profile update
@@ -103,14 +119,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (Object.keys(errors).length > 0) {
-    return json({ errors, passwordErrors: null, success: false, passwordSuccess: false }, { status: 400 });
+    return json({ errors, passwordErrors: null, success: false, passwordSuccess: false, emojiSuccess: false }, { status: 400 });
   }
 
   // Check if email is already taken by another user
   const existingUser = await getUserByEmail(email as string);
   if (existingUser && existingUser.id !== userId) {
     errors.email = "This email is already in use";
-    return json({ errors, passwordErrors: null, success: false, passwordSuccess: false }, { status: 400 });
+    return json({ errors, passwordErrors: null, success: false, passwordSuccess: false, emojiSuccess: false }, { status: 400 });
   }
 
   await updateUser(userId, {
@@ -119,7 +135,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     email: (email as string).trim(),
   });
 
-  return json({ errors: null, passwordErrors: null, success: true, passwordSuccess: false });
+  return json({ errors: null, passwordErrors: null, success: true, passwordSuccess: false, emojiSuccess: false });
 };
 
 export default function Account() {
@@ -216,6 +232,96 @@ export default function Account() {
               }`}
             />
           </button>
+        </Form>
+      </section>
+
+      <section className="border rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-2">Notifications</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          Control how you receive notifications.
+        </p>
+        <Form method="post" className="flex items-center justify-between">
+          <input type="hidden" name="intent" value="toggleEmailNotifications" />
+          <input type="hidden" name="emailNotifications" value={data.user?.emailNotifications ? "false" : "true"} />
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">Email Notifications</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Receive emails for book requests</span>
+          </div>
+          <button
+            type="submit"
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              data.user?.emailNotifications ? "bg-blue-500" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                data.user?.emailNotifications ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </Form>
+      </section>
+
+      <section className="border rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-2">Profile Picture</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          Choose an emoji to represent you, or use your initials.
+        </p>
+
+        {actionData?.emojiSuccess && (
+          <div className="p-3 rounded bg-green-100 text-green-800 mb-4">
+            Profile picture updated successfully.
+          </div>
+        )}
+
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold text-xl flex-shrink-0">
+            {data.user?.profileEmoji ? (
+              <span className="text-3xl">{data.user.profileEmoji}</span>
+            ) : (
+              <>
+                {(data.user?.firstname?.[0] || "").toUpperCase()}
+                {(data.user?.surname?.[0] || "").toUpperCase()}
+              </>
+            )}
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            {data.user?.profileEmoji ? "Current emoji" : "Using initials"}
+          </div>
+        </div>
+
+        <Form method="post">
+          <input type="hidden" name="intent" value="updateProfileEmoji" />
+          <div className="grid grid-cols-8 sm:grid-cols-10 gap-2 mb-4">
+            {["😀", "😎", "🤓", "🧐", "🤔", "😊", "🥳", "🤩", "😇", "🙂",
+              "👤", "👩", "👨", "🧑", "👧", "👦", "🧔", "👴", "👵", "🧓",
+              "🦊", "🐱", "🐶", "🐼", "🐨", "🦁", "🐯", "🐮", "🐷", "🐸",
+              "📚", "📖", "📕", "📗", "📘", "📙", "🎓", "✏️", "🖊️", "📝",
+              "🌟", "⭐", "🌈", "🔥", "💡", "💎", "🎨", "🎭", "🎪", "🎯"
+            ].map((emoji) => (
+              <button
+                key={emoji}
+                type="submit"
+                name="emoji"
+                value={emoji}
+                className={`w-10 h-10 text-2xl rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-center ${
+                  data.user?.profileEmoji === emoji ? "bg-blue-100 dark:bg-blue-900 ring-2 ring-blue-500" : ""
+                }`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+          {data.user?.profileEmoji && (
+            <button
+              type="submit"
+              name="emoji"
+              value=""
+              className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 underline"
+            >
+              Remove emoji and use initials
+            </button>
+          )}
         </Form>
       </section>
 
