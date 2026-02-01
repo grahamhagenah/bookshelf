@@ -57,7 +57,7 @@ export function getBookListItems(userId: User["id"]) {
     where: {
       userId: userId,
     },
-    select: { id: true, title: true, cover: true, userId: true, borrowerId: true },
+    select: { id: true, title: true, cover: true, author: true, datePublished: true, pageCount: true, lendCount: true, userId: true, borrowerId: true },
     orderBy: { updatedAt: "desc" },
   });
 }
@@ -138,18 +138,45 @@ export function deleteBook({
   });
 }
 
-export function lendBook(bookId: Book["id"], borrowerId: User["id"]) {
+export async function lendBook(bookId: Book["id"], borrowerId: User["id"]) {
   const borrowedAt = new Date();
   const dueDate = new Date(borrowedAt);
   dueDate.setDate(dueDate.getDate() + 28); // 4 weeks
 
+  // Create lending history record
+  await prisma.lendingHistory.create({
+    data: {
+      bookId,
+      borrowerId,
+      borrowedAt,
+    },
+  });
+
   return prisma.book.update({
     where: { id: bookId },
-    data: { borrowerId, borrowedAt, dueDate },
+    data: {
+      borrowerId,
+      borrowedAt,
+      dueDate,
+      lendCount: { increment: 1 },
+    },
   });
 }
 
-export function returnBook(bookId: Book["id"]) {
+export async function returnBook(bookId: Book["id"]) {
+  // Update the most recent lending history record with return date
+  const latestLending = await prisma.lendingHistory.findFirst({
+    where: { bookId, returnedAt: null },
+    orderBy: { borrowedAt: "desc" },
+  });
+
+  if (latestLending) {
+    await prisma.lendingHistory.update({
+      where: { id: latestLending.id },
+      data: { returnedAt: new Date() },
+    });
+  }
+
   return prisma.book.update({
     where: { id: bookId },
     data: { borrowerId: null, borrowedAt: null, dueDate: null },
@@ -176,7 +203,7 @@ export function updateBookMetadata(
 export function getBorrowedBooks(userId: User["id"]) {
   return prisma.book.findMany({
     where: { borrowerId: userId },
-    select: { id: true, title: true, cover: true, userId: true, borrowerId: true },
+    select: { id: true, title: true, cover: true, author: true, datePublished: true, pageCount: true, lendCount: true, userId: true, borrowerId: true },
     orderBy: { updatedAt: "desc" },
   });
 }
@@ -269,6 +296,27 @@ export async function getBooksNearDue(daysUntilDue: number = 3) {
           id: true,
           firstname: true,
           surname: true,
+        },
+      },
+    },
+  });
+}
+
+export async function getLendingHistory(bookId: Book["id"]) {
+  return prisma.lendingHistory.findMany({
+    where: { bookId },
+    orderBy: { borrowedAt: "desc" },
+    select: {
+      id: true,
+      borrowedAt: true,
+      returnedAt: true,
+      borrower: {
+        select: {
+          id: true,
+          firstname: true,
+          surname: true,
+          shareToken: true,
+          profileEmoji: true,
         },
       },
     },

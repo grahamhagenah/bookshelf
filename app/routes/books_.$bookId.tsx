@@ -3,26 +3,24 @@ import { json, redirect } from "@remix-run/node";
 import { Form, isRouteErrorResponse, Link, useLoaderData, useRouteError, useNavigation, useActionData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 import { useState } from "react";
-import { deleteBook, getBookById, returnBook, updateBookMetadata } from "~/models/book.server";
+import { deleteBook, getBookById, returnBook, updateBookMetadata, getLendingHistory } from "~/models/book.server";
 import { getUserById, getUserEmailById, createBookRequestNotification, createBookReturnedNotification, createNotification, createOverdueReminderNotification } from "~/models/user.server";
 import { sendBookRequestEmail } from "~/email.server";
 import { requireUserId } from "~/session.server";
 import Breadcrumbs from "~/components/breadcrumbs";
+import { HistoryIcon, PersonAddIcon } from "~/components/icons";
 
 function BookCover({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <div className="relative inline-block">
-      {!loaded && (
-        <div className="rounded-lg bg-blue-100 opacity-50" style={{ width: 200, height: 300 }} />
-      )}
+    <div className="relative w-[200px] h-[300px] rounded-lg overflow-hidden bg-blue-100">
       <img
         src={src}
         alt={alt}
         loading="lazy"
         decoding="async"
-        className={`rounded-lg shadow-xl h-[300px] ${loaded ? 'opacity-100' : 'opacity-0'} ${!loaded ? 'absolute top-0 left-0' : ''} transition-opacity duration-300`}
+        className={`w-full h-full object-cover rounded-lg shadow-xl ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
         onLoad={() => setLoaded(true)}
       />
     </div>
@@ -87,7 +85,17 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     }
   }
 
-  return json({ book, isOwner, isBorrowed, isBorrower, isFriend, currentUser });
+  // Fetch lending history for the book
+  const lendingHistory = await getLendingHistory(params.bookId);
+
+  // Mark which borrowers in history are friends
+  const lendingHistoryWithFriendStatus = lendingHistory.map(entry => ({
+    ...entry,
+    isFriend: followingIds.includes(entry.borrower.id),
+    isCurrentUser: entry.borrower.id === userId,
+  }));
+
+  return json({ book, isOwner, isBorrowed, isBorrower, isFriend, currentUser, lendingHistory: lendingHistoryWithFriendStatus });
 };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
@@ -173,8 +181,12 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   }
 
   if (intent === "friendRequest") {
+    // Check if there's a specific target user (from lending history)
+    const targetUserId = formData.get("targetUserId");
+    const targetId = typeof targetUserId === "string" ? targetUserId : book.userId;
+
     // Can't send friend request to yourself
-    if (book.userId === userId) {
+    if (targetId === userId) {
       throw new Response("Cannot send friend request to yourself", { status: 400 });
     }
 
@@ -184,7 +196,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
 
     const senderName = `${currentUser.firstname} ${currentUser.surname}`;
-    await createNotification(userId, book.userId, senderName);
+    await createNotification(userId, targetId, senderName);
 
     return json({ friendRequestSent: true, message: "Friend request sent!" });
   }
@@ -521,6 +533,84 @@ export default function BookDetailsPage() {
             >
               View on Open Library
             </a>
+          </div>
+        )}
+
+        {data.lendingHistory && data.lendingHistory.length > 0 && (
+          <div className="py-4">
+            <h5 className="font-semibold text-lg mb-3 flex items-center gap-2">
+              <HistoryIcon size={20} className="text-gray-400" />
+              Lending History
+            </h5>
+            <ul className="space-y-1">
+              {data.lendingHistory.map((entry) => (
+                <li key={entry.id} className="flex items-center justify-between text-sm py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold text-xs flex-shrink-0">
+                      {entry.isCurrentUser ? (
+                        data.currentUser?.profileEmoji ? (
+                          <span className="text-lg">{data.currentUser.profileEmoji}</span>
+                        ) : (
+                          <>
+                            {(data.currentUser?.firstname?.[0] || "").toUpperCase()}
+                            {(data.currentUser?.surname?.[0] || "").toUpperCase()}
+                          </>
+                        )
+                      ) : entry.borrower.profileEmoji ? (
+                        <span className="text-lg">{entry.borrower.profileEmoji}</span>
+                      ) : (
+                        <>
+                          {(entry.borrower.firstname?.[0] || "").toUpperCase()}
+                          {(entry.borrower.surname?.[0] || "").toUpperCase()}
+                        </>
+                      )}
+                    </div>
+                    {entry.isCurrentUser ? (
+                      <span className="font-medium text-gray-900 dark:text-gray-100">You</span>
+                    ) : entry.isFriend ? (
+                      <Link
+                        to={`/friend/${entry.borrower.id}`}
+                        className="font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
+                      >
+                        {entry.borrower.firstname} {entry.borrower.surname}
+                      </Link>
+                    ) : entry.borrower.shareToken ? (
+                      <Link
+                        to={`/shelf/${entry.borrower.shareToken}`}
+                        className="font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
+                      >
+                        {entry.borrower.firstname} {entry.borrower.surname}
+                      </Link>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{entry.borrower.firstname} {entry.borrower.surname}</span>
+                        <Form method="post" className="inline">
+                          <input type="hidden" name="intent" value="friendRequest" />
+                          <input type="hidden" name="targetUserId" value={entry.borrower.id} />
+                          <button
+                            type="submit"
+                            className="inline-flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700"
+                            title="Add as friend to view their shelf"
+                          >
+                            <PersonAddIcon size={14} />
+                            <span>Add friend</span>
+                          </button>
+                        </Form>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-gray-400 text-xs">
+                    {new Date(entry.borrowedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    {entry.returnedAt && (
+                      <span> — {new Date(entry.returnedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                    )}
+                    {!entry.returnedAt && (
+                      <span className="ml-2 text-amber-600">Current</span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 

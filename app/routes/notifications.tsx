@@ -352,7 +352,7 @@ export default function Notifications() {
             Recent Activity
           </h2>
           <ul className="space-y-2">
-            {data.history.map((notification) => (
+            {[...data.history].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((notification) => (
               <li key={notification.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 py-3 px-3 bg-gray-50 rounded-lg text-gray-600 text-sm">
                 <div className="flex items-start sm:items-center gap-3">
                   <span className="flex-shrink-0">{getHistoryIcon(notification.type)}</span>

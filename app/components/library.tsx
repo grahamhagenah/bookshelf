@@ -26,6 +26,9 @@ interface Book {
   title: string;
   cover: string;
   author?: string;
+  datePublished?: string | null;
+  pageCount?: number | null;
+  lendCount?: number;
   isBorrowed?: boolean;
   isLending?: boolean;
 }
@@ -238,25 +241,39 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
 
         {/* List View */}
         {viewMode === "list" && (
-          <ol className="space-y-2">
+          <ol className="border-t border-gray-100 dark:border-gray-800">
             {bookListItems.map((book) => (
-              <li key={book.id}>
+              <li key={book.id} className="border-b border-gray-100 dark:border-gray-800">
                 <NavLink
                   to={`/books/${book.id}`}
-                  className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors border border-gray-100 dark:border-gray-800"
+                  className="flex items-center gap-3 px-2 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                 >
-                  <BookCover
-                    src={getCoverUrl(book.cover, "S")}
-                    alt={book.title}
-                    className="shadow w-12 h-16 flex-shrink-0"
-                  />
                   <div className="flex-grow min-w-0">
-                    <p className="truncate">
-                      <span className="font-medium text-gray-900 dark:text-gray-100">{book.title}</span>
-                      {book.author && (
-                        <span className="text-gray-400 dark:text-gray-500"> · <span className="text-gray-500 dark:text-gray-400">{book.author}</span></span>
-                      )}
-                    </p>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{book.title}</span>
+                    {book.author && (
+                      <span className="text-gray-400 dark:text-gray-500"> · </span>
+                    )}
+                    {book.author && (
+                      <span className="text-gray-500 dark:text-gray-400">{book.author}</span>
+                    )}
+                    {book.datePublished && (
+                      <span className="text-gray-400 dark:text-gray-500"> · </span>
+                    )}
+                    {book.datePublished && (
+                      <span className="text-gray-400 dark:text-gray-500">{book.datePublished}</span>
+                    )}
+                    {book.pageCount && (
+                      <span className="text-gray-400 dark:text-gray-500"> · </span>
+                    )}
+                    {book.pageCount && (
+                      <span className="text-gray-400 dark:text-gray-500">{book.pageCount} pages</span>
+                    )}
+                    {book.lendCount !== undefined && book.lendCount > 0 && (
+                      <span className="text-gray-400 dark:text-gray-500"> · </span>
+                    )}
+                    {book.lendCount !== undefined && book.lendCount > 0 && (
+                      <span className="text-gray-400 dark:text-gray-500">lent {book.lendCount}×</span>
+                    )}
                   </div>
                   {book.isBorrowed && (
                     <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full flex-shrink-0">
