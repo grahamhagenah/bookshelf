@@ -18,18 +18,18 @@ export default function Index() {
           <div className="flex items-center justify-center gap-4 mb-6">
             <BookStackIcon size={64} className="text-blue-600" />
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold text-gray-800 mb-4">
+          <h1 className="text-5xl md:text-7xl font-bold text-gray-800 dark:text-gray-100 mb-4">
             Stacks
           </h1>
-          <p className="text-xl text-gray-600 max-w-xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
             Your personal lending library. Catalog your books, connect with friends, and share the joy of reading.
           </p>
         </div>
 
         {user ? (
-          <div className="bg-white rounded-2xl shadow-lg border p-8 max-w-md w-full text-center">
-            <p className="text-gray-600 mb-6">
-              Welcome back, <span className="font-semibold text-gray-800">{user.firstname}</span>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border dark:border-gray-800 p-8 max-w-md w-full text-center">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Welcome back, <span className="font-semibold text-gray-800 dark:text-gray-100">{user.firstname}</span>
             </p>
             <Link
               to="/books"
@@ -39,8 +39,8 @@ export default function Index() {
             </Link>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-lg border p-8 max-w-md w-full">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6 text-center">Get started</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border dark:border-gray-800 p-8 max-w-md w-full">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-6 text-center">Get started</h2>
             <div className="space-y-3">
               <Link
                 to="/join"
@@ -50,7 +50,7 @@ export default function Index() {
               </Link>
               <Link
                 to="/login"
-                className="flex items-center justify-center w-full rounded-xl border-2 border-gray-200 px-6 py-3 text-lg font-medium text-gray-700 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                className="flex items-center justify-center w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 px-6 py-3 text-lg font-medium text-gray-700 dark:text-gray-300 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors"
               >
                 Sign in
               </Link>
