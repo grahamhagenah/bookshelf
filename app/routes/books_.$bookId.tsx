@@ -287,22 +287,59 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     return json({ refreshed: false, message: "Could not find book on Open Library." });
   }
 
+  if (intent === "edit") {
+    // Only owner can edit
+    if (book.userId !== userId) {
+      throw new Response("Unauthorized", { status: 403 });
+    }
+
+    const title = formData.get("title");
+    const author = formData.get("author");
+    const cover = formData.get("cover");
+    const body = formData.get("body");
+    const datePublished = formData.get("datePublished");
+    const pageCount = formData.get("pageCount");
+    const publisher = formData.get("publisher");
+    const subjects = formData.get("subjects");
+
+    await updateBookMetadata(book.id, {
+      title: typeof title === "string" ? title : undefined,
+      author: typeof author === "string" ? author : undefined,
+      cover: typeof cover === "string" && cover ? cover : undefined,
+      body: typeof body === "string" ? body : undefined,
+      datePublished: typeof datePublished === "string" && datePublished ? datePublished : null,
+      pageCount: typeof pageCount === "string" && pageCount ? parseInt(pageCount, 10) : null,
+      publisher: typeof publisher === "string" && publisher ? publisher : null,
+      subjects: typeof subjects === "string" && subjects ? subjects : null,
+    });
+
+    return json({ edited: true, message: "Book updated successfully!" });
+  }
+
   return null;
 };
 
 export default function BookDetailsPage() {
   const data = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>() as { success?: boolean; refreshed?: boolean; friendRequestSent?: boolean; reminderSent?: boolean; message?: string } | null;
+  const actionData = useActionData<typeof action>() as { success?: boolean; refreshed?: boolean; friendRequestSent?: boolean; reminderSent?: boolean; edited?: boolean; message?: string } | null;
   const navigation = useNavigation();
+  const [isEditing, setIsEditing] = useState(false);
 
   const isSubmitting = navigation.state === "submitting" && navigation.formData?.get("intent") === "request";
   const isRefreshing = navigation.state === "submitting" && navigation.formData?.get("intent") === "refresh";
   const isSendingFriendRequest = navigation.state === "submitting" && navigation.formData?.get("intent") === "friendRequest";
   const isSendingReminder = navigation.state === "submitting" && navigation.formData?.get("intent") === "sendReminder";
+  const isSaving = navigation.state === "submitting" && navigation.formData?.get("intent") === "edit";
   const requestSent = actionData?.success === true;
   const friendRequestSent = actionData?.friendRequestSent === true;
   const reminderSent = actionData?.reminderSent === true;
   const refreshResult = actionData?.refreshed !== undefined ? actionData : null;
+  const editResult = actionData?.edited !== undefined ? actionData : null;
+
+  // Close edit mode after successful save
+  if (editResult?.edited && isEditing && navigation.state === "idle") {
+    setIsEditing(false);
+  }
 
   const canRequestBook = !data.isOwner && !data.isBorrowed && !data.isBorrower && data.isFriend;
   const needsFriendship = !data.isOwner && !data.isFriend;
@@ -422,48 +459,244 @@ export default function BookDetailsPage() {
         )}
       </section>
       <section className="order-1 md:order-2 flex-1">
-        <h3 className="text-4xl md:text-5xl font-bold">{data.book.title}</h3>
-        <h4 className="text-3xl md:text-4xl author py-4">{data.book.author}</h4>
+        {isEditing ? (
+          /* Edit Mode */
+          <Form method="post" className="space-y-4">
+            <input type="hidden" name="intent" value="edit" />
 
-        <div className="flex flex-wrap gap-x-6 gap-y-2 py-4 text-sm text-gray-600 dark:text-gray-400">
-          {data.book.datePublished && (
-            <div>
-              <span className="font-semibold">Published:</span> {data.book.datePublished}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Book</h3>
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                Cancel
+              </button>
             </div>
-          )}
-          {data.book.pageCount && (
-            <div>
-              <span className="font-semibold">Pages:</span> {data.book.pageCount}
-            </div>
-          )}
-          {data.book.publisher && (
-            <div>
-              <span className="font-semibold">Publisher:</span> {data.book.publisher}
-            </div>
-          )}
-          {!data.isOwner && data.book.user && (
-            <div>
-              <span className="font-semibold">Owner:</span> {data.book.user.firstname} {data.book.user.surname}
-            </div>
-          )}
-        </div>
 
-        {data.book.subjects && (
-          <div className="py-2">
-            <div className="flex flex-wrap gap-2">
-              {data.book.subjects.split(", ").map((subject, index) => (
-                <span
-                  key={index}
-                  className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-3 py-1 rounded-full"
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                defaultValue={data.book.title}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="cover" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover URL</label>
+              <div className="flex gap-3">
+                <input
+                  type="url"
+                  id="cover"
+                  name="cover"
+                  defaultValue={data.book.cover}
+                  placeholder="https://covers.openlibrary.org/..."
+                  className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
+                />
+                {data.book.cover && (
+                  <img
+                    src={data.book.cover}
+                    alt="Current cover"
+                    className="w-10 h-14 object-cover rounded border border-gray-200 dark:border-gray-700"
+                  />
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="author" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Author</label>
+              <input
+                type="text"
+                id="author"
+                name="author"
+                defaultValue={data.book.author}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="body" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+              <textarea
+                id="body"
+                name="body"
+                rows={4}
+                defaultValue={data.book.body}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="datePublished" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Year Published</label>
+                <input
+                  type="text"
+                  id="datePublished"
+                  name="datePublished"
+                  defaultValue={data.book.datePublished || ""}
+                  placeholder="e.g. 1984"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="pageCount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Page Count</label>
+                <input
+                  type="number"
+                  id="pageCount"
+                  name="pageCount"
+                  defaultValue={data.book.pageCount || ""}
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="publisher" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Publisher</label>
+              <input
+                type="text"
+                id="publisher"
+                name="publisher"
+                defaultValue={data.book.publisher || ""}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="subjects" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subjects</label>
+              <input
+                type="text"
+                id="subjects"
+                name="subjects"
+                defaultValue={data.book.subjects || ""}
+                placeholder="Comma-separated, e.g. Fiction, Adventure, Classic"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="submit"
+                disabled={isSaving}
+                className={`rounded-lg px-4 py-2 font-medium ${
+                  isSaving
+                    ? "bg-gray-300 text-gray-500 cursor-wait"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
+              >
+                {isSaving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+
+            <hr className="my-6" />
+
+            <div className="space-y-4">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Actions</h4>
+
+              {data.book.openLibraryKey && (
+                <a
+                  href={`https://openlibrary.org${data.book.openLibraryKey}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm"
                 >
-                  {subject}
-                </span>
-              ))}
+                  View on Open Library →
+                </a>
+              )}
+
+              <div className="flex flex-wrap gap-3">
+                <Form method="post">
+                  <input type="hidden" name="intent" value="refresh" />
+                  <button
+                    type="submit"
+                    disabled={isRefreshing}
+                    className={`rounded-lg border-2 px-4 py-2 text-sm ${
+                      isRefreshing
+                        ? "border-gray-300 text-gray-400 cursor-wait"
+                        : "border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                    }`}
+                  >
+                    {isRefreshing ? "Refreshing..." : "Refresh from Open Library"}
+                  </button>
+                </Form>
+                <Form method="post">
+                  <input type="hidden" name="intent" value="delete" />
+                  <button
+                    type="submit"
+                    className="rounded-lg border-2 border-red-500 px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                  >
+                    Delete Book
+                  </button>
+                </Form>
+              </div>
+              {refreshResult && (
+                <p className={`text-sm ${refreshResult.refreshed ? "text-green-600" : "text-amber-600"}`}>
+                  {refreshResult.message}
+                </p>
+              )}
             </div>
-          </div>
+          </Form>
+        ) : (
+          /* View Mode */
+          <>
+            <div className="flex items-start justify-between gap-4">
+              <h3 className="text-4xl md:text-5xl font-bold">{data.book.title}</h3>
+              {data.isOwner && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex-shrink-0 text-sm px-3 py-1 rounded-md border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+            <h4 className="text-3xl md:text-4xl author py-4">{data.book.author}</h4>
+
+            <div className="flex flex-wrap gap-x-6 gap-y-2 py-4 text-sm text-gray-600 dark:text-gray-400">
+              {data.book.datePublished && (
+                <div>
+                  <span className="font-semibold">Published:</span> {data.book.datePublished}
+                </div>
+              )}
+              {data.book.pageCount && (
+                <div>
+                  <span className="font-semibold">Pages:</span> {data.book.pageCount}
+                </div>
+              )}
+              {data.book.publisher && (
+                <div>
+                  <span className="font-semibold">Publisher:</span> {data.book.publisher}
+                </div>
+              )}
+              {!data.isOwner && data.book.user && (
+                <div>
+                  <span className="font-semibold">Owner:</span> {data.book.user.firstname} {data.book.user.surname}
+                </div>
+              )}
+            </div>
+
+            {data.book.subjects && (
+              <div className="py-2">
+                <div className="flex flex-wrap gap-2">
+                  {data.book.subjects.split(", ").map((subject, index) => (
+                    <span
+                      key={index}
+                      className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-3 py-1 rounded-full"
+                    >
+                      {subject}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
-        {data.isOwner && data.isBorrowed && data.book.borrower && (() => {
+        {!isEditing && data.isOwner && data.isBorrowed && data.book.borrower && (() => {
           const dueDate = data.book.dueDate ? new Date(data.book.dueDate) : null;
           const now = new Date();
           const isOverdue = dueDate && dueDate < now;
@@ -518,25 +751,14 @@ export default function BookDetailsPage() {
           );
         })()}
 
-        <div className="py-4">
-          <h5 className="font-semibold text-lg mb-2">Description</h5>
-          <p className="summary text-gray-700 dark:text-gray-300 leading-relaxed">{data.book.body || "No description available."}</p>
-        </div>
-
-        {data.book.openLibraryKey && (
-          <div className="py-2">
-            <a
-              href={`https://openlibrary.org${data.book.openLibraryKey}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 text-sm"
-            >
-              View on Open Library
-            </a>
+        {!isEditing && (
+          <div className="py-4">
+            <h5 className="font-semibold text-lg mb-2">Description</h5>
+            <p className="summary text-gray-700 dark:text-gray-300 leading-relaxed">{data.book.body || "No description available."}</p>
           </div>
         )}
 
-        {data.lendingHistory && data.lendingHistory.length > 0 && (
+        {!isEditing && data.lendingHistory && data.lendingHistory.length > 0 && (
           <div className="py-4">
             <h5 className="font-semibold text-lg mb-3 flex items-center gap-2">
               <HistoryIcon size={20} className="text-gray-400" />
@@ -614,41 +836,6 @@ export default function BookDetailsPage() {
           </div>
         )}
 
-        {data.isOwner && (
-          <>
-            <hr className="my-4" />
-            <div className="flex flex-wrap gap-3 items-center">
-              <Form method="post">
-                <input type="hidden" name="intent" value="refresh" />
-                <button
-                  type="submit"
-                  disabled={isRefreshing}
-                  className={`rounded border-2 px-4 py-2 ${
-                    isRefreshing
-                      ? "border-gray-300 text-gray-400 cursor-wait"
-                      : "border-green-600 text-green-600 hover:bg-green-50 focus:bg-green-100"
-                  }`}
-                >
-                  {isRefreshing ? "Refreshing..." : "Refresh from Open Library"}
-                </button>
-              </Form>
-              <Form method="post">
-                <input type="hidden" name="intent" value="delete" />
-                <button
-                  type="submit"
-                  className="rounded border-2 border-red-500 px-4 py-2 text-red-500 hover:bg-red-50 focus:bg-red-100"
-                >
-                  Delete
-                </button>
-              </Form>
-            </div>
-            {refreshResult && (
-              <p className={`mt-3 text-sm ${refreshResult.refreshed ? "text-green-600" : "text-amber-600"}`}>
-                {refreshResult.message}
-              </p>
-            )}
-          </>
-        )}
       </section>
     </main>
     </>

@@ -186,6 +186,9 @@ export async function returnBook(bookId: Book["id"]) {
 export function updateBookMetadata(
   bookId: Book["id"],
   data: {
+    title?: string;
+    author?: string;
+    cover?: string;
     datePublished?: string | null;
     pageCount?: number | null;
     subjects?: string | null;
