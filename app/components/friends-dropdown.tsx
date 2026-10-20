@@ -41,10 +41,12 @@ export default function FriendsDropdown() {
     <div className="relative inline-block" ref={menuRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+        aria-label="Friends"
+        aria-expanded={open}
+        title="Friends"
+        className="inline-flex items-center justify-center w-10 h-10 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         <GroupIcon size={20} />
-        <span className="hidden md:inline">Friends</span>
       </button>
 
       {open && (

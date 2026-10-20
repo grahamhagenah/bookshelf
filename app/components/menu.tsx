@@ -34,7 +34,10 @@ export default function PositionedMenu() {
     <div className="relative inline-block" ref={menuRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+        aria-label={user ? "Account menu" : "Log in"}
+        aria-expanded={open}
+        title={user ? `${user.firstname} ${user.surname}` : "Log in"}
+        className="inline-flex items-center justify-center w-10 h-10 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         {user?.profileEmoji ? (
           <span className="text-xl">{user.profileEmoji}</span>
@@ -45,7 +48,6 @@ export default function PositionedMenu() {
         ) : (
           <UserIcon size={20} />
         )}
-        <span className="hidden md:inline">{user ? user.firstname : "Log In"}</span>
       </button>
 
       {open && (

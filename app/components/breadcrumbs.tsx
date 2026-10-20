@@ -47,7 +47,7 @@ export default function Breadcrumbs() {
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="px-4 md:px-8 py-3">
+    <nav aria-label="Breadcrumb" className="mx-auto max-w-4xl px-4 md:px-8 py-3">
       <ol className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
         <li>
           <Link

@@ -1,7 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Form, Link } from "@remix-run/react";
 import { useOptionalUser } from "~/utils";
-import { BookStackIcon } from "~/components/icons";
+import { BookshelfIcon } from "~/components/icons";
 
 export const meta: MetaFunction = () => [{ title: "Stacks" }];
 
@@ -16,7 +16,7 @@ export default function Index() {
       <section className="flex flex-col items-center justify-center min-h-[calc(100vh-60px)] px-4 py-12">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-4 mb-6">
-            <BookStackIcon size={64} className="text-blue-600" />
+            <BookshelfIcon size={64} className="text-blue-600" />
           </div>
           <h1 className="text-5xl md:text-7xl font-bold text-gray-800 dark:text-gray-100 mb-4">
             Stacks

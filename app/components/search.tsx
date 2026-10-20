@@ -4,10 +4,11 @@ export default function Search() {
   return (
     <a
       href="/search"
-      className="inline-flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors mr-2"
+      aria-label="Search books"
+      title="Search books"
+      className="inline-flex items-center justify-center w-10 h-10 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
     >
       <SearchIcon size={20} />
-      <span>Search</span>
     </a>
   )
 }

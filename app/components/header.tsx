@@ -3,7 +3,7 @@ import Search from "./search"
 import PositionedMenu from './menu'
 import Notifications from './notifications'
 import FriendsDropdown from './friends-dropdown'
-import { BookStackIcon } from './icons';
+import { BookshelfIcon } from './icons';
 
 interface RootLoaderData {
   user: {
@@ -36,11 +36,12 @@ export default function Header() {
   const libraryOwnerName = shareData?.ownerName || friendData?.friendName;
 
   return (
-    <header className="w-full flex items-center justify-between shadow-sm px-4 md:px-8 py-2 bg-white dark:bg-gray-950 dark:shadow-gray-900">
+    <header className="w-full shadow-sm bg-white dark:bg-gray-950 dark:shadow-gray-900">
+      <div className="mx-auto max-w-4xl flex items-center justify-between px-4 md:px-8 py-2">
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <a id="logo" href={user ? "/books" : "/"} className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0 group">
           <span className="transition-transform duration-200 group-hover:rotate-[-8deg]">
-            <BookStackIcon size={32} />
+            <BookshelfIcon size={32} className="text-blue-600 dark:text-blue-500" />
           </span>
           <span className="text-xl sm:text-2xl">Stacks</span>
         </a>
@@ -50,11 +51,12 @@ export default function Header() {
           </span>
         )}
       </div>
-      <div className="flex items-center flex-shrink-0">
+      <div className="flex items-center gap-1 flex-shrink-0">
         {user && <div className="hidden sm:block"><Search /></div>}
         {user && <Notifications />}
         {user && <FriendsDropdown />}
         <PositionedMenu />
+      </div>
       </div>
     </header>
   );

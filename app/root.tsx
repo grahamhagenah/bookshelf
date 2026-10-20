@@ -41,7 +41,10 @@ export default function App() {
       <body className="h-full bg-white dark:bg-black text-gray-900 dark:text-gray-100 transition-colors">
         <Header />
         {user?.demoGroup ? <DemoBanner /> : null}
-        <Outlet />
+        {/* One shared page width; the header and banner backgrounds stay full-bleed */}
+        <div className="mx-auto w-full max-w-4xl">
+          <Outlet />
+        </div>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
