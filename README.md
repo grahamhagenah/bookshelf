@@ -12,6 +12,7 @@ A social book-lending app where you can catalog your personal library, connect w
 - **Email Notifications** — Get notified via email when someone requests one of your books
 - **Public Sharing** — Generate a shareable link so anyone can browse your bookshelf
 - **Notification History** — Track friend requests, book requests, approvals, and returns
+- **Demo Mode** — Visit `/demo` (or "explore a demo library" on the home page) to try a fully stocked library without signing up
 
 ## Tech Stack
 
@@ -68,6 +69,15 @@ FROM_EMAIL=Stacks <no-reply@yourdomain.com>
 | `RESEND_API_KEY` | API key from [resend.com](https://resend.com) | Production |
 | `APP_URL` | Your app's public URL | Production |
 | `FROM_EMAIL` | Sender address for emails | Production |
+
+## Demo Mode
+
+Visiting `/demo` creates a private sandbox and signs the visitor in to it: a library of 14 books, three friends with their own shelves, books lent out (one overdue) and borrowed (one due soon), and pending friend and borrow requests to act on. The demo friends accept friend requests and approve borrow requests immediately so every flow can be tried.
+
+- Each sandbox is tagged with `User.demoGroup`. Demo users never appear in search, suggestions or the admin dashboard for real users, and can't send requests to real users.
+- Demo emails use the reserved `demo.stacks.invalid` domain, so no mail is ever sent.
+- The banner's "Start over" builds a fresh sandbox; "Create your own account" deletes it and opens sign-up. Sandboxes older than 24 hours are deleted whenever a new one is created.
+- The sandbox contents live in `app/models/demo.server.ts`.
 
 ## Email Notifications
 

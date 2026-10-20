@@ -179,6 +179,16 @@ export default function LoginPage() {
             </div>
           </div>
         </Form>
+        <Form action="/demo" method="post" className="mt-6 text-center">
+          <button
+            type="submit"
+            name="intent"
+            value="start"
+            className="text-sm text-blue-500 hover:text-blue-600"
+          >
+            Just looking? Try the demo library
+          </button>
+        </Form>
       </div>
     </div>
   );

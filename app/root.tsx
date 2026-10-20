@@ -2,6 +2,7 @@ import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import Header from './components/header'
+import DemoBanner from './components/demo-banner'
 import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData,
 } from "@remix-run/react";
 import { getUser } from "~/session.server";
@@ -39,6 +40,7 @@ export default function App() {
       </head>
       <body className="h-full bg-white dark:bg-black text-gray-900 dark:text-gray-100 transition-colors">
         <Header />
+        {user?.demoGroup ? <DemoBanner /> : null}
         <Outlet />
         <ScrollRestoration />
         <Scripts />

@@ -18,6 +18,7 @@ export async function getUserById(id: User["id"]) {
       darkMode: true,
       profileEmoji: true,
       emailNotifications: true,
+      demoGroup: true,
       notificationsSent: true,
       notificationsReceived: {
         where: { read: false },
@@ -54,7 +55,7 @@ export async function getUserById(id: User["id"]) {
 export async function getUserByEmail(email: User["email"]) {
   return prisma.user.findUnique({
     where: { email },
-    select: { id: true }
+    select: { id: true, demoGroup: true }
   })
 }
 
@@ -320,11 +321,21 @@ export async function deleteUserByEmail(email: User["email"]) {
   return prisma.user.delete({ where: { email } });
 }
 
+// Real users only see real users; demo users only see their own sandbox
+async function getVisibleGroup(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { demoGroup: true },
+  });
+  return user?.demoGroup ?? null;
+}
+
 export async function searchUsers(query: string, currentUserId: string) {
   // Fetch all users except current user
   const users = await prisma.user.findMany({
     where: {
       id: { not: currentUserId },
+      demoGroup: await getVisibleGroup(currentUserId),
     },
     select: {
       id: true,
@@ -491,6 +502,7 @@ export async function getSuggestedFriends(userId: string, limit: number = 5) {
       id: {
         notIn: [userId, ...friendIds],
       },
+      demoGroup: await getVisibleGroup(userId),
     },
     select: {
       id: true,
@@ -549,6 +561,7 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
 
 export async function getAllUsersWithStats() {
   const users = await prisma.user.findMany({
+    where: { demoGroup: null },
     select: {
       id: true,
       email: true,

@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { deleteBook, getBookById, returnBook, updateBookMetadata, getLendingHistory } from "~/models/book.server";
 import { getUserById, getUserEmailById, createBookRequestNotification, createBookReturnedNotification, createNotification, createOverdueReminderNotification } from "~/models/user.server";
 import { sendBookRequestEmail } from "~/email.server";
+import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import { requireUserId } from "~/session.server";
 import Breadcrumbs from "~/components/breadcrumbs";
 import { HistoryIcon, PersonAddIcon } from "~/components/icons";
@@ -128,6 +129,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     if (book.borrowerId !== null) {
       throw new Response("Book is already borrowed", { status: 400 });
     }
+    if (!(await canInteract(userId, book.userId))) {
+      throw new Response("Not Found", { status: 404 });
+    }
 
     const currentUser = await getUserById(userId);
     if (!currentUser) {
@@ -135,13 +139,16 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
 
     const senderName = `${currentUser.firstname} ${currentUser.surname}`;
-    await createBookRequestNotification(
+    const bookRequest = await createBookRequestNotification(
       userId,
       book.userId,
       senderName,
       book.id,
       book.title
     );
+
+    // Demo friends approve on the spot
+    await respondAsDemoPersona(bookRequest.id);
 
     // Send email notification to book owner (if they have email notifications enabled)
     const bookOwner = await getUserEmailById(book.userId);
@@ -189,6 +196,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     if (targetId === userId) {
       throw new Response("Cannot send friend request to yourself", { status: 400 });
     }
+    if (!(await canInteract(userId, targetId))) {
+      throw new Response("Not Found", { status: 404 });
+    }
 
     const currentUser = await getUserById(userId);
     if (!currentUser) {
@@ -196,7 +206,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
 
     const senderName = `${currentUser.firstname} ${currentUser.surname}`;
-    await createNotification(userId, targetId, senderName);
+    const friendRequest = await createNotification(userId, targetId, senderName);
+
+    await respondAsDemoPersona(friendRequest.id);
 
     return json({ friendRequestSent: true, message: "Friend request sent!" });
   }

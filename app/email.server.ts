@@ -4,6 +4,8 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
+import { isDemoEmail } from "~/utils";
+
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 const FROM_EMAIL = process.env.FROM_EMAIL || "Stacks <onboarding@resend.dev>";
 
@@ -18,6 +20,11 @@ export async function sendBookRequestEmail({
   requesterName: string;
   bookTitle: string;
 }) {
+  // Demo sandbox addresses are undeliverable by design
+  if (isDemoEmail(toEmail)) {
+    return { success: false, error: "Demo account" };
+  }
+
   if (!resend) {
     console.log("Email not sent (RESEND_API_KEY not configured):", {
       to: toEmail,
@@ -107,6 +114,11 @@ export async function sendPasswordResetEmail({
   toName: string;
   tempPassword: string;
 }) {
+  // Demo sandbox addresses are undeliverable by design
+  if (isDemoEmail(toEmail)) {
+    return { success: false, error: "Demo account" };
+  }
+
   if (!resend) {
     console.log("Email not sent (RESEND_API_KEY not configured):", {
       to: toEmail,

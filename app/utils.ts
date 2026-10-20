@@ -74,3 +74,9 @@ export function useUser(): User {
 export function validateEmail(email: unknown): email is string {
   return typeof email === "string" && email.length > 3 && email.includes("@");
 }
+// Demo sandbox accounts use this reserved, undeliverable domain
+export const DEMO_EMAIL_DOMAIN = "demo.stacks.invalid";
+
+export function isDemoEmail(email: string) {
+  return email.endsWith(`@${DEMO_EMAIL_DOMAIN}`);
+}
