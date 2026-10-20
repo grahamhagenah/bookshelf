@@ -5,7 +5,7 @@ export default function DemoBanner() {
     <div className="w-full bg-stone-50 dark:bg-stone-950/40 border-b border-stone-200 dark:border-stone-900 py-2 text-sm">
       <div className="mx-auto max-w-4xl px-4 md:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <p className="text-stone-900 dark:text-stone-200">
-          <strong>Demo library.</strong> Approve a request, borrow from a friend, add a book — it&apos;s all yours to try. Nothing is shared, and it resets after 24 hours.
+          <strong>You&apos;re in a demo.</strong> Try anything — it resets in 24 hours.
         </p>
         <Form action="/demo" method="post" className="flex gap-2 flex-shrink-0">
           <button
@@ -22,7 +22,7 @@ export default function DemoBanner() {
             value="exit"
             className="rounded bg-accent-500 px-3 py-1 text-white hover:bg-accent-600 transition-colors"
           >
-            Create your own account
+            Sign up
           </button>
         </Form>
       </div>

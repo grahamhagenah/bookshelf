@@ -76,7 +76,7 @@ Visiting `/demo` creates a private sandbox and signs the visitor in to it: a lib
 
 - Each sandbox is tagged with `User.demoGroup`. Demo users never appear in search, suggestions or the admin dashboard for real users, and can't send requests to real users.
 - Demo emails use the reserved `demo.stacks.invalid` domain, so no mail is ever sent.
-- The banner's "Start over" builds a fresh sandbox; "Create your own account" deletes it and opens sign-up. Sandboxes older than 24 hours are deleted whenever a new one is created.
+- The banner's "Start over" builds a fresh sandbox; "Sign up" deletes it and opens sign-up. Sandboxes older than 24 hours are deleted whenever a new one is created.
 - The sandbox contents live in `app/models/demo.server.ts`.
 
 ## Email Notifications

@@ -3,6 +3,7 @@ import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run
 import { json } from "@remix-run/node";
 import Header from './components/header'
 import DemoBanner from './components/demo-banner'
+import Footer from './components/footer'
 import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData,
 } from "@remix-run/react";
 import { getUser } from "~/session.server";
@@ -38,13 +39,14 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className="h-full bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors">
+      <body className="min-h-full flex flex-col bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors">
         <Header />
         {user?.demoGroup ? <DemoBanner /> : null}
         {/* One shared page width; the header and banner backgrounds stay full-bleed */}
-        <div className="mx-auto w-full max-w-4xl">
+        <div className="mx-auto w-full max-w-4xl flex-1">
           <Outlet />
         </div>
+        <Footer />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

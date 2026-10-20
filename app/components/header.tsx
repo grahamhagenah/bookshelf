@@ -2,7 +2,6 @@ import { useMatches } from "@remix-run/react";
 import Search from "./search"
 import PositionedMenu from './menu'
 import Notifications from './notifications'
-import FriendsDropdown from './friends-dropdown'
 import { BookshelfIcon } from './icons';
 import Breadcrumbs from './breadcrumbs';
 
@@ -32,7 +31,6 @@ export default function Header() {
       <div className="flex items-center gap-1 flex-shrink-0">
         {user && <div className="hidden sm:block"><Search /></div>}
         {user && <Notifications />}
-        {user && <FriendsDropdown />}
         <PositionedMenu />
       </div>
       </div>
