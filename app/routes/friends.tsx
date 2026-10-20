@@ -3,6 +3,8 @@ import { json, redirect } from "@remix-run/node";
 import { requireUserId, getUserId } from "~/session.server";
 import { useLoaderData, useFetcher, Link } from "@remix-run/react";
 import { getUserById, createNotification, getUserByEmail, getSuggestedFriends, getPendingFriendRequests } from "~/models/user.server";
+import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
+import { isDemoEmail } from "~/utils";
 import { Form, useActionData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import Layout from "~/components / Layout/Layout";
@@ -47,7 +49,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Handle search-based friend request (by friendId)
   if (typeof friendId === "string" && friendId.length > 0) {
-    await createNotification(senderId, friendId, senderName);
+    if (!(await canInteract(senderId, friendId))) {
+      return json(
+        { errors: { email: "User not found" }, success: false },
+        { status: 404 }
+      );
+    }
+    const friendRequest = await createNotification(senderId, friendId, senderName);
+    await respondAsDemoPersona(friendRequest.id);
     return json({ success: true, friendId, errors: null });
   }
 
@@ -60,14 +69,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const receiver = await getUserByEmail(email);
-  if (!receiver) {
+  if (!receiver || receiver.demoGroup !== user.demoGroup) {
     return json(
       { errors: { email: "No user found with this email" }, success: false },
       { status: 404 }
     );
   }
 
-  await createNotification(senderId, receiver.id, senderName);
+  const friendRequest = await createNotification(senderId, receiver.id, senderName);
+  await respondAsDemoPersona(friendRequest.id);
 
   return redirect(`/books`);
 };
@@ -167,7 +177,7 @@ export default function Friends() {
                     </div>
                     <div>
                       <h3 className="font-medium">{user.firstname} {user.surname}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                      {!isDemoEmail(user.email) && <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>}
                     </div>
                   </a>
                 </li>
@@ -181,7 +191,7 @@ export default function Friends() {
                     </div>
                     <div className="flex-grow">
                       <h3 className="font-medium">{request.receiver.firstname} {request.receiver.surname}</h3>
-                      <p className="text-sm text-gray-500">{request.receiver.email}</p>
+                      {!isDemoEmail(request.receiver.email) && <p className="text-sm text-gray-500">{request.receiver.email}</p>}
                     </div>
                     <span className="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full flex-shrink-0">
                       Pending
@@ -279,7 +289,7 @@ export default function Friends() {
                             </div>
                             <div>
                               <p className="font-medium">{user.firstname} {user.surname}</p>
-                              <p className="text-sm text-gray-500">{user.email}</p>
+                              {!isDemoEmail(user.email) && <p className="text-sm text-gray-500">{user.email}</p>}
                             </div>
                           </div>
                           {isPending ? (

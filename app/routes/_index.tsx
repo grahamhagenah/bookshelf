@@ -1,5 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import { Form, Link } from "@remix-run/react";
 import { useOptionalUser } from "~/utils";
 import { BookStackIcon } from "~/components/icons";
 
@@ -54,6 +54,16 @@ export default function Index() {
               >
                 Sign in
               </Link>
+              <Form action="/demo" method="post">
+                <button
+                  type="submit"
+                  name="intent"
+                  value="start"
+                  className="w-full text-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium py-2"
+                >
+                  Or explore a demo library first →
+                </button>
+              </Form>
             </div>
           </div>
         )}

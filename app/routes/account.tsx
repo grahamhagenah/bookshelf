@@ -4,6 +4,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { getUserById, getUserByEmail, updateUser, generateShareToken, revokeShareToken, changePassword, toggleDarkMode, toggleEmailNotifications } from "~/models/user.server";
 import { getBookStats } from "~/models/book.server";
+import { getDemoGroup } from "~/models/demo.server";
 import Layout from "~/components / Layout/Layout";
 import Breadcrumbs from "~/components/breadcrumbs";
 import { Form, useActionData } from "@remix-run/react";
@@ -28,6 +29,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
+  // Demo accounts keep their placeholder email and have no password
+  const isDemo = (await getDemoGroup(userId)) !== null;
 
   // Handle share token actions
   if (intent === "generateShareToken") {
@@ -64,7 +67,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Handle password change
-  if (intent === "changePassword") {
+  if (intent === "changePassword" && !isDemo) {
     const currentPassword = formData.get("currentPassword");
     const newPassword = formData.get("newPassword");
     const confirmPassword = formData.get("confirmPassword");
@@ -123,7 +126,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Check if email is already taken by another user
-  const existingUser = await getUserByEmail(email as string);
+  const existingUser = isDemo ? null : await getUserByEmail(email as string);
   if (existingUser && existingUser.id !== userId) {
     errors.email = "This email is already in use";
     return json({ errors, passwordErrors: null, success: false, passwordSuccess: false, emojiSuccess: false }, { status: 400 });
@@ -132,7 +135,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   await updateUser(userId, {
     firstname: (firstname as string).trim(),
     surname: (surname as string).trim(),
-    email: (email as string).trim(),
+    email: isDemo ? undefined : (email as string).trim(),
   });
 
   return json({ errors: null, passwordErrors: null, success: true, passwordSuccess: false, emojiSuccess: false });
@@ -182,7 +185,7 @@ export default function Account() {
           </div>
           <div>
             <dt className="text-sm font-medium text-gray-500">Email</dt>
-            <dd className="text-lg">{data.user?.email}</dd>
+            <dd className="text-lg">{data.user?.demoGroup ? "Demo account" : data.user?.email}</dd>
           </div>
           <div>
             <dt className="text-sm font-medium text-gray-500">Friends</dt>
@@ -449,6 +452,7 @@ export default function Account() {
                 type="email"
                 autoComplete="email"
                 defaultValue={data.user?.email}
+                readOnly={Boolean(data.user?.demoGroup)}
                 aria-invalid={actionData?.errors?.email ? true : undefined}
                 aria-describedby="email-error"
                 className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
@@ -470,6 +474,7 @@ export default function Account() {
         </Form>
       </section>
 
+      {!data.user?.demoGroup && (
       <section className="border rounded-lg p-6">
         <Form method="post" className="space-y-4">
           <input type="hidden" name="intent" value="changePassword" />
@@ -565,6 +570,7 @@ export default function Account() {
           </button>
         </Form>
       </section>
+      )}
     </Layout>
     </>
   );

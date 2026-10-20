@@ -17,6 +17,8 @@ model User {
   darkMode           Boolean @default(false)
   profileEmoji       String?
   emailNotifications Boolean @default(true)
+  // Set on throwaway demo accounts; everyone in one demo sandbox shares it
+  demoGroup          String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -32,6 +34,8 @@ model User {
 
   followedBy User[]  @relation("UserFollows")
   following  User[]  @relation("UserFollows")
+
+  @@index([demoGroup], name: "demo_group_index")
 }
 
 model Password {
