@@ -6,6 +6,12 @@ import { getPublicBookListItems } from "~/models/book.server";
 import { useLoaderData } from "@remix-run/react";
 import Library from "~/components/library";
 
+export const handle = {
+  breadcrumb: (data: { ownerName?: string } | undefined) => (
+    <span>{data?.ownerName ? `${data.ownerName}'s library` : "Library"}</span>
+  ),
+};
+
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   invariant(params.token, "token not found");
 
@@ -28,9 +34,6 @@ export default function PublicSharePage() {
 
   return (
     <>
-      <div className="sm:hidden px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
-        {data.ownerName}&apos;s library
-      </div>
       <Library bookListItems={data.bookListItems} ownerName={data.ownerName} />
     </>
   );

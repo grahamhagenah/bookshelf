@@ -8,22 +8,31 @@ import { getUserById, getUserEmailById, createBookRequestNotification, createBoo
 import { sendBookRequestEmail } from "~/email.server";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import { requireUserId } from "~/session.server";
-import Breadcrumbs from "~/components/breadcrumbs";
 import { HistoryIcon, PersonAddIcon } from "~/components/icons";
+import CoverPlaceholder from "~/components/cover-placeholder";
 
-function BookCover({ src, alt }: { src: string; alt: string }) {
+function BookCover({ src, title, author }: { src: string; title: string; author: string }) {
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
 
   return (
-    <div className="relative w-[200px] h-[300px] rounded-lg overflow-hidden bg-blue-100">
-      <img
-        src={src}
-        alt={alt}
-        loading="lazy"
-        decoding="async"
-        className={`w-full h-full object-cover rounded-lg shadow-xl ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
-        onLoad={() => setLoaded(true)}
-      />
+    <div className="relative w-[200px] h-[300px] rounded-lg overflow-hidden shadow-md">
+      {!loaded && <CoverPlaceholder title={title} author={author} large className="absolute inset-0" />}
+      {!error && (
+        <img
+          src={src}
+          alt={title}
+          loading="lazy"
+          decoding="async"
+          className={`w-full h-full object-cover rounded-lg ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+          onLoad={(e) => {
+            // Open Library answers unknown covers with a 1x1 pixel
+            if (e.currentTarget.naturalWidth <= 1) setError(true);
+            else setLoaded(true);
+          }}
+          onError={() => setError(true)}
+        />
+      )}
     </div>
   );
 }
@@ -359,11 +368,10 @@ export default function BookDetailsPage() {
 
   return (
     <>
-    <Breadcrumbs />
     <main className="flex flex-col md:flex-row gap-8 md:gap-12 p-8 w-full max-w-5xl mx-auto mt-4 md:mt-12">
       <section className="order-2 md:order-1 flex-shrink-0">
         <div className="book-cover p-8 md:p-0">
-          <BookCover src={data.book.cover} alt={data.book.title} />
+          <BookCover src={data.book.cover} title={data.book.title} author={data.book.author} />
         </div>
         {canRequestBook && (
           <Form method="post">
@@ -373,10 +381,10 @@ export default function BookDetailsPage() {
               disabled={isSubmitting || requestSent}
               className={`mb-4 rounded border-2 w-full mt-8 px-4 py-3 text-base font-medium ${
                 requestSent
-                  ? "border-green-500 text-green-600 bg-green-50 cursor-default"
+                  ? "border-accent-500 text-accent-600 bg-accent-50 cursor-default"
                   : isSubmitting
-                  ? "border-gray-300 text-gray-400 cursor-wait"
-                  : "border-blue-500 text-blue-600 hover:bg-blue-50 focus:bg-blue-100"
+                  ? "border-stone-300 text-stone-400 cursor-wait"
+                  : "border-accent-500 text-accent-600 hover:bg-accent-50 focus:bg-accent-100"
               }`}
             >
               {requestSent ? "Request Sent" : isSubmitting ? "Requesting..." : "Request Book"}
@@ -384,8 +392,8 @@ export default function BookDetailsPage() {
           </Form>
         )}
         {needsFriendship && data.book.user && (
-          <div className="mt-8 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-            <p className="text-amber-800 dark:text-amber-200 text-sm mb-3">
+          <div className="mt-8 bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-lg p-4">
+            <p className="text-stone-800 dark:text-stone-200 text-sm mb-3">
               Add <span className="font-semibold">{data.book.user.firstname} {data.book.user.surname}</span> as a friend to borrow their books.
             </p>
             <Form method="post">
@@ -395,10 +403,10 @@ export default function BookDetailsPage() {
                 disabled={isSendingFriendRequest || friendRequestSent}
                 className={`rounded w-full px-4 py-2 text-sm font-medium ${
                   friendRequestSent
-                    ? "bg-green-500 text-white cursor-default"
+                    ? "bg-accent-500 text-white cursor-default"
                     : isSendingFriendRequest
-                    ? "bg-gray-300 text-gray-500 cursor-wait"
-                    : "bg-amber-500 text-white hover:bg-amber-600"
+                    ? "bg-stone-300 text-stone-500 cursor-wait"
+                    : "bg-stone-500 text-white hover:bg-stone-600"
                 }`}
               >
                 {friendRequestSent ? "Friend Request Sent!" : isSendingFriendRequest ? "Sending..." : "Send Friend Request"}
@@ -411,13 +419,13 @@ export default function BookDetailsPage() {
             {data.book.user && (
               <div className={`border rounded-lg p-4 mt-8 ${
                 data.book.dueDate && new Date(data.book.dueDate) < new Date()
-                  ? "bg-red-50 border-red-200"
-                  : "bg-blue-50 border-blue-200"
+                  ? "bg-accent-50 border-accent-200"
+                  : "bg-accent-50 border-accent-200"
               }`}>
                 <p className={`text-sm ${
                   data.book.dueDate && new Date(data.book.dueDate) < new Date()
-                    ? "text-red-800"
-                    : "text-blue-800"
+                    ? "text-accent-800"
+                    : "text-accent-800"
                 }`}>
                   <span className="font-semibold">Borrowed from:</span>{" "}
                   {data.book.user.firstname} {data.book.user.surname}
@@ -425,8 +433,8 @@ export default function BookDetailsPage() {
                 {data.book.borrowedAt && (
                   <p className={`text-sm mt-1 ${
                     data.book.dueDate && new Date(data.book.dueDate) < new Date()
-                      ? "text-red-700"
-                      : "text-blue-700"
+                      ? "text-accent-700"
+                      : "text-accent-700"
                   }`}>
                     <span className="font-semibold">Since:</span>{" "}
                     {new Date(data.book.borrowedAt).toLocaleDateString("en-US", {
@@ -439,8 +447,8 @@ export default function BookDetailsPage() {
                 {data.book.dueDate && (
                   <p className={`text-sm mt-1 font-semibold ${
                     new Date(data.book.dueDate) < new Date()
-                      ? "text-red-700"
-                      : "text-blue-700"
+                      ? "text-accent-700"
+                      : "text-accent-700"
                   }`}>
                     {new Date(data.book.dueDate) < new Date() ? (
                       <>Overdue! Was due {new Date(data.book.dueDate).toLocaleDateString("en-US", {
@@ -463,7 +471,7 @@ export default function BookDetailsPage() {
               <input type="hidden" name="intent" value="return" />
               <button
                 type="submit"
-                className={`mb-4 rounded border-2 border-amber-500 w-full ${data.book.user ? 'mt-4' : 'mt-8'} px-4 py-3 text-base font-medium text-amber-600 hover:bg-amber-50 focus:bg-amber-100`}
+                className={`mb-4 rounded border-2 border-stone-500 w-full ${data.book.user ? 'mt-4' : 'mt-8'} px-4 py-3 text-base font-medium text-stone-600 hover:bg-stone-50 focus:bg-stone-100`}
               >
                 Return Book
               </button>
@@ -478,30 +486,30 @@ export default function BookDetailsPage() {
             <input type="hidden" name="intent" value="edit" />
 
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Book</h3>
+              <h3 className="text-2xl font-bold text-stone-900 dark:text-stone-100">Edit Book</h3>
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
-                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                className="text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
               >
                 Cancel
               </button>
             </div>
 
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+              <label htmlFor="title" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Title</label>
               <input
                 type="text"
                 id="title"
                 name="title"
                 defaultValue={data.book.title}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="cover" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover URL</label>
+              <label htmlFor="cover" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Cover URL</label>
               <div className="flex gap-3">
                 <input
                   type="url"
@@ -509,85 +517,85 @@ export default function BookDetailsPage() {
                   name="cover"
                   defaultValue={data.book.cover}
                   placeholder="https://covers.openlibrary.org/..."
-                  className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
+                  className="flex-1 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 text-sm"
                 />
                 {data.book.cover && (
                   <img
                     src={data.book.cover}
                     alt="Current cover"
-                    className="w-10 h-14 object-cover rounded border border-gray-200 dark:border-gray-700"
+                    className="w-10 h-14 object-cover rounded border border-stone-200 dark:border-stone-700"
                   />
                 )}
               </div>
             </div>
 
             <div>
-              <label htmlFor="author" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Author</label>
+              <label htmlFor="author" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Author</label>
               <input
                 type="text"
                 id="author"
                 name="author"
                 defaultValue={data.book.author}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="body" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+              <label htmlFor="body" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Description</label>
               <textarea
                 id="body"
                 name="body"
                 rows={4}
                 defaultValue={data.book.body}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="datePublished" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Year Published</label>
+                <label htmlFor="datePublished" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Year Published</label>
                 <input
                   type="text"
                   id="datePublished"
                   name="datePublished"
                   defaultValue={data.book.datePublished || ""}
                   placeholder="e.g. 1984"
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
                 />
               </div>
               <div>
-                <label htmlFor="pageCount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Page Count</label>
+                <label htmlFor="pageCount" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Page Count</label>
                 <input
                   type="number"
                   id="pageCount"
                   name="pageCount"
                   defaultValue={data.book.pageCount || ""}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="publisher" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Publisher</label>
+              <label htmlFor="publisher" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Publisher</label>
               <input
                 type="text"
                 id="publisher"
                 name="publisher"
                 defaultValue={data.book.publisher || ""}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
               />
             </div>
 
             <div>
-              <label htmlFor="subjects" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subjects</label>
+              <label htmlFor="subjects" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Subjects</label>
               <input
                 type="text"
                 id="subjects"
                 name="subjects"
                 defaultValue={data.book.subjects || ""}
                 placeholder="Comma-separated, e.g. Fiction, Adventure, Classic"
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
               />
             </div>
 
@@ -597,8 +605,8 @@ export default function BookDetailsPage() {
                 disabled={isSaving}
                 className={`rounded-lg px-4 py-2 font-medium ${
                   isSaving
-                    ? "bg-gray-300 text-gray-500 cursor-wait"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
+                    ? "bg-stone-300 text-stone-500 cursor-wait"
+                    : "bg-accent-600 text-white hover:bg-accent-700"
                 }`}
               >
                 {isSaving ? "Saving..." : "Save Changes"}
@@ -608,14 +616,14 @@ export default function BookDetailsPage() {
             <hr className="my-6" />
 
             <div className="space-y-4">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Actions</h4>
+              <h4 className="font-semibold text-stone-900 dark:text-stone-100">Actions</h4>
 
               {data.book.openLibraryKey && (
                 <a
                   href={`https://openlibrary.org${data.book.openLibraryKey}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm"
+                  className="inline-flex items-center text-accent-600 hover:text-accent-800 text-sm"
                 >
                   View on Open Library →
                 </a>
@@ -629,8 +637,8 @@ export default function BookDetailsPage() {
                     disabled={isRefreshing}
                     className={`rounded-lg border-2 px-4 py-2 text-sm ${
                       isRefreshing
-                        ? "border-gray-300 text-gray-400 cursor-wait"
-                        : "border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                        ? "border-stone-300 text-stone-400 cursor-wait"
+                        : "border-accent-600 text-accent-600 hover:bg-accent-50 dark:hover:bg-accent-950"
                     }`}
                   >
                     {isRefreshing ? "Refreshing..." : "Refresh from Open Library"}
@@ -640,14 +648,14 @@ export default function BookDetailsPage() {
                   <input type="hidden" name="intent" value="delete" />
                   <button
                     type="submit"
-                    className="rounded-lg border-2 border-red-500 px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                    className="rounded-lg border-2 border-accent-500 px-4 py-2 text-sm text-accent-500 hover:bg-accent-50 dark:hover:bg-accent-950"
                   >
                     Delete Book
                   </button>
                 </Form>
               </div>
               {refreshResult && (
-                <p className={`text-sm ${refreshResult.refreshed ? "text-green-600" : "text-amber-600"}`}>
+                <p className={`text-sm ${refreshResult.refreshed ? "text-accent-600" : "text-stone-600"}`}>
                   {refreshResult.message}
                 </p>
               )}
@@ -661,7 +669,7 @@ export default function BookDetailsPage() {
               {data.isOwner && (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex-shrink-0 text-sm px-3 py-1 rounded-md border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                  className="flex-shrink-0 text-sm px-3 py-1 rounded-md border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:border-stone-300 dark:hover:border-stone-600 hover:text-stone-800 dark:hover:text-stone-200 transition-colors"
                 >
                   Edit
                 </button>
@@ -669,7 +677,7 @@ export default function BookDetailsPage() {
             </div>
             <h4 className="text-3xl md:text-4xl author py-4">{data.book.author}</h4>
 
-            <div className="flex flex-wrap gap-x-6 gap-y-2 py-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 py-4 text-sm text-stone-600 dark:text-stone-400">
               {data.book.datePublished && (
                 <div>
                   <span className="font-semibold">Published:</span> {data.book.datePublished}
@@ -698,7 +706,7 @@ export default function BookDetailsPage() {
                   {data.book.subjects.split(", ").map((subject, index) => (
                     <span
                       key={index}
-                      className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-3 py-1 rounded-full"
+                      className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs px-3 py-1 rounded-full"
                     >
                       {subject}
                     </span>
@@ -716,13 +724,13 @@ export default function BookDetailsPage() {
           const daysLeft = dueDate ? Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
 
           return (
-            <div className={`border rounded-lg p-4 my-4 ${isOverdue ? "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800" : "bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800"}`}>
-              <p className={isOverdue ? "text-red-800 dark:text-red-200" : "text-amber-800 dark:text-amber-200"}>
+            <div className={`border rounded-lg p-4 my-4 ${isOverdue ? "bg-accent-50 border-accent-200 dark:bg-accent-950 dark:border-accent-800" : "bg-stone-50 border-stone-200 dark:bg-stone-950 dark:border-stone-800"}`}>
+              <p className={isOverdue ? "text-accent-800 dark:text-accent-200" : "text-stone-800 dark:text-stone-200"}>
                 <span className="font-semibold">Currently lent to:</span>{" "}
-                <span className={isOverdue ? "text-red-700 dark:text-red-300" : "text-amber-700 dark:text-amber-300"}>{data.book.borrower.firstname} {data.book.borrower.surname}</span>
+                <span className={isOverdue ? "text-accent-700 dark:text-accent-300" : "text-stone-700 dark:text-stone-300"}>{data.book.borrower.firstname} {data.book.borrower.surname}</span>
               </p>
               {data.book.borrowedAt && (
-                <p className={`text-sm mt-1 ${isOverdue ? "text-red-700 dark:text-red-300" : "text-amber-700 dark:text-amber-300"}`}>
+                <p className={`text-sm mt-1 ${isOverdue ? "text-accent-700 dark:text-accent-300" : "text-stone-700 dark:text-stone-300"}`}>
                   <span className="font-semibold">Since:</span>{" "}
                   {new Date(data.book.borrowedAt).toLocaleDateString("en-US", {
                     month: "long",
@@ -732,7 +740,7 @@ export default function BookDetailsPage() {
                 </p>
               )}
               {dueDate && (
-                <p className={`text-sm mt-1 font-semibold ${isOverdue ? "text-red-700 dark:text-red-300" : "text-amber-700 dark:text-amber-300"}`}>
+                <p className={`text-sm mt-1 font-semibold ${isOverdue ? "text-accent-700 dark:text-accent-300" : "text-stone-700 dark:text-stone-300"}`}>
                   {isOverdue ? (
                     <>Overdue by {Math.abs(daysLeft!)} {Math.abs(daysLeft!) === 1 ? "day" : "days"}</>
                   ) : daysLeft !== null && daysLeft <= 3 ? (
@@ -749,12 +757,12 @@ export default function BookDetailsPage() {
                   disabled={isSendingReminder || reminderSent}
                   className={`text-sm px-3 py-1.5 rounded ${
                     reminderSent
-                      ? "bg-green-500 text-white cursor-default"
+                      ? "bg-accent-500 text-white cursor-default"
                       : isSendingReminder
-                      ? "bg-gray-300 text-gray-500 cursor-wait"
+                      ? "bg-stone-300 text-stone-500 cursor-wait"
                       : isOverdue
-                      ? "bg-red-600 text-white hover:bg-red-700"
-                      : "bg-amber-600 text-white hover:bg-amber-700"
+                      ? "bg-accent-600 text-white hover:bg-accent-700"
+                      : "bg-stone-600 text-white hover:bg-stone-700"
                   }`}
                 >
                   {reminderSent ? "Reminder Sent!" : isSendingReminder ? "Sending..." : "Send Return Reminder"}
@@ -767,21 +775,21 @@ export default function BookDetailsPage() {
         {!isEditing && (
           <div className="py-4">
             <h5 className="font-semibold text-lg mb-2">Description</h5>
-            <p className="summary text-gray-700 dark:text-gray-300 leading-relaxed">{data.book.body || "No description available."}</p>
+            <p className="summary text-stone-700 dark:text-stone-300 leading-relaxed">{data.book.body || "No description available."}</p>
           </div>
         )}
 
         {!isEditing && data.lendingHistory && data.lendingHistory.length > 0 && (
           <div className="py-4">
             <h5 className="font-semibold text-lg mb-3 flex items-center gap-2">
-              <HistoryIcon size={20} className="text-gray-400" />
+              <HistoryIcon size={20} className="text-stone-400" />
               Lending History
             </h5>
             <ul className="space-y-1">
               {data.lendingHistory.map((entry) => (
-                <li key={entry.id} className="flex items-center justify-between text-sm py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                <li key={entry.id} className="flex items-center justify-between text-sm py-2 border-b border-stone-100 dark:border-stone-800 last:border-0">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold text-xs flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-accent-100 dark:bg-accent-900 flex items-center justify-center text-accent-600 dark:text-accent-300 font-semibold text-xs flex-shrink-0">
                       {entry.isCurrentUser ? (
                         data.currentUser?.profileEmoji ? (
                           <span className="text-lg">{data.currentUser.profileEmoji}</span>
@@ -801,30 +809,30 @@ export default function BookDetailsPage() {
                       )}
                     </div>
                     {entry.isCurrentUser ? (
-                      <span className="font-medium text-gray-900 dark:text-gray-100">You</span>
+                      <span className="font-medium text-stone-900 dark:text-stone-100">You</span>
                     ) : entry.isFriend ? (
                       <Link
                         to={`/friend/${entry.borrower.id}`}
-                        className="font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
+                        className="font-medium text-stone-900 dark:text-stone-100 hover:text-accent-600 dark:hover:text-accent-400"
                       >
                         {entry.borrower.firstname} {entry.borrower.surname}
                       </Link>
                     ) : entry.borrower.shareToken ? (
                       <Link
                         to={`/shelf/${entry.borrower.shareToken}`}
-                        className="font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
+                        className="font-medium text-stone-900 dark:text-stone-100 hover:text-accent-600 dark:hover:text-accent-400"
                       >
                         {entry.borrower.firstname} {entry.borrower.surname}
                       </Link>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{entry.borrower.firstname} {entry.borrower.surname}</span>
+                        <span className="font-medium text-stone-900 dark:text-stone-100">{entry.borrower.firstname} {entry.borrower.surname}</span>
                         <Form method="post" className="inline">
                           <input type="hidden" name="intent" value="friendRequest" />
                           <input type="hidden" name="targetUserId" value={entry.borrower.id} />
                           <button
                             type="submit"
-                            className="inline-flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700"
+                            className="inline-flex items-center gap-1 text-xs text-stone-600 hover:text-stone-700"
                             title="Add as friend to view their shelf"
                           >
                             <PersonAddIcon size={14} />
@@ -834,13 +842,13 @@ export default function BookDetailsPage() {
                       </div>
                     )}
                   </div>
-                  <div className="text-gray-400 text-xs">
+                  <div className="text-stone-400 text-xs">
                     {new Date(entry.borrowedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     {entry.returnedAt && (
                       <span> — {new Date(entry.returnedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
                     )}
                     {!entry.returnedAt && (
-                      <span className="ml-2 text-amber-600">Current</span>
+                      <span className="ml-2 text-stone-600">Current</span>
                     )}
                   </div>
                 </li>

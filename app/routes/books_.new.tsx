@@ -91,7 +91,7 @@ export default function NewBookPage() {
           <input
             ref={titleRef}
             name="title"
-            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
+            className="flex-1 rounded-md border-2 border-accent-500 px-3 text-lg leading-loose"
             aria-invalid={actionData?.errors?.title ? true : undefined}
             aria-errormessage={
               actionData?.errors?.title ? "title-error" : undefined
@@ -99,7 +99,7 @@ export default function NewBookPage() {
           />
         </label>
         {actionData?.errors?.title ? (
-          <div className="pt-1 text-red-700" id="title-error">
+          <div className="pt-1 text-accent-700" id="title-error">
             {actionData.errors.title}
           </div>
         ) : null}
@@ -111,7 +111,7 @@ export default function NewBookPage() {
           <input
             ref={authorRef}
             name="author"
-            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
+            className="flex-1 rounded-md border-2 border-accent-500 px-3 text-lg leading-loose"
             aria-invalid={actionData?.errors?.author ? true : undefined}
             aria-errormessage={
               actionData?.errors?.author ? "author-error" : undefined
@@ -119,7 +119,7 @@ export default function NewBookPage() {
           />
         </label>
         {actionData?.errors?.author ? (
-          <div className="pt-1 text-red-700" id="author-error">
+          <div className="pt-1 text-accent-700" id="author-error">
             {actionData.errors.author}
           </div>
         ) : null}
@@ -131,7 +131,7 @@ export default function NewBookPage() {
           <input
             ref={coverRef}
             name="cover"
-            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
+            className="flex-1 rounded-md border-2 border-accent-500 px-3 text-lg leading-loose"
             aria-invalid={actionData?.errors?.cover ? true : undefined}
             aria-errormessage={
               actionData?.errors?.cover ? "cover-error" : undefined
@@ -139,7 +139,7 @@ export default function NewBookPage() {
           />
         </label>
         {actionData?.errors?.cover ? (
-          <div className="pt-1 text-red-700" id="cover-error">
+          <div className="pt-1 text-accent-700" id="cover-error">
             {actionData.errors.cover}
           </div>
         ) : null}
@@ -152,7 +152,7 @@ export default function NewBookPage() {
             ref={datePublishedRef}
             name="datePublished"
             placeholder="e.g., 1984, March 2020"
-            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
+            className="flex-1 rounded-md border-2 border-accent-500 px-3 text-lg leading-loose"
           />
         </label>
       </div>
@@ -164,7 +164,7 @@ export default function NewBookPage() {
             ref={bodyRef}
             name="body"
             rows={8}
-            className="w-full flex-1 rounded-md border-2 border-blue-500 px-3 py-2 text-lg leading-6"
+            className="w-full flex-1 rounded-md border-2 border-accent-500 px-3 py-2 text-lg leading-6"
             aria-invalid={actionData?.errors?.body ? true : undefined}
             aria-errormessage={
               actionData?.errors?.body ? "body-error" : undefined
@@ -172,7 +172,7 @@ export default function NewBookPage() {
           />
         </label>
         {actionData?.errors?.body ? (
-          <div className="pt-1 text-red-700" id="body-error">
+          <div className="pt-1 text-accent-700" id="body-error">
             {actionData.errors.body}
           </div>
         ) : null}
@@ -181,7 +181,7 @@ export default function NewBookPage() {
       <div className="text-right">
         <button
           type="submit"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+          className="rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 focus:bg-accent-400"
         >
           Save
         </button>

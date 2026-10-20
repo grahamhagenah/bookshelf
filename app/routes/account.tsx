@@ -6,7 +6,6 @@ import { getUserById, getUserByEmail, updateUser, generateShareToken, revokeShar
 import { getBookStats } from "~/models/book.server";
 import { getDemoGroup } from "~/models/demo.server";
 import Layout from "~/components / Layout/Layout";
-import Breadcrumbs from "~/components/breadcrumbs";
 import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -174,39 +173,38 @@ export default function Account() {
 
   return (
     <>
-    <Breadcrumbs />
     <Layout title="Account">
       <section className="border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">Account Details</h2>
         <dl className="space-y-3">
           <div>
-            <dt className="text-sm font-medium text-gray-500">Name</dt>
+            <dt className="text-sm font-medium text-stone-500">Name</dt>
             <dd className="text-lg">{data.user?.firstname} {data.user?.surname}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">Email</dt>
+            <dt className="text-sm font-medium text-stone-500">Email</dt>
             <dd className="text-lg">{data.user?.demoGroup ? "Demo account" : data.user?.email}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">Friends</dt>
+            <dt className="text-sm font-medium text-stone-500">Friends</dt>
             <dd className="text-lg">{data.user?.following.length || 0}</dd>
           </div>
         </dl>
 
         <div className="mt-6 pt-6 border-t">
-          <h3 className="text-sm font-medium text-gray-500 mb-3">Library Stats</h3>
+          <h3 className="text-sm font-medium text-stone-500 mb-3">Library Stats</h3>
           <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="bg-gray-50 rounded-lg p-3">
-              <dd className="text-2xl font-semibold text-gray-900">{data.bookStats.totalBooks}</dd>
-              <dt className="text-sm text-gray-500">Books</dt>
+            <div className="bg-stone-50 rounded-lg p-3">
+              <dd className="text-2xl font-semibold text-stone-900">{data.bookStats.totalBooks}</dd>
+              <dt className="text-sm text-stone-500">Books</dt>
             </div>
-            <div className="bg-blue-50 rounded-lg p-3">
-              <dd className="text-2xl font-semibold text-blue-600">{data.bookStats.borrowedBooks}</dd>
-              <dt className="text-sm text-gray-500">Borrowed</dt>
+            <div className="bg-accent-50 rounded-lg p-3">
+              <dd className="text-2xl font-semibold text-accent-600">{data.bookStats.borrowedBooks}</dd>
+              <dt className="text-sm text-stone-500">Borrowed</dt>
             </div>
-            <div className="bg-amber-50 rounded-lg p-3">
-              <dd className="text-2xl font-semibold text-amber-600">{data.bookStats.lentBooks}</dd>
-              <dt className="text-sm text-gray-500">Lent Out</dt>
+            <div className="bg-stone-50 rounded-lg p-3">
+              <dd className="text-2xl font-semibold text-stone-600">{data.bookStats.lentBooks}</dd>
+              <dt className="text-sm text-stone-500">Lent Out</dt>
             </div>
           </div>
         </div>
@@ -214,7 +212,7 @@ export default function Account() {
 
       <section className="border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-2">Appearance</h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
+        <p className="text-stone-600 dark:text-stone-400 mb-4">
           Customize how Stacks looks on your device.
         </p>
         <Form method="post" className="flex items-center justify-between">
@@ -226,7 +224,7 @@ export default function Account() {
           <button
             type="submit"
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              data.user?.darkMode ? "bg-blue-500" : "bg-gray-300"
+              data.user?.darkMode ? "bg-accent-500" : "bg-stone-300"
             }`}
           >
             <span
@@ -240,7 +238,7 @@ export default function Account() {
 
       <section className="border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-2">Notifications</h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
+        <p className="text-stone-600 dark:text-stone-400 mb-4">
           Control how you receive notifications.
         </p>
         <Form method="post" className="flex items-center justify-between">
@@ -248,12 +246,12 @@ export default function Account() {
           <input type="hidden" name="emailNotifications" value={data.user?.emailNotifications ? "false" : "true"} />
           <div className="flex flex-col">
             <span className="text-sm font-medium">Email Notifications</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">Receive emails for book requests</span>
+            <span className="text-xs text-stone-500 dark:text-stone-400">Receive emails for book requests</span>
           </div>
           <button
             type="submit"
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              data.user?.emailNotifications ? "bg-blue-500" : "bg-gray-300"
+              data.user?.emailNotifications ? "bg-accent-500" : "bg-stone-300"
             }`}
           >
             <span
@@ -267,18 +265,18 @@ export default function Account() {
 
       <section className="border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-2">Profile Picture</h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
+        <p className="text-stone-600 dark:text-stone-400 mb-4">
           Choose an emoji to represent you, or use your initials.
         </p>
 
         {actionData?.emojiSuccess && (
-          <div className="p-3 rounded bg-green-100 text-green-800 mb-4">
+          <div className="p-3 rounded bg-accent-100 text-accent-800 mb-4">
             Profile picture updated successfully.
           </div>
         )}
 
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold text-xl flex-shrink-0">
+          <div className="w-16 h-16 rounded-full bg-accent-100 dark:bg-accent-900 flex items-center justify-center text-accent-600 dark:text-accent-300 font-semibold text-xl flex-shrink-0">
             {data.user?.profileEmoji ? (
               <span className="text-3xl">{data.user.profileEmoji}</span>
             ) : (
@@ -288,7 +286,7 @@ export default function Account() {
               </>
             )}
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-sm text-stone-600 dark:text-stone-400">
             {data.user?.profileEmoji ? "Current emoji" : "Using initials"}
           </div>
         </div>
@@ -307,8 +305,8 @@ export default function Account() {
                 type="submit"
                 name="emoji"
                 value={emoji}
-                className={`w-10 h-10 text-2xl rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-center ${
-                  data.user?.profileEmoji === emoji ? "bg-blue-100 dark:bg-blue-900 ring-2 ring-blue-500" : ""
+                className={`w-10 h-10 text-2xl rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors flex items-center justify-center ${
+                  data.user?.profileEmoji === emoji ? "bg-accent-100 dark:bg-accent-900 ring-2 ring-accent-500" : ""
                 }`}
               >
                 {emoji}
@@ -320,7 +318,7 @@ export default function Account() {
               type="submit"
               name="emoji"
               value=""
-              className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 underline"
+              className="text-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 underline"
             >
               Remove emoji and use initials
             </button>
@@ -330,7 +328,7 @@ export default function Account() {
 
       <section className="border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-2">Share Your Bookshelf</h2>
-        <p className="text-gray-600 mb-4">
+        <p className="text-stone-600 mb-4">
           Anyone with this link can view your bookshelf without logging in.
         </p>
 
@@ -340,13 +338,13 @@ export default function Account() {
               type="text"
               readOnly
               value={shareUrl}
-              className="w-full rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm"
+              className="w-full rounded border border-stone-300 bg-stone-50 px-3 py-2 text-sm"
             />
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={handleCopy}
-                className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+                className="rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 focus:bg-accent-400"
               >
                 {copied ? "Copied!" : "Copy Link"}
               </button>
@@ -354,7 +352,7 @@ export default function Account() {
                 <input type="hidden" name="intent" value="revokeShareToken" />
                 <button
                   type="submit"
-                  className="rounded border border-red-500 px-4 py-2 text-red-500 hover:bg-red-50"
+                  className="rounded border border-accent-500 px-4 py-2 text-accent-500 hover:bg-accent-50"
                 >
                   Revoke Access
                 </button>
@@ -366,7 +364,7 @@ export default function Account() {
             <input type="hidden" name="intent" value="generateShareToken" />
             <button
               type="submit"
-              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+              className="rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 focus:bg-accent-400"
             >
               Generate Share Link
             </button>
@@ -377,10 +375,10 @@ export default function Account() {
       <section className="border rounded-lg p-6">
         <Form method="post" className="space-y-4">
           <h2 className="text-xl font-semibold mb-2">Update Profile</h2>
-          <p className="text-gray-600">Change your name or email address below.</p>
+          <p className="text-stone-600">Change your name or email address below.</p>
 
           {actionData?.success && (
-            <div className="p-3 rounded bg-green-100 text-green-800">
+            <div className="p-3 rounded bg-accent-100 text-accent-800">
               Your profile has been updated successfully.
             </div>
           )}
@@ -388,7 +386,7 @@ export default function Account() {
           <div>
             <label
               htmlFor="firstname"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-stone-700"
             >
               First name
             </label>
@@ -401,10 +399,10 @@ export default function Account() {
                 defaultValue={data.user?.firstname}
                 aria-invalid={actionData?.errors?.firstname ? true : undefined}
                 aria-describedby="firstname-error"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.firstname && (
-                <div className="pt-1 text-red-700" id="firstname-error">
+                <div className="pt-1 text-accent-700" id="firstname-error">
                   {actionData.errors.firstname}
                 </div>
               )}
@@ -414,7 +412,7 @@ export default function Account() {
           <div>
             <label
               htmlFor="surname"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-stone-700"
             >
               Last name
             </label>
@@ -427,10 +425,10 @@ export default function Account() {
                 defaultValue={data.user?.surname}
                 aria-invalid={actionData?.errors?.surname ? true : undefined}
                 aria-describedby="surname-error"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.surname && (
-                <div className="pt-1 text-red-700" id="surname-error">
+                <div className="pt-1 text-accent-700" id="surname-error">
                   {actionData.errors.surname}
                 </div>
               )}
@@ -440,7 +438,7 @@ export default function Account() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-stone-700"
             >
               Email address
             </label>
@@ -455,10 +453,10 @@ export default function Account() {
                 readOnly={Boolean(data.user?.demoGroup)}
                 aria-invalid={actionData?.errors?.email ? true : undefined}
                 aria-describedby="email-error"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.email && (
-                <div className="pt-1 text-red-700" id="email-error">
+                <div className="pt-1 text-accent-700" id="email-error">
                   {actionData.errors.email}
                 </div>
               )}
@@ -467,7 +465,7 @@ export default function Account() {
 
           <button
             type="submit"
-            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+            className="rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 focus:bg-accent-400"
           >
             Save changes
           </button>
@@ -479,10 +477,10 @@ export default function Account() {
         <Form method="post" className="space-y-4">
           <input type="hidden" name="intent" value="changePassword" />
           <h2 className="text-xl font-semibold mb-2">Change Password</h2>
-          <p className="text-gray-600">Update your password to keep your account secure.</p>
+          <p className="text-stone-600">Update your password to keep your account secure.</p>
 
           {actionData?.passwordSuccess && (
-            <div className="p-3 rounded bg-green-100 text-green-800">
+            <div className="p-3 rounded bg-accent-100 text-accent-800">
               Your password has been changed successfully.
             </div>
           )}
@@ -490,7 +488,7 @@ export default function Account() {
           <div>
             <label
               htmlFor="currentPassword"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-stone-700"
             >
               Current password
             </label>
@@ -502,10 +500,10 @@ export default function Account() {
                 autoComplete="current-password"
                 aria-invalid={actionData?.passwordErrors?.currentPassword ? true : undefined}
                 aria-describedby="currentPassword-error"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.passwordErrors?.currentPassword && (
-                <div className="pt-1 text-red-700" id="currentPassword-error">
+                <div className="pt-1 text-accent-700" id="currentPassword-error">
                   {actionData.passwordErrors.currentPassword}
                 </div>
               )}
@@ -515,7 +513,7 @@ export default function Account() {
           <div>
             <label
               htmlFor="newPassword"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-stone-700"
             >
               New password
             </label>
@@ -527,10 +525,10 @@ export default function Account() {
                 autoComplete="new-password"
                 aria-invalid={actionData?.passwordErrors?.newPassword ? true : undefined}
                 aria-describedby="newPassword-error"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.passwordErrors?.newPassword && (
-                <div className="pt-1 text-red-700" id="newPassword-error">
+                <div className="pt-1 text-accent-700" id="newPassword-error">
                   {actionData.passwordErrors.newPassword}
                 </div>
               )}
@@ -540,7 +538,7 @@ export default function Account() {
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-stone-700"
             >
               Confirm new password
             </label>
@@ -552,10 +550,10 @@ export default function Account() {
                 autoComplete="new-password"
                 aria-invalid={actionData?.passwordErrors?.confirmPassword ? true : undefined}
                 aria-describedby="confirmPassword-error"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.passwordErrors?.confirmPassword && (
-                <div className="pt-1 text-red-700" id="confirmPassword-error">
+                <div className="pt-1 text-accent-700" id="confirmPassword-error">
                   {actionData.passwordErrors.confirmPassword}
                 </div>
               )}
@@ -564,7 +562,7 @@ export default function Account() {
 
           <button
             type="submit"
-            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+            className="rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 focus:bg-accent-400"
           >
             Change Password
           </button>

@@ -38,7 +38,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className="h-full bg-white dark:bg-black text-gray-900 dark:text-gray-100 transition-colors">
+      <body className="h-full bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors">
         <Header />
         {user?.demoGroup ? <DemoBanner /> : null}
         {/* One shared page width; the header and banner backgrounds stay full-bleed */}

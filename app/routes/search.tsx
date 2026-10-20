@@ -4,7 +4,6 @@ import { useLoaderData, useSearchParams, useNavigation, Link, useFetcher } from 
 import { Form } from "@remix-run/react";
 import { createBook, getUserLibraryKeys, bookExistsInLibrary } from "~/models/book.server";
 import { requireUserId, getUserId } from "~/session.server";
-import Breadcrumbs from "~/components/breadcrumbs";
 import { SearchIcon, CheckCircleIcon } from "~/components/icons";
 
 export const handle = {
@@ -189,7 +188,7 @@ function SearchResultItem({ book, isInLibrary }: { book: OpenLibraryBook; isInLi
   const subjectsPreview = book.subject?.slice(0, 3).join(", ") ?? "";
 
   return (
-    <li className="border-b border-gray-200 last:border-0 py-4">
+    <li className="border-b border-stone-200 last:border-0 py-4">
       <fetcher.Form method="post" className="flex gap-4">
         <div className="flex-shrink-0">
           {book.cover_i ? (
@@ -199,18 +198,18 @@ function SearchResultItem({ book, isInLibrary }: { book: OpenLibraryBook; isInLi
               alt={book.title}
             />
           ) : (
-            <div className="w-24 h-36 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
+            <div className="w-24 h-36 bg-stone-200 rounded-md flex items-center justify-center text-stone-400 text-xs">
               No Cover
             </div>
           )}
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-xl font-bold truncate">{book.title}</h3>
-          <h4 className="text-base text-gray-700">
+          <h4 className="text-base text-stone-700">
             {book.author_name?.join(", ") ?? "Unknown Author"}
           </h4>
 
-          <div className="flex flex-wrap gap-3 text-sm text-gray-600 py-1">
+          <div className="flex flex-wrap gap-3 text-sm text-stone-600 py-1">
             {book.first_publish_year && (
               <span>{book.first_publish_year}</span>
             )}
@@ -223,7 +222,7 @@ function SearchResultItem({ book, isInLibrary }: { book: OpenLibraryBook; isInLi
           </div>
 
           {subjectsPreview && (
-            <p className="text-sm text-gray-500 truncate">{subjectsPreview}</p>
+            <p className="text-sm text-stone-500 truncate">{subjectsPreview}</p>
           )}
 
           <input type="hidden" name="title" value={book.title ?? ""} />
@@ -240,12 +239,12 @@ function SearchResultItem({ book, isInLibrary }: { book: OpenLibraryBook; isInLi
             disabled={isAdding || isAdded || alreadyInLibrary}
             className={`rounded px-3 py-1.5 text-sm mt-2 inline-flex items-center gap-1.5 ${
               isAdded
-                ? "bg-green-500 text-white cursor-default"
+                ? "bg-accent-500 text-white cursor-default"
                 : alreadyInLibrary
-                ? "bg-gray-200 text-gray-500 cursor-default"
+                ? "bg-stone-200 text-stone-500 cursor-default"
                 : isAdding
-                ? "bg-gray-400 text-white cursor-wait"
-                : "bg-blue-500 text-white hover:bg-blue-600 focus:bg-blue-400"
+                ? "bg-stone-400 text-white cursor-wait"
+                : "bg-accent-500 text-white hover:bg-accent-600 focus:bg-accent-400"
             }`}
           >
             {isAdded ? (
@@ -326,7 +325,6 @@ export default function Search() {
 
   return (
     <>
-      <Breadcrumbs />
       <main className="w-full max-w-4xl mx-auto px-4 py-8 md:px-8 md:py-12">
         <h1 className="text-3xl md:text-4xl font-bold mb-8">Search</h1>
 
@@ -335,7 +333,7 @@ export default function Search() {
           <div className="flex flex-col gap-4">
             {/* Search Input */}
             <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">
                 <SearchIcon size={20} />
               </div>
               <input
@@ -343,7 +341,7 @@ export default function Search() {
                 name="q"
                 defaultValue={currentQuery}
                 placeholder="Search for books..."
-                className="w-full pl-10 pr-4 py-3 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-3 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-accent-500"
               />
             </div>
 
@@ -351,14 +349,14 @@ export default function Search() {
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Search Type */}
               <div className="flex-1">
-                <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="type" className="block text-sm font-medium text-stone-700 mb-1">
                   Search by
                 </label>
                 <select
                   id="type"
                   name="type"
                   defaultValue={currentType}
-                  className="w-full h-10 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-10 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500"
                 >
                   <option value="all">All Fields</option>
                   <option value="title">Title</option>
@@ -368,14 +366,14 @@ export default function Search() {
 
               {/* Language Filter */}
               <div className="flex-1">
-                <label htmlFor="lang" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="lang" className="block text-sm font-medium text-stone-700 mb-1">
                   Language
                 </label>
                 <select
                   id="lang"
                   name="lang"
                   defaultValue={currentLang}
-                  className="w-full h-10 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-10 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500"
                 >
                   {LANGUAGES.map((lang) => (
                     <option key={lang.code} value={lang.code}>
@@ -390,7 +388,7 @@ export default function Search() {
                 <button
                   type="submit"
                   disabled={isSearching}
-                  className="w-full sm:w-auto h-10 px-6 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:bg-blue-400 disabled:bg-gray-400"
+                  className="w-full sm:w-auto h-10 px-6 bg-accent-500 text-white rounded-lg hover:bg-accent-600 focus:bg-accent-400 disabled:bg-stone-400"
                 >
                   {isSearching ? "Searching..." : "Search"}
                 </button>
@@ -401,7 +399,7 @@ export default function Search() {
 
         {/* Results Info */}
         {data.query && (
-          <div className="mb-4 text-gray-600">
+          <div className="mb-4 text-stone-600">
             {isSearching ? (
               <p>Searching...</p>
             ) : (
@@ -415,7 +413,7 @@ export default function Search() {
                   <span> in <span className="font-semibold">{LANGUAGES.find(l => l.code === currentLang)?.label}</span></span>
                 )}
                 {totalPages > 1 && (
-                  <span className="ml-2 text-gray-500">
+                  <span className="ml-2 text-stone-500">
                     (Page {currentPage} of {totalPages.toLocaleString()})
                   </span>
                 )}
@@ -427,9 +425,9 @@ export default function Search() {
         {/* Empty State */}
         {!data.query && (
           <div className="text-center py-16">
-            <SearchIcon size={64} className="text-gray-300 mb-4 mx-auto" />
-            <h2 className="text-2xl font-semibold text-gray-700 mb-2">Search for Books</h2>
-            <p className="text-gray-500 max-w-md mx-auto">
+            <SearchIcon size={64} className="text-stone-300 mb-4 mx-auto" />
+            <h2 className="text-2xl font-semibold text-stone-700 mb-2">Search for Books</h2>
+            <p className="text-stone-500 max-w-md mx-auto">
               Enter a book title, author name, or keywords to search the Open Library database
               and add books to your collection.
             </p>
@@ -439,8 +437,8 @@ export default function Search() {
         {/* No Results */}
         {data.query && data.docs.length === 0 && !isSearching && (
           <div className="text-center py-16">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-2">No Results Found</h2>
-            <p className="text-gray-500">
+            <h2 className="text-2xl font-semibold text-stone-700 mb-2">No Results Found</h2>
+            <p className="text-stone-500">
               Try adjusting your search terms or filters.
             </p>
           </div>
@@ -460,13 +458,13 @@ export default function Search() {
             {currentPage > 1 ? (
               <Link
                 to={getPageUrl(currentPage - 1)}
-                className="px-3 py-2 rounded border hover:bg-gray-100"
+                className="px-3 py-2 rounded border hover:bg-stone-100"
                 aria-label="Previous page"
               >
                 Previous
               </Link>
             ) : (
-              <span className="px-3 py-2 rounded border text-gray-300 cursor-not-allowed">
+              <span className="px-3 py-2 rounded border text-stone-300 cursor-not-allowed">
                 Previous
               </span>
             )}
@@ -484,8 +482,8 @@ export default function Search() {
                     to={getPageUrl(page)}
                     className={`px-3 py-2 rounded border ${
                       page === currentPage
-                        ? "bg-blue-500 text-white border-blue-500"
-                        : "hover:bg-gray-100"
+                        ? "bg-accent-500 text-white border-accent-500"
+                        : "hover:bg-stone-100"
                     }`}
                     aria-current={page === currentPage ? "page" : undefined}
                   >
@@ -499,13 +497,13 @@ export default function Search() {
             {currentPage < totalPages ? (
               <Link
                 to={getPageUrl(currentPage + 1)}
-                className="px-3 py-2 rounded border hover:bg-gray-100"
+                className="px-3 py-2 rounded border hover:bg-stone-100"
                 aria-label="Next page"
               >
                 Next
               </Link>
             ) : (
-              <span className="px-3 py-2 rounded border text-gray-300 cursor-not-allowed">
+              <span className="px-3 py-2 rounded border text-stone-300 cursor-not-allowed">
                 Next
               </span>
             )}

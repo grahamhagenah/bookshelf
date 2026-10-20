@@ -37,12 +37,12 @@ export default function PositionedMenu() {
         aria-label={user ? "Account menu" : "Log in"}
         aria-expanded={open}
         title={user ? `${user.firstname} ${user.surname}` : "Log in"}
-        className="inline-flex items-center justify-center w-10 h-10 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className="inline-flex items-center justify-center w-10 h-10 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
       >
         {user?.profileEmoji ? (
           <span className="text-xl">{user.profileEmoji}</span>
         ) : user ? (
-          <span className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold text-xs">
+          <span className="w-6 h-6 rounded-full bg-accent-100 dark:bg-accent-900 flex items-center justify-center text-accent-600 dark:text-accent-300 font-semibold text-xs">
             {user.firstname?.[0]?.toUpperCase()}{user.surname?.[0]?.toUpperCase()}
           </span>
         ) : (
@@ -51,11 +51,11 @@ export default function PositionedMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-950 rounded-lg shadow-lg border dark:border-gray-800 py-1 z-50">
+        <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-stone-950 rounded-lg shadow-lg border dark:border-stone-800 py-1 z-50">
           <a
             href="/books"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-3 px-4 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
           >
             <BookIcon size={20} />
             <span>My Library</span>
@@ -63,7 +63,7 @@ export default function PositionedMenu() {
           <a
             href="/search"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-3 px-4 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
           >
             <SearchIcon size={20} />
             <span>Book Search</span>
@@ -71,7 +71,7 @@ export default function PositionedMenu() {
           <a
             href="/account"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-3 px-4 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
           >
             <SettingsIcon size={20} />
             <span>Account Settings</span>
@@ -79,7 +79,7 @@ export default function PositionedMenu() {
           <a
             href="/friends"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-3 px-4 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
           >
             <GroupIcon size={20} />
             <span>Friends</span>
@@ -88,17 +88,17 @@ export default function PositionedMenu() {
             <a
               href="/dashboard"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-blue-600 dark:text-blue-400"
+              className="flex items-center gap-3 px-4 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors text-accent-600 dark:text-accent-400"
             >
               <DashboardIcon size={20} />
               <span>Dashboard</span>
             </a>
           )}
-          <div className="border-t dark:border-gray-800 my-1" />
+          <div className="border-t dark:border-stone-800 my-1" />
           <Form action="/logout" method="post">
             <button
               type="submit"
-              className="flex items-center gap-3 px-4 py-2 w-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+              className="flex items-center gap-3 px-4 py-2 w-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors text-left"
             >
               <LogoutIcon size={20} />
               <span>Logout</span>
