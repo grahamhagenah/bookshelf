@@ -115,10 +115,10 @@ function ComingUp({ items }: { items: DueItem[] }) {
           const days = daysUntil(book.dueDate);
           const overdue = days < 0;
           const who = `${person.firstname} ${person.surname}`;
-          // Spelled out for screen readers; the tile shows it visually
+          // Spelled out beside the tile, so its number reads as days
           const when = overdue
-            ? `${-days} ${days === -1 ? "day" : "days"} overdue`
-            : `due ${inDays(days)}`;
+            ? `${-days} ${days === -1 ? "day" : "days"} late`
+            : inDays(days);
           return (
             <li key={book.id} className="min-w-0">
               <Link
@@ -132,7 +132,14 @@ function ComingUp({ items }: { items: DueItem[] }) {
                   </span>
                   <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
                     {direction === "borrowed" ? "Back to" : "With"} {who}
-                    <span className="sr-only">, {when}</span>
+                    {" · "}
+                    <span
+                      className={
+                        overdue ? "font-semibold text-stone-900 dark:text-stone-100" : ""
+                      }
+                    >
+                      {when}
+                    </span>
                   </span>
                 </span>
               </Link>
