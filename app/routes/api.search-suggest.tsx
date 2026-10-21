@@ -1,0 +1,114 @@
+import type { LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
+
+import { searchFriendsBooks } from "~/models/book.server";
+import { requireUserId } from "~/session.server";
+
+const FRIEND_LIMIT = 4;
+const OPEN_LIBRARY_LIMIT = 5;
+
+interface OpenLibrarySuggestion {
+  title: string;
+  author: string | null;
+}
+
+interface FriendSuggestion {
+  id: string;
+  title: string;
+  author: string;
+  owner: string;
+  available: boolean;
+}
+
+export interface SuggestResponse {
+  query: string;
+  friends: FriendSuggestion[];
+  openLibrary: OpenLibrarySuggestion[];
+}
+
+// Typeahead for the search box. Friends' books come back at once; Open
+// Library is asked separately (?source=openLibrary) since it can be slow.
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const userId = await requireUserId(request);
+  const params = new URL(request.url).searchParams;
+  const query = params.get("q")?.trim() ?? "";
+  const source = params.get("source");
+
+  if (query.length < 2) {
+    return json<SuggestResponse>({ query, friends: [], openLibrary: [] });
+  }
+
+  if (source === "openLibrary") {
+    return json<SuggestResponse>({
+      query,
+      friends: [],
+      openLibrary: await suggestFromOpenLibrary(query),
+    });
+  }
+
+  const friendBooks = await searchFriendsBooks(userId, query);
+  return json<SuggestResponse>({
+    query,
+    friends: friendBooks.slice(0, FRIEND_LIMIT).map((book) => ({
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      owner: `${book.user.firstname} ${book.user.surname}`,
+      available: book.borrowerId === null,
+    })),
+    openLibrary: [],
+  });
+};
+
+const words = (text: string) => text.toLowerCase().match(/[\p{L}\p{N}']+/gu) ?? [];
+
+// Every typed word must start a word in the title or author, so "piran"
+// suggests Piranesi rather than whatever Open Library ranks first
+function matchesTyped(typed: string, title: string, author: string | null) {
+  const haystack = words(`${title} ${author ?? ""}`);
+  return words(typed).every((word) =>
+    haystack.some((candidate) => candidate.startsWith(word)),
+  );
+}
+
+async function searchOpenLibrary(q: string) {
+  try {
+    const res = await fetch(
+      `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=40&fields=title,author_name`,
+      { signal: AbortSignal.timeout(4000) },
+    );
+    if (!res.ok) return [];
+    const body = await res.json();
+    return Array.isArray(body.docs) ? body.docs : [];
+  } catch {
+    return [];
+  }
+}
+
+// Open Library has no prefix search, so ask twice at once: with the last
+// word as a wildcard (finds "Piranesi" from "piran", but can be slow) and as
+// typed. Wildcard matches lead; whichever answers in time is used.
+async function suggestFromOpenLibrary(
+  query: string,
+): Promise<OpenLibrarySuggestion[]> {
+  const lastWord = words(query).at(-1) ?? "";
+  const [prefixed, plain] = await Promise.all([
+    lastWord.length >= 2 ? searchOpenLibrary(`${query}*`) : [],
+    searchOpenLibrary(query),
+  ]);
+
+  // Editions repeat; keep one suggestion per title and author
+  const seen = new Set<string>();
+  const suggestions: OpenLibrarySuggestion[] = [];
+  for (const doc of [...prefixed, ...plain]) {
+    if (typeof doc.title !== "string") continue;
+    const author: string | null = doc.author_name?.[0] ?? null;
+    if (!matchesTyped(query, doc.title, author)) continue;
+    const id = `${doc.title}|${author}`.toLowerCase();
+    if (seen.has(id)) continue;
+    seen.add(id);
+    suggestions.push({ title: doc.title, author });
+    if (suggestions.length === OPEN_LIBRARY_LIMIT) break;
+  }
+  return suggestions;
+}

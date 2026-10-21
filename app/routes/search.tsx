@@ -14,7 +14,8 @@ import {
 } from "@remix-run/react";
 import { useState } from "react";
 
-import { SearchIcon, CheckCircleIcon } from "~/components/icons";
+import { CheckCircleIcon } from "~/components/icons";
+import SearchBox from "~/components/search-box";
 import {
   createBook,
   getUserLibraryKeys,
@@ -490,19 +491,7 @@ export default function Search() {
 
       <Form method="get" className="mb-10">
         <div className="flex gap-2">
-          <div className="relative flex-1">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">
-              <SearchIcon size={18} />
-            </div>
-            <input
-              type="text"
-              name="q"
-              defaultValue={currentQuery}
-              placeholder="Search by title or author"
-              aria-label="Search by title or author"
-              className="w-full pl-10 pr-4 py-2.5 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-base placeholder:text-stone-400 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
-            />
-          </div>
+          <SearchBox defaultValue={currentQuery} />
           <button
             type="submit"
             disabled={isSearching}
