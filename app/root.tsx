@@ -59,8 +59,6 @@ export default function App() {
   const { user, sharePrompt } = useLoaderData<typeof loader>();
   const { pathname } = useLocation();
   const isDarkMode = user?.darkMode ?? false;
-  // The logged-out landing page stands on its own, without the top bar
-  const isLanding = pathname === "/" && !user;
   // Not on the account page, which has its own sharing section, or on
   // home, where a new account's welcome steps include sharing
   const showSharePrompt =
@@ -76,7 +74,7 @@ export default function App() {
         <Links />
       </head>
       <body className="min-h-full flex flex-col bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors">
-        {isLanding ? null : <Header />}
+        <Header />
         {user?.demoGroup ? <DemoBanner /> : null}
         {user ? <SharePrompt show={showSharePrompt} /> : null}
         {/* One shared page width; the header and banner backgrounds stay full-bleed */}
