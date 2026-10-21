@@ -309,10 +309,10 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
         <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8" />
       ) : (
         <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8">
-          {/* Filter bar: find, narrow, sort, and switch views */}
-          <div className="mb-6 flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative w-full sm:w-56">
+          {/* Filter bar: find, narrow, sort, and switch views, in one line
+              on wider screens (status pills scroll if they run out of room) */}
+          <div className="mb-6 flex flex-wrap md:flex-nowrap items-center gap-2">
+              <div className="relative w-full md:w-44 md:flex-shrink-0">
                 <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400">
                   <SearchIcon size={14} />
                 </div>
@@ -325,6 +325,30 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                   className="h-8 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 pl-8 pr-2 text-sm placeholder:text-stone-400 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
                 />
               </div>
+              {statuses.length > 1 ? (
+                <div className="flex gap-1.5 overflow-x-auto min-w-0 [scrollbar-width:none]" role="group" aria-label="Show">
+                  {statuses.map(({ value, label, count }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-pressed={status === value}
+                      onClick={() => setStatus(value)}
+                      className={`flex-shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-sm transition-colors ${
+                        status === value
+                          ? "bg-stone-700 dark:bg-stone-200 text-white dark:text-stone-900"
+                          : "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700"
+                      }`}
+                    >
+                      {label}
+                      <span
+                        className={`ml-1.5 ${status === value ? "opacity-70" : "text-stone-400 dark:text-stone-500"}`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               <label htmlFor="library-sort" className="sr-only">
                 Sort
               </label>
@@ -332,13 +356,13 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                 id="library-sort"
                 value={sort}
                 onChange={(event) => setSort(event.target.value as Sort)}
-                className="h-8 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-700 dark:text-stone-200 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10"
+                className="h-8 flex-shrink-0 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-700 dark:text-stone-200 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10"
               >
                 <option value="recent">Recently added</option>
                 <option value="title">Title</option>
                 <option value="author">Author</option>
               </select>
-              <div className="ml-auto flex gap-1" role="group" aria-label="View">
+              <div className="ml-auto flex flex-shrink-0 gap-1" role="group" aria-label="View">
                 <button
                   onClick={() => handleViewChange("cover")}
                   aria-pressed={viewMode === "cover"}
@@ -366,31 +390,6 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                   <ListViewIcon size={16} />
                 </button>
               </div>
-            </div>
-            {statuses.length > 1 ? (
-              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Show">
-                {statuses.map(({ value, label, count }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    aria-pressed={status === value}
-                    onClick={() => setStatus(value)}
-                    className={`rounded-full px-3 py-1 text-sm transition-colors ${
-                      status === value
-                        ? "bg-stone-700 dark:bg-stone-200 text-white dark:text-stone-900"
-                        : "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700"
-                    }`}
-                  >
-                    {label}
-                    <span
-                      className={`ml-1.5 ${status === value ? "opacity-70" : "text-stone-400 dark:text-stone-500"}`}
-                    >
-                      {count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
           </div>
 
           {visibleBooks.length === 0 ? (
