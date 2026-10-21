@@ -18,11 +18,13 @@ import {
 
 import { seo } from "~/seo";
 import { getUser } from "~/session.server";
+import { sharePromptDismissed } from "~/share-prompt.server";
 import stylesheet from "~/styles/tailwind.css";
 
 import DemoBanner from "./components/demo-banner";
 import Footer from "./components/footer";
 import Header from "./components/header";
+import SharePrompt from "./components/share-prompt";
 
 // Fallback for any page without its own meta; those are signed-in pages
 export const meta: MetaFunction = () => seo({ noindex: true });
@@ -45,14 +47,22 @@ export const links: LinksFunction = () => [
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  return json({ user: await getUser(request) });
+  const user = await getUser(request);
+  return json({
+    user,
+    // Invite people without a public link yet, until they say no thanks
+    sharePrompt: Boolean(user && !user.shareToken && !sharePromptDismissed(request)),
+  });
 };
 
 export default function App() {
-  const { user } = useLoaderData<typeof loader>();
+  const { user, sharePrompt } = useLoaderData<typeof loader>();
+  const { pathname } = useLocation();
   const isDarkMode = user?.darkMode ?? false;
   // The logged-out landing page stands on its own, without the top bar
-  const isLanding = useLocation().pathname === "/" && !user;
+  const isLanding = pathname === "/" && !user;
+  // Not on the account page, which has its own sharing section
+  const showSharePrompt = sharePrompt && pathname !== "/account";
 
   return (
     <html lang="en" className={`h-full ${isDarkMode ? "dark" : ""}`}>
@@ -66,6 +76,7 @@ export default function App() {
       <body className="min-h-full flex flex-col bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors">
         {isLanding ? null : <Header />}
         {user?.demoGroup ? <DemoBanner /> : null}
+        {user ? <SharePrompt show={showSharePrompt} /> : null}
         {/* One shared page width; the header and banner backgrounds stay full-bleed */}
         <div className="mx-auto w-full max-w-5xl flex-1">
           <Outlet />

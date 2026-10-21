@@ -26,6 +26,7 @@ import {
   toggleDarkMode,
   toggleEmailNotifications,
 } from "~/models/user.server";
+import { publicOrigin } from "~/origin.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -42,9 +43,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getUserById(userId),
     getBookStats(userId),
   ]);
-  const url = new URL(request.url);
-  const origin = url.origin;
-  return { user, origin, bookStats };
+  return { user, origin: publicOrigin(request), bookStats };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
