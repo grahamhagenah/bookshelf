@@ -438,7 +438,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                             className="inline-flex items-center gap-1 text-stone-400 dark:text-stone-500"
                             title={`${book.loveCount} ${book.loveCount === 1 ? "reader loved" : "readers loved"} this`}
                           >
-                            <HeartIcon size={11} filled />
+                            <HeartIcon size={11} filled className="text-rose-400" />
                             {book.loveCount}
                           </span>
                         ) : null}
@@ -513,7 +513,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                     </div>
                     {book.loveCount ? (
                       <span className="inline-flex items-center gap-1 text-xs text-stone-400 dark:text-stone-500 flex-shrink-0">
-                        <HeartIcon size={11} filled />
+                        <HeartIcon size={11} filled className="text-rose-400" />
                         {book.loveCount}
                       </span>
                     ) : null}

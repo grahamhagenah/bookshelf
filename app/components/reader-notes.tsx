@@ -82,14 +82,14 @@ export default function ReaderNotes({
               aria-pressed={loved}
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
                 loved
-                  ? "border-stone-700 bg-stone-700 text-white dark:border-stone-200 dark:bg-stone-200 dark:text-stone-900"
+                  ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
                   : "border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500"
               }`}
             >
-              <HeartIcon size={14} filled={loved} />
+              <HeartIcon size={14} filled={loved} className={loved ? "text-rose-500" : ""} />
               {loved ? "Loved" : "Love it"}
               {loveCount > 0 ? (
-                <span className={loved ? "opacity-70" : "text-stone-400"}>
+                <span className={loved ? "text-rose-400" : "text-stone-400"}>
                   {loveCount}
                 </span>
               ) : null}
@@ -97,7 +97,7 @@ export default function ReaderNotes({
           </loveFetcher.Form>
         ) : loveCount > 0 ? (
           <span className="inline-flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
-            <HeartIcon size={14} filled />
+            <HeartIcon size={14} filled className="text-rose-400" />
             {loveCount}
           </span>
         ) : null}
@@ -183,7 +183,7 @@ export default function ReaderNotes({
                         <HeartIcon
                           size={12}
                           filled
-                          className="text-stone-500 dark:text-stone-400"
+                          className="text-rose-400"
                         />
                       ) : null}
                       <span className="text-xs text-stone-400 dark:text-stone-500">
