@@ -347,9 +347,9 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
               {ownerName ? null : (
                 <Link
                   to="/search"
-                  className="ml-auto inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md bg-stone-700 dark:bg-stone-200 px-3 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+                  className="ml-auto inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
                 >
-                  <span aria-hidden="true" className="text-base leading-none">
+                  <span aria-hidden="true" className="text-base leading-none text-stone-400 dark:text-stone-500">
                     +
                   </span>
                   Add books
