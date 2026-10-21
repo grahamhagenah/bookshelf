@@ -16,6 +16,8 @@ export default function CoverWall() {
         className="cover-wall absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-no-repeat"
         style={{ width: WIDTH, height: HEIGHT, backgroundSize: "100% 100%" }}
       />
+      {/* An even wash so the covers stay in color but sit back behind the card */}
+      <div className="absolute inset-0 bg-white/60 dark:bg-stone-950/60" />
     </div>
   );
 }
