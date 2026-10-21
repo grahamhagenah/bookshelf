@@ -58,6 +58,10 @@ model Book {
   publisher     String?
   openLibraryKey String?
   lendCount     Int     @default(0)
+  // Extra Open Library details, looked up once per book
+  firstSentence  String?
+  authorKey      String?
+  detailsFetchedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -134,4 +138,15 @@ model ReaderNote {
 
   @@unique([bookId, userId])
   @@index([bookId], name: "reader_note_book_index")
+}
+
+// Open Library author details, shared by every copy of their books
+model Author {
+  key       String   @id
+  name      String
+  bio       String?
+  birthDate String?
+  deathDate String?
+  wikipedia String?
+  updatedAt DateTime @updatedAt
 }
