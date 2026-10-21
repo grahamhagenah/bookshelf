@@ -72,34 +72,6 @@ interface DueItem {
   direction: "borrowed" | "lent";
 }
 
-// A tiny calendar page: "Late" or "Due" on top, the day count below
-function DayTile({ days }: { days: number }) {
-  const overdue = days < 0;
-  return (
-    <span
-      aria-hidden="true"
-      className="flex w-8 flex-shrink-0 flex-col overflow-hidden rounded bg-white dark:bg-stone-900 text-center ring-1 ring-stone-200 dark:ring-stone-700"
-    >
-      <span
-        className={`text-[8px] font-semibold uppercase leading-[11px] tracking-wide ${
-          overdue
-            ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900"
-            : "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400"
-        }`}
-      >
-        {overdue ? "Late" : "Due"}
-      </span>
-      <span
-        className={`py-1 font-semibold leading-none text-stone-900 dark:text-stone-100 ${
-          days === 0 ? "text-[9px]" : "text-sm"
-        }`}
-      >
-        {days === 0 ? "Today" : Math.abs(days)}
-      </span>
-    </span>
-  );
-}
-
 function ComingUp({ items }: { items: DueItem[] }) {
   if (items.length === 0) return null;
   return (
@@ -125,7 +97,6 @@ function ComingUp({ items }: { items: DueItem[] }) {
                 to={`/books/${book.id}`}
                 className="-mx-2 flex items-center gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
               >
-                <DayTile days={days} />
                 <span className="min-w-0">
                   <span className="block max-w-[18rem] truncate text-sm font-semibold text-stone-900 dark:text-stone-100">
                     {book.title}
