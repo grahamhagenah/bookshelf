@@ -1,7 +1,8 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Form, Link } from "@remix-run/react";
+import { Link } from "@remix-run/react";
 
 import CoverWall from "~/components/cover-wall";
+import DemoButton from "~/components/demo-button";
 import { StacksLogo } from "~/components/icons";
 import { useOptionalUser } from "~/utils";
 
@@ -61,16 +62,9 @@ export default function Index() {
               >
                 Sign in
               </Link>
-              <Form action="/demo" method="post">
-                <button
-                  type="submit"
-                  name="intent"
-                  value="start"
-                  className="w-full text-center text-stone-900 dark:text-stone-100 dark:text-stone-100 hover:text-stone-900 dark:hover:text-white font-medium py-2"
-                >
-                  Or explore a demo library first →
-                </button>
-              </Form>
+              <DemoButton className="w-full text-center text-stone-900 dark:text-stone-100 hover:text-stone-600 dark:hover:text-stone-300 font-medium py-2 transition-colors">
+                Or explore a demo library first →
+              </DemoButton>
             </div>
           </div>
         )}

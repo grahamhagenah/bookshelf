@@ -1,5 +1,6 @@
-import { Form, Link, useMatches } from "@remix-run/react";
+import { Link, useMatches } from "@remix-run/react";
 
+import DemoButton from "./demo-button";
 import { StacksLogo } from "./icons";
 
 interface RootLoaderData {
@@ -36,9 +37,7 @@ export default function Footer() {
             ) : (
               <>
                 <li>
-                  <Form action="/demo" method="post">
-                    <button type="submit" name="intent" value="start" className={linkClass}>Try the demo</button>
-                  </Form>
+                  <DemoButton className={linkClass}>Try the demo</DemoButton>
                 </li>
                 <li><Link to="/join" className={linkClass}>Create an account</Link></li>
                 <li><Link to="/login" className={linkClass}>Sign in</Link></li>

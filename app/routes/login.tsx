@@ -7,6 +7,7 @@ import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 
+import DemoButton from "~/components/demo-button";
 import { verifyLogin } from "~/models/user.server";
 import { createUserSession, getUserId } from "~/session.server";
 import { safeRedirect, validateEmail } from "~/utils";
@@ -190,16 +191,14 @@ export default function LoginPage() {
             </div>
           </div>
         </Form>
-        <Form action="/demo" method="post" className="mt-6 text-center">
-          <button
-            type="submit"
-            name="intent"
-            value="start"
-            className="text-sm text-stone-900 dark:text-stone-100 hover:text-stone-900"
-          >
-            Just looking? Try the demo library
-          </button>
-        </Form>
+        <div className="mt-8 border-t border-stone-100 dark:border-stone-800 pt-6 text-center text-sm text-stone-500 dark:text-stone-400">
+          <span>Just looking? </span>
+          <span className="inline-block">
+            <DemoButton className="text-stone-900 dark:text-stone-100 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:decoration-stone-900 dark:hover:decoration-stone-100">
+              Try the demo library
+            </DemoButton>
+          </span>
+        </div>
       </div>
     </div>
   );
