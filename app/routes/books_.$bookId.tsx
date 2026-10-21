@@ -14,8 +14,8 @@ import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
-import PersonLink from "~/components/person-link";
 import { PersonAddIcon } from "~/components/icons";
+import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
 import { sendBookRequestEmail } from "~/email.server";
 import {
