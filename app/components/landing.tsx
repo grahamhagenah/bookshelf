@@ -95,7 +95,7 @@ function Showcase() {
             SO
           </span>
           <div className="min-w-0 pt-1.5">
-            <p className="text-sm leading-snug text-stone-800 dark:text-stone-200">
+            <p className="text-balance text-sm leading-snug text-stone-800 dark:text-stone-200">
               <span className="font-semibold">Sam Okafor</span> would like to
               borrow <span className="font-semibold">Circe</span>
             </p>
@@ -128,7 +128,7 @@ function Showcase() {
                 className="ml-1.5 inline align-[-1px] text-rose-400"
               />
             </p>
-            <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
+            <p className="mt-1 text-balance text-sm text-stone-600 dark:text-stone-300">
               &ldquo;Gorgeous. The chapters on Aiaia felt like a long
               summer.&rdquo;
             </p>
@@ -195,7 +195,7 @@ export default function Landing() {
             <br />
             shared with friends.
           </h1>
-          <p className="mt-5 max-w-lg text-xl sm:text-2xl leading-snug text-stone-600 dark:text-stone-300">
+          <p className="mt-5 max-w-lg text-balance text-xl sm:text-2xl leading-snug text-stone-600 dark:text-stone-300">
             Keep track of the books you own, lend them to friends, and borrow
             theirs.
           </p>
