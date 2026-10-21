@@ -9,6 +9,7 @@ import { StacksLogo } from "~/components/icons";
 import { getFriendActivity } from "~/models/activity.server";
 import { getHomeBooks } from "~/models/book.server";
 import { getUserById } from "~/models/user.server";
+import { publicOrigin } from "~/origin.server";
 import { seo } from "~/seo";
 import { getUserId } from "~/session.server";
 
@@ -31,6 +32,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       books,
       activity,
       friendIds: user.following.map((friend) => friend.id),
+      // For the "Share your shelf" step on a new account's welcome
+      shareUrl: user.shareToken
+        ? `${publicOrigin(request)}/share/${user.shareToken}`
+        : null,
     },
   });
 };
