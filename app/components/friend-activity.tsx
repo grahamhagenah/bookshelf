@@ -94,7 +94,7 @@ export default function FriendActivityItem({
       <div className="min-w-0 flex-1 pt-1">
         <p className="text-stone-800 dark:text-stone-200 leading-snug">{text}</p>
         {item.kind === "note" && item.body ? (
-          <p className="mt-1 text-sm text-stone-600 dark:text-stone-300 line-clamp-2">
+          <p className="mt-1 text-pretty text-sm text-stone-600 dark:text-stone-300 line-clamp-2">
             &ldquo;{item.body}&rdquo;
           </p>
         ) : null}
