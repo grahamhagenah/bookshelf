@@ -197,7 +197,7 @@ export default function SearchBox({
         aria-label={inHeader ? "Search or add books" : "Search by title or author"}
         // Arriving on an empty search page (e.g. from Add books), start typing
         // eslint-disable-next-line jsx-a11y/no-autofocus
-        autoFocus={!inHeader ? !defaultValue : null}
+        autoFocus={!inHeader && !defaultValue ? true : undefined}
         role="combobox"
         aria-expanded={showList}
         aria-controls={listId}
