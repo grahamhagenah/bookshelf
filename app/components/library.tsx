@@ -429,8 +429,8 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                       author={book.author}
                       className="w-full aspect-[2/3] transition-opacity duration-200 group-hover:opacity-90"
                     />
-                    {book.isBorrowed || book.isLending || book.loveCount ? (
-                      <span className="mt-1.5 flex items-center justify-between gap-2 text-xs">
+                    {/* Always there, even when empty, so every row lines up */}
+                    <span className="mt-1.5 flex h-4 items-center justify-between gap-2 text-xs">
                         {book.isBorrowed ? (
                           <span className="inline-flex items-center gap-1 font-medium text-stone-900 dark:text-stone-100">
                             <BorrowedIcon size={12} />
@@ -454,7 +454,6 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                           </span>
                         ) : null}
                       </span>
-                    ) : null}
                   </NavLink>
                 </li>
               ))}
