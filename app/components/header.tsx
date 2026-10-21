@@ -49,7 +49,25 @@ export default function Header() {
             </a>
           ) : null}
           {user ? <Notifications /> : null}
-          <PositionedMenu />
+          {user ? (
+            <PositionedMenu />
+          ) : (
+            // Signed out: the two ways in, rather than an empty menu
+            <>
+              <a
+                href="/login"
+                className="rounded-md px-3 py-1.5 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors"
+              >
+                Sign in
+              </a>
+              <a
+                href="/join"
+                className="rounded-md bg-stone-700 dark:bg-stone-200 px-3 py-1.5 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+              >
+                Create account
+              </a>
+            </>
+          )}
         </div>
       </div>
     </header>
