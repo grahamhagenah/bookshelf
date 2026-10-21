@@ -8,12 +8,14 @@ import {
   useFetcher,
   Form,
 } from "@remix-run/react";
+import { useState } from "react";
 
 import { SearchIcon, CheckCircleIcon } from "~/components/icons";
 import {
   createBook,
   getUserLibraryKeys,
   bookExistsInLibrary,
+  searchFriendsBooks,
 } from "~/models/book.server";
 import { requireUserId, getUserId } from "~/session.server";
 
@@ -71,9 +73,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Get user's existing library keys to show which books are already added
   const libraryKeys = userId ? await getUserLibraryKeys(userId) : [];
 
+  // Friends' copies come first, so only look them up for the first page
+  const friendBooks =
+    userId && query.trim() && page === 1
+      ? await searchFriendsBooks(userId, query)
+      : [];
+
   // Return empty results if no query
   if (!query.trim()) {
     return json({
+      friendBooks,
       docs: [],
       numFound: 0,
       query: "",
@@ -124,15 +133,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const offset = (page - 1) * RESULTS_PER_PAGE;
 
-  const res = await fetch(
-    `https://openlibrary.org/search.json?${searchQuery}&limit=${RESULTS_PER_PAGE}&offset=${offset}&fields=${fields}`,
-  );
-  const data = (await res.json()) as OpenLibraryResponse;
+  // Open Library rejects some queries (e.g. "the") and can be slow or down;
+  // treat any failure as no matches so friends' results still show
+  let data: OpenLibraryResponse = { docs: [], numFound: 0 };
+  try {
+    const res = await fetch(
+      `https://openlibrary.org/search.json?${searchQuery}&limit=${RESULTS_PER_PAGE}&offset=${offset}&fields=${fields}`,
+      { signal: AbortSignal.timeout(8000) },
+    );
+    const body = await res.json();
+    if (res.ok && Array.isArray(body.docs)) data = body;
+  } catch {
+    // keep the empty result
+  }
 
   const totalPages = Math.ceil(data.numFound / RESULTS_PER_PAGE);
 
   return json({
     ...data,
+    friendBooks,
     query,
     searchType,
     language,
@@ -217,6 +236,91 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return json({ success: true, addedKey: openLibraryKey });
 };
 
+function SmallCover({
+  src,
+  title,
+  author,
+  className,
+}: {
+  src: string | null;
+  title: string;
+  author: string;
+  className: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <div
+      className={`relative flex-shrink-0 overflow-hidden rounded-md shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}
+    >
+      {/* Too small for the placeholder's text; the title sits alongside */}
+      <div className="absolute inset-0 bg-stone-200 dark:bg-stone-800" />
+      {src && !failed ? (
+        <img
+          src={src}
+          alt={`${title} by ${author}`}
+          loading="lazy"
+          className="relative h-full w-full object-cover"
+          onLoad={(e) => {
+            // Open Library answers unknown covers with a 1x1 pixel
+            if (e.currentTarget.naturalWidth <= 1) setFailed(true);
+          }}
+          onError={() => setFailed(true)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+interface FriendBook {
+  id: string;
+  title: string;
+  author: string;
+  cover: string;
+  borrowerId: string | null;
+  user: { id: string; firstname: string; surname: string };
+}
+
+function FriendBookRow({ book }: { book: FriendBook }) {
+  const available = book.borrowerId === null;
+  return (
+    <li>
+      <Link
+        to={`/books/${book.id}`}
+        className="flex items-center gap-3 rounded-lg -mx-2 px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+      >
+        <SmallCover
+          src={book.cover}
+          title={book.title}
+          author={book.author}
+          className="w-10 h-15"
+        />
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-stone-900 dark:text-stone-100 truncate">
+            {book.title}
+          </p>
+          <p className="text-sm text-stone-500 dark:text-stone-400 truncate">
+            {book.author}
+          </p>
+        </div>
+        <div className="flex-shrink-0 text-right text-sm">
+          <p className="text-stone-700 dark:text-stone-300">
+            {book.user.firstname} {book.user.surname}
+          </p>
+          <p
+            className={
+              available
+                ? "text-stone-500 dark:text-stone-400"
+                : "text-stone-400 dark:text-stone-500"
+            }
+          >
+            {available ? "Available" : "Lent out"}
+          </p>
+        </div>
+      </Link>
+    </li>
+  );
+}
+
 function SearchResultItem({
   book,
   isInLibrary,
@@ -232,46 +336,35 @@ function SearchResultItem({
   const isAdding = fetcher.state === "submitting";
   const isAdded = fetcher.data?.success === true;
   const alreadyInLibrary = isInLibrary || fetcher.data?.alreadyExists === true;
-  const subjectsPreview = book.subject?.slice(0, 3).join(", ") ?? "";
+  const author = book.author_name?.join(", ") ?? "Unknown author";
+  const details = [
+    book.first_publish_year,
+    book.number_of_pages_median ? `${book.number_of_pages_median} pages` : null,
+    book.publisher?.[0],
+  ].filter(Boolean);
 
   return (
-    <li className="border-b border-stone-200 last:border-0 py-4">
+    <li className="py-4">
       <fetcher.Form method="post" className="flex gap-4">
-        <div className="flex-shrink-0">
-          {book.cover_i ? (
-            <img
-              className="rounded-md shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10 w-24 h-36 object-cover"
-              src={`https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`}
-              alt={book.title}
-            />
-          ) : (
-            <div className="w-24 h-36 bg-stone-200 rounded-md flex items-center justify-center text-stone-400 text-xs">
-              No Cover
-            </div>
-          )}
-        </div>
+        <SmallCover
+          src={
+            book.cover_i
+              ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
+              : null
+          }
+          title={book.title}
+          author={author}
+          className="w-16 h-24"
+        />
         <div className="flex-1 min-w-0">
-          <h3 className="text-xl font-bold truncate">{book.title}</h3>
-          <h4 className="text-base text-stone-700">
-            {book.author_name?.join(", ") ?? "Unknown Author"}
-          </h4>
-
-          <div className="flex flex-wrap gap-3 text-sm text-stone-600 py-1">
-            {book.first_publish_year ? (
-              <span>{book.first_publish_year}</span>
-            ) : null}
-            {book.number_of_pages_median ? (
-              <span>{book.number_of_pages_median} pages</span>
-            ) : null}
-            {book.publisher?.[0] ? (
-              <span className="truncate max-w-[200px]">
-                {book.publisher[0]}
-              </span>
-            ) : null}
-          </div>
-
-          {subjectsPreview ? (
-            <p className="text-sm text-stone-500 truncate">{subjectsPreview}</p>
+          <h3 className="font-semibold text-stone-900 dark:text-stone-100 leading-snug">
+            {book.title}
+          </h3>
+          <p className="text-stone-500 dark:text-stone-400">{author}</p>
+          {details.length > 0 ? (
+            <p className="mt-1 text-sm text-stone-400 dark:text-stone-500 truncate">
+              {details.join(" · ")}
+            </p>
           ) : null}
 
           <input type="hidden" name="title" value={book.title ?? ""} />
@@ -306,37 +399,33 @@ function SearchResultItem({
           <button
             type="submit"
             disabled={isAdding || isAdded || alreadyInLibrary}
-            className={`rounded-md px-3 py-1.5 text-sm mt-2 inline-flex items-center gap-1.5 ${
-              isAdded
-                ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 cursor-default"
-                : alreadyInLibrary
-                  ? "bg-stone-200 text-stone-500 cursor-default"
-                  : isAdding
-                    ? "bg-stone-400 text-white cursor-wait"
-                    : "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
+            className={`mt-2 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+              isAdded || alreadyInLibrary
+                ? "bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 cursor-default"
+                : isAdding
+                  ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 opacity-60 cursor-wait"
+                  : "bg-stone-900 dark:bg-stone-100 font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300"
             }`}
           >
-            {isAdded ? (
-              <>
-                <CheckCircleIcon size={16} />
-                Added to Library
-              </>
-            ) : alreadyInLibrary ? (
-              <>
-                <CheckCircleIcon size={16} />
-                In Library
-              </>
-            ) : isAdding ? (
-              "Adding..."
-            ) : (
-              "Add to Library"
-            )}
+            {isAdded || alreadyInLibrary ? (
+              <CheckCircleIcon size={14} />
+            ) : null}
+            {isAdded
+              ? "Added"
+              : alreadyInLibrary
+                ? "In your library"
+                : isAdding
+                  ? "Adding…"
+                  : "Add to my library"}
           </button>
         </div>
       </fetcher.Form>
     </li>
   );
 }
+
+const selectClass =
+  "h-9 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-700 dark:text-stone-300 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10";
 
 export default function Search() {
   const data = useLoaderData<typeof loader>();
@@ -351,6 +440,7 @@ export default function Search() {
   const currentLang = searchParams.get("lang") || "";
   const currentPage = data.page || 1;
   const totalPages = data.totalPages || 0;
+  const friendBooks = data.friendBooks ?? [];
 
   // Build URL for a specific page while preserving other params
   const getPageUrl = (page: number) => {
@@ -365,92 +455,131 @@ export default function Search() {
     const maxVisible = 5;
 
     if (totalPages <= maxVisible + 2) {
-      // Show all pages if total is small
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
-      // Always show first page
       pages.push(1);
-
-      if (currentPage > 3) {
-        pages.push("...");
-      }
-
-      // Pages around current
+      if (currentPage > 3) pages.push("...");
       const start = Math.max(2, currentPage - 1);
       const end = Math.min(totalPages - 1, currentPage + 1);
-
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-
-      if (currentPage < totalPages - 2) {
-        pages.push("...");
-      }
-
-      // Always show last page
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("...");
       pages.push(totalPages);
     }
 
     return pages;
   };
 
+  const pageLink =
+    "px-3 py-1.5 text-sm rounded-md border border-stone-200 dark:border-stone-700 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
+  const pageDisabled =
+    "px-3 py-1.5 text-sm rounded-md border border-stone-100 dark:border-stone-800 text-stone-300 dark:text-stone-600 cursor-not-allowed";
+  const sectionHeading =
+    "text-sm font-semibold text-stone-500 dark:text-stone-400";
+
   return (
-    <>
-      <main className="w-full max-w-4xl mx-auto px-4 py-8 md:px-8 md:py-10">
-        <h1 className="sr-only">Search</h1>
+    <main className="w-full max-w-4xl mx-auto px-4 py-8 md:px-8 md:py-10">
+      <h1 className="sr-only">Search</h1>
 
-        {/* Search Form */}
-        <Form method="get" className="mb-8">
-          <div className="flex flex-col gap-4">
-            {/* Search Input */}
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">
-                <SearchIcon size={20} />
-              </div>
-              <input
-                type="text"
-                name="q"
-                defaultValue={currentQuery}
-                placeholder="Search for books..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-base placeholder:text-stone-400 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
-              />
+      <Form method="get" className="mb-10">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">
+              <SearchIcon size={18} />
             </div>
+            <input
+              type="text"
+              name="q"
+              defaultValue={currentQuery}
+              placeholder="Search by title or author"
+              aria-label="Search by title or author"
+              className="w-full pl-10 pr-4 py-2.5 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-base placeholder:text-stone-400 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isSearching}
+            className="px-5 rounded-md bg-stone-900 dark:bg-stone-100 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors disabled:opacity-60"
+          >
+            {isSearching ? "Searching…" : "Search"}
+          </button>
+        </div>
+        {/* Keep the Open Library filters through new searches */}
+        <input type="hidden" name="type" value={currentType} />
+        <input type="hidden" name="lang" value={currentLang} />
+      </Form>
 
-            {/* Filters Row */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Search Type */}
-              <div className="flex-1">
-                <label
-                  htmlFor="type"
-                  className="block text-sm font-medium text-stone-700 mb-1"
-                >
+      {!data.query ? (
+        <div className="py-12 text-center max-w-md mx-auto">
+          <p className="text-stone-700 dark:text-stone-300">
+            Find a book on your friends&apos; shelves, or add a new one to your
+            library.
+          </p>
+          <p className="mt-2 text-sm text-stone-400 dark:text-stone-500">
+            Search once and you&apos;ll see both.
+          </p>
+        </div>
+      ) : (
+        <div className={isSearching ? "opacity-60 transition-opacity" : ""}>
+          {currentPage === 1 ? (
+            <section className="mb-12">
+              <h2 className={`${sectionHeading} mb-2`}>
+                On your friends&apos; shelves
+                {friendBooks.length > 0 ? (
+                  <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">
+                    {friendBooks.length}
+                  </span>
+                ) : null}
+              </h2>
+              {friendBooks.length > 0 ? (
+                <ul>
+                  {friendBooks.map((book) => (
+                    <FriendBookRow key={book.id} book={book} />
+                  ))}
+                </ul>
+              ) : (
+                <p className="py-2 text-sm text-stone-400 dark:text-stone-500">
+                  None of your friends have a book matching &ldquo;{data.query}
+                  &rdquo;.
+                </p>
+              )}
+            </section>
+          ) : null}
+
+          <section>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+              <h2 className={sectionHeading}>
+                Add to your library
+                {data.numFound > 0 ? (
+                  <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">
+                    {data.numFound.toLocaleString()} on Open Library
+                  </span>
+                ) : null}
+              </h2>
+              <Form method="get" className="flex gap-2">
+                <input type="hidden" name="q" value={currentQuery} />
+                <label htmlFor="type" className="sr-only">
                   Search by
                 </label>
                 <select
                   id="type"
                   name="type"
                   defaultValue={currentType}
-                  className="w-full h-10 px-3 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+                  onChange={(e) => e.currentTarget.form?.requestSubmit()}
+                  className={selectClass}
                 >
-                  <option value="all">All Fields</option>
-                  <option value="title">Title</option>
-                  <option value="author">Author</option>
+                  <option value="all">Title or author</option>
+                  <option value="title">Title only</option>
+                  <option value="author">Author only</option>
                 </select>
-              </div>
-
-              {/* Language Filter */}
-              <div className="flex-1">
-                <label
-                  htmlFor="lang"
-                  className="block text-sm font-medium text-stone-700 mb-1"
-                >
+                <label htmlFor="lang" className="sr-only">
                   Language
                 </label>
                 <select
                   id="lang"
                   name="lang"
                   defaultValue={currentLang}
-                  className="w-full h-10 px-3 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+                  onChange={(e) => e.currentTarget.form?.requestSubmit()}
+                  className={selectClass}
                 >
                   {LANGUAGES.map((lang) => (
                     <option key={lang.code} value={lang.code}>
@@ -458,161 +587,86 @@ export default function Search() {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              {/* Search Button */}
-              <div className="flex items-end">
-                <button
-                  type="submit"
-                  disabled={isSearching}
-                  className="w-full sm:w-auto h-10 px-5 rounded-md bg-stone-900 dark:bg-stone-100 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors disabled:opacity-60"
-                >
-                  {isSearching ? "Searching..." : "Search"}
-                </button>
-              </div>
+              </Form>
             </div>
-          </div>
-        </Form>
 
-        {/* Results Info */}
-        {data.query ? (
-          <div className="mb-4 text-stone-600">
-            {isSearching ? (
-              <p>Searching...</p>
-            ) : (
-              <p>
-                Found{" "}
-                <span className="font-semibold">
-                  {data.numFound.toLocaleString()}
-                </span>{" "}
-                results for &ldquo;
-                <span className="font-semibold">{data.query}</span>&rdquo;
-                {currentType !== "all" ? (
-                  <span>
-                    {" "}
-                    in <span className="font-semibold">{currentType}s</span>
-                  </span>
-                ) : null}
-                {currentLang ? (
-                  <span>
-                    {" "}
-                    in{" "}
-                    <span className="font-semibold">
-                      {LANGUAGES.find((l) => l.code === currentLang)?.label}
-                    </span>
-                  </span>
-                ) : null}
-                {totalPages > 1 ? (
-                  <span className="ml-2 text-stone-500">
-                    (Page {currentPage} of {totalPages.toLocaleString()})
-                  </span>
-                ) : null}
+            {data.docs.length === 0 ? (
+              <p className="py-2 text-sm text-stone-400 dark:text-stone-500">
+                No matches on Open Library. Try fewer words or another filter.
               </p>
-            )}
-          </div>
-        ) : null}
-
-        {/* Empty State */}
-        {!data.query ? (
-          <div className="text-center py-16">
-            <SearchIcon size={64} className="text-stone-300 mb-4 mx-auto" />
-            <h2 className="text-2xl font-semibold text-stone-700 mb-2">
-              Search for Books
-            </h2>
-            <p className="text-stone-500 max-w-md mx-auto">
-              Enter a book title, author name, or keywords to search the Open
-              Library database and add books to your collection.
-            </p>
-          </div>
-        ) : null}
-
-        {/* No Results */}
-        {data.query && data.docs.length === 0 && !isSearching ? (
-          <div className="text-center py-16">
-            <h2 className="text-2xl font-semibold text-stone-700 mb-2">
-              No Results Found
-            </h2>
-            <p className="text-stone-500">
-              Try adjusting your search terms or filters.
-            </p>
-          </div>
-        ) : null}
-
-        {/* Results List */}
-        <ul className="search-results mb-4">
-          {data.docs.map((book, index) => (
-            <SearchResultItem
-              key={book.key || index}
-              book={book}
-              isInLibrary={
-                book.key ? data.libraryKeys.includes(book.key) : false
-              }
-            />
-          ))}
-        </ul>
-
-        {/* Pagination */}
-        {totalPages > 1 && data.query ? (
-          <nav
-            className="flex justify-center items-center gap-2 py-8"
-            aria-label="Pagination"
-          >
-            {/* Previous Button */}
-            {currentPage > 1 ? (
-              <Link
-                to={getPageUrl(currentPage - 1)}
-                className="px-3 py-1.5 text-sm rounded-md border border-stone-200 dark:border-stone-700 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-                aria-label="Previous page"
-              >
-                Previous
-              </Link>
             ) : (
-              <span className="px-3 py-1.5 text-sm rounded-md border border-stone-100 dark:border-stone-800 text-stone-300 dark:text-stone-600 cursor-not-allowed">
-                Previous
-              </span>
+              <ul className="divide-y divide-stone-100 dark:divide-stone-800">
+                {data.docs.map((book, index) => (
+                  <SearchResultItem
+                    key={book.key || index}
+                    book={book}
+                    isInLibrary={
+                      book.key ? data.libraryKeys.includes(book.key) : false
+                    }
+                  />
+                ))}
+              </ul>
             )}
 
-            {/* Page Numbers */}
-            <div className="flex gap-1">
-              {getPageNumbers().map((page, index) =>
-                page === "..." ? (
-                  <span key={`ellipsis-${index}`} className="px-3 py-2">
-                    ...
-                  </span>
-                ) : (
+            {totalPages > 1 ? (
+              <nav
+                className="flex justify-center items-center gap-2 py-8"
+                aria-label="Pagination"
+              >
+                {currentPage > 1 ? (
                   <Link
-                    key={page}
-                    to={getPageUrl(page)}
-                    className={`px-3 py-1.5 text-sm rounded-md border ${
-                      page === currentPage
-                        ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 border-stone-900 dark:border-stone-100"
-                        : "hover:bg-stone-100"
-                    }`}
-                    aria-current={page === currentPage ? "page" : undefined}
+                    to={getPageUrl(currentPage - 1)}
+                    className={pageLink}
+                    aria-label="Previous page"
                   >
-                    {page}
+                    Previous
                   </Link>
-                ),
-              )}
-            </div>
+                ) : (
+                  <span className={pageDisabled}>Previous</span>
+                )}
 
-            {/* Next Button */}
-            {currentPage < totalPages ? (
-              <Link
-                to={getPageUrl(currentPage + 1)}
-                className="px-3 py-1.5 text-sm rounded-md border border-stone-200 dark:border-stone-700 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-                aria-label="Next page"
-              >
-                Next
-              </Link>
-            ) : (
-              <span className="px-3 py-1.5 text-sm rounded-md border border-stone-100 dark:border-stone-800 text-stone-300 dark:text-stone-600 cursor-not-allowed">
-                Next
-              </span>
-            )}
-          </nav>
-        ) : null}
-      </main>
-    </>
+                <div className="flex gap-1">
+                  {getPageNumbers().map((page, index) =>
+                    page === "..." ? (
+                      <span
+                        key={`ellipsis-${index}`}
+                        className="px-2 py-1.5 text-sm text-stone-400"
+                      >
+                        …
+                      </span>
+                    ) : (
+                      <Link
+                        key={page}
+                        to={getPageUrl(page)}
+                        className={
+                          page === currentPage
+                            ? "px-3 py-1.5 text-sm rounded-md border bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 border-stone-900 dark:border-stone-100"
+                            : pageLink
+                        }
+                        aria-current={page === currentPage ? "page" : undefined}
+                      >
+                        {page}
+                      </Link>
+                    ),
+                  )}
+                </div>
+
+                {currentPage < totalPages ? (
+                  <Link
+                    to={getPageUrl(currentPage + 1)}
+                    className={pageLink}
+                    aria-label="Next page"
+                  >
+                    Next
+                  </Link>
+                ) : (
+                  <span className={pageDisabled}>Next</span>
+                )}
+              </nav>
+            ) : null}
+          </section>
+        </div>
+      )}
+    </main>
   );
 }

@@ -350,3 +350,31 @@ export async function getLendingHistory(bookId: Book["id"]) {
     },
   });
 }
+
+// Books on friends' shelves whose title or author matches the query
+export async function searchFriendsBooks(userId: User["id"], query: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { following: { select: { id: true } } },
+  });
+  const friendIds = user?.following.map((friend) => friend.id) ?? [];
+  const term = query.trim();
+  if (friendIds.length === 0 || !term) return [];
+
+  return prisma.book.findMany({
+    where: {
+      userId: { in: friendIds },
+      OR: [{ title: { contains: term } }, { author: { contains: term } }],
+    },
+    select: {
+      id: true,
+      title: true,
+      author: true,
+      cover: true,
+      borrowerId: true,
+      user: { select: { id: true, firstname: true, surname: true } },
+    },
+    orderBy: { title: "asc" },
+    take: 30,
+  });
+}
