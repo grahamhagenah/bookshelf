@@ -25,7 +25,7 @@ export default function Header() {
         <div className="flex items-center gap-2 min-w-0">
           <a
             id="logo"
-            href={user ? "/books" : "/"}
+            href="/"
             className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0"
           >
             <StacksLogo

@@ -102,7 +102,7 @@ export default function FriendActivityItem({
           {formatDate(item.at)}
         </p>
         {item.kind === "added" && covers.length > 1 ? (
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 flex flex-wrap gap-2">
             {covers.map((book) => (
               <FeedCover key={book.id} book={book} />
             ))}

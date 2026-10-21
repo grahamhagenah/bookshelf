@@ -17,7 +17,7 @@ import {
 // Visiting /demo drops you straight into a populated sandbox library
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
-  if (userId) return redirect("/books");
+  if (userId) return redirect("/");
 
   // Link previews and crawlers shouldn't spin up sandboxes
   if (isBot(request.headers.get("user-agent"))) return redirect("/");
@@ -27,7 +27,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     request,
     userId: demoUserId,
     remember: false,
-    redirectTo: "/books",
+    redirectTo: "/",
   });
 };
 
@@ -39,7 +39,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const demoGroup = userId ? await getDemoGroup(userId) : null;
 
   // Only demo sessions can be reset or ended here
-  if (userId && !demoGroup) return redirect("/books");
+  if (userId && !demoGroup) return redirect("/");
 
   if (demoGroup) await deleteDemoGroup(demoGroup);
 
@@ -56,6 +56,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     request,
     userId: demoUserId,
     remember: false,
-    redirectTo: "/books",
+    redirectTo: "/",
   });
 };

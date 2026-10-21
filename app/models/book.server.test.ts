@@ -5,6 +5,7 @@ import {
   DEFAULT_LOAN_WEEKS,
   EXTEND_WEEKS,
   extendLoan,
+  getHomeBooks,
   lendBook,
   loanWeeks,
   returnBook,
@@ -140,5 +141,29 @@ describe("returnBook", () => {
     expect(history.every((loan) => loan.returnedAt !== null)).toBe(true);
     const updated = await prisma.book.findUniqueOrThrow({ where: { id: book.id } });
     expect(updated.lendCount).toBe(2);
+  });
+});
+
+describe("getHomeBooks", () => {
+  test("sorts your books into borrowed, lent out and on the shelf", async () => {
+    const me = await makeUser("Me");
+    const friend = await makeUser("Friend");
+    const later = await makeBook(me.id, "Due later");
+    const sooner = await makeBook(me.id, "Due sooner");
+    await makeBook(me.id, "At home");
+    const theirs = await makeBook(friend.id, "Theirs");
+
+    await lendBook(later.id, friend.id, 4);
+    await lendBook(sooner.id, friend.id, 1);
+    await lendBook(theirs.id, me.id, 2);
+
+    const home = await getHomeBooks(me.id);
+    expect(home.borrowed.map((book) => [book.title, book.owner.firstname])).toEqual([
+      ["Theirs", "Friend"],
+    ]);
+    // Soonest due first
+    expect(home.lent.map((book) => book.title)).toEqual(["Due sooner", "Due later"]);
+    expect(home.lent[0].borrower?.firstname).toBe("Friend");
+    expect(home.shelf.map((book) => book.title)).toEqual(["At home"]);
   });
 });
