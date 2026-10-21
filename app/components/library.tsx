@@ -9,7 +9,9 @@ import {
   SearchIcon,
   BookIcon,
   GridViewIcon,
+  BorrowedIcon,
   HeartIcon,
+  LentIcon,
   ListViewIcon,
 } from "./icons";
 
@@ -430,11 +432,13 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                     {book.isBorrowed || book.isLending || book.loveCount ? (
                       <span className="mt-1.5 flex items-center justify-between gap-2 text-xs">
                         {book.isBorrowed ? (
-                          <span className="font-medium text-stone-900 dark:text-stone-100">
+                          <span className="inline-flex items-center gap-1 font-medium text-stone-900 dark:text-stone-100">
+                            <BorrowedIcon size={12} />
                             Borrowed
                           </span>
                         ) : book.isLending ? (
-                          <span className="text-stone-500 dark:text-stone-400">
+                          <span className="inline-flex items-center gap-1 text-stone-500 dark:text-stone-400">
+                            <LentIcon size={12} />
                             Lent out
                           </span>
                         ) : (
@@ -525,12 +529,14 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                       </span>
                     ) : null}
                     {book.isBorrowed ? (
-                      <span className="bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs px-2 py-1 rounded-full flex-shrink-0">
+                      <span className="bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs px-2 py-1 rounded-full flex-shrink-0 inline-flex items-center gap-1">
+                        <BorrowedIcon size={12} />
                         Borrowed
                       </span>
                     ) : null}
                     {book.isLending ? (
-                      <span className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 text-xs px-2 py-1 rounded-full flex-shrink-0">
+                      <span className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 text-xs px-2 py-1 rounded-full flex-shrink-0 inline-flex items-center gap-1">
+                        <LentIcon size={12} />
                         Lent out
                       </span>
                     ) : null}
