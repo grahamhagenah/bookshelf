@@ -209,3 +209,21 @@ export function HeartIcon({
     </svg>
   );
 }
+
+// Arrow heading out, for a book that's lent out
+export function LentIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 17L17 7M8 7h9v9"/>
+    </svg>
+  );
+}
+
+// Arrow coming in, for a book borrowed from a friend
+export function BorrowedIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M17 7L7 17M16 17H7V8"/>
+    </svg>
+  );
+}
