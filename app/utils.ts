@@ -88,3 +88,67 @@ export function coverSrc(url: string) {
     ? url.replace("https://covers.openlibrary.org/", "/covers/")
     : url;
 }
+
+// Open Library subjects mix real topics with catalog codes and library
+// labels. Keep a few readable topics.
+const SUBJECT_NOISE = new Set([
+  "accessible book",
+  "protected daisy",
+  "in library",
+  "lending library",
+  "large type books",
+  "new york times bestseller",
+  "new york times reviewed",
+  "open library staff picks",
+  "long now manual for civilization",
+  "internet archive wishlist",
+  "overdrive",
+  "fiction",
+  "general",
+  "nonfiction",
+  "juvenile fiction",
+  "translations into english",
+  "english language",
+]);
+
+export function cleanSubjects(subjects: string[] | string | null | undefined, max = 5) {
+  const list = Array.isArray(subjects) ? subjects : (subjects ?? "").split(",");
+  const seen = new Set<string>();
+  const kept: string[] = [];
+  for (const raw of list) {
+    let subject = raw.trim().replace(/\.$/, "");
+    // "genre:fantasy" carries a real topic; other "code:value" tags don't
+    const genre = subject.match(/^genre:(.+)$/i);
+    if (genre) subject = genre[1].replace(/[_-]+/g, " ");
+    if (
+      !subject ||
+      /[:=_]|--|\(|\d/.test(subject) ||
+      subject.length > 30 ||
+      SUBJECT_NOISE.has(subject.toLowerCase())
+    ) {
+      continue;
+    }
+    subject = subject.charAt(0).toUpperCase() + subject.slice(1);
+    // "Science fiction" and "Science-fiction" are the same topic
+    const key = subject.toLowerCase().replace(/[^a-z]/g, "");
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    kept.push(subject);
+    if (kept.length === max) break;
+  }
+  return kept;
+}
+
+// Open Library descriptions and bios sometimes carry Markdown; show prose
+export function stripMarkdown(text: string) {
+  return text
+    .replace(/\r/g, "")
+    .replace(/\(\[[^\]]*\]\[\d+\]\)/g, "")
+    .replace(/^\s*\[\d+\]:.*$/gm, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    // Italics first, so bold text that contains italics unwraps cleanly
+    .replace(/(^|[\s(])[*_]([^*_\n]+)[*_](?=[\s).,;:!?]|$)/g, "$1$2")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}

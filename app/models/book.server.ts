@@ -1,6 +1,7 @@
 import type { User, Book } from "@prisma/client";
 
 import { prisma } from "~/db.server";
+import { cleanSubjects } from "~/utils";
 
 export function getBook({
   id,
@@ -129,7 +130,8 @@ export function createBook({
       cover,
       datePublished,
       pageCount,
-      subjects,
+      // Open Library's subject list mixes real topics with catalog codes
+      subjects: cleanSubjects(subjects).join(", ") || null,
       publisher,
       openLibraryKey,
       user: {
