@@ -28,7 +28,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   ]);
   return json({
     home: {
-      firstname: user.firstname,
       books,
       activity,
       friendIds: user.following.map((friend) => friend.id),

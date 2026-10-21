@@ -1,5 +1,6 @@
 import type { SerializeFrom } from "@remix-run/node";
 import { Link } from "@remix-run/react";
+import { useState } from "react";
 
 import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
@@ -87,48 +88,52 @@ function BookRow({
   );
 }
 
+// The shelf can be long; show a few and let the rest open on request
+const SHELF_PREVIEW = 5;
+
 function Group({
   title,
   count,
   children,
+  footer,
 }: {
   title: string;
   count: number;
   children: React.ReactNode;
+  footer?: React.ReactNode;
 }) {
   if (count === 0) return null;
   return (
-    <div className="mt-6 first:mt-0">
+    // A rule between groups, so each reads as its own block
+    <div className="border-t border-stone-200 dark:border-stone-800 pt-5 mt-6 first:border-t-0 first:pt-0 first:mt-0">
       <h3 className="mb-1 flex items-baseline gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400">
         {title}
         <span className="font-normal text-stone-400 dark:text-stone-500">{count}</span>
       </h3>
-      <ul>{children}</ul>
+      <ul className="divide-y divide-stone-100 dark:divide-stone-900">{children}</ul>
+      {footer}
     </div>
   );
 }
 
 export default function Home({
-  firstname,
   books,
   activity,
   friendIds,
 }: {
-  firstname: string;
   books: HomeBooks;
   activity: SerializeFrom<FriendActivity>[];
   friendIds: string[];
 }) {
   const total = books.borrowed.length + books.lent.length + books.shelf.length;
+  const [showWholeShelf, setShowWholeShelf] = useState(false);
+  const shelf = showWholeShelf ? books.shelf : books.shelf.slice(0, SHELF_PREVIEW);
 
   return (
     <main className="px-4 md:px-8 py-8 md:py-10">
-      <h1 className="mb-8 text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">
-        Hi, {firstname}
-      </h1>
-
-      <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-14">
-        <section aria-labelledby="your-books">
+      <h1 className="sr-only">Home</h1>
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-0">
+        <section aria-labelledby="your-books" className="lg:pr-12">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 id="your-books" className="text-lg font-semibold">
               Your books
@@ -172,8 +177,24 @@ export default function Home({
                   </li>
                 ))}
               </Group>
-              <Group title="On your shelf" count={books.shelf.length}>
-                {books.shelf.map((book) => (
+              <Group
+                title="On your shelf"
+                count={books.shelf.length}
+                footer={
+                  books.shelf.length > SHELF_PREVIEW ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowWholeShelf((open) => !open)}
+                      className={`mt-2 ${linkClass}`}
+                    >
+                      {showWholeShelf
+                        ? "Show fewer"
+                        : `Show all ${books.shelf.length}`}
+                    </button>
+                  ) : null
+                }
+              >
+                {shelf.map((book) => (
                   <li key={book.id}>
                     <BookRow book={book} />
                   </li>
@@ -183,7 +204,11 @@ export default function Home({
           )}
         </section>
 
-        <aside aria-labelledby="friend-activity">
+        {/* Its own column, set off by a rule (above it on phones) */}
+        <aside
+          aria-labelledby="friend-activity"
+          className="border-t border-stone-200 dark:border-stone-800 pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-12"
+        >
           <div className="mb-2 flex items-center justify-between gap-3">
             <h2 id="friend-activity" className="text-lg font-semibold">
               Friend activity
