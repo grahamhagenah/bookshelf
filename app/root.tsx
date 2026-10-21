@@ -67,7 +67,7 @@ export default function App() {
         {isLanding ? null : <Header />}
         {user?.demoGroup ? <DemoBanner /> : null}
         {/* One shared page width; the header and banner backgrounds stay full-bleed */}
-        <div className="mx-auto w-full max-w-4xl flex-1">
+        <div className="mx-auto w-full max-w-5xl flex-1">
           <Outlet />
         </div>
         <Footer />
