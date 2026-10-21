@@ -99,7 +99,7 @@ async function suggestFromOpenLibrary(
 
   // Editions repeat; keep one suggestion per title and author
   const seen = new Set<string>();
-  const suggestions: OpenLibrarySuggestion[] = [];
+  const candidates: OpenLibrarySuggestion[] = [];
   for (const doc of [...prefixed, ...plain]) {
     if (typeof doc.title !== "string") continue;
     const author: string | null = doc.author_name?.[0] ?? null;
@@ -107,8 +107,21 @@ async function suggestFromOpenLibrary(
     const id = `${doc.title}|${author}`.toLowerCase();
     if (seen.has(id)) continue;
     seen.add(id);
-    suggestions.push({ title: doc.title, author });
-    if (suggestions.length === OPEN_LIBRARY_LIMIT) break;
+    candidates.push({ title: doc.title, author });
   }
+
+  // A title that is, or begins with, exactly what's typed goes first
+  // ("circe" → Circe, not Circeo or books by authors called Circe); the
+  // rest keep Open Library's order
+  const typed = words(query).join(" ");
+  const rank = ({ title }: OpenLibrarySuggestion) => {
+    const normalized = words(title).join(" ");
+    return normalized === typed || normalized.startsWith(`${typed} `) ? 0 : 1;
+  };
+  const suggestions = candidates
+    .map((suggestion, index) => ({ suggestion, index }))
+    .sort((a, b) => rank(a.suggestion) - rank(b.suggestion) || a.index - b.index)
+    .slice(0, OPEN_LIBRARY_LIMIT)
+    .map(({ suggestion }) => suggestion);
   return suggestions;
 }
