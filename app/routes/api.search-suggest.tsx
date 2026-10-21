@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 
-import { searchFriendsBooks } from "~/models/book.server";
+import { getUserLibraryKeys, searchFriendsBooks } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
 
 const FRIEND_LIMIT = 4;
@@ -10,6 +10,14 @@ const OPEN_LIBRARY_LIMIT = 5;
 interface OpenLibrarySuggestion {
   title: string;
   author: string | null;
+  // What's needed to add the book straight from the suggestion
+  key: string | null;
+  coverId: number | null;
+  year: number | null;
+  pages: number | null;
+  subjects: string | null;
+  publisher: string | null;
+  inLibrary: boolean;
 }
 
 interface FriendSuggestion {
@@ -42,7 +50,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return json<SuggestResponse>({
       query,
       friends: [],
-      openLibrary: await suggestFromOpenLibrary(query),
+      openLibrary: await suggestFromOpenLibrary(
+        query,
+        new Set(await getUserLibraryKeys(userId)),
+      ),
     });
   }
 
@@ -74,7 +85,7 @@ function matchesTyped(typed: string, title: string, author: string | null) {
 async function searchOpenLibrary(q: string) {
   try {
     const res = await fetch(
-      `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=40&fields=title,author_name`,
+      `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=40&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,publisher`,
       { signal: AbortSignal.timeout(4000) },
     );
     if (!res.ok) return [];
@@ -90,6 +101,7 @@ async function searchOpenLibrary(q: string) {
 // typed. Wildcard matches lead; whichever answers in time is used.
 async function suggestFromOpenLibrary(
   query: string,
+  libraryKeys: Set<string>,
 ): Promise<OpenLibrarySuggestion[]> {
   const lastWord = words(query).at(-1) ?? "";
   const [prefixed, plain] = await Promise.all([
@@ -107,7 +119,21 @@ async function suggestFromOpenLibrary(
     const id = `${doc.title}|${author}`.toLowerCase();
     if (seen.has(id)) continue;
     seen.add(id);
-    candidates.push({ title: doc.title, author });
+    const key: string | null = typeof doc.key === "string" ? doc.key : null;
+    candidates.push({
+      title: doc.title,
+      author,
+      key,
+      coverId: typeof doc.cover_i === "number" ? doc.cover_i : null,
+      year: typeof doc.first_publish_year === "number" ? doc.first_publish_year : null,
+      pages:
+        typeof doc.number_of_pages_median === "number"
+          ? doc.number_of_pages_median
+          : null,
+      subjects: Array.isArray(doc.subject) ? doc.subject.slice(0, 5).join(", ") : null,
+      publisher: Array.isArray(doc.publisher) ? (doc.publisher[0] ?? null) : null,
+      inLibrary: key ? libraryKeys.has(key) : false,
+    });
   }
 
   // A title that is, or begins with, exactly what's typed goes first

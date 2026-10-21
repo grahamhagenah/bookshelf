@@ -15,10 +15,58 @@ type Option =
       owner: string;
       available: boolean;
     }
-  | { kind: "openLibrary"; title: string; author: string | null }
+  | ({ kind: "openLibrary" } & SuggestResponse["openLibrary"][number])
   | { kind: "search"; text: string };
 
 const DEBOUNCE_MS = 200;
+
+// "+ Add" on an Open Library suggestion: adds the book without leaving the
+// page, using the search page's add action
+function AddFromSuggestion({
+  book,
+}: {
+  book: SuggestResponse["openLibrary"][number];
+}) {
+  const fetcher = useFetcher<{ success?: boolean; alreadyExists?: boolean }>();
+  const added = fetcher.data?.success === true;
+  const owned = book.inLibrary || fetcher.data?.alreadyExists === true;
+  const adding = fetcher.state !== "idle";
+
+  if (owned || added) {
+    return (
+      <span className="flex-shrink-0 text-xs text-stone-400 dark:text-stone-500">
+        {added ? "Added ✓" : "In your library"}
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={adding}
+      onClick={(event) => {
+        // Don't also run the row's search
+        event.stopPropagation();
+        fetcher.submit(
+          {
+            title: book.title,
+            author: book.author ?? "",
+            cover: book.coverId?.toString() ?? "",
+            datePublished: book.year?.toString() ?? "",
+            pageCount: book.pages?.toString() ?? "",
+            subjects: book.subjects ?? "",
+            publisher: book.publisher ?? "",
+            openLibraryKey: book.key ?? "",
+          },
+          { method: "post", action: "/search" },
+        );
+      }}
+      className="flex-shrink-0 rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-xs font-medium text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 disabled:opacity-60 transition-colors"
+    >
+      {adding ? "Adding…" : "+ Add"}
+    </button>
+  );
+}
 
 // The search field with suggestions as you type. Picking a friend's book
 // opens it; picking an Open Library title searches for it. The "header"
@@ -145,8 +193,11 @@ export default function SearchBox({
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         onKeyDown={onKeyDown}
-        placeholder={inHeader ? "Search books" : "Search by title or author"}
-        aria-label={inHeader ? "Search books" : "Search by title or author"}
+        placeholder={inHeader ? "Search or add books" : "Search by title or author"}
+        aria-label={inHeader ? "Search or add books" : "Search by title or author"}
+        // Arriving on an empty search page (e.g. from Add books), start typing
+        // eslint-disable-next-line jsx-a11y/no-autofocus
+        autoFocus={!inHeader ? !defaultValue : null}
         role="combobox"
         aria-expanded={showList}
         aria-controls={listId}
@@ -219,6 +270,9 @@ export default function SearchBox({
                           </span>
                         ) : null}
                       </span>
+                      {option.kind === "openLibrary" ? (
+                        <AddFromSuggestion book={option} />
+                      ) : null}
                       {option.kind === "friend" ? (
                         <span className="flex-shrink-0 text-xs text-stone-400 dark:text-stone-500">
                           {option.owner}
