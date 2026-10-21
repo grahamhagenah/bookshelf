@@ -143,7 +143,7 @@ export function cleanSubjects(subjects: string[] | string | null | undefined, ma
 export function stripMarkdown(text: string) {
   return text
     .replace(/\r/g, "")
-    .replace(/\(\[[^\]]*\]\[\d+\]\)/g, "")
+    .replace(/\s*\(\[[^\]]*\]\[\d+\]\)/g, "")
     .replace(/^\s*\[\d+\]:.*$/gm, "")
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
     // Italics first, so bold text that contains italics unwraps cleanly
