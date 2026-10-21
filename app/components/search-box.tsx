@@ -123,8 +123,14 @@ export default function SearchBox({
 
   return (
     <div className="relative flex-1">
-      <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">
-        <SearchIcon size={inHeader ? 16 : 18} />
+      <div
+        className={`pointer-events-none absolute top-1/2 -translate-y-1/2 ${
+          inHeader
+            ? "left-2.5 text-stone-400/80 dark:text-stone-500"
+            : "left-3 text-stone-400"
+        }`}
+      >
+        <SearchIcon size={inHeader ? 15 : 18} />
       </div>
       <input
         ref={inputRef}
@@ -147,11 +153,12 @@ export default function SearchBox({
         aria-autocomplete="list"
         aria-activedescendant={active >= 0 ? optionId(active) : undefined}
         autoComplete="off"
-        className={`w-full rounded-md border border-stone-200 dark:border-stone-700 dark:bg-stone-900 placeholder:text-stone-400 ${
+        className={`w-full rounded-md border focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors ${
           inHeader
-            ? "h-9 pl-9 pr-3 text-sm bg-stone-50 focus:bg-white"
-            : "pl-10 pr-4 py-2.5 text-base bg-white"
-        } focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors`}
+            ? // Quiet until used: no border, a faint fill, outlined on focus
+              "h-8 pl-8 pr-3 text-sm border-transparent bg-stone-100/70 hover:bg-stone-100 focus:bg-white dark:bg-stone-900 dark:hover:bg-stone-800 dark:focus:bg-stone-900 placeholder:text-stone-400 dark:placeholder:text-stone-500"
+            : "pl-10 pr-4 py-2.5 text-base border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 placeholder:text-stone-400"
+        }`}
       />
 
       {showList ? (

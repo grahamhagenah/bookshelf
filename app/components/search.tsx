@@ -15,7 +15,7 @@ export default function Search() {
         method="get"
         action="/search"
         role="search"
-        className="hidden md:block w-56 lg:w-64"
+        className="hidden md:block w-48 lg:w-56"
       >
         <SearchBox variant="header" />
       </Form>
