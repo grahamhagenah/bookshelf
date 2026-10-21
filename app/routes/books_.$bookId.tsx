@@ -31,6 +31,7 @@ import {
   getReaderNotes,
   saveReaderNote,
 } from "~/models/note.server";
+import { ensureBookDetails, getAuthor } from "~/models/openlibrary.server";
 import {
   getUserById,
   getUserEmailById,
@@ -77,6 +78,89 @@ const labelClass =
   "block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5";
 const inputClass =
   "w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors";
+
+// "1920–1986" from Open Library's free-form dates
+function lifespan(birth: string | null, death: string | null) {
+  const year = (date: string | null) => date?.match(/\d{3,4}/)?.[0] ?? null;
+  const born = year(birth);
+  const died = year(death);
+  if (born && died) return `${born}–${died}`;
+  if (born) return `Born ${born}`;
+  return null;
+}
+
+function AboutAuthor({
+  author,
+}: {
+  author: {
+    key: string;
+    name: string;
+    bio: string | null;
+    birthDate: string | null;
+    deathDate: string | null;
+    wikipedia: string | null;
+  };
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const years = lifespan(author.birthDate, author.deathDate);
+  const isLong = (author.bio?.length ?? 0) > 320;
+
+  return (
+    <div className="mt-8">
+      <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
+        About the author
+      </h2>
+      <p className="text-stone-900 dark:text-stone-100">
+        <span className="font-medium">{author.name}</span>
+        {years ? (
+          <span className="ml-2 text-sm text-stone-400 dark:text-stone-500">
+            {years}
+          </span>
+        ) : null}
+      </p>
+      {author.bio ? (
+        <>
+          <p
+            className={`summary mt-1 text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose ${
+              isLong && !expanded ? "line-clamp-4" : ""
+            }`}
+          >
+            {author.bio}
+          </p>
+          {isLong ? (
+            <button
+              type="button"
+              onClick={() => setExpanded(!expanded)}
+              className="mt-1 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
+            >
+              {expanded ? "Show less" : "Read more"}
+            </button>
+          ) : null}
+        </>
+      ) : null}
+      <p className="mt-2 flex gap-4 text-sm">
+        {author.wikipedia ? (
+          <a
+            href={author.wikipedia}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200"
+          >
+            Wikipedia
+          </a>
+        ) : null}
+        <a
+          href={`https://openlibrary.org/authors/${author.key}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200"
+        >
+          More on Open Library
+        </a>
+      </p>
+    </div>
+  );
+}
 
 function BookCover({
   src,
@@ -155,9 +239,15 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.bookId, "bookId not found");
 
-  const book = await getBookById(params.bookId);
+  let book = await getBookById(params.bookId);
   if (!book) {
     throw new Response("Not Found", { status: 404 });
+  }
+
+  // First visit: look up the opening sentence and author from Open Library
+  if (!book.detailsFetchedAt) {
+    await ensureBookDetails(book);
+    book = (await getBookById(params.bookId)) ?? book;
   }
 
   const isOwner = book.userId === userId;
@@ -178,10 +268,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   // Fetch lending history and reader notes for the book
-  const [lendingHistory, readerNotes, canNote] = await Promise.all([
+  const [lendingHistory, readerNotes, canNote, author] = await Promise.all([
     getLendingHistory(params.bookId),
     getReaderNotes(params.bookId),
     canLeaveNote(userId, book),
+    getAuthor(book.authorKey),
   ]);
 
   // Mark which borrowers in history are friends
@@ -203,6 +294,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     myNote: readerNotes.find((note) => note.user.id === userId) ?? null,
     canNote,
     noteMaxLength: NOTE_MAX_LENGTH,
+    author,
   });
 };
 
@@ -446,6 +538,16 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         openLibraryKey: bookData.key || null,
         body: description,
       });
+      await ensureBookDetails(
+        {
+          id: book.id,
+          title: book.title,
+          author: book.author,
+          openLibraryKey: bookData.key || null,
+          detailsFetchedAt: null,
+        },
+        { force: true },
+      );
       return json({
         refreshed: true,
         message: "Book info updated from Open Library!",
@@ -984,6 +1086,17 @@ export default function BookDetailsPage() {
               })()
             : null}
 
+          {!isEditing && data.book.firstSentence ? (
+            <div className="mt-8">
+              <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
+                Opening line
+              </h2>
+              <blockquote className="border-l-2 border-stone-200 dark:border-stone-700 pl-4 italic text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
+                “{data.book.firstSentence}”
+              </blockquote>
+            </div>
+          ) : null}
+
           {!isEditing ? (
             <div className="mt-8">
               <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
@@ -994,6 +1107,8 @@ export default function BookDetailsPage() {
               </p>
             </div>
           ) : null}
+
+          {!isEditing && data.author ? <AboutAuthor author={data.author} /> : null}
 
           {!isEditing ? (
             <ReaderNotes
