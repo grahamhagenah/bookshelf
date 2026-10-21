@@ -3,6 +3,7 @@ import { json } from "@remix-run/node";
 
 import { getUserLibraryKeys, searchFriendsBooks } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
+import { cleanSubjects } from "~/utils";
 
 const FRIEND_LIMIT = 4;
 const OPEN_LIBRARY_LIMIT = 5;
@@ -130,7 +131,7 @@ async function suggestFromOpenLibrary(
         typeof doc.number_of_pages_median === "number"
           ? doc.number_of_pages_median
           : null,
-      subjects: Array.isArray(doc.subject) ? doc.subject.slice(0, 5).join(", ") : null,
+      subjects: cleanSubjects(doc.subject).join(", ") || null,
       publisher: Array.isArray(doc.publisher) ? (doc.publisher[0] ?? null) : null,
       inLibrary: key ? libraryKeys.has(key) : false,
     });

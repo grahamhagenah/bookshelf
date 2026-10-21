@@ -24,7 +24,7 @@ import {
 } from "~/models/book.server";
 import { seo } from "~/seo";
 import { requireUserId, getUserId } from "~/session.server";
-import { coverSrc } from "~/utils";
+import { cleanSubjects, coverSrc } from "~/utils";
 
 export const meta: MetaFunction = () =>
   seo({ title: "Search", noindex: true });
@@ -397,7 +397,7 @@ function SearchResultItem({
           <input
             type="hidden"
             name="subjects"
-            value={book.subject?.slice(0, 5).join(", ") ?? ""}
+            value={cleanSubjects(book.subject).join(", ")}
           />
           <input
             type="hidden"

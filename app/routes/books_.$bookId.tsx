@@ -52,7 +52,7 @@ import {
 } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
-import { coverSrc } from "~/utils";
+import { cleanSubjects, coverSrc, stripMarkdown } from "~/utils";
 
 const shortDate = (date: string | Date) =>
   new Date(date).toLocaleDateString("en-US", {
@@ -574,7 +574,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       await updateBookMetadata(book.id, {
         datePublished: bookData.first_publish_year?.toString() || null,
         pageCount: bookData.number_of_pages_median || null,
-        subjects: bookData.subject?.slice(0, 5).join(", ") || null,
+        subjects: cleanSubjects(bookData.subject).join(", ") || null,
         publisher: bookData.publisher?.[0] || null,
         openLibraryKey: bookData.key || null,
         body: description,
@@ -1028,9 +1028,9 @@ export default function BookDetailsPage() {
                 </p>
               ) : null}
 
-              {data.book.subjects ? (
+              {cleanSubjects(data.book.subjects).length > 0 ? (
                 <div className="mt-4 flex flex-wrap gap-1.5">
-                  {data.book.subjects.split(", ").map((subject, index) => (
+                  {cleanSubjects(data.book.subjects).map((subject, index) => (
                     <span
                       key={index}
                       className="rounded-full bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 text-xs text-stone-600 dark:text-stone-300"
@@ -1192,7 +1192,7 @@ export default function BookDetailsPage() {
                 About this book
               </h2>
               <p className="summary text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
-                {data.book.body || "No description yet."}
+                {data.book.body ? stripMarkdown(data.book.body) : "No description yet."}
               </p>
             </div>
           ) : null}
