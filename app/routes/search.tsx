@@ -268,7 +268,7 @@ function SmallCover({
           src={src}
           alt={`${title} by ${author}`}
           loading="lazy"
-          className="relative h-full w-full object-cover"
+          className="relative h-full w-full object-cover scale-[1.04]"
           onLoad={(e) => {
             // Open Library answers unknown covers with a 1x1 pixel
             if (e.currentTarget.naturalWidth <= 1) setFailed(true);

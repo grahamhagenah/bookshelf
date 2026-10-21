@@ -66,7 +66,7 @@ function BookCover({
   const [error, setError] = useState(false);
 
   return (
-    <div className={`relative overflow-hidden rounded-md ${className}`}>
+    <div className={`relative overflow-hidden rounded-md ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}>
       {!loaded || error ? (
         <CoverPlaceholder
           title={title}
@@ -83,7 +83,9 @@ function BookCover({
           // The first row is usually on screen right away
           loading={eager ? "eager" : "lazy"}
           decoding="async"
-          className={`relative w-full h-full object-cover ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
+          // Many scans carry a thin page edge or scanner border; zooming in
+          // 4% lets the rounded frame trim it
+          className={`relative w-full h-full object-cover scale-[1.04] ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
           onLoad={(e) => {
             // Open Library answers unknown covers with a 1x1 pixel
             if (e.currentTarget.naturalWidth <= 1) setError(true);
