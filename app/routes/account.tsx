@@ -12,6 +12,7 @@ import Avatar, {
   AvatarGlyph,
   isAvatarIcon,
 } from "~/components/avatar";
+import { BookIcon, BorrowedIcon, LentIcon } from "~/components/icons";
 import Layout from "~/components / Layout/Layout";
 import { getBookStats } from "~/models/book.server";
 import { getDemoGroup } from "~/models/demo.server";
@@ -309,26 +310,27 @@ export default function Account() {
             <h3 className="text-sm font-medium text-stone-500 mb-3">
               Library Stats
             </h3>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="bg-stone-50 rounded-lg p-3">
-                <dd className="text-2xl font-semibold text-stone-900">
-                  {data.bookStats.totalBooks}
-                </dd>
-                <dt className="text-sm text-stone-500">Books</dt>
-              </div>
-              <div className="bg-stone-100 rounded-lg p-3">
-                <dd className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
-                  {data.bookStats.borrowedBooks}
-                </dd>
-                <dt className="text-sm text-stone-500">Borrowed</dt>
-              </div>
-              <div className="bg-stone-50 rounded-lg p-3">
-                <dd className="text-2xl font-semibold text-stone-600">
-                  {data.bookStats.lentBooks}
-                </dd>
-                <dt className="text-sm text-stone-500">Lent Out</dt>
-              </div>
-            </div>
+            <dl className="grid grid-cols-3 gap-4 text-center">
+              {[
+                { label: "Books", value: data.bookStats.totalBooks, Icon: BookIcon },
+                { label: "Borrowed", value: data.bookStats.borrowedBooks, Icon: BorrowedIcon },
+                { label: "Lent out", value: data.bookStats.lentBooks, Icon: LentIcon },
+              ].map(({ label, value, Icon }) => (
+                // Number above its label, though the label comes first in the markup
+                <div
+                  key={label}
+                  className="flex flex-col-reverse rounded-lg bg-stone-50 dark:bg-stone-900 p-3"
+                >
+                  <dt className="inline-flex items-center justify-center gap-1 text-sm text-stone-500 dark:text-stone-400">
+                    <Icon size={13} />
+                    {label}
+                  </dt>
+                  <dd className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
+                    {value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </section>
 
