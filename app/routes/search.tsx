@@ -24,6 +24,7 @@ import {
 } from "~/models/book.server";
 import { seo } from "~/seo";
 import { requireUserId, getUserId } from "~/session.server";
+import { coverSrc } from "~/utils";
 
 export const meta: MetaFunction = () =>
   seo({ title: "Search", noindex: true });
@@ -265,7 +266,7 @@ function SmallCover({
       <div className="absolute inset-0 bg-stone-200 dark:bg-stone-800" />
       {src && !failed ? (
         <img
-          src={src}
+          src={coverSrc(src)}
           alt={`${title} by ${author}`}
           loading="lazy"
           className="relative h-full w-full object-cover"

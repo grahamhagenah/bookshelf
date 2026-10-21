@@ -1,6 +1,8 @@
 import { NavLink, Link } from "@remix-run/react";
 import { useState, useLayoutEffect, useEffect } from "react";
 
+import { coverSrc } from "~/utils";
+
 import CoverPlaceholder from "./cover-placeholder";
 import {
   GroupIcon,
@@ -16,7 +18,8 @@ const OPEN_LIBRARY_SIZE = /-[SML]\.jpg$/;
 // Open Library serves each cover as S (~45px wide), M (~180px) and L (~400px+).
 // Grid tiles are ~150px wide, so M is enough on standard screens; listing L as
 // a 2x candidate lets high-density screens fetch it without slowing others down.
-function getCoverSources(url: string) {
+function getCoverSources(original: string) {
+  const url = coverSrc(original);
   if (!OPEN_LIBRARY_SIZE.test(url)) return { src: url };
   return {
     src: url.replace(OPEN_LIBRARY_SIZE, "-M.jpg"),

@@ -28,15 +28,20 @@ import Header from "./components/header";
 export const meta: MetaFunction = () => seo({ noindex: true });
 
 export const links: LinksFunction = () => [
+  // Start the body font straight away instead of after the stylesheet
+  {
+    rel: "preload",
+    href: "/fonts/source-sans-3-latin-normal.woff2",
+    as: "font",
+    type: "font/woff2",
+    crossOrigin: "anonymous",
+  },
   { rel: "stylesheet", href: stylesheet },
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
   { rel: "icon", href: "/favicon.ico", sizes: "32x32" },
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
   { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
   { rel: "manifest", href: "/site.webmanifest" },
-  // Preconnect to Open Library for faster cover image loads
-  { rel: "preconnect", href: "https://covers.openlibrary.org" },
-  { rel: "dns-prefetch", href: "https://covers.openlibrary.org" },
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
