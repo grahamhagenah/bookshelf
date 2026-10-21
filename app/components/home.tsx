@@ -72,51 +72,75 @@ interface DueItem {
   direction: "borrowed" | "lent";
 }
 
+// A small calendar page: what kind of date it is on top, the day count big
+function DayTile({ days }: { days: number }) {
+  const overdue = days < 0;
+  const count = Math.abs(days);
+  return (
+    <span
+      aria-hidden="true"
+      className="flex w-11 flex-shrink-0 flex-col overflow-hidden rounded-md bg-white dark:bg-stone-900 text-center ring-1 ring-stone-200 dark:ring-stone-700"
+    >
+      <span
+        className={`py-px text-[9px] font-semibold uppercase tracking-wider ${
+          overdue
+            ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900"
+            : "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400"
+        }`}
+      >
+        {overdue ? "Late" : "Due in"}
+      </span>
+      {days === 0 ? (
+        <span className="py-2 text-xs font-semibold leading-none text-stone-900 dark:text-stone-100">
+          Today
+        </span>
+      ) : (
+        <>
+          <span className="pt-1 text-lg font-semibold leading-none text-stone-900 dark:text-stone-100">
+            {count}
+          </span>
+          <span className="pb-1 text-[9px] leading-tight text-stone-400 dark:text-stone-500">
+            {count === 1 ? "day" : "days"}
+          </span>
+        </>
+      )}
+    </span>
+  );
+}
+
 function ComingUp({ items }: { items: DueItem[] }) {
   if (items.length === 0) return null;
   return (
     <section
       aria-labelledby="coming-up"
-      className="mb-6 flex flex-wrap items-center gap-x-6 border-b border-stone-200 dark:border-stone-800 pb-4"
+      className="mb-6 flex flex-col gap-2 border-b border-stone-200 dark:border-stone-800 pb-5 sm:flex-row sm:items-center sm:gap-6"
     >
-      {/* One line: a small label, then the items (wrapping on phones) */}
       <h2 id="coming-up" className="whitespace-nowrap text-sm font-semibold text-stone-500 dark:text-stone-400">
         Coming up
       </h2>
-      <ul className="flex flex-wrap gap-x-8">
+      <ul className="flex flex-wrap gap-x-8 gap-y-2">
         {items.map(({ book, person, direction }) => {
           const days = daysUntil(book.dueDate);
           const overdue = days < 0;
           const who = `${person.firstname} ${person.surname}`;
+          // Spelled out for screen readers; the tile shows it visually
           const when = overdue
             ? `${-days} ${days === -1 ? "day" : "days"} overdue`
             : `due ${inDays(days)}`;
           return (
-            <li key={book.id}>
+            <li key={book.id} className="min-w-0">
               <Link
                 to={`/books/${book.id}`}
-                className="-mx-2 flex items-center gap-2 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+                className="-mx-2 flex items-center gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
               >
-                <span
-                  aria-hidden="true"
-                  className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${
-                    overdue
-                      ? "bg-stone-900 dark:bg-stone-100"
-                      : "bg-stone-300 dark:bg-stone-600"
-                  }`}
-                />
-                <span className="min-w-0 text-sm text-stone-600 dark:text-stone-300">
-                  <span className="font-semibold text-stone-900 dark:text-stone-100">
+                <DayTile days={days} />
+                <span className="min-w-0">
+                  <span className="block max-w-[18rem] truncate text-sm font-semibold text-stone-900 dark:text-stone-100">
                     {book.title}
-                  </span>{" "}
-                  {direction === "borrowed" ? "goes back to" : "is with"} {who}
-                  {" · "}
-                  <span
-                    className={
-                      overdue ? "font-semibold text-stone-900 dark:text-stone-100" : ""
-                    }
-                  >
-                    {when}
+                  </span>
+                  <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
+                    {direction === "borrowed" ? "Back to" : "With"} {who}
+                    <span className="sr-only">, {when}</span>
                   </span>
                 </span>
               </Link>
