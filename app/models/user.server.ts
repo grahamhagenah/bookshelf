@@ -677,3 +677,30 @@ export async function verifyLogin(
 
   return userWithoutPassword;
 }
+
+// Tells a book's owner that someone left a note or heart on it, once per
+// reader until the owner dismisses it
+export async function createReaderNoteNotification(
+  senderId: User["id"],
+  receiverId: User["id"],
+  senderName: string,
+  bookId: string,
+  bookTitle: string,
+) {
+  const existing = await prisma.notification.findFirst({
+    where: { type: "READER_NOTE", senderId, receiverId, bookId, read: false },
+    select: { id: true },
+  });
+  if (existing) return existing;
+  return prisma.notification.create({
+    data: {
+      type: "READER_NOTE",
+      receiver: { connect: { id: receiverId } },
+      sender: { connect: { id: senderId } },
+      senderName,
+      book: { connect: { id: bookId } },
+      bookTitle,
+    },
+    select: { id: true },
+  });
+}

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300..800;1,300..800&display=swap');
 @import "tailwindcss";
 
 @source "../../app/**/*.{js,jsx,ts,tsx}";
@@ -6,7 +6,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-family-sans: 'Ubuntu', sans-serif;
+  --font-family-sans: 'Source Sans 3', system-ui, sans-serif;
+  --font-sans: 'Source Sans 3', system-ui, sans-serif;
 }
 
 /* Tailwind v4 defaults borders to currentColor; keep them quiet instead */

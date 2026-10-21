@@ -103,16 +103,18 @@ export default function Avatar({
   surname,
   icon,
   size = "md",
+  className = "",
 }: {
   firstname?: string | null;
   surname?: string | null;
   icon?: string | null;
   size?: keyof typeof SIZES;
+  className?: string;
 }) {
   const { box, icon: iconSize } = SIZES[size];
   return (
     <span
-      className={`${box} rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 font-semibold flex items-center justify-center flex-shrink-0`}
+      className={`${box} rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 font-semibold flex items-center justify-center flex-shrink-0 ${className}`}
     >
       {isAvatarIcon(icon) ? (
         <AvatarGlyph icon={icon} size={iconSize} />

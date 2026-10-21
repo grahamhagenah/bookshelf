@@ -14,7 +14,8 @@ import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
-import { HistoryIcon, PersonAddIcon } from "~/components/icons";
+import ReaderNotes from "~/components/reader-notes";
+import { PersonAddIcon } from "~/components/icons";
 import { sendBookRequestEmail } from "~/email.server";
 import {
   deleteBook,
@@ -25,14 +26,57 @@ import {
 } from "~/models/book.server";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import {
+  NOTE_MAX_LENGTH,
+  canLeaveNote,
+  getReaderNotes,
+  saveReaderNote,
+} from "~/models/note.server";
+import {
   getUserById,
   getUserEmailById,
   createBookRequestNotification,
   createBookReturnedNotification,
   createNotification,
   createOverdueReminderNotification,
+  createReaderNoteNotification,
 } from "~/models/user.server";
 import { requireUserId } from "~/session.server";
+
+const longDate = (date: string | Date) =>
+  new Date(date).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+const shortDate = (date: string | Date) =>
+  new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+// "Oct 21", adding the year only when it isn't this year
+const monthDay = (date: string | Date) => {
+  const d = new Date(date);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(d.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}),
+  });
+};
+
+const primaryButton =
+  "rounded-md bg-stone-900 dark:bg-stone-100 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors";
+const secondaryButton =
+  "rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
+const quietLabel =
+  "rounded-md bg-stone-100 dark:bg-stone-800 px-4 py-2 text-sm text-stone-500 dark:text-stone-400 cursor-default";
+const panel = "rounded-lg bg-stone-50 dark:bg-stone-900 p-4 text-sm";
+const labelClass =
+  "block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5";
+const inputClass =
+  "w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors";
 
 function BookCover({
   src,
@@ -47,7 +91,7 @@ function BookCover({
   const [error, setError] = useState(false);
 
   return (
-    <div className="relative w-[200px] h-[300px] overflow-hidden rounded-md">
+    <div className="relative w-[140px] h-[210px] md:w-[200px] md:h-[300px] overflow-hidden rounded-md shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10">
       {!loaded || error ? (
         <CoverPlaceholder
           title={title}
@@ -133,8 +177,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     }
   }
 
-  // Fetch lending history for the book
-  const lendingHistory = await getLendingHistory(params.bookId);
+  // Fetch lending history and reader notes for the book
+  const [lendingHistory, readerNotes, canNote] = await Promise.all([
+    getLendingHistory(params.bookId),
+    getReaderNotes(params.bookId),
+    canLeaveNote(userId, book),
+  ]);
 
   // Mark which borrowers in history are friends
   const lendingHistoryWithFriendStatus = lendingHistory.map((entry) => ({
@@ -151,6 +199,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     isFriend,
     currentUser,
     lendingHistory: lendingHistoryWithFriendStatus,
+    readerNotes,
+    myNote: readerNotes.find((note) => note.user.id === userId) ?? null,
+    canNote,
+    noteMaxLength: NOTE_MAX_LENGTH,
   });
 };
 
@@ -164,6 +216,43 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const book = await getBookById(params.bookId);
   if (!book) {
     throw new Response("Not Found", { status: 404 });
+  }
+
+  if (
+    intent === "toggleLove" ||
+    intent === "saveNote" ||
+    intent === "deleteNote"
+  ) {
+    if (!(await canLeaveNote(userId, book))) {
+      throw new Response("Only readers of this copy can leave notes", {
+        status: 403,
+      });
+    }
+    const body = formData.get("body");
+    const note =
+      intent === "toggleLove"
+        ? await saveReaderNote(userId, book.id, {
+            loved: formData.get("loved") === "true",
+          })
+        : await saveReaderNote(userId, book.id, {
+            body:
+              intent === "saveNote" && typeof body === "string" ? body : null,
+          });
+
+    // Let the owner know when a reader hearts or writes about their book
+    if (book.userId !== userId && (note.loved || note.body)) {
+      const reader = await getUserById(userId);
+      if (reader) {
+        await createReaderNoteNotification(
+          userId,
+          book.userId,
+          `${reader.firstname} ${reader.surname}`,
+          book.id,
+          book.title,
+        );
+      }
+    }
+    return json({ noteSaved: true });
   }
 
   if (intent === "delete") {
@@ -450,45 +539,48 @@ export default function BookDetailsPage() {
   const canRequestBook =
     !data.isOwner && !data.isBorrowed && !data.isBorrower && data.isFriend;
   const needsFriendship = !data.isOwner && !data.isFriend;
+  const details = [
+    data.book.datePublished,
+    data.book.pageCount ? `${data.book.pageCount} pages` : null,
+    data.book.publisher,
+  ].filter(Boolean);
 
   return (
     <>
-      <main className="flex flex-col md:flex-row gap-8 md:gap-12 p-8 w-full max-w-5xl mx-auto mt-4 md:mt-12">
-        <section className="order-2 md:order-1 flex-shrink-0">
-          <div className="book-cover p-8 md:p-0">
-            <BookCover
-              src={data.book.cover}
-              title={data.book.title}
-              author={data.book.author}
-            />
-          </div>
+      <main className="flex flex-col md:flex-row gap-8 md:gap-12 px-4 md:px-8 py-8 md:py-12 w-full">
+        <section className="flex-shrink-0 md:w-[200px] space-y-4">
+          <BookCover
+            src={data.book.cover}
+            title={data.book.title}
+            author={data.book.author}
+          />
           {canRequestBook ? (
             <Form method="post">
               <input type="hidden" name="intent" value="request" />
               <button
                 type="submit"
                 disabled={isSubmitting || requestSent}
-                className={`mb-4 rounded border-2 w-full mt-8 px-4 py-3 text-base font-medium ${
+                className={`w-full ${
                   requestSent
-                    ? "border-stone-900 dark:border-stone-100 text-stone-900 dark:text-stone-100 bg-stone-100 cursor-default"
+                    ? quietLabel
                     : isSubmitting
-                      ? "border-stone-300 text-stone-400 cursor-wait"
-                      : "border-stone-900 dark:border-stone-100 text-stone-900 dark:text-stone-100 hover:bg-stone-50 focus:bg-stone-100"
+                      ? `${primaryButton} opacity-60 cursor-wait`
+                      : primaryButton
                 }`}
               >
                 {requestSent
-                  ? "Request Sent"
+                  ? "Request sent"
                   : isSubmitting
-                    ? "Requesting..."
-                    : "Request Book"}
+                    ? "Asking…"
+                    : "Ask to borrow"}
               </button>
             </Form>
           ) : null}
           {needsFriendship && data.book.user ? (
-            <div className="mt-8 bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-lg p-4">
-              <p className="text-stone-800 dark:text-stone-200 text-sm mb-3">
+            <div className={panel}>
+              <p className="text-stone-600 dark:text-stone-300 mb-3">
                 Add{" "}
-                <span className="font-semibold">
+                <span className="font-semibold text-stone-900 dark:text-stone-100">
                   {data.book.user.firstname} {data.book.user.surname}
                 </span>{" "}
                 as a friend to borrow their books.
@@ -498,138 +590,72 @@ export default function BookDetailsPage() {
                 <button
                   type="submit"
                   disabled={isSendingFriendRequest || friendRequestSent}
-                  className={`rounded w-full px-4 py-2 text-sm font-medium ${
+                  className={`w-full ${
                     friendRequestSent
-                      ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 cursor-default"
+                      ? quietLabel
                       : isSendingFriendRequest
-                        ? "bg-stone-300 text-stone-500 cursor-wait"
-                        : "bg-stone-500 text-white hover:bg-stone-600"
+                        ? `${primaryButton} opacity-60 cursor-wait`
+                        : primaryButton
                   }`}
                 >
                   {friendRequestSent
-                    ? "Friend Request Sent!"
+                    ? "Friend request sent"
                     : isSendingFriendRequest
-                      ? "Sending..."
-                      : "Send Friend Request"}
+                      ? "Sending…"
+                      : "Add friend"}
                 </button>
               </Form>
             </div>
           ) : null}
           {data.isBorrower ? (
-            <>
+            <div className={panel}>
               {data.book.user ? (
-                <div
-                  className={`border rounded-lg p-4 mt-8 ${
-                    data.book.dueDate &&
-                    new Date(data.book.dueDate) < new Date()
-                      ? "bg-stone-100 border-stone-200"
-                      : "bg-stone-100 border-stone-200"
-                  }`}
-                >
-                  <p
-                    className={`text-sm ${
-                      data.book.dueDate &&
-                      new Date(data.book.dueDate) < new Date()
-                        ? "text-stone-900 dark:text-stone-100"
-                        : "text-stone-900 dark:text-stone-100"
-                    }`}
-                  >
-                    <span className="font-semibold">Borrowed from:</span>{" "}
-                    {data.book.user.firstname} {data.book.user.surname}
+                <div className="mb-3 space-y-0.5">
+                  <p className="text-stone-800 dark:text-stone-200">
+                    Borrowed from{" "}
+                    <span className="font-semibold">
+                      {data.book.user.firstname} {data.book.user.surname}
+                    </span>
                   </p>
                   {data.book.borrowedAt ? (
-                    <p
-                      className={`text-sm mt-1 ${
-                        data.book.dueDate &&
-                        new Date(data.book.dueDate) < new Date()
-                          ? "text-stone-900 dark:text-stone-100"
-                          : "text-stone-900 dark:text-stone-100"
-                      }`}
-                    >
-                      <span className="font-semibold">Since:</span>{" "}
-                      {new Date(data.book.borrowedAt).toLocaleDateString(
-                        "en-US",
-                        {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        },
-                      )}
+                    <p className="text-stone-500 dark:text-stone-400">
+                      Since {longDate(data.book.borrowedAt)}
                     </p>
                   ) : null}
                   {data.book.dueDate ? (
-                    <p
-                      className={`text-sm mt-1 font-semibold ${
-                        new Date(data.book.dueDate) < new Date()
-                          ? "text-stone-900 dark:text-stone-100"
-                          : "text-stone-900 dark:text-stone-100"
-                      }`}
-                    >
-                      {new Date(data.book.dueDate) < new Date() ? (
-                        <>
-                          Overdue! Was due{" "}
-                          {new Date(data.book.dueDate).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            },
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          Due:{" "}
-                          {new Date(data.book.dueDate).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            },
-                          )}
-                        </>
-                      )}
-                    </p>
+                    new Date(data.book.dueDate) < new Date() ? (
+                      <p className="font-semibold text-stone-900 dark:text-stone-100">
+                        Overdue since {longDate(data.book.dueDate)}
+                      </p>
+                    ) : (
+                      <p className="text-stone-500 dark:text-stone-400">
+                        Due {longDate(data.book.dueDate)}
+                      </p>
+                    )
                   ) : null}
                 </div>
               ) : null}
               <Form method="post">
                 <input type="hidden" name="intent" value="return" />
-                <button
-                  type="submit"
-                  className={`mb-4 rounded border-2 border-stone-500 w-full ${data.book.user ? "mt-4" : "mt-8"} px-4 py-3 text-base font-medium text-stone-600 hover:bg-stone-50 focus:bg-stone-100`}
-                >
-                  Return Book
+                <button type="submit" className={`w-full ${secondaryButton}`}>
+                  Return book
                 </button>
               </Form>
-            </>
+            </div>
           ) : null}
         </section>
-        <section className="order-1 md:order-2 flex-1">
+        <section className="flex-1 min-w-0">
           {isEditing ? (
             /* Edit Mode */
-            <Form method="post" className="space-y-4">
-              <input type="hidden" name="intent" value="edit" />
-
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-                  Edit Book
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(false)}
-                  className="text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
-                >
-                  Cancel
-                </button>
-              </div>
+            <div>
+              <h2 className="text-xl font-semibold text-stone-900 dark:text-stone-100 mb-6">
+                Edit book
+              </h2>
+              <Form method="post" className="space-y-5">
+                <input type="hidden" name="intent" value="edit" />
 
               <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
-                >
+                <label htmlFor="title" className={labelClass}>
                   Title
                 </label>
                 <input
@@ -637,42 +663,12 @@ export default function BookDetailsPage() {
                   id="title"
                   name="title"
                   defaultValue={data.book.title}
-                  className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
+                  className={inputClass}
                   required
                 />
               </div>
-
               <div>
-                <label
-                  htmlFor="cover"
-                  className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
-                >
-                  Cover URL
-                </label>
-                <div className="flex gap-3">
-                  <input
-                    type="url"
-                    id="cover"
-                    name="cover"
-                    defaultValue={data.book.cover}
-                    placeholder="https://covers.openlibrary.org/..."
-                    className="flex-1 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900 text-sm"
-                  />
-                  {data.book.cover ? (
-                    <img
-                      src={data.book.cover}
-                      alt="Current cover"
-                      className="w-10 h-14 object-cover rounded border border-stone-200 dark:border-stone-700"
-                    />
-                  ) : null}
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="author"
-                  className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
-                >
+                <label htmlFor="author" className={labelClass}>
                   Author
                 </label>
                 <input
@@ -680,82 +676,64 @@ export default function BookDetailsPage() {
                   id="author"
                   name="author"
                   defaultValue={data.book.author}
-                  className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
+                  className={inputClass}
                   required
                 />
               </div>
-
               <div>
-                <label
-                  htmlFor="body"
-                  className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
-                >
+                <label htmlFor="body" className={labelClass}>
                   Description
                 </label>
                 <textarea
                   id="body"
                   name="body"
-                  rows={4}
+                  rows={5}
                   defaultValue={data.book.body}
-                  className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
+                  className={`${inputClass} leading-relaxed`}
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_2fr] gap-4">
                 <div>
-                  <label
-                    htmlFor="datePublished"
-                    className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
-                  >
-                    Year Published
+                  <label htmlFor="datePublished" className={labelClass}>
+                    Year
                   </label>
                   <input
                     type="text"
                     id="datePublished"
                     name="datePublished"
                     defaultValue={data.book.datePublished || ""}
-                    placeholder="e.g. 1984"
-                    className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
+                    placeholder="1984"
+                    inputMode="numeric"
+                    className={inputClass}
                   />
                 </div>
                 <div>
-                  <label
-                    htmlFor="pageCount"
-                    className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
-                  >
-                    Page Count
+                  <label htmlFor="pageCount" className={labelClass}>
+                    Pages
                   </label>
                   <input
                     type="number"
                     id="pageCount"
                     name="pageCount"
                     defaultValue={data.book.pageCount || ""}
-                    className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="col-span-2 sm:col-span-1">
+                  <label htmlFor="publisher" className={labelClass}>
+                    Publisher
+                  </label>
+                  <input
+                    type="text"
+                    id="publisher"
+                    name="publisher"
+                    defaultValue={data.book.publisher || ""}
+                    className={inputClass}
                   />
                 </div>
               </div>
-
               <div>
-                <label
-                  htmlFor="publisher"
-                  className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
-                >
-                  Publisher
-                </label>
-                <input
-                  type="text"
-                  id="publisher"
-                  name="publisher"
-                  defaultValue={data.book.publisher || ""}
-                  className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="subjects"
-                  className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
-                >
+                <label htmlFor="subjects" className={labelClass}>
                   Subjects
                 </label>
                 <input
@@ -763,86 +741,131 @@ export default function BookDetailsPage() {
                   id="subjects"
                   name="subjects"
                   defaultValue={data.book.subjects || ""}
-                  placeholder="Comma-separated, e.g. Fiction, Adventure, Classic"
-                  className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
+                  placeholder="Fiction, Adventure, Classic"
+                  className={inputClass}
                 />
+                <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
+                  Separate with commas.
+                </p>
+              </div>
+              <div>
+                <label htmlFor="cover" className={labelClass}>
+                  Cover image URL
+                </label>
+                <input
+                  type="url"
+                  id="cover"
+                  name="cover"
+                  defaultValue={data.book.cover}
+                  placeholder="https://covers.openlibrary.org/..."
+                  className={inputClass}
+                />
+                <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
+                  The preview on the left updates after you save.
+                </p>
               </div>
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className={`rounded-lg px-4 py-2 font-medium ${
-                    isSaving
-                      ? "bg-stone-300 text-stone-500 cursor-wait"
-                      : "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300"
-                  }`}
-                >
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </button>
-              </div>
-
-              <hr className="my-6" />
-
-              <div className="space-y-4">
-                <h4 className="font-semibold text-stone-900 dark:text-stone-100">
-                  Actions
-                </h4>
-
-                {data.book.openLibraryKey ? (
-                  <a
-                    href={`https://openlibrary.org${data.book.openLibraryKey}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-stone-900 dark:text-stone-100 hover:text-stone-900 text-sm"
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className={`${primaryButton} ${isSaving ? "opacity-60 cursor-wait" : ""}`}
                   >
-                    View on Open Library →
-                  </a>
-                ) : null}
+                    {isSaving ? "Saving…" : "Save changes"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className={secondaryButton}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </Form>
 
-                <div className="flex flex-wrap gap-3">
-                  <Form method="post">
+              {/* Kept outside the edit form: forms can't nest */}
+              <div className="mt-10 border-t border-stone-100 dark:border-stone-800 pt-6 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-sm">
+                    <p className="font-medium text-stone-800 dark:text-stone-200">
+                      Refresh from Open Library
+                    </p>
+                    <p className="text-stone-500 dark:text-stone-400">
+                      Fill in the year, pages, publisher, subjects and
+                      description.
+                      {data.book.openLibraryKey ? (
+                        <>
+                          {" "}
+                          <a
+                            href={`https://openlibrary.org${data.book.openLibraryKey}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline underline-offset-2 hover:text-stone-800 dark:hover:text-stone-200"
+                          >
+                            View on Open Library
+                          </a>
+                        </>
+                      ) : null}
+                    </p>
+                    {refreshResult ? (
+                      <p className="mt-1 text-stone-800 dark:text-stone-200">
+                        {refreshResult.message}
+                      </p>
+                    ) : null}
+                  </div>
+                  <Form method="post" className="flex-shrink-0">
                     <input type="hidden" name="intent" value="refresh" />
                     <button
                       type="submit"
                       disabled={isRefreshing}
-                      className={`rounded-lg border-2 px-4 py-2 text-sm ${
-                        isRefreshing
-                          ? "border-stone-300 text-stone-400 cursor-wait"
-                          : "border-stone-900 dark:border-stone-100 text-stone-900 dark:text-stone-100 hover:bg-stone-50 dark:hover:bg-stone-800"
-                      }`}
+                      className={`${secondaryButton} ${isRefreshing ? "opacity-60 cursor-wait" : ""}`}
                     >
-                      {isRefreshing
-                        ? "Refreshing..."
-                        : "Refresh from Open Library"}
-                    </button>
-                  </Form>
-                  <Form method="post">
-                    <input type="hidden" name="intent" value="delete" />
-                    <button
-                      type="submit"
-                      className="rounded-lg border-2 border-stone-900 dark:border-stone-100 px-4 py-2 text-sm text-stone-900 dark:text-stone-100 hover:bg-stone-50 dark:hover:bg-stone-800"
-                    >
-                      Delete Book
+                      {isRefreshing ? "Refreshing…" : "Refresh"}
                     </button>
                   </Form>
                 </div>
-                {refreshResult ? (
-                  <p
-                    className={`text-sm ${refreshResult.refreshed ? "text-stone-900 dark:text-stone-100" : "text-stone-600"}`}
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-sm">
+                    <p className="font-medium text-stone-800 dark:text-stone-200">
+                      Delete this book
+                    </p>
+                    <p className="text-stone-500 dark:text-stone-400">
+                      Removes it from your library for good.
+                    </p>
+                  </div>
+                  <Form
+                    method="post"
+                    className="flex-shrink-0"
+                    onSubmit={(event) => {
+                      if (!confirm(`Delete ${data.book.title} from your library?`)) {
+                        event.preventDefault();
+                      }
+                    }}
                   >
-                    {refreshResult.message}
-                  </p>
-                ) : null}
+                    <input type="hidden" name="intent" value="delete" />
+                    <button
+                      type="submit"
+                      className={`${secondaryButton} hover:bg-stone-900 hover:text-white hover:border-stone-900 dark:hover:bg-stone-100 dark:hover:text-stone-900`}
+                    >
+                      Delete
+                    </button>
+                  </Form>
+                </div>
               </div>
-            </Form>
+            </div>
           ) : (
             /* View Mode */
             <>
               <div className="flex items-start justify-between gap-4">
-                <h3 className="text-4xl md:text-5xl font-bold">
-                  {data.book.title}
-                </h3>
+                <div className="min-w-0">
+                  <h1 className="text-3xl md:text-4xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
+                    {data.book.title}
+                  </h1>
+                  <p className="mt-1 text-lg md:text-xl text-stone-500 dark:text-stone-400">
+                    {data.book.author}
+                  </p>
+                </div>
                 {data.isOwner ? (
                   <button
                     onClick={() => setIsEditing(true)}
@@ -852,49 +875,29 @@ export default function BookDetailsPage() {
                   </button>
                 ) : null}
               </div>
-              <h4 className="text-3xl md:text-4xl author py-4">
-                {data.book.author}
-              </h4>
 
-              <div className="flex flex-wrap gap-x-6 gap-y-2 py-4 text-sm text-stone-600 dark:text-stone-400">
-                {data.book.datePublished ? (
-                  <div>
-                    <span className="font-semibold">Published:</span>{" "}
-                    {data.book.datePublished}
-                  </div>
-                ) : null}
-                {data.book.pageCount ? (
-                  <div>
-                    <span className="font-semibold">Pages:</span>{" "}
-                    {data.book.pageCount}
-                  </div>
-                ) : null}
-                {data.book.publisher ? (
-                  <div>
-                    <span className="font-semibold">Publisher:</span>{" "}
-                    {data.book.publisher}
-                  </div>
-                ) : null}
-                {!data.isOwner && data.book.user ? (
-                  <div>
-                    <span className="font-semibold">Owner:</span>{" "}
-                    {data.book.user.firstname} {data.book.user.surname}
-                  </div>
-                ) : null}
-              </div>
+              {details.length > 0 ? (
+                <p className="mt-4 text-sm text-stone-500 dark:text-stone-400">
+                  {details.join(" · ")}
+                </p>
+              ) : null}
+              {!data.isOwner && data.book.user ? (
+                <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+                  From {data.book.user.firstname} {data.book.user.surname}&apos;s
+                  shelf
+                </p>
+              ) : null}
 
               {data.book.subjects ? (
-                <div className="py-2">
-                  <div className="flex flex-wrap gap-2">
-                    {data.book.subjects.split(", ").map((subject, index) => (
-                      <span
-                        key={index}
-                        className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs px-3 py-1 rounded-full"
-                      >
-                        {subject}
-                      </span>
-                    ))}
-                  </div>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {data.book.subjects.split(", ").map((subject, index) => (
+                    <span
+                      key={index}
+                      className="rounded-full bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 text-xs text-stone-600 dark:text-stone-300"
+                    >
+                      {subject}
+                    </span>
+                  ))}
                 </div>
               ) : null}
             </>
@@ -916,88 +919,64 @@ export default function BookDetailsPage() {
 
                 return (
                   <div
-                    className={`border rounded-lg p-4 my-4 ${isOverdue ? "bg-stone-100 border-stone-200 dark:bg-stone-800 dark:border-stone-600" : "bg-stone-50 border-stone-200 dark:bg-stone-950 dark:border-stone-800"}`}
+                    className={`${panel} mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`}
                   >
-                    <p
-                      className={
-                        isOverdue
-                          ? "text-stone-900 dark:text-stone-100 dark:text-stone-100"
-                          : "text-stone-800 dark:text-stone-200"
-                      }
-                    >
-                      <span className="font-semibold">Currently lent to:</span>{" "}
-                      <span
-                        className={
-                          isOverdue
-                            ? "text-stone-900 dark:text-stone-100 dark:text-stone-100"
-                            : "text-stone-700 dark:text-stone-300"
-                        }
-                      >
+                    <p className="text-stone-800 dark:text-stone-200">
+                      Lent to{" "}
+                      <span className="font-semibold">
                         {data.book.borrower.firstname}{" "}
                         {data.book.borrower.surname}
                       </span>
+                      {data.book.borrowedAt ? (
+                        <span className="text-stone-500 dark:text-stone-400">
+                          {" "}
+                          since {monthDay(data.book.borrowedAt)}
+                        </span>
+                      ) : null}
+                      {dueDate ? (
+                        <span
+                          className={
+                            isOverdue
+                              ? "font-semibold text-stone-900 dark:text-stone-100"
+                              : "text-stone-500 dark:text-stone-400"
+                          }
+                        >
+                          {" · "}
+                          {isOverdue ? (
+                            <>
+                              overdue by {Math.abs(daysLeft!)}{" "}
+                              {Math.abs(daysLeft!) === 1 ? "day" : "days"}
+                            </>
+                          ) : daysLeft !== null && daysLeft <= 3 ? (
+                            <>
+                              due in {daysLeft} {daysLeft === 1 ? "day" : "days"}
+                            </>
+                          ) : (
+                            <>due {monthDay(dueDate)}</>
+                          )}
+                        </span>
+                      ) : null}
                     </p>
-                    {data.book.borrowedAt ? (
-                      <p
-                        className={`text-sm mt-1 ${isOverdue ? "text-stone-900 dark:text-stone-100 dark:text-stone-100" : "text-stone-700 dark:text-stone-300"}`}
-                      >
-                        <span className="font-semibold">Since:</span>{" "}
-                        {new Date(data.book.borrowedAt).toLocaleDateString(
-                          "en-US",
-                          {
-                            month: "long",
-                            day: "numeric",
-                            year: "numeric",
-                          },
-                        )}
-                      </p>
-                    ) : null}
-                    {dueDate ? (
-                      <p
-                        className={`text-sm mt-1 font-semibold ${isOverdue ? "text-stone-900 dark:text-stone-100 dark:text-stone-100" : "text-stone-700 dark:text-stone-300"}`}
-                      >
-                        {isOverdue ? (
-                          <>
-                            Overdue by {Math.abs(daysLeft!)}{" "}
-                            {Math.abs(daysLeft!) === 1 ? "day" : "days"}
-                          </>
-                        ) : daysLeft !== null && daysLeft <= 3 ? (
-                          <>
-                            Due in {daysLeft} {daysLeft === 1 ? "day" : "days"}{" "}
-                            — reminder will be sent
-                          </>
-                        ) : (
-                          <>
-                            Due in {daysLeft} days (
-                            {dueDate.toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })}
-                            )
-                          </>
-                        )}
-                      </p>
-                    ) : null}
-                    <Form method="post" className="mt-3">
+                    <Form method="post" className="flex-shrink-0">
                       <input type="hidden" name="intent" value="sendReminder" />
                       <button
                         type="submit"
                         disabled={isSendingReminder || reminderSent}
-                        className={`text-sm px-3 py-1.5 rounded ${
+                        className={
                           reminderSent
-                            ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 cursor-default"
+                            ? quietLabel
                             : isSendingReminder
-                              ? "bg-stone-300 text-stone-500 cursor-wait"
+                              ? `${secondaryButton} opacity-60 cursor-wait`
                               : isOverdue
-                                ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300"
-                                : "bg-stone-600 text-white hover:bg-stone-700"
-                        }`}
+                                ? primaryButton
+                                : secondaryButton
+                        }
                       >
                         {reminderSent
-                          ? "Reminder Sent!"
+                          ? "Reminder sent"
                           : isSendingReminder
-                            ? "Sending..."
-                            : "Send Return Reminder"}
+                            ? "Sending…"
+                            : "Send a reminder"}
                       </button>
                     </Form>
                   </div>
@@ -1006,27 +985,37 @@ export default function BookDetailsPage() {
             : null}
 
           {!isEditing ? (
-            <div className="py-4">
-              <h5 className="font-semibold text-lg mb-2">Description</h5>
-              <p className="summary text-stone-700 dark:text-stone-300 leading-relaxed">
-                {data.book.body || "No description available."}
+            <div className="mt-8">
+              <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
+                About this book
+              </h2>
+              <p className="summary text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
+                {data.book.body || "No description yet."}
               </p>
             </div>
+          ) : null}
+
+          {!isEditing ? (
+            <ReaderNotes
+              notes={data.readerNotes}
+              myNote={data.myNote}
+              canNote={data.canNote}
+              maxLength={data.noteMaxLength}
+            />
           ) : null}
 
           {!isEditing &&
           data.lendingHistory &&
           data.lendingHistory.length > 0 ? (
-            <div className="py-4">
-              <h5 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                <HistoryIcon size={20} className="text-stone-400" />
-                Lending History
-              </h5>
-              <ul className="space-y-1">
+            <div className="mt-10">
+              <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-1">
+                Lending history
+              </h2>
+              <ul className="divide-y divide-stone-100 dark:divide-stone-800">
                 {data.lendingHistory.map((entry) => (
                   <li
                     key={entry.id}
-                    className="flex items-center justify-between text-sm py-2 border-b border-stone-100 dark:border-stone-800 last:border-0"
+                    className="flex items-center justify-between gap-3 text-sm py-2.5"
                   >
                     <div className="flex items-center gap-3">
                       {entry.isCurrentUser ? (
@@ -1090,25 +1079,19 @@ export default function BookDetailsPage() {
                         </div>
                       )}
                     </div>
-                    <div className="text-stone-400 text-xs">
-                      {new Date(entry.borrowedAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                    <div className="flex items-center gap-2 text-xs text-stone-400 dark:text-stone-500 flex-shrink-0">
                       {entry.returnedAt ? (
                         <span>
-                          {" "}
-                          —{" "}
-                          {new Date(entry.returnedAt).toLocaleDateString(
-                            "en-US",
-                            { month: "short", day: "numeric", year: "numeric" },
-                          )}
+                          {shortDate(entry.borrowedAt)} – {shortDate(entry.returnedAt)}
                         </span>
-                      ) : null}
-                      {!entry.returnedAt ? (
-                        <span className="ml-2 text-stone-600">Current</span>
-                      ) : null}
+                      ) : (
+                        <>
+                          <span>Since {shortDate(entry.borrowedAt)}</span>
+                          <span className="rounded-full bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-stone-600 dark:text-stone-300">
+                            Now
+                          </span>
+                        </>
+                      )}
                     </div>
                   </li>
                 ))}

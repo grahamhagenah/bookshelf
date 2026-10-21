@@ -21,20 +21,18 @@ export default function Header() {
 
   return (
     <header className="w-full border-b border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950">
-      <div className="mx-auto max-w-4xl flex items-center justify-between px-4 md:px-8 py-2">
+      <div className="mx-auto max-w-4xl flex items-center justify-between px-4 md:px-8 py-1.5">
         <div className="flex items-center gap-2 min-w-0">
           <a
             id="logo"
             href={user ? "/books" : "/"}
-            className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0 group"
+            className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0"
           >
-            <span className="transition-transform duration-200 group-hover:rotate-[-4deg]">
-              <StacksLogo
-                size={28}
-                className="text-stone-900 dark:text-stone-100"
-              />
-            </span>
-            <span className="text-lg sm:text-xl">Stacks</span>
+            <StacksLogo
+              size={24}
+              className="text-stone-900 dark:text-stone-100"
+            />
+            <span className="text-base sm:text-lg">Stacks</span>
           </a>
           <Breadcrumbs />
         </div>

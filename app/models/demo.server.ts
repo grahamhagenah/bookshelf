@@ -612,6 +612,65 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     });
   }
 
+  // Reader notes: hearts and short notes from the owner and past borrowers
+  const readerNotes: {
+    title: string;
+    by: OwnerKey;
+    loved: boolean;
+    body?: string;
+    at: Date;
+  }[] = [
+    {
+      title: "Dune",
+      by: "you",
+      loved: true,
+      body: "Read it every few years and catch something new each time.",
+      at: ago(130 * day),
+    },
+    {
+      title: "Dune",
+      by: "maya",
+      loved: true,
+      body: "Slow first hundred pages, then I couldn't put it down. Read the appendices!",
+      at: ago(95 * day),
+    },
+    { title: "Dune", by: "priya", loved: true, at: ago(48 * day) },
+    {
+      title: "Project Hail Mary",
+      by: "sam",
+      loved: true,
+      body: "Rocky is the best character in any book I've read this year.",
+      at: ago(55 * day),
+    },
+    {
+      title: "Circe",
+      by: "maya",
+      loved: true,
+      body: "Gorgeous. The chapters on Aiaia felt like a long summer.",
+      at: ago(1 * day),
+    },
+    {
+      title: "Lessons in Chemistry",
+      by: "priya",
+      loved: true,
+      body: "Funny and furious in equal measure.",
+      at: ago(60 * day),
+    },
+  ];
+
+  for (const note of readerNotes) {
+    await prisma.readerNote.create({
+      data: {
+        bookId: books[note.title],
+        userId: ids[note.by],
+        loved: note.loved,
+        body: note.body ?? null,
+        createdAt: note.at,
+        updatedAt: note.at,
+      },
+    });
+  }
+
   const notifications: {
     type: string;
     from: OwnerKey;
@@ -642,6 +701,13 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       to: "you",
       title: "Lessons in Chemistry",
       at: ago(3 * hour),
+    },
+    {
+      type: "READER_NOTE",
+      from: "maya",
+      to: "you",
+      title: "Circe",
+      at: ago(1 * day),
     },
     // The visitor's own request, still pending with Maya
     {

@@ -36,8 +36,8 @@ export default function Dashboard() {
   return (
     <>
       <Layout title="Admin Dashboard">
-        <section className="border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Overview</h2>
+        <section>
+          <h2 className="text-lg font-semibold mb-4">Overview</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-stone-100 rounded-lg p-4 text-center">
               <dd className="text-3xl font-semibold text-stone-900 dark:text-stone-100">
@@ -66,8 +66,8 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <section className="border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">
+        <section>
+          <h2 className="text-lg font-semibold mb-4">
             All Users ({users.length})
           </h2>
           <div className="overflow-x-auto">

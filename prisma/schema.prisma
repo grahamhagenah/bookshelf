@@ -28,6 +28,7 @@ model User {
   books     Book[]
   borrowedBooks Book[] @relation("borrowedBooks")
   lendingHistory LendingHistory[]
+  readerNotes    ReaderNote[]
 
   notificationsSent     Notification[] @relation("sender")
   notificationsReceived Notification[] @relation("receiver")
@@ -71,6 +72,7 @@ model Book {
 
   notifications Notification[]
   lendingHistory LendingHistory[]
+  readerNotes    ReaderNote[]
 }
 
 model LendingHistory {
@@ -113,4 +115,23 @@ model Notification {
 
   @@index([senderId], name: "sender_id_index")
   @@index([receiverId], name: "receiver_id_index")
+}
+
+// A reader's heart and optional short note on one copy of a book
+model ReaderNote {
+  id     String  @id @default(cuid())
+  loved  Boolean @default(false)
+  body   String?
+
+  book   Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  bookId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([bookId, userId])
+  @@index([bookId], name: "reader_note_book_index")
 }

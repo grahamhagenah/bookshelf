@@ -4,6 +4,7 @@ import { Link, useLoaderData } from "@remix-run/react";
 
 import Library from "~/components/library";
 import { getBookListItems, getBorrowedBooks } from "~/models/book.server";
+import { getLoveCounts } from "~/models/note.server";
 import { getUserById } from "~/models/user.server";
 import { requireUserId } from "~/session.server";
 
@@ -28,7 +29,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     isBorrowed: true,
     isLending: false,
   }));
-  const bookListItems = [...ownedWithFlag, ...borrowedWithFlag];
+  const books = [...ownedWithFlag, ...borrowedWithFlag];
+  const loveCounts = await getLoveCounts(books.map((book) => book.id));
+  const bookListItems = books.map((book) => ({
+    ...book,
+    loveCount: loveCounts.get(book.id) ?? 0,
+  }));
 
   return json({ user, bookListItems });
 };

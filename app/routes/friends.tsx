@@ -172,8 +172,8 @@ export default function Friends() {
   return (
     <>
       <Layout title="Friends">
-        <section className="border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Your Friends</h2>
+        <section>
+          <h2 className="text-lg font-semibold mb-4">Your Friends</h2>
           {following.length > 0 || pendingRequests.length > 0 ? (
             <>
               {following.length > 0 ? (
@@ -182,9 +182,9 @@ export default function Friends() {
                   {following.length !== 1 ? "s" : ""}
                 </p>
               ) : null}
-              <ul className="divide-y">
+              <ul className="space-y-1">
                 {following.map((user, index) => (
-                  <li key={index} className="py-3 first:pt-0 last:pb-0">
+                  <li key={index} className="py-1">
                     <a
                       href={`/friend/${user.id}`}
                       className="flex items-center gap-3 hover:bg-stone-50 dark:hover:bg-stone-800 -mx-2 px-2 py-2 rounded-lg transition-colors"
@@ -208,7 +208,7 @@ export default function Friends() {
                   </li>
                 ))}
                 {pendingRequests.map((request) => (
-                  <li key={request.id} className="py-3 first:pt-0 last:pb-0">
+                  <li key={request.id} className="py-1">
                     <div className="flex items-center gap-3 -mx-2 px-2 py-2">
                       <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 font-semibold text-sm flex-shrink-0">
                         {(request.receiver.firstname?.[0] || "").toUpperCase()}
@@ -245,12 +245,12 @@ export default function Friends() {
 
         {suggestedFriends.filter((user) => !pendingUserIds.has(user.id))
           .length > 0 ? (
-          <section className="border rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-2">Suggested Friends</h2>
+          <section>
+            <h2 className="text-lg font-semibold mb-2">Suggested Friends</h2>
             <p className="text-stone-600 mb-4">
               People who recently joined Stacks
             </p>
-            <ul className="divide-y">
+            <ul className="space-y-1">
               {suggestedFriends
                 .filter(
                   (user) =>
@@ -259,7 +259,7 @@ export default function Friends() {
                 .map((user) => (
                   <li
                     key={user.id}
-                    className="py-3 first:pt-0 last:pb-0 flex items-center justify-between"
+                    className="py-1 flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-900 dark:text-stone-100 font-semibold text-sm flex-shrink-0">
@@ -277,7 +277,7 @@ export default function Friends() {
                       type="button"
                       onClick={() => handleSendRequest(user.id)}
                       disabled={requestFetcher.state !== "idle"}
-                      className="rounded bg-stone-900 dark:bg-stone-100 px-3 py-1.5 text-sm text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 disabled:opacity-50"
+                      className="rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 hover:text-stone-900 dark:hover:border-stone-500 dark:hover:text-white transition-colors disabled:opacity-50"
                     >
                       Send Request
                     </button>
@@ -295,8 +295,8 @@ export default function Friends() {
           </section>
         ) : null}
 
-        <section className="border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-2">Find Friends</h2>
+        <section>
+          <h2 className="text-lg font-semibold mb-2">Find Friends</h2>
           <p className="text-stone-600 mb-4">
             Search for users by name or email to send them a friend request.
           </p>
@@ -330,7 +330,7 @@ export default function Friends() {
             {searchQuery.length >= 2 ? (
               <div className="border rounded-lg bg-white">
                 {searchResults.length > 0 ? (
-                  <ul className="divide-y">
+                  <ul className="space-y-1">
                     {searchResults
                       .filter((user) => !sentRequests.has(user.id))
                       .map((user) => {
@@ -367,7 +367,7 @@ export default function Friends() {
                                 type="button"
                                 onClick={() => handleSendRequest(user.id)}
                                 disabled={requestFetcher.state !== "idle"}
-                                className="rounded bg-stone-900 dark:bg-stone-100 px-3 py-1.5 text-sm text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 disabled:opacity-50"
+                                className="rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 hover:text-stone-900 dark:hover:border-stone-500 dark:hover:text-white transition-colors disabled:opacity-50"
                               >
                                 Send Request
                               </button>
@@ -390,7 +390,7 @@ export default function Friends() {
           </div>
         </section>
 
-        <section className="border rounded-lg p-6">
+        <section>
           <details>
             <summary className="cursor-pointer font-medium">
               Add by email address
