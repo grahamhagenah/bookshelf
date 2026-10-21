@@ -6,7 +6,7 @@ interface IconProps {
   size?: number;
 }
 
-// Line-art stack of three books, the top one tilted
+// Line-art stack of three books
 export function StacksLogo({ className = "", size = 24 }: IconProps) {
   return (
     <svg
@@ -25,10 +25,8 @@ export function StacksLogo({ className = "", size = 24 }: IconProps) {
       <path d="M6.5 16v4.5" />
       <rect x="5" y="11.5" width="15" height="4.5" rx="1" />
       <path d="M16.5 11.5V16" />
-      <g transform="rotate(-7 11 9)">
-        <rect x="4.5" y="7" width="14" height="4.5" rx="1" />
-        <path d="M8 7v4.5" />
-      </g>
+      <rect x="4" y="7" width="14" height="4.5" rx="1" />
+      <path d="M7.5 7v4.5" />
     </svg>
   );
 }
