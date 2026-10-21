@@ -80,3 +80,11 @@ export const DEMO_EMAIL_DOMAIN = "demo.stacks.invalid";
 export function isDemoEmail(email: string) {
   return email.endsWith(`@${DEMO_EMAIL_DOMAIN}`);
 }
+
+// Open Library covers are served through this site's /covers route, which
+// caches them; other cover URLs (pasted by hand) are used as they are
+export function coverSrc(url: string) {
+  return url.startsWith("https://covers.openlibrary.org/")
+    ? url.replace("https://covers.openlibrary.org/", "/covers/")
+    : url;
+}

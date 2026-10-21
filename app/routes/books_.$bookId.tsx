@@ -48,6 +48,7 @@ import {
 } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+import { coverSrc } from "~/utils";
 
 const longDate = (date: string | Date) =>
   new Date(date).toLocaleDateString("en-US", {
@@ -192,7 +193,7 @@ function BookCover({
       ) : null}
       {!error ? (
         <img
-          src={src}
+          src={coverSrc(src)}
           alt={title}
           loading="lazy"
           decoding="async"
