@@ -94,19 +94,11 @@ function Showcase() {
           <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-xs font-semibold text-stone-700 dark:text-stone-200">
             SO
           </span>
-          <div className="min-w-0">
+          <div className="min-w-0 pt-1.5">
             <p className="text-sm leading-snug text-stone-800 dark:text-stone-200">
               <span className="font-semibold">Sam Okafor</span> would like to
               borrow <span className="font-semibold">Circe</span>
             </p>
-            <div className="mt-2 flex gap-2">
-              <span className="rounded-md bg-stone-700 dark:bg-stone-200 px-2.5 py-1 text-xs font-medium text-white dark:text-stone-900">
-                Lend it
-              </span>
-              <span className="rounded-md border border-stone-200 dark:border-stone-700 px-2.5 py-1 text-xs text-stone-700 dark:text-stone-200">
-                Decline
-              </span>
-            </div>
           </div>
         </div>
       </div>
