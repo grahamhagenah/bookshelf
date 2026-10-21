@@ -217,7 +217,7 @@ export default function Home({
   ].sort((a, b) => daysUntil(a.book.dueDate) - daysUntil(b.book.dueDate));
 
   return (
-    <main className="px-4 md:px-8 py-8 md:py-10">
+    <main className="px-4 md:px-8 pt-4 md:pt-8 pb-8 md:pb-10">
       <h1 className="sr-only">Home</h1>
       <ComingUp items={comingUp} />
 
