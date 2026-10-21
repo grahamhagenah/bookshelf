@@ -1,6 +1,6 @@
 import { Form, Link, useMatches } from "@remix-run/react";
 
-import { BookshelfIcon } from "./icons";
+import { StacksLogo } from "./icons";
 
 interface RootLoaderData {
   user: { id: string } | null;
@@ -18,7 +18,7 @@ export default function Footer() {
       <div className="mx-auto max-w-4xl px-4 md:px-8 py-8 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2 max-w-xs">
           <Link to={user ? "/books" : "/"} className="inline-flex items-center gap-2 font-semibold text-stone-900 dark:text-stone-100">
-            <BookshelfIcon size={20} className="text-stone-900 dark:text-stone-100 dark:text-stone-100" />
+            <StacksLogo size={20} className="text-stone-900 dark:text-stone-100" />
             Stacks
           </Link>
           <p>A lending library for the books you own.</p>

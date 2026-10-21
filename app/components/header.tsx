@@ -1,7 +1,7 @@
 import { useMatches } from "@remix-run/react";
 
 import Breadcrumbs from "./breadcrumbs";
-import { BookshelfIcon } from "./icons";
+import { StacksLogo } from "./icons";
 import PositionedMenu from "./menu";
 import Notifications from "./notifications";
 import Search from "./search";
@@ -28,10 +28,10 @@ export default function Header() {
             href={user ? "/books" : "/"}
             className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0 group"
           >
-            <span className="transition-transform duration-200 group-hover:rotate-[-8deg]">
-              <BookshelfIcon
+            <span className="transition-transform duration-200 group-hover:rotate-[-4deg]">
+              <StacksLogo
                 size={28}
-                className="text-stone-900 dark:text-stone-100 dark:text-stone-100"
+                className="text-stone-900 dark:text-stone-100"
               />
             </span>
             <span className="text-lg sm:text-xl">Stacks</span>
