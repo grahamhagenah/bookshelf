@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import Avatar from "./avatar";
 import { HeartIcon } from "./icons";
+import PersonLink from "./person-link";
 
 interface ReaderNote {
   id: string;
@@ -30,11 +31,13 @@ export default function ReaderNotes({
   myNote,
   canNote,
   maxLength,
+  friendIds,
 }: {
   notes: ReaderNote[];
   myNote: ReaderNote | null;
   canNote: boolean;
   maxLength: number;
+  friendIds: string[];
 }) {
   const loveFetcher = useFetcher();
   const noteFetcher = useFetcher<{ noteSaved?: boolean }>();
@@ -166,7 +169,15 @@ export default function ReaderNotes({
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-1.5 text-sm">
                       <span className="font-medium text-stone-900 dark:text-stone-100">
-                        {isMine ? "You" : `${note.user.firstname} ${note.user.surname}`}
+                        {isMine ? (
+                          "You"
+                        ) : (
+                          <PersonLink
+                            id={note.user.id}
+                            name={`${note.user.firstname} ${note.user.surname}`}
+                            friendIds={friendIds}
+                          />
+                        )}
                       </span>
                       {(isMine ? loved : note.loved) ? (
                         <HeartIcon
@@ -216,9 +227,16 @@ export default function ReaderNotes({
       {heartsOnly.length > 0 ? (
         <p className="py-2 text-xs text-stone-400 dark:text-stone-500">
           {hasNotes ? "Also loved by " : "Loved by "}
-          {heartsOnly
-            .map((note) => `${note.user.firstname} ${note.user.surname}`)
-            .join(", ")}
+          {heartsOnly.map((note, index) => (
+            <span key={note.id}>
+              {index > 0 ? ", " : null}
+              <PersonLink
+                id={note.user.id}
+                name={`${note.user.firstname} ${note.user.surname}`}
+                friendIds={friendIds}
+              />
+            </span>
+          ))}
         </p>
       ) : null}
     </div>

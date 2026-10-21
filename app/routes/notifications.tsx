@@ -3,6 +3,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 
 import ActivityIcon from "~/components/activity-icon";
+import PersonLink from "~/components/person-link";
 import Layout from "~/components / Layout/Layout";
 import { lendBook } from "~/models/book.server";
 import {
@@ -26,7 +27,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getNotificationHistory(userId, 10),
     getPendingBookRequests(userId),
   ]);
-  return json({ user, history, pendingBookRequests });
+  const friendIds = user?.following.map((friend) => friend.id) ?? [];
+  return json({ user, history, pendingBookRequests, friendIds });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -180,9 +182,23 @@ function Row({
   );
 }
 
-function ActivityItem({ notification }: { notification: ActivityNotification }) {
+function ActivityItem({
+  notification,
+  friendIds,
+}: {
+  notification: ActivityNotification;
+  friendIds: string[];
+}) {
   const type = notification.type || "FRIEND_REQUEST";
-  const name = <strong className="font-semibold">{notification.senderName}</strong>;
+  const name = (
+    <strong className="font-semibold">
+      <PersonLink
+        id={notification.senderId}
+        name={notification.senderName}
+        friendIds={friendIds}
+      />
+    </strong>
+  );
   const book = <strong className="font-semibold">{notification.bookTitle}</strong>;
 
   let text: React.ReactNode;
@@ -292,14 +308,26 @@ function ActivityItem({ notification }: { notification: ActivityNotification }) 
   );
 }
 
-const getHistoryText = (notification: {
+const getHistoryText = (
+  notification: {
   type: string;
+  senderId: string;
   senderName: string;
   bookTitle?: string | null;
   actionTaken?: string | null;
-}) => {
+},
+  friendIds: string[],
+) => {
   const action = notification.actionTaken || "done";
-  const name = <span className="text-stone-700 dark:text-stone-300">{notification.senderName}</span>;
+  const name = (
+    <span className="text-stone-700 dark:text-stone-300">
+      <PersonLink
+        id={notification.senderId}
+        name={notification.senderName}
+        friendIds={friendIds}
+      />
+    </span>
+  );
   const book = <span className="text-stone-700 dark:text-stone-300">{notification.bookTitle}</span>;
 
   switch (notification.type) {
@@ -353,7 +381,7 @@ export default function Activity() {
           <ul>
             {needsAction.map((notification) => (
               <li key={notification.id}>
-                <ActivityItem notification={notification} />
+                <ActivityItem notification={notification} friendIds={data.friendIds} />
               </li>
             ))}
           </ul>
@@ -370,7 +398,7 @@ export default function Activity() {
           <ul>
             {updates.map((notification) => (
               <li key={notification.id}>
-                <ActivityItem notification={notification} />
+                <ActivityItem notification={notification} friendIds={data.friendIds} />
               </li>
             ))}
           </ul>
@@ -393,7 +421,11 @@ export default function Activity() {
                 >
                   You asked{" "}
                   <strong className="font-semibold">
-                    {request.receiver.firstname} {request.receiver.surname}
+                    <PersonLink
+                      id={request.receiver.id}
+                      name={`${request.receiver.firstname} ${request.receiver.surname}`}
+                      friendIds={data.friendIds}
+                    />
                   </strong>{" "}
                   to borrow{" "}
                   <strong className="font-semibold">{request.bookTitle}</strong>
@@ -414,7 +446,7 @@ export default function Activity() {
                 className="flex items-center gap-3 py-2 text-sm text-stone-500 dark:text-stone-400"
               >
                 <ActivityIcon type={notification.type} size="sm" />
-                <span className="flex-1 min-w-0">{getHistoryText(notification)}</span>
+                <span className="flex-1 min-w-0">{getHistoryText(notification, data.friendIds)}</span>
                 <span className="text-xs text-stone-400 dark:text-stone-500 flex-shrink-0">
                   {formatDate(notification.createdAt, true)}
                 </span>

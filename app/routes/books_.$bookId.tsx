@@ -14,6 +14,7 @@ import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
+import PersonLink from "~/components/person-link";
 import { PersonAddIcon } from "~/components/icons";
 import ReaderNotes from "~/components/reader-notes";
 import { sendBookRequestEmail } from "~/email.server";
@@ -295,6 +296,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     canNote,
     noteMaxLength: NOTE_MAX_LENGTH,
     author,
+    friendIds: followingIds,
   });
 };
 
@@ -716,7 +718,11 @@ export default function BookDetailsPage() {
                   <p className="text-stone-800 dark:text-stone-200">
                     Borrowed from{" "}
                     <span className="font-semibold">
-                      {data.book.user.firstname} {data.book.user.surname}
+                      <PersonLink
+                        id={data.book.user.id}
+                        name={`${data.book.user.firstname} ${data.book.user.surname}`}
+                        friendIds={data.friendIds}
+                      />
                     </span>
                   </p>
                   {data.book.borrowedAt ? (
@@ -973,8 +979,13 @@ export default function BookDetailsPage() {
               ) : null}
               {!data.isOwner && data.book.user ? (
                 <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-                  From {data.book.user.firstname} {data.book.user.surname}&apos;s
-                  shelf
+                  From{" "}
+                  <PersonLink
+                    id={data.book.user.id}
+                    name={`${data.book.user.firstname} ${data.book.user.surname}`}
+                    friendIds={data.friendIds}
+                  />
+                  &apos;s shelf
                 </p>
               ) : null}
 
@@ -1025,8 +1036,11 @@ export default function BookDetailsPage() {
                     <p className="text-stone-800 dark:text-stone-200">
                       Lent to{" "}
                       <span className="font-semibold">
-                        {data.book.borrower.firstname}{" "}
-                        {data.book.borrower.surname}
+                        <PersonLink
+                          id={data.book.borrower.id}
+                          name={`${data.book.borrower.firstname} ${data.book.borrower.surname}`}
+                          friendIds={data.friendIds}
+                        />
                       </span>
                       {data.book.borrowedAt ? (
                         <span className="text-stone-500 dark:text-stone-400">
@@ -1115,6 +1129,7 @@ export default function BookDetailsPage() {
               myNote={data.myNote}
               canNote={data.canNote}
               maxLength={data.noteMaxLength}
+              friendIds={data.friendIds}
             />
           ) : null}
 
