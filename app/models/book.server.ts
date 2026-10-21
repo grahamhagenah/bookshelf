@@ -75,6 +75,41 @@ export function getBookListItems(userId: User["id"]) {
   });
 }
 
+// Everything on the home page's list: books you've borrowed, books you've
+// lent out (soonest due first), and the rest of your shelf
+export async function getHomeBooks(userId: User["id"]) {
+  const person = { select: { id: true, firstname: true, surname: true } };
+  const fields = {
+    id: true,
+    title: true,
+    author: true,
+    cover: true,
+    borrowedAt: true,
+    dueDate: true,
+  } as const;
+
+  const [own, borrowed] = await Promise.all([
+    prisma.book.findMany({
+      where: { userId },
+      select: { ...fields, borrower: person },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.book.findMany({
+      where: { borrowerId: userId },
+      select: { ...fields, user: person },
+      orderBy: { dueDate: "asc" },
+    }),
+  ]);
+
+  const due = (book: { dueDate: Date | null }) =>
+    book.dueDate?.getTime() ?? Infinity;
+  return {
+    borrowed: borrowed.map(({ user, ...book }) => ({ ...book, owner: user })),
+    lent: own.filter((book) => book.borrower).sort((a, b) => due(a) - due(b)),
+    shelf: own.filter((book) => !book.borrower),
+  };
+}
+
 export function getPublicBookListItems(userId: User["id"]) {
   return prisma.book.findMany({
     where: {
