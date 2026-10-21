@@ -1,8 +1,8 @@
 // A wall of book covers behind the landing page. It's one pre-drawn
-// image (public/cover-wall.webp, rebuilt by scripts/cover-wall) rather than
-// ~150 separate covers, so the page loads quickly.
+// image (public/cover-wall.webp, and @2x for sharp screens; rebuilt by
+// scripts/cover-wall) rather than ~150 separate covers.
 
-// The grid's size in CSS pixels; the image is drawn a little larger
+// The grid's size in CSS pixels
 const WIDTH = 2032;
 const HEIGHT = 1672;
 
@@ -13,13 +13,8 @@ export default function CoverWall() {
       className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
     >
       <div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-no-repeat"
-        style={{
-          width: WIDTH,
-          height: HEIGHT,
-          backgroundImage: "url(/cover-wall.webp)",
-          backgroundSize: "100% 100%",
-        }}
+        className="cover-wall absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-no-repeat"
+        style={{ width: WIDTH, height: HEIGHT, backgroundSize: "100% 100%" }}
       />
     </div>
   );

@@ -197,3 +197,12 @@ button#demo-customized-button {
 .summary {
   white-space: pre-wrap;
 }
+
+/* Landing page cover wall: 1x for regular screens, 2x for sharp ones */
+.cover-wall {
+  background-image: url("/cover-wall.webp");
+  background-image: image-set(
+    url("/cover-wall.webp") 1x,
+    url("/cover-wall@2x.webp") 2x
+  );
+}
