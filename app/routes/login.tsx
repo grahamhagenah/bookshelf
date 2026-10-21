@@ -1,7 +1,12 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction} from "@remix-run/node";
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef } from "react";
+
 import { verifyLogin } from "~/models/user.server";
 import { createUserSession, getUserId } from "~/session.server";
 import { safeRedirect, validateEmail } from "~/utils";
@@ -102,7 +107,10 @@ export default function LoginPage() {
                 className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.email ? (
-                <div className="pt-1 text-stone-900 dark:text-stone-100" id="email-error">
+                <div
+                  className="pt-1 text-stone-900 dark:text-stone-100"
+                  id="email-error"
+                >
                   {actionData.errors.email}
                 </div>
               ) : null}
@@ -136,7 +144,10 @@ export default function LoginPage() {
                 className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.password ? (
-                <div className="pt-1 text-stone-900 dark:text-stone-100" id="password-error">
+                <div
+                  className="pt-1 text-stone-900 dark:text-stone-100"
+                  id="password-error"
+                >
                   {actionData.errors.password}
                 </div>
               ) : null}

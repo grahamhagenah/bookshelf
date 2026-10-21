@@ -5,7 +5,6 @@ import { prisma } from "~/db.server";
 export function getBook({
   id,
   userId,
-
 }: Pick<Book, "id"> & {
   userId: User["id"];
 }) {
@@ -37,7 +36,7 @@ export function getBookById(id: Book["id"]) {
           id: true,
           firstname: true,
           surname: true,
-        }
+        },
       },
       user: {
         select: {
@@ -45,8 +44,8 @@ export function getBookById(id: Book["id"]) {
           firstname: true,
           surname: true,
           shareToken: true,
-        }
-      }
+        },
+      },
     },
     where: { id },
   });
@@ -57,7 +56,17 @@ export function getBookListItems(userId: User["id"]) {
     where: {
       userId: userId,
     },
-    select: { id: true, title: true, cover: true, author: true, datePublished: true, pageCount: true, lendCount: true, userId: true, borrowerId: true },
+    select: {
+      id: true,
+      title: true,
+      cover: true,
+      author: true,
+      datePublished: true,
+      pageCount: true,
+      lendCount: true,
+      userId: true,
+      borrowerId: true,
+    },
     orderBy: { updatedAt: "desc" },
   });
 }
@@ -195,7 +204,7 @@ export function updateBookMetadata(
     publisher?: string | null;
     openLibraryKey?: string | null;
     body?: string;
-  }
+  },
 ) {
   return prisma.book.update({
     where: { id: bookId },
@@ -206,7 +215,17 @@ export function updateBookMetadata(
 export function getBorrowedBooks(userId: User["id"]) {
   return prisma.book.findMany({
     where: { borrowerId: userId },
-    select: { id: true, title: true, cover: true, author: true, datePublished: true, pageCount: true, lendCount: true, userId: true, borrowerId: true },
+    select: {
+      id: true,
+      title: true,
+      cover: true,
+      author: true,
+      datePublished: true,
+      pageCount: true,
+      lendCount: true,
+      userId: true,
+      borrowerId: true,
+    },
     orderBy: { updatedAt: "desc" },
   });
 }
@@ -229,7 +248,10 @@ export async function getUserLibraryKeys(userId: User["id"]) {
   return books.map((b) => b.openLibraryKey).filter(Boolean) as string[];
 }
 
-export async function bookExistsInLibrary(userId: User["id"], openLibraryKey: string) {
+export async function bookExistsInLibrary(
+  userId: User["id"],
+  openLibraryKey: string,
+) {
   const book = await prisma.book.findFirst({
     where: { userId, openLibraryKey },
     select: { id: true },
@@ -268,7 +290,7 @@ export async function getOverdueBooks() {
   });
 }
 
-export async function getBooksNearDue(daysUntilDue: number = 3) {
+export async function getBooksNearDue(daysUntilDue = 3) {
   const now = new Date();
   const threshold = new Date(now);
   threshold.setDate(threshold.getDate() + daysUntilDue);

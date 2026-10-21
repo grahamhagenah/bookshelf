@@ -7,7 +7,7 @@ export type { User } from "@prisma/client";
 
 export async function getUserById(id: User["id"]) {
   return prisma.user.findUnique({
-    where: { id } ,
+    where: { id },
     select: {
       id: true,
       email: true,
@@ -31,7 +31,7 @@ export async function getUserById(id: User["id"]) {
           bookId: true,
           bookTitle: true,
           createdAt: true,
-        }
+        },
       },
       following: {
         select: {
@@ -41,22 +41,22 @@ export async function getUserById(id: User["id"]) {
           surname: true,
           profileEmoji: true,
           _count: {
-            select: { books: true }
-          }
+            select: { books: true },
+          },
         },
         orderBy: {
-          books: { _count: 'desc' }
-        }
-      }
-    }
-  })
+          books: { _count: "desc" },
+        },
+      },
+    },
+  });
 }
 
 export async function getUserByEmail(email: User["email"]) {
   return prisma.user.findUnique({
     where: { email },
-    select: { id: true, demoGroup: true }
-  })
+    select: { id: true, demoGroup: true },
+  });
 }
 
 export async function getUserEmailById(id: User["id"]) {
@@ -68,13 +68,18 @@ export async function getUserEmailById(id: User["id"]) {
       firstname: true,
       surname: true,
       emailNotifications: true,
-    }
-  })
+    },
+  });
 }
 
 export async function updateUser(
   id: User["id"],
-  data: { email?: string; firstname?: string; surname?: string; profileEmoji?: string | null }
+  data: {
+    email?: string;
+    firstname?: string;
+    surname?: string;
+    profileEmoji?: string | null;
+  },
 ) {
   return prisma.user.update({
     where: { id },
@@ -90,7 +95,7 @@ export async function updateUser(
 }
 
 export function generateUserSlug(firstname: string, surname: string): string {
-  return `${firstname}-${surname}`.toLowerCase().replace(/\s+/g, '-');
+  return `${firstname}-${surname}`.toLowerCase().replace(/\s+/g, "-");
 }
 
 export async function getUserBySlug(slug: string) {
@@ -107,14 +112,16 @@ export async function getUserBySlug(slug: string) {
           email: true,
           firstname: true,
           surname: true,
-        }
-      }
-    }
+        },
+      },
+    },
   });
 
   // Find user by comparing generated slugs
-  const matchingUser = users.find(user => {
-    const userSlug = `${user.firstname}-${user.surname}`.toLowerCase().replace(/\s+/g, '-');
+  const matchingUser = users.find((user) => {
+    const userSlug = `${user.firstname}-${user.surname}`
+      .toLowerCase()
+      .replace(/\s+/g, "-");
     return userSlug === slug.toLowerCase();
   });
 
@@ -124,12 +131,15 @@ export async function getUserBySlug(slug: string) {
 export async function deleteNotification(notificationId: Notification["id"]) {
   return prisma.notification.delete({
     where: {
-      id: notificationId
-    }
-  })
+      id: notificationId,
+    },
+  });
 }
 
-export async function markNotificationAsRead(notificationId: Notification["id"], actionTaken: string) {
+export async function markNotificationAsRead(
+  notificationId: Notification["id"],
+  actionTaken: string,
+) {
   return prisma.notification.update({
     where: { id: notificationId },
     data: {
@@ -139,7 +149,7 @@ export async function markNotificationAsRead(notificationId: Notification["id"],
   });
 }
 
-export async function getNotificationHistory(userId: string, limit: number = 10) {
+export async function getNotificationHistory(userId: string, limit = 10) {
   return prisma.notification.findMany({
     where: {
       receiverId: userId,
@@ -160,7 +170,11 @@ export async function getNotificationHistory(userId: string, limit: number = 10)
   });
 }
 
-export async function createNotification(senderId: User["id"], receiverId: User["id"], senderName: string) {
+export async function createNotification(
+  senderId: User["id"],
+  receiverId: User["id"],
+  senderName: string,
+) {
   return prisma.notification.create({
     data: {
       type: "FRIEND_REQUEST",
@@ -172,8 +186,14 @@ export async function createNotification(senderId: User["id"], receiverId: User[
       },
       senderName: senderName,
     },
-    select: { id: true, sender: true, receiver: true, senderId: true, receiverId: true}
-  })
+    select: {
+      id: true,
+      sender: true,
+      receiver: true,
+      senderId: true,
+      receiverId: true,
+    },
+  });
 }
 
 export async function createBookRequestNotification(
@@ -181,7 +201,7 @@ export async function createBookRequestNotification(
   receiverId: User["id"],
   senderName: string,
   bookId: string,
-  bookTitle: string
+  bookTitle: string,
 ) {
   return prisma.notification.create({
     data: {
@@ -198,15 +218,23 @@ export async function createBookRequestNotification(
       },
       bookTitle: bookTitle,
     },
-    select: { id: true, sender: true, receiver: true, senderId: true, receiverId: true, bookId: true, bookTitle: true }
-  })
+    select: {
+      id: true,
+      sender: true,
+      receiver: true,
+      senderId: true,
+      receiverId: true,
+      bookId: true,
+      bookTitle: true,
+    },
+  });
 }
 
 export async function createBookApprovedNotification(
   senderId: User["id"],
   receiverId: User["id"],
   senderName: string,
-  bookTitle: string
+  bookTitle: string,
 ) {
   return prisma.notification.create({
     data: {
@@ -220,15 +248,22 @@ export async function createBookApprovedNotification(
       senderName: senderName,
       bookTitle: bookTitle,
     },
-    select: { id: true, sender: true, receiver: true, senderId: true, receiverId: true, bookTitle: true }
-  })
+    select: {
+      id: true,
+      sender: true,
+      receiver: true,
+      senderId: true,
+      receiverId: true,
+      bookTitle: true,
+    },
+  });
 }
 
 export async function createBookReturnedNotification(
   senderId: User["id"],
   receiverId: User["id"],
   senderName: string,
-  bookTitle: string
+  bookTitle: string,
 ) {
   return prisma.notification.create({
     data: {
@@ -242,8 +277,15 @@ export async function createBookReturnedNotification(
       senderName: senderName,
       bookTitle: bookTitle,
     },
-    select: { id: true, sender: true, receiver: true, senderId: true, receiverId: true, bookTitle: true }
-  })
+    select: {
+      id: true,
+      sender: true,
+      receiver: true,
+      senderId: true,
+      receiverId: true,
+      bookTitle: true,
+    },
+  });
 }
 
 export async function createOverdueReminderNotification(
@@ -251,7 +293,7 @@ export async function createOverdueReminderNotification(
   borrowerId: User["id"],
   ownerName: string,
   bookId: string,
-  bookTitle: string
+  bookTitle: string,
 ) {
   return prisma.notification.create({
     data: {
@@ -268,12 +310,20 @@ export async function createOverdueReminderNotification(
       },
       bookTitle: bookTitle,
     },
-    select: { id: true, senderId: true, receiverId: true, bookId: true, bookTitle: true }
-  })
+    select: {
+      id: true,
+      senderId: true,
+      receiverId: true,
+      bookId: true,
+      bookTitle: true,
+    },
+  });
 }
 
-export async function createFriendship(userId: User["id"], friendId: User["id"]) {
-
+export async function createFriendship(
+  userId: User["id"],
+  friendId: User["id"],
+) {
   await prisma.user.update({
     where: { id: userId },
     data: {
@@ -299,8 +349,12 @@ export async function createFriendship(userId: User["id"], friendId: User["id"])
   });
 }
 
-
-export async function createUser(email: User["email"], password: string,  firstname: string, surname: string) {
+export async function createUser(
+  email: User["email"],
+  password: string,
+  firstname: string,
+  surname: string,
+) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   return prisma.user.create({
@@ -396,14 +450,21 @@ export async function toggleDarkMode(userId: string, enabled: boolean) {
   });
 }
 
-export async function toggleEmailNotifications(userId: string, enabled: boolean) {
+export async function toggleEmailNotifications(
+  userId: string,
+  enabled: boolean,
+) {
   await prisma.user.update({
     where: { id: userId },
     data: { emailNotifications: enabled },
   });
 }
 
-export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+export async function changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+) {
   const userWithPassword = await prisma.user.findUnique({
     where: { id: userId },
     include: { password: true },
@@ -413,7 +474,10 @@ export async function changePassword(userId: string, currentPassword: string, ne
     return { success: false, error: "User not found" };
   }
 
-  const isValid = await bcrypt.compare(currentPassword, userWithPassword.password.hash);
+  const isValid = await bcrypt.compare(
+    currentPassword,
+    userWithPassword.password.hash,
+  );
   if (!isValid) {
     return { success: false, error: "Current password is incorrect" };
   }
@@ -461,10 +525,7 @@ export async function getPendingFriendRequests(userId: string) {
     where: {
       senderId: userId,
       type: "FRIEND_REQUEST",
-      OR: [
-        { read: false },
-        { actionTaken: null },
-      ],
+      OR: [{ read: false }, { actionTaken: null }],
     },
     select: {
       id: true,
@@ -485,7 +546,7 @@ export async function getPendingFriendRequests(userId: string) {
   return pendingRequests;
 }
 
-export async function getSuggestedFriends(userId: string, limit: number = 5) {
+export async function getSuggestedFriends(userId: string, limit = 5) {
   // Get the current user's friend list
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -531,8 +592,8 @@ export async function resetPassword(email: string) {
   }
 
   // Generate a random alphanumeric temporary password (no special characters)
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-  let tempPassword = '';
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  let tempPassword = "";
   for (let i = 0; i < 12; i++) {
     tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
   }

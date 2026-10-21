@@ -1,9 +1,18 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import isbot from "isbot";
+import isBot from "isbot";
 
-import { createDemoSandbox, deleteDemoGroup, getDemoGroup } from "~/models/demo.server";
-import { createUserSession, getUserId, sessionStorage, getSession } from "~/session.server";
+import {
+  createDemoSandbox,
+  deleteDemoGroup,
+  getDemoGroup,
+} from "~/models/demo.server";
+import {
+  createUserSession,
+  getUserId,
+  sessionStorage,
+  getSession,
+} from "~/session.server";
 
 // Visiting /demo drops you straight into a populated sandbox library
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -11,10 +20,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (userId) return redirect("/books");
 
   // Link previews and crawlers shouldn't spin up sandboxes
-  if (isbot(request.headers.get("user-agent"))) return redirect("/");
+  if (isBot(request.headers.get("user-agent"))) return redirect("/");
 
   const demoUserId = await createDemoSandbox();
-  return createUserSession({ request, userId: demoUserId, remember: false, redirectTo: "/books" });
+  return createUserSession({
+    request,
+    userId: demoUserId,
+    remember: false,
+    redirectTo: "/books",
+  });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -38,5 +52,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // "start" and "reset" both hand out a fresh sandbox
   const demoUserId = await createDemoSandbox();
-  return createUserSession({ request, userId: demoUserId, remember: false, redirectTo: "/books" });
+  return createUserSession({
+    request,
+    userId: demoUserId,
+    remember: false,
+    redirectTo: "/books",
+  });
 };

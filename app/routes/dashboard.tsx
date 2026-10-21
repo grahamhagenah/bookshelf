@@ -1,9 +1,10 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { requireUserId } from "~/session.server";
-import { isUserAdmin, getAllUsersWithStats } from "~/models/user.server";
+
 import Layout from "~/components / Layout/Layout";
+import { isUserAdmin, getAllUsersWithStats } from "~/models/user.server";
+import { requireUserId } from "~/session.server";
 
 export const handle = {
   breadcrumb: () => <span>Admin Dashboard</span>,
@@ -39,26 +40,36 @@ export default function Dashboard() {
           <h2 className="text-xl font-semibold mb-4">Overview</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-stone-100 rounded-lg p-4 text-center">
-              <dd className="text-3xl font-semibold text-stone-900 dark:text-stone-100">{stats.totalUsers}</dd>
+              <dd className="text-3xl font-semibold text-stone-900 dark:text-stone-100">
+                {stats.totalUsers}
+              </dd>
               <dt className="text-sm text-stone-600">Total Users</dt>
             </div>
             <div className="bg-stone-100 rounded-lg p-4 text-center">
-              <dd className="text-3xl font-semibold text-stone-900 dark:text-stone-100">{stats.totalBooks}</dd>
+              <dd className="text-3xl font-semibold text-stone-900 dark:text-stone-100">
+                {stats.totalBooks}
+              </dd>
               <dt className="text-sm text-stone-600">Total Books</dt>
             </div>
             <div className="bg-stone-50 rounded-lg p-4 text-center">
-              <dd className="text-3xl font-semibold text-stone-600">{Math.floor(stats.totalFriendships)}</dd>
+              <dd className="text-3xl font-semibold text-stone-600">
+                {Math.floor(stats.totalFriendships)}
+              </dd>
               <dt className="text-sm text-stone-600">Friendships</dt>
             </div>
             <div className="bg-stone-50 rounded-lg p-4 text-center">
-              <dd className="text-3xl font-semibold text-stone-600">{stats.adminCount}</dd>
+              <dd className="text-3xl font-semibold text-stone-600">
+                {stats.adminCount}
+              </dd>
               <dt className="text-sm text-stone-600">Admins</dt>
             </div>
           </div>
         </section>
 
         <section className="border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">All Users ({users.length})</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            All Users ({users.length})
+          </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -75,7 +86,9 @@ export default function Dashboard() {
                 {users.map((user) => (
                   <tr key={user.id} className="border-b last:border-0">
                     <td className="py-3">
-                      <span className="font-medium">{user.firstname} {user.surname}</span>
+                      <span className="font-medium">
+                        {user.firstname} {user.surname}
+                      </span>
                     </td>
                     <td className="py-3 text-stone-600">{user.email}</td>
                     <td className="py-3 text-center">{user.bookCount}</td>

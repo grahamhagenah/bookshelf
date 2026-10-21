@@ -1,11 +1,27 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { requireUserId } from "~/session.server";
-import { createFriendship, getUserById, markNotificationAsRead, createBookApprovedNotification, getNotificationHistory, getPendingBookRequests } from "~/models/user.server";
-import { lendBook } from "~/models/book.server";
+
+import {
+  PersonAddIcon,
+  HourglassIcon,
+  MenuBookIcon,
+  CheckCircleIcon,
+  KeyboardReturnIcon,
+  HistoryIcon,
+  ClockIcon,
+} from "~/components/icons";
 import Layout from "~/components / Layout/Layout";
-import { PersonAddIcon, HourglassIcon, MenuBookIcon, CheckCircleIcon, KeyboardReturnIcon, HistoryIcon, ClockIcon } from "~/components/icons";
+import { lendBook } from "~/models/book.server";
+import {
+  createFriendship,
+  getUserById,
+  markNotificationAsRead,
+  createBookApprovedNotification,
+  getNotificationHistory,
+  getPendingBookRequests,
+} from "~/models/user.server";
+import { requireUserId } from "~/session.server";
 
 export const handle = {
   breadcrumb: () => <span>Notifications</span>,
@@ -57,7 +73,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const currentUser = await getUserById(userId);
       if (currentUser) {
         const senderName = `${currentUser.firstname} ${currentUser.surname}`;
-        await createBookApprovedNotification(userId, senderId, senderName, bookTitle);
+        await createBookApprovedNotification(
+          userId,
+          senderId,
+          senderName,
+          bookTitle,
+        );
       }
 
       await markNotificationAsRead(notificationId, "approved");
@@ -81,7 +102,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Handle overdue/due soon reminders (just dismiss them)
-  if (notificationType === "OVERDUE_REMINDER" || notificationType === "DUE_SOON_REMINDER") {
+  if (
+    notificationType === "OVERDUE_REMINDER" ||
+    notificationType === "DUE_SOON_REMINDER"
+  ) {
     if (formData.get("dismiss") === "true") {
       await markNotificationAsRead(notificationId, "dismissed");
     }
@@ -91,7 +115,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function Notifications() {
-
   const data = useLoaderData<typeof loader>();
 
   const renderNotification = (notification: {
@@ -106,17 +129,36 @@ export default function Notifications() {
 
     if (notificationType === "FRIEND_REQUEST") {
       return (
-        <form method="post" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <form
+          method="post"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+        >
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="FRIEND_REQUEST" />
           <p className="flex items-start sm:items-center gap-3">
             <PersonAddIcon className="flex-shrink-0" />
-            <span><strong>{notification.senderName}</strong> sent a friend request</span>
+            <span>
+              <strong>{notification.senderName}</strong> sent a friend request
+            </span>
           </p>
           <div className="flex gap-2 flex-shrink-0">
-            <button className="flex-1 sm:flex-none rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700" type="submit" name="friend_request" value="accept">Accept</button>
-            <button className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800" type="submit" name="friend_request" value="decline">Decline</button>
+            <button
+              className="flex-1 sm:flex-none rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
+              type="submit"
+              name="friend_request"
+              value="accept"
+            >
+              Accept
+            </button>
+            <button
+              className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800"
+              type="submit"
+              name="friend_request"
+              value="decline"
+            >
+              Decline
+            </button>
           </div>
         </form>
       );
@@ -124,19 +166,47 @@ export default function Notifications() {
 
     if (notificationType === "BOOK_REQUEST") {
       return (
-        <form method="post" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <form
+          method="post"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+        >
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="BOOK_REQUEST" />
-          <input type="hidden" name="bookId" value={notification.bookId || ""} />
-          <input type="hidden" name="bookTitle" value={notification.bookTitle || ""} />
+          <input
+            type="hidden"
+            name="bookId"
+            value={notification.bookId || ""}
+          />
+          <input
+            type="hidden"
+            name="bookTitle"
+            value={notification.bookTitle || ""}
+          />
           <p className="flex items-start sm:items-center gap-3">
             <MenuBookIcon className="flex-shrink-0" />
-            <span><strong>{notification.senderName}</strong> wants to borrow <strong>{notification.bookTitle}</strong></span>
+            <span>
+              <strong>{notification.senderName}</strong> wants to borrow{" "}
+              <strong>{notification.bookTitle}</strong>
+            </span>
           </p>
           <div className="flex gap-2 flex-shrink-0">
-            <button className="flex-1 sm:flex-none rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700" type="submit" name="book_request" value="approve">Approve</button>
-            <button className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800" type="submit" name="book_request" value="decline">Decline</button>
+            <button
+              className="flex-1 sm:flex-none rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
+              type="submit"
+              name="book_request"
+              value="approve"
+            >
+              Approve
+            </button>
+            <button
+              className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800"
+              type="submit"
+              name="book_request"
+              value="decline"
+            >
+              Decline
+            </button>
           </div>
         </form>
       );
@@ -144,16 +214,29 @@ export default function Notifications() {
 
     if (notificationType === "BOOK_APPROVED") {
       return (
-        <form method="post" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <form
+          method="post"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+        >
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="BOOK_APPROVED" />
           <p className="flex items-start sm:items-center gap-3">
             <CheckCircleIcon className="flex-shrink-0 text-stone-900 dark:text-stone-100" />
-            <span><strong>{notification.senderName}</strong> approved your request for <strong>{notification.bookTitle}</strong></span>
+            <span>
+              <strong>{notification.senderName}</strong> approved your request
+              for <strong>{notification.bookTitle}</strong>
+            </span>
           </p>
           <div className="flex gap-2 flex-shrink-0">
-            <button className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800" type="submit" name="dismiss" value="true">Dismiss</button>
+            <button
+              className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800"
+              type="submit"
+              name="dismiss"
+              value="true"
+            >
+              Dismiss
+            </button>
           </div>
         </form>
       );
@@ -161,16 +244,29 @@ export default function Notifications() {
 
     if (notificationType === "BOOK_RETURNED") {
       return (
-        <form method="post" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <form
+          method="post"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+        >
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="BOOK_RETURNED" />
           <p className="flex items-start sm:items-center gap-3">
             <KeyboardReturnIcon className="flex-shrink-0 text-stone-600" />
-            <span><strong>{notification.senderName}</strong> returned <strong>{notification.bookTitle}</strong></span>
+            <span>
+              <strong>{notification.senderName}</strong> returned{" "}
+              <strong>{notification.bookTitle}</strong>
+            </span>
           </p>
           <div className="flex gap-2 flex-shrink-0">
-            <button className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800" type="submit" name="dismiss" value="true">Dismiss</button>
+            <button
+              className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800"
+              type="submit"
+              name="dismiss"
+              value="true"
+            >
+              Dismiss
+            </button>
           </div>
         </form>
       );
@@ -178,17 +274,39 @@ export default function Notifications() {
 
     if (notificationType === "OVERDUE_REMINDER") {
       return (
-        <form method="post" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <form
+          method="post"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+        >
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
-          <input type="hidden" name="notificationType" value="OVERDUE_REMINDER" />
+          <input
+            type="hidden"
+            name="notificationType"
+            value="OVERDUE_REMINDER"
+          />
           <p className="flex items-start sm:items-center gap-3">
             <ClockIcon className="flex-shrink-0 text-stone-900 dark:text-stone-100" />
-            <span><strong>{notification.bookTitle}</strong> is overdue — please return it to <strong>{notification.senderName}</strong></span>
+            <span>
+              <strong>{notification.bookTitle}</strong> is overdue — please
+              return it to <strong>{notification.senderName}</strong>
+            </span>
           </p>
           <div className="flex gap-2 flex-shrink-0">
-            <a href={`/books/${notification.bookId}`} className="flex-1 sm:flex-none rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 text-center">View Book</a>
-            <button className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800" type="submit" name="dismiss" value="true">Dismiss</button>
+            <a
+              href={`/books/${notification.bookId}`}
+              className="flex-1 sm:flex-none rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 text-center"
+            >
+              View Book
+            </a>
+            <button
+              className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800"
+              type="submit"
+              name="dismiss"
+              value="true"
+            >
+              Dismiss
+            </button>
           </div>
         </form>
       );
@@ -196,17 +314,39 @@ export default function Notifications() {
 
     if (notificationType === "DUE_SOON_REMINDER") {
       return (
-        <form method="post" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <form
+          method="post"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+        >
           <input type="hidden" name="senderId" value={notification.senderId} />
           <input type="hidden" name="notificationId" value={notification.id} />
-          <input type="hidden" name="notificationType" value="DUE_SOON_REMINDER" />
+          <input
+            type="hidden"
+            name="notificationType"
+            value="DUE_SOON_REMINDER"
+          />
           <p className="flex items-start sm:items-center gap-3">
             <ClockIcon className="flex-shrink-0 text-stone-600" />
-            <span><strong>{notification.bookTitle}</strong> is due soon — remember to return it to <strong>{notification.senderName}</strong></span>
+            <span>
+              <strong>{notification.bookTitle}</strong> is due soon — remember
+              to return it to <strong>{notification.senderName}</strong>
+            </span>
           </p>
           <div className="flex gap-2 flex-shrink-0">
-            <a href={`/books/${notification.bookId}`} className="flex-1 sm:flex-none rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 text-center">View Book</a>
-            <button className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800" type="submit" name="dismiss" value="true">Dismiss</button>
+            <a
+              href={`/books/${notification.bookId}`}
+              className="flex-1 sm:flex-none rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 text-center"
+            >
+              View Book
+            </a>
+            <button
+              className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800"
+              type="submit"
+              name="dismiss"
+              value="true"
+            >
+              Dismiss
+            </button>
           </div>
         </form>
       );
@@ -255,37 +395,46 @@ export default function Notifications() {
       case "FRIEND_REQUEST":
         return (
           <>
-            <strong>{notification.senderName}</strong> friend request — <span className="text-stone-500">{action}</span>
+            <strong>{notification.senderName}</strong> friend request —{" "}
+            <span className="text-stone-500">{action}</span>
           </>
         );
       case "BOOK_REQUEST":
         return (
           <>
-            <strong>{notification.senderName}</strong> requested <strong>{notification.bookTitle}</strong> — <span className="text-stone-500">{action}</span>
+            <strong>{notification.senderName}</strong> requested{" "}
+            <strong>{notification.bookTitle}</strong> —{" "}
+            <span className="text-stone-500">{action}</span>
           </>
         );
       case "BOOK_APPROVED":
         return (
           <>
-            <strong>{notification.senderName}</strong> approved <strong>{notification.bookTitle}</strong> — <span className="text-stone-500">{action}</span>
+            <strong>{notification.senderName}</strong> approved{" "}
+            <strong>{notification.bookTitle}</strong> —{" "}
+            <span className="text-stone-500">{action}</span>
           </>
         );
       case "BOOK_RETURNED":
         return (
           <>
-            <strong>{notification.senderName}</strong> returned <strong>{notification.bookTitle}</strong> — <span className="text-stone-500">{action}</span>
+            <strong>{notification.senderName}</strong> returned{" "}
+            <strong>{notification.bookTitle}</strong> —{" "}
+            <span className="text-stone-500">{action}</span>
           </>
         );
       case "OVERDUE_REMINDER":
         return (
           <>
-            <strong>{notification.bookTitle}</strong> overdue reminder — <span className="text-stone-500">{action}</span>
+            <strong>{notification.bookTitle}</strong> overdue reminder —{" "}
+            <span className="text-stone-500">{action}</span>
           </>
         );
       case "DUE_SOON_REMINDER":
         return (
           <>
-            <strong>{notification.bookTitle}</strong> due soon reminder — <span className="text-stone-500">{action}</span>
+            <strong>{notification.bookTitle}</strong> due soon reminder —{" "}
+            <span className="text-stone-500">{action}</span>
           </>
         );
       default:
@@ -295,76 +444,99 @@ export default function Notifications() {
 
   return (
     <>
-    <Layout title="Notifications">
-      <section className="border rounded-lg p-4 sm:p-6">
-        <h2 className="text-xl font-semibold mb-4">New</h2>
-        {(data.user?.notificationsReceived?.length ?? 0) > 0 ? (
-          <ul className="space-y-3">
-            {data.user?.notificationsReceived?.map((notification) => (
-              <li key={notification.id} className="bg-stone-50 rounded-lg p-4">
-                {renderNotification(notification)}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="flex items-center gap-3 text-stone-500 py-4">
-            <HourglassIcon />
-            <span>No new notifications</span>
-          </div>
-        )}
-      </section>
-
-      {data.pendingBookRequests && data.pendingBookRequests.length > 0 && (
+      <Layout title="Notifications">
         <section className="border rounded-lg p-4 sm:p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <HourglassIcon className="text-stone-500" />
-            Pending Requests
-          </h2>
-          <ul className="space-y-3">
-            {data.pendingBookRequests.map((request) => (
-              <li key={request.id} className="bg-stone-50 dark:bg-stone-950 rounded-lg p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <p className="flex items-start sm:items-center gap-3">
-                    <MenuBookIcon className="flex-shrink-0 text-stone-600" />
-                    <span className="text-stone-800 dark:text-stone-200">
-                      Waiting for <strong>{request.receiver.firstname} {request.receiver.surname}</strong> to respond to your request for <strong>{request.bookTitle}</strong>
-                    </span>
-                  </p>
-                  <a
-                    href={`/books/${request.bookId}`}
-                    className="flex-shrink-0 rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 text-center text-sm"
+          <h2 className="text-xl font-semibold mb-4">New</h2>
+          {(data.user?.notificationsReceived?.length ?? 0) > 0 ? (
+            <ul className="space-y-3">
+              {data.user?.notificationsReceived?.map((notification) => (
+                <li
+                  key={notification.id}
+                  className="bg-stone-50 rounded-lg p-4"
+                >
+                  {renderNotification(notification)}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="flex items-center gap-3 text-stone-500 py-4">
+              <HourglassIcon />
+              <span>No new notifications</span>
+            </div>
+          )}
+        </section>
+
+        {data.pendingBookRequests && data.pendingBookRequests.length > 0 ? (
+          <section className="border rounded-lg p-4 sm:p-6">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <HourglassIcon className="text-stone-500" />
+              Pending Requests
+            </h2>
+            <ul className="space-y-3">
+              {data.pendingBookRequests.map((request) => (
+                <li
+                  key={request.id}
+                  className="bg-stone-50 dark:bg-stone-950 rounded-lg p-4"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <p className="flex items-start sm:items-center gap-3">
+                      <MenuBookIcon className="flex-shrink-0 text-stone-600" />
+                      <span className="text-stone-800 dark:text-stone-200">
+                        Waiting for{" "}
+                        <strong>
+                          {request.receiver.firstname}{" "}
+                          {request.receiver.surname}
+                        </strong>{" "}
+                        to respond to your request for{" "}
+                        <strong>{request.bookTitle}</strong>
+                      </span>
+                    </p>
+                    <a
+                      href={`/books/${request.bookId}`}
+                      className="flex-shrink-0 rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 text-center text-sm"
+                    >
+                      View Book
+                    </a>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {data.history && data.history.length > 0 ? (
+          <section className="border rounded-lg p-4 sm:p-6">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <HistoryIcon className="text-stone-400" />
+              Recent Activity
+            </h2>
+            <ul className="space-y-2">
+              {[...data.history]
+                .sort(
+                  (a, b) =>
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime(),
+                )
+                .map((notification) => (
+                  <li
+                    key={notification.id}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 py-3 px-3 bg-stone-50 rounded-lg text-stone-600 text-sm"
                   >
-                    View Book
-                  </a>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {data.history && data.history.length > 0 && (
-        <section className="border rounded-lg p-4 sm:p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <HistoryIcon className="text-stone-400" />
-            Recent Activity
-          </h2>
-          <ul className="space-y-2">
-            {[...data.history].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((notification) => (
-              <li key={notification.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 py-3 px-3 bg-stone-50 rounded-lg text-stone-600 text-sm">
-                <div className="flex items-start sm:items-center gap-3">
-                  <span className="flex-shrink-0">{getHistoryIcon(notification.type)}</span>
-                  <span>{getHistoryText(notification)}</span>
-                </div>
-                <span className="text-stone-400 text-xs sm:text-sm flex-shrink-0 ml-7 sm:ml-0">
-                  {formatDate(notification.createdAt)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </Layout>
+                    <div className="flex items-start sm:items-center gap-3">
+                      <span className="flex-shrink-0">
+                        {getHistoryIcon(notification.type)}
+                      </span>
+                      <span>{getHistoryText(notification)}</span>
+                    </div>
+                    <span className="text-stone-400 text-xs sm:text-sm flex-shrink-0 ml-7 sm:ml-0">
+                      {formatDate(notification.createdAt)}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          </section>
+        ) : null}
+      </Layout>
     </>
   );
 }

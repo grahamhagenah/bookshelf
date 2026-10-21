@@ -2,6 +2,7 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef } from "react";
+
 import { createBook } from "~/models/book.server";
 import { requireUserId } from "~/session.server";
 
@@ -17,29 +18,61 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (typeof title !== "string" || title.length === 0) {
     return json(
-      { errors: { title: "Title is required", author: null, body: null, cover: null, datePublished: null } },
-      { status: 400 }
+      {
+        errors: {
+          title: "Title is required",
+          author: null,
+          body: null,
+          cover: null,
+          datePublished: null,
+        },
+      },
+      { status: 400 },
     );
   }
 
   if (typeof author !== "string" || author.length === 0) {
     return json(
-      { errors: { title: null, author: "Author is required", body: null, cover: null, datePublished: null } },
-      { status: 400 }
+      {
+        errors: {
+          title: null,
+          author: "Author is required",
+          body: null,
+          cover: null,
+          datePublished: null,
+        },
+      },
+      { status: 400 },
     );
   }
 
   if (typeof body !== "string" || body.length === 0) {
     return json(
-      { errors: { title: null, author: null, body: "Description is required", cover: null, datePublished: null } },
-      { status: 400 }
+      {
+        errors: {
+          title: null,
+          author: null,
+          body: "Description is required",
+          cover: null,
+          datePublished: null,
+        },
+      },
+      { status: 400 },
     );
   }
 
   if (typeof cover !== "string" || cover.length === 0) {
     return json(
-      { errors: { title: null, author: null, body: null, cover: "Cover URL is required", datePublished: null } },
-      { status: 400 }
+      {
+        errors: {
+          title: null,
+          author: null,
+          body: null,
+          cover: "Cover URL is required",
+          datePublished: null,
+        },
+      },
+      { status: 400 },
     );
   }
 
@@ -48,7 +81,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     title,
     cover,
     author,
-    datePublished: typeof datePublished === "string" && datePublished.length > 0 ? datePublished : null,
+    datePublished:
+      typeof datePublished === "string" && datePublished.length > 0
+        ? datePublished
+        : null,
     userId,
   });
 
@@ -99,7 +135,10 @@ export default function NewBookPage() {
           />
         </label>
         {actionData?.errors?.title ? (
-          <div className="pt-1 text-stone-900 dark:text-stone-100" id="title-error">
+          <div
+            className="pt-1 text-stone-900 dark:text-stone-100"
+            id="title-error"
+          >
             {actionData.errors.title}
           </div>
         ) : null}
@@ -119,7 +158,10 @@ export default function NewBookPage() {
           />
         </label>
         {actionData?.errors?.author ? (
-          <div className="pt-1 text-stone-900 dark:text-stone-100" id="author-error">
+          <div
+            className="pt-1 text-stone-900 dark:text-stone-100"
+            id="author-error"
+          >
             {actionData.errors.author}
           </div>
         ) : null}
@@ -139,7 +181,10 @@ export default function NewBookPage() {
           />
         </label>
         {actionData?.errors?.cover ? (
-          <div className="pt-1 text-stone-900 dark:text-stone-100" id="cover-error">
+          <div
+            className="pt-1 text-stone-900 dark:text-stone-100"
+            id="cover-error"
+          >
             {actionData.errors.cover}
           </div>
         ) : null}
@@ -172,7 +217,10 @@ export default function NewBookPage() {
           />
         </label>
         {actionData?.errors?.body ? (
-          <div className="pt-1 text-stone-900 dark:text-stone-100" id="body-error">
+          <div
+            className="pt-1 text-stone-900 dark:text-stone-100"
+            id="body-error"
+          >
             {actionData.errors.body}
           </div>
         ) : null}

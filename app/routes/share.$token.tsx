@@ -1,10 +1,11 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import invariant from "tiny-invariant";
-import { getUserByShareToken } from "~/models/user.server";
-import { getPublicBookListItems } from "~/models/book.server";
 import { useLoaderData } from "@remix-run/react";
+import invariant from "tiny-invariant";
+
 import Library from "~/components/library";
+import { getPublicBookListItems } from "~/models/book.server";
+import { getUserByShareToken } from "~/models/user.server";
 
 export const handle = {
   breadcrumb: (data: { ownerName?: string } | undefined) => (
