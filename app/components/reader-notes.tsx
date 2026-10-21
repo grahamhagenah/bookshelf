@@ -25,7 +25,71 @@ const formatDate = (date: string) =>
     year: "numeric",
   });
 
-// Hearts and short notes left by the owner and everyone who has read this copy
+// The heart sits under the cover and the notes further down; both read
+// the same fetcher so a tap shows up in both places straight away
+const LOVE_FETCHER = "reader-love";
+
+function useLoved(notes: ReaderNote[], myNote: ReaderNote | null) {
+  const fetcher = useFetcher({ key: LOVE_FETCHER });
+  // Show the heart's new state straight away, before the server answers
+  const pendingLoved = fetcher.formData?.get("loved");
+  const loved =
+    pendingLoved !== undefined && pendingLoved !== null
+      ? pendingLoved === "true"
+      : (myNote?.loved ?? false);
+  const loveCount =
+    notes.filter((note) => note.loved).length -
+    (myNote?.loved ? 1 : 0) +
+    (loved ? 1 : 0);
+  return { fetcher, loved, loveCount };
+}
+
+export function LoveButton({
+  notes,
+  myNote,
+  canNote,
+}: {
+  notes: ReaderNote[];
+  myNote: ReaderNote | null;
+  canNote: boolean;
+}) {
+  const { fetcher, loved, loveCount } = useLoved(notes, myNote);
+
+  if (!canNote) {
+    return loveCount > 0 ? (
+      <p className="inline-flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
+        <HeartIcon size={14} filled className="text-rose-400" />
+        {loveCount} {loveCount === 1 ? "reader loved" : "readers loved"} this
+      </p>
+    ) : null;
+  }
+
+  return (
+    <fetcher.Form method="post">
+      <input type="hidden" name="intent" value="toggleLove" />
+      <input type="hidden" name="loved" value={loved ? "false" : "true"} />
+      <button
+        type="submit"
+        aria-pressed={loved}
+        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
+          loved
+            ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
+            : "border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500"
+        }`}
+      >
+        <HeartIcon size={14} filled={loved} className={loved ? "text-rose-500" : ""} />
+        {loved ? "Loved" : "Love it"}
+        {loveCount > 0 ? (
+          <span className={loved ? "text-rose-400" : "text-stone-400"}>
+            {loveCount}
+          </span>
+        ) : null}
+      </button>
+    </fetcher.Form>
+  );
+}
+
+// Short notes left by the owner and everyone who has read this copy
 export default function ReaderNotes({
   notes,
   myNote,
@@ -39,20 +103,9 @@ export default function ReaderNotes({
   maxLength: number;
   friendIds: string[];
 }) {
-  const loveFetcher = useFetcher();
+  const { loved } = useLoved(notes, myNote);
   const noteFetcher = useFetcher<{ noteSaved?: boolean }>();
   const [isWriting, setIsWriting] = useState(false);
-
-  // Show the heart's new state straight away, before the server answers
-  const pendingLoved = loveFetcher.formData?.get("loved");
-  const loved =
-    pendingLoved !== undefined && pendingLoved !== null
-      ? pendingLoved === "true"
-      : (myNote?.loved ?? false);
-  const loveCount =
-    notes.filter((note) => note.loved).length -
-    (myNote?.loved ? 1 : 0) +
-    (loved ? 1 : 0);
 
   useEffect(() => {
     if (noteFetcher.state === "idle" && noteFetcher.data?.noteSaved) {
@@ -69,39 +122,9 @@ export default function ReaderNotes({
 
   return (
     <div className="mt-10">
-      <div className="flex items-center justify-between gap-3 mb-1">
-        <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400">
-          Reader notes
-        </h2>
-        {canNote ? (
-          <loveFetcher.Form method="post">
-            <input type="hidden" name="intent" value="toggleLove" />
-            <input type="hidden" name="loved" value={loved ? "false" : "true"} />
-            <button
-              type="submit"
-              aria-pressed={loved}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
-                loved
-                  ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
-                  : "border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500"
-              }`}
-            >
-              <HeartIcon size={14} filled={loved} className={loved ? "text-rose-500" : ""} />
-              {loved ? "Loved" : "Love it"}
-              {loveCount > 0 ? (
-                <span className={loved ? "text-rose-400" : "text-stone-400"}>
-                  {loveCount}
-                </span>
-              ) : null}
-            </button>
-          </loveFetcher.Form>
-        ) : loveCount > 0 ? (
-          <span className="inline-flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
-            <HeartIcon size={14} filled className="text-rose-400" />
-            {loveCount}
-          </span>
-        ) : null}
-      </div>
+      <h2 className="mb-1 text-sm font-semibold text-stone-500 dark:text-stone-400">
+        Reader notes
+      </h2>
 
       {isWriting ? (
         <noteFetcher.Form method="post" className="py-3">

@@ -20,7 +20,7 @@ import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
 import { PersonAddIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
-import ReaderNotes from "~/components/reader-notes";
+import ReaderNotes, { LoveButton } from "~/components/reader-notes";
 import { sendBookRequestEmail } from "~/email.server";
 import {
   deleteBook,
@@ -741,6 +741,13 @@ export default function BookDetailsPage() {
               </div>
             ) : null}
           </div>
+          {!isEditing ? (
+            <LoveButton
+              notes={data.readerNotes}
+              myNote={data.myNote}
+              canNote={data.canNote}
+            />
+          ) : null}
           {canRequestBook ? (
             <Form method="post">
               <input type="hidden" name="intent" value="request" />
