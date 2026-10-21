@@ -185,7 +185,13 @@ function BookCover({
   };
 
   return (
-    <div className="relative flex-shrink-0 w-[120px] h-[180px] md:w-[200px] md:h-[300px] lg:w-[240px] lg:h-[360px] overflow-hidden rounded-xs shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10">
+    // The cover keeps its own proportions here (some are taller or wider
+    // than 2:3); the placeholder holds a 2:3 space until it arrives
+    <div
+      className={`relative flex-shrink-0 w-[120px] md:w-[200px] lg:w-[240px] overflow-hidden rounded-xs shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10 ${
+        loaded && !error ? "" : "aspect-[2/3]"
+      }`}
+    >
       {!loaded || error ? (
         <CoverPlaceholder
           title={title}
@@ -200,7 +206,12 @@ function BookCover({
           alt={title}
           loading="lazy"
           decoding="async"
-          className={`relative w-full h-full object-cover ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
+          className={`w-full object-cover transition-opacity duration-300 ${
+            loaded
+              ? // No taller than twice the width, however odd the image
+                "relative block h-auto max-h-[240px] md:max-h-[400px] lg:max-h-[480px] opacity-100"
+              : "absolute inset-0 h-full opacity-0"
+          }`}
           // A cached cover can finish loading before React hydrates and
           // attaches onLoad, so also check it once it's in the page
           ref={(img) => {
