@@ -12,15 +12,17 @@ export function seo({
   title,
   description = DEFAULT_DESCRIPTION,
   path,
+  image = `${SITE_URL}/og-image.png`,
   noindex = false,
 }: {
   title?: string;
   description?: string;
   path?: string;
+  // An absolute URL to a 1200x630 picture for link previews
+  image?: string;
   noindex?: boolean;
 } = {}): MetaDescriptor[] {
   const fullTitle = title ? `${title} · ${SITE_NAME}` : DEFAULT_TITLE;
-  const image = `${SITE_URL}/og-image.png`;
   const tags: MetaDescriptor[] = [
     { title: fullTitle },
     { name: "description", content: description },

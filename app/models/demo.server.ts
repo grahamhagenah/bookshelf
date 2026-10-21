@@ -484,10 +484,8 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     names[key] = `${person.firstname} ${person.surname}`;
   }
 
-  await prisma.user.update({
-    where: { id: ids.you },
-    data: { shareToken: crypto.randomUUID() },
-  });
+  // No public link for the visitor yet, so the demo shows the "Share
+  // your bookshelf" prompt
 
   // title -> book id, across every library in the sandbox
   const books: Record<string, string> = {};
