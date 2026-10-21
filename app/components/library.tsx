@@ -65,8 +65,10 @@ function BookCover({
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 
+  // Small corners: scans often carry a thin border, and tight corners keep
+  // it reading as part of the cover rather than a clipped edge
   return (
-    <div className={`relative overflow-hidden rounded-md ${className}`}>
+    <div className={`relative overflow-hidden rounded-xs ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}>
       {!loaded || error ? (
         <CoverPlaceholder
           title={title}

@@ -181,7 +181,7 @@ function BookCover({
   const [error, setError] = useState(false);
 
   return (
-    <div className="relative w-[140px] h-[210px] md:w-[200px] md:h-[300px] overflow-hidden rounded-md shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10">
+    <div className="relative w-[140px] h-[210px] md:w-[200px] md:h-[300px] overflow-hidden rounded-xs shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10">
       {!loaded || error ? (
         <CoverPlaceholder
           title={title}

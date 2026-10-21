@@ -102,7 +102,7 @@ export default function CoverWall() {
         {tiles.map((src, i) => (
           <div
             key={i}
-            className={`aspect-[2/3] overflow-hidden rounded-md bg-stone-200 dark:bg-stone-800 ${
+            className={`aspect-[2/3] overflow-hidden rounded-xs bg-stone-200 dark:bg-stone-800 ${
               i % 2 ? "translate-y-8" : ""
             }`}
           >
