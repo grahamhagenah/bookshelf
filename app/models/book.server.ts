@@ -150,10 +150,39 @@ export function deleteBook({
   });
 }
 
-export async function lendBook(bookId: Book["id"], borrowerId: User["id"]) {
+// Loan lengths the owner can pick from, in weeks
+export const LOAN_WEEKS = [1, 2, 3, 4, 6, 8] as const;
+export const DEFAULT_LOAN_WEEKS = 4;
+export const EXTEND_WEEKS = [1, 2, 4] as const;
+
+const DAY = 24 * 60 * 60 * 1000;
+
+// Keeps a loan length to one of the offered choices
+export function loanWeeks(value: unknown, choices: readonly number[] = LOAN_WEEKS) {
+  const weeks = Number(value);
+  return choices.includes(weeks) ? weeks : DEFAULT_LOAN_WEEKS;
+}
+
+// Reminders that no longer apply once a loan is extended or ends
+function clearDueReminders(bookId: Book["id"], borrowerId: User["id"]) {
+  return prisma.notification.updateMany({
+    where: {
+      bookId,
+      receiverId: borrowerId,
+      read: false,
+      type: { in: ["DUE_SOON_REMINDER", "OVERDUE_REMINDER"] },
+    },
+    data: { read: true, actionTaken: "dismissed" },
+  });
+}
+
+export async function lendBook(
+  bookId: Book["id"],
+  borrowerId: User["id"],
+  weeks: number = DEFAULT_LOAN_WEEKS,
+) {
   const borrowedAt = new Date();
-  const dueDate = new Date(borrowedAt);
-  dueDate.setDate(dueDate.getDate() + 28); // 4 weeks
+  const dueDate = new Date(borrowedAt.getTime() + weeks * 7 * DAY);
 
   // Create lending history record
   await prisma.lendingHistory.create({
@@ -175,7 +204,27 @@ export async function lendBook(bookId: Book["id"], borrowerId: User["id"]) {
   });
 }
 
+// Pushes the due date back; an overdue loan is extended from today
+export async function extendLoan(bookId: Book["id"], weeks: number) {
+  const book = await prisma.book.findUnique({
+    where: { id: bookId },
+    select: { borrowerId: true, dueDate: true },
+  });
+  if (!book?.borrowerId) return null;
+
+  const from = Math.max(book.dueDate?.getTime() ?? 0, Date.now());
+  const dueDate = new Date(from + weeks * 7 * DAY);
+  await clearDueReminders(bookId, book.borrowerId);
+  return prisma.book.update({ where: { id: bookId }, data: { dueDate } });
+}
+
 export async function returnBook(bookId: Book["id"]) {
+  const current = await prisma.book.findUnique({
+    where: { id: bookId },
+    select: { borrowerId: true },
+  });
+  if (current?.borrowerId) await clearDueReminders(bookId, current.borrowerId);
+
   // Update the most recent lending history record with return date
   const latestLending = await prisma.lendingHistory.findFirst({
     where: { bookId, returnedAt: null },

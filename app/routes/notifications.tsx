@@ -9,7 +9,12 @@ import { useLoaderData } from "@remix-run/react";
 import ActivityIcon from "~/components/activity-icon";
 import PersonLink from "~/components/person-link";
 import Layout from "~/components / Layout/Layout";
-import { lendBook } from "~/models/book.server";
+import {
+  DEFAULT_LOAN_WEEKS,
+  LOAN_WEEKS,
+  lendBook,
+  loanWeeks,
+} from "~/models/book.server";
 import {
   createFriendship,
   getUserById,
@@ -36,7 +41,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getPendingBookRequests(userId),
   ]);
   const friendIds = user?.following.map((friend) => friend.id) ?? [];
-  return json({ user, history, pendingBookRequests, friendIds });
+  return json({
+    user,
+    history,
+    pendingBookRequests,
+    friendIds,
+    loanChoices: { weeks: LOAN_WEEKS, defaultWeeks: DEFAULT_LOAN_WEEKS },
+  });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -69,7 +80,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (formData.get("book_request") === "approve") {
       // Lend the book to the requester
-      await lendBook(bookId, senderId);
+      await lendBook(bookId, senderId, loanWeeks(formData.get("weeks")));
 
       // Get current user's name for the approval notification
       const currentUser = await getUserById(userId);
@@ -96,8 +107,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
-  // Handle reader note notification (just dismiss it)
-  if (notificationType === "READER_NOTE") {
+  // Reader notes and loan extensions only need dismissing
+  if (notificationType === "READER_NOTE" || notificationType === "LOAN_EXTENDED") {
     if (formData.get("dismiss") === "true") {
       await markNotificationAsRead(notificationId, "dismissed");
     }
@@ -190,12 +201,19 @@ function Row({
   );
 }
 
+interface LoanChoices {
+  weeks: readonly number[];
+  defaultWeeks: number;
+}
+
 function ActivityItem({
   notification,
   friendIds,
+  loanChoices,
 }: {
   notification: ActivityNotification;
   friendIds: string[];
+  loanChoices: LoanChoices;
 }) {
   const type = notification.type || "FRIEND_REQUEST";
   const name = (
@@ -230,6 +248,21 @@ function ActivityItem({
       text = <>{name} would like to borrow {book}</>;
       actions = (
         <>
+          <label className="sr-only" htmlFor={`weeks-${notification.id}`}>
+            Loan length
+          </label>
+          <select
+            id={`weeks-${notification.id}`}
+            name="weeks"
+            defaultValue={loanChoices.defaultWeeks}
+            className="h-[34px] rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-700 dark:text-stone-200 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10"
+          >
+            {loanChoices.weeks.map((weeks) => (
+              <option key={weeks} value={weeks}>
+                for {weeks} {weeks === 1 ? "week" : "weeks"}
+              </option>
+            ))}
+          </select>
           <button className={primaryButton} type="submit" name="book_request" value="approve">
             Lend it
           </button>
@@ -267,6 +300,19 @@ function ActivityItem({
       break;
     case "BOOK_RETURNED":
       text = <>{name} returned {book}</>;
+      break;
+    case "LOAN_EXTENDED":
+      text = <>{name} gave you more time with {book}</>;
+      actions = (
+        <>
+          <a href={`/books/${notification.bookId}`} className={secondaryButton}>
+            View book
+          </a>
+          <button className={quietButton} type="submit" name="dismiss" value="true">
+            Dismiss
+          </button>
+        </>
+      );
       break;
     case "READER_NOTE":
       text = <>{name} shared their thoughts on {book}</>;
@@ -349,6 +395,8 @@ const getHistoryText = (
       return <>{name} returned {book}</>;
     case "READER_NOTE":
       return <>{name} shared their thoughts on {book}</>;
+    case "LOAN_EXTENDED":
+      return <>{name} extended your loan of {book}</>;
     case "OVERDUE_REMINDER":
       return <>{book} was overdue</>;
     case "DUE_SOON_REMINDER":
@@ -389,7 +437,11 @@ export default function Activity() {
           <ul>
             {needsAction.map((notification) => (
               <li key={notification.id}>
-                <ActivityItem notification={notification} friendIds={data.friendIds} />
+                <ActivityItem
+                  notification={notification}
+                  friendIds={data.friendIds}
+                  loanChoices={data.loanChoices}
+                />
               </li>
             ))}
           </ul>
@@ -406,7 +458,11 @@ export default function Activity() {
           <ul>
             {updates.map((notification) => (
               <li key={notification.id}>
-                <ActivityItem notification={notification} friendIds={data.friendIds} />
+                <ActivityItem
+                  notification={notification}
+                  friendIds={data.friendIds}
+                  loanChoices={data.loanChoices}
+                />
               </li>
             ))}
           </ul>

@@ -704,3 +704,24 @@ export async function createReaderNoteNotification(
     select: { id: true },
   });
 }
+
+// Tells a borrower the owner gave them more time with a book
+export function createLoanExtendedNotification(
+  senderId: User["id"],
+  receiverId: User["id"],
+  senderName: string,
+  bookId: string,
+  bookTitle: string,
+) {
+  return prisma.notification.create({
+    data: {
+      type: "LOAN_EXTENDED",
+      receiver: { connect: { id: receiverId } },
+      sender: { connect: { id: senderId } },
+      senderName,
+      book: { connect: { id: bookId } },
+      bookTitle,
+    },
+    select: { id: true },
+  });
+}

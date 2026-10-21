@@ -25,6 +25,9 @@ import { sendBookRequestEmail } from "~/email.server";
 import {
   deleteBook,
   getBookById,
+  EXTEND_WEEKS,
+  extendLoan,
+  loanWeeks,
   returnBook,
   updateBookMetadata,
   getLendingHistory,
@@ -44,6 +47,7 @@ import {
   createBookReturnedNotification,
   createNotification,
   createOverdueReminderNotification,
+  createLoanExtendedNotification,
   createReaderNoteNotification,
 } from "~/models/user.server";
 import { seo } from "~/seo";
@@ -307,6 +311,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     myNote: readerNotes.find((note) => note.user.id === userId) ?? null,
     canNote,
     noteMaxLength: NOTE_MAX_LENGTH,
+    extendWeeks: EXTEND_WEEKS,
     author,
     friendIds: followingIds,
   });
@@ -468,6 +473,35 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     await respondAsDemoPersona(friendRequest.id);
 
     return json({ friendRequestSent: true, message: "Friend request sent!" });
+  }
+
+  if (intent === "extendLoan" || intent === "markReturned") {
+    // Only the owner manages a loan from this side
+    if (book.userId !== userId) {
+      throw new Response("Unauthorized", { status: 403 });
+    }
+    if (!book.borrowerId) {
+      throw new Response("Book is not currently borrowed", { status: 400 });
+    }
+
+    if (intent === "markReturned") {
+      // The book came back in person, without the borrower pressing Return
+      await returnBook(book.id);
+      return json({ markedReturned: true });
+    }
+
+    await extendLoan(book.id, loanWeeks(formData.get("weeks"), EXTEND_WEEKS));
+    const owner = await getUserById(userId);
+    if (owner) {
+      await createLoanExtendedNotification(
+        userId,
+        book.borrowerId,
+        `${owner.firstname} ${owner.surname}`,
+        book.id,
+        book.title,
+      );
+    }
+    return json({ loanExtended: true });
   }
 
   if (intent === "sendReminder") {
@@ -1042,9 +1076,7 @@ export default function BookDetailsPage() {
                   : null;
 
                 return (
-                  <div
-                    className={`${panel} mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`}
-                  >
+                  <div className={`${panel} mt-6 space-y-3`}>
                     <p className="text-stone-800 dark:text-stone-200">
                       Lent to{" "}
                       <span className="font-semibold">
@@ -1084,7 +1116,8 @@ export default function BookDetailsPage() {
                         </span>
                       ) : null}
                     </p>
-                    <Form method="post" className="flex-shrink-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                    <Form method="post">
                       <input type="hidden" name="intent" value="sendReminder" />
                       <button
                         type="submit"
@@ -1106,6 +1139,44 @@ export default function BookDetailsPage() {
                             : "Send a reminder"}
                       </button>
                     </Form>
+                      <Form method="post" className="flex items-center gap-2">
+                        <input type="hidden" name="intent" value="extendLoan" />
+                        <label htmlFor="extend-weeks" className="sr-only">
+                          Extend by
+                        </label>
+                        <select
+                          id="extend-weeks"
+                          name="weeks"
+                          defaultValue={data.extendWeeks[1]}
+                          className="h-[38px] rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-700 dark:text-stone-200 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10"
+                        >
+                          {data.extendWeeks.map((weeks) => (
+                            <option key={weeks} value={weeks}>
+                              +{weeks} {weeks === 1 ? "week" : "weeks"}
+                            </option>
+                          ))}
+                        </select>
+                        <button type="submit" className={secondaryButton}>
+                          Extend
+                        </button>
+                      </Form>
+                      <Form
+                        method="post"
+                        onSubmit={(event) => {
+                          if (!confirm(`Mark ${data.book.title} as returned?`)) {
+                            event.preventDefault();
+                          }
+                        }}
+                      >
+                        <input type="hidden" name="intent" value="markReturned" />
+                        <button
+                          type="submit"
+                          className="rounded-md px-3 py-2 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+                        >
+                          Mark returned
+                        </button>
+                      </Form>
+                    </div>
                   </div>
                 );
               })()
