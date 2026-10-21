@@ -133,11 +133,14 @@ function LoanList({
   id,
   title,
   books,
+  personLabel,
   empty,
 }: {
   id: string;
   title: string;
   books: { book: HomeBook; person: Person | null }[];
+  // "From" or "To", so the name doesn't read as the author's
+  personLabel: string;
   empty: string;
 }) {
   return (
@@ -166,7 +169,9 @@ function LoanList({
                       {book.title}
                     </span>
                     <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
-                      {person ? `${person.firstname} ${person.surname}` : null}
+                      {person
+                        ? `${personLabel} ${person.firstname} ${person.surname}`
+                        : null}
                       {person && book.dueDate ? " · " : null}
                       {book.dueDate ? (
                         <span
@@ -232,12 +237,14 @@ export default function Home({
                 id="borrowing"
                 title="Borrowing"
                 books={books.borrowed.map((book) => ({ book, person: book.owner }))}
+                personLabel="From"
                 empty="Nothing borrowed right now."
               />
               <LoanList
                 id="lent-out"
                 title="Lent out"
                 books={books.lent.map((book) => ({ book, person: book.borrower }))}
+                personLabel="To"
                 empty="Everything's on your shelf."
               />
             </div>
