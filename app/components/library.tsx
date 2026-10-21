@@ -324,13 +324,13 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                       onClick={() => setStatus(value)}
                       className={`flex-shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-sm transition-colors ${
                         status === value
-                          ? "bg-stone-700 dark:bg-stone-200 text-white dark:text-stone-900"
-                          : "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700"
+                          ? "bg-stone-100 dark:bg-stone-800 font-medium text-stone-900 dark:text-stone-100"
+                          : "text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-900 hover:text-stone-800 dark:hover:text-stone-200"
                       }`}
                     >
                       {label}
                       <span
-                        className={`ml-1.5 ${status === value ? "opacity-70" : "text-stone-400 dark:text-stone-500"}`}
+                        className="ml-1.5 font-normal text-stone-400 dark:text-stone-500"
                       >
                         {count}
                       </span>
