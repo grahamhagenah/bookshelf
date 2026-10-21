@@ -1,5 +1,3 @@
-import { useId } from "react";
-
 // Lightweight SVG icons to replace MUI icons
 // Each icon is ~200 bytes vs MUI's ~20KB per icon
 
@@ -8,28 +6,29 @@ interface IconProps {
   size?: number;
 }
 
-// Books on a shelf, the last one leaning; the bands mark each spine
-export function BookshelfIcon({ className = "", size = 24 }: IconProps) {
-  const maskId = `bookshelf-${useId()}`;
+// Line-art stack of three books, the top one tilted
+export function StacksLogo({ className = "", size = 24 }: IconProps) {
   return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <mask id={maskId}>
-        <rect width="24" height="24" fill="white" />
-        <g fill="black">
-          <rect x="3.8" y="8" width="1.9" height="0.9" />
-          <rect x="8.3" y="5.5" width="2.4" height="0.9" />
-          <rect x="8.3" y="15.8" width="2.4" height="0.9" />
-          <rect x="13.2" y="9.5" width="1.6" height="0.9" />
-          <rect x="16.8" y="8" width="1.9" height="0.9" transform="rotate(16 16 19)" />
-        </g>
-      </mask>
-      <g mask={`url(#${maskId})`}>
-        <rect x="3" y="6" width="3.5" height="13" rx="0.75" />
-        <rect x="7.5" y="3.5" width="4" height="15.5" rx="0.75" />
-        <rect x="12.5" y="7.5" width="3" height="11.5" rx="0.75" />
-        <rect x="16" y="6" width="3.5" height="13" rx="0.75" transform="rotate(16 16 19)" />
+    <svg
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="16" width="18" height="4.5" rx="1" />
+      <path d="M6.5 16v4.5" />
+      <rect x="5" y="11.5" width="15" height="4.5" rx="1" />
+      <path d="M16.5 11.5V16" />
+      <g transform="rotate(-7 11 9)">
+        <rect x="4.5" y="7" width="14" height="4.5" rx="1" />
+        <path d="M8 7v4.5" />
       </g>
-      <rect x="1.5" y="19" width="21" height="2" rx="1" />
     </svg>
   );
 }
