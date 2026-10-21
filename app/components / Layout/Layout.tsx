@@ -5,7 +5,7 @@ interface LayoutProps {
 
 const Layout = ({ children, title }: LayoutProps) => {
   return (
-    <main className="w-full max-w-4xl mx-auto px-4 py-8 md:px-8 md:py-10">
+    <main className="w-full max-w-5xl mx-auto px-4 py-8 md:px-8 md:py-10">
       {/* The header breadcrumb already shows the page title */}
       {title ? <h1 className="sr-only">{title}</h1> : null}
       {/* Open sections split by hairlines rather than boxed cards */}
