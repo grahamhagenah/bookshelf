@@ -50,7 +50,7 @@ function Cover({ src, className = "" }: { src: string; className?: string }) {
 interface CardBook {
   title: string;
   cover: string;
-  status?: "lent" | "borrowed";
+  status?: "lent" | "borrowed" | "available";
   hearts?: number;
   className: string;
 }
@@ -68,6 +68,11 @@ function BookCard({ book, width = "w-[34%]" }: { book: CardBook; width?: string 
           <span className="inline-flex items-center gap-1 text-stone-500 dark:text-stone-400">
             <LentIcon size={11} />
             Lent out
+          </span>
+        ) : book.status === "available" ? (
+          <span className="inline-flex items-center gap-1.5 text-stone-500 dark:text-stone-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-stone-400 dark:bg-stone-500" />
+            Available
           </span>
         ) : book.status === "borrowed" ? (
           <span className="inline-flex items-center gap-1 font-medium text-stone-900 dark:text-stone-100">
@@ -150,6 +155,7 @@ export default function ShowcaseLending() {
         {
           title: "The Hobbit",
           cover: COVERS.hobbit,
+          status: "available" as const,
           hearts: 4,
           className: "right-0 top-[25%] sm:top-[21%] rotate-6",
         },
