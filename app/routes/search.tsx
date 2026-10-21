@@ -396,11 +396,11 @@ export default function Search() {
 
   return (
     <>
-      <main className="w-full max-w-4xl mx-auto px-4 py-8 md:px-8 md:py-12">
-        <h1 className="text-3xl md:text-4xl font-bold mb-8">Search</h1>
+      <main className="w-full max-w-4xl mx-auto px-4 py-8 md:px-8 md:py-10">
+        <h1 className="sr-only">Search</h1>
 
         {/* Search Form */}
-        <Form method="get" className="border rounded-lg p-6 mb-8">
+        <Form method="get" className="mb-8">
           <div className="flex flex-col gap-4">
             {/* Search Input */}
             <div className="relative">

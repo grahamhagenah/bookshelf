@@ -5,6 +5,7 @@ import invariant from "tiny-invariant";
 
 import Library from "~/components/library";
 import { getBookListItems } from "~/models/book.server";
+import { getLoveCounts } from "~/models/note.server";
 import { getUserById } from "~/models/user.server";
 import { requireUserId } from "~/session.server";
 
@@ -37,7 +38,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw new Response("Not Found", { status: 404 });
   }
 
-  const bookListItems = await getBookListItems(user.id);
+  const books = await getBookListItems(user.id);
+  const loveCounts = await getLoveCounts(books.map((book) => book.id));
+  const bookListItems = books.map((book) => ({
+    ...book,
+    loveCount: loveCounts.get(book.id) ?? 0,
+  }));
 
   return json({
     user,

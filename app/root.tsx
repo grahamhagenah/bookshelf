@@ -13,6 +13,7 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useLocation,
 } from "@remix-run/react";
 
 import { getUser } from "~/session.server";
@@ -43,6 +44,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function App() {
   const { user } = useLoaderData<typeof loader>();
   const isDarkMode = user?.darkMode ?? false;
+  // The logged-out landing page stands on its own, without the top bar
+  const isLanding = useLocation().pathname === "/" && !user;
 
   return (
     <html lang="en" className={`h-full ${isDarkMode ? "dark" : ""}`}>
@@ -53,7 +56,7 @@ export default function App() {
         <Links />
       </head>
       <body className="min-h-full flex flex-col bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors">
-        <Header />
+        {isLanding ? null : <Header />}
         {user?.demoGroup ? <DemoBanner /> : null}
         {/* One shared page width; the header and banner backgrounds stay full-bleed */}
         <div className="mx-auto w-full max-w-4xl flex-1">

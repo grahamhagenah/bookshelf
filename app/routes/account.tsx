@@ -276,8 +276,8 @@ export default function Account() {
   return (
     <>
       <Layout title="Account">
-        <section className="border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Account Details</h2>
+        <section>
+          <h2 className="text-lg font-semibold mb-4">Account Details</h2>
           <dl className="space-y-3">
             <div>
               <dt className="text-sm font-medium text-stone-500">Name</dt>
@@ -324,8 +324,8 @@ export default function Account() {
           </div>
         </section>
 
-        <section className="border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-2">Appearance</h2>
+        <section>
+          <h2 className="text-lg font-semibold mb-2">Appearance</h2>
           <p className="text-stone-600 dark:text-stone-400 mb-4">
             Customize how Stacks looks on your device.
           </p>
@@ -356,8 +356,8 @@ export default function Account() {
           </Form>
         </section>
 
-        <section className="border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-2">Notifications</h2>
+        <section>
+          <h2 className="text-lg font-semibold mb-2">Notifications</h2>
           <p className="text-stone-600 dark:text-stone-400 mb-4">
             Control how you receive notifications.
           </p>
@@ -397,8 +397,8 @@ export default function Account() {
           </Form>
         </section>
 
-        <section className="border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-2">Profile Picture</h2>
+        <section>
+          <h2 className="text-lg font-semibold mb-2">Profile Picture</h2>
           <p className="text-stone-600 dark:text-stone-400 mb-4">
             Choose an icon to represent you, or use your initials.
           </p>
@@ -457,8 +457,8 @@ export default function Account() {
           </Form>
         </section>
 
-        <section className="border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-2">Share Your Bookshelf</h2>
+        <section>
+          <h2 className="text-lg font-semibold mb-2">Share Your Bookshelf</h2>
           <p className="text-stone-600 mb-4">
             Anyone with this link can view your bookshelf without logging in.
           </p>
@@ -503,9 +503,9 @@ export default function Account() {
           )}
         </section>
 
-        <section className="border rounded-lg p-6">
+        <section>
           <Form method="post" className="space-y-4">
-            <h2 className="text-xl font-semibold mb-2">Update Profile</h2>
+            <h2 className="text-lg font-semibold mb-2">Update Profile</h2>
             <p className="text-stone-600">
               Change your name or email address below.
             </p>
@@ -617,10 +617,10 @@ export default function Account() {
         </section>
 
         {!data.user?.demoGroup ? (
-          <section className="border rounded-lg p-6">
+          <section>
             <Form method="post" className="space-y-4">
               <input type="hidden" name="intent" value="changePassword" />
-              <h2 className="text-xl font-semibold mb-2">Change Password</h2>
+              <h2 className="text-lg font-semibold mb-2">Change Password</h2>
               <p className="text-stone-600">
                 Update your password to keep your account secure.
               </p>

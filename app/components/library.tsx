@@ -7,6 +7,7 @@ import {
   SearchIcon,
   BookIcon,
   GridViewIcon,
+  HeartIcon,
   ListViewIcon,
 } from "./icons";
 
@@ -38,6 +39,7 @@ interface Book {
   lendCount?: number;
   isBorrowed?: boolean;
   isLending?: boolean;
+  loveCount?: number;
 }
 
 interface LibraryProps {
@@ -235,34 +237,6 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
         <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8" />
       ) : (
         <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8">
-          {/* View Toggle - Fixed bottom right */}
-          <div className="fixed bottom-4 right-4 z-50">
-            <div className="inline-flex rounded-full bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm border border-stone-200 dark:border-stone-700 p-0.5 shadow-sm">
-              <button
-                onClick={() => handleViewChange("cover")}
-                className={`w-8 h-8 rounded-full transition-colors flex items-center justify-center ${
-                  viewMode === "cover"
-                    ? "bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200"
-                    : "text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300"
-                }`}
-                title="Cover view"
-              >
-                <GridViewIcon size={18} />
-              </button>
-              <button
-                onClick={() => handleViewChange("list")}
-                className={`w-8 h-8 rounded-full transition-colors flex items-center justify-center ${
-                  viewMode === "list"
-                    ? "bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200"
-                    : "text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300"
-                }`}
-                title="List view"
-              >
-                <ListViewIcon size={18} />
-              </button>
-            </div>
-          </div>
-
           {/* Cover View */}
           {viewMode === "cover" ? (
             <ol className="grid grid-cols-3 gap-3 sm:gap-4 sm:grid-cols-4 md:grid-cols-5">
@@ -276,14 +250,28 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                       author={book.author}
                       className="w-full aspect-[2/3] transition-opacity duration-200 group-hover:opacity-90"
                     />
-                    {book.isBorrowed ? (
-                      <span className="block mt-1.5 text-xs font-medium text-stone-900 dark:text-stone-100 dark:text-stone-100">
-                        Borrowed
-                      </span>
-                    ) : null}
-                    {book.isLending ? (
-                      <span className="block mt-1.5 text-xs text-stone-500 dark:text-stone-400">
-                        Lent out
+                    {book.isBorrowed || book.isLending || book.loveCount ? (
+                      <span className="mt-1.5 flex items-center justify-between gap-2 text-xs">
+                        {book.isBorrowed ? (
+                          <span className="font-medium text-stone-900 dark:text-stone-100">
+                            Borrowed
+                          </span>
+                        ) : book.isLending ? (
+                          <span className="text-stone-500 dark:text-stone-400">
+                            Lent out
+                          </span>
+                        ) : (
+                          <span />
+                        )}
+                        {book.loveCount ? (
+                          <span
+                            className="inline-flex items-center gap-1 text-stone-400 dark:text-stone-500"
+                            title={`${book.loveCount} ${book.loveCount === 1 ? "reader loved" : "readers loved"} this`}
+                          >
+                            <HeartIcon size={11} filled />
+                            {book.loveCount}
+                          </span>
+                        ) : null}
                       </span>
                     ) : null}
                   </NavLink>
@@ -353,6 +341,12 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                         </span>
                       ) : null}
                     </div>
+                    {book.loveCount ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-stone-400 dark:text-stone-500 flex-shrink-0">
+                        <HeartIcon size={11} filled />
+                        {book.loveCount}
+                      </span>
+                    ) : null}
                     {book.isBorrowed ? (
                       <span className="bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs px-2 py-1 rounded-full flex-shrink-0">
                         Borrowed
@@ -368,6 +362,36 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
               ))}
             </ol>
           ) : null}
+
+          {/* View toggle, below the books */}
+          <div className="mt-8 flex justify-center gap-1">
+            <button
+              onClick={() => handleViewChange("cover")}
+              aria-pressed={viewMode === "cover"}
+              className={`w-7 h-7 rounded-md transition-colors flex items-center justify-center ${
+                viewMode === "cover"
+                  ? "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200"
+                  : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+              }`}
+              title="Cover view"
+              aria-label="Cover view"
+            >
+              <GridViewIcon size={16} />
+            </button>
+            <button
+              onClick={() => handleViewChange("list")}
+              aria-pressed={viewMode === "list"}
+              className={`w-7 h-7 rounded-md transition-colors flex items-center justify-center ${
+                viewMode === "list"
+                  ? "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200"
+                  : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+              }`}
+              title="List view"
+              aria-label="List view"
+            >
+              <ListViewIcon size={16} />
+            </button>
+          </div>
         </main>
       )}
     </>
