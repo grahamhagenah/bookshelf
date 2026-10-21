@@ -362,7 +362,7 @@ function SearchResultItem({
           }
           title={book.title}
           author={author}
-          className="w-16 h-24"
+          className="w-[74px] self-stretch"
         />
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-stone-900 dark:text-stone-100 leading-snug">
