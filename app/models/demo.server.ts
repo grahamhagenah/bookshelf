@@ -41,12 +41,13 @@ const VISITOR = {
   profileEmoji: null,
 };
 
+// Everyone shows initials; picking an icon is left for the visitor to try
 const PERSONAS = {
-  maya: { firstname: "Maya", surname: "Chen", profileEmoji: "leaf" },
-  sam: { firstname: "Sam", surname: "Okafor", profileEmoji: "mountain" },
-  priya: { firstname: "Priya", surname: "Patel", profileEmoji: "book" },
+  maya: { firstname: "Maya", surname: "Chen", profileEmoji: null },
+  sam: { firstname: "Sam", surname: "Okafor", profileEmoji: null },
+  priya: { firstname: "Priya", surname: "Patel", profileEmoji: null },
   // Theo has sent the visitor a friend request; Lena shows up as a suggestion
-  theo: { firstname: "Theo", surname: "Martin", profileEmoji: "wave" },
+  theo: { firstname: "Theo", surname: "Martin", profileEmoji: null },
   lena: { firstname: "Lena", surname: "Fischer", profileEmoji: null },
 } as const;
 
