@@ -15,7 +15,7 @@ export default function Footer() {
   const user = rootData?.user;
 
   return (
-    <footer className="mt-16 border-t border-stone-200 dark:border-stone-800 text-sm text-stone-500 dark:text-stone-400">
+    <footer className="mt-16 border-t border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 text-sm text-stone-500 dark:text-stone-400">
       <div className="mx-auto max-w-4xl px-4 md:px-8 py-8 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2 max-w-xs">
           <Link to={user ? "/books" : "/"} className="inline-flex items-center gap-2 font-semibold text-stone-900 dark:text-stone-100">
