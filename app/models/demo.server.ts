@@ -312,14 +312,14 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
   ],
   priya: [
     {
-      title: "Lessons in Chemistry",
-      author: "Bonnie Garmus",
-      isbn: "9780385547345",
-      datePublished: "2022",
-      pageCount: 390,
-      publisher: "Doubleday",
-      subjects: "Historical fiction, Science, Women",
-      body: "A chemist in the 1960s, pushed out of her lab, ends up hosting a cooking show and teaching a nation more than recipes.",
+      title: "Jonathan Strange & Mr Norrell",
+      author: "Susanna Clarke",
+      isbn: "9780765356154",
+      datePublished: "2004",
+      pageCount: 1006,
+      publisher: "Tor Books",
+      subjects: "Fantasy, Magic, Historical fiction",
+      body: "In Napoleonic England, two very different magicians revive English magic, become master and pupil, then rivals, as the old magic stirs back to life.",
     },
     {
       title: "The Midnight Library",
@@ -580,7 +580,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       dueDate: fromNow(22 * day),
     },
     {
-      title: "Lessons in Chemistry",
+      title: "Jonathan Strange & Mr Norrell",
       borrower: "you",
       borrowedAt: ago(26 * day),
       dueDate: fromNow(2 * day),
@@ -650,10 +650,10 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       at: ago(1 * day),
     },
     {
-      title: "Lessons in Chemistry",
+      title: "Jonathan Strange & Mr Norrell",
       by: "priya",
       loved: true,
-      body: "Funny and furious in equal measure.",
+      body: "Long, strange and completely enchanting. Read the footnotes.",
       at: ago(60 * day),
     },
   ];
@@ -699,7 +699,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       type: "DUE_SOON_REMINDER",
       from: "priya",
       to: "you",
-      title: "Lessons in Chemistry",
+      title: "Jonathan Strange & Mr Norrell",
       at: ago(3 * hour),
     },
     {
@@ -738,7 +738,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       type: "BOOK_APPROVED",
       from: "priya",
       to: "you",
-      title: "Lessons in Chemistry",
+      title: "Jonathan Strange & Mr Norrell",
       at: ago(26 * day),
       actionTaken: "dismissed",
     },
