@@ -9,7 +9,7 @@ import { getUserById } from "~/models/user.server";
 import { requireUserId } from "~/session.server";
 
 export const handle = {
-  breadcrumb: () => <Link to="/books">Books</Link>,
+  breadcrumb: () => <Link to="/books">My books</Link>,
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
