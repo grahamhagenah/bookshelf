@@ -43,31 +43,31 @@ export default function Index() {
         // on the right
         <div
           aria-hidden="true"
-          className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b sm:bg-gradient-to-r from-white via-white/90 sm:via-white/85 to-white/40 sm:to-transparent dark:from-stone-950 dark:via-stone-950/90 dark:to-transparent"
+          className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b sm:bg-gradient-to-r from-white sm:from-40% via-white/90 sm:via-white/80 sm:via-60% to-white/40 sm:to-transparent dark:from-stone-950 dark:via-stone-950/90 dark:to-transparent"
         />
       )}
       <section
         className={`relative flex flex-col justify-center px-4 md:px-8 py-16 ${user ? "min-h-[calc(100vh-60px)] items-center" : "min-h-screen"}`}
       >
         {/* Content sits on the page itself, no card */}
-        <div className="w-full max-w-lg">
-          <p className="flex items-center gap-2 text-base font-semibold text-stone-900 dark:text-stone-100">
-            <StacksLogo size={22} className="text-stone-900 dark:text-stone-100" />
+        <div className="w-full max-w-xl">
+          <p className="flex items-center gap-2.5 text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
+            <StacksLogo size={32} className="text-stone-900 dark:text-stone-100" />
             Stacks
           </p>
 
           {user ? (
             <>
-              <h1 className="mt-10 text-4xl sm:text-5xl font-semibold tracking-tight leading-[1.05] text-stone-900 dark:text-stone-50">
+              <h1 className="mt-10 text-5xl sm:text-6xl font-bold tracking-tight leading-[1.02] text-stone-900 dark:text-stone-50">
                 Welcome back, {user.firstname}.
               </h1>
-              <p className="mt-4 text-lg leading-relaxed text-stone-600 dark:text-stone-300">
+              <p className="mt-5 text-xl sm:text-2xl leading-snug text-stone-600 dark:text-stone-300">
                 Your shelf is right where you left it.
               </p>
               <div className="mt-8">
                 <Link
                   to="/books"
-                  className="inline-flex items-center justify-center rounded-md bg-stone-700 dark:bg-stone-200 px-5 py-2.5 font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+                  className="inline-flex items-center justify-center rounded-md bg-stone-700 dark:bg-stone-200 px-6 py-3 text-lg font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
                 >
                   Go to my library →
                 </Link>
@@ -75,23 +75,23 @@ export default function Index() {
             </>
           ) : (
             <>
-              <h1 className="mt-10 text-4xl sm:text-5xl font-semibold tracking-tight leading-[1.05] text-stone-900 dark:text-stone-50">
+              <h1 className="mt-10 text-5xl sm:text-6xl font-bold tracking-tight leading-[1.02] text-stone-900 dark:text-stone-50">
                 Your bookshelf,
                 <br />
                 shared with friends.
               </h1>
-              <p className="mt-4 text-lg leading-relaxed text-stone-600 dark:text-stone-300">
+              <p className="mt-5 text-xl sm:text-2xl leading-snug text-stone-600 dark:text-stone-300">
                 Keep track of the books you own, lend them to friends, and
                 borrow theirs.
               </p>
 
-              <ul className="mt-6 space-y-2 text-sm text-stone-600 dark:text-stone-300">
+              <ul className="mt-7 space-y-3 text-base sm:text-lg text-stone-600 dark:text-stone-300">
                 {FEATURES.map(({ label, icon }) => (
                   <li key={label} className="flex items-center gap-2.5">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400">
+                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400">
                       <svg
-                        width="13"
-                        height="13"
+                        width="16"
+                        height="16"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -111,18 +111,18 @@ export default function Index() {
               <div className="mt-8 flex flex-col sm:flex-row gap-3">
                 <Link
                   to="/join"
-                  className="inline-flex items-center justify-center rounded-md bg-stone-700 dark:bg-stone-200 px-5 py-2.5 font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+                  className="inline-flex items-center justify-center rounded-md bg-stone-700 dark:bg-stone-200 px-6 py-3 text-lg font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
                 >
                   Create an account
                 </Link>
                 <Link
                   to="/login"
-                  className="inline-flex items-center justify-center rounded-md bg-white/60 dark:bg-stone-800/60 ring-1 ring-inset ring-stone-300 dark:ring-stone-700 px-5 py-2.5 font-medium text-stone-800 dark:text-stone-200 hover:bg-white dark:hover:bg-stone-800 transition-colors"
+                  className="inline-flex items-center justify-center rounded-md bg-white/60 dark:bg-stone-800/60 ring-1 ring-inset ring-stone-300 dark:ring-stone-700 px-6 py-3 text-lg font-medium text-stone-800 dark:text-stone-200 hover:bg-white dark:hover:bg-stone-800 transition-colors"
                 >
                   Sign in
                 </Link>
               </div>
-              <div className="mt-5 text-sm text-stone-500 dark:text-stone-400">
+              <div className="mt-6 text-base text-stone-500 dark:text-stone-400">
                 <DemoButton className="text-stone-700 dark:text-stone-200 font-medium underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline">
                   Or look around a demo library first →
                 </DemoButton>
