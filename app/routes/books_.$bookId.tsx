@@ -959,24 +959,12 @@ export default function BookDetailsPage() {
           ) : (
             /* View Mode */
             <>
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <h1 className="text-3xl md:text-4xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
-                    {data.book.title}
-                  </h1>
-                  <p className="mt-1 text-lg md:text-xl text-stone-500 dark:text-stone-400">
-                    {data.book.author}
-                  </p>
-                </div>
-                {data.isOwner ? (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex-shrink-0 text-sm px-3 py-1 rounded-md border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:border-stone-300 dark:hover:border-stone-600 hover:text-stone-800 dark:hover:text-stone-200 transition-colors"
-                  >
-                    Edit
-                  </button>
-                ) : null}
-              </div>
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
+                {data.book.title}
+              </h1>
+              <p className="mt-1 text-lg md:text-xl text-stone-500 dark:text-stone-400">
+                {data.book.author}
+              </p>
 
               {details.length > 0 ? (
                 <p className="mt-4 text-sm text-stone-500 dark:text-stone-400">
@@ -1001,6 +989,17 @@ export default function BookDetailsPage() {
                     </span>
                   ))}
                 </div>
+              ) : null}
+
+              {/* Rarely needed, so it sits quietly under the details */}
+              {data.isOwner ? (
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  className="mt-3 text-sm text-stone-400 dark:text-stone-500 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+                >
+                  Edit details
+                </button>
               ) : null}
             </>
           )}
