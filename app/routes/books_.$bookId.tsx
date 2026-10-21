@@ -10,21 +10,22 @@ import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import { requireUserId } from "~/session.server";
 import { HistoryIcon, PersonAddIcon } from "~/components/icons";
 import CoverPlaceholder from "~/components/cover-placeholder";
+import Avatar from "~/components/avatar";
 
 function BookCover({ src, title, author }: { src: string; title: string; author: string }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 
   return (
-    <div className="relative w-[200px] h-[300px] rounded-lg overflow-hidden shadow-md">
-      {!loaded && <CoverPlaceholder title={title} author={author} large className="absolute inset-0" />}
+    <div className="relative w-[200px] h-[300px] overflow-hidden rounded-md">
+      {(!loaded || error) && <CoverPlaceholder title={title} author={author} large className="absolute inset-0" />}
       {!error && (
         <img
           src={src}
           alt={title}
           loading="lazy"
           decoding="async"
-          className={`w-full h-full object-cover rounded-lg ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+          className={`relative w-full h-full object-cover ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
           onLoad={(e) => {
             // Open Library answers unknown covers with a 1x1 pixel
             if (e.currentTarget.naturalWidth <= 1) setError(true);
@@ -381,10 +382,10 @@ export default function BookDetailsPage() {
               disabled={isSubmitting || requestSent}
               className={`mb-4 rounded border-2 w-full mt-8 px-4 py-3 text-base font-medium ${
                 requestSent
-                  ? "border-accent-500 text-accent-600 bg-accent-50 cursor-default"
+                  ? "border-stone-900 dark:border-stone-100 text-stone-900 dark:text-stone-100 bg-stone-100 cursor-default"
                   : isSubmitting
                   ? "border-stone-300 text-stone-400 cursor-wait"
-                  : "border-accent-500 text-accent-600 hover:bg-accent-50 focus:bg-accent-100"
+                  : "border-stone-900 dark:border-stone-100 text-stone-900 dark:text-stone-100 hover:bg-stone-50 focus:bg-stone-100"
               }`}
             >
               {requestSent ? "Request Sent" : isSubmitting ? "Requesting..." : "Request Book"}
@@ -403,7 +404,7 @@ export default function BookDetailsPage() {
                 disabled={isSendingFriendRequest || friendRequestSent}
                 className={`rounded w-full px-4 py-2 text-sm font-medium ${
                   friendRequestSent
-                    ? "bg-accent-500 text-white cursor-default"
+                    ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 cursor-default"
                     : isSendingFriendRequest
                     ? "bg-stone-300 text-stone-500 cursor-wait"
                     : "bg-stone-500 text-white hover:bg-stone-600"
@@ -419,13 +420,13 @@ export default function BookDetailsPage() {
             {data.book.user && (
               <div className={`border rounded-lg p-4 mt-8 ${
                 data.book.dueDate && new Date(data.book.dueDate) < new Date()
-                  ? "bg-accent-50 border-accent-200"
-                  : "bg-accent-50 border-accent-200"
+                  ? "bg-stone-100 border-stone-200"
+                  : "bg-stone-100 border-stone-200"
               }`}>
                 <p className={`text-sm ${
                   data.book.dueDate && new Date(data.book.dueDate) < new Date()
-                    ? "text-accent-800"
-                    : "text-accent-800"
+                    ? "text-stone-900 dark:text-stone-100"
+                    : "text-stone-900 dark:text-stone-100"
                 }`}>
                   <span className="font-semibold">Borrowed from:</span>{" "}
                   {data.book.user.firstname} {data.book.user.surname}
@@ -433,8 +434,8 @@ export default function BookDetailsPage() {
                 {data.book.borrowedAt && (
                   <p className={`text-sm mt-1 ${
                     data.book.dueDate && new Date(data.book.dueDate) < new Date()
-                      ? "text-accent-700"
-                      : "text-accent-700"
+                      ? "text-stone-900 dark:text-stone-100"
+                      : "text-stone-900 dark:text-stone-100"
                   }`}>
                     <span className="font-semibold">Since:</span>{" "}
                     {new Date(data.book.borrowedAt).toLocaleDateString("en-US", {
@@ -447,8 +448,8 @@ export default function BookDetailsPage() {
                 {data.book.dueDate && (
                   <p className={`text-sm mt-1 font-semibold ${
                     new Date(data.book.dueDate) < new Date()
-                      ? "text-accent-700"
-                      : "text-accent-700"
+                      ? "text-stone-900 dark:text-stone-100"
+                      : "text-stone-900 dark:text-stone-100"
                   }`}>
                     {new Date(data.book.dueDate) < new Date() ? (
                       <>Overdue! Was due {new Date(data.book.dueDate).toLocaleDateString("en-US", {
@@ -503,7 +504,7 @@ export default function BookDetailsPage() {
                 id="title"
                 name="title"
                 defaultValue={data.book.title}
-                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
+                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
                 required
               />
             </div>
@@ -517,7 +518,7 @@ export default function BookDetailsPage() {
                   name="cover"
                   defaultValue={data.book.cover}
                   placeholder="https://covers.openlibrary.org/..."
-                  className="flex-1 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 text-sm"
+                  className="flex-1 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900 text-sm"
                 />
                 {data.book.cover && (
                   <img
@@ -536,7 +537,7 @@ export default function BookDetailsPage() {
                 id="author"
                 name="author"
                 defaultValue={data.book.author}
-                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
+                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
                 required
               />
             </div>
@@ -548,7 +549,7 @@ export default function BookDetailsPage() {
                 name="body"
                 rows={4}
                 defaultValue={data.book.body}
-                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
+                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
               />
             </div>
 
@@ -561,7 +562,7 @@ export default function BookDetailsPage() {
                   name="datePublished"
                   defaultValue={data.book.datePublished || ""}
                   placeholder="e.g. 1984"
-                  className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
+                  className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
                 />
               </div>
               <div>
@@ -571,7 +572,7 @@ export default function BookDetailsPage() {
                   id="pageCount"
                   name="pageCount"
                   defaultValue={data.book.pageCount || ""}
-                  className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
+                  className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
                 />
               </div>
             </div>
@@ -583,7 +584,7 @@ export default function BookDetailsPage() {
                 id="publisher"
                 name="publisher"
                 defaultValue={data.book.publisher || ""}
-                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
+                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
               />
             </div>
 
@@ -595,7 +596,7 @@ export default function BookDetailsPage() {
                 name="subjects"
                 defaultValue={data.book.subjects || ""}
                 placeholder="Comma-separated, e.g. Fiction, Adventure, Classic"
-                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
+                className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 focus:border-stone-900 focus:ring-1 focus:ring-stone-900"
               />
             </div>
 
@@ -606,7 +607,7 @@ export default function BookDetailsPage() {
                 className={`rounded-lg px-4 py-2 font-medium ${
                   isSaving
                     ? "bg-stone-300 text-stone-500 cursor-wait"
-                    : "bg-accent-600 text-white hover:bg-accent-700"
+                    : "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300"
                 }`}
               >
                 {isSaving ? "Saving..." : "Save Changes"}
@@ -623,7 +624,7 @@ export default function BookDetailsPage() {
                   href={`https://openlibrary.org${data.book.openLibraryKey}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center text-accent-600 hover:text-accent-800 text-sm"
+                  className="inline-flex items-center text-stone-900 dark:text-stone-100 hover:text-stone-900 text-sm"
                 >
                   View on Open Library →
                 </a>
@@ -638,7 +639,7 @@ export default function BookDetailsPage() {
                     className={`rounded-lg border-2 px-4 py-2 text-sm ${
                       isRefreshing
                         ? "border-stone-300 text-stone-400 cursor-wait"
-                        : "border-accent-600 text-accent-600 hover:bg-accent-50 dark:hover:bg-accent-950"
+                        : "border-stone-900 dark:border-stone-100 text-stone-900 dark:text-stone-100 hover:bg-stone-50 dark:hover:bg-stone-800"
                     }`}
                   >
                     {isRefreshing ? "Refreshing..." : "Refresh from Open Library"}
@@ -648,14 +649,14 @@ export default function BookDetailsPage() {
                   <input type="hidden" name="intent" value="delete" />
                   <button
                     type="submit"
-                    className="rounded-lg border-2 border-accent-500 px-4 py-2 text-sm text-accent-500 hover:bg-accent-50 dark:hover:bg-accent-950"
+                    className="rounded-lg border-2 border-stone-900 dark:border-stone-100 px-4 py-2 text-sm text-stone-900 dark:text-stone-100 hover:bg-stone-50 dark:hover:bg-stone-800"
                   >
                     Delete Book
                   </button>
                 </Form>
               </div>
               {refreshResult && (
-                <p className={`text-sm ${refreshResult.refreshed ? "text-accent-600" : "text-stone-600"}`}>
+                <p className={`text-sm ${refreshResult.refreshed ? "text-stone-900 dark:text-stone-100" : "text-stone-600"}`}>
                   {refreshResult.message}
                 </p>
               )}
@@ -724,13 +725,13 @@ export default function BookDetailsPage() {
           const daysLeft = dueDate ? Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
 
           return (
-            <div className={`border rounded-lg p-4 my-4 ${isOverdue ? "bg-accent-50 border-accent-200 dark:bg-accent-950 dark:border-accent-800" : "bg-stone-50 border-stone-200 dark:bg-stone-950 dark:border-stone-800"}`}>
-              <p className={isOverdue ? "text-accent-800 dark:text-accent-200" : "text-stone-800 dark:text-stone-200"}>
+            <div className={`border rounded-lg p-4 my-4 ${isOverdue ? "bg-stone-100 border-stone-200 dark:bg-stone-800 dark:border-stone-600" : "bg-stone-50 border-stone-200 dark:bg-stone-950 dark:border-stone-800"}`}>
+              <p className={isOverdue ? "text-stone-900 dark:text-stone-100 dark:text-stone-100" : "text-stone-800 dark:text-stone-200"}>
                 <span className="font-semibold">Currently lent to:</span>{" "}
-                <span className={isOverdue ? "text-accent-700 dark:text-accent-300" : "text-stone-700 dark:text-stone-300"}>{data.book.borrower.firstname} {data.book.borrower.surname}</span>
+                <span className={isOverdue ? "text-stone-900 dark:text-stone-100 dark:text-stone-100" : "text-stone-700 dark:text-stone-300"}>{data.book.borrower.firstname} {data.book.borrower.surname}</span>
               </p>
               {data.book.borrowedAt && (
-                <p className={`text-sm mt-1 ${isOverdue ? "text-accent-700 dark:text-accent-300" : "text-stone-700 dark:text-stone-300"}`}>
+                <p className={`text-sm mt-1 ${isOverdue ? "text-stone-900 dark:text-stone-100 dark:text-stone-100" : "text-stone-700 dark:text-stone-300"}`}>
                   <span className="font-semibold">Since:</span>{" "}
                   {new Date(data.book.borrowedAt).toLocaleDateString("en-US", {
                     month: "long",
@@ -740,7 +741,7 @@ export default function BookDetailsPage() {
                 </p>
               )}
               {dueDate && (
-                <p className={`text-sm mt-1 font-semibold ${isOverdue ? "text-accent-700 dark:text-accent-300" : "text-stone-700 dark:text-stone-300"}`}>
+                <p className={`text-sm mt-1 font-semibold ${isOverdue ? "text-stone-900 dark:text-stone-100 dark:text-stone-100" : "text-stone-700 dark:text-stone-300"}`}>
                   {isOverdue ? (
                     <>Overdue by {Math.abs(daysLeft!)} {Math.abs(daysLeft!) === 1 ? "day" : "days"}</>
                   ) : daysLeft !== null && daysLeft <= 3 ? (
@@ -757,11 +758,11 @@ export default function BookDetailsPage() {
                   disabled={isSendingReminder || reminderSent}
                   className={`text-sm px-3 py-1.5 rounded ${
                     reminderSent
-                      ? "bg-accent-500 text-white cursor-default"
+                      ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 cursor-default"
                       : isSendingReminder
                       ? "bg-stone-300 text-stone-500 cursor-wait"
                       : isOverdue
-                      ? "bg-accent-600 text-white hover:bg-accent-700"
+                      ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300"
                       : "bg-stone-600 text-white hover:bg-stone-700"
                   }`}
                 >
@@ -789,38 +790,24 @@ export default function BookDetailsPage() {
               {data.lendingHistory.map((entry) => (
                 <li key={entry.id} className="flex items-center justify-between text-sm py-2 border-b border-stone-100 dark:border-stone-800 last:border-0">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-accent-100 dark:bg-accent-900 flex items-center justify-center text-accent-600 dark:text-accent-300 font-semibold text-xs flex-shrink-0">
-                      {entry.isCurrentUser ? (
-                        data.currentUser?.profileEmoji ? (
-                          <span className="text-lg">{data.currentUser.profileEmoji}</span>
-                        ) : (
-                          <>
-                            {(data.currentUser?.firstname?.[0] || "").toUpperCase()}
-                            {(data.currentUser?.surname?.[0] || "").toUpperCase()}
-                          </>
-                        )
-                      ) : entry.borrower.profileEmoji ? (
-                        <span className="text-lg">{entry.borrower.profileEmoji}</span>
-                      ) : (
-                        <>
-                          {(entry.borrower.firstname?.[0] || "").toUpperCase()}
-                          {(entry.borrower.surname?.[0] || "").toUpperCase()}
-                        </>
-                      )}
-                    </div>
+                    {entry.isCurrentUser ? (
+                      <Avatar firstname={data.currentUser?.firstname} surname={data.currentUser?.surname} icon={data.currentUser?.profileEmoji} size="sm" />
+                    ) : (
+                      <Avatar firstname={entry.borrower.firstname} surname={entry.borrower.surname} icon={entry.borrower.profileEmoji} size="sm" />
+                    )}
                     {entry.isCurrentUser ? (
                       <span className="font-medium text-stone-900 dark:text-stone-100">You</span>
                     ) : entry.isFriend ? (
                       <Link
                         to={`/friend/${entry.borrower.id}`}
-                        className="font-medium text-stone-900 dark:text-stone-100 hover:text-accent-600 dark:hover:text-accent-400"
+                        className="font-medium text-stone-900 dark:text-stone-100 hover:text-stone-900 dark:hover:text-white"
                       >
                         {entry.borrower.firstname} {entry.borrower.surname}
                       </Link>
                     ) : entry.borrower.shareToken ? (
                       <Link
                         to={`/shelf/${entry.borrower.shareToken}`}
-                        className="font-medium text-stone-900 dark:text-stone-100 hover:text-accent-600 dark:hover:text-accent-400"
+                        className="font-medium text-stone-900 dark:text-stone-100 hover:text-stone-900 dark:hover:text-white"
                       >
                         {entry.borrower.firstname} {entry.borrower.surname}
                       </Link>

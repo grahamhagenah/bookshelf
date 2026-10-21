@@ -115,7 +115,7 @@ export default function Notifications() {
             <span><strong>{notification.senderName}</strong> sent a friend request</span>
           </p>
           <div className="flex gap-2 flex-shrink-0">
-            <button className="flex-1 sm:flex-none rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 focus:bg-accent-400" type="submit" name="friend_request" value="accept">Accept</button>
+            <button className="flex-1 sm:flex-none rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700" type="submit" name="friend_request" value="accept">Accept</button>
             <button className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800" type="submit" name="friend_request" value="decline">Decline</button>
           </div>
         </form>
@@ -135,7 +135,7 @@ export default function Notifications() {
             <span><strong>{notification.senderName}</strong> wants to borrow <strong>{notification.bookTitle}</strong></span>
           </p>
           <div className="flex gap-2 flex-shrink-0">
-            <button className="flex-1 sm:flex-none rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 focus:bg-accent-400" type="submit" name="book_request" value="approve">Approve</button>
+            <button className="flex-1 sm:flex-none rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700" type="submit" name="book_request" value="approve">Approve</button>
             <button className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800" type="submit" name="book_request" value="decline">Decline</button>
           </div>
         </form>
@@ -149,7 +149,7 @@ export default function Notifications() {
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="BOOK_APPROVED" />
           <p className="flex items-start sm:items-center gap-3">
-            <CheckCircleIcon className="flex-shrink-0 text-accent-600" />
+            <CheckCircleIcon className="flex-shrink-0 text-stone-900 dark:text-stone-100" />
             <span><strong>{notification.senderName}</strong> approved your request for <strong>{notification.bookTitle}</strong></span>
           </p>
           <div className="flex gap-2 flex-shrink-0">
@@ -183,11 +183,11 @@ export default function Notifications() {
           <input type="hidden" name="notificationId" value={notification.id} />
           <input type="hidden" name="notificationType" value="OVERDUE_REMINDER" />
           <p className="flex items-start sm:items-center gap-3">
-            <ClockIcon className="flex-shrink-0 text-accent-600" />
+            <ClockIcon className="flex-shrink-0 text-stone-900 dark:text-stone-100" />
             <span><strong>{notification.bookTitle}</strong> is overdue — please return it to <strong>{notification.senderName}</strong></span>
           </p>
           <div className="flex gap-2 flex-shrink-0">
-            <a href={`/books/${notification.bookId}`} className="flex-1 sm:flex-none rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 text-center">View Book</a>
+            <a href={`/books/${notification.bookId}`} className="flex-1 sm:flex-none rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 text-center">View Book</a>
             <button className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800" type="submit" name="dismiss" value="true">Dismiss</button>
           </div>
         </form>
@@ -205,7 +205,7 @@ export default function Notifications() {
             <span><strong>{notification.bookTitle}</strong> is due soon — remember to return it to <strong>{notification.senderName}</strong></span>
           </p>
           <div className="flex gap-2 flex-shrink-0">
-            <a href={`/books/${notification.bookId}`} className="flex-1 sm:flex-none rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 text-center">View Book</a>
+            <a href={`/books/${notification.bookId}`} className="flex-1 sm:flex-none rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 text-center">View Book</a>
             <button className="flex-1 sm:flex-none rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800" type="submit" name="dismiss" value="true">Dismiss</button>
           </div>
         </form>

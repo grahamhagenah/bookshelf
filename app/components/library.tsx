@@ -28,33 +28,29 @@ interface LibraryProps {
   ownerName?: string; // If provided, this is someone else's library (friend or public)
 }
 
-// Simple progressive image component with native lazy loading
-function BookCover({ src, title, author, className, style }: { src: string; title: string; author?: string; className?: string; style?: React.CSSProperties }) {
+// One rounded box that clips both the image and its placeholder
+function BookCover({ src, title, author, className }: { src: string; title: string; author?: string; className?: string }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 
-  if (error) {
-    return <CoverPlaceholder title={title} author={author} className={className} />;
-  }
-
   return (
-    <div className={`relative ${className}`} style={style}>
-      {!loaded && (
-        <CoverPlaceholder title={title} author={author} className="absolute inset-0" />
+    <div className={`relative overflow-hidden rounded-md ${className}`}>
+      {(!loaded || error) && <CoverPlaceholder title={title} author={author} className="absolute inset-0" />}
+      {!error && (
+        <img
+          src={src}
+          alt={title}
+          loading="lazy"
+          decoding="async"
+          className={`relative w-full h-full object-cover ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+          onLoad={(e) => {
+            // Open Library answers unknown covers with a 1x1 pixel
+            if (e.currentTarget.naturalWidth <= 1) setError(true);
+            else setLoaded(true);
+          }}
+          onError={() => setError(true)}
+        />
       )}
-      <img
-        src={src}
-        alt={title}
-        loading="lazy"
-        decoding="async"
-        className={`w-full h-full object-cover rounded-lg ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
-        onLoad={(e) => {
-          // Open Library answers unknown covers with a 1x1 pixel
-          if (e.currentTarget.naturalWidth <= 1) setError(true);
-          else setLoaded(true);
-        }}
-        onError={() => setError(true)}
-      />
     </div>
   );
 }
@@ -105,7 +101,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
         <section className="flex flex-col items-center justify-center min-h-[calc(100vh-60px)] px-4 py-12">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-6xl font-bold text-stone-800 mb-4">
-              Welcome to your <span className="text-accent-600">lending library</span>
+              Welcome to your <span className="text-stone-900 dark:text-stone-100">lending library</span>
             </h1>
             <p className="text-xl text-stone-600 max-w-2xl mx-auto">
               Build your personal book collection, connect with friends, and share the joy of reading together.
@@ -118,46 +114,46 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
               <li>
                 <Link
                   to="/search"
-                  className="flex items-center gap-4 p-4 rounded-xl border-2 border-stone-100 hover:border-accent-300 hover:bg-accent-50 transition-all group"
+                  className="flex items-center gap-4 p-4 rounded-xl border-2 border-stone-100 hover:border-stone-400 hover:bg-stone-50 transition-all group"
                 >
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent-100 text-accent-600 font-bold text-xl group-hover:bg-accent-200 transition-colors">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-stone-100 text-stone-900 dark:text-stone-100 font-bold text-xl group-hover:bg-stone-200 transition-colors">
                     1
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg text-stone-800">Add books to your library</h3>
                     <p className="text-stone-600">Search for books by title or author and add them to your collection</p>
                   </div>
-                  <SearchIcon size={32} className="text-accent-400 group-hover:text-accent-600 transition-colors" />
+                  <SearchIcon size={32} className="text-stone-400 group-hover:text-stone-900 transition-colors" />
                 </Link>
               </li>
               <li>
                 <Link
                   to="/friends"
-                  className="flex items-center gap-4 p-4 rounded-xl border-2 border-stone-100 hover:border-accent-300 hover:bg-accent-50 transition-all group"
+                  className="flex items-center gap-4 p-4 rounded-xl border-2 border-stone-100 hover:border-stone-400 hover:bg-stone-50 transition-all group"
                 >
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent-100 text-accent-600 font-bold text-xl group-hover:bg-accent-200 transition-colors">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-stone-100 text-stone-900 dark:text-stone-100 font-bold text-xl group-hover:bg-stone-200 transition-colors">
                     2
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg text-stone-800">Connect with friends</h3>
                     <p className="text-stone-600">Find friends by email and see what books they have available</p>
                   </div>
-                  <GroupIcon size={32} className="text-accent-400 group-hover:text-accent-600 transition-colors" />
+                  <GroupIcon size={32} className="text-stone-400 group-hover:text-stone-900 transition-colors" />
                 </Link>
               </li>
               <li>
                 <Link
                   to="/account"
-                  className="flex items-center gap-4 p-4 rounded-xl border-2 border-stone-100 hover:border-accent-300 hover:bg-accent-50 transition-all group"
+                  className="flex items-center gap-4 p-4 rounded-xl border-2 border-stone-100 hover:border-stone-400 hover:bg-stone-50 transition-all group"
                 >
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent-100 text-accent-600 font-bold text-xl group-hover:bg-accent-200 transition-colors">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-stone-100 text-stone-900 dark:text-stone-100 font-bold text-xl group-hover:bg-stone-200 transition-colors">
                     3
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg text-stone-800">Share your bookshelf</h3>
                     <p className="text-stone-600">Generate a public link so anyone can browse your collection</p>
                   </div>
-                  <BookIcon size={32} className="text-accent-400 group-hover:text-accent-600 transition-colors" />
+                  <BookIcon size={32} className="text-stone-400 group-hover:text-stone-900 transition-colors" />
                 </Link>
               </li>
             </ol>
@@ -202,15 +198,15 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
           <ol className="grid grid-cols-3 gap-3 sm:gap-4 sm:grid-cols-4 md:grid-cols-5">
             {bookListItems.map((book) => (
               <li key={book.id} className="cover-wrapper">
-                <NavLink to={`/books/${book.id}`}>
+                <NavLink to={`/books/${book.id}`} className="group block">
                   <BookCover
                     src={getCoverUrl(book.cover, "M")}
                     title={book.title}
                     author={book.author}
-                    className="shadow-md book-cover w-full aspect-[2/3]"
+                    className="w-full aspect-[2/3] transition-opacity duration-200 group-hover:opacity-90"
                   />
                   {book.isBorrowed && (
-                    <span className="block mt-1.5 text-xs font-medium text-accent-700 dark:text-accent-300">Borrowed</span>
+                    <span className="block mt-1.5 text-xs font-medium text-stone-900 dark:text-stone-100 dark:text-stone-100">Borrowed</span>
                   )}
                   {book.isLending && (
                     <span className="block mt-1.5 text-xs text-stone-500 dark:text-stone-400">Lent out</span>
@@ -258,7 +254,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                     )}
                   </div>
                   {book.isBorrowed && (
-                    <span className="bg-accent-600 text-white text-xs px-2 py-1 rounded-full flex-shrink-0">
+                    <span className="bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs px-2 py-1 rounded-full flex-shrink-0">
                       Borrowed
                     </span>
                   )}

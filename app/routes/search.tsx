@@ -239,12 +239,12 @@ function SearchResultItem({ book, isInLibrary }: { book: OpenLibraryBook; isInLi
             disabled={isAdding || isAdded || alreadyInLibrary}
             className={`rounded px-3 py-1.5 text-sm mt-2 inline-flex items-center gap-1.5 ${
               isAdded
-                ? "bg-accent-500 text-white cursor-default"
+                ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 cursor-default"
                 : alreadyInLibrary
                 ? "bg-stone-200 text-stone-500 cursor-default"
                 : isAdding
                 ? "bg-stone-400 text-white cursor-wait"
-                : "bg-accent-500 text-white hover:bg-accent-600 focus:bg-accent-400"
+                : "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
             }`}
           >
             {isAdded ? (
@@ -341,7 +341,7 @@ export default function Search() {
                 name="q"
                 defaultValue={currentQuery}
                 placeholder="Search for books..."
-                className="w-full pl-10 pr-4 py-3 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-accent-500"
+                className="w-full pl-10 pr-4 py-3 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-stone-900"
               />
             </div>
 
@@ -356,7 +356,7 @@ export default function Search() {
                   id="type"
                   name="type"
                   defaultValue={currentType}
-                  className="w-full h-10 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500"
+                  className="w-full h-10 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900"
                 >
                   <option value="all">All Fields</option>
                   <option value="title">Title</option>
@@ -373,7 +373,7 @@ export default function Search() {
                   id="lang"
                   name="lang"
                   defaultValue={currentLang}
-                  className="w-full h-10 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500"
+                  className="w-full h-10 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900"
                 >
                   {LANGUAGES.map((lang) => (
                     <option key={lang.code} value={lang.code}>
@@ -388,7 +388,7 @@ export default function Search() {
                 <button
                   type="submit"
                   disabled={isSearching}
-                  className="w-full sm:w-auto h-10 px-6 bg-accent-500 text-white rounded-lg hover:bg-accent-600 focus:bg-accent-400 disabled:bg-stone-400"
+                  className="w-full sm:w-auto h-10 px-6 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 rounded-lg hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700 disabled:bg-stone-400"
                 >
                   {isSearching ? "Searching..." : "Search"}
                 </button>
@@ -482,7 +482,7 @@ export default function Search() {
                     to={getPageUrl(page)}
                     className={`px-3 py-2 rounded border ${
                       page === currentPage
-                        ? "bg-accent-500 text-white border-accent-500"
+                        ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 border-stone-900 dark:border-stone-100"
                         : "hover:bg-stone-100"
                     }`}
                     aria-current={page === currentPage ? "page" : undefined}

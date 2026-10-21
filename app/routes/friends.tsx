@@ -5,6 +5,7 @@ import { useLoaderData, useFetcher, Link } from "@remix-run/react";
 import { getUserById, createNotification, getUserByEmail, getSuggestedFriends, getPendingFriendRequests } from "~/models/user.server";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import { isDemoEmail } from "~/utils";
+import Avatar from "~/components/avatar";
 import { Form, useActionData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import Layout from "~/components / Layout/Layout";
@@ -163,16 +164,7 @@ export default function Friends() {
               {following.map((user, index) => (
                 <li key={index} className="py-3 first:pt-0 last:pb-0">
                   <a href={`/friend/${user.id}`} className="flex items-center gap-3 hover:bg-stone-50 dark:hover:bg-stone-800 -mx-2 px-2 py-2 rounded-lg transition-colors">
-                    <div className="w-10 h-10 rounded-full bg-accent-100 dark:bg-accent-900 flex items-center justify-center text-accent-600 dark:text-accent-300 font-semibold text-sm flex-shrink-0">
-                      {user.profileEmoji ? (
-                        <span className="text-xl">{user.profileEmoji}</span>
-                      ) : (
-                        <>
-                          {(user.firstname?.[0] || "").toUpperCase()}
-                          {(user.surname?.[0] || "").toUpperCase()}
-                        </>
-                      )}
-                    </div>
+                    <Avatar firstname={user.firstname} surname={user.surname} icon={user.profileEmoji} />
                     <div>
                       <h3 className="font-medium">{user.firstname} {user.surname}</h3>
                       {!isDemoEmail(user.email) && <p className="text-sm text-stone-500 dark:text-stone-400">{user.email}</p>}
@@ -217,7 +209,7 @@ export default function Friends() {
               .map((user) => (
                 <li key={user.id} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-accent-100 flex items-center justify-center text-accent-600 font-semibold text-sm flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-900 dark:text-stone-100 font-semibold text-sm flex-shrink-0">
                       {(user.firstname?.[0] || "").toUpperCase()}
                       {(user.surname?.[0] || "").toUpperCase()}
                     </div>
@@ -230,7 +222,7 @@ export default function Friends() {
                     type="button"
                     onClick={() => handleSendRequest(user.id)}
                     disabled={requestFetcher.state !== "idle"}
-                    className="rounded bg-accent-500 px-3 py-1.5 text-sm text-white hover:bg-accent-600 disabled:opacity-50"
+                    className="rounded bg-stone-900 dark:bg-stone-100 px-3 py-1.5 text-sm text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 disabled:opacity-50"
                   >
                     Send Request
                   </button>
@@ -281,7 +273,7 @@ export default function Friends() {
                       return (
                         <li key={user.id} className="p-3 flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm ${isPending ? 'bg-stone-100 text-stone-600' : 'bg-accent-100 text-accent-600'}`}>
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm ${isPending ? 'bg-stone-100 text-stone-600' : 'bg-stone-100 text-stone-900 dark:text-stone-100'}`}>
                               {(user.firstname?.[0] || "").toUpperCase()}
                               {(user.surname?.[0] || "").toUpperCase()}
                             </div>
@@ -299,7 +291,7 @@ export default function Friends() {
                               type="button"
                               onClick={() => handleSendRequest(user.id)}
                               disabled={requestFetcher.state !== "idle"}
-                              className="rounded bg-accent-500 px-3 py-1.5 text-sm text-white hover:bg-accent-600 disabled:opacity-50"
+                              className="rounded bg-stone-900 dark:bg-stone-100 px-3 py-1.5 text-sm text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 disabled:opacity-50"
                             >
                               Send Request
                             </button>
@@ -339,7 +331,7 @@ export default function Friends() {
                 className="w-full rounded border border-stone-300 px-3 py-2"
               />
               {actionData?.errors?.email && (
-                <div className="mt-1 text-sm text-accent-600" id="email-error">
+                <div className="mt-1 text-sm text-stone-900 dark:text-stone-100" id="email-error">
                   {actionData.errors.email}
                 </div>
               )}
@@ -347,7 +339,7 @@ export default function Friends() {
             <input type="hidden" name="redirectTo" value={redirectTo} />
             <button
               type="submit"
-              className="rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600"
+              className="rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300"
             >
               Send friend request
             </button>

@@ -12,7 +12,7 @@ export default function Index() {
       <section className="flex flex-col items-center justify-center min-h-[calc(100vh-60px)] px-4 py-12">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-4 mb-6">
-            <BookshelfIcon size={64} className="text-accent-600" />
+            <BookshelfIcon size={64} className="text-stone-900 dark:text-stone-100" />
           </div>
           <h1 className="text-5xl md:text-7xl font-bold text-stone-800 dark:text-stone-100 mb-4">
             Stacks
@@ -29,7 +29,7 @@ export default function Index() {
             </p>
             <Link
               to="/books"
-              className="inline-flex items-center justify-center w-full rounded-xl bg-accent-500 px-6 py-3 text-lg font-medium text-white hover:bg-accent-600 focus:bg-accent-400 transition-colors"
+              className="inline-flex items-center justify-center w-full rounded-xl bg-stone-900 dark:bg-stone-100 px-6 py-3 text-lg font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700 transition-colors"
             >
               Go to my library
             </Link>
@@ -40,13 +40,13 @@ export default function Index() {
             <div className="space-y-3">
               <Link
                 to="/join"
-                className="flex items-center justify-center w-full rounded-xl bg-accent-500 px-6 py-3 text-lg font-medium text-white hover:bg-accent-600 focus:bg-accent-400 transition-colors"
+                className="flex items-center justify-center w-full rounded-xl bg-stone-900 dark:bg-stone-100 px-6 py-3 text-lg font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700 transition-colors"
               >
                 Create an account
               </Link>
               <Link
                 to="/login"
-                className="flex items-center justify-center w-full rounded-xl border-2 border-stone-200 dark:border-stone-700 px-6 py-3 text-lg font-medium text-stone-700 dark:text-stone-300 hover:border-accent-300 hover:bg-accent-50 dark:hover:bg-stone-800 transition-colors"
+                className="flex items-center justify-center w-full rounded-xl border-2 border-stone-200 dark:border-stone-700 px-6 py-3 text-lg font-medium text-stone-700 dark:text-stone-300 hover:border-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
               >
                 Sign in
               </Link>
@@ -55,7 +55,7 @@ export default function Index() {
                   type="submit"
                   name="intent"
                   value="start"
-                  className="w-full text-center text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 font-medium py-2"
+                  className="w-full text-center text-stone-900 dark:text-stone-100 dark:text-stone-100 hover:text-stone-900 dark:hover:text-white font-medium py-2"
                 >
                   Or explore a demo library first →
                 </button>

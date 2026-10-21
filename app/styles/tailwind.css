@@ -7,19 +7,6 @@
 
 @theme {
   --font-family-sans: 'Ubuntu', sans-serif;
-
-  /* The one brand color: a warm terracotta. Everything else is stone. */
-  --color-accent-50: #faf5f2;
-  --color-accent-100: #f3e7e0;
-  --color-accent-200: #e6cdbf;
-  --color-accent-300: #d3a993;
-  --color-accent-400: #bb7f63;
-  --color-accent-500: #a35f43;
-  --color-accent-600: #8c4d35;
-  --color-accent-700: #733f2d;
-  --color-accent-800: #5e3427;
-  --color-accent-900: #4d2c22;
-  --color-accent-950: #2a1510;
 }
 
 /* Tailwind v4 defaults borders to currentColor; keep them quiet instead */
@@ -49,15 +36,12 @@ body {
 
 .dark .bg-stone-50 { background-color: var(--color-stone-900); }
 .dark .bg-stone-100 { background-color: var(--color-stone-800); }
-.dark .bg-accent-50 { background-color: color-mix(in oklab, var(--color-accent-500) 12%, transparent); }
-.dark .bg-accent-100 { background-color: color-mix(in oklab, var(--color-accent-500) 18%, transparent); }
 
 .dark .text-stone-500 { color: var(--color-stone-400); }
 .dark .text-stone-600 { color: var(--color-stone-300); }
 .dark .text-stone-700 { color: var(--color-stone-200); }
 .dark .text-stone-800 { color: var(--color-stone-100); }
 .dark .text-stone-900 { color: var(--color-stone-50); }
-.dark .text-accent-600, .dark .text-accent-700, .dark .text-accent-800 { color: var(--color-accent-300); }
 
 .dark hr {
   border-color: var(--color-stone-800);

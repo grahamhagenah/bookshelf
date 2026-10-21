@@ -5,6 +5,7 @@ import { json, redirect } from "@remix-run/node";
 import { getUserById, getUserByEmail, updateUser, generateShareToken, revokeShareToken, changePassword, toggleDarkMode, toggleEmailNotifications } from "~/models/user.server";
 import { getBookStats } from "~/models/book.server";
 import { getDemoGroup } from "~/models/demo.server";
+import Avatar, { AVATAR_ICONS, AvatarGlyph, isAvatarIcon } from "~/components/avatar";
 import Layout from "~/components / Layout/Layout";
 import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
@@ -60,7 +61,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (intent === "updateProfileEmoji") {
     const emoji = formData.get("emoji");
     await updateUser(userId, {
-      profileEmoji: emoji === "" ? null : (emoji as string),
+      profileEmoji: isAvatarIcon(emoji) ? emoji : null,
     });
     return json({ errors: null, passwordErrors: null, success: false, passwordSuccess: false, emojiSuccess: true });
   }
@@ -198,8 +199,8 @@ export default function Account() {
               <dd className="text-2xl font-semibold text-stone-900">{data.bookStats.totalBooks}</dd>
               <dt className="text-sm text-stone-500">Books</dt>
             </div>
-            <div className="bg-accent-50 rounded-lg p-3">
-              <dd className="text-2xl font-semibold text-accent-600">{data.bookStats.borrowedBooks}</dd>
+            <div className="bg-stone-100 rounded-lg p-3">
+              <dd className="text-2xl font-semibold text-stone-900 dark:text-stone-100">{data.bookStats.borrowedBooks}</dd>
               <dt className="text-sm text-stone-500">Borrowed</dt>
             </div>
             <div className="bg-stone-50 rounded-lg p-3">
@@ -224,7 +225,7 @@ export default function Account() {
           <button
             type="submit"
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              data.user?.darkMode ? "bg-accent-500" : "bg-stone-300"
+              data.user?.darkMode ? "bg-stone-900 dark:bg-stone-400" : "bg-stone-300 dark:bg-stone-700"
             }`}
           >
             <span
@@ -251,7 +252,7 @@ export default function Account() {
           <button
             type="submit"
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              data.user?.emailNotifications ? "bg-accent-500" : "bg-stone-300"
+              data.user?.emailNotifications ? "bg-stone-900 dark:bg-stone-400" : "bg-stone-300 dark:bg-stone-700"
             }`}
           >
             <span
@@ -266,61 +267,51 @@ export default function Account() {
       <section className="border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-2">Profile Picture</h2>
         <p className="text-stone-600 dark:text-stone-400 mb-4">
-          Choose an emoji to represent you, or use your initials.
+          Choose an icon to represent you, or use your initials.
         </p>
 
         {actionData?.emojiSuccess && (
-          <div className="p-3 rounded bg-accent-100 text-accent-800 mb-4">
-            Profile picture updated successfully.
+          <div className="p-3 rounded bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-100 mb-4">
+            Profile picture updated.
           </div>
         )}
 
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 rounded-full bg-accent-100 dark:bg-accent-900 flex items-center justify-center text-accent-600 dark:text-accent-300 font-semibold text-xl flex-shrink-0">
-            {data.user?.profileEmoji ? (
-              <span className="text-3xl">{data.user.profileEmoji}</span>
-            ) : (
-              <>
-                {(data.user?.firstname?.[0] || "").toUpperCase()}
-                {(data.user?.surname?.[0] || "").toUpperCase()}
-              </>
-            )}
-          </div>
+          <Avatar firstname={data.user?.firstname} surname={data.user?.surname} icon={data.user?.profileEmoji} size="lg" />
           <div className="text-sm text-stone-600 dark:text-stone-400">
-            {data.user?.profileEmoji ? "Current emoji" : "Using initials"}
+            {isAvatarIcon(data.user?.profileEmoji) ? "Using an icon" : "Using initials"}
           </div>
         </div>
 
         <Form method="post">
           <input type="hidden" name="intent" value="updateProfileEmoji" />
-          <div className="grid grid-cols-8 sm:grid-cols-10 gap-2 mb-4">
-            {["😀", "😎", "🤓", "🧐", "🤔", "😊", "🥳", "🤩", "😇", "🙂",
-              "👤", "👩", "👨", "🧑", "👧", "👦", "🧔", "👴", "👵", "🧓",
-              "🦊", "🐱", "🐶", "🐼", "🐨", "🦁", "🐯", "🐮", "🐷", "🐸",
-              "📚", "📖", "📕", "📗", "📘", "📙", "🎓", "✏️", "🖊️", "📝",
-              "🌟", "⭐", "🌈", "🔥", "💡", "💎", "🎨", "🎭", "🎪", "🎯"
-            ].map((emoji) => (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {AVATAR_ICONS.map((icon) => (
               <button
-                key={emoji}
+                key={icon}
                 type="submit"
                 name="emoji"
-                value={emoji}
-                className={`w-10 h-10 text-2xl rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors flex items-center justify-center ${
-                  data.user?.profileEmoji === emoji ? "bg-accent-100 dark:bg-accent-900 ring-2 ring-accent-500" : ""
+                value={icon}
+                aria-label={`Use the ${icon} icon`}
+                aria-pressed={data.user?.profileEmoji === icon}
+                className={`w-11 h-11 rounded-full border transition-colors flex items-center justify-center text-stone-700 dark:text-stone-200 ${
+                  data.user?.profileEmoji === icon
+                    ? "border-stone-900 dark:border-stone-100 bg-stone-100 dark:bg-stone-800"
+                    : "border-stone-200 dark:border-stone-700 hover:border-stone-400 dark:hover:border-stone-500"
                 }`}
               >
-                {emoji}
+                <AvatarGlyph icon={icon} size={22} />
               </button>
             ))}
           </div>
-          {data.user?.profileEmoji && (
+          {isAvatarIcon(data.user?.profileEmoji) && (
             <button
               type="submit"
               name="emoji"
               value=""
               className="text-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 underline"
             >
-              Remove emoji and use initials
+              Use my initials instead
             </button>
           )}
         </Form>
@@ -344,7 +335,7 @@ export default function Account() {
               <button
                 type="button"
                 onClick={handleCopy}
-                className="rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 focus:bg-accent-400"
+                className="rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
               >
                 {copied ? "Copied!" : "Copy Link"}
               </button>
@@ -352,7 +343,7 @@ export default function Account() {
                 <input type="hidden" name="intent" value="revokeShareToken" />
                 <button
                   type="submit"
-                  className="rounded border border-accent-500 px-4 py-2 text-accent-500 hover:bg-accent-50"
+                  className="rounded border border-stone-900 dark:border-stone-100 px-4 py-2 text-stone-900 dark:text-stone-100 hover:bg-stone-50"
                 >
                   Revoke Access
                 </button>
@@ -364,7 +355,7 @@ export default function Account() {
             <input type="hidden" name="intent" value="generateShareToken" />
             <button
               type="submit"
-              className="rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 focus:bg-accent-400"
+              className="rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
             >
               Generate Share Link
             </button>
@@ -378,7 +369,7 @@ export default function Account() {
           <p className="text-stone-600">Change your name or email address below.</p>
 
           {actionData?.success && (
-            <div className="p-3 rounded bg-accent-100 text-accent-800">
+            <div className="p-3 rounded bg-stone-100 text-stone-900 dark:text-stone-100">
               Your profile has been updated successfully.
             </div>
           )}
@@ -402,7 +393,7 @@ export default function Account() {
                 className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.firstname && (
-                <div className="pt-1 text-accent-700" id="firstname-error">
+                <div className="pt-1 text-stone-900 dark:text-stone-100" id="firstname-error">
                   {actionData.errors.firstname}
                 </div>
               )}
@@ -428,7 +419,7 @@ export default function Account() {
                 className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.surname && (
-                <div className="pt-1 text-accent-700" id="surname-error">
+                <div className="pt-1 text-stone-900 dark:text-stone-100" id="surname-error">
                   {actionData.errors.surname}
                 </div>
               )}
@@ -456,7 +447,7 @@ export default function Account() {
                 className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.email && (
-                <div className="pt-1 text-accent-700" id="email-error">
+                <div className="pt-1 text-stone-900 dark:text-stone-100" id="email-error">
                   {actionData.errors.email}
                 </div>
               )}
@@ -465,7 +456,7 @@ export default function Account() {
 
           <button
             type="submit"
-            className="rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 focus:bg-accent-400"
+            className="rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
           >
             Save changes
           </button>
@@ -480,7 +471,7 @@ export default function Account() {
           <p className="text-stone-600">Update your password to keep your account secure.</p>
 
           {actionData?.passwordSuccess && (
-            <div className="p-3 rounded bg-accent-100 text-accent-800">
+            <div className="p-3 rounded bg-stone-100 text-stone-900 dark:text-stone-100">
               Your password has been changed successfully.
             </div>
           )}
@@ -503,7 +494,7 @@ export default function Account() {
                 className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.passwordErrors?.currentPassword && (
-                <div className="pt-1 text-accent-700" id="currentPassword-error">
+                <div className="pt-1 text-stone-900 dark:text-stone-100" id="currentPassword-error">
                   {actionData.passwordErrors.currentPassword}
                 </div>
               )}
@@ -528,7 +519,7 @@ export default function Account() {
                 className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.passwordErrors?.newPassword && (
-                <div className="pt-1 text-accent-700" id="newPassword-error">
+                <div className="pt-1 text-stone-900 dark:text-stone-100" id="newPassword-error">
                   {actionData.passwordErrors.newPassword}
                 </div>
               )}
@@ -553,7 +544,7 @@ export default function Account() {
                 className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.passwordErrors?.confirmPassword && (
-                <div className="pt-1 text-accent-700" id="confirmPassword-error">
+                <div className="pt-1 text-stone-900 dark:text-stone-100" id="confirmPassword-error">
                   {actionData.passwordErrors.confirmPassword}
                 </div>
               )}
@@ -562,7 +553,7 @@ export default function Account() {
 
           <button
             type="submit"
-            className="rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 focus:bg-accent-400"
+            className="rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
           >
             Change Password
           </button>
