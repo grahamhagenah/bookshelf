@@ -181,7 +181,7 @@ function BookCover({
   const [error, setError] = useState(false);
 
   return (
-    <div className="relative w-[140px] h-[210px] md:w-[200px] md:h-[300px] overflow-hidden rounded-md shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10">
+    <div className="relative w-[140px] h-[210px] md:w-[200px] md:h-[300px] overflow-hidden rounded-xs shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10">
       {!loaded || error ? (
         <CoverPlaceholder
           title={title}
@@ -196,7 +196,7 @@ function BookCover({
           alt={title}
           loading="lazy"
           decoding="async"
-          className={`relative w-full h-full object-cover scale-[1.04] ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
+          className={`relative w-full h-full object-cover ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
           onLoad={(e) => {
             // Open Library answers unknown covers with a 1x1 pixel
             if (e.currentTarget.naturalWidth <= 1) setError(true);

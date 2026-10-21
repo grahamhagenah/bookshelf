@@ -259,7 +259,7 @@ function SmallCover({
   const [failed, setFailed] = useState(false);
   return (
     <div
-      className={`relative flex-shrink-0 overflow-hidden rounded-md shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}
+      className={`relative flex-shrink-0 overflow-hidden rounded-xs shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}
     >
       {/* Too small for the placeholder's text; the title sits alongside */}
       <div className="absolute inset-0 bg-stone-200 dark:bg-stone-800" />
@@ -268,7 +268,7 @@ function SmallCover({
           src={src}
           alt={`${title} by ${author}`}
           loading="lazy"
-          className="relative h-full w-full object-cover scale-[1.04]"
+          className="relative h-full w-full object-cover"
           onLoad={(e) => {
             // Open Library answers unknown covers with a 1x1 pixel
             if (e.currentTarget.naturalWidth <= 1) setFailed(true);
