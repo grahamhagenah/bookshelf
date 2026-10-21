@@ -681,7 +681,7 @@ function BookFacts({ data }: { data: BookData }) {
   } else if (!data.isBorrower) {
     rows.push(["Status", book.borrower ? "Out on loan" : "Available to borrow"]);
     if (owner) {
-      rows.push([`On ${owner.firstname}'s shelf since`, monthDay(book.createdAt)]);
+      rows.push(["Added", `${monthDay(book.createdAt)} by ${owner.firstname}`]);
     }
   }
   if (book.lendCount > 0 || data.isOwner) {
@@ -695,11 +695,12 @@ function BookFacts({ data }: { data: BookData }) {
   if (rows.length === 0) return null;
 
   return (
-    <dl className="space-y-1.5 text-sm">
+    // Short labels in a narrow column, values right beside them
+    <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
       {rows.map(([label, value]) => (
-        <div key={label} className="flex items-baseline justify-between gap-3">
+        <div key={label} className="contents">
           <dt className="text-stone-500 dark:text-stone-400">{label}</dt>
-          <dd className="min-w-0 text-right text-stone-800 dark:text-stone-200">{value}</dd>
+          <dd className="text-stone-800 dark:text-stone-200">{value}</dd>
         </div>
       ))}
     </dl>
