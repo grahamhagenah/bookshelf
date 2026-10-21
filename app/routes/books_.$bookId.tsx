@@ -1,4 +1,5 @@
 import type {
+  SerializeFrom,
   ActionFunctionArgs,
   LoaderFunctionArgs,
   MetaFunction,
@@ -18,7 +19,6 @@ import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
-import { PersonAddIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import ReaderNotes, { LoveButton } from "~/components/reader-notes";
 import { sendBookRequestEmail } from "~/email.server";
@@ -53,13 +53,6 @@ import {
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 import { cleanSubjects, coverSrc, stripMarkdown } from "~/utils";
-
-const shortDate = (date: string | Date) =>
-  new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 
 // "Oct 21", adding the year only when it isn't this year
 const monthDay = (date: string | Date) => {
@@ -657,6 +650,123 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   return null;
 };
 
+type BookData = SerializeFrom<typeof loader>;
+
+// A few facts beside the cover: where the book is, when it arrived, how
+// often it's been lent
+function BookFacts({ data }: { data: BookData }) {
+  const { book } = data;
+  const owner = book.user;
+  const rows: [string, React.ReactNode][] = [];
+
+  if (data.isOwner) {
+    rows.push([
+      "Status",
+      book.borrower ? (
+        <>
+          Lent to {book.borrower.firstname}
+          {book.dueDate ? (
+            new Date(book.dueDate) < new Date() ? (
+              <span className="font-semibold text-stone-900 dark:text-stone-100"> · overdue</span>
+            ) : (
+              ` · due ${monthDay(book.dueDate)}`
+            )
+          ) : null}
+        </>
+      ) : (
+        "On your shelf"
+      ),
+    ]);
+    rows.push(["Added", monthDay(book.createdAt)]);
+  } else if (!data.isBorrower) {
+    rows.push(["Status", book.borrower ? "Out on loan" : "Available to borrow"]);
+    if (owner) {
+      rows.push([`On ${owner.firstname}'s shelf since`, monthDay(book.createdAt)]);
+    }
+  }
+  if (book.lendCount > 0 || data.isOwner) {
+    rows.push([
+      "Lent",
+      book.lendCount === 0
+        ? "Not yet"
+        : `${book.lendCount} ${book.lendCount === 1 ? "time" : "times"}`,
+    ]);
+  }
+  if (rows.length === 0) return null;
+
+  return (
+    <dl className="space-y-1.5 text-sm">
+      {rows.map(([label, value]) => (
+        <div key={label} className="flex items-baseline justify-between gap-3">
+          <dt className="text-stone-500 dark:text-stone-400">{label}</dt>
+          <dd className="min-w-0 text-right text-stone-800 dark:text-stone-200">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+// Everyone who has had this copy, newest first
+function LendingHistory({
+  entries,
+  currentUser,
+}: {
+  entries: BookData["lendingHistory"];
+  currentUser: BookData["currentUser"];
+}) {
+  return (
+    <div>
+      <h2 className="mb-1 text-sm font-semibold text-stone-500 dark:text-stone-400">
+        Lending history
+      </h2>
+      <ul className="divide-y divide-stone-100 dark:divide-stone-800">
+        {entries.map((entry) => {
+          const person = entry.isCurrentUser && currentUser ? currentUser : entry.borrower;
+          const name = `${entry.borrower.firstname} ${entry.borrower.surname}`;
+          return (
+            <li key={entry.id} className="flex items-center gap-2.5 py-2 text-sm">
+              <Avatar
+                firstname={person.firstname}
+                surname={person.surname}
+                icon={person.profileEmoji}
+                size="xs"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-stone-900 dark:text-stone-100">
+                  {entry.isCurrentUser ? (
+                    "You"
+                  ) : entry.isFriend ? (
+                    <Link
+                      to={`/friend/${entry.borrower.id}`}
+                      className="underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+                    >
+                      {name}
+                    </Link>
+                  ) : entry.borrower.shareToken ? (
+                    <Link
+                      to={`/share/${entry.borrower.shareToken}`}
+                      className="underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+                    >
+                      {name}
+                    </Link>
+                  ) : (
+                    name
+                  )}
+                </p>
+                <p className="text-xs text-stone-400 dark:text-stone-500">
+                  {entry.returnedAt
+                    ? `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
+                    : `Since ${monthDay(entry.borrowedAt)} · has it now`}
+                </p>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export default function BookDetailsPage() {
   const data = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>() as {
@@ -851,6 +961,15 @@ export default function BookDetailsPage() {
                   Return book
                 </button>
               </Form>
+            </div>
+          ) : null}
+          {!isEditing ? <BookFacts data={data} /> : null}
+          {!isEditing && data.lendingHistory.length > 0 ? (
+            <div className="hidden md:block">
+              <LendingHistory
+                entries={data.lendingHistory}
+                currentUser={data.currentUser}
+              />
             </div>
           ) : null}
         </section>
@@ -1250,98 +1369,13 @@ export default function BookDetailsPage() {
             />
           ) : null}
 
-          {!isEditing &&
-          data.lendingHistory &&
-          data.lendingHistory.length > 0 ? (
-            <div className="mt-10">
-              <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-1">
-                Lending history
-              </h2>
-              <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-                {data.lendingHistory.map((entry) => (
-                  <li
-                    key={entry.id}
-                    className="flex items-center justify-between gap-3 text-sm py-2.5"
-                  >
-                    <div className="flex items-center gap-3">
-                      {entry.isCurrentUser ? (
-                        <Avatar
-                          firstname={data.currentUser?.firstname}
-                          surname={data.currentUser?.surname}
-                          icon={data.currentUser?.profileEmoji}
-                          size="sm"
-                        />
-                      ) : (
-                        <Avatar
-                          firstname={entry.borrower.firstname}
-                          surname={entry.borrower.surname}
-                          icon={entry.borrower.profileEmoji}
-                          size="sm"
-                        />
-                      )}
-                      {entry.isCurrentUser ? (
-                        <span className="font-medium text-stone-900 dark:text-stone-100">
-                          You
-                        </span>
-                      ) : entry.isFriend ? (
-                        <Link
-                          to={`/friend/${entry.borrower.id}`}
-                          className="font-medium text-stone-900 dark:text-stone-100 hover:text-stone-900 dark:hover:text-white"
-                        >
-                          {entry.borrower.firstname} {entry.borrower.surname}
-                        </Link>
-                      ) : entry.borrower.shareToken ? (
-                        <Link
-                          to={`/shelf/${entry.borrower.shareToken}`}
-                          className="font-medium text-stone-900 dark:text-stone-100 hover:text-stone-900 dark:hover:text-white"
-                        >
-                          {entry.borrower.firstname} {entry.borrower.surname}
-                        </Link>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-stone-900 dark:text-stone-100">
-                            {entry.borrower.firstname} {entry.borrower.surname}
-                          </span>
-                          <Form method="post" className="inline">
-                            <input
-                              type="hidden"
-                              name="intent"
-                              value="friendRequest"
-                            />
-                            <input
-                              type="hidden"
-                              name="targetUserId"
-                              value={entry.borrower.id}
-                            />
-                            <button
-                              type="submit"
-                              className="inline-flex items-center gap-1 text-xs text-stone-600 hover:text-stone-700"
-                              title="Add as friend to view their shelf"
-                            >
-                              <PersonAddIcon size={14} />
-                              <span>Add friend</span>
-                            </button>
-                          </Form>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-stone-400 dark:text-stone-500 flex-shrink-0">
-                      {entry.returnedAt ? (
-                        <span>
-                          {shortDate(entry.borrowedAt)} – {shortDate(entry.returnedAt)}
-                        </span>
-                      ) : (
-                        <>
-                          <span>Since {shortDate(entry.borrowedAt)}</span>
-                          <span className="rounded-full bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-stone-600 dark:text-stone-300">
-                            Now
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+          {/* On phones the history comes last, after the book's details */}
+          {!isEditing && data.lendingHistory.length > 0 ? (
+            <div className="mt-10 md:hidden">
+              <LendingHistory
+                entries={data.lendingHistory}
+                currentUser={data.currentUser}
+              />
             </div>
           ) : null}
         </section>

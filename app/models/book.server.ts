@@ -35,6 +35,8 @@ export function getBookById(id: Book["id"]) {
       borrowerId: true,
       borrowedAt: true,
       dueDate: true,
+      createdAt: true,
+      lendCount: true,
       borrower: {
         select: {
           id: true,
