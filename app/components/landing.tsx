@@ -6,8 +6,9 @@ import DemoButton from "./demo-button";
 import { BorrowedIcon, HeartIcon, LentIcon } from "./icons";
 
 // The signed-out home page: what Stacks is, beside a small, staged glimpse
-// of the app itself (a few books with their loan status and hearts, and a
-// note from a friend), so people see what they're signing up for
+// of the app itself (a friend asking to borrow, a few books with their
+// loan status and hearts, and a note from a friend), so people see what
+// they're signing up for
 
 const cover = (isbn: string) =>
   coverSrc(`https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`);
@@ -26,20 +27,20 @@ const BOOKS: ShowcaseBook[] = [
     title: "The Left Hand of Darkness",
     cover: cover("9780441478125"),
     status: "borrowed",
-    className: "left-0 top-[9%] -rotate-6",
+    className: "left-0 top-[26%] sm:top-[20%] -rotate-6",
   },
   {
     title: "Circe",
     cover: cover("9780316556347"),
     hearts: 3,
-    className: "left-[33%] top-0 z-10 rotate-1",
+    className: "left-[33%] top-[19%] sm:top-[12%] z-10 rotate-1",
   },
   {
     title: "Piranesi",
     cover: cover("9781635575637"),
     status: "lent",
     hearts: 2,
-    className: "right-0 top-[11%] rotate-6",
+    className: "right-0 top-[28%] sm:top-[22%] rotate-6",
   },
 ];
 
@@ -85,8 +86,31 @@ function Showcase() {
   return (
     <div
       aria-hidden="true"
-      className="relative mx-auto h-[330px] w-full max-w-[420px] select-none sm:h-[385px]"
+      className="relative mx-auto h-[430px] w-full max-w-[420px] select-none sm:h-[455px]"
     >
+      {/* A friend asking to borrow, as it shows up in Activity */}
+      <div className="absolute left-[16%] right-0 top-0 z-30 rotate-2 rounded-lg bg-white dark:bg-stone-900 p-3 shadow-soft ring-1 ring-stone-900/5 dark:ring-white/10">
+        <div className="flex items-start gap-3">
+          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-xs font-semibold text-stone-700 dark:text-stone-200">
+            SO
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm leading-snug text-stone-800 dark:text-stone-200">
+              <span className="font-semibold">Sam Okafor</span> would like to
+              borrow <span className="font-semibold">Circe</span>
+            </p>
+            <div className="mt-2 flex gap-2">
+              <span className="rounded-md bg-stone-700 dark:bg-stone-200 px-2.5 py-1 text-xs font-medium text-white dark:text-stone-900">
+                Lend it
+              </span>
+              <span className="rounded-md border border-stone-200 dark:border-stone-700 px-2.5 py-1 text-xs text-stone-700 dark:text-stone-200">
+                Decline
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {BOOKS.map((book) => (
         <BookCard key={book.title} book={book} />
       ))}
