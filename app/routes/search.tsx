@@ -411,8 +411,8 @@ function SearchResultItem({
               isAdded || alreadyInLibrary
                 ? "bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 cursor-default"
                 : isAdding
-                  ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 opacity-60 cursor-wait"
-                  : "bg-stone-900 dark:bg-stone-100 font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300"
+                  ? "bg-stone-700 dark:bg-stone-200 text-white dark:text-stone-900 opacity-60 cursor-wait"
+                  : "bg-stone-700 dark:bg-stone-200 font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100"
             }`}
           >
             {isAdded || alreadyInLibrary ? (
@@ -506,7 +506,7 @@ export default function Search() {
           <button
             type="submit"
             disabled={isSearching}
-            className="px-5 rounded-md bg-stone-900 dark:bg-stone-100 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors disabled:opacity-60"
+            className="px-5 rounded-md bg-stone-700 dark:bg-stone-200 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors disabled:opacity-60"
           >
             {isSearching ? "Searching…" : "Search"}
           </button>
@@ -648,7 +648,7 @@ export default function Search() {
                         to={getPageUrl(page)}
                         className={
                           page === currentPage
-                            ? "px-3 py-1.5 text-sm rounded-md border bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 border-stone-900 dark:border-stone-100"
+                            ? "px-3 py-1.5 text-sm rounded-md border bg-stone-700 dark:bg-stone-200 text-white dark:text-stone-900 border-stone-700 dark:border-stone-200"
                             : pageLink
                         }
                         aria-current={page === currentPage ? "page" : undefined}
