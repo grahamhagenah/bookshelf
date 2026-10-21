@@ -12,7 +12,7 @@ export default function DemoBanner() {
             type="submit"
             name="intent"
             value="reset"
-            className="rounded-md px-3 py-1 text-stone-900 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-900/50 transition-colors"
+            className="rounded-md border border-stone-300 dark:border-stone-700 px-3 py-1 text-stone-900 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:bg-white/60 dark:hover:bg-stone-900/50 transition-colors"
           >
             Start over
           </button>
@@ -20,7 +20,7 @@ export default function DemoBanner() {
             type="submit"
             name="intent"
             value="exit"
-            className="rounded-md bg-stone-700 dark:bg-stone-200 px-3 py-1 text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+            className="rounded-md border border-transparent bg-stone-700 dark:bg-stone-200 px-3 py-1 text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
           >
             Sign up
           </button>
