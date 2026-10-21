@@ -560,6 +560,42 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       borrowedAt: ago(100 * day),
       returnedAt: ago(85 * day),
     },
+    {
+      title: "Station Eleven",
+      borrower: "maya",
+      borrowedAt: ago(150 * day),
+      returnedAt: ago(128 * day),
+    },
+    {
+      title: "Educated",
+      borrower: "priya",
+      borrowedAt: ago(90 * day),
+      returnedAt: ago(62 * day),
+    },
+    {
+      title: "Klara and the Sun",
+      borrower: "sam",
+      borrowedAt: ago(75 * day),
+      returnedAt: ago(58 * day),
+    },
+    {
+      title: "Braiding Sweetgrass",
+      borrower: "maya",
+      borrowedAt: ago(110 * day),
+      returnedAt: ago(70 * day),
+    },
+    {
+      title: "Normal People",
+      borrower: "you",
+      borrowedAt: ago(140 * day),
+      returnedAt: ago(125 * day),
+    },
+    {
+      title: "Anxious People",
+      borrower: "you",
+      borrowedAt: ago(65 * day),
+      returnedAt: ago(45 * day),
+    },
     // Current loans
     {
       title: "Project Hail Mary",
@@ -584,6 +620,36 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       borrower: "you",
       borrowedAt: ago(26 * day),
       dueDate: fromNow(2 * day),
+    },
+    {
+      title: "Station Eleven",
+      borrower: "priya",
+      borrowedAt: ago(19 * day),
+      dueDate: fromNow(9 * day),
+    },
+    {
+      title: "A Gentleman in Moscow",
+      borrower: "maya",
+      borrowedAt: ago(8 * day),
+      dueDate: fromNow(20 * day),
+    },
+    {
+      title: "The Left Hand of Darkness",
+      borrower: "sam",
+      borrowedAt: ago(11 * day),
+      dueDate: fromNow(17 * day),
+    },
+    {
+      title: "Gilead",
+      borrower: "you",
+      borrowedAt: ago(12 * day),
+      dueDate: fromNow(16 * day),
+    },
+    {
+      title: "Never Let Me Go",
+      borrower: "you",
+      borrowedAt: ago(3 * day),
+      dueDate: fromNow(25 * day),
     },
   ];
 
@@ -656,6 +722,62 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       body: "Long, strange and completely enchanting. Read the footnotes.",
       at: ago(60 * day),
     },
+    // Your own shelf
+    { title: "Piranesi", by: "you", loved: true, at: ago(40 * day) },
+    {
+      title: "Station Eleven",
+      by: "you",
+      loved: true,
+      body: "Survival is insufficient. The best pandemic novel, written before the pandemic.",
+      at: ago(160 * day),
+    },
+    { title: "Station Eleven", by: "maya", loved: true, at: ago(128 * day) },
+    { title: "Circe", by: "you", loved: true, at: ago(30 * day) },
+    { title: "The Remains of the Day", by: "you", loved: true, at: ago(90 * day) },
+    {
+      title: "Braiding Sweetgrass",
+      by: "maya",
+      loved: true,
+      body: "Changed how I look at my garden. Take it slow, a chapter at a time.",
+      at: ago(70 * day),
+    },
+    { title: "Braiding Sweetgrass", by: "you", loved: true, at: ago(120 * day) },
+    { title: "The Left Hand of Darkness", by: "you", loved: true, at: ago(200 * day) },
+    {
+      title: "Educated",
+      by: "priya",
+      loved: true,
+      body: "Hard to read in places, impossible to stop.",
+      at: ago(62 * day),
+    },
+    {
+      title: "Klara and the Sun",
+      by: "sam",
+      loved: false,
+      body: "Quieter than I expected. Klara stuck with me for weeks though.",
+      at: ago(58 * day),
+    },
+    { title: "The Hobbit", by: "sam", loved: true, at: ago(40 * day) },
+    { title: "The Hobbit", by: "you", loved: true, at: ago(300 * day) },
+    { title: "A Gentleman in Moscow", by: "you", loved: true, at: ago(180 * day) },
+    { title: "Pachinko", by: "you", loved: true, at: ago(220 * day) },
+    // Friends' shelves
+    { title: "The Martian", by: "you", loved: true, at: ago(85 * day) },
+    { title: "The Martian", by: "sam", loved: true, at: ago(400 * day) },
+    {
+      title: "Normal People",
+      by: "you",
+      loved: false,
+      body: "Read it in two sittings. Not sure I liked them, but I believed them.",
+      at: ago(125 * day),
+    },
+    { title: "Normal People", by: "maya", loved: true, at: ago(300 * day) },
+    { title: "Anxious People", by: "you", loved: true, at: ago(45 * day) },
+    { title: "Anxious People", by: "priya", loved: true, at: ago(250 * day) },
+    { title: "The Overstory", by: "maya", loved: true, at: ago(200 * day) },
+    { title: "Tomorrow, and Tomorrow, and Tomorrow", by: "maya", loved: true, at: ago(90 * day) },
+    { title: "The Road", by: "sam", loved: true, at: ago(150 * day) },
+    { title: "The Midnight Library", by: "priya", loved: true, at: ago(120 * day) },
   ];
 
   for (const note of readerNotes) {
