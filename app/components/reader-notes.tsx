@@ -37,11 +37,21 @@ function useLoved(notes: ReaderNote[], myNote: ReaderNote | null) {
     pendingLoved !== undefined && pendingLoved !== null
       ? pendingLoved === "true"
       : (myNote?.loved ?? false);
-  const loveCount =
-    notes.filter((note) => note.loved).length -
-    (myNote?.loved ? 1 : 0) +
-    (loved ? 1 : 0);
-  return { fetcher, loved, loveCount };
+  // Everyone else who loved it, by first name
+  const others = notes
+    .filter((note) => note.loved && note.id !== myNote?.id)
+    .map((note) => note.user.firstname);
+  return { fetcher, loved, others };
+}
+
+// "Loved by you", "Loved by you and Maya", "Loved by Maya and 2 others"
+function lovedBy(loved: boolean, others: string[]) {
+  const names = loved ? ["you", ...others] : others;
+  if (names.length === 0) return null;
+  if (names.length === 1) return `Loved by ${names[0]}`;
+  if (names.length === 2) return `Loved by ${names[0]} and ${names[1]}`;
+  const rest = names.length - 1;
+  return `Loved by ${names[0]} and ${rest} ${rest === 1 ? "other" : "others"}`;
 }
 
 export function LoveButton({
@@ -53,13 +63,14 @@ export function LoveButton({
   myNote: ReaderNote | null;
   canNote: boolean;
 }) {
-  const { fetcher, loved, loveCount } = useLoved(notes, myNote);
+  const { fetcher, loved, others } = useLoved(notes, myNote);
+  const label = lovedBy(loved, others);
 
   if (!canNote) {
-    return loveCount > 0 ? (
+    return label ? (
       <p className="inline-flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
         <HeartIcon size={14} filled className="text-rose-400" />
-        {loveCount} {loveCount === 1 ? "reader loved" : "readers loved"} this
+        {label}
       </p>
     ) : null;
   }
@@ -71,6 +82,7 @@ export function LoveButton({
       <button
         type="submit"
         aria-pressed={loved}
+        title={loved ? "Take back your heart" : "Love it"}
         className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
           loved
             ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
@@ -78,12 +90,7 @@ export function LoveButton({
         }`}
       >
         <HeartIcon size={14} filled={loved} className={loved ? "text-rose-500" : ""} />
-        {loved ? "Loved" : "Love it"}
-        {loveCount > 0 ? (
-          <span className={loved ? "text-rose-400" : "text-stone-400"}>
-            {loveCount}
-          </span>
-        ) : null}
+        {label ?? "Love it"}
       </button>
     </fetcher.Form>
   );
