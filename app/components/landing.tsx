@@ -7,8 +7,8 @@ import { BorrowedIcon, HeartIcon, LentIcon } from "./icons";
 
 // The signed-out home page: what Stacks is, beside a small, staged glimpse
 // of the app itself (a friend asking to borrow, a few books with their
-// loan status and hearts, and a note from a friend), so people see what
-// they're signing up for
+// loan status, hearts and a due date, a note from a friend, and friends'
+// shelves to borrow from), so people see what they're signing up for
 
 const cover = (isbn: string) =>
   coverSrc(`https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`);
@@ -86,7 +86,7 @@ function Showcase() {
   return (
     <div
       aria-hidden="true"
-      className="relative mx-auto h-[430px] w-full max-w-[420px] select-none sm:h-[455px]"
+      className="relative mx-auto h-[480px] w-full max-w-[420px] select-none sm:h-[505px]"
     >
       {/* A friend asking to borrow, as it shows up in Activity */}
       <div className="absolute left-[16%] right-0 top-0 z-30 rotate-2 rounded-lg bg-white dark:bg-stone-900 p-3 shadow-soft ring-1 ring-stone-900/5 dark:ring-white/10">
@@ -107,8 +107,13 @@ function Showcase() {
         <BookCard key={book.title} book={book} />
       ))}
 
+      {/* When the lent-out book is due back, stuck on its corner */}
+      <span className="absolute right-[-3%] top-[24%] z-30 rotate-[8deg] rounded-md bg-stone-900 px-2 py-1 text-[11px] font-medium text-white shadow-soft dark:bg-stone-100 dark:text-stone-900 sm:top-[19%]">
+        With Sam · due in 5 days
+      </span>
+
       {/* A note from a friend, laid over the books */}
-      <div className="absolute bottom-0 left-[5%] right-[8%] z-20 -rotate-1 rounded-lg bg-white dark:bg-stone-900 p-4 shadow-soft ring-1 ring-stone-900/5 dark:ring-white/10">
+      <div className="absolute bottom-[11%] left-[5%] right-[8%] z-20 -rotate-1 rounded-lg bg-white dark:bg-stone-900 p-4 shadow-soft ring-1 ring-stone-900/5 dark:ring-white/10">
         <div className="flex items-start gap-3">
           <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-xs font-semibold text-stone-700 dark:text-stone-200">
             MC
@@ -129,6 +134,26 @@ function Showcase() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Friends' shelves, all in one place */}
+      <div className="absolute bottom-0 right-[3%] z-20 flex rotate-2 items-center gap-2.5 rounded-full bg-white dark:bg-stone-900 py-1.5 pl-1.5 pr-3.5 shadow-soft ring-1 ring-stone-900/5 dark:ring-white/10">
+        <span className="flex">
+          {["MC", "SO", "PP"].map((initials, index) => (
+            <span
+              key={initials}
+              className={`flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-[10px] font-semibold text-stone-700 dark:text-stone-200 ring-2 ring-white dark:ring-stone-900 ${
+                index > 0 ? "-ml-1" : ""
+              }`}
+            >
+              {initials}
+            </span>
+          ))}
+        </span>
+        <span className="text-xs text-stone-600 dark:text-stone-300">
+          <span className="font-semibold text-stone-900 dark:text-stone-100">16 books</span>{" "}
+          on your friends&apos; shelves
+        </span>
       </div>
     </div>
   );
