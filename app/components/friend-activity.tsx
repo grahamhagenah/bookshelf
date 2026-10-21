@@ -101,12 +101,13 @@ export default function FriendActivityItem({
         <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
           {formatDate(item.at)}
         </p>
-        {item.kind === "added" && covers.length > 1 ? (
+        {/* Covers sit under the words for every kind of entry */}
+        {covers.length > 0 ? (
           <div className="mt-2 flex flex-wrap gap-2">
             {covers.map((book) => (
               <FeedCover key={book.id} book={book} />
             ))}
-            {item.books.length > covers.length ? (
+            {item.kind === "added" && item.books.length > covers.length ? (
               <span className="self-center text-xs text-stone-400 dark:text-stone-500">
                 +{item.books.length - covers.length}
               </span>
@@ -114,7 +115,6 @@ export default function FriendActivityItem({
           </div>
         ) : null}
       </div>
-      {item.kind !== "added" || covers.length === 1 ? <FeedCover book={covers[0]} /> : null}
     </div>
   );
 }
