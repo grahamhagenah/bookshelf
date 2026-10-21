@@ -660,26 +660,11 @@ function BookFacts({ data }: { data: BookData }) {
   const rows: [string, React.ReactNode][] = [];
 
   if (data.isOwner) {
-    rows.push([
-      "Status",
-      book.borrower ? (
-        <>
-          Lent to {book.borrower.firstname}
-          {book.dueDate ? (
-            new Date(book.dueDate) < new Date() ? (
-              <span className="font-semibold text-stone-900 dark:text-stone-100"> · overdue</span>
-            ) : (
-              ` · due ${monthDay(book.dueDate)}`
-            )
-          ) : null}
-        </>
-      ) : (
-        "On your shelf"
-      ),
-    ]);
+    // Where it is shows in the label under the cover
     rows.push(["Added", monthDay(book.createdAt)]);
   } else if (!data.isBorrower) {
-    rows.push(["Status", book.borrower ? "Out on loan" : "Available to borrow"]);
+    // Available goes without saying beside Ask to borrow
+    if (book.borrower) rows.push(["Status", "Out on loan"]);
     if (owner) {
       rows.push(["Added", `${monthDay(book.createdAt)} by ${owner.firstname}`]);
     }
@@ -863,12 +848,14 @@ export default function BookDetailsPage() {
               </div>
             ) : null}
           </div>
-          {!isEditing ? (
-            <LoveButton
-              notes={data.readerNotes}
-              myNote={data.myNote}
-              canNote={data.canNote}
-            />
+          {/* Your own copy: where it is, as a label that looks like the
+              button a friend would see here */}
+          {data.isOwner && !isEditing ? (
+            <p className="w-full cursor-default rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-center text-sm text-stone-500 dark:text-stone-400">
+              {data.book.borrower
+                ? `Lent to ${data.book.borrower.firstname}`
+                : "On your shelf"}
+            </p>
           ) : null}
           {canRequestBook ? (
             <Form method="post">
@@ -891,6 +878,13 @@ export default function BookDetailsPage() {
                     : "Ask to borrow"}
               </button>
             </Form>
+          ) : null}
+          {!isEditing ? (
+            <LoveButton
+              notes={data.readerNotes}
+              myNote={data.myNote}
+              canNote={data.canNote}
+            />
           ) : null}
           {needsFriendship && data.book.user ? (
             <div className={panel}>
