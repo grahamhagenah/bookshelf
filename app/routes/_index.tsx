@@ -36,7 +36,7 @@ const FEATURES = [
 export default function Index() {
   const user = useOptionalUser();
   return (
-    <main className={user ? "min-h-[calc(100vh-60px)]" : "min-h-screen"}>
+    <main className={user ? undefined : "min-h-screen"}>
       {user ? null : <CoverWall />}
       {user ? null : (
         // Fade the wall to white behind the text, leaving the covers clear
@@ -47,7 +47,7 @@ export default function Index() {
         />
       )}
       <section
-        className={`relative flex flex-col justify-center px-4 md:px-8 py-16 ${user ? "min-h-[calc(100vh-60px)] items-center" : "min-h-screen"}`}
+        className={`relative flex flex-col justify-center px-4 md:px-8 ${user ? "py-16 sm:py-24 items-center" : "py-16 min-h-screen"}`}
       >
         {/* Content sits on the page itself, no card */}
         <div className="w-full max-w-xl">
