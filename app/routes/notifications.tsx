@@ -1,4 +1,8 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 
@@ -14,7 +18,11 @@ import {
   getNotificationHistory,
   getPendingBookRequests,
 } from "~/models/user.server";
+import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+
+export const meta: MetaFunction = () =>
+  seo({ title: "Activity", noindex: true });
 
 export const handle = {
   breadcrumb: () => <span>Activity</span>,

@@ -4,9 +4,10 @@ import { Link } from "@remix-run/react";
 import CoverWall from "~/components/cover-wall";
 import DemoButton from "~/components/demo-button";
 import { StacksLogo } from "~/components/icons";
+import { seo } from "~/seo";
 import { useOptionalUser } from "~/utils";
 
-export const meta: MetaFunction = () => [{ title: "Stacks" }];
+export const meta: MetaFunction = () => seo({ path: "/" });
 
 export default function Index() {
   const user = useOptionalUser();

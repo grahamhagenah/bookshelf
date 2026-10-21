@@ -1,4 +1,8 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import {
   useLoaderData,
@@ -20,8 +24,12 @@ import {
   getSuggestedFriends,
   getPendingFriendRequests,
 } from "~/models/user.server";
+import { seo } from "~/seo";
 import { requireUserId, getUserId } from "~/session.server";
 import { isDemoEmail } from "~/utils";
+
+export const meta: MetaFunction = () =>
+  seo({ title: "Friends", noindex: true });
 
 export const handle = {
   breadcrumb: () => <Link to="/friends">Friends</Link>,

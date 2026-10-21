@@ -1,4 +1,7 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type {
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 
@@ -6,7 +9,11 @@ import Library from "~/components/library";
 import { getBookListItems, getBorrowedBooks } from "~/models/book.server";
 import { getLoveCounts } from "~/models/note.server";
 import { getUserById } from "~/models/user.server";
+import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+
+export const meta: MetaFunction = () =>
+  seo({ title: "My books", noindex: true });
 
 export const handle = {
   breadcrumb: () => <Link to="/books">My books</Link>,

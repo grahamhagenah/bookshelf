@@ -9,6 +9,7 @@ import { useEffect, useRef } from "react";
 
 import DemoButton from "~/components/demo-button";
 import { verifyLogin } from "~/models/user.server";
+import { seo } from "~/seo";
 import { createUserSession, getUserId } from "~/session.server";
 import { safeRedirect, validateEmail } from "~/utils";
 
@@ -65,7 +66,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 };
 
-export const meta: MetaFunction = () => [{ title: "Login" }];
+export const meta: MetaFunction = () =>
+  seo({ title: "Log in", path: "/login" });
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();

@@ -1,10 +1,17 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type {
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 
 import Layout from "~/components / Layout/Layout";
 import { isUserAdmin, getAllUsersWithStats } from "~/models/user.server";
+import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+
+export const meta: MetaFunction = () =>
+  seo({ title: "Admin", noindex: true });
 
 export const handle = {
   breadcrumb: () => <span>Admin Dashboard</span>,

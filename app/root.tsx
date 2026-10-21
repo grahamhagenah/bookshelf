@@ -16,6 +16,7 @@ import {
   useLocation,
 } from "@remix-run/react";
 
+import { seo } from "~/seo";
 import { getUser } from "~/session.server";
 import stylesheet from "~/styles/tailwind.css";
 
@@ -23,15 +24,16 @@ import DemoBanner from "./components/demo-banner";
 import Footer from "./components/footer";
 import Header from "./components/header";
 
-export const meta: MetaFunction = () => [
-  { title: "Stacks - Your Lending Library" },
-  { name: "description", content: "Share and borrow books with friends" },
-];
+// Fallback for any page without its own meta; those are signed-in pages
+export const meta: MetaFunction = () => seo({ noindex: true });
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
+  { rel: "icon", href: "/favicon.ico", sizes: "32x32" },
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+  { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+  { rel: "manifest", href: "/site.webmanifest" },
   // Preconnect to Open Library for faster cover image loads
   { rel: "preconnect", href: "https://covers.openlibrary.org" },
   { rel: "dns-prefetch", href: "https://covers.openlibrary.org" },
@@ -52,6 +54,7 @@ export default function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="theme-color" content={isDarkMode ? "#0c0a09" : "#ffffff"} />
         <Meta />
         <Links />
       </head>

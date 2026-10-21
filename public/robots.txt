@@ -1,0 +1,8 @@
+# Only the public front door is worth indexing; libraries are private
+User-agent: *
+Allow: /$
+Allow: /join
+Allow: /login
+Disallow: /
+
+Sitemap: https://bookstacks.site/sitemap.xml

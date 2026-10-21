@@ -1,5 +1,9 @@
 import { json } from "@remix-run/node";
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
+import type {
+  LoaderFunctionArgs,
+  ActionFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import {
   useLoaderData,
   useSearchParams,
@@ -15,7 +19,11 @@ import {
   getUserLibraryKeys,
   bookExistsInLibrary,
 } from "~/models/book.server";
+import { seo } from "~/seo";
 import { requireUserId, getUserId } from "~/session.server";
+
+export const meta: MetaFunction = () =>
+  seo({ title: "Search", noindex: true });
 
 export const handle = {
   breadcrumb: () => <span>Search</span>,

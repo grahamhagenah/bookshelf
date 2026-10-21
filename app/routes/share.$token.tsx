@@ -1,4 +1,7 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type {
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
@@ -6,6 +9,16 @@ import invariant from "tiny-invariant";
 import Library from "~/components/library";
 import { getPublicBookListItems } from "~/models/book.server";
 import { getUserByShareToken } from "~/models/user.server";
+import { seo } from "~/seo";
+
+export const meta: MetaFunction<typeof loader> = ({ data }) =>
+  seo({
+    title: data?.ownerName ? `${data.ownerName}'s bookshelf` : "Bookshelf",
+    description: data?.ownerName
+      ? `Browse the books on ${data.ownerName}'s shelf on Stacks.`
+      : undefined,
+    noindex: true,
+  });
 
 export const handle = {
   breadcrumb: (data: { ownerName?: string } | undefined) => (
