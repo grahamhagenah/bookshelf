@@ -6,8 +6,25 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  /* The one shadow for floating things: menus, cards */
+  --shadow-soft: 0 4px 12px -2px rgb(28 25 23 / 0.06);
   --font-family-sans: 'Source Sans 3', system-ui, sans-serif;
   --font-sans: 'Source Sans 3', system-ui, sans-serif;
+}
+
+/* Browsers draw focus rings and checkboxes in the system accent color
+   (orange on some Macs); keep both in the stone palette */
+@layer base {
+  :root {
+    accent-color: var(--color-stone-900);
+  }
+  .dark {
+    accent-color: var(--color-stone-100);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-stone-400);
+    outline-offset: 2px;
+  }
 }
 
 /* Tailwind v4 defaults borders to currentColor; keep them quiet instead */

@@ -42,8 +42,9 @@ export function SearchIcon({ className = "", size = 24 }: IconProps) {
 
 export function UserIcon({ className = "", size = 24 }: IconProps) {
   return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="4"/>
+      <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
     </svg>
   );
 }

@@ -404,7 +404,7 @@ export default function Account() {
           </p>
 
           {actionData?.emojiSuccess ? (
-            <div className="p-3 rounded bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-100 mb-4">
+            <div className="p-3 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-100 mb-4">
               Profile picture updated.
             </div>
           ) : null}
@@ -469,13 +469,13 @@ export default function Account() {
                 type="text"
                 readOnly
                 value={shareUrl}
-                className="w-full rounded border border-stone-300 bg-stone-50 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-3 py-2 text-sm text-stone-700 dark:text-stone-300"
               />
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
+                  className="rounded-md bg-stone-900 dark:bg-stone-100 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors"
                 >
                   {copied ? "Copied!" : "Copy Link"}
                 </button>
@@ -483,7 +483,7 @@ export default function Account() {
                   <input type="hidden" name="intent" value="revokeShareToken" />
                   <button
                     type="submit"
-                    className="rounded border border-stone-900 dark:border-stone-100 px-4 py-2 text-stone-900 dark:text-stone-100 hover:bg-stone-50"
+                    className="rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
                   >
                     Revoke Access
                   </button>
@@ -495,7 +495,7 @@ export default function Account() {
               <input type="hidden" name="intent" value="generateShareToken" />
               <button
                 type="submit"
-                className="rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
+                className="rounded-md bg-stone-900 dark:bg-stone-100 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors"
               >
                 Generate Share Link
               </button>
@@ -511,7 +511,7 @@ export default function Account() {
             </p>
 
             {actionData?.success ? (
-              <div className="p-3 rounded bg-stone-100 text-stone-900 dark:text-stone-100">
+              <div className="p-3 rounded-lg bg-stone-100 text-stone-900 dark:text-stone-100">
                 Your profile has been updated successfully.
               </div>
             ) : null}
@@ -534,7 +534,7 @@ export default function Account() {
                     actionData?.errors?.firstname ? true : undefined
                   }
                   aria-describedby="firstname-error"
-                  className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
+                  className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
                 />
                 {actionData?.errors?.firstname ? (
                   <div
@@ -563,7 +563,7 @@ export default function Account() {
                   defaultValue={data.user?.surname}
                   aria-invalid={actionData?.errors?.surname ? true : undefined}
                   aria-describedby="surname-error"
-                  className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
+                  className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
                 />
                 {actionData?.errors?.surname ? (
                   <div
@@ -594,7 +594,7 @@ export default function Account() {
                   readOnly={Boolean(data.user?.demoGroup)}
                   aria-invalid={actionData?.errors?.email ? true : undefined}
                   aria-describedby="email-error"
-                  className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
+                  className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
                 />
                 {actionData?.errors?.email ? (
                   <div
@@ -609,7 +609,7 @@ export default function Account() {
 
             <button
               type="submit"
-              className="rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
+              className="rounded-md bg-stone-900 dark:bg-stone-100 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors"
             >
               Save changes
             </button>
@@ -626,7 +626,7 @@ export default function Account() {
               </p>
 
               {actionData?.passwordSuccess ? (
-                <div className="p-3 rounded bg-stone-100 text-stone-900 dark:text-stone-100">
+                <div className="p-3 rounded-lg bg-stone-100 text-stone-900 dark:text-stone-100">
                   Your password has been changed successfully.
                 </div>
               ) : null}
@@ -650,7 +650,7 @@ export default function Account() {
                         : undefined
                     }
                     aria-describedby="currentPassword-error"
-                    className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
+                    className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
                   />
                   {actionData?.passwordErrors?.currentPassword ? (
                     <div
@@ -680,7 +680,7 @@ export default function Account() {
                       actionData?.passwordErrors?.newPassword ? true : undefined
                     }
                     aria-describedby="newPassword-error"
-                    className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
+                    className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
                   />
                   {actionData?.passwordErrors?.newPassword ? (
                     <div
@@ -712,7 +712,7 @@ export default function Account() {
                         : undefined
                     }
                     aria-describedby="confirmPassword-error"
-                    className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
+                    className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
                   />
                   {actionData?.passwordErrors?.confirmPassword ? (
                     <div
@@ -727,7 +727,7 @@ export default function Account() {
 
               <button
                 type="submit"
-                className="rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
+                className="rounded-md bg-stone-900 dark:bg-stone-100 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors"
               >
                 Change Password
               </button>

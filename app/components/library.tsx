@@ -154,7 +154,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-lg border p-8 max-w-3xl w-full">
+            <div className="bg-white dark:bg-stone-900 rounded-lg shadow-soft border border-stone-200/80 dark:border-stone-800 p-8 max-w-3xl w-full">
               <h2 className="text-2xl font-semibold text-stone-800 mb-6 text-center">
                 Here&apos;s how it works
               </h2>
@@ -162,7 +162,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                 <li>
                   <Link
                     to="/search"
-                    className="flex items-center gap-4 p-4 rounded-xl border-2 border-stone-100 hover:border-stone-400 hover:bg-stone-50 transition-all group"
+                    className="flex items-center gap-4 p-4 rounded-lg border border-stone-200 dark:border-stone-800 hover:border-stone-400 dark:hover:border-stone-600 transition-colors group"
                   >
                     <div className="flex items-center justify-center w-12 h-12 rounded-full bg-stone-100 text-stone-900 dark:text-stone-100 font-bold text-xl group-hover:bg-stone-200 transition-colors">
                       1
@@ -185,7 +185,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                 <li>
                   <Link
                     to="/friends"
-                    className="flex items-center gap-4 p-4 rounded-xl border-2 border-stone-100 hover:border-stone-400 hover:bg-stone-50 transition-all group"
+                    className="flex items-center gap-4 p-4 rounded-lg border border-stone-200 dark:border-stone-800 hover:border-stone-400 dark:hover:border-stone-600 transition-colors group"
                   >
                     <div className="flex items-center justify-center w-12 h-12 rounded-full bg-stone-100 text-stone-900 dark:text-stone-100 font-bold text-xl group-hover:bg-stone-200 transition-colors">
                       2
@@ -208,7 +208,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                 <li>
                   <Link
                     to="/account"
-                    className="flex items-center gap-4 p-4 rounded-xl border-2 border-stone-100 hover:border-stone-400 hover:bg-stone-50 transition-all group"
+                    className="flex items-center gap-4 p-4 rounded-lg border border-stone-200 dark:border-stone-800 hover:border-stone-400 dark:hover:border-stone-600 transition-colors group"
                   >
                     <div className="flex items-center justify-center w-12 h-12 rounded-full bg-stone-100 text-stone-900 dark:text-stone-100 font-bold text-xl group-hover:bg-stone-200 transition-colors">
                       3

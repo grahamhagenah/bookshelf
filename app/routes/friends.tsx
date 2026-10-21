@@ -316,7 +316,7 @@ export default function Friends() {
                   placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded border border-stone-300 px-3 py-2"
+                  className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
                   autoComplete="off"
                 />
                 {isSearching ? (
@@ -415,7 +415,7 @@ export default function Friends() {
                   autoComplete="email"
                   aria-invalid={actionData?.errors?.email ? true : undefined}
                   aria-describedby="email-error"
-                  className="w-full rounded border border-stone-300 px-3 py-2"
+                  className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
                 />
                 {actionData?.errors?.email ? (
                   <div
@@ -429,7 +429,7 @@ export default function Friends() {
               <input type="hidden" name="redirectTo" value={redirectTo} />
               <button
                 type="submit"
-                className="rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300"
+                className="rounded-md bg-stone-900 dark:bg-stone-100 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors"
               >
                 Send friend request
               </button>

@@ -127,7 +127,7 @@ export default function NewBookPage() {
           <input
             ref={titleRef}
             name="title"
-            className="flex-1 rounded-md border-2 border-stone-900 dark:border-stone-100 px-3 text-lg leading-loose"
+            className="flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
             aria-invalid={actionData?.errors?.title ? true : undefined}
             aria-errormessage={
               actionData?.errors?.title ? "title-error" : undefined
@@ -150,7 +150,7 @@ export default function NewBookPage() {
           <input
             ref={authorRef}
             name="author"
-            className="flex-1 rounded-md border-2 border-stone-900 dark:border-stone-100 px-3 text-lg leading-loose"
+            className="flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
             aria-invalid={actionData?.errors?.author ? true : undefined}
             aria-errormessage={
               actionData?.errors?.author ? "author-error" : undefined
@@ -173,7 +173,7 @@ export default function NewBookPage() {
           <input
             ref={coverRef}
             name="cover"
-            className="flex-1 rounded-md border-2 border-stone-900 dark:border-stone-100 px-3 text-lg leading-loose"
+            className="flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
             aria-invalid={actionData?.errors?.cover ? true : undefined}
             aria-errormessage={
               actionData?.errors?.cover ? "cover-error" : undefined
@@ -197,7 +197,7 @@ export default function NewBookPage() {
             ref={datePublishedRef}
             name="datePublished"
             placeholder="e.g., 1984, March 2020"
-            className="flex-1 rounded-md border-2 border-stone-900 dark:border-stone-100 px-3 text-lg leading-loose"
+            className="flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
           />
         </label>
       </div>
@@ -209,7 +209,7 @@ export default function NewBookPage() {
             ref={bodyRef}
             name="body"
             rows={8}
-            className="w-full flex-1 rounded-md border-2 border-stone-900 dark:border-stone-100 px-3 py-2 text-lg leading-6"
+            className="w-full flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors leading-relaxed"
             aria-invalid={actionData?.errors?.body ? true : undefined}
             aria-errormessage={
               actionData?.errors?.body ? "body-error" : undefined
@@ -229,7 +229,7 @@ export default function NewBookPage() {
       <div className="text-right">
         <button
           type="submit"
-          className="rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
+          className="rounded-md bg-stone-900 dark:bg-stone-100 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors"
         >
           Save
         </button>
