@@ -156,6 +156,17 @@ describe("getHomeBooks", () => {
     await lendBook(later.id, friend.id, 4);
     await lendBook(sooner.id, friend.id, 1);
     await lendBook(theirs.id, me.id, 2);
+    // Created a day apart, so "newest" is unambiguous
+    for (const [days, title] of [
+      [3, "Due later"],
+      [2, "Due sooner"],
+      [1, "At home"],
+    ] as const) {
+      await prisma.book.updateMany({
+        where: { userId: me.id, title },
+        data: { createdAt: new Date(Date.now() - days * DAY) },
+      });
+    }
 
     const home = await getHomeBooks(me.id);
     expect(home.borrowed.map((book) => [book.title, book.owner.firstname])).toEqual([
@@ -165,5 +176,11 @@ describe("getHomeBooks", () => {
     expect(home.lent.map((book) => book.title)).toEqual(["Due sooner", "Due later"]);
     expect(home.lent[0].borrower?.firstname).toBe("Friend");
     expect(home.shelf.map((book) => book.title)).toEqual(["At home"]);
+    // Newest first, whether or not they're lent out
+    expect(home.recent.map((book) => book.title)).toEqual([
+      "At home",
+      "Due sooner",
+      "Due later",
+    ]);
   });
 });

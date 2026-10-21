@@ -75,8 +75,8 @@ export function getBookListItems(userId: User["id"]) {
   });
 }
 
-// Everything on the home page's list: books you've borrowed, books you've
-// lent out (soonest due first), and the rest of your shelf
+// Everything on the home page: books you've borrowed, books you've lent
+// out (soonest due first), the rest of your shelf, and your newest books
 export async function getHomeBooks(userId: User["id"]) {
   const person = { select: { id: true, firstname: true, surname: true } };
   const fields = {
@@ -107,6 +107,7 @@ export async function getHomeBooks(userId: User["id"]) {
     borrowed: borrowed.map(({ user, ...book }) => ({ ...book, owner: user })),
     lent: own.filter((book) => book.borrower).sort((a, b) => due(a) - due(b)),
     shelf: own.filter((book) => !book.borrower),
+    recent: own.slice(0, 6),
   };
 }
 

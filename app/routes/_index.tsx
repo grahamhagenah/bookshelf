@@ -24,7 +24,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const [books, activity] = await Promise.all([
     getHomeBooks(user.id),
-    getFriendActivity(user.id, { limit: 12 }),
+    getFriendActivity(user.id, { limit: 6 }),
   ]);
   return json({
     home: {
