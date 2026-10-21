@@ -54,13 +54,6 @@ import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 import { coverSrc } from "~/utils";
 
-const longDate = (date: string | Date) =>
-  new Date(date).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-
 const shortDate = (date: string | Date) =>
   new Date(date).toLocaleDateString("en-US", {
     month: "short",
@@ -761,7 +754,7 @@ export default function BookDetailsPage() {
             <div className={panel}>
               {data.book.user ? (
                 <div className="mb-3 space-y-0.5">
-                  <p className="text-stone-800 dark:text-stone-200">
+                  <p className="text-stone-800 dark:text-stone-200 [overflow-wrap:anywhere]">
                     Borrowed from{" "}
                     <span className="font-semibold">
                       <PersonLink
@@ -773,17 +766,17 @@ export default function BookDetailsPage() {
                   </p>
                   {data.book.borrowedAt ? (
                     <p className="text-stone-500 dark:text-stone-400">
-                      Since {longDate(data.book.borrowedAt)}
+                      Since {monthDay(data.book.borrowedAt)}
                     </p>
                   ) : null}
                   {data.book.dueDate ? (
                     new Date(data.book.dueDate) < new Date() ? (
                       <p className="font-semibold text-stone-900 dark:text-stone-100">
-                        Overdue since {longDate(data.book.dueDate)}
+                        Overdue since {monthDay(data.book.dueDate)}
                       </p>
                     ) : (
                       <p className="text-stone-500 dark:text-stone-400">
-                        Due {longDate(data.book.dueDate)}
+                        Due {monthDay(data.book.dueDate)}
                       </p>
                     )
                   ) : null}
