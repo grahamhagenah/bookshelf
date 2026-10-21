@@ -1,5 +1,6 @@
 import type { SerializeFrom } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import { Link, useFetcher } from "@remix-run/react";
+import { useState } from "react";
 
 import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
@@ -212,16 +213,172 @@ function LoanList({
   );
 }
 
+const actionClass =
+  "inline-flex h-8 items-center rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
+
+function StepMark({ number, done }: { number: number; done: boolean }) {
+  return done ? (
+    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M5 12.5l4.5 4.5L19 7.5" />
+      </svg>
+      <span className="sr-only">Done:</span>
+    </span>
+  ) : (
+    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-sm font-semibold text-stone-600 dark:bg-stone-800 dark:text-stone-300">
+      {number}
+    </span>
+  );
+}
+
+// For a new account: three steps to a working shelf, each ticked off as
+// it's done. Shown until you have books and a friend.
+function Welcome({
+  bookCount,
+  friendCount,
+  shareUrl,
+  divided,
+}: {
+  bookCount: number;
+  friendCount: number;
+  shareUrl: string | null;
+  // A rule underneath only when something follows
+  divided: boolean;
+}) {
+  // Same key as the header's share prompt, so either one sees the new link
+  const shareFetcher = useFetcher<{ url?: string }>({ key: "share-link" });
+  const url = shareFetcher.data?.url ?? shareUrl;
+  const creating = shareFetcher.state !== "idle";
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+    } catch {
+      // Clipboard can be blocked; the link still works from the Account page
+    }
+  };
+
+  const steps = [
+    {
+      title: "Add your books",
+      text: "Search by title or author and add the books on your shelf.",
+      done: bookCount > 0,
+      doneText: `${bookCount} ${bookCount === 1 ? "book" : "books"} added`,
+      action: (
+        <Link to="/search" className={actionClass}>
+          Add books
+        </Link>
+      ),
+    },
+    {
+      title: "Find friends",
+      text: "See what's on their shelves and borrow from each other.",
+      done: friendCount > 0,
+      doneText: `${friendCount} ${friendCount === 1 ? "friend" : "friends"}`,
+      action: (
+        <Link to="/friends" className={actionClass}>
+          Find friends
+        </Link>
+      ),
+    },
+    {
+      title: "Share your shelf",
+      text: "Make a link anyone can open to browse your books.",
+      done: Boolean(url),
+      doneText: null,
+      action: (
+        <shareFetcher.Form method="post" action="/share-link">
+          <button
+            type="submit"
+            name="intent"
+            value="create"
+            disabled={creating}
+            className={`${actionClass} ${creating ? "opacity-60 cursor-wait" : ""}`}
+          >
+            {creating ? "Creating…" : "Create link"}
+          </button>
+        </shareFetcher.Form>
+      ),
+    },
+  ];
+
+  return (
+    <section
+      aria-labelledby="welcome"
+      className={
+        divided ? "mb-8 border-b border-stone-200 dark:border-stone-800 pb-8" : undefined
+      }
+    >
+      <h2 id="welcome" className="text-xl font-semibold text-stone-900 dark:text-stone-100">
+        Welcome to Stacks
+      </h2>
+      <p className="mt-1 text-stone-500 dark:text-stone-400">
+        Three steps to get your shelf going.
+      </p>
+      <ol className="mt-6 grid gap-8 sm:grid-cols-3 sm:gap-10">
+        {steps.map((step, index) => (
+          <li key={step.title}>
+            <StepMark number={index + 1} done={step.done} />
+            <h3
+              className={`mt-3 font-semibold ${
+                step.done
+                  ? "text-stone-500 dark:text-stone-400"
+                  : "text-stone-900 dark:text-stone-100"
+              }`}
+            >
+              {step.title}
+            </h3>
+            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{step.text}</p>
+            <div className="mt-3">
+              {!step.done ? (
+                step.action
+              ) : step.doneText ? (
+                <p className="text-sm text-stone-500 dark:text-stone-400">{step.doneText}</p>
+              ) : (
+                <button type="button" onClick={copy} className={actionClass}>
+                  {copied ? "Copied" : "Copy link"}
+                </button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 export default function Home({
   books,
   activity,
   friendIds,
+  shareUrl,
 }: {
   books: HomeBooks;
   activity: SerializeFrom<FriendActivity>[];
   friendIds: string[];
+  shareUrl: string | null;
 }) {
   const ownCount = books.lent.length + books.shelf.length;
+
+  // A new account gets the welcome steps; each section below appears once
+  // it has something in it, so there's no stack of empty boxes
+  const setupDone = ownCount > 0 && friendIds.length > 0;
+  const showLoans = setupDone || books.borrowed.length + books.lent.length > 0;
+  const showRecent = setupDone || ownCount > 0;
+  const showFeed = setupDone || friendIds.length > 0;
+  const showMain = showLoans || showRecent;
 
   // Overdue first, then whatever's due soonest, in either direction
   const due = (
@@ -241,9 +398,23 @@ export default function Home({
     <main className="px-4 md:px-8 pt-4 md:pt-8 pb-8 md:pb-10">
       <h1 className="sr-only">Home</h1>
       <ComingUp items={comingUp} />
+      {setupDone ? null : (
+        <Welcome
+          bookCount={ownCount}
+          friendCount={friendIds.length}
+          shareUrl={shareUrl}
+          divided={showMain || showFeed}
+        />
+      )}
 
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-0">
-        <div className="lg:pr-12">
+      <div
+        className={`grid gap-10 lg:gap-0 ${
+          showMain && showFeed ? "lg:grid-cols-[minmax(0,1fr)_20rem]" : ""
+        }`}
+      >
+        {showMain ? (
+        <div className={showFeed ? "lg:pr-12" : undefined}>
+          {showLoans ? (
           <section aria-labelledby="loans">
             <h2 id="loans" className={`${headingClass} mb-3`}>
               Loans
@@ -265,10 +436,14 @@ export default function Home({
               />
             </div>
           </section>
+          ) : null}
 
+          {showRecent ? (
           <section
             aria-labelledby="recently-added"
-            className="mt-8 border-t border-stone-200 dark:border-stone-800 pt-6"
+            className={
+              showLoans ? "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6" : undefined
+            }
           >
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 id="recently-added" className={`${headingClass} whitespace-nowrap`}>
@@ -329,12 +504,19 @@ export default function Home({
               </p>
             )}
           </section>
+          ) : null}
         </div>
+        ) : null}
 
         {/* Its own column, set off by a rule (above it on phones) */}
+        {showFeed ? (
         <aside
           aria-labelledby="friend-activity"
-          className="border-t border-stone-200 dark:border-stone-800 pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-12"
+          className={
+            showMain
+              ? "border-t border-stone-200 dark:border-stone-800 pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-12"
+              : undefined
+          }
         >
           <div className="mb-2 flex items-center justify-between gap-3">
             <h2 id="friend-activity" className={headingClass}>
@@ -370,6 +552,7 @@ export default function Home({
             </p>
           )}
         </aside>
+        ) : null}
       </div>
     </main>
   );

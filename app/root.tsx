@@ -61,8 +61,10 @@ export default function App() {
   const isDarkMode = user?.darkMode ?? false;
   // The logged-out landing page stands on its own, without the top bar
   const isLanding = pathname === "/" && !user;
-  // Not on the account page, which has its own sharing section
-  const showSharePrompt = sharePrompt && pathname !== "/account";
+  // Not on the account page, which has its own sharing section, or on
+  // home, where a new account's welcome steps include sharing
+  const showSharePrompt =
+    sharePrompt && pathname !== "/account" && pathname !== "/";
 
   return (
     <html lang="en" className={`h-full ${isDarkMode ? "dark" : ""}`}>
