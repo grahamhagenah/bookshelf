@@ -6,7 +6,6 @@ import Library from "~/components/library";
 import { getBookListItems } from "~/models/book.server";
 import { Link, useLoaderData } from "@remix-run/react";
 import { requireUserId } from "~/session.server";
-import Breadcrumbs from "~/components/breadcrumbs";
 
 type LoaderData = {
   friendName: string;
@@ -52,10 +51,6 @@ export default function FriendsBookPage() {
 
   return (
     <>
-      <Breadcrumbs />
-      <div className="sm:hidden px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
-        {data.friendName}&apos;s library
-      </div>
       <Library bookListItems={data.bookListItems} ownerName={data.friendName} />
     </>
   );

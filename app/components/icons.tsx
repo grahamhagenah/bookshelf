@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 // Lightweight SVG icons to replace MUI icons
 // Each icon is ~200 bytes vs MUI's ~20KB per icon
 
@@ -6,10 +8,28 @@ interface IconProps {
   size?: number;
 }
 
-export function BookStackIcon({ className = "", size = 24 }: IconProps) {
+// Books on a shelf, the last one leaning; the bands mark each spine
+export function BookshelfIcon({ className = "", size = 24 }: IconProps) {
+  const maskId = `bookshelf-${useId()}`;
   return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={{ transform: "rotate(90deg)" }}>
-      <path d="M5.566 4.657A4.505 4.505 0 0 1 6.75 4.5h10.5c.41 0 .806.055 1.183.157A3 3 0 0 0 15.75 3h-7.5a3 3 0 0 0-2.684 1.657ZM2.25 12a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3v-6ZM5.25 7.5c-.41 0-.806.055-1.184.157A3 3 0 0 1 6.75 6h10.5a3 3 0 0 1 2.683 1.657A4.505 4.505 0 0 0 18.75 7.5H5.25Z"/>
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <mask id={maskId}>
+        <rect width="24" height="24" fill="white" />
+        <g fill="black">
+          <rect x="3.8" y="8" width="1.9" height="0.9" />
+          <rect x="8.3" y="5.5" width="2.4" height="0.9" />
+          <rect x="8.3" y="15.8" width="2.4" height="0.9" />
+          <rect x="13.2" y="9.5" width="1.6" height="0.9" />
+          <rect x="16.8" y="8" width="1.9" height="0.9" transform="rotate(16 16 19)" />
+        </g>
+      </mask>
+      <g mask={`url(#${maskId})`}>
+        <rect x="3" y="6" width="3.5" height="13" rx="0.75" />
+        <rect x="7.5" y="3.5" width="4" height="15.5" rx="0.75" />
+        <rect x="12.5" y="7.5" width="3" height="11.5" rx="0.75" />
+        <rect x="16" y="6" width="3.5" height="13" rx="0.75" transform="rotate(16 16 19)" />
+      </g>
+      <rect x="1.5" y="19" width="21" height="2" rx="1" />
     </svg>
   );
 }

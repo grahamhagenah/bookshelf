@@ -112,7 +112,7 @@ export default function Join() {
         <div>
             <label
               htmlFor="firstname"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-stone-700"
             >
               First Name
             </label>
@@ -127,10 +127,10 @@ export default function Join() {
                 type="text"
                 aria-invalid={actionData?.errors?.firstname ? true : undefined}
                 aria-describedby="firstname-error"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.firstname ? (
-                <div className="pt-1 text-red-700" id="firstname-error">
+                <div className="pt-1 text-accent-700" id="firstname-error">
                   {actionData.errors.firstname}
                 </div>
               ) : null}
@@ -139,7 +139,7 @@ export default function Join() {
           <div>
             <label
               htmlFor="surname"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-stone-700"
             >
               Last Name
             </label>
@@ -154,10 +154,10 @@ export default function Join() {
                 type="text"
                 aria-invalid={actionData?.errors?.surname ? true : undefined}
                 aria-describedby="surname-error"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.surname ? (
-                <div className="pt-1 text-red-700" id="surname-error">
+                <div className="pt-1 text-accent-700" id="surname-error">
                   {actionData.errors.surname}
                 </div>
               ) : null}
@@ -167,7 +167,7 @@ export default function Join() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-stone-700"
             >
               Email address
             </label>
@@ -183,10 +183,10 @@ export default function Join() {
                 autoComplete="email"
                 aria-invalid={actionData?.errors?.email ? true : undefined}
                 aria-describedby="email-error"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.email ? (
-                <div className="pt-1 text-red-700" id="email-error">
+                <div className="pt-1 text-accent-700" id="email-error">
                   {actionData.errors.email}
                 </div>
               ) : null}
@@ -196,7 +196,7 @@ export default function Join() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-stone-700"
             >
               Password
             </label>
@@ -209,10 +209,10 @@ export default function Join() {
                 autoComplete="new-password"
                 aria-invalid={actionData?.errors?.password ? true : undefined}
                 aria-describedby="password-error"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.password ? (
-                <div className="pt-1 text-red-700" id="password-error">
+                <div className="pt-1 text-accent-700" id="password-error">
                   {actionData.errors.password}
                 </div>
               ) : null}
@@ -222,15 +222,15 @@ export default function Join() {
         <input type="hidden" name="redirectTo" value={redirectTo} />
         <button
           type="submit"
-          className="w-full rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+          className="w-full rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 focus:bg-accent-400"
         >
           Create Account
         </button>
         <div className="flex items-center justify-center">
-          <div className="text-center text-sm text-gray-500">
+          <div className="text-center text-sm text-stone-500">
             Already have an account?{" "}
             <Link
-              className="text-blue-500 underline"
+              className="text-accent-500 underline"
               to={{
                 pathname: "/login",
                 search: searchParams.toString(),

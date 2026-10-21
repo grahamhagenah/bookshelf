@@ -1,13 +1,9 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Form, Link } from "@remix-run/react";
 import { useOptionalUser } from "~/utils";
-import { BookStackIcon } from "~/components/icons";
+import { BookshelfIcon } from "~/components/icons";
 
 export const meta: MetaFunction = () => [{ title: "Stacks" }];
-
-export const handle = {
-  breadcrumb: () => <Link to="/">Home</Link>,
-};
 
 export default function Index() {
   const user = useOptionalUser();
@@ -16,41 +12,41 @@ export default function Index() {
       <section className="flex flex-col items-center justify-center min-h-[calc(100vh-60px)] px-4 py-12">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-4 mb-6">
-            <BookStackIcon size={64} className="text-blue-600" />
+            <BookshelfIcon size={64} className="text-accent-600" />
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+          <h1 className="text-5xl md:text-7xl font-bold text-stone-800 dark:text-stone-100 mb-4">
             Stacks
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
+          <p className="text-xl text-stone-600 dark:text-stone-400 max-w-xl mx-auto">
             Your personal lending library. Catalog your books, connect with friends, and share the joy of reading.
           </p>
         </div>
 
         {user ? (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border dark:border-gray-800 p-8 max-w-md w-full text-center">
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Welcome back, <span className="font-semibold text-gray-800 dark:text-gray-100">{user.firstname}</span>
+          <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-lg border dark:border-stone-800 p-8 max-w-md w-full text-center">
+            <p className="text-stone-600 dark:text-stone-400 mb-6">
+              Welcome back, <span className="font-semibold text-stone-800 dark:text-stone-100">{user.firstname}</span>
             </p>
             <Link
               to="/books"
-              className="inline-flex items-center justify-center w-full rounded-xl bg-blue-500 px-6 py-3 text-lg font-medium text-white hover:bg-blue-600 focus:bg-blue-400 transition-colors"
+              className="inline-flex items-center justify-center w-full rounded-xl bg-accent-500 px-6 py-3 text-lg font-medium text-white hover:bg-accent-600 focus:bg-accent-400 transition-colors"
             >
               Go to my library
             </Link>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border dark:border-gray-800 p-8 max-w-md w-full">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-6 text-center">Get started</h2>
+          <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-lg border dark:border-stone-800 p-8 max-w-md w-full">
+            <h2 className="text-xl font-semibold text-stone-800 dark:text-stone-100 mb-6 text-center">Get started</h2>
             <div className="space-y-3">
               <Link
                 to="/join"
-                className="flex items-center justify-center w-full rounded-xl bg-blue-500 px-6 py-3 text-lg font-medium text-white hover:bg-blue-600 focus:bg-blue-400 transition-colors"
+                className="flex items-center justify-center w-full rounded-xl bg-accent-500 px-6 py-3 text-lg font-medium text-white hover:bg-accent-600 focus:bg-accent-400 transition-colors"
               >
                 Create an account
               </Link>
               <Link
                 to="/login"
-                className="flex items-center justify-center w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 px-6 py-3 text-lg font-medium text-gray-700 dark:text-gray-300 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors"
+                className="flex items-center justify-center w-full rounded-xl border-2 border-stone-200 dark:border-stone-700 px-6 py-3 text-lg font-medium text-stone-700 dark:text-stone-300 hover:border-accent-300 hover:bg-accent-50 dark:hover:bg-stone-800 transition-colors"
               >
                 Sign in
               </Link>
@@ -59,7 +55,7 @@ export default function Index() {
                   type="submit"
                   name="intent"
                   value="start"
-                  className="w-full text-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium py-2"
+                  className="w-full text-center text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 font-medium py-2"
                 >
                   Or explore a demo library first →
                 </button>

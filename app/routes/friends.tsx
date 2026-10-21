@@ -8,7 +8,6 @@ import { isDemoEmail } from "~/utils";
 import { Form, useActionData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import Layout from "~/components / Layout/Layout";
-import Breadcrumbs from "~/components/breadcrumbs";
 
 export const handle = {
   breadcrumb: () => <Link to="/friends">Friends</Link>,
@@ -152,20 +151,19 @@ export default function Friends() {
 
   return (
     <>
-    <Breadcrumbs />
     <Layout title="Friends">
       <section className="border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">Your Friends</h2>
         {following.length > 0 || pendingRequests.length > 0 ? (
           <>
             {following.length > 0 && (
-              <p className="text-gray-600 mb-4">You have {following.length} friend{following.length !== 1 ? 's' : ''}</p>
+              <p className="text-stone-600 mb-4">You have {following.length} friend{following.length !== 1 ? 's' : ''}</p>
             )}
             <ul className="divide-y">
               {following.map((user, index) => (
                 <li key={index} className="py-3 first:pt-0 last:pb-0">
-                  <a href={`/friend/${user.id}`} className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 -mx-2 px-2 py-2 rounded-lg transition-colors">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold text-sm flex-shrink-0">
+                  <a href={`/friend/${user.id}`} className="flex items-center gap-3 hover:bg-stone-50 dark:hover:bg-stone-800 -mx-2 px-2 py-2 rounded-lg transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-accent-100 dark:bg-accent-900 flex items-center justify-center text-accent-600 dark:text-accent-300 font-semibold text-sm flex-shrink-0">
                       {user.profileEmoji ? (
                         <span className="text-xl">{user.profileEmoji}</span>
                       ) : (
@@ -177,7 +175,7 @@ export default function Friends() {
                     </div>
                     <div>
                       <h3 className="font-medium">{user.firstname} {user.surname}</h3>
-                      {!isDemoEmail(user.email) && <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>}
+                      {!isDemoEmail(user.email) && <p className="text-sm text-stone-500 dark:text-stone-400">{user.email}</p>}
                     </div>
                   </a>
                 </li>
@@ -185,15 +183,15 @@ export default function Friends() {
               {pendingRequests.map((request) => (
                 <li key={request.id} className="py-3 first:pt-0 last:pb-0">
                   <div className="flex items-center gap-3 -mx-2 px-2 py-2">
-                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-semibold text-sm flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 font-semibold text-sm flex-shrink-0">
                       {(request.receiver.firstname?.[0] || "").toUpperCase()}
                       {(request.receiver.surname?.[0] || "").toUpperCase()}
                     </div>
                     <div className="flex-grow">
                       <h3 className="font-medium">{request.receiver.firstname} {request.receiver.surname}</h3>
-                      {!isDemoEmail(request.receiver.email) && <p className="text-sm text-gray-500">{request.receiver.email}</p>}
+                      {!isDemoEmail(request.receiver.email) && <p className="text-sm text-stone-500">{request.receiver.email}</p>}
                     </div>
-                    <span className="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full flex-shrink-0">
+                    <span className="bg-stone-100 text-stone-700 text-xs px-2 py-1 rounded-full flex-shrink-0">
                       Pending
                     </span>
                   </div>
@@ -204,7 +202,7 @@ export default function Friends() {
         ) : (
           <div className="text-center py-8">
             <h3 className="text-xl font-medium mb-2">No friends yet</h3>
-            <p className="text-gray-600">Search for users below to send them a friend request.</p>
+            <p className="text-stone-600">Search for users below to send them a friend request.</p>
           </div>
         )}
       </section>
@@ -212,34 +210,34 @@ export default function Friends() {
       {suggestedFriends.filter((user) => !pendingUserIds.has(user.id)).length > 0 && (
         <section className="border rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-2">Suggested Friends</h2>
-          <p className="text-gray-600 mb-4">People who recently joined Stacks</p>
+          <p className="text-stone-600 mb-4">People who recently joined Stacks</p>
           <ul className="divide-y">
             {suggestedFriends
               .filter((user) => !sentRequests.has(user.id) && !pendingUserIds.has(user.id))
               .map((user) => (
                 <li key={user.id} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-semibold text-sm flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-accent-100 flex items-center justify-center text-accent-600 font-semibold text-sm flex-shrink-0">
                       {(user.firstname?.[0] || "").toUpperCase()}
                       {(user.surname?.[0] || "").toUpperCase()}
                     </div>
                     <div>
                       <h3 className="font-medium">{user.firstname} {user.surname}</h3>
-                      <p className="text-sm text-gray-500">New member</p>
+                      <p className="text-sm text-stone-500">New member</p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleSendRequest(user.id)}
                     disabled={requestFetcher.state !== "idle"}
-                    className="rounded bg-blue-500 px-3 py-1.5 text-sm text-white hover:bg-blue-600 disabled:opacity-50"
+                    className="rounded bg-accent-500 px-3 py-1.5 text-sm text-white hover:bg-accent-600 disabled:opacity-50"
                   >
                     Send Request
                   </button>
                 </li>
               ))}
             {suggestedFriends.filter((user) => !sentRequests.has(user.id) && !pendingUserIds.has(user.id)).length === 0 && (
-              <li className="py-3 text-gray-500">You've sent requests to all suggested friends</li>
+              <li className="py-3 text-stone-500">You've sent requests to all suggested friends</li>
             )}
           </ul>
         </section>
@@ -247,10 +245,10 @@ export default function Friends() {
 
       <section className="border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-2">Find Friends</h2>
-        <p className="text-gray-600 mb-4">Search for users by name or email to send them a friend request.</p>
+        <p className="text-stone-600 mb-4">Search for users by name or email to send them a friend request.</p>
         <div className="space-y-4">
           <div>
-            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="search" className="block text-sm font-medium text-stone-700 mb-1">
               Search by name or email
             </label>
             <div className="relative">
@@ -261,11 +259,11 @@ export default function Friends() {
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded border border-gray-300 px-3 py-2"
+                className="w-full rounded border border-stone-300 px-3 py-2"
                 autoComplete="off"
               />
               {isSearching && (
-                <div className="absolute right-3 top-2.5 text-sm text-gray-400">
+                <div className="absolute right-3 top-2.5 text-sm text-stone-400">
                   Searching...
                 </div>
               )}
@@ -283,17 +281,17 @@ export default function Friends() {
                       return (
                         <li key={user.id} className="p-3 flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm ${isPending ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm ${isPending ? 'bg-stone-100 text-stone-600' : 'bg-accent-100 text-accent-600'}`}>
                               {(user.firstname?.[0] || "").toUpperCase()}
                               {(user.surname?.[0] || "").toUpperCase()}
                             </div>
                             <div>
                               <p className="font-medium">{user.firstname} {user.surname}</p>
-                              {!isDemoEmail(user.email) && <p className="text-sm text-gray-500">{user.email}</p>}
+                              {!isDemoEmail(user.email) && <p className="text-sm text-stone-500">{user.email}</p>}
                             </div>
                           </div>
                           {isPending ? (
-                            <span className="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full">
+                            <span className="bg-stone-100 text-stone-700 text-xs px-2 py-1 rounded-full">
                               Pending
                             </span>
                           ) : (
@@ -301,7 +299,7 @@ export default function Friends() {
                               type="button"
                               onClick={() => handleSendRequest(user.id)}
                               disabled={requestFetcher.state !== "idle"}
-                              className="rounded bg-blue-500 px-3 py-1.5 text-sm text-white hover:bg-blue-600 disabled:opacity-50"
+                              className="rounded bg-accent-500 px-3 py-1.5 text-sm text-white hover:bg-accent-600 disabled:opacity-50"
                             >
                               Send Request
                             </button>
@@ -310,11 +308,11 @@ export default function Friends() {
                       );
                     })}
                   {searchResults.filter((user) => !sentRequests.has(user.id)).length === 0 && (
-                    <li className="p-3 text-gray-500">Request sent to all matching users</li>
+                    <li className="p-3 text-stone-500">Request sent to all matching users</li>
                   )}
                 </ul>
               ) : !isSearching ? (
-                <p className="p-3 text-gray-500">No users found</p>
+                <p className="p-3 text-stone-500">No users found</p>
               ) : null}
             </div>
           )}
@@ -325,9 +323,9 @@ export default function Friends() {
         <details>
           <summary className="cursor-pointer font-medium">Add by email address</summary>
           <Form method="post" className="space-y-4 mt-4">
-            <p className="text-gray-600">If you know someone's exact email address, you can add them directly.</p>
+            <p className="text-stone-600">If you know someone's exact email address, you can add them directly.</p>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-stone-700 mb-1">
                 Email address
               </label>
               <input
@@ -338,10 +336,10 @@ export default function Friends() {
                 autoComplete="email"
                 aria-invalid={actionData?.errors?.email ? true : undefined}
                 aria-describedby="email-error"
-                className="w-full rounded border border-gray-300 px-3 py-2"
+                className="w-full rounded border border-stone-300 px-3 py-2"
               />
               {actionData?.errors?.email && (
-                <div className="mt-1 text-sm text-red-600" id="email-error">
+                <div className="mt-1 text-sm text-accent-600" id="email-error">
                   {actionData.errors.email}
                 </div>
               )}
@@ -349,7 +347,7 @@ export default function Friends() {
             <input type="hidden" name="redirectTo" value={redirectTo} />
             <button
               type="submit"
-              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+              className="rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600"
             >
               Send friend request
             </button>
