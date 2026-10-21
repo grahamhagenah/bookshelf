@@ -36,12 +36,8 @@ export default function Header() {
           </a>
           <Breadcrumbs />
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {user ? (
-            <div className="hidden sm:block">
-              <Search />
-            </div>
-          ) : null}
+        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+          {user ? <Search /> : null}
           {user ? <Notifications /> : null}
           <PositionedMenu />
         </div>

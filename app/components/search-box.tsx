@@ -21,8 +21,16 @@ type Option =
 const DEBOUNCE_MS = 200;
 
 // The search field with suggestions as you type. Picking a friend's book
-// opens it; picking an Open Library title searches for it.
-export default function SearchBox({ defaultValue }: { defaultValue: string }) {
+// opens it; picking an Open Library title searches for it. The "header"
+// variant is compact, starts a fresh search and clears itself after a pick.
+export default function SearchBox({
+  defaultValue = "",
+  variant = "page",
+}: {
+  defaultValue?: string;
+  variant?: "page" | "header";
+}) {
+  const inHeader = variant === "header";
   const friendsFetcher = useFetcher<SuggestResponse>();
   const openLibraryFetcher = useFetcher<SuggestResponse>();
   const navigate = useNavigate();
@@ -70,7 +78,8 @@ export default function SearchBox({ defaultValue }: { defaultValue: string }) {
 
   const runSearch = (text: string) => {
     setOpen(false);
-    const params = new URLSearchParams(window.location.search);
+    // On the search page, keep the Open Library filters; elsewhere start fresh
+    const params = new URLSearchParams(inHeader ? "" : window.location.search);
     params.set("q", text);
     params.delete("page");
     navigate(`/search?${params.toString()}`);
@@ -86,6 +95,7 @@ export default function SearchBox({ defaultValue }: { defaultValue: string }) {
     } else {
       runSearch(option.text);
     }
+    if (inHeader) setValue("");
     inputRef.current?.blur();
   };
 
@@ -102,6 +112,7 @@ export default function SearchBox({ defaultValue }: { defaultValue: string }) {
       choose(options[active]);
     } else if (event.key === "Escape") {
       setOpen(false);
+      if (inHeader) inputRef.current?.blur();
     }
   };
 
@@ -113,7 +124,7 @@ export default function SearchBox({ defaultValue }: { defaultValue: string }) {
   return (
     <div className="relative flex-1">
       <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">
-        <SearchIcon size={18} />
+        <SearchIcon size={inHeader ? 16 : 18} />
       </div>
       <input
         ref={inputRef}
@@ -128,15 +139,19 @@ export default function SearchBox({ defaultValue }: { defaultValue: string }) {
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         onKeyDown={onKeyDown}
-        placeholder="Search by title or author"
-        aria-label="Search by title or author"
+        placeholder={inHeader ? "Search books" : "Search by title or author"}
+        aria-label={inHeader ? "Search books" : "Search by title or author"}
         role="combobox"
         aria-expanded={showList}
         aria-controls={listId}
         aria-autocomplete="list"
         aria-activedescendant={active >= 0 ? optionId(active) : undefined}
         autoComplete="off"
-        className="w-full pl-10 pr-4 py-2.5 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-base placeholder:text-stone-400 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+        className={`w-full rounded-md border border-stone-200 dark:border-stone-700 dark:bg-stone-900 placeholder:text-stone-400 ${
+          inHeader
+            ? "h-9 pl-9 pr-3 text-sm bg-stone-50 focus:bg-white"
+            : "pl-10 pr-4 py-2.5 text-base bg-white"
+        } focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors`}
       />
 
       {showList ? (
@@ -144,7 +159,10 @@ export default function SearchBox({ defaultValue }: { defaultValue: string }) {
           id={listId}
           role="listbox"
           aria-label="Suggestions"
-          className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-stone-200/80 dark:border-stone-800 bg-white dark:bg-stone-900 py-1 shadow-soft"
+          // In the header the box is narrow, so the list is wider than it
+          className={`absolute top-full z-30 mt-1 overflow-hidden ${
+            inHeader ? "right-0 w-[min(26rem,calc(100vw-2rem))]" : "left-0 right-0"
+          } rounded-lg border border-stone-200/80 dark:border-stone-800 bg-white dark:bg-stone-900 py-1 shadow-soft text-left`}
           // Keep focus in the input so a click registers before blur closes it
           onMouseDown={(event) => event.preventDefault()}
         >
