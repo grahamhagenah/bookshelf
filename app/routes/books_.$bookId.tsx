@@ -177,9 +177,15 @@ function BookCover({
 }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
+  const showCover = (img: HTMLImageElement) => {
+    // Open Library answers unknown covers with a 1x1 pixel, and a broken
+    // image has no width at all
+    if (img.naturalWidth <= 1) setError(true);
+    else setLoaded(true);
+  };
 
   return (
-    <div className="relative w-[140px] h-[210px] md:w-[200px] md:h-[300px] overflow-hidden rounded-xs shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10">
+    <div className="relative flex-shrink-0 w-[120px] h-[180px] md:w-[200px] md:h-[300px] overflow-hidden rounded-xs shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10">
       {!loaded || error ? (
         <CoverPlaceholder
           title={title}
@@ -195,11 +201,12 @@ function BookCover({
           loading="lazy"
           decoding="async"
           className={`relative w-full h-full object-cover ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
-          onLoad={(e) => {
-            // Open Library answers unknown covers with a 1x1 pixel
-            if (e.currentTarget.naturalWidth <= 1) setError(true);
-            else setLoaded(true);
+          // A cached cover can finish loading before React hydrates and
+          // attaches onLoad, so also check it once it's in the page
+          ref={(img) => {
+            if (img?.complete) showCover(img);
           }}
+          onLoad={(e) => showCover(e.currentTarget)}
           onError={() => setError(true)}
         />
       ) : null}
@@ -688,15 +695,52 @@ export default function BookDetailsPage() {
     data.book.publisher,
   ].filter(Boolean);
 
+  // Title and details: beside the cover on phones, in the main column on
+  // larger screens
+  const heading = (
+    <>
+      <h1 className="text-2xl md:text-4xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
+        {data.book.title}
+      </h1>
+      <p className="mt-1 md:text-xl text-stone-500 dark:text-stone-400">
+        {data.book.author}
+      </p>
+
+      {details.length > 0 ? (
+        <p className="mt-3 md:mt-4 text-sm text-stone-500 dark:text-stone-400">
+          {details.join(" · ")}
+        </p>
+      ) : null}
+      {!data.isOwner && data.book.user ? (
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+          From{" "}
+          <PersonLink
+            id={data.book.user.id}
+            name={`${data.book.user.firstname} ${data.book.user.surname}`}
+            friendIds={data.friendIds}
+          />
+          &apos;s shelf
+        </p>
+      ) : null}
+    </>
+  );
+
   return (
     <>
-      <main className="flex flex-col md:flex-row gap-8 md:gap-12 px-4 md:px-8 py-8 md:py-12 w-full">
+      <main className="flex flex-col md:flex-row gap-6 md:gap-12 md:gap-12 px-4 md:px-8 py-8 md:py-12 w-full">
         <section className="flex-shrink-0 md:w-[200px] space-y-4">
-          <BookCover
-            src={data.book.cover}
-            title={data.book.title}
-            author={data.book.author}
-          />
+          <div className="flex items-start gap-4">
+            <BookCover
+              src={data.book.cover}
+              title={data.book.title}
+              author={data.book.author}
+            />
+            {!isEditing ? (
+              <div className="md:hidden min-w-0 flex-1 [overflow-wrap:anywhere]">
+                {heading}
+              </div>
+            ) : null}
+          </div>
           {canRequestBook ? (
             <Form method="post">
               <input type="hidden" name="intent" value="request" />
@@ -1004,32 +1048,10 @@ export default function BookDetailsPage() {
           ) : (
             /* View Mode */
             <>
-              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
-                {data.book.title}
-              </h1>
-              <p className="mt-1 text-lg md:text-xl text-stone-500 dark:text-stone-400">
-                {data.book.author}
-              </p>
-
-              {details.length > 0 ? (
-                <p className="mt-4 text-sm text-stone-500 dark:text-stone-400">
-                  {details.join(" · ")}
-                </p>
-              ) : null}
-              {!data.isOwner && data.book.user ? (
-                <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-                  From{" "}
-                  <PersonLink
-                    id={data.book.user.id}
-                    name={`${data.book.user.firstname} ${data.book.user.surname}`}
-                    friendIds={data.friendIds}
-                  />
-                  &apos;s shelf
-                </p>
-              ) : null}
+              <div className="hidden md:block">{heading}</div>
 
               {cleanSubjects(data.book.subjects).length > 0 ? (
-                <div className="mt-4 flex flex-wrap gap-1.5">
+                <div className="md:mt-4 flex flex-wrap gap-1.5">
                   {cleanSubjects(data.book.subjects).map((subject, index) => (
                     <span
                       key={index}

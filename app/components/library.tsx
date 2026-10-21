@@ -97,6 +97,12 @@ function BookCover({
   const { src, srcSet } = getCoverSources(cover);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
+  const showCover = (img: HTMLImageElement) => {
+    // Open Library answers unknown covers with a 1x1 pixel, and a broken
+    // image has no width at all
+    if (img.naturalWidth <= 1) setError(true);
+    else setLoaded(true);
+  };
 
   // Small corners: scans often carry a thin border, and tight corners keep
   // it reading as part of the cover rather than a clipped edge
@@ -119,11 +125,12 @@ function BookCover({
           loading={eager ? "eager" : "lazy"}
           decoding="async"
           className={`relative w-full h-full object-cover ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
-          onLoad={(e) => {
-            // Open Library answers unknown covers with a 1x1 pixel
-            if (e.currentTarget.naturalWidth <= 1) setError(true);
-            else setLoaded(true);
+          // A cached cover can finish loading before React hydrates and
+          // attaches onLoad, so also check it once it's in the page
+          ref={(img) => {
+            if (img?.complete) showCover(img);
           }}
+          onLoad={(e) => showCover(e.currentTarget)}
           onError={() => setError(true)}
         />
       ) : null}
