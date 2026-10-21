@@ -38,11 +38,19 @@ export default function Index() {
   return (
     <main className={user ? "min-h-[calc(100vh-60px)]" : "min-h-screen"}>
       {user ? null : <CoverWall />}
+      {user ? null : (
+        // Fade the wall to white behind the text, leaving the covers clear
+        // on the right
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b sm:bg-gradient-to-r from-white via-white/90 sm:via-white/85 to-white/40 sm:to-transparent dark:from-stone-950 dark:via-stone-950/90 dark:to-transparent"
+        />
+      )}
       <section
-        className={`relative flex flex-col items-center justify-center px-4 py-12 ${user ? "min-h-[calc(100vh-60px)]" : "min-h-screen"}`}
+        className={`relative flex flex-col justify-center px-4 md:px-8 py-16 ${user ? "min-h-[calc(100vh-60px)] items-center" : "min-h-screen"}`}
       >
-        {/* One frosted card over the cover wall */}
-        <div className="w-full max-w-lg rounded-xl bg-white/85 dark:bg-stone-900/85 backdrop-blur-xl ring-1 ring-stone-900/10 dark:ring-white/10 shadow-[0_24px_60px_-20px_rgb(28_25_23/0.35)] p-8 sm:p-10">
+        {/* Content sits on the page itself, no card */}
+        <div className="w-full max-w-lg">
           <p className="flex items-center gap-2 text-base font-semibold text-stone-900 dark:text-stone-100">
             <StacksLogo size={22} className="text-stone-900 dark:text-stone-100" />
             Stacks
