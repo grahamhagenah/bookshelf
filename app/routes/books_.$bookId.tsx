@@ -77,7 +77,7 @@ const secondaryButton =
   "rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
 const quietLabel =
   "rounded-md bg-stone-100 dark:bg-stone-800 px-4 py-2 text-sm text-stone-500 dark:text-stone-400 cursor-default";
-const panel = "rounded-lg bg-stone-50 dark:bg-stone-900 p-4 text-sm";
+const panel = "text-sm";
 const labelClass =
   "block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5";
 const inputClass =
