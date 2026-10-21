@@ -40,7 +40,7 @@ export default function Index() {
             </p>
             <Link
               to="/books"
-              className="inline-flex items-center justify-center w-full rounded-md bg-stone-900 dark:bg-stone-100 px-5 py-2.5 font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors"
+              className="inline-flex items-center justify-center w-full rounded-md bg-stone-700 dark:bg-stone-200 px-5 py-2.5 font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
             >
               Go to my library
             </Link>
@@ -53,7 +53,7 @@ export default function Index() {
             <div className="space-y-3">
               <Link
                 to="/join"
-                className="flex items-center justify-center w-full rounded-md bg-stone-900 dark:bg-stone-100 px-5 py-2.5 font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors"
+                className="flex items-center justify-center w-full rounded-md bg-stone-700 dark:bg-stone-200 px-5 py-2.5 font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
               >
                 Create an account
               </Link>

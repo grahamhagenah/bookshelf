@@ -82,7 +82,7 @@ export default function ReaderNotes({
               aria-pressed={loved}
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
                 loved
-                  ? "border-stone-900 bg-stone-900 text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
+                  ? "border-stone-700 bg-stone-700 text-white dark:border-stone-200 dark:bg-stone-200 dark:text-stone-900"
                   : "border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500"
               }`}
             >
@@ -125,7 +125,7 @@ export default function ReaderNotes({
             <button
               type="submit"
               disabled={isSaving}
-              className={`rounded-md bg-stone-900 dark:bg-stone-100 px-3 py-1.5 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors ${isSaving ? "opacity-60 cursor-wait" : ""}`}
+              className={`rounded-md bg-stone-700 dark:bg-stone-200 px-3 py-1.5 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors ${isSaving ? "opacity-60 cursor-wait" : ""}`}
             >
               {isSaving ? "Saving…" : "Save note"}
             </button>
