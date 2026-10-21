@@ -10,7 +10,6 @@ import { useEffect, useRef } from "react";
 import { createUser, getUserByEmail } from "~/models/user.server";
 import { createUserSession, getUserId } from "~/session.server";
 import { safeRedirect, validateEmail } from "~/utils";
-import Layout from "~/components / Layout/Layout";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
@@ -28,35 +27,70 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (typeof firstname !== "string" || firstname.length === 0) {
     return json(
-      { errors: { firstname: "First name is required", surname: null, email: null, password: null } },
+      {
+        errors: {
+          firstname: "First name is required",
+          surname: null,
+          email: null,
+          password: null,
+        },
+      },
       { status: 400 },
     );
   }
 
   if (typeof surname !== "string" || surname.length === 0) {
     return json(
-      { errors: { firstname: null, surname: "Last name is required", email: null, password: null } },
+      {
+        errors: {
+          firstname: null,
+          surname: "Last name is required",
+          email: null,
+          password: null,
+        },
+      },
       { status: 400 },
     );
   }
 
   if (!validateEmail(email)) {
     return json(
-      { errors: { firstname: null, surname: null, email: "Email is invalid", password: null } },
+      {
+        errors: {
+          firstname: null,
+          surname: null,
+          email: "Email is invalid",
+          password: null,
+        },
+      },
       { status: 400 },
     );
   }
 
   if (typeof password !== "string" || password.length === 0) {
     return json(
-      { errors: { firstname: null, surname: null, email: null, password: "Password is required" } },
+      {
+        errors: {
+          firstname: null,
+          surname: null,
+          email: null,
+          password: "Password is required",
+        },
+      },
       { status: 400 },
     );
   }
 
   if (password.length < 8) {
     return json(
-      { errors: { firstname: null, surname: null, email: null, password: "Password is too short" } },
+      {
+        errors: {
+          firstname: null,
+          surname: null,
+          email: null,
+          password: "Password is too short",
+        },
+      },
       { status: 400 },
     );
   }
@@ -109,7 +143,7 @@ export default function Join() {
     <div className="flex h-5/6 flex-col justify-center">
       <div className="mx-auto w-full max-w-md px-8">
         <Form method="post" className="space-y-6">
-        <div>
+          <div>
             <label
               htmlFor="firstname"
               className="block text-sm font-medium text-stone-700"
@@ -130,7 +164,10 @@ export default function Join() {
                 className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.firstname ? (
-                <div className="pt-1 text-stone-900 dark:text-stone-100" id="firstname-error">
+                <div
+                  className="pt-1 text-stone-900 dark:text-stone-100"
+                  id="firstname-error"
+                >
                   {actionData.errors.firstname}
                 </div>
               ) : null}
@@ -157,7 +194,10 @@ export default function Join() {
                 className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.surname ? (
-                <div className="pt-1 text-stone-900 dark:text-stone-100" id="surname-error">
+                <div
+                  className="pt-1 text-stone-900 dark:text-stone-100"
+                  id="surname-error"
+                >
                   {actionData.errors.surname}
                 </div>
               ) : null}
@@ -186,7 +226,10 @@ export default function Join() {
                 className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.email ? (
-                <div className="pt-1 text-stone-900 dark:text-stone-100" id="email-error">
+                <div
+                  className="pt-1 text-stone-900 dark:text-stone-100"
+                  id="email-error"
+                >
                   {actionData.errors.email}
                 </div>
               ) : null}
@@ -212,36 +255,39 @@ export default function Join() {
                 className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
               />
               {actionData?.errors?.password ? (
-                <div className="pt-1 text-stone-900 dark:text-stone-100" id="password-error">
+                <div
+                  className="pt-1 text-stone-900 dark:text-stone-100"
+                  id="password-error"
+                >
                   {actionData.errors.password}
                 </div>
               ) : null}
             </div>
           </div>
 
-        <input type="hidden" name="redirectTo" value={redirectTo} />
-        <button
-          type="submit"
-          className="w-full rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
-        >
-          Create Account
-        </button>
-        <div className="flex items-center justify-center">
-          <div className="text-center text-sm text-stone-500">
-            Already have an account?{" "}
-            <Link
-              className="text-stone-900 dark:text-stone-100 underline"
-              to={{
-                pathname: "/login",
-                search: searchParams.toString(),
-              }}
-            >
-              Log in
-            </Link>
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+          <button
+            type="submit"
+            className="w-full rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
+          >
+            Create Account
+          </button>
+          <div className="flex items-center justify-center">
+            <div className="text-center text-sm text-stone-500">
+              Already have an account?{" "}
+              <Link
+                className="text-stone-900 dark:text-stone-100 underline"
+                to={{
+                  pathname: "/login",
+                  search: searchParams.toString(),
+                }}
+              >
+                Log in
+              </Link>
+            </div>
           </div>
-        </div>
-      </Form>
+        </Form>
+      </div>
     </div>
-  </div>
   );
 }

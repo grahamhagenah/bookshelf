@@ -1,7 +1,16 @@
 import { Form, useMatches } from "@remix-run/react";
-import { useState, useRef, useEffect } from 'react';
-import { BookIcon, UserIcon, SettingsIcon, GroupIcon, LogoutIcon, SearchIcon, DashboardIcon } from './icons';
-import Avatar from './avatar';
+import { useState, useRef, useEffect } from "react";
+
+import Avatar from "./avatar";
+import {
+  BookIcon,
+  UserIcon,
+  SettingsIcon,
+  GroupIcon,
+  LogoutIcon,
+  SearchIcon,
+  DashboardIcon,
+} from "./icons";
 
 interface RootLoaderData {
   user: {
@@ -15,7 +24,9 @@ interface RootLoaderData {
 
 export default function PositionedMenu() {
   const matches = useMatches();
-  const rootData = matches.find(m => m.id === "root")?.data as RootLoaderData | undefined;
+  const rootData = matches.find((m) => m.id === "root")?.data as
+    | RootLoaderData
+    | undefined;
   const user = rootData?.user;
 
   const [open, setOpen] = useState(false);
@@ -27,8 +38,8 @@ export default function PositionedMenu() {
         setOpen(false);
       }
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
@@ -41,13 +52,18 @@ export default function PositionedMenu() {
         className="inline-flex items-center justify-center w-10 h-10 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
       >
         {user ? (
-          <Avatar firstname={user.firstname} surname={user.surname} icon={user.profileEmoji} size="xs" />
+          <Avatar
+            firstname={user.firstname}
+            surname={user.surname}
+            icon={user.profileEmoji}
+            size="xs"
+          />
         ) : (
           <UserIcon size={20} />
         )}
       </button>
 
-      {open && (
+      {open ? (
         <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-stone-950 rounded-lg shadow-lg border dark:border-stone-800 py-1 z-50">
           <a
             href="/books"
@@ -81,7 +97,7 @@ export default function PositionedMenu() {
             <GroupIcon size={20} />
             <span>Friends</span>
           </a>
-          {user?.isAdmin && (
+          {user?.isAdmin ? (
             <a
               href="/dashboard"
               onClick={() => setOpen(false)}
@@ -90,7 +106,7 @@ export default function PositionedMenu() {
               <DashboardIcon size={20} />
               <span>Dashboard</span>
             </a>
-          )}
+          ) : null}
           <div className="border-t dark:border-stone-800 my-1" />
           <Form action="/logout" method="post">
             <button
@@ -102,7 +118,7 @@ export default function PositionedMenu() {
             </button>
           </Form>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

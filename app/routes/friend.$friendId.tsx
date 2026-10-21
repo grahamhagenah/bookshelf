@@ -1,15 +1,16 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { getUserById } from "~/models/user.server";
+
 import Library from "~/components/library";
 import { getBookListItems } from "~/models/book.server";
-import { Link, useLoaderData } from "@remix-run/react";
+import { getUserById } from "~/models/user.server";
 import { requireUserId } from "~/session.server";
 
-type LoaderData = {
+interface LoaderData {
   friendName: string;
-};
+}
 
 export const handle = {
   breadcrumbs: (data: LoaderData) => [
@@ -30,7 +31,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   // Verify the current user is friends with this person
   const currentUser = await getUserById(currentUserId);
-  const followingIds = currentUser?.following?.map(f => f.id) ?? [];
+  const followingIds = currentUser?.following?.map((f) => f.id) ?? [];
 
   if (!followingIds.includes(params.friendId)) {
     throw new Response("Not Found", { status: 404 });
@@ -44,7 +45,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     bookListItems,
   });
 };
-
 
 export default function FriendsBookPage() {
   const data = useLoaderData<typeof loader>();

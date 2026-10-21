@@ -1,10 +1,21 @@
 import { json } from "@remix-run/node";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useSearchParams, useNavigation, Link, useFetcher } from "@remix-run/react";
-import { Form } from "@remix-run/react";
-import { createBook, getUserLibraryKeys, bookExistsInLibrary } from "~/models/book.server";
-import { requireUserId, getUserId } from "~/session.server";
+import {
+  useLoaderData,
+  useSearchParams,
+  useNavigation,
+  Link,
+  useFetcher,
+  Form,
+} from "@remix-run/react";
+
 import { SearchIcon, CheckCircleIcon } from "~/components/icons";
+import {
+  createBook,
+  getUserLibraryKeys,
+  bookExistsInLibrary,
+} from "~/models/book.server";
+import { requireUserId, getUserId } from "~/session.server";
 
 export const handle = {
   breadcrumb: () => <span>Search</span>,
@@ -114,13 +125,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const offset = (page - 1) * RESULTS_PER_PAGE;
 
   const res = await fetch(
-    `https://openlibrary.org/search.json?${searchQuery}&limit=${RESULTS_PER_PAGE}&offset=${offset}&fields=${fields}`
+    `https://openlibrary.org/search.json?${searchQuery}&limit=${RESULTS_PER_PAGE}&offset=${offset}&fields=${fields}`,
   );
-  const data = await res.json() as OpenLibraryResponse;
+  const data = (await res.json()) as OpenLibraryResponse;
 
   const totalPages = Math.ceil(data.numFound / RESULTS_PER_PAGE);
 
-  return json({ ...data, query, searchType, language, page, totalPages, libraryKeys });
+  return json({
+    ...data,
+    query,
+    searchType,
+    language,
+    page,
+    totalPages,
+    libraryKeys,
+  });
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -130,7 +149,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const title = formData.get("title");
   const author = formData.get("author");
   const coverId = formData.get("cover");
-  const cover = "https://covers.openlibrary.org/b/id/" + (coverId ?? "") + "-L.jpg";
+  const cover =
+    "https://covers.openlibrary.org/b/id/" + (coverId ?? "") + "-L.jpg";
   const datePublished = formData.get("datePublished");
   const pageCount = formData.get("pageCount");
   const subjects = formData.get("subjects");
@@ -141,7 +161,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (typeof openLibraryKey === "string" && openLibraryKey.length > 0) {
     const exists = await bookExistsInLibrary(userId, openLibraryKey);
     if (exists) {
-      return json({ success: false, alreadyExists: true, addedKey: openLibraryKey });
+      return json({
+        success: false,
+        alreadyExists: true,
+        addedKey: openLibraryKey,
+      });
     }
   }
 
@@ -149,7 +173,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   let description = "";
   if (typeof openLibraryKey === "string" && openLibraryKey.length > 0) {
     try {
-      const workRes = await fetch(`https://openlibrary.org${openLibraryKey}.json`);
+      const workRes = await fetch(
+        `https://openlibrary.org${openLibraryKey}.json`,
+      );
       if (workRes.ok) {
         const workData = await workRes.json();
         // Description can be a string or an object with a "value" property
@@ -169,19 +195,40 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     author: typeof author === "string" ? author : "",
     body: description,
     cover,
-    datePublished: typeof datePublished === "string" && datePublished.length > 0 ? datePublished : null,
-    pageCount: typeof pageCount === "string" && pageCount.length > 0 ? parseInt(pageCount, 10) : null,
-    subjects: typeof subjects === "string" && subjects.length > 0 ? subjects : null,
-    publisher: typeof publisher === "string" && publisher.length > 0 ? publisher : null,
-    openLibraryKey: typeof openLibraryKey === "string" && openLibraryKey.length > 0 ? openLibraryKey : null,
+    datePublished:
+      typeof datePublished === "string" && datePublished.length > 0
+        ? datePublished
+        : null,
+    pageCount:
+      typeof pageCount === "string" && pageCount.length > 0
+        ? parseInt(pageCount, 10)
+        : null,
+    subjects:
+      typeof subjects === "string" && subjects.length > 0 ? subjects : null,
+    publisher:
+      typeof publisher === "string" && publisher.length > 0 ? publisher : null,
+    openLibraryKey:
+      typeof openLibraryKey === "string" && openLibraryKey.length > 0
+        ? openLibraryKey
+        : null,
     userId,
   });
 
   return json({ success: true, addedKey: openLibraryKey });
 };
 
-function SearchResultItem({ book, isInLibrary }: { book: OpenLibraryBook; isInLibrary: boolean }) {
-  const fetcher = useFetcher<{ success: boolean; alreadyExists?: boolean; addedKey: string }>();
+function SearchResultItem({
+  book,
+  isInLibrary,
+}: {
+  book: OpenLibraryBook;
+  isInLibrary: boolean;
+}) {
+  const fetcher = useFetcher<{
+    success: boolean;
+    alreadyExists?: boolean;
+    addedKey: string;
+  }>();
   const isAdding = fetcher.state === "submitting";
   const isAdded = fetcher.data?.success === true;
   const alreadyInLibrary = isInLibrary || fetcher.data?.alreadyExists === true;
@@ -210,28 +257,50 @@ function SearchResultItem({ book, isInLibrary }: { book: OpenLibraryBook; isInLi
           </h4>
 
           <div className="flex flex-wrap gap-3 text-sm text-stone-600 py-1">
-            {book.first_publish_year && (
+            {book.first_publish_year ? (
               <span>{book.first_publish_year}</span>
-            )}
-            {book.number_of_pages_median && (
+            ) : null}
+            {book.number_of_pages_median ? (
               <span>{book.number_of_pages_median} pages</span>
-            )}
-            {book.publisher?.[0] && (
-              <span className="truncate max-w-[200px]">{book.publisher[0]}</span>
-            )}
+            ) : null}
+            {book.publisher?.[0] ? (
+              <span className="truncate max-w-[200px]">
+                {book.publisher[0]}
+              </span>
+            ) : null}
           </div>
 
-          {subjectsPreview && (
+          {subjectsPreview ? (
             <p className="text-sm text-stone-500 truncate">{subjectsPreview}</p>
-          )}
+          ) : null}
 
           <input type="hidden" name="title" value={book.title ?? ""} />
-          <input type="hidden" name="author" value={book.author_name?.[0] ?? ""} />
+          <input
+            type="hidden"
+            name="author"
+            value={book.author_name?.[0] ?? ""}
+          />
           <input type="hidden" name="cover" value={book.cover_i ?? ""} />
-          <input type="hidden" name="datePublished" value={book.first_publish_year?.toString() ?? ""} />
-          <input type="hidden" name="pageCount" value={book.number_of_pages_median?.toString() ?? ""} />
-          <input type="hidden" name="subjects" value={book.subject?.slice(0, 5).join(", ") ?? ""} />
-          <input type="hidden" name="publisher" value={book.publisher?.[0] ?? ""} />
+          <input
+            type="hidden"
+            name="datePublished"
+            value={book.first_publish_year?.toString() ?? ""}
+          />
+          <input
+            type="hidden"
+            name="pageCount"
+            value={book.number_of_pages_median?.toString() ?? ""}
+          />
+          <input
+            type="hidden"
+            name="subjects"
+            value={book.subject?.slice(0, 5).join(", ") ?? ""}
+          />
+          <input
+            type="hidden"
+            name="publisher"
+            value={book.publisher?.[0] ?? ""}
+          />
           <input type="hidden" name="openLibraryKey" value={book.key ?? ""} />
 
           <button
@@ -241,10 +310,10 @@ function SearchResultItem({ book, isInLibrary }: { book: OpenLibraryBook; isInLi
               isAdded
                 ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 cursor-default"
                 : alreadyInLibrary
-                ? "bg-stone-200 text-stone-500 cursor-default"
-                : isAdding
-                ? "bg-stone-400 text-white cursor-wait"
-                : "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
+                  ? "bg-stone-200 text-stone-500 cursor-default"
+                  : isAdding
+                    ? "bg-stone-400 text-white cursor-wait"
+                    : "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
             }`}
           >
             {isAdded ? (
@@ -274,7 +343,9 @@ export default function Search() {
   const [searchParams] = useSearchParams();
   const navigation = useNavigation();
 
-  const isSearching = navigation.state === "loading" && navigation.location?.pathname === "/search";
+  const isSearching =
+    navigation.state === "loading" &&
+    navigation.location?.pathname === "/search";
   const currentQuery = searchParams.get("q") || "";
   const currentType = searchParams.get("type") || "all";
   const currentLang = searchParams.get("lang") || "";
@@ -349,7 +420,10 @@ export default function Search() {
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Search Type */}
               <div className="flex-1">
-                <label htmlFor="type" className="block text-sm font-medium text-stone-700 mb-1">
+                <label
+                  htmlFor="type"
+                  className="block text-sm font-medium text-stone-700 mb-1"
+                >
                   Search by
                 </label>
                 <select
@@ -366,7 +440,10 @@ export default function Search() {
 
               {/* Language Filter */}
               <div className="flex-1">
-                <label htmlFor="lang" className="block text-sm font-medium text-stone-700 mb-1">
+                <label
+                  htmlFor="lang"
+                  className="block text-sm font-medium text-stone-700 mb-1"
+                >
                   Language
                 </label>
                 <select
@@ -398,62 +475,88 @@ export default function Search() {
         </Form>
 
         {/* Results Info */}
-        {data.query && (
+        {data.query ? (
           <div className="mb-4 text-stone-600">
             {isSearching ? (
               <p>Searching...</p>
             ) : (
               <p>
-                Found <span className="font-semibold">{data.numFound.toLocaleString()}</span> results
-                for "<span className="font-semibold">{data.query}</span>"
-                {currentType !== "all" && (
-                  <span> in <span className="font-semibold">{currentType}s</span></span>
-                )}
-                {currentLang && (
-                  <span> in <span className="font-semibold">{LANGUAGES.find(l => l.code === currentLang)?.label}</span></span>
-                )}
-                {totalPages > 1 && (
+                Found{" "}
+                <span className="font-semibold">
+                  {data.numFound.toLocaleString()}
+                </span>{" "}
+                results for &ldquo;
+                <span className="font-semibold">{data.query}</span>&rdquo;
+                {currentType !== "all" ? (
+                  <span>
+                    {" "}
+                    in <span className="font-semibold">{currentType}s</span>
+                  </span>
+                ) : null}
+                {currentLang ? (
+                  <span>
+                    {" "}
+                    in{" "}
+                    <span className="font-semibold">
+                      {LANGUAGES.find((l) => l.code === currentLang)?.label}
+                    </span>
+                  </span>
+                ) : null}
+                {totalPages > 1 ? (
                   <span className="ml-2 text-stone-500">
                     (Page {currentPage} of {totalPages.toLocaleString()})
                   </span>
-                )}
+                ) : null}
               </p>
             )}
           </div>
-        )}
+        ) : null}
 
         {/* Empty State */}
-        {!data.query && (
+        {!data.query ? (
           <div className="text-center py-16">
             <SearchIcon size={64} className="text-stone-300 mb-4 mx-auto" />
-            <h2 className="text-2xl font-semibold text-stone-700 mb-2">Search for Books</h2>
+            <h2 className="text-2xl font-semibold text-stone-700 mb-2">
+              Search for Books
+            </h2>
             <p className="text-stone-500 max-w-md mx-auto">
-              Enter a book title, author name, or keywords to search the Open Library database
-              and add books to your collection.
+              Enter a book title, author name, or keywords to search the Open
+              Library database and add books to your collection.
             </p>
           </div>
-        )}
+        ) : null}
 
         {/* No Results */}
-        {data.query && data.docs.length === 0 && !isSearching && (
+        {data.query && data.docs.length === 0 && !isSearching ? (
           <div className="text-center py-16">
-            <h2 className="text-2xl font-semibold text-stone-700 mb-2">No Results Found</h2>
+            <h2 className="text-2xl font-semibold text-stone-700 mb-2">
+              No Results Found
+            </h2>
             <p className="text-stone-500">
               Try adjusting your search terms or filters.
             </p>
           </div>
-        )}
+        ) : null}
 
         {/* Results List */}
         <ul className="search-results mb-4">
           {data.docs.map((book, index) => (
-            <SearchResultItem key={book.key || index} book={book} isInLibrary={book.key ? data.libraryKeys.includes(book.key) : false} />
+            <SearchResultItem
+              key={book.key || index}
+              book={book}
+              isInLibrary={
+                book.key ? data.libraryKeys.includes(book.key) : false
+              }
+            />
           ))}
         </ul>
 
         {/* Pagination */}
-        {totalPages > 1 && data.query && (
-          <nav className="flex justify-center items-center gap-2 py-8" aria-label="Pagination">
+        {totalPages > 1 && data.query ? (
+          <nav
+            className="flex justify-center items-center gap-2 py-8"
+            aria-label="Pagination"
+          >
             {/* Previous Button */}
             {currentPage > 1 ? (
               <Link
@@ -489,7 +592,7 @@ export default function Search() {
                   >
                     {page}
                   </Link>
-                )
+                ),
               )}
             </div>
 
@@ -508,7 +611,7 @@ export default function Search() {
               </span>
             )}
           </nav>
-        )}
+        ) : null}
       </main>
     </>
   );

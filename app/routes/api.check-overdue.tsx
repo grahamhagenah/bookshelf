@@ -1,8 +1,9 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
+
+import { prisma } from "~/db.server";
 import { getOverdueBooks, getBooksNearDue } from "~/models/book.server";
 import { createOverdueReminderNotification } from "~/models/user.server";
-import { prisma } from "~/db.server";
 
 // This endpoint checks for overdue books and sends reminder notifications
 // It can be called by a cron job (e.g., daily)
@@ -44,7 +45,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         book.borrowerId!,
         ownerName,
         book.id,
-        book.title
+        book.title,
       );
       remindersCreated++;
     }

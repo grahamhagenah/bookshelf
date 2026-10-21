@@ -1,7 +1,8 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { requireUserId } from "~/session.server";
+
 import { getUserById, searchUsers } from "~/models/user.server";
+import { requireUserId } from "~/session.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -23,12 +24,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const pendingRequestIds = new Set(
     user?.notificationsSent
       ?.filter((n) => n.type === "FRIEND_REQUEST")
-      .map((n) => n.receiverId) || []
+      .map((n) => n.receiverId) || [],
   );
 
   // Filter out users already followed or with pending requests
   const filteredResults = results.filter(
-    (u) => !followingIds.has(u.id) && !pendingRequestIds.has(u.id)
+    (u) => !followingIds.has(u.id) && !pendingRequestIds.has(u.id),
   );
 
   return json(filteredResults);

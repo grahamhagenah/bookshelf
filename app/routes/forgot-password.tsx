@@ -2,8 +2,9 @@ import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, Link, useActionData } from "@remix-run/react";
 import { useEffect, useRef } from "react";
-import { resetPassword } from "~/models/user.server";
+
 import { sendPasswordResetEmail } from "~/email.server";
+import { resetPassword } from "~/models/user.server";
 import { validateEmail } from "~/utils";
 
 export const meta: MetaFunction = () => [{ title: "Forgot Password" }];
@@ -14,8 +15,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (!validateEmail(email)) {
     return json(
-      { errors: { email: "Please enter a valid email address" }, success: false },
-      { status: 400 }
+      {
+        errors: { email: "Please enter a valid email address" },
+        success: false,
+      },
+      { status: 400 },
     );
   }
 
@@ -54,9 +58,12 @@ export default function ForgotPasswordPage() {
         {actionData?.success ? (
           <div className="space-y-6">
             <div className="rounded-lg bg-stone-100 p-6 text-center">
-              <h2 className="text-xl font-semibold text-stone-900 dark:text-stone-100 mb-2">Check your email</h2>
+              <h2 className="text-xl font-semibold text-stone-900 dark:text-stone-100 mb-2">
+                Check your email
+              </h2>
               <p className="text-stone-900 dark:text-stone-100">
-                If an account exists with that email address, we've sent a temporary password you can use to log in.
+                If an account exists with that email address, we&apos;ve sent a
+                temporary password you can use to log in.
               </p>
             </div>
             <div className="text-center">
@@ -71,9 +78,12 @@ export default function ForgotPasswordPage() {
         ) : (
           <Form method="post" className="space-y-6">
             <div>
-              <h1 className="text-2xl font-semibold mb-2">Forgot your password?</h1>
+              <h1 className="text-2xl font-semibold mb-2">
+                Forgot your password?
+              </h1>
               <p className="text-stone-600">
-                Enter your email address and we'll send you a temporary password.
+                Enter your email address and we&apos;ll send you a temporary
+                password.
               </p>
             </div>
 
@@ -89,6 +99,7 @@ export default function ForgotPasswordPage() {
                   ref={emailRef}
                   id="email"
                   required
+                  // eslint-disable-next-line jsx-a11y/no-autofocus
                   autoFocus={true}
                   name="email"
                   type="email"
@@ -98,7 +109,10 @@ export default function ForgotPasswordPage() {
                   className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
                 />
                 {actionData?.errors?.email ? (
-                  <div className="pt-1 text-stone-900 dark:text-stone-100" id="email-error">
+                  <div
+                    className="pt-1 text-stone-900 dark:text-stone-100"
+                    id="email-error"
+                  >
                     {actionData.errors.email}
                   </div>
                 ) : null}
