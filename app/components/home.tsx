@@ -77,12 +77,13 @@ function ComingUp({ items }: { items: DueItem[] }) {
   return (
     <section
       aria-labelledby="coming-up"
-      className="mb-8 border-b border-stone-200 dark:border-stone-800 pb-6"
+      className="mb-6 border-b border-stone-200 dark:border-stone-800 pb-4"
     >
-      <h2 id="coming-up" className={`${headingClass} mb-2`}>
+      {/* A slim strip: a small label, then the items run along one line */}
+      <h2 id="coming-up" className="mb-0.5 text-sm font-semibold text-stone-500 dark:text-stone-400">
         Coming up
       </h2>
-      <ul className="grid gap-x-10 sm:grid-cols-2">
+      <ul className="flex flex-wrap gap-x-8">
         {items.map(({ book, person, direction }) => {
           const days = daysUntil(book.dueDate);
           const overdue = days < 0;
@@ -94,11 +95,11 @@ function ComingUp({ items }: { items: DueItem[] }) {
             <li key={book.id}>
               <Link
                 to={`/books/${book.id}`}
-                className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+                className="-mx-2 flex items-center gap-2 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
               >
                 <span
                   aria-hidden="true"
-                  className={`h-2 w-2 flex-shrink-0 rounded-full ${
+                  className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${
                     overdue
                       ? "bg-stone-900 dark:bg-stone-100"
                       : "bg-stone-300 dark:bg-stone-600"
@@ -275,10 +276,11 @@ export default function Home({
               </div>
             </div>
             {books.recent.length > 0 ? (
-              // Four across on phones (the newest four), six on wider screens
+              // Two rows: four across on phones (the newest eight), six on
+              // wider screens
               <ul className="grid grid-cols-4 gap-3 sm:grid-cols-6">
                 {books.recent.map((book, index) => (
-                  <li key={book.id} className={index >= 4 ? "hidden sm:block" : undefined}>
+                  <li key={book.id} className={index >= 8 ? "hidden sm:block" : undefined}>
                     <Link
                       to={`/books/${book.id}`}
                       title={book.title}

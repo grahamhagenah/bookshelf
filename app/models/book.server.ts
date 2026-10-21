@@ -107,7 +107,8 @@ export async function getHomeBooks(userId: User["id"]) {
     borrowed: borrowed.map(({ user, ...book }) => ({ ...book, owner: user })),
     lent: own.filter((book) => book.borrower).sort((a, b) => due(a) - due(b)),
     shelf: own.filter((book) => !book.borrower),
-    recent: own.slice(0, 6),
+    // Two rows of covers on the home page
+    recent: own.slice(0, 12),
   };
 }
 
