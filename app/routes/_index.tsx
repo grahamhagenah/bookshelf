@@ -87,15 +87,15 @@ export default function Index() {
 
               <ul className="mt-7 space-y-3 text-base sm:text-lg text-stone-600 dark:text-stone-300">
                 {FEATURES.map(({ label, icon }) => (
-                  <li key={label} className="flex items-center gap-2.5">
-                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400">
+                  <li key={label} className="flex items-center gap-3">
+                    <span className="flex w-5 flex-shrink-0 items-center justify-center text-stone-500 dark:text-stone-400">
                       <svg
-                        width="16"
-                        height="16"
+                        width="20"
+                        height="20"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="2"
+                        strokeWidth="1.75"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         aria-hidden="true"
