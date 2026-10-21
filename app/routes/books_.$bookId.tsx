@@ -879,13 +879,6 @@ export default function BookDetailsPage() {
               </button>
             </Form>
           ) : null}
-          {!isEditing ? (
-            <LoveButton
-              notes={data.readerNotes}
-              myNote={data.myNote}
-              canNote={data.canNote}
-            />
-          ) : null}
           {needsFriendship && data.book.user ? (
             <div className={panel}>
               <p className="text-stone-600 dark:text-stone-300 mb-3">
@@ -957,6 +950,14 @@ export default function BookDetailsPage() {
                 </button>
               </Form>
             </div>
+          ) : null}
+          {/* The heart comes after whatever you can do with the book */}
+          {!isEditing ? (
+            <LoveButton
+              notes={data.readerNotes}
+              myNote={data.myNote}
+              canNote={data.canNote}
+            />
           ) : null}
           {!isEditing ? <BookFacts data={data} /> : null}
           {!isEditing && data.lendingHistory.length > 0 ? (
