@@ -25,6 +25,13 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M4 9h10.5a5.5 5.5 0 010 11H11" />
     </>
   ),
+  // Clock with a plus
+  LOAN_EXTENDED: (
+    <>
+      <circle cx="11" cy="12" r="7.5" />
+      <path d="M11 8v4l2.5 1.5M19.5 3.5v5M17 6h5" />
+    </>
+  ),
   // Clock
   DUE_SOON_REMINDER: (
     <>
