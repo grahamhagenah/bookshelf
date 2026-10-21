@@ -3,11 +3,21 @@ import { useState, useLayoutEffect, useEffect } from "react";
 import { GroupIcon, SearchIcon, BookIcon, GridViewIcon, ListViewIcon } from './icons';
 import CoverPlaceholder from './cover-placeholder';
 
-// Convert Open Library cover URL to different size
-// Sizes: S (small ~50px), M (medium ~180px), L (large ~300px)
-function getCoverUrl(url: string, size: "S" | "M" | "L" = "M"): string {
-  return url.replace(/-[SML]\.jpg$/, `-${size}.jpg`);
+const OPEN_LIBRARY_SIZE = /-[SML]\.jpg$/;
+
+// Open Library serves each cover as S (~45px wide), M (~180px) and L (~400px+).
+// Grid tiles are ~150px wide, so M is enough on standard screens; listing L as
+// a 2x candidate lets high-density screens fetch it without slowing others down.
+function getCoverSources(url: string) {
+  if (!OPEN_LIBRARY_SIZE.test(url)) return { src: url };
+  return {
+    src: url.replace(OPEN_LIBRARY_SIZE, "-M.jpg"),
+    srcSet: `${url.replace(OPEN_LIBRARY_SIZE, "-M.jpg")} 180w, ${url.replace(OPEN_LIBRARY_SIZE, "-L.jpg")} 400w`,
+  };
 }
+
+// Matches the grid: 3 columns on phones, then up to 5 in the 56rem column
+const COVER_SIZES = "(min-width: 768px) 160px, (min-width: 640px) 22vw, 31vw";
 
 type ViewMode = "cover" | "list";
 
@@ -29,7 +39,8 @@ interface LibraryProps {
 }
 
 // One rounded box that clips both the image and its placeholder
-function BookCover({ src, title, author, className }: { src: string; title: string; author?: string; className?: string }) {
+function BookCover({ cover, title, author, className, eager = false }: { cover: string; title: string; author?: string; className?: string; eager?: boolean }) {
+  const { src, srcSet } = getCoverSources(cover);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 
@@ -39,8 +50,11 @@ function BookCover({ src, title, author, className }: { src: string; title: stri
       {!error && (
         <img
           src={src}
+          srcSet={srcSet}
+          sizes={srcSet ? COVER_SIZES : undefined}
           alt={title}
-          loading="lazy"
+          // The first row is usually on screen right away
+          loading={eager ? "eager" : "lazy"}
           decoding="async"
           className={`relative w-full h-full object-cover ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
           onLoad={(e) => {
@@ -196,11 +210,12 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
         {/* Cover View */}
         {viewMode === "cover" && (
           <ol className="grid grid-cols-3 gap-3 sm:gap-4 sm:grid-cols-4 md:grid-cols-5">
-            {bookListItems.map((book) => (
+            {bookListItems.map((book, index) => (
               <li key={book.id} className="cover-wrapper">
                 <NavLink to={`/books/${book.id}`} className="group block">
                   <BookCover
-                    src={getCoverUrl(book.cover, "M")}
+                    cover={book.cover}
+                    eager={index < 5}
                     title={book.title}
                     author={book.author}
                     className="w-full aspect-[2/3] transition-opacity duration-200 group-hover:opacity-90"
