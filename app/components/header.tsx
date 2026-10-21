@@ -29,10 +29,10 @@ export default function Header() {
             className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0"
           >
             <StacksLogo
-              size={24}
+              size={28}
               className="text-stone-900 dark:text-stone-100"
             />
-            <span className="text-base sm:text-lg">Stacks</span>
+            <span className="text-lg sm:text-xl">Stacks</span>
           </a>
           <Breadcrumbs />
         </div>
