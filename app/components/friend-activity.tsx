@@ -19,7 +19,7 @@ function FeedCover({ book }: { book: FeedBook }) {
     <Link
       to={`/books/${book.id}`}
       title={book.title}
-      className="block w-9 h-[54px] flex-shrink-0 overflow-hidden rounded-xs bg-stone-100 dark:bg-stone-800 ring-1 ring-stone-900/5 dark:ring-white/10 hover:opacity-90 transition-opacity"
+      className="block w-11 h-[66px] flex-shrink-0 overflow-hidden rounded-xs bg-stone-100 dark:bg-stone-800 ring-1 ring-stone-900/5 dark:ring-white/10 hover:opacity-90 transition-opacity"
     >
       <img
         src={coverSrc(book.cover)}

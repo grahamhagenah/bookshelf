@@ -1,6 +1,5 @@
 import type { SerializeFrom } from "@remix-run/node";
 import { Link } from "@remix-run/react";
-import { useState } from "react";
 
 import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
@@ -8,8 +7,9 @@ import { coverSrc } from "~/utils";
 
 import FriendActivityItem from "./friend-activity";
 
-// The signed-in home page: your books and where each one is on the left,
-// what friends have been up to on the right (below, on phones)
+// The signed-in home page, ordered by how soon things need you: what's due
+// at the top, then your loans both ways side by side, your newest books,
+// and what friends have been up to alongside (below, on phones)
 
 type HomeBooks = SerializeFrom<Awaited<ReturnType<typeof getHomeBooks>>>;
 interface HomeBook {
@@ -24,95 +24,169 @@ interface Person {
   surname: string;
 }
 
+const DAY = 24 * 60 * 60 * 1000;
+// How far ahead "Coming up" looks
+const COMING_UP_DAYS = 7;
+
 const monthDay = (date: string) =>
   new Date(date).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
+// Whole days from today to the due date; negative once it's passed
+function daysUntil(date: string) {
+  const startOfToday = new Date().setHours(0, 0, 0, 0);
+  const due = new Date(date).setHours(0, 0, 0, 0);
+  return Math.round((due - startOfToday) / DAY);
+}
+
+function inDays(days: number) {
+  if (days === 0) return "today";
+  if (days === 1) return "tomorrow";
+  return `in ${days} days`;
+}
+
 const linkClass =
   "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
+const headingClass = "text-lg font-semibold text-stone-900 dark:text-stone-100";
+const subheadingClass =
+  "mb-1 flex items-baseline gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400";
 
-function Due({ dueDate }: { dueDate: string | null }) {
-  if (!dueDate) return null;
-  return new Date(dueDate) < new Date() ? (
-    <span className="font-semibold text-stone-900 dark:text-stone-100">
-      Overdue since {monthDay(dueDate)}
-    </span>
-  ) : (
-    <>Due {monthDay(dueDate)}</>
-  );
-}
-
-function BookRow({
-  book,
-  person,
-  personLabel,
-}: {
-  book: HomeBook;
-  person?: Person | null;
-  personLabel?: string;
-}) {
+function Cover({ book, className }: { book: HomeBook; className: string }) {
   return (
-    <Link
-      to={`/books/${book.id}`}
-      className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+    <span
+      className={`block flex-shrink-0 overflow-hidden rounded-xs bg-stone-100 dark:bg-stone-800 ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}
     >
-      <span className="block w-8 h-12 flex-shrink-0 overflow-hidden rounded-xs bg-stone-100 dark:bg-stone-800 ring-1 ring-stone-900/5 dark:ring-white/10">
-        <img
-          src={coverSrc(book.cover)}
-          alt=""
-          loading="lazy"
-          className="h-full w-full object-cover"
-        />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium text-stone-900 dark:text-stone-100">
-          {book.title}
-        </span>
-        <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
-          {book.author}
-        </span>
-      </span>
-      {person ? (
-        <span className="flex-shrink-0 text-right text-sm text-stone-500 dark:text-stone-400 max-w-[45%]">
-          <span className="block truncate">
-            {personLabel}{" "}
-            <span className="text-stone-700 dark:text-stone-200">
-              {person.firstname} {person.surname}
-            </span>
-          </span>
-          <span className="block">
-            <Due dueDate={book.dueDate} />
-          </span>
-        </span>
-      ) : null}
-    </Link>
+      <img
+        src={coverSrc(book.cover)}
+        alt=""
+        loading="lazy"
+        className="h-full w-full object-cover"
+      />
+    </span>
   );
 }
 
-// The shelf can be long; show a few and let the rest open on request
-const SHELF_PREVIEW = 5;
+// One line in "Coming up": overdue or due within the week, either way
+interface DueItem {
+  book: HomeBook & { dueDate: string };
+  person: Person;
+  direction: "borrowed" | "lent";
+}
 
-function Group({
-  title,
-  count,
-  children,
-  footer,
-}: {
-  title: string;
-  count: number;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-}) {
-  if (count === 0) return null;
+function ComingUp({ items }: { items: DueItem[] }) {
+  if (items.length === 0) return null;
   return (
-    // A rule between groups, so each reads as its own block
-    <div className="border-t border-stone-200 dark:border-stone-800 pt-5 mt-6 first:border-t-0 first:pt-0 first:mt-0">
-      <h3 className="mb-1 flex items-baseline gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400">
+    <section
+      aria-labelledby="coming-up"
+      className="mb-8 border-b border-stone-200 dark:border-stone-800 pb-6"
+    >
+      <h2 id="coming-up" className={`${headingClass} mb-2`}>
+        Coming up
+      </h2>
+      <ul className="grid gap-x-10 sm:grid-cols-2">
+        {items.map(({ book, person, direction }) => {
+          const days = daysUntil(book.dueDate);
+          const overdue = days < 0;
+          const who = `${person.firstname} ${person.surname}`;
+          const when = overdue
+            ? `${-days} ${days === -1 ? "day" : "days"} overdue`
+            : `due ${inDays(days)}`;
+          return (
+            <li key={book.id}>
+              <Link
+                to={`/books/${book.id}`}
+                className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 flex-shrink-0 rounded-full ${
+                    overdue
+                      ? "bg-stone-900 dark:bg-stone-100"
+                      : "bg-stone-300 dark:bg-stone-600"
+                  }`}
+                />
+                <span className="min-w-0 text-sm text-stone-600 dark:text-stone-300">
+                  <span className="font-semibold text-stone-900 dark:text-stone-100">
+                    {book.title}
+                  </span>{" "}
+                  {direction === "borrowed" ? "goes back to" : "is with"} {who}
+                  {" · "}
+                  <span
+                    className={
+                      overdue ? "font-semibold text-stone-900 dark:text-stone-100" : ""
+                    }
+                  >
+                    {when}
+                  </span>
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+// A compact list for one direction of lending
+function LoanList({
+  id,
+  title,
+  books,
+  empty,
+}: {
+  id: string;
+  title: string;
+  books: { book: HomeBook; person: Person | null }[];
+  empty: string;
+}) {
+  return (
+    <section aria-labelledby={id} className="min-w-0">
+      <h3 id={id} className={subheadingClass}>
         {title}
-        <span className="font-normal text-stone-400 dark:text-stone-500">{count}</span>
+        <span className="font-normal text-stone-400 dark:text-stone-500">
+          {books.length}
+        </span>
       </h3>
-      <ul className="divide-y divide-stone-100 dark:divide-stone-900">{children}</ul>
-      {footer}
-    </div>
+      {books.length === 0 ? (
+        <p className="py-2 text-sm text-stone-400 dark:text-stone-500">{empty}</p>
+      ) : (
+        <ul className="divide-y divide-stone-100 dark:divide-stone-900">
+          {books.map(({ book, person }) => {
+            const overdue = book.dueDate ? daysUntil(book.dueDate) < 0 : false;
+            return (
+              <li key={book.id}>
+                <Link
+                  to={`/books/${book.id}`}
+                  className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+                >
+                  <Cover book={book} className="w-10 h-15" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-stone-900 dark:text-stone-100">
+                      {book.title}
+                    </span>
+                    <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
+                      {person ? `${person.firstname} ${person.surname}` : null}
+                      {person && book.dueDate ? " · " : null}
+                      {book.dueDate ? (
+                        <span
+                          className={
+                            overdue
+                              ? "font-semibold text-stone-900 dark:text-stone-100"
+                              : ""
+                          }
+                        >
+                          {overdue ? "overdue" : `due ${monthDay(book.dueDate)}`}
+                        </span>
+                      ) : null}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }
 
@@ -125,84 +199,112 @@ export default function Home({
   activity: SerializeFrom<FriendActivity>[];
   friendIds: string[];
 }) {
-  const total = books.borrowed.length + books.lent.length + books.shelf.length;
-  const [showWholeShelf, setShowWholeShelf] = useState(false);
-  const shelf = showWholeShelf ? books.shelf : books.shelf.slice(0, SHELF_PREVIEW);
+  const ownCount = books.lent.length + books.shelf.length;
+
+  // Overdue first, then whatever's due soonest, in either direction
+  const due = (
+    book: HomeBook,
+    person: Person | null,
+    direction: DueItem["direction"],
+  ): DueItem[] =>
+    person && book.dueDate && daysUntil(book.dueDate) <= COMING_UP_DAYS
+      ? [{ book: { ...book, dueDate: book.dueDate }, person, direction }]
+      : [];
+  const comingUp = [
+    ...books.borrowed.flatMap((book) => due(book, book.owner, "borrowed")),
+    ...books.lent.flatMap((book) => due(book, book.borrower, "lent")),
+  ].sort((a, b) => daysUntil(a.book.dueDate) - daysUntil(b.book.dueDate));
 
   return (
     <main className="px-4 md:px-8 py-8 md:py-10">
       <h1 className="sr-only">Home</h1>
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-0">
-        <section aria-labelledby="your-books" className="lg:pr-12">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 id="your-books" className="text-lg font-semibold">
-              Your books
-            </h2>
-            <div className="flex items-center gap-4">
-              <Link to="/books" className={linkClass}>
-                Library
-              </Link>
-              <Link
-                to="/search"
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-              >
-                <span aria-hidden="true" className="text-base leading-none text-stone-400">
-                  +
-                </span>
-                Add books
-              </Link>
-            </div>
-          </div>
+      <ComingUp items={comingUp} />
 
-          {total === 0 ? (
-            <p className="py-10 text-center text-stone-500 dark:text-stone-400">
-              Nothing here yet.{" "}
-              <Link to="/search" className="text-stone-800 dark:text-stone-200 underline underline-offset-2">
-                Add your first books
-              </Link>
-            </p>
-          ) : (
-            <>
-              <Group title="Borrowed" count={books.borrowed.length}>
-                {books.borrowed.map((book) => (
-                  <li key={book.id}>
-                    <BookRow book={book} person={book.owner} personLabel="From" />
-                  </li>
-                ))}
-              </Group>
-              <Group title="Lent out" count={books.lent.length}>
-                {books.lent.map((book) => (
-                  <li key={book.id}>
-                    <BookRow book={book} person={book.borrower} personLabel="With" />
-                  </li>
-                ))}
-              </Group>
-              <Group
-                title="On your shelf"
-                count={books.shelf.length}
-                footer={
-                  books.shelf.length > SHELF_PREVIEW ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowWholeShelf((open) => !open)}
-                      className={`mt-2 ${linkClass}`}
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-0">
+        <div className="lg:pr-12">
+          <section aria-labelledby="loans">
+            <h2 id="loans" className={`${headingClass} mb-3`}>
+              Loans
+            </h2>
+            <div className="grid gap-8 sm:grid-cols-2 sm:gap-10">
+              <LoanList
+                id="borrowing"
+                title="Borrowing"
+                books={books.borrowed.map((book) => ({ book, person: book.owner }))}
+                empty="Nothing borrowed right now."
+              />
+              <LoanList
+                id="lent-out"
+                title="Lent out"
+                books={books.lent.map((book) => ({ book, person: book.borrower }))}
+                empty="Everything's on your shelf."
+              />
+            </div>
+          </section>
+
+          <section
+            aria-labelledby="recently-added"
+            className="mt-8 border-t border-stone-200 dark:border-stone-800 pt-6"
+          >
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 id="recently-added" className={`${headingClass} whitespace-nowrap`}>
+                Recently added
+              </h2>
+              <div className="flex items-center gap-4 whitespace-nowrap">
+                <Link to="/books" className={linkClass}>
+                  {ownCount > 0 ? (
+                    <>
+                      <span className="sm:hidden">All {ownCount}</span>
+                      <span className="hidden sm:inline">
+                        All {ownCount} in your library
+                      </span>
+                    </>
+                  ) : (
+                    "Library"
+                  )}
+                </Link>
+                <Link
+                  to="/search"
+                  className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
+                >
+                  <span aria-hidden="true" className="text-base leading-none text-stone-400">
+                    +
+                  </span>
+                  Add books
+                </Link>
+              </div>
+            </div>
+            {books.recent.length > 0 ? (
+              // Four across on phones (the newest four), six on wider screens
+              <ul className="grid grid-cols-4 gap-3 sm:grid-cols-6">
+                {books.recent.map((book, index) => (
+                  <li key={book.id} className={index >= 4 ? "hidden sm:block" : undefined}>
+                    <Link
+                      to={`/books/${book.id}`}
+                      title={book.title}
+                      className="block hover:opacity-90 transition-opacity"
                     >
-                      {showWholeShelf
-                        ? "Show fewer"
-                        : `Show all ${books.shelf.length}`}
-                    </button>
-                  ) : null
-                }
-              >
-                {shelf.map((book) => (
-                  <li key={book.id}>
-                    <BookRow book={book} />
+                      <Cover book={book} className="w-full aspect-[2/3]" />
+                      <span className="mt-1.5 block truncate text-xs text-stone-600 dark:text-stone-300">
+                        {book.title}
+                      </span>
+                    </Link>
                   </li>
                 ))}
-              </Group>
-            </>
-          )}
-        </section>
+              </ul>
+            ) : (
+              <p className="py-6 text-center text-stone-500 dark:text-stone-400">
+                Nothing here yet.{" "}
+                <Link
+                  to="/search"
+                  className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                >
+                  Add your first books
+                </Link>
+              </p>
+            )}
+          </section>
+        </div>
 
         {/* Its own column, set off by a rule (above it on phones) */}
         <aside
@@ -210,7 +312,7 @@ export default function Home({
           className="border-t border-stone-200 dark:border-stone-800 pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-12"
         >
           <div className="mb-2 flex items-center justify-between gap-3">
-            <h2 id="friend-activity" className="text-lg font-semibold">
+            <h2 id="friend-activity" className={headingClass}>
               Friend activity
             </h2>
             {activity.length > 0 ? (
@@ -230,7 +332,10 @@ export default function Home({
           ) : friendIds.length === 0 ? (
             <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
               Add friends to see the books they add and love.{" "}
-              <Link to="/friends" className="text-stone-800 dark:text-stone-200 underline underline-offset-2">
+              <Link
+                to="/friends"
+                className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+              >
                 Find friends
               </Link>
             </p>
