@@ -77,10 +77,10 @@ function ComingUp({ items }: { items: DueItem[] }) {
   return (
     <section
       aria-labelledby="coming-up"
-      className="mb-6 border-b border-stone-200 dark:border-stone-800 pb-4"
+      className="mb-6 flex flex-wrap items-center gap-x-6 border-b border-stone-200 dark:border-stone-800 pb-4"
     >
-      {/* A slim strip: a small label, then the items run along one line */}
-      <h2 id="coming-up" className="mb-0.5 text-sm font-semibold text-stone-500 dark:text-stone-400">
+      {/* One line: a small label, then the items (wrapping on phones) */}
+      <h2 id="coming-up" className="whitespace-nowrap text-sm font-semibold text-stone-500 dark:text-stone-400">
         Coming up
       </h2>
       <ul className="flex flex-wrap gap-x-8">
