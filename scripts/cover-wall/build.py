@@ -1,8 +1,9 @@
-"""Rebuilds public/cover-wall.jpg, the faded wall behind the landing page.
+"""Rebuilds public/cover-wall.webp, the faded wall behind the landing page.
 
 Fetches each cover from Open Library, lays them out like the old CSS grid
-(16x9 tiles, every other one nudged down) and draws one grayscale JPEG at
-half size with render.swift. Run from the repo root on a Mac:
+(16x9 tiles, every other one nudged down), draws a full-color master at
+1.5x with render.swift, then saves it as a 1.25x WebP (~600KB). Run from the
+repo root on a Mac with WebP tools installed (brew install webp):
 
     python3 scripts/cover-wall/build.py
 """
@@ -92,5 +93,9 @@ with tempfile.TemporaryDirectory() as tmp:
     # Step through the list so neighbours rarely repeat
     tiles = [COVERS[(i * 7) % len(COVERS)].replace("/", "_") for i in range(COLUMNS * ROWS)]
     (work / "layout.json").write_text(json.dumps({"cols": COLUMNS, "rows": ROWS, "tiles": tiles}))
-    output = here.parent.parent / "public" / "cover-wall.jpg"
-    subprocess.run(["swift", str(here / "render.swift"), str(work), str(output), "0.5"], check=True)
+    master = work / "master.jpg"
+    subprocess.run(["swift", str(here / "render.swift"), str(work), str(master), "1.5", "0.95"], check=True)
+    # The page shows the wall at 2032px wide; 1.25x stays sharp on most
+    # high-density screens without tripling the download
+    output = here.parent.parent / "public" / "cover-wall.webp"
+    subprocess.run(["cwebp", "-quiet", "-q", "70", "-m", "6", "-resize", "2540", "0", str(master), "-o", str(output)], check=True)
