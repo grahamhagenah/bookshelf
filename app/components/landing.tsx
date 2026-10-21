@@ -128,7 +128,7 @@ function Showcase() {
                 className="ml-1.5 inline align-[-1px] text-rose-400"
               />
             </p>
-            <p className="mt-1 text-balance text-sm text-stone-600 dark:text-stone-300">
+            <p className="mt-1 text-pretty text-sm text-stone-600 dark:text-stone-300">
               &ldquo;Gorgeous. The chapters on Aiaia felt like a long
               summer.&rdquo;
             </p>
