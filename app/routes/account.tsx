@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
+import type {
+  LoaderFunctionArgs,
+  ActionFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
@@ -21,7 +25,11 @@ import {
   toggleDarkMode,
   toggleEmailNotifications,
 } from "~/models/user.server";
+import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+
+export const meta: MetaFunction = () =>
+  seo({ title: "Account", noindex: true });
 
 export const handle = {
   breadcrumb: () => <span>Account</span>,

@@ -1,4 +1,8 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import {
   Form,
@@ -42,6 +46,7 @@ import {
   createOverdueReminderNotification,
   createReaderNoteNotification,
 } from "~/models/user.server";
+import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
 const longDate = (date: string | Date) =>
@@ -215,6 +220,12 @@ interface LoaderData {
   };
   isOwner: boolean;
 }
+
+export const meta: MetaFunction<typeof loader> = ({ data }) =>
+  seo({
+    title: data?.book ? `${data.book.title} by ${data.book.author}` : "Book",
+    noindex: true,
+  });
 
 export const handle = {
   breadcrumbs: (data: LoaderData) => {

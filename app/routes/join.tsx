@@ -8,6 +8,7 @@ import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 
 import { createUser, getUserByEmail } from "~/models/user.server";
+import { seo } from "~/seo";
 import { createUserSession, getUserId } from "~/session.server";
 import { safeRedirect, validateEmail } from "~/utils";
 
@@ -120,7 +121,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 };
 
-export const meta: MetaFunction = () => [{ title: "Sign Up" }];
+export const meta: MetaFunction = () =>
+  seo({
+    title: "Sign up",
+    description:
+      "Create a free Stacks account to catalog your books, lend them to friends and borrow theirs.",
+    path: "/join",
+  });
 
 export default function Join() {
   const [searchParams] = useSearchParams();

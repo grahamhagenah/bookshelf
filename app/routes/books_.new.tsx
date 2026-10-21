@@ -1,10 +1,17 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+import type {
+  ActionFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 
 import { createBook } from "~/models/book.server";
+import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+
+export const meta: MetaFunction = () =>
+  seo({ title: "Add a book", noindex: true });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);

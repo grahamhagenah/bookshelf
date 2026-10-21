@@ -5,9 +5,11 @@ import { useEffect, useRef } from "react";
 
 import { sendPasswordResetEmail } from "~/email.server";
 import { resetPassword } from "~/models/user.server";
+import { seo } from "~/seo";
 import { validateEmail } from "~/utils";
 
-export const meta: MetaFunction = () => [{ title: "Forgot Password" }];
+export const meta: MetaFunction = () =>
+  seo({ title: "Reset your password", path: "/forgot-password", noindex: true });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
