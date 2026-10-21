@@ -47,7 +47,6 @@ interface Book {
 }
 
 type Status = "all" | "shelf" | "available" | "lent" | "borrowed" | "loved";
-type Sort = "recent" | "title" | "author";
 
 const isLent = (book: Book) =>
   !book.isBorrowed && (book.isLending ?? Boolean(book.borrowerId));
@@ -75,14 +74,6 @@ const OTHER_STATUSES: [Status, string][] = [
   ["lent", "Lent out"],
   ["loved", "Loved"],
 ];
-
-const SORTS: Record<Sort, (a: Book, b: Book) => number> = {
-  recent: () => 0, // the server already lists newest first
-  title: (a, b) => a.title.localeCompare(b.title),
-  author: (a, b) =>
-    (a.author ?? "").localeCompare(b.author ?? "") ||
-    a.title.localeCompare(b.title),
-};
 
 interface LibraryProps {
   bookListItems: Book[];
@@ -166,7 +157,6 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
 
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<Status>("all");
-  const [sort, setSort] = useState<Sort>("recent");
 
   const statuses = (ownerName ? OTHER_STATUSES : OWN_STATUSES)
     .map(([value, label]) => ({
@@ -188,8 +178,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
         !term ||
         book.title.toLowerCase().includes(term) ||
         (book.author ?? "").toLowerCase().includes(term),
-    )
-    .sort(SORTS[sort]);
+    );
   const isFiltered = Boolean(term) || status !== "all";
 
   return (
@@ -309,10 +298,10 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
         <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8" />
       ) : (
         <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8">
-          {/* Filter bar: find, narrow, sort, and switch views, in one line
+          {/* Filter bar: find, narrow and switch views, in one line
               on wider screens (status pills scroll if they run out of room) */}
           <div className="mb-6 flex flex-wrap md:flex-nowrap items-center gap-2">
-              <div className="relative w-full md:w-44 md:flex-shrink-0">
+              <div className="relative w-full md:w-56 md:flex-shrink-0">
                 <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400">
                   <SearchIcon size={14} />
                 </div>
@@ -349,19 +338,6 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                   ))}
                 </div>
               ) : null}
-              <label htmlFor="library-sort" className="sr-only">
-                Sort
-              </label>
-              <select
-                id="library-sort"
-                value={sort}
-                onChange={(event) => setSort(event.target.value as Sort)}
-                className="h-8 flex-shrink-0 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-700 dark:text-stone-200 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10"
-              >
-                <option value="recent">Recently added</option>
-                <option value="title">Title</option>
-                <option value="author">Author</option>
-              </select>
               <div className="ml-auto flex flex-shrink-0 gap-1" role="group" aria-label="View">
                 <button
                   onClick={() => handleViewChange("cover")}
