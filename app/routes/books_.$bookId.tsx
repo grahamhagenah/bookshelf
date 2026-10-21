@@ -185,7 +185,7 @@ function BookCover({
   };
 
   return (
-    <div className="relative flex-shrink-0 w-[120px] h-[180px] md:w-[200px] md:h-[300px] overflow-hidden rounded-xs shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10">
+    <div className="relative flex-shrink-0 w-[120px] h-[180px] md:w-[200px] md:h-[300px] lg:w-[240px] lg:h-[360px] overflow-hidden rounded-xs shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10">
       {!loaded || error ? (
         <CoverPlaceholder
           title={title}
@@ -728,7 +728,7 @@ export default function BookDetailsPage() {
   return (
     <>
       <main className="flex flex-col md:flex-row gap-6 md:gap-12 md:gap-12 px-4 md:px-8 py-8 md:py-12 w-full">
-        <section className="flex-shrink-0 md:w-[200px] space-y-4">
+        <section className="flex-shrink-0 md:w-[200px] lg:w-[240px] space-y-4">
           <div className="flex items-start gap-4">
             <BookCover
               src={data.book.cover}
