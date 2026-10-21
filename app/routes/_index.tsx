@@ -62,7 +62,7 @@ export default function Index() {
               >
                 Sign in
               </Link>
-              <DemoButton className="w-full text-center text-stone-900 dark:text-stone-100 hover:text-stone-600 dark:hover:text-stone-300 font-medium py-2 transition-colors">
+              <DemoButton className="w-full text-center text-stone-900 dark:text-stone-100 font-medium py-2 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline">
                 Or explore a demo library first →
               </DemoButton>
             </div>
