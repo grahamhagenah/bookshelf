@@ -18,14 +18,14 @@ export default function Index() {
         className={`relative flex flex-col items-center justify-center px-4 py-12 ${user ? "min-h-[calc(100vh-60px)]" : "min-h-screen"}`}
       >
         <div className="text-center mb-12">
-          <h1 className="flex items-center justify-center gap-3 md:gap-5 text-5xl md:text-7xl font-bold text-stone-800 dark:text-stone-100 mb-4">
+          <h1 className="flex items-center justify-center gap-2.5 md:gap-3 text-4xl md:text-5xl font-bold tracking-tight text-stone-800 dark:text-stone-100 mb-5">
             <StacksLogo
               size={64}
-              className="h-12 w-12 md:h-16 md:w-16 text-stone-900 dark:text-stone-100"
+              className="h-9 w-9 md:h-11 md:w-11 text-stone-900 dark:text-stone-100"
             />
             Stacks
           </h1>
-          <p className="text-xl text-stone-600 dark:text-stone-400 max-w-md mx-auto text-balance">
+          <p className="text-xl md:text-2xl leading-snug text-stone-600 dark:text-stone-400 max-w-lg mx-auto text-balance">
             Keep track of the books you own, lend them to friends, and borrow theirs.
           </p>
         </div>

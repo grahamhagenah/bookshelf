@@ -1,8 +1,8 @@
 // A faded wall of book covers behind the landing page. It's one pre-drawn
-// grayscale image (public/cover-wall.jpg, rebuilt by scripts/cover-wall)
-// rather than ~150 separate covers, so the page loads quickly.
+// image (public/cover-wall.webp, rebuilt by scripts/cover-wall) rather than
+// ~150 separate covers, so the page loads quickly.
 
-// The image is drawn at half size; show it at the grid's full size
+// The grid's size in CSS pixels; the image is drawn a little larger
 const WIDTH = 2032;
 const HEIGHT = 1672;
 
@@ -22,7 +22,7 @@ export default function CoverWall() {
         style={{
           width: WIDTH,
           height: HEIGHT,
-          backgroundImage: "url(/cover-wall.jpg)",
+          backgroundImage: "url(/cover-wall.webp)",
           backgroundSize: "100% 100%",
         }}
       />

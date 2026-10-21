@@ -1,4 +1,4 @@
-// Draws the landing page's cover wall into one grayscale JPEG.
+// Draws the landing page's cover wall into one JPEG.
 // Layout matches cover-wall.tsx: 112px tiles (2:3), 16px gaps, every other
 // tile nudged down 32px, 2px corners.
 import CoreGraphics
@@ -9,6 +9,7 @@ import UniformTypeIdentifiers
 let dir = CommandLine.arguments[1]
 let output = CommandLine.arguments[2]
 let scale = Double(CommandLine.arguments[3]) ?? 1.0
+let quality = Double(CommandLine.arguments.count > 4 ? CommandLine.arguments[4] : "0.7") ?? 0.7
 
 struct Layout: Decodable { let cols: Int; let rows: Int; let tiles: [String] }
 let layout = try JSONDecoder().decode(
@@ -18,14 +19,14 @@ let tileW = 112.0, tileH = 168.0, gap = 16.0, nudge = 32.0, radius = 2.0
 let width = (Double(layout.cols) * tileW + Double(layout.cols - 1) * gap) * scale
 let height = (Double(layout.rows) * tileH + Double(layout.rows - 1) * gap + nudge) * scale
 
-let gray = CGColorSpaceCreateDeviceGray()
+let rgb = CGColorSpace(name: CGColorSpace.sRGB)!
 guard let ctx = CGContext(
   data: nil, width: Int(width), height: Int(height), bitsPerComponent: 8,
-  bytesPerRow: 0, space: gray, bitmapInfo: CGImageAlphaInfo.none.rawValue)
+  bytesPerRow: 0, space: rgb, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)
 else { fatalError("no context") }
 
 // Page background, then tiles; CoreGraphics' origin is bottom-left
-ctx.setFillColor(CGColor(gray: 1, alpha: 1))
+ctx.setFillColor(CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 1))
 ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
 ctx.interpolationQuality = .high
 
@@ -42,7 +43,7 @@ for (i, name) in layout.tiles.enumerated() {
   ctx.addPath(path)
   ctx.clip()
   // Placeholder tone (stone-200) under every tile
-  ctx.setFillColor(CGColor(gray: 0.9, alpha: 1))
+  ctx.setFillColor(CGColor(srgbRed: 0.906, green: 0.898, blue: 0.894, alpha: 1))
   ctx.fill(rect)
   let url = URL(fileURLWithPath: "\(dir)/covers/\(name)") as CFURL
   if let source = CGImageSourceCreateWithURL(url, nil),
@@ -69,6 +70,6 @@ guard let result = ctx.makeImage(),
     URL(fileURLWithPath: output) as CFURL, UTType.jpeg.identifier as CFString, 1, nil)
 else { fatalError("no output") }
 CGImageDestinationAddImage(
-  dest, result, [kCGImageDestinationLossyCompressionQuality: 0.5] as CFDictionary)
+  dest, result, [kCGImageDestinationLossyCompressionQuality: quality] as CFDictionary)
 CGImageDestinationFinalize(dest)
 print("wrote \(Int(width))x\(Int(height))")
