@@ -313,10 +313,11 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
         <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8" />
       ) : (
         <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8">
-          {/* Filter bar: find, narrow and switch views, in one line
-              on wider screens (status pills scroll if they run out of room) */}
+          {/* Filter bar: find, narrow and switch views, in one line on
+              wider screens. On phones the pills drop to a second line of
+              their own (and scroll if they run out of room) */}
           <div className="mb-6 flex flex-wrap md:flex-nowrap items-center gap-2">
-              <div className="relative w-full md:w-56 md:flex-shrink-0">
+              <div className="relative min-w-0 flex-1 md:w-56 md:flex-none">
                 <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400">
                   <SearchIcon size={14} />
                 </div>
@@ -324,13 +325,13 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                   type="search"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Filter by title or author"
+                  placeholder="Filter books"
                   aria-label="Filter by title or author"
                   className="h-8 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 pl-8 pr-2 text-sm placeholder:text-stone-400 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
                 />
               </div>
               {statuses.length > 1 ? (
-                <div className="flex gap-1.5 overflow-x-auto min-w-0 [scrollbar-width:none]" role="group" aria-label="Show">
+                <div className="order-last w-full md:order-none md:w-auto flex gap-1.5 overflow-x-auto min-w-0 [scrollbar-width:none]" role="group" aria-label="Show">
                   {statuses.map(({ value, label, count }) => (
                     <button
                       key={value}
