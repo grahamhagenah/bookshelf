@@ -1,11 +1,11 @@
 // Shown while a cover loads, or instead of one that fails to load: a plain
-// tile with the title and author, tinted from the book's title so the shelf
-// isn't a wall of identical blocks.
+// tile with the title and author, in one of a few grays picked from the
+// title so the shelf isn't a wall of identical blocks.
 const TINTS = [
   "bg-stone-100",
   "bg-stone-200 dark:bg-stone-800",
-  "bg-accent-50 dark:bg-accent-950",
-  "bg-accent-100 dark:bg-accent-950/60",
+  "bg-stone-50 dark:bg-stone-900",
+  "bg-stone-200/60 dark:bg-stone-800/70",
 ];
 
 function tintFor(text: string) {

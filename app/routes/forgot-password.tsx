@@ -53,16 +53,16 @@ export default function ForgotPasswordPage() {
       <div className="mx-auto w-full max-w-md px-8">
         {actionData?.success ? (
           <div className="space-y-6">
-            <div className="rounded-lg bg-accent-50 p-6 text-center">
-              <h2 className="text-xl font-semibold text-accent-800 mb-2">Check your email</h2>
-              <p className="text-accent-700">
+            <div className="rounded-lg bg-stone-100 p-6 text-center">
+              <h2 className="text-xl font-semibold text-stone-900 dark:text-stone-100 mb-2">Check your email</h2>
+              <p className="text-stone-900 dark:text-stone-100">
                 If an account exists with that email address, we've sent a temporary password you can use to log in.
               </p>
             </div>
             <div className="text-center">
               <Link
                 to="/login"
-                className="text-accent-500 underline"
+                className="text-stone-900 dark:text-stone-100 underline"
               >
                 Back to login
               </Link>
@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
                   className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
                 />
                 {actionData?.errors?.email ? (
-                  <div className="pt-1 text-accent-700" id="email-error">
+                  <div className="pt-1 text-stone-900 dark:text-stone-100" id="email-error">
                     {actionData.errors.email}
                   </div>
                 ) : null}
@@ -107,7 +107,7 @@ export default function ForgotPasswordPage() {
 
             <button
               type="submit"
-              className="w-full rounded bg-accent-500 px-4 py-2 text-white hover:bg-accent-600 focus:bg-accent-400"
+              className="w-full rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
             >
               Send temporary password
             </button>
@@ -115,7 +115,7 @@ export default function ForgotPasswordPage() {
             <div className="text-center text-sm text-stone-500">
               Remember your password?{" "}
               <Link
-                className="text-accent-500 underline"
+                className="text-stone-900 dark:text-stone-100 underline"
                 to="/login"
               >
                 Log in

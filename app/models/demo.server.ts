@@ -37,12 +37,12 @@ const fromNow = (ms: number) => new Date(Date.now() + ms);
 const VISITOR = { key: "you", firstname: "Jordan", surname: "Avery", profileEmoji: null };
 
 const PERSONAS = {
-  maya: { firstname: "Maya", surname: "Chen", profileEmoji: "🌿" },
-  sam: { firstname: "Sam", surname: "Okafor", profileEmoji: "🚀" },
-  priya: { firstname: "Priya", surname: "Patel", profileEmoji: "📚" },
+  maya: { firstname: "Maya", surname: "Chen", profileEmoji: "leaf" },
+  sam: { firstname: "Sam", surname: "Okafor", profileEmoji: "mountain" },
+  priya: { firstname: "Priya", surname: "Patel", profileEmoji: "book" },
   // Theo has sent the visitor a friend request; Lena shows up as a suggestion
-  theo: { firstname: "Theo", surname: "Martin", profileEmoji: "🎧" },
-  lena: { firstname: "Lena", surname: "Fischer", profileEmoji: "☕" },
+  theo: { firstname: "Theo", surname: "Martin", profileEmoji: "wave" },
+  lena: { firstname: "Lena", surname: "Fischer", profileEmoji: null },
 } as const;
 
 type PersonaKey = keyof typeof PERSONAS;

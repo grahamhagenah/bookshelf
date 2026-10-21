@@ -22,7 +22,7 @@ export default function Header() {
       <div className="flex items-center gap-2 min-w-0">
         <a id="logo" href={user ? "/books" : "/"} className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0 group">
           <span className="transition-transform duration-200 group-hover:rotate-[-8deg]">
-            <BookshelfIcon size={28} className="text-accent-600 dark:text-accent-400" />
+            <BookshelfIcon size={28} className="text-stone-900 dark:text-stone-100 dark:text-stone-100" />
           </span>
           <span className="text-lg sm:text-xl">Stacks</span>
         </a>

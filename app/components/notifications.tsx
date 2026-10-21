@@ -21,7 +21,7 @@ export default function Notifications() {
     >
       <BellIcon size={20} />
       {notificationCount > 0 && (
-        <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-5 h-5 px-1 text-xs font-bold text-white bg-accent-500 rounded-full">
+        <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-5 h-5 px-1 text-xs font-bold text-white dark:text-stone-900 bg-stone-900 dark:bg-stone-100 rounded-full">
           {notificationCount > 9 ? '9+' : notificationCount}
         </span>
       )}

@@ -38,12 +38,12 @@ export default function Dashboard() {
         <section className="border rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Overview</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-accent-50 rounded-lg p-4 text-center">
-              <dd className="text-3xl font-semibold text-accent-600">{stats.totalUsers}</dd>
+            <div className="bg-stone-100 rounded-lg p-4 text-center">
+              <dd className="text-3xl font-semibold text-stone-900 dark:text-stone-100">{stats.totalUsers}</dd>
               <dt className="text-sm text-stone-600">Total Users</dt>
             </div>
-            <div className="bg-accent-50 rounded-lg p-4 text-center">
-              <dd className="text-3xl font-semibold text-accent-600">{stats.totalBooks}</dd>
+            <div className="bg-stone-100 rounded-lg p-4 text-center">
+              <dd className="text-3xl font-semibold text-stone-900 dark:text-stone-100">{stats.totalBooks}</dd>
               <dt className="text-sm text-stone-600">Total Books</dt>
             </div>
             <div className="bg-stone-50 rounded-lg p-4 text-center">
@@ -85,7 +85,7 @@ export default function Dashboard() {
                     </td>
                     <td className="py-3 text-center">
                       {user.isAdmin ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-accent-100 text-accent-800">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-stone-100 text-stone-900 dark:text-stone-100">
                           Admin
                         </span>
                       ) : (

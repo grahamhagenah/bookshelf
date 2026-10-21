@@ -1,6 +1,7 @@
 import { Form, useMatches } from "@remix-run/react";
 import { useState, useRef, useEffect } from 'react';
 import { BookIcon, UserIcon, SettingsIcon, GroupIcon, LogoutIcon, SearchIcon, DashboardIcon } from './icons';
+import Avatar from './avatar';
 
 interface RootLoaderData {
   user: {
@@ -39,12 +40,8 @@ export default function PositionedMenu() {
         title={user ? `${user.firstname} ${user.surname}` : "Log in"}
         className="inline-flex items-center justify-center w-10 h-10 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
       >
-        {user?.profileEmoji ? (
-          <span className="text-xl">{user.profileEmoji}</span>
-        ) : user ? (
-          <span className="w-6 h-6 rounded-full bg-accent-100 dark:bg-accent-900 flex items-center justify-center text-accent-600 dark:text-accent-300 font-semibold text-xs">
-            {user.firstname?.[0]?.toUpperCase()}{user.surname?.[0]?.toUpperCase()}
-          </span>
+        {user ? (
+          <Avatar firstname={user.firstname} surname={user.surname} icon={user.profileEmoji} size="xs" />
         ) : (
           <UserIcon size={20} />
         )}
@@ -88,7 +85,7 @@ export default function PositionedMenu() {
             <a
               href="/dashboard"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors text-accent-600 dark:text-accent-400"
+              className="flex items-center gap-3 px-4 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors text-stone-900 dark:text-stone-100 dark:text-stone-100"
             >
               <DashboardIcon size={20} />
               <span>Dashboard</span>
