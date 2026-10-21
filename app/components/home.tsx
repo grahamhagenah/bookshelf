@@ -77,41 +77,37 @@ function ComingUp({ items }: { items: DueItem[] }) {
   return (
     <section
       aria-labelledby="coming-up"
-      className="mb-6 flex flex-col gap-2 border-b border-stone-200 dark:border-stone-800 pb-5 sm:flex-row sm:items-center sm:gap-6"
+      className="mb-6 flex flex-wrap items-center gap-x-6 border-b border-stone-200 dark:border-stone-800 pb-4"
     >
+      {/* One line: a small label, then the items (wrapping on phones) */}
       <h2 id="coming-up" className="whitespace-nowrap text-sm font-semibold text-stone-500 dark:text-stone-400">
         Coming up
       </h2>
-      <ul className="flex flex-wrap gap-x-8 gap-y-2">
+      <ul className="flex flex-wrap gap-x-8">
         {items.map(({ book, person, direction }) => {
           const days = daysUntil(book.dueDate);
           const overdue = days < 0;
           const who = `${person.firstname} ${person.surname}`;
-          // Spelled out beside the tile, so its number reads as days
           const when = overdue
             ? `${-days} ${days === -1 ? "day" : "days"} late`
             : inDays(days);
           return (
-            <li key={book.id} className="min-w-0">
+            <li key={book.id}>
               <Link
                 to={`/books/${book.id}`}
-                className="-mx-2 flex items-center gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+                className="-mx-2 block rounded-md px-2 py-1 text-sm text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
               >
-                <span className="min-w-0">
-                  <span className="block max-w-[18rem] truncate text-sm font-semibold text-stone-900 dark:text-stone-100">
-                    {book.title}
-                  </span>
-                  <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
-                    {direction === "borrowed" ? "Back to" : "With"} {who}
-                    {" · "}
-                    <span
-                      className={
-                        overdue ? "font-semibold text-stone-900 dark:text-stone-100" : ""
-                      }
-                    >
-                      {when}
-                    </span>
-                  </span>
+                <span className="font-semibold text-stone-900 dark:text-stone-100">
+                  {book.title}
+                </span>{" "}
+                {direction === "borrowed" ? "goes back to" : "is with"} {who}
+                {" · "}
+                <span
+                  className={
+                    overdue ? "font-semibold text-stone-900 dark:text-stone-100" : ""
+                  }
+                >
+                  {when}
                 </span>
               </Link>
             </li>
