@@ -160,12 +160,12 @@ function LoanList({
                   to={`/books/${book.id}`}
                   className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
                 >
-                  <Cover book={book} className="w-10 h-15" />
+                  <Cover book={book} className="w-14 h-21" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-stone-900 dark:text-stone-100">
+                    <span className="block truncate font-medium text-stone-900 dark:text-stone-100">
                       {book.title}
                     </span>
-                    <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
+                    <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
                       {person ? `${person.firstname} ${person.surname}` : null}
                       {person && book.dueDate ? " · " : null}
                       {book.dueDate ? (
