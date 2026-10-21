@@ -15,6 +15,7 @@ import invariant from "tiny-invariant";
 import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
 import { PersonAddIcon } from "~/components/icons";
+import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
 import { sendBookRequestEmail } from "~/email.server";
 import {
@@ -295,6 +296,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     canNote,
     noteMaxLength: NOTE_MAX_LENGTH,
     author,
+    friendIds: followingIds,
   });
 };
 
@@ -716,7 +718,11 @@ export default function BookDetailsPage() {
                   <p className="text-stone-800 dark:text-stone-200">
                     Borrowed from{" "}
                     <span className="font-semibold">
-                      {data.book.user.firstname} {data.book.user.surname}
+                      <PersonLink
+                        id={data.book.user.id}
+                        name={`${data.book.user.firstname} ${data.book.user.surname}`}
+                        friendIds={data.friendIds}
+                      />
                     </span>
                   </p>
                   {data.book.borrowedAt ? (
@@ -959,24 +965,12 @@ export default function BookDetailsPage() {
           ) : (
             /* View Mode */
             <>
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <h1 className="text-3xl md:text-4xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
-                    {data.book.title}
-                  </h1>
-                  <p className="mt-1 text-lg md:text-xl text-stone-500 dark:text-stone-400">
-                    {data.book.author}
-                  </p>
-                </div>
-                {data.isOwner ? (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex-shrink-0 text-sm px-3 py-1 rounded-md border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:border-stone-300 dark:hover:border-stone-600 hover:text-stone-800 dark:hover:text-stone-200 transition-colors"
-                  >
-                    Edit
-                  </button>
-                ) : null}
-              </div>
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
+                {data.book.title}
+              </h1>
+              <p className="mt-1 text-lg md:text-xl text-stone-500 dark:text-stone-400">
+                {data.book.author}
+              </p>
 
               {details.length > 0 ? (
                 <p className="mt-4 text-sm text-stone-500 dark:text-stone-400">
@@ -985,8 +979,13 @@ export default function BookDetailsPage() {
               ) : null}
               {!data.isOwner && data.book.user ? (
                 <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-                  From {data.book.user.firstname} {data.book.user.surname}&apos;s
-                  shelf
+                  From{" "}
+                  <PersonLink
+                    id={data.book.user.id}
+                    name={`${data.book.user.firstname} ${data.book.user.surname}`}
+                    friendIds={data.friendIds}
+                  />
+                  &apos;s shelf
                 </p>
               ) : null}
 
@@ -1001,6 +1000,17 @@ export default function BookDetailsPage() {
                     </span>
                   ))}
                 </div>
+              ) : null}
+
+              {/* Rarely needed, so it sits quietly under the details */}
+              {data.isOwner ? (
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  className="mt-3 text-sm text-stone-400 dark:text-stone-500 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+                >
+                  Edit details
+                </button>
               ) : null}
             </>
           )}
@@ -1026,8 +1036,11 @@ export default function BookDetailsPage() {
                     <p className="text-stone-800 dark:text-stone-200">
                       Lent to{" "}
                       <span className="font-semibold">
-                        {data.book.borrower.firstname}{" "}
-                        {data.book.borrower.surname}
+                        <PersonLink
+                          id={data.book.borrower.id}
+                          name={`${data.book.borrower.firstname} ${data.book.borrower.surname}`}
+                          friendIds={data.friendIds}
+                        />
                       </span>
                       {data.book.borrowedAt ? (
                         <span className="text-stone-500 dark:text-stone-400">
@@ -1116,6 +1129,7 @@ export default function BookDetailsPage() {
               myNote={data.myNote}
               canNote={data.canNote}
               maxLength={data.noteMaxLength}
+              friendIds={data.friendIds}
             />
           ) : null}
 
