@@ -68,7 +68,7 @@ export default function PositionedMenu() {
       </button>
 
       {open ? (
-        <div className="absolute right-0 mt-1 w-52 bg-white dark:bg-stone-950 rounded-lg shadow-[0_4px_12px_-2px_rgb(28_25_23/0.06)] border border-stone-200/80 dark:border-stone-800 py-1 z-50 text-sm [&_svg]:text-stone-600 dark:[&_svg]:text-stone-300 [&_svg]:[stroke-width:1.75]">
+        <div className="absolute right-0 mt-1 w-52 bg-white dark:bg-stone-950 rounded-lg shadow-soft border border-stone-200/80 dark:border-stone-800 py-1 z-50 text-sm [&_svg]:text-stone-600 dark:[&_svg]:text-stone-300 [&_svg]:[stroke-width:1.75]">
           <a
             href="/books"
             onClick={() => setOpen(false)}

@@ -240,7 +240,7 @@ function SearchResultItem({
         <div className="flex-shrink-0">
           {book.cover_i ? (
             <img
-              className="rounded-md shadow-md w-24 h-36 object-cover"
+              className="rounded-md shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10 w-24 h-36 object-cover"
               src={`https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`}
               alt={book.title}
             />
@@ -306,7 +306,7 @@ function SearchResultItem({
           <button
             type="submit"
             disabled={isAdding || isAdded || alreadyInLibrary}
-            className={`rounded px-3 py-1.5 text-sm mt-2 inline-flex items-center gap-1.5 ${
+            className={`rounded-md px-3 py-1.5 text-sm mt-2 inline-flex items-center gap-1.5 ${
               isAdded
                 ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 cursor-default"
                 : alreadyInLibrary
@@ -412,7 +412,7 @@ export default function Search() {
                 name="q"
                 defaultValue={currentQuery}
                 placeholder="Search for books..."
-                className="w-full pl-10 pr-4 py-3 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-stone-900"
+                className="w-full pl-10 pr-4 py-2.5 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-base placeholder:text-stone-400 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
               />
             </div>
 
@@ -430,7 +430,7 @@ export default function Search() {
                   id="type"
                   name="type"
                   defaultValue={currentType}
-                  className="w-full h-10 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900"
+                  className="w-full h-10 px-3 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
                 >
                   <option value="all">All Fields</option>
                   <option value="title">Title</option>
@@ -450,7 +450,7 @@ export default function Search() {
                   id="lang"
                   name="lang"
                   defaultValue={currentLang}
-                  className="w-full h-10 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900"
+                  className="w-full h-10 px-3 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
                 >
                   {LANGUAGES.map((lang) => (
                     <option key={lang.code} value={lang.code}>
@@ -465,7 +465,7 @@ export default function Search() {
                 <button
                   type="submit"
                   disabled={isSearching}
-                  className="w-full sm:w-auto h-10 px-6 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 rounded-lg hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700 disabled:bg-stone-400"
+                  className="w-full sm:w-auto h-10 px-5 rounded-md bg-stone-900 dark:bg-stone-100 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors disabled:opacity-60"
                 >
                   {isSearching ? "Searching..." : "Search"}
                 </button>
@@ -561,13 +561,13 @@ export default function Search() {
             {currentPage > 1 ? (
               <Link
                 to={getPageUrl(currentPage - 1)}
-                className="px-3 py-2 rounded border hover:bg-stone-100"
+                className="px-3 py-1.5 text-sm rounded-md border border-stone-200 dark:border-stone-700 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
                 aria-label="Previous page"
               >
                 Previous
               </Link>
             ) : (
-              <span className="px-3 py-2 rounded border text-stone-300 cursor-not-allowed">
+              <span className="px-3 py-1.5 text-sm rounded-md border border-stone-100 dark:border-stone-800 text-stone-300 dark:text-stone-600 cursor-not-allowed">
                 Previous
               </span>
             )}
@@ -583,7 +583,7 @@ export default function Search() {
                   <Link
                     key={page}
                     to={getPageUrl(page)}
-                    className={`px-3 py-2 rounded border ${
+                    className={`px-3 py-1.5 text-sm rounded-md border ${
                       page === currentPage
                         ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 border-stone-900 dark:border-stone-100"
                         : "hover:bg-stone-100"
@@ -600,13 +600,13 @@ export default function Search() {
             {currentPage < totalPages ? (
               <Link
                 to={getPageUrl(currentPage + 1)}
-                className="px-3 py-2 rounded border hover:bg-stone-100"
+                className="px-3 py-1.5 text-sm rounded-md border border-stone-200 dark:border-stone-700 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
                 aria-label="Next page"
               >
                 Next
               </Link>
             ) : (
-              <span className="px-3 py-2 rounded border text-stone-300 cursor-not-allowed">
+              <span className="px-3 py-1.5 text-sm rounded-md border border-stone-100 dark:border-stone-800 text-stone-300 dark:text-stone-600 cursor-not-allowed">
                 Next
               </span>
             )}

@@ -140,7 +140,7 @@ export default function Join() {
   }, [actionData]);
 
   return (
-    <div className="flex h-5/6 flex-col justify-center">
+    <div className="flex flex-col justify-center py-12 md:py-20">
       <div className="mx-auto w-full max-w-md px-8">
         <Form method="post" className="space-y-6">
           <div>
@@ -161,7 +161,7 @@ export default function Join() {
                 type="text"
                 aria-invalid={actionData?.errors?.firstname ? true : undefined}
                 aria-describedby="firstname-error"
-                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
+                className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
               />
               {actionData?.errors?.firstname ? (
                 <div
@@ -191,7 +191,7 @@ export default function Join() {
                 type="text"
                 aria-invalid={actionData?.errors?.surname ? true : undefined}
                 aria-describedby="surname-error"
-                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
+                className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
               />
               {actionData?.errors?.surname ? (
                 <div
@@ -223,7 +223,7 @@ export default function Join() {
                 autoComplete="email"
                 aria-invalid={actionData?.errors?.email ? true : undefined}
                 aria-describedby="email-error"
-                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
+                className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
               />
               {actionData?.errors?.email ? (
                 <div
@@ -252,7 +252,7 @@ export default function Join() {
                 autoComplete="new-password"
                 aria-invalid={actionData?.errors?.password ? true : undefined}
                 aria-describedby="password-error"
-                className="w-full rounded border border-stone-500 px-2 py-1 text-lg"
+                className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
               />
               {actionData?.errors?.password ? (
                 <div
@@ -268,7 +268,7 @@ export default function Join() {
           <input type="hidden" name="redirectTo" value={redirectTo} />
           <button
             type="submit"
-            className="w-full rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 focus:bg-stone-700"
+            className="w-full rounded-md bg-stone-900 dark:bg-stone-100 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors"
           >
             Create Account
           </button>
