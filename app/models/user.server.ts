@@ -432,6 +432,7 @@ export async function getUserByShareToken(token: string) {
       id: true,
       firstname: true,
       surname: true,
+      demoGroup: true,
     },
   });
 }
@@ -724,4 +725,41 @@ export function createLoanExtendedNotification(
     },
     select: { id: true },
   });
+}
+
+// How someone looking at a shelf relates to its owner, for the invite on
+// a shared shelf
+export type FriendStatus =
+  | "self"
+  | "friends"
+  | "requested" // the viewer asked; waiting on the owner
+  | "invited" // the owner asked; waiting on the viewer
+  | "none";
+
+export async function getFriendStatus(
+  viewerId: User["id"],
+  ownerId: User["id"],
+): Promise<FriendStatus> {
+  if (viewerId === ownerId) return "self";
+
+  const [friends, request] = await Promise.all([
+    prisma.user.count({
+      where: { id: viewerId, following: { some: { id: ownerId } } },
+    }),
+    prisma.notification.findFirst({
+      where: {
+        type: "FRIEND_REQUEST",
+        actionTaken: null,
+        OR: [
+          { senderId: viewerId, receiverId: ownerId },
+          { senderId: ownerId, receiverId: viewerId },
+        ],
+      },
+      select: { senderId: true },
+    }),
+  ]);
+
+  if (friends > 0) return "friends";
+  if (!request) return "none";
+  return request.senderId === viewerId ? "requested" : "invited";
 }

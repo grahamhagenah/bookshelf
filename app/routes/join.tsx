@@ -4,10 +4,21 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
+import {
+  Form,
+  Link,
+  useActionData,
+  useLoaderData,
+  useSearchParams,
+} from "@remix-run/react";
 import { useEffect, useRef } from "react";
 
-import { createUser, getUserByEmail } from "~/models/user.server";
+import {
+  createNotification,
+  createUser,
+  getUserByEmail,
+  getUserByShareToken,
+} from "~/models/user.server";
 import { seo } from "~/seo";
 import { createUserSession, getUserId } from "~/session.server";
 import { safeRedirect, validateEmail } from "~/utils";
@@ -15,7 +26,12 @@ import { safeRedirect, validateEmail } from "~/utils";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
   if (userId) return redirect("/");
-  return json({});
+  // Arriving from someone's shared shelf: say whose, so the form has a point
+  const invite = new URL(request.url).searchParams.get("invite");
+  const inviter = invite ? await getUserByShareToken(invite) : null;
+  return json({
+    inviterName: inviter ? `${inviter.firstname} ${inviter.surname}` : null,
+  });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -113,6 +129,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const user = await createUser(email, password, firstname, surname);
 
+  // Joined from a shared shelf: ask its owner to be friends straight away.
+  // Demo shelves are left out, since demo and real accounts can't mix.
+  const invite = formData.get("invite");
+  const inviter =
+    typeof invite === "string" ? await getUserByShareToken(invite) : null;
+  if (inviter && !inviter.demoGroup) {
+    await createNotification(user.id, inviter.id, `${firstname} ${surname}`);
+  }
+
   return createUserSession({
     redirectTo,
     remember: false,
@@ -132,6 +157,8 @@ export const meta: MetaFunction = () =>
 export default function Join() {
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? undefined;
+  const invite = searchParams.get("invite") ?? undefined;
+  const { inviterName } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -149,6 +176,15 @@ export default function Join() {
   return (
     <div className="flex flex-col justify-center py-12 md:py-20">
       <div className="mx-auto w-full max-w-md px-8">
+        {inviterName ? (
+          <p className="mb-8 text-stone-600 dark:text-stone-300">
+            Create an account to borrow from{" "}
+            <strong className="font-semibold text-stone-900 dark:text-stone-100">
+              {inviterName}
+            </strong>
+            . We&apos;ll send them a friend request for you.
+          </p>
+        ) : null}
         <Form method="post" className="space-y-6">
           <div>
             <label
@@ -273,6 +309,7 @@ export default function Join() {
           </div>
 
           <input type="hidden" name="redirectTo" value={redirectTo} />
+          {invite ? <input type="hidden" name="invite" value={invite} /> : null}
           <button
             type="submit"
             className="w-full rounded-md bg-stone-700 dark:bg-stone-200 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
