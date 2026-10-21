@@ -808,21 +808,22 @@ export default function BookDetailsPage() {
                       />
                     </span>
                   </p>
-                  {data.book.borrowedAt ? (
+                  {data.book.borrowedAt || data.book.dueDate ? (
                     <p className="text-stone-500 dark:text-stone-400">
-                      Since {monthDay(data.book.borrowedAt)}
+                      {data.book.borrowedAt
+                        ? `Since ${monthDay(data.book.borrowedAt)}`
+                        : null}
+                      {data.book.borrowedAt && data.book.dueDate ? " · " : null}
+                      {data.book.dueDate ? (
+                        new Date(data.book.dueDate) < new Date() ? (
+                          <span className="font-semibold text-stone-900 dark:text-stone-100">
+                            Overdue since {monthDay(data.book.dueDate)}
+                          </span>
+                        ) : (
+                          <>Due {monthDay(data.book.dueDate)}</>
+                        )
+                      ) : null}
                     </p>
-                  ) : null}
-                  {data.book.dueDate ? (
-                    new Date(data.book.dueDate) < new Date() ? (
-                      <p className="font-semibold text-stone-900 dark:text-stone-100">
-                        Overdue since {monthDay(data.book.dueDate)}
-                      </p>
-                    ) : (
-                      <p className="text-stone-500 dark:text-stone-400">
-                        Due {monthDay(data.book.dueDate)}
-                      </p>
-                    )
                   ) : null}
                 </div>
               ) : null}
