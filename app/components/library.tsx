@@ -28,33 +28,29 @@ interface LibraryProps {
   ownerName?: string; // If provided, this is someone else's library (friend or public)
 }
 
-// Simple progressive image component with native lazy loading
-function BookCover({ src, title, author, className, style }: { src: string; title: string; author?: string; className?: string; style?: React.CSSProperties }) {
+// One rounded box that clips both the image and its placeholder
+function BookCover({ src, title, author, className }: { src: string; title: string; author?: string; className?: string }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 
-  if (error) {
-    return <CoverPlaceholder title={title} author={author} className={className} />;
-  }
-
   return (
-    <div className={`relative ${className}`} style={style}>
-      {!loaded && (
-        <CoverPlaceholder title={title} author={author} className="absolute inset-0" />
+    <div className={`relative overflow-hidden rounded-md ${className}`}>
+      {(!loaded || error) && <CoverPlaceholder title={title} author={author} className="absolute inset-0" />}
+      {!error && (
+        <img
+          src={src}
+          alt={title}
+          loading="lazy"
+          decoding="async"
+          className={`relative w-full h-full object-cover ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+          onLoad={(e) => {
+            // Open Library answers unknown covers with a 1x1 pixel
+            if (e.currentTarget.naturalWidth <= 1) setError(true);
+            else setLoaded(true);
+          }}
+          onError={() => setError(true)}
+        />
       )}
-      <img
-        src={src}
-        alt={title}
-        loading="lazy"
-        decoding="async"
-        className={`w-full h-full object-cover rounded-lg ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
-        onLoad={(e) => {
-          // Open Library answers unknown covers with a 1x1 pixel
-          if (e.currentTarget.naturalWidth <= 1) setError(true);
-          else setLoaded(true);
-        }}
-        onError={() => setError(true)}
-      />
     </div>
   );
 }
@@ -202,12 +198,12 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
           <ol className="grid grid-cols-3 gap-3 sm:gap-4 sm:grid-cols-4 md:grid-cols-5">
             {bookListItems.map((book) => (
               <li key={book.id} className="cover-wrapper">
-                <NavLink to={`/books/${book.id}`}>
+                <NavLink to={`/books/${book.id}`} className="group block">
                   <BookCover
                     src={getCoverUrl(book.cover, "M")}
                     title={book.title}
                     author={book.author}
-                    className="shadow-md book-cover w-full aspect-[2/3]"
+                    className="w-full aspect-[2/3] transition-opacity duration-200 group-hover:opacity-90"
                   />
                   {book.isBorrowed && (
                     <span className="block mt-1.5 text-xs font-medium text-stone-900 dark:text-stone-100 dark:text-stone-100">Borrowed</span>

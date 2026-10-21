@@ -17,15 +17,15 @@ function BookCover({ src, title, author }: { src: string; title: string; author:
   const [error, setError] = useState(false);
 
   return (
-    <div className="relative w-[200px] h-[300px] rounded-lg overflow-hidden shadow-md">
-      {!loaded && <CoverPlaceholder title={title} author={author} large className="absolute inset-0" />}
+    <div className="relative w-[200px] h-[300px] overflow-hidden rounded-md">
+      {(!loaded || error) && <CoverPlaceholder title={title} author={author} large className="absolute inset-0" />}
       {!error && (
         <img
           src={src}
           alt={title}
           loading="lazy"
           decoding="async"
-          className={`w-full h-full object-cover rounded-lg ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+          className={`relative w-full h-full object-cover ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
           onLoad={(e) => {
             // Open Library answers unknown covers with a 1x1 pixel
             if (e.currentTarget.naturalWidth <= 1) setError(true);

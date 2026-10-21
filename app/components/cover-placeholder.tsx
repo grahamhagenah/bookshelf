@@ -29,7 +29,7 @@ export default function CoverPlaceholder({
 }) {
   return (
     <div
-      className={`flex flex-col justify-between overflow-hidden rounded-lg text-stone-800 dark:text-stone-100 ${tintFor(title)} ${
+      className={`flex flex-col justify-between overflow-hidden text-stone-800 dark:text-stone-100 ${tintFor(title)} ${
         large ? "p-5" : "p-2.5 sm:p-3"
       } ${className}`}
     >
