@@ -7,6 +7,7 @@ import {
   UserIcon,
   SettingsIcon,
   GroupIcon,
+  PulseIcon,
   LogoutIcon,
   SearchIcon,
   DashboardIcon,
@@ -100,6 +101,14 @@ export default function PositionedMenu() {
           >
             <GroupIcon size={18} />
             <span>Friends</span>
+          </a>
+          <a
+            href="/feed"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+          >
+            <PulseIcon size={18} />
+            <span>Friend Activity</span>
           </a>
           {user?.isAdmin ? (
             <a
