@@ -23,7 +23,12 @@ import {
 } from "~/models/user.server";
 import { seo } from "~/seo";
 import { createUserSession, getUserId } from "~/session.server";
-import { safeRedirect, validateEmail } from "~/utils";
+import {
+  HONEYPOT_FIELD,
+  looksLikeBot,
+  safeRedirect,
+  validateEmail,
+} from "~/utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
@@ -42,6 +47,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     inviterName: inviter ? `${inviter.firstname} ${inviter.surname}` : null,
     shelfNames: shelf ? shelf.members.map((m) => m.firstname) : null,
     friendName: friendInviter ? friendInviter.firstname : null,
+    renderedAt: Date.now(),
   });
 };
 
@@ -52,6 +58,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const email = formData.get("email");
   const password = formData.get("password");
   const redirectTo = safeRedirect(formData.get("redirectTo"), "/");
+
+  // A filled honeypot is a bot: send it away as if it had worked, so it
+  // has nothing to learn. A form sent too fast may be a person with
+  // autofill, so ask them to try again instead.
+  const bot = looksLikeBot(formData);
+  if (bot === "honeypot") return redirect("/");
+  if (bot === "too-fast") {
+    return json(
+      {
+        errors: {
+          firstname: null,
+          surname: null,
+          email: null,
+          password: "Something went wrong. Please try again.",
+        },
+      },
+      { status: 400 },
+    );
+  }
 
   if (typeof firstname !== "string" || firstname.length === 0) {
     return json(
@@ -169,7 +194,8 @@ export default function Join() {
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? undefined;
   const invite = searchParams.get("invite") ?? undefined;
-  const { inviterName, shelfNames, friendName } = useLoaderData<typeof loader>();
+  const { inviterName, shelfNames, friendName, renderedAt } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -337,6 +363,19 @@ export default function Join() {
             </div>
           </div>
 
+          {/* Hidden from people and screen readers; bots fill it in */}
+          <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+            <label htmlFor={HONEYPOT_FIELD}>Website</label>
+            <input
+              id={HONEYPOT_FIELD}
+              name={HONEYPOT_FIELD}
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              defaultValue=""
+            />
+          </div>
+          <input type="hidden" name="renderedAt" value={renderedAt} />
           <input type="hidden" name="redirectTo" value={redirectTo} />
           {invite ? <input type="hidden" name="invite" value={invite} /> : null}
           <button

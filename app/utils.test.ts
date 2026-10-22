@@ -2,6 +2,8 @@ import {
   cleanSubjects,
   coverSrc,
   isDemoEmail,
+  looksLikeBot,
+  MIN_SIGNUP_MS,
   safeRedirect,
   stripMarkdown,
   validateEmail,
@@ -116,4 +118,29 @@ test("coverSrc can ask Open Library for a smaller size", () => {
     "/covers/b/isbn/9780441172719-M.jpg",
   );
   expect(coverSrc("https://example.com/cover.jpg", "M")).toBe("https://example.com/cover.jpg");
+});
+
+function signupForm(fields: Record<string, string>) {
+  const formData = new FormData();
+  for (const [key, value] of Object.entries(fields)) formData.set(key, value);
+  return formData;
+}
+
+test("looksLikeBot passes a person who took their time", () => {
+  const now = 1_000_000;
+  const form = signupForm({ website: "", renderedAt: String(now - MIN_SIGNUP_MS) });
+  expect(looksLikeBot(form, now)).toBe(null);
+});
+
+test("looksLikeBot catches a filled honeypot", () => {
+  const now = 1_000_000;
+  const form = signupForm({ website: "http://spam.example", renderedAt: "1" });
+  expect(looksLikeBot(form, now)).toBe("honeypot");
+});
+
+test("looksLikeBot catches forms sent too fast or without a timestamp", () => {
+  const now = 1_000_000;
+  expect(looksLikeBot(signupForm({ renderedAt: String(now - 500) }), now)).toBe("too-fast");
+  expect(looksLikeBot(signupForm({}), now)).toBe("too-fast");
+  expect(looksLikeBot(signupForm({ renderedAt: "soon" }), now)).toBe("too-fast");
 });
