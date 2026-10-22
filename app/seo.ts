@@ -2,9 +2,11 @@ import type { MetaDescriptor } from "@remix-run/node";
 
 export const SITE_URL = "https://bookstacks.site";
 const SITE_NAME = "Stacks";
-const DEFAULT_TITLE = "Stacks · Lend and borrow books with friends";
+// Worded the way people search: lending books to friends, keeping track of
+// a home library, an alternative to Goodreads for the physical books
+const DEFAULT_TITLE = "Stacks · Lend books to friends and track your home library";
 const DEFAULT_DESCRIPTION =
-  "Keep track of the books you own, lend them to friends, and borrow theirs. A free lending library for your bookshelf.";
+  "A free book lending app. Catalog the books you own, lend them to friends with due-date reminders so they come back, and borrow theirs.";
 
 // Title, description, canonical link and social card for one page.
 // Private pages pass noindex so search engines leave them out.
@@ -47,3 +49,40 @@ export function seo({
   if (noindex) tags.push({ name: "robots", content: "noindex" });
   return tags;
 }
+
+// A machine-readable description of a page for search engines (JSON-LD),
+// added alongside seo() in a route's meta
+export function structuredData(data: Record<string, unknown>): MetaDescriptor {
+  return { "script:ld+json": { "@context": "https://schema.org", ...data } };
+}
+
+// What Stacks is, for the front page
+export const ABOUT_STACKS = {
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: SITE_URL,
+      description: DEFAULT_DESCRIPTION,
+    },
+    {
+      "@type": "WebApplication",
+      name: SITE_NAME,
+      url: SITE_URL,
+      description: DEFAULT_DESCRIPTION,
+      applicationCategory: "LifestyleApplication",
+      operatingSystem: "Any",
+      browserRequirements: "Requires a modern web browser",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      featureList: [
+        "Catalog the books you own by search, barcode scan or import from Goodreads and StoryGraph",
+        "Lend books to friends with due dates and reminders",
+        "See which friends own a book and ask to borrow it",
+        "A want-to-read list that tells you when a friend has the book",
+        "Notes and hearts that stay with each copy",
+        "Share one shelf with the people you live with",
+      ],
+      author: { "@type": "Person", name: "Graham Hagenah", url: "https://grahamhagenah.com" },
+    },
+  ],
+};

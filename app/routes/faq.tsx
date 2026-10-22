@@ -1,18 +1,43 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
+import { isValidElement } from "react";
 
-import { seo } from "~/seo";
+import { seo, structuredData } from "~/seo";
 
 // Plain answers to the questions people ask about Stacks: what it is,
 // how it differs from the reading trackers, and how lending works
 
-export const meta: MetaFunction = () =>
-  seo({
+export const meta: MetaFunction = () => [
+  ...seo({
     title: "FAQ",
     description:
       "What Stacks is, how it differs from Goodreads and StoryGraph, and how lending, notes, shared shelves and importing work.",
     path: "/faq",
-  });
+  }),
+  // The same questions and answers, machine-readable
+  structuredData({
+    "@type": "FAQPage",
+    mainEntity: sections.flatMap((section) =>
+      section.items.map((item) => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: { "@type": "Answer", text: textOf(item.a) },
+      })),
+    ),
+  }),
+];
+
+// The words in an answer, without its links and paragraphs
+function textOf(node: React.ReactNode): string {
+  if (node === null || node === undefined || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(textOf).join("");
+  if (isValidElement<{ children?: React.ReactNode }>(node)) {
+    const text = textOf(node.props.children);
+    return node.type === "p" ? `${text} ` : text;
+  }
+  return "";
+}
 
 export const handle = {
   breadcrumb: () => <span>FAQ</span>,

@@ -14,12 +14,14 @@ import { shelfIds } from "~/models/household.server";
 import { getPendingFriendRequests, getUserById } from "~/models/user.server";
 import { getWantToRead } from "~/models/wish.server";
 import { publicOrigin } from "~/origin.server";
-import { seo } from "~/seo";
+import { ABOUT_STACKS, seo, structuredData } from "~/seo";
 import { getUserId, requireUserId } from "~/session.server";
 import { WELCOME_COOKIE, dismissCookie, welcomeDismissed } from "~/share-prompt.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) =>
-  data?.home ? seo({ title: "Home", noindex: true }) : seo({ path: "/" });
+  data?.home
+    ? seo({ title: "Home", noindex: true })
+    : [...seo({ path: "/" }), structuredData(ABOUT_STACKS)];
 
 // Signed in, this is your home: your books and friends' activity.
 // Signed out, it's the landing page.

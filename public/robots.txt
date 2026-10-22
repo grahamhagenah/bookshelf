@@ -1,6 +1,7 @@
-# Only the public front door is worth indexing; libraries are private
+# Only the public pages are worth indexing; libraries are private
 User-agent: *
 Allow: /$
+Allow: /faq
 Allow: /join
 Allow: /login
 Disallow: /

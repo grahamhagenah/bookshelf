@@ -117,8 +117,8 @@ export default function Landing() {
             shared with friends.
           </h1>
           <p className="mt-5 max-w-lg text-balance text-xl sm:text-2xl leading-snug text-stone-600 dark:text-stone-300">
-            Keep track of the books you own, lend them to friends, and borrow
-            theirs.
+            Catalog your home library, lend books to friends with reminders so
+            they come back, and borrow theirs.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <Link
@@ -152,7 +152,7 @@ export default function Landing() {
         >
           Search once and see which friends have a book, then ask to borrow it
           with a tap. They pick how long you can keep it, and Stacks reminds you
-          both when it&apos;s due.
+          both when it&apos;s due, so lent books find their way home.
         </Feature>
 
         <Feature
