@@ -968,7 +968,7 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
         </>
       ) : (
         <>
-          Haven&apos;t read it yet?{" "}
+          Finished it?{" "}
           <button type="submit" className={buttonClass}>
             Mark as read
           </button>
