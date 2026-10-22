@@ -15,7 +15,7 @@ import {
   useNavigation,
   useActionData,
 } from "@remix-run/react";
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
@@ -118,54 +118,79 @@ function AboutAuthor({
   const linkClass =
     "text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200";
 
-  // Just the label shows; the years, bio and links unfold on request.
-  // The name itself is already at the top of the page.
+  const [open, setOpen] = useState(false);
+  // Long enough to need cutting short? Guessed from the length first (so the
+  // server and first paint agree), then measured once it's on screen
+  const [long, setLong] = useState((author.bio?.length ?? 0) > 220);
+  const bioRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    const bio = bioRef.current;
+    if (bio && !open) setLong(bio.scrollHeight > bio.clientHeight + 1);
+  }, [open, author.bio]);
+  const clipped = long && !open;
+
+  // The first few lines of the bio, fading out, with the rest (and the
+  // links) a tap away. The name itself is already at the top of the page.
   return (
-    <details className="group mt-8">
-      <summary className="flex cursor-pointer list-none items-center gap-2 text-stone-900 dark:text-stone-100 [&::-webkit-details-marker]:hidden">
-        <span className="text-sm font-semibold text-stone-500 dark:text-stone-400">
-          About the author
-        </span>
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-          className="text-stone-400 transition-transform group-open:rotate-180"
-        >
-          <path d="M6 9l6 6 6-6" />
-        </svg>
-      </summary>
-      {/* The name is already at the top of the page */}
-      {years ? (
-        <p className="mt-2 text-sm text-stone-400 dark:text-stone-500">{years}</p>
-      ) : null}
+    <section className="mt-8">
+      <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
+        About the author
+        {years ? <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">{years}</span> : null}
+      </h2>
       {author.bio ? (
-        <p className="summary mt-1 max-w-prose text-pretty leading-relaxed text-stone-700 dark:text-stone-300">
+        <p
+          ref={bioRef}
+          id={`bio-${author.key}`}
+          className={`summary max-w-prose text-pretty leading-relaxed text-stone-700 dark:text-stone-300 ${
+            clipped ? "line-clamp-3 [mask-image:linear-gradient(to_bottom,black_45%,transparent)]" : ""
+          }`}
+        >
           {author.bio}
         </p>
       ) : null}
-      <p className="mt-2 flex gap-4 text-sm">
-        {author.wikipedia ? (
-          <a href={author.wikipedia} target="_blank" rel="noopener noreferrer" className={linkClass}>
-            Wikipedia
-          </a>
-        ) : null}
-        <a
-          href={`https://openlibrary.org/authors/${author.key}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={linkClass}
+      {long ? (
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          aria-controls={`bio-${author.key}`}
+          className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white"
         >
-          More on Open Library
-        </a>
-      </p>
-    </details>
+          {open ? "Show less" : "Read more"}
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            className={`text-stone-400 transition-transform ${open ? "rotate-180" : ""}`}
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+      ) : null}
+      {!clipped ? (
+        <p className="mt-2 flex gap-4 text-sm">
+          {author.wikipedia ? (
+            <a href={author.wikipedia} target="_blank" rel="noopener noreferrer" className={linkClass}>
+              Wikipedia
+            </a>
+          ) : null}
+          <a
+            href={`https://openlibrary.org/authors/${author.key}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={linkClass}
+          >
+            More on Open Library
+          </a>
+        </p>
+      ) : null}
+    </section>
   );
 }
 
