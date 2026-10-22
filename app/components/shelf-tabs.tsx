@@ -1,15 +1,14 @@
 import { NavLink } from "@remix-run/react";
 
-import { BookIcon, BookmarkIcon } from "./icons";
+import { BookIcon, BookmarkIcon, HistoryIcon } from "./icons";
 
-// Your two lists of books, side by side at the top of each: the books you
-// have, and the ones you'd like to
+// Your lists of books, side by side at the top of each: the books you
+// have, the ones you'd like to, and the ones that have passed between you
+// and your friends
 export default function ShelfTabs({
-  libraryCount,
-  wantCount,
+  counts,
 }: {
-  libraryCount: number;
-  wantCount: number;
+  counts: { library: number; want: number; history: number };
 }) {
   // The same weight either way, so switching tabs never nudges the other
   const tab = ({ isActive }: { isActive: boolean }) =>
@@ -23,17 +22,22 @@ export default function ShelfTabs({
   return (
     <nav
       aria-label="Your books"
-      className="mb-6 flex gap-6 border-b border-stone-200 dark:border-stone-800"
+      className="mb-6 flex gap-5 sm:gap-6 overflow-x-auto [scrollbar-width:none] border-b border-stone-200 dark:border-stone-800"
     >
       <NavLink to="/books" end className={tab}>
-        <BookIcon size={16} />
+        <BookIcon size={16} className="hidden sm:block" />
         My library
-        <span className={count}>{libraryCount}</span>
+        <span className={count}>{counts.library}</span>
       </NavLink>
       <NavLink to="/want-to-read" className={tab}>
-        <BookmarkIcon size={16} />
+        <BookmarkIcon size={16} className="hidden sm:block" />
         Want to read
-        <span className={count}>{wantCount}</span>
+        <span className={count}>{counts.want}</span>
+      </NavLink>
+      <NavLink to="/history" className={tab}>
+        <HistoryIcon size={16} className="hidden sm:block" />
+        History
+        <span className={count}>{counts.history}</span>
       </NavLink>
     </nav>
   );

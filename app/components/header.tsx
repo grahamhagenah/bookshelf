@@ -1,6 +1,6 @@
 import { NavLink, useLocation, useMatches } from "@remix-run/react";
 
-import { BookIcon, PulseIcon, StacksLogo } from "./icons";
+import { BookIcon, GroupIcon, StacksLogo } from "./icons";
 import PositionedMenu from "./menu";
 import Notifications from "./notifications";
 import Search from "./search";
@@ -48,19 +48,21 @@ export default function Header() {
               own; phones keep the icons */}
           {user ? (
             <nav aria-label="Main" className="hidden md:flex items-center gap-1">
-              {/* Your want-to-read list is a tab of your library */}
+              {/* Your want-to-read list and history are tabs of your library */}
               <NavLink
                 to="/books"
                 end
                 className={({ isActive }) =>
-                  navClass({ isActive: isActive || pathname === "/want-to-read" })
+                  navClass({
+                    isActive: isActive || pathname === "/want-to-read" || pathname === "/history",
+                  })
                 }
               >
                 <BookIcon size={16} />
                 My library
               </NavLink>
               <NavLink to="/feed" className={navClass}>
-                <PulseIcon size={16} />
+                <GroupIcon size={16} />
                 Friend activity
               </NavLink>
             </nav>
@@ -73,7 +75,7 @@ export default function Header() {
               title="Friend activity"
               className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             >
-              <PulseIcon size={20} />
+              <GroupIcon size={20} />
             </a>
           ) : null}
           {user ? <Notifications /> : null}

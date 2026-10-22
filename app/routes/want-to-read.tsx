@@ -12,8 +12,7 @@ import { BookmarkIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
 import Layout from "~/components / Layout/Layout";
-import { getBookStats } from "~/models/book.server";
-import { shelfIds } from "~/models/household.server";
+import { getShelfCounts } from "~/models/history.server";
 import { getUserById } from "~/models/user.server";
 import {
   getWantToRead,
@@ -33,16 +32,15 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [user, items, stats] = await Promise.all([
+  const [user, items, counts] = await Promise.all([
     getUserById(userId),
     getWantToRead(userId),
-    shelfIds(userId).then((ids) => getBookStats(userId, ids)),
+    getShelfCounts(userId),
   ]);
   return json({
     items,
     friendIds: user?.following.map((friend) => friend.id) ?? [],
-    // As the library counts it: your shelf and what you've borrowed
-    libraryCount: stats.totalBooks + stats.borrowedBooks,
+    counts,
   });
 };
 
@@ -161,13 +159,13 @@ function WantRow({
 }
 
 export default function WantToRead() {
-  const { items, friendIds, libraryCount } = useLoaderData<typeof loader>();
+  const { items, friendIds, counts } = useLoaderData<typeof loader>();
   const matched = items.filter((item) => item.copies.length > 0).length;
 
   return (
     <Layout title="Want to read">
       <section>
-        <ShelfTabs libraryCount={libraryCount} wantCount={items.length} />
+        <ShelfTabs counts={{ ...counts, want: items.length }} />
         <div className="flex flex-wrap items-start justify-between gap-3">
           <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
             Books you don&apos;t own but would like to read. When a friend has one,
