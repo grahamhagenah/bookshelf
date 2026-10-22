@@ -127,6 +127,8 @@ const SEARCH_FIELDS =
   "key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,publisher,first_sentence,author_key,isbn";
 
 interface Found {
+  title: string | null;
+  author: string | null;
   key: string | null;
   cover: string | null;
   datePublished: string | null;
@@ -157,6 +159,8 @@ export async function lookupWork(book: {
   const doc = data.docs?.[0];
   if (!doc) return null;
   return {
+    title: typeof doc.title === "string" ? doc.title : null,
+    author: doc.author_name?.[0] ?? null,
     key: typeof doc.key === "string" ? doc.key : null,
     cover: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : null,
     datePublished: doc.first_publish_year ? String(doc.first_publish_year) : null,
