@@ -1001,20 +1001,23 @@ function LendingHistory({ data }: { data: BookData }) {
           {lendCount === 0 ? "not lent yet" : `lent ${lendCount} ${lendCount === 1 ? "time" : "times"}`}
         </span>
       </h2>
-      <ul className="divide-y divide-stone-100 dark:divide-stone-800">
+      <ul className="space-y-3">
         {entries.map((entry) => {
           const person = entry.isCurrentUser && currentUser ? currentUser : entry.borrower;
           const name = `${entry.borrower.firstname} ${entry.borrower.surname}`;
           return (
-            <li key={entry.id} className="flex items-center gap-3 py-2.5">
+            <li
+              key={entry.id}
+              className="flex items-center gap-3 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 px-4 py-3"
+            >
               <Avatar
                 firstname={person.firstname}
                 surname={person.surname}
                 icon={person.profileEmoji}
-                size="sm"
+                size="md"
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-stone-900 dark:text-stone-100">
+                <p className="truncate font-semibold text-stone-900 dark:text-stone-100">
                   {entry.isCurrentUser ? (
                     "You"
                   ) : entry.isFriend ? (
@@ -1045,15 +1048,15 @@ function LendingHistory({ data }: { data: BookData }) {
           );
         })}
         {ownerPerson ? (
-          <li className="flex items-center gap-3 py-2.5">
+          <li className="flex items-center gap-3 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 px-4 py-3">
             <Avatar
               firstname={ownerPerson.firstname}
               surname={ownerPerson.surname}
               icon={isOwner ? (currentUser?.profileEmoji ?? null) : null}
-              size="sm"
+              size="md"
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium text-stone-900 dark:text-stone-100">
+              <p className="truncate font-semibold text-stone-900 dark:text-stone-100">
                 {isOwner ? "You" : ownerLink(`${ownerPerson.firstname} ${ownerPerson.surname}`)}
               </p>
               <p className="text-sm text-stone-500 dark:text-stone-400">

@@ -188,23 +188,26 @@ export default function ReaderNotes({
       ) : null}
 
       {hasNotes ? (
-        <ul className="divide-y divide-stone-100 dark:divide-stone-800">
+        <ul className="space-y-3">
           {notes
             .filter((note) => note.body)
             .map((note) => {
               const isMine = note.id === myNote?.id;
               if (isMine && isWriting) return null;
               return (
-                <li key={note.id} className="flex gap-3 py-3">
-                  <Avatar
-                    firstname={note.user.firstname}
-                    surname={note.user.surname}
-                    icon={note.user.profileEmoji}
-                    size="sm"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-1.5">
-                      <span className="font-medium text-stone-900 dark:text-stone-100">
+                <li
+                  key={note.id}
+                  className="rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 px-4 py-3.5"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar
+                      firstname={note.user.firstname}
+                      surname={note.user.surname}
+                      icon={note.user.profileEmoji}
+                      size="md"
+                    />
+                    <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 leading-snug">
+                      <span className="font-semibold text-stone-900 dark:text-stone-100">
                         {isMine ? (
                           "You"
                         ) : (
@@ -215,41 +218,41 @@ export default function ReaderNotes({
                           />
                         )}
                       </span>
+                      <span className="text-stone-600 dark:text-stone-300">
+                        {(isMine ? loved : note.loved) ? "loved it" : "wrote about it"}
+                      </span>
                       {(isMine ? loved : note.loved) ? (
-                        <HeartIcon
-                          size={12}
-                          filled
-                          className="text-rose-400"
-                        />
+                        <HeartIcon size={13} filled className="text-rose-400" />
                       ) : null}
+                      <span className="text-stone-400 dark:text-stone-500"> · </span>
                       <span className="text-sm text-stone-400 dark:text-stone-500">
                         {formatDate(note.updatedAt)}
                       </span>
                     </p>
-                    <p className="mt-0.5 leading-relaxed text-stone-700 dark:text-stone-300 whitespace-pre-wrap break-words">
-                      {note.body}
-                    </p>
-                    {isMine ? (
-                      <div className="mt-1 flex gap-3 text-sm">
-                        <button
-                          type="button"
-                          onClick={() => setIsWriting(true)}
-                          className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200"
-                        >
-                          Edit
-                        </button>
-                        <noteFetcher.Form method="post">
-                          <input type="hidden" name="intent" value="deleteNote" />
-                          <button
-                            type="submit"
-                            className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200"
-                          >
-                            Remove
-                          </button>
-                        </noteFetcher.Form>
-                      </div>
-                    ) : null}
                   </div>
+                  <p className="mt-3 text-pretty leading-relaxed text-stone-800 dark:text-stone-200 whitespace-pre-wrap break-words">
+                    {note.body}
+                  </p>
+                  {isMine ? (
+                    <div className="mt-3 flex gap-4 border-t border-stone-100 dark:border-stone-800 pt-2 text-sm">
+                      <button
+                        type="button"
+                        onClick={() => setIsWriting(true)}
+                        className="text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
+                      >
+                        Edit
+                      </button>
+                      <noteFetcher.Form method="post">
+                        <input type="hidden" name="intent" value="deleteNote" />
+                        <button
+                          type="submit"
+                          className="text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
+                        >
+                          Remove
+                        </button>
+                      </noteFetcher.Form>
+                    </div>
+                  ) : null}
                 </li>
               );
             })}
