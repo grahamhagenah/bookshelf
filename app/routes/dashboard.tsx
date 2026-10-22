@@ -10,7 +10,6 @@ import { useMemo, useState } from "react";
 
 import {
   BookIcon,
-  ChevronRightIcon,
   DashboardIcon,
   GroupIcon,
   LentIcon,
@@ -608,37 +607,30 @@ function EditUser({ user, isYou }: { user: AdminUser; isYou: boolean }) {
   const saved = fetcher.state === "idle" && fetcher.data && "saved" in fetcher.data;
 
   return (
-    <div className="space-y-3">
-      <fetcher.Form method="post" className="grid gap-3 sm:grid-cols-[1fr_1fr_1.6fr_auto] sm:items-end">
-        <input type="hidden" name="intent" value="updateUser" />
-        <input type="hidden" name="userId" value={user.id} />
-        <label className={fieldLabel}>
-          First name
-          <input name="firstname" defaultValue={user.firstname} required className={field} />
-        </label>
-        <label className={fieldLabel}>
-          Surname
-          <input name="surname" defaultValue={user.surname} required className={field} />
-        </label>
-        <label className={fieldLabel}>
-          Email
-          <input name="email" type="email" defaultValue={user.email} required className={field} />
-        </label>
-        <button type="submit" disabled={busy} className={saveButton}>
-          {busy && !deleting ? "Saving…" : "Save"}
-        </button>
-      </fetcher.Form>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm" role="status">
-          {error ? (
-            <span className={warnText}>{error}</span>
-          ) : saved ? (
-            <span className="text-forest-700 dark:text-forest-400">Saved</span>
-          ) : null}
-        </p>
-        {isYou ? (
-          <p className={`text-sm ${mutedClass}`}>This is you, so it can&apos;t be deleted here.</p>
-        ) : (
+    <div className="space-y-2">
+      {/* Both forms share one row: the edit form's fields sit straight in the
+          grid, and Delete takes the last cell */}
+      <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1.6fr_auto_auto] sm:items-end">
+        <fetcher.Form method="post" className="contents">
+          <input type="hidden" name="intent" value="updateUser" />
+          <input type="hidden" name="userId" value={user.id} />
+          <label className={fieldLabel}>
+            First name
+            <input name="firstname" defaultValue={user.firstname} required className={field} />
+          </label>
+          <label className={fieldLabel}>
+            Surname
+            <input name="surname" defaultValue={user.surname} required className={field} />
+          </label>
+          <label className={fieldLabel}>
+            Email
+            <input name="email" type="email" defaultValue={user.email} required className={field} />
+          </label>
+          <button type="submit" disabled={busy} className={saveButton}>
+            {busy && !deleting ? "Saving…" : "Save"}
+          </button>
+        </fetcher.Form>
+        {isYou ? null : (
           <fetcher.Form
             method="post"
             onSubmit={(event) => {
@@ -652,28 +644,34 @@ function EditUser({ user, isYou }: { user: AdminUser; isYou: boolean }) {
             <button
               type="submit"
               disabled={busy}
-              className="rounded-md px-2.5 py-1 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-200 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:ring-red-900 dark:hover:bg-red-950/40 transition-colors"
+              className="w-full whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-200 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:ring-red-900 dark:hover:bg-red-950/40 transition-colors"
             >
               {deleting ? "Deleting…" : "Delete account"}
             </button>
           </fetcher.Form>
         )}
       </div>
+      <p className="text-sm" role="status">
+        {error ? (
+          <span className={warnText}>{error}</span>
+        ) : saved ? (
+          <span className="text-forest-700 dark:text-forest-400">Saved</span>
+        ) : isYou ? (
+          <span className={mutedClass}>This is you, so it can&apos;t be deleted here.</span>
+        ) : null}
+      </p>
     </div>
   );
 }
 
-const userColumns = "sm:grid-cols-[minmax(0,1fr)_4rem_4rem_4.5rem_7rem]";
+const userColumns = "sm:grid-cols-[minmax(0,1fr)_4rem_4rem_4.5rem_6rem_4.5rem]";
 
 function UserRow({ user, isYou }: { user: AdminUser; isYou: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <li>
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-        className={`grid w-full grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 py-3 text-left text-sm ${userColumns}`}
+      <div
+        className={`grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-4 py-3 text-sm ${userColumns}`}
       >
         <span className="min-w-0">
           <span className="font-medium text-stone-900 dark:text-stone-100">{user.name}</span>
@@ -687,14 +685,20 @@ function UserRow({ user, isYou }: { user: AdminUser; isYou: boolean }) {
         <span className="hidden text-right tabular-nums sm:block">{user.bookCount}</span>
         <span className="hidden text-right tabular-nums sm:block">{user.friendCount}</span>
         <span className="hidden text-right tabular-nums sm:block">{user.borrowedCount}</span>
-        <span className={`flex items-baseline justify-end gap-1.5 ${mutedClass}`}>
-          {ago(user.lastActive)}
-          <ChevronRightIcon
-            size={14}
-            className={`self-center transition-transform ${open ? "rotate-90" : ""}`}
-          />
-        </span>
-      </button>
+        <span className={`text-right ${mutedClass}`}>{ago(user.lastActive)}</span>
+        {/* Fixed width, so Edit and Close don't nudge the row */}
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-label={`${open ? "Close" : "Edit"} ${user.name}`}
+          onClick={() => setOpen(!open)}
+          className={`${outlineButton} w-16 justify-self-end text-center ${
+            open ? "bg-stone-100 dark:bg-stone-800" : ""
+          }`}
+        >
+          {open ? "Close" : "Edit"}
+        </button>
+      </div>
       {open ? (
         <div className="space-y-3 pb-4 text-sm text-stone-800 dark:text-stone-200">
           <p className={mutedClass}>
@@ -778,6 +782,7 @@ function People({ users, userId }: { users: Data["users"]; userId: string }) {
         <span className="text-right">Friends</span>
         <span className="text-right">Borrowed</span>
         <span className="text-right">Last active</span>
+        <span />
       </div>
       {shown.length ? (
         <ul className="divide-y divide-stone-100 dark:divide-stone-800">
