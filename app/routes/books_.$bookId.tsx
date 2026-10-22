@@ -977,8 +977,9 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
   );
 }
 
-// Your copy while someone has it: who, until when, and what you can do
-// about it, each choice under a line saying what it's for
+// The loan that's out right now, as the top entry of your copy's lending
+// history: who, until when, and what you can do about it, each choice
+// under a line saying what it's for
 function LoanCard({ data }: { data: BookData }) {
   const reminder = useFetcher<{ reminderSent?: boolean }>();
   const extend = useFetcher();
@@ -1015,7 +1016,7 @@ function LoanCard({ data }: { data: BookData }) {
 
   return (
     <div
-      className={`mt-8 rounded-xl border border-stone-200 dark:border-stone-800 text-sm transition-opacity ${
+      className={`rounded-xl border border-stone-200 dark:border-stone-800 text-sm transition-opacity ${
         returned.state !== "idle" ? "opacity-50" : ""
       }`}
     >
@@ -1164,6 +1165,13 @@ function LendingHistory({ data }: { data: BookData }) {
       </h2>
       <ul className="space-y-3">
         {entries.map((entry) => {
+          if (!entry.returnedAt && isOwner && book.borrower?.id === entry.borrower.id) {
+            return (
+              <li key={entry.id}>
+                <LoanCard data={data} />
+              </li>
+            );
+          }
           const person = entry.isCurrentUser && currentUser ? currentUser : entry.borrower;
           const name = `${entry.borrower.firstname} ${entry.borrower.surname}`;
           return (
@@ -1336,13 +1344,24 @@ export default function BookDetailsPage() {
             ) : null}
           </div>
           {/* Your own copy: where it is, as a label that looks like the
-              button a friend would see here */}
+              button a friend would see here. While it's out, it takes you
+              down to the loan in the lending history. */}
           {data.isOwner && !isEditing ? (
-            <p className="w-full cursor-default rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-center text-sm text-stone-500 dark:text-stone-400">
-              {data.book.borrower
-                ? `Lent to ${data.book.borrower.firstname}`
-                : "On your shelf"}
-            </p>
+            data.book.borrower ? (
+              <a
+                href="#lending"
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+              >
+                Lent to {data.book.borrower.firstname}
+                <span aria-hidden="true" className="text-stone-400 dark:text-stone-500">
+                  ↓
+                </span>
+              </a>
+            ) : (
+              <p className="w-full cursor-default rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-center text-sm text-stone-500 dark:text-stone-400">
+                On your shelf
+              </p>
+            )
           ) : null}
           {data.isOwner && !isEditing && !data.book.borrower ? (
             <LendToFriend
@@ -1693,12 +1712,6 @@ export default function BookDetailsPage() {
 
           {!isEditing && data.author ? <AboutAuthor author={data.author} /> : null}
 
-          {/* Your copy while it's out, after the book and before what readers
-              thought of it */}
-          {!isEditing && data.isOwner && data.isBorrowed && data.book.borrower ? (
-            <LoanCard data={data} />
-          ) : null}
-
           {!isEditing ? (
             <ReaderNotes
               notes={data.readerNotes}
@@ -1711,7 +1724,7 @@ export default function BookDetailsPage() {
           ) : null}
 
           {!isEditing ? (
-            <div className="mt-10">
+            <div id="lending" className="mt-10 scroll-mt-6">
               <LendingHistory data={data} />
             </div>
           ) : null}
