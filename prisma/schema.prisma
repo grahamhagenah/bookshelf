@@ -14,7 +14,13 @@ model User {
   surname            String
   shareToken         String? @unique
   isAdmin            Boolean @default(false)
+  // Superseded by theme; still read for accounts that haven't picked one
   darkMode           Boolean @default(false)
+  // "light", "dark" or "system" (follow the device)
+  theme              String?
+  // The library as "cover" grid or "list", and the grid's covers "large" or "small"
+  libraryView        String  @default("cover")
+  coverSize          String  @default("large")
   profileEmoji       String?
   emailNotifications Boolean @default(true)
   // Set on throwaway demo accounts; everyone in one demo sandbox shares it

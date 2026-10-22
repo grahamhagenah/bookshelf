@@ -6,6 +6,7 @@ import type {
 import { json } from "@remix-run/node";
 import { Link, useLoaderData, Form, useActionData, useFetcher } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
+import type { ComponentType } from "react";
 
 import Avatar, {
   AVATAR_ICONS,
@@ -16,9 +17,11 @@ import {
   BookIcon,
   BorrowedIcon,
   CheckCircleIcon,
+  GridViewIcon,
   GroupIcon,
   ImportIcon,
   LentIcon,
+  ListViewIcon,
 } from "~/components/icons";
 import Layout from "~/components / Layout/Layout";
 import { getBookStats } from "~/models/book.server";
@@ -37,12 +40,20 @@ import {
   generateShareToken,
   revokeShareToken,
   changePassword,
-  toggleDarkMode,
+  setAppearance,
   toggleEmailNotifications,
 } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+import {
+  coverSizeOf,
+  isCoverSize,
+  isLibraryView,
+  isTheme,
+  libraryViewOf,
+  themeOf,
+} from "~/utils";
 
 export const meta: MetaFunction = () =>
   seo({ title: "Account", noindex: true });
@@ -142,10 +153,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
-  // Handle dark mode toggle
-  if (intent === "toggleDarkMode") {
-    const enabled = formData.get("darkMode") === "true";
-    await toggleDarkMode(userId, enabled);
+  // Theme, library view and cover size: one at a time, whichever was sent
+  if (intent === "appearance") {
+    const theme = formData.get("theme");
+    const libraryView = formData.get("libraryView");
+    const coverSize = formData.get("coverSize");
+    await setAppearance(userId, {
+      theme: isTheme(theme) ? theme : undefined,
+      libraryView: isLibraryView(libraryView) ? libraryView : undefined,
+      coverSize: isCoverSize(coverSize) ? coverSize : undefined,
+    });
     return json({
       errors: null,
       passwordErrors: null,
@@ -488,14 +505,41 @@ export default function Account() {
         </div>
       </Section>
 
-      <Section title="Preferences" description="How Stacks looks, and what it emails you.">
+      <Section
+        title="Preferences"
+        description="How Stacks looks and what it emails you. These follow you to every device you sign in on."
+      >
         <div className="grid gap-3 sm:grid-cols-2">
-          <Toggle
-            intent="toggleDarkMode"
-            name="darkMode"
-            on={Boolean(user?.darkMode)}
-            label="Dark mode"
-            hint="On every device you sign in on"
+          <Choice
+            name="theme"
+            value={themeOf(user)}
+            label="Theme"
+            hint="Auto matches your phone or computer"
+            options={[
+              ["light", "Light"],
+              ["dark", "Dark"],
+              ["system", "Auto"],
+            ]}
+          />
+          <Choice
+            name="libraryView"
+            value={libraryViewOf(user)}
+            label="Library view"
+            hint="For your shelf and your friends'"
+            options={[
+              ["cover", "Covers", GridViewIcon],
+              ["list", "List", ListViewIcon],
+            ]}
+          />
+          <Choice
+            name="coverSize"
+            value={coverSizeOf(user)}
+            label="Cover size"
+            hint="Small fits more on a row"
+            options={[
+              ["large", "Large"],
+              ["small", "Small"],
+            ]}
           />
           <Toggle
             intent="toggleEmailNotifications"
@@ -713,7 +757,7 @@ function Toggle({
         type="submit"
         role="switch"
         aria-checked={checked}
-        className="flex w-full items-center gap-3 rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3 text-left hover:border-stone-300 dark:hover:border-stone-700 transition-colors"
+        className="flex h-full w-full items-center gap-3 rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3 text-left hover:border-stone-300 dark:hover:border-stone-700 transition-colors"
       >
         <span
           aria-hidden="true"
@@ -735,6 +779,63 @@ function Toggle({
         </span>
       </button>
     </fetcher.Form>
+  );
+}
+
+// A setting with a few options, side by side like segments of one
+// button; saved as soon as one is picked
+function Choice({
+  name,
+  value,
+  label,
+  hint,
+  options,
+}: {
+  name: string;
+  value: string;
+  label: string;
+  hint: string;
+  options: [string, string, ComponentType<{ size?: number }>?][];
+}) {
+  const fetcher = useFetcher();
+  const current = (fetcher.formData?.get(name) as string | undefined) ?? value;
+  const id = `choice-${name}`;
+  return (
+    <div className="rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3">
+      <p id={id} className="text-sm font-medium text-stone-900 dark:text-stone-100">
+        {label}
+      </p>
+      <p className="text-sm text-stone-500 dark:text-stone-400">{hint}</p>
+      <div
+        role="radiogroup"
+        aria-labelledby={id}
+        className="mt-3 grid auto-cols-fr grid-flow-col gap-1 rounded-md bg-stone-100 dark:bg-stone-800 p-1"
+      >
+        {options.map(([option, text, Icon]) => (
+          <label
+            key={option}
+            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded px-2 py-1 text-sm transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-stone-400 ${
+              current === option
+                ? "bg-white dark:bg-stone-950 font-medium text-stone-900 dark:text-stone-50 shadow-sm"
+                : "text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
+            }`}
+          >
+            <input
+              type="radio"
+              name={name}
+              value={option}
+              checked={current === option}
+              onChange={() =>
+                fetcher.submit({ intent: "appearance", [name]: option }, { method: "post" })
+              }
+              className="sr-only"
+            />
+            {Icon ? <Icon size={14} /> : null}
+            {text}
+          </label>
+        ))}
+      </div>
+    </div>
   );
 }
 

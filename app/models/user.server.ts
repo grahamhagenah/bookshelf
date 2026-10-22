@@ -2,6 +2,7 @@ import type { Password, User, Notification } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "~/db.server";
+import type { CoverSize, LibraryView, Theme } from "~/utils";
 
 export type { User } from "@prisma/client";
 
@@ -16,6 +17,9 @@ export async function getUserById(id: User["id"]) {
       shareToken: true,
       isAdmin: true,
       darkMode: true,
+      theme: true,
+      libraryView: true,
+      coverSize: true,
       profileEmoji: true,
       emailNotifications: true,
       demoGroup: true,
@@ -369,6 +373,7 @@ export async function createUser(
       },
       firstname,
       surname,
+      theme: "system",
     },
   });
 }
@@ -470,11 +475,11 @@ export async function revokeShareToken(userId: string) {
   });
 }
 
-export async function toggleDarkMode(userId: string, enabled: boolean) {
-  await prisma.user.update({
-    where: { id: userId },
-    data: { darkMode: enabled },
-  });
+export async function setAppearance(
+  userId: string,
+  appearance: { theme?: Theme; libraryView?: LibraryView; coverSize?: CoverSize },
+) {
+  await prisma.user.update({ where: { id: userId }, data: appearance });
 }
 
 export async function toggleEmailNotifications(
