@@ -56,9 +56,12 @@ export default function Feed() {
   return (
     <Layout title="Friend activity">
       {activity.length > 0 ? (
-        days.map((day) => (
-          <section key={day.label} aria-label={day.label}>
-            <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400">
+        // One block, so the page's section padding applies once; days are
+        // set apart by a little space and their heading
+        <div>
+          {days.map((day, index) => (
+          <section key={day.label} aria-label={day.label} className={index > 0 ? "mt-6" : undefined}>
+            <h2 className="mb-1 text-sm font-semibold text-stone-500 dark:text-stone-400">
               {day.label}
             </h2>
             <ul className="divide-y divide-stone-100 dark:divide-stone-800">
@@ -74,7 +77,8 @@ export default function Feed() {
               ))}
             </ul>
           </section>
-        ))
+          ))}
+        </div>
       ) : (
         <div className="py-16 text-center text-stone-500 dark:text-stone-400">
           {friendIds.length === 0 ? (

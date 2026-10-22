@@ -77,9 +77,9 @@ function BookCard({
   return (
     <Link
       to={`/books/${book.id}`}
-      className="group -mx-2 flex items-center gap-4 rounded-md px-2 py-1.5 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+      className="group -mx-2 flex items-center gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
     >
-      <FeedCover book={book} className="h-[120px] w-20 transition-opacity group-hover:opacity-90" />
+      <FeedCover book={book} className="h-[102px] w-[68px] transition-opacity group-hover:opacity-90" />
       <span className="min-w-0">
         <span className="block font-medium leading-snug text-stone-900 dark:text-stone-100">
           {book.title}
@@ -192,7 +192,7 @@ export default function FriendActivityItem({
   }
 
   return (
-    <article className="flex items-start gap-4 py-6">
+    <article className="flex items-start gap-4 py-4">
       <Avatar
         firstname={item.friend.firstname}
         surname={item.friend.surname}
@@ -204,13 +204,13 @@ export default function FriendActivityItem({
         <p className="leading-snug text-stone-800 dark:text-stone-200">{text}</p>
 
         {item.kind === "note" && item.body ? (
-          <blockquote className="mt-3 max-w-prose text-pretty text-lg leading-relaxed text-stone-700 dark:text-stone-300">
+          <blockquote className="mt-1.5 max-w-prose text-pretty text-lg leading-relaxed text-stone-700 dark:text-stone-300">
             &ldquo;{item.body}&rdquo;
           </blockquote>
         ) : null}
 
         {item.kind === "added" && item.books.length > 1 ? (
-          <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-4">
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-3">
             {books.map((book) => (
               <BookTile key={book.id} book={book} />
             ))}
@@ -226,7 +226,7 @@ export default function FriendActivityItem({
             ) : null}
           </ul>
         ) : (
-          <div className="mt-3">
+          <div className="mt-2">
             <BookCard book={books[0]} friendId={item.friend.id} userId={userId} />
           </div>
         )}
