@@ -244,11 +244,11 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      <div className="relative mx-auto w-full max-w-lg px-4">
+      <div className="mx-auto w-full max-w-lg px-4">
         {phase === "nocamera" ? (
           <p className="rounded-md bg-stone-900 px-4 py-6 text-center text-sm text-stone-300">{note}</p>
         ) : (
-          <>
+          <div className="relative">
             <video
               ref={videoRef}
               muted
@@ -256,14 +256,17 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
               autoPlay
               className="aspect-[4/3] w-full rounded-md bg-stone-900 object-cover"
             />
-            {/* The frame to put the stripes in; it goes green when one is read */}
+            {/* The frame to put the stripes in; it goes green when one is
+                read. It's placed against the video alone, so nothing
+                below can move it. */}
             <div
               aria-hidden="true"
-              className={`pointer-events-none absolute inset-x-8 top-1/2 h-24 -translate-y-1/2 rounded-lg border-2 transition-all duration-150 ${frameClass}`}
+              className={`pointer-events-none absolute inset-x-8 top-1/2 h-24 -translate-y-1/2 rounded-lg border-2 transition-colors duration-150 ${frameClass}`}
             />
-          </>
+          </div>
         )}
-        <p className="mt-2 flex items-center justify-center gap-2 text-center text-sm text-stone-400" aria-live="polite">
+        {/* Fixed heights, so the words can change without anything moving */}
+        <p className="mt-2 flex h-5 items-center justify-center gap-2 text-center text-sm text-stone-400" aria-live="polite">
           {phase === "starting" ? (
             "Starting the camera…"
           ) : phase === "looking" ? (
@@ -272,11 +275,11 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
               Looking for a barcode
             </>
           ) : phase === "found" ? (
-            <span className="text-emerald-300">Got it</span>
+            <span className="font-medium text-emerald-300">Got it</span>
           ) : null}
         </p>
-        {phase === "looking" || phase === "starting" ? (
-          <p className="mt-1 text-center text-xs text-stone-500">
+        {phase !== "nocamera" ? (
+          <p className="mt-1 min-h-8 text-center text-xs text-stone-500">
             Fill the frame with the black stripes (not the printed number), about a hand&apos;s width away, and hold still.
           </p>
         ) : null}
