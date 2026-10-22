@@ -17,11 +17,12 @@ export interface Work {
 }
 
 // Two records describe the same book when they share a work key or ISBN,
-// or failing those, a title
+// or failing those, a title. Different ISBNs prove nothing: every edition
+// has its own, so a paperback and a hardback still go by title.
 export function sameWork(a: Work, b: Work) {
   if (a.openLibraryKey && b.openLibraryKey) {
     return a.openLibraryKey === b.openLibraryKey;
   }
-  if (a.isbn && b.isbn) return a.isbn === b.isbn;
+  if (a.isbn && b.isbn && a.isbn === b.isbn) return true;
   return normalizeTitle(a.title) === normalizeTitle(b.title);
 }

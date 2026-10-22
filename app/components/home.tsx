@@ -331,6 +331,8 @@ interface Wanted {
   cover: string;
   // First name of a friend who has it, if any
   owner: string | null;
+  // Their copy, or a search when no friend has one
+  to: string;
 }
 
 // One row of covers: four on phones, six on wider screens
@@ -494,7 +496,7 @@ export default function Home({
             </div>
             {wanted.length > 0 ? (
               <CoverRow
-                items={wanted.map((item) => ({ ...item, to: "/want-to-read" }))}
+                items={wanted}
                 caption={(index) => (
                   <span className="block truncate text-xs text-stone-400 dark:text-stone-500">
                     {wanted[index].owner ? `${wanted[index].owner} has it` : "\u00a0"}

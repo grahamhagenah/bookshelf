@@ -16,6 +16,9 @@ test("sameWork goes by work key, then ISBN, then title", () => {
   expect(sameWork({ title: "A", openLibraryKey: "/works/1" }, { title: "B", openLibraryKey: "/works/1" })).toBe(true);
   expect(sameWork({ title: "A", openLibraryKey: "/works/1" }, { title: "A", openLibraryKey: "/works/2" })).toBe(false);
   expect(sameWork({ title: "A", isbn: "1" }, { title: "B", isbn: "1" })).toBe(true);
+  // Two editions of one book
+  expect(sameWork({ title: "Hamnet", isbn: "9780525657606" }, { title: "Hamnet", isbn: "9781432892494" })).toBe(true);
+  expect(sameWork({ title: "Hamnet", isbn: "1" }, { title: "Circe", isbn: "2" })).toBe(false);
   expect(sameWork({ title: "Dune (Dune, #1)" }, { title: "dune" })).toBe(true);
   expect(sameWork({ title: "Dune" }, { title: "Dune Messiah" })).toBe(false);
 });

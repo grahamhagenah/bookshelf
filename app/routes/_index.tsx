@@ -43,13 +43,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       // The want-to-read list, ones a friend has first
       wanted: [...wanted]
         .sort((a, b) => Number(b.copies.length > 0) - Number(a.copies.length > 0))
-        .map(({ id, title, author, cover, copies }) => ({
-          id,
-          title,
-          author,
-          cover,
-          owner: copies[0]?.owner.firstname ?? null,
-        })),
+        .map(({ id, title, author, cover, copies }) => {
+          // A friend's copy opens, one that's on their shelf if there is;
+          // with none, a search for it
+          const copy = copies.find((each) => each.available) ?? copies[0];
+          return {
+            id,
+            title,
+            author,
+            cover,
+            owner: copy?.owner.firstname ?? null,
+            to: copy ? `/books/${copy.bookId}` : `/search?q=${encodeURIComponent(title)}`,
+          };
+        }),
       friendIds: user.following.map((friend) => friend.id),
       requestsSent: sentRequests.length,
       welcomeDismissed: welcomeDismissed(request),
