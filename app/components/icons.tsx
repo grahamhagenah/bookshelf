@@ -6,8 +6,7 @@ interface IconProps {
   size?: number;
 }
 
-// Line-art stack of three books, each with a coloured spine. The colour
-// runs under the outline so the stroke covers the seam.
+// Line-art stack of three books
 export function StacksLogo({ className = "", size = 24 }: IconProps) {
   return (
     <svg
@@ -22,12 +21,12 @@ export function StacksLogo({ className = "", size = 24 }: IconProps) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M4 15H6.5V19.5H4A1 1 0 0 1 3 18.5V16A1 1 0 0 1 4 15Z" fill="#C4613F" stroke="none" />
-      <path d="M16.5 9.5H19A1 1 0 0 1 20 10.5V14A1 1 0 0 1 19 15H16.5Z" fill="#6F8F6A" stroke="none" />
-      <path d="M5.5 5H8V9.5H5.5A1 1 0 0 1 4.5 8.5V6A1 1 0 0 1 5.5 5Z" fill="#5A7D9A" stroke="none" />
       <rect x="3" y="15" width="18" height="4.5" rx="1" />
+      <path d="M6.5 15v4.5" />
       <rect x="5" y="9.5" width="15" height="5.5" rx="1" />
+      <path d="M16.5 9.5v5.5" />
       <rect x="4.5" y="5" width="14" height="4.5" rx="1" />
+      <path d="M8 5v4.5" />
     </svg>
   );
 }
