@@ -204,6 +204,8 @@ export default function SearchBox({
         aria-autocomplete="list"
         aria-activedescendant={active >= 0 ? optionId(active) : undefined}
         autoComplete="off"
+        // Phone keyboards label their Enter key "Search"
+        enterKeyHint="search"
         className={`w-full rounded-md border focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors ${
           inHeader
             ? // Quiet until used: no border, a faint fill, outlined on focus

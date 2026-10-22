@@ -552,13 +552,15 @@ export default function Search() {
         />
       ) : null}
       <Form method="get" className="mb-10">
-        {/* Phones: the box and Search share a line, Scan gets its own below */}
+        {/* Phones: the box takes the whole line (its keyboard has a Search key,
+            and the suggestions get the room); Scan gets its own line below */}
         <div className="flex flex-wrap gap-2 sm:flex-nowrap">
           <SearchBox defaultValue={currentQuery} />
           <button
             type="submit"
             disabled={isSearching}
-            className="px-5 rounded-md bg-forest-600 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-60"
+            // Visually hidden on phones, but still there so Enter submits
+            className="sr-only sm:not-sr-only sm:px-5 rounded-md bg-forest-600 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-60"
           >
             {isSearching ? "Searching…" : "Search"}
           </button>
