@@ -120,8 +120,9 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
     if (lastRef.current.isbn === isbn && now - lastRef.current.at < SAME_CODE_MS) return;
     lastRef.current = { isbn, at: now };
 
-    // Say so straight away, before the lookup
-    setPhase("found");
+    // Say so straight away, before the lookup (unless there's no camera
+    // to be looking through)
+    setPhase((current) => (current === "nocamera" ? current : "found"));
     navigator.vibrate?.(60);
     setTimeout(() => setPhase((current) => (current === "found" ? "looking" : current)), 900);
     if (scansRef.current.some((scan) => scan.isbn === isbn)) return;
