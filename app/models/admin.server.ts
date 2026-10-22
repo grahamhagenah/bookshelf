@@ -263,6 +263,8 @@ export async function getFunnel() {
       _count: { select: { books: true, following: true, lendingHistory: true } },
       // Any of their books ever lent out
       books: { where: { lendCount: { gt: 0 } }, select: { id: true }, take: 1 },
+      // Kept after cancelling, so this is anyone who ever paid
+      stripeSubscriptionId: true,
     },
   });
   const steps = (since: Date | null) => {
@@ -278,6 +280,7 @@ export async function getFunnel() {
         label: "Lent or borrowed",
         count: count((p) => p._count.lendingHistory > 0 || p.books.length > 0),
       },
+      { label: "Subscribed to Plus", count: count((p) => p.stripeSubscriptionId !== null) },
     ];
   };
   return { allTime: steps(null), last30: steps(daysAgo(30)) };
@@ -286,4 +289,57 @@ export async function getFunnel() {
 // Plus as a gift, for friends and early users
 export function setPlan(userId: string, plus: boolean) {
   return prisma.user.update({ where: { id: userId }, data: { plan: plus ? "plus" : "free" } });
+}
+
+// Stacks Plus at a glance: who pays, what that comes to a month, and who's
+// on their way out. Gifts count as Plus but not as revenue; amounts are
+// before Stripe's fees and any tax.
+export async function getRevenue() {
+  const [subscribers, ended] = await Promise.all([
+    prisma.user.findMany({
+      where: { ...real, plan: "plus" },
+      select: {
+        id: true,
+        firstname: true,
+        surname: true,
+        email: true,
+        stripeSubscriptionId: true,
+        subscriptionStatus: true,
+        planInterval: true,
+        planAmount: true,
+        planStartedAt: true,
+        planRenewsAt: true,
+        planEndsAt: true,
+      },
+      orderBy: [{ planStartedAt: "desc" }, { createdAt: "desc" }],
+    }),
+    // Paid once, not any more
+    prisma.user.count({ where: { ...real, plan: "free", stripeSubscriptionId: { not: null } } }),
+  ]);
+  const paying = subscribers.filter((user) => user.stripeSubscriptionId);
+  const perMonth = (user: (typeof paying)[number]) =>
+    (user.planAmount ?? 0) / (user.planInterval === "year" ? 12 : 1);
+  return {
+    paying: paying.length,
+    monthly: paying.filter((user) => user.planInterval === "month").length,
+    yearly: paying.filter((user) => user.planInterval === "year").length,
+    gifted: subscribers.length - paying.length,
+    // Monthly recurring revenue, in cents
+    mrr: Math.round(paying.reduce((sum, user) => sum + perMonth(user), 0)),
+    cancelling: paying.filter((user) => user.planEndsAt).length,
+    pastDue: paying.filter((user) => user.subscriptionStatus === "past_due").length,
+    ended,
+    subscribers: subscribers.map((user) => ({
+      id: user.id,
+      name: `${user.firstname} ${user.surname}`,
+      email: user.email,
+      gift: !user.stripeSubscriptionId,
+      interval: user.planInterval,
+      amount: user.planAmount,
+      startedAt: user.planStartedAt,
+      renewsAt: user.planRenewsAt,
+      endsAt: user.planEndsAt,
+      pastDue: user.subscriptionStatus === "past_due",
+    })),
+  };
 }

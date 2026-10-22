@@ -26,7 +26,8 @@ function subscription(over: Partial<Stripe.Subscription> & { userId?: string } =
     customer: "cus_1",
     status: "active",
     metadata: userId ? { userId } : {},
-    items: { data: [{ current_period_end: inAMonth }] },
+    items: { data: [{ current_period_end: inAMonth, price: { unit_amount: 300, recurring: { interval: "month" } } }] },
+    start_date: Math.floor(Date.now() / 1000),
     cancel_at: null,
     cancel_at_period_end: false,
     ...rest,
@@ -44,6 +45,10 @@ test("a new subscription turns Plus on, found by the account it names", async ()
   await applySubscription(subscription({ userId: me.id }));
   const plan = await planOf(me.id);
   expect(plan).toMatchObject({ plan: "plus", subscriptionStatus: "active", stripeCustomerId: "cus_1", planEndsAt: null });
+  // What they pay, for the dashboard
+  expect(
+    await prisma.user.findUniqueOrThrow({ where: { id: me.id }, select: { planInterval: true, planAmount: true } }),
+  ).toEqual({ planInterval: "month", planAmount: 300 });
   expect(plan.planRenewsAt?.getTime()).toBe(inAMonth * 1000);
 });
 

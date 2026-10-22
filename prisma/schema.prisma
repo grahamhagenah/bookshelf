@@ -38,6 +38,11 @@ model User {
   subscriptionStatus   String?
   planRenewsAt         DateTime?
   planEndsAt           DateTime?
+  // What they pay, for the dashboard's revenue: "month" or "year", the
+  // amount per period in cents, and when the subscription began
+  planInterval         String?
+  planAmount           Int?
+  planStartedAt        DateTime?
   // When they clicked the link we emailed; no digests or request emails
   // go out before then
   emailVerifiedAt    DateTime?

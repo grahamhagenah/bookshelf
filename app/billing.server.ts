@@ -137,7 +137,8 @@ export async function applySubscription(subscription: Stripe.Subscription) {
   if (!plus && user.stripeSubscriptionId && user.stripeSubscriptionId !== subscription.id) {
     return user.id;
   }
-  const renewsAt = toDate(subscription.items.data[0]?.current_period_end);
+  const item = subscription.items.data[0];
+  const renewsAt = toDate(item?.current_period_end);
   await prisma.user.update({
     where: { id: user.id },
     data: {
@@ -150,6 +151,10 @@ export async function applySubscription(subscription: Stripe.Subscription) {
       planEndsAt: plus
         ? (toDate(subscription.cancel_at) ?? (subscription.cancel_at_period_end ? renewsAt : null))
         : null,
+      // What they pay, for the dashboard
+      planInterval: plus ? (item?.price.recurring?.interval ?? null) : null,
+      planAmount: plus ? (item?.price.unit_amount ?? null) : null,
+      planStartedAt: plus ? toDate(subscription.start_date) : null,
     },
   });
   return user.id;

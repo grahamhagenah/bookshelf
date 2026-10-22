@@ -1,7 +1,14 @@
 // @vitest-environment node
 import { makeBook, makeUser, prisma } from "../../test/db";
 
-import { getAdminUsers, getDataQuality, getFunnel, getHealth, getLending } from "./admin.server";
+import {
+  getAdminUsers,
+  getDataQuality,
+  getFunnel,
+  getHealth,
+  getLending,
+  getRevenue,
+} from "./admin.server";
 import { lendBook } from "./book.server";
 import { createFriendship, deleteUsers } from "./user.server";
 
@@ -111,5 +118,37 @@ test("the funnel follows real people from sign-up to their first loan", async ()
   const grew = after.last30.map((step, index) => step.count - before.last30[index].count);
   // Two people signed up (the demo doesn't count); the reader got all the
   // way, and the friend has a book and a friend and lent something
-  expect(grew).toEqual([2, 2, 1, 2, 2]);
+  // Nobody here has paid for Plus
+  expect(grew).toEqual([2, 2, 1, 2, 2, 0]);
+});
+
+test("revenue counts paying subscribers, a yearly plan as a twelfth a month", async () => {
+  const before = await getRevenue();
+  const plus = (name: string, data: Record<string, unknown>) =>
+    makeUser(name).then((user) =>
+      prisma.user.update({ where: { id: user.id }, data: { plan: "plus", ...data } }),
+    );
+  const paid = { subscriptionStatus: "active", planStartedAt: new Date(), planRenewsAt: new Date(Date.now() + 30 * DAY) };
+  await plus("Monthly", { ...paid, stripeSubscriptionId: "sub_m", planInterval: "month", planAmount: 300 });
+  await plus("Yearly", { ...paid, stripeSubscriptionId: "sub_y", planInterval: "year", planAmount: 2400, planEndsAt: new Date(Date.now() + 30 * DAY) });
+  await plus("Failing", { ...paid, stripeSubscriptionId: "sub_f", planInterval: "month", planAmount: 300, subscriptionStatus: "past_due" });
+  await plus("Gift", {});
+  // Paid once, then cancelled
+  const ended = await makeUser("Ended");
+  await prisma.user.update({ where: { id: ended.id }, data: { stripeSubscriptionId: "sub_e", subscriptionStatus: "canceled" } });
+  // The demo never counts
+  const demo = await makeUser("Demo", { demoGroup: "revenue-test" });
+  await prisma.user.update({ where: { id: demo.id }, data: { plan: "plus" } });
+
+  const after = await getRevenue();
+  expect(after.paying - before.paying).toBe(3);
+  expect(after.monthly - before.monthly).toBe(2);
+  expect(after.yearly - before.yearly).toBe(1);
+  expect(after.gifted - before.gifted).toBe(1);
+  // $3 + $3 + $24 / 12
+  expect(after.mrr - before.mrr).toBe(800);
+  expect(after.cancelling - before.cancelling).toBe(1);
+  expect(after.pastDue - before.pastDue).toBe(1);
+  expect(after.ended - before.ended).toBe(1);
+  expect(after.subscribers.find((user) => user.name.startsWith("Gift"))).toMatchObject({ gift: true });
 });

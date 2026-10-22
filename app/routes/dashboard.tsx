@@ -10,8 +10,11 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   BookIcon,
+  CheckCircleIcon,
+  ClockIcon,
   DashboardIcon,
   GroupIcon,
+  HeartIcon,
   LentIcon,
   UserIcon,
 } from "~/components/icons";
@@ -22,6 +25,7 @@ import {
   getFunnel,
   getHealth,
   getLending,
+  getRevenue,
   setPlan,
 } from "~/models/admin.server";
 import { deleteExpiredDemoGroups } from "~/models/demo.server";
@@ -47,15 +51,16 @@ async function requireAdmin(request: Request) {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireAdmin(request);
-  const [health, funnel, feedback, lending, users, quality] = await Promise.all([
+  const [health, revenue, funnel, feedback, lending, users, quality] = await Promise.all([
     getHealth(),
+    getRevenue(),
     getFunnel(),
     getFeedback(),
     getLending(),
     getAdminUsers(),
     getDataQuality(),
   ]);
-  return json({ userId, health, funnel, feedback, lending, users, quality });
+  return json({ userId, health, revenue, funnel, feedback, lending, users, quality });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -125,8 +130,15 @@ const bookLink =
   "hover:underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600";
 
 const DAY = 24 * 60 * 60 * 1000;
-const shortDate = (date: string | Date) =>
-  new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+// "Oct 22", with the year when it isn't this one ("Oct 22, 2027")
+const shortDate = (date: string | Date) => {
+  const when = new Date(date);
+  return when.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: when.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
+  });
+};
 
 // "today", "3d ago", "5w ago", or the month once it's older than a few months
 function ago(date: string) {
@@ -175,7 +187,8 @@ function Stat({
   tone = "stone",
 }: {
   label: string;
-  value: number;
+  // A count, or something already formatted, like an amount of money
+  value: number | string;
   note?: string;
   noteClass?: string;
   icon?: (props: { size?: number }) => JSX.Element;
@@ -196,7 +209,7 @@ function Stat({
         <dt className={`text-sm ${mutedClass}`}>{label}</dt>
         <dd className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
           <span className="text-2xl font-semibold tabular-nums text-stone-900 dark:text-stone-50">
-            {value.toLocaleString()}
+            {typeof value === "number" ? value.toLocaleString() : value}
           </span>
           {note ? <span className={`text-sm ${noteClass}`}>{note}</span> : null}
         </dd>
@@ -261,6 +274,87 @@ function DailyBars({
         </tbody>
       </table>
     </figure>
+  );
+}
+
+const money = (cents: number) =>
+  (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+
+function DollarIcon({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3v18" />
+      <path d="M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.6 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3" />
+    </svg>
+  );
+}
+
+// Who pays for Stacks Plus and what it comes to; gifts are Plus without pay
+function Plus({ revenue }: { revenue: Data["revenue"] }) {
+  const split = [
+    revenue.monthly ? `${revenue.monthly} monthly` : null,
+    revenue.yearly ? `${revenue.yearly} yearly` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <section aria-labelledby="plus">
+      <h2 id="plus" className={headingClass}>
+        Stacks Plus
+      </h2>
+      <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5 rounded-xl border border-stone-200 bg-stone-50/60 p-4 dark:border-stone-800 dark:bg-stone-900/40 sm:p-5 lg:grid-cols-4">
+        <Stat label="Paying" value={revenue.paying} note={split || undefined} icon={CheckCircleIcon} tone="violet" />
+        <Stat label="Monthly revenue" value={money(revenue.mrr)} note="before fees and tax" icon={DollarIcon} tone="forest" />
+        <Stat label="Gifted" value={revenue.gifted} icon={HeartIcon} tone="amber" />
+        <Stat
+          label="Cancelling"
+          value={revenue.cancelling}
+          note={
+            revenue.pastDue
+              ? `${revenue.pastDue} ${revenue.pastDue === 1 ? "payment" : "payments"} failing`
+              : revenue.ended
+                ? `${revenue.ended} ended`
+                : undefined
+          }
+          noteClass={revenue.pastDue ? warnText : mutedClass}
+          icon={ClockIcon}
+        />
+      </dl>
+      {revenue.subscribers.length ? (
+        <ul className="mt-4 divide-y divide-stone-100 text-sm dark:divide-stone-800">
+          {revenue.subscribers.map((user) => (
+            <li key={user.id} className="flex items-baseline justify-between gap-4 py-2.5">
+              <span className="min-w-0">
+                <span className="font-medium text-stone-900 dark:text-stone-100">{user.name}</span>
+                <span className={`block truncate ${mutedClass}`}>{user.email}</span>
+              </span>
+              <span className="flex-shrink-0 text-right">
+                <span className="block tabular-nums text-stone-800 dark:text-stone-200">
+                  {user.gift
+                    ? "Gift"
+                    : user.amount
+                      ? `${money(user.amount)} a ${user.interval ?? "month"}`
+                      : "Plus"}
+                </span>
+                <span className={`block text-xs ${user.pastDue ? warnText : user.endsAt ? "text-amber-700 dark:text-amber-400" : mutedClass}`}>
+                  {user.pastDue
+                    ? "Payment failing"
+                    : user.endsAt
+                      ? `Ends ${shortDate(user.endsAt)}`
+                      : user.renewsAt
+                        ? `${user.startedAt ? `Since ${shortDate(user.startedAt)} · ` : ""}renews ${shortDate(user.renewsAt)}`
+                        : user.gift
+                          ? "From the dashboard"
+                          : ""}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className={`mt-4 text-sm ${mutedClass}`}>Nobody&apos;s on Plus yet.</p>
+      )}
+    </section>
   );
 }
 
@@ -396,7 +490,9 @@ function Funnel({ funnel }: { funnel: Data["funnel"] }) {
                       className="inline-block rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium tabular-nums text-stone-700 dark:bg-stone-800 dark:text-stone-200"
                       title="Made it from the step above"
                     >
-                      ↓ {percent(step.count, steps[index - 1].count)}%
+                      ↓{" "}
+                      {/* Nobody at the step above: a share of nothing isn't 0% */}
+                      {steps[index - 1].count ? `${percent(step.count, steps[index - 1].count)}%` : "–"}
                     </span>
                   )}
                 </span>
@@ -913,10 +1009,12 @@ function DataQuality({ quality }: { quality: Data["quality"] }) {
 }
 
 export default function Dashboard() {
-  const { userId, health, funnel, feedback, lending, users, quality } = useLoaderData<typeof loader>();
+  const { userId, health, revenue, funnel, feedback, lending, users, quality } =
+    useLoaderData<typeof loader>();
   return (
     <Layout title="Admin Dashboard">
       <Health health={health} />
+      <Plus revenue={revenue} />
       <Funnel funnel={funnel} />
       <Feedback feedback={feedback} />
       <Lending lending={lending} />
