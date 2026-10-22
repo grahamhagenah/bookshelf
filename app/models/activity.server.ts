@@ -19,7 +19,11 @@ interface FeedPerson {
 interface FeedBook {
   id: string;
   title: string;
+  author: string;
   cover: string;
+  // Whose copy it is, and whether it's on their shelf right now
+  owner: { id: string; firstname: string };
+  available: boolean;
 }
 
 export type FriendActivity =
@@ -37,7 +41,29 @@ export type FriendActivity =
 const person = {
   select: { id: true, firstname: true, surname: true, profileEmoji: true },
 } as const;
-const bookFields = { id: true, title: true, cover: true } as const;
+const bookFields = {
+  id: true,
+  title: true,
+  author: true,
+  cover: true,
+  borrowerId: true,
+  user: { select: { id: true, firstname: true } },
+} as const;
+
+function feedBook({
+  borrowerId,
+  user,
+  ...book
+}: {
+  id: string;
+  title: string;
+  author: string;
+  cover: string;
+  borrowerId: string | null;
+  user: { id: string; firstname: string };
+}): FeedBook {
+  return { ...book, owner: user, available: borrowerId === null };
+}
 
 export async function getFriendActivity(
   userId: User["id"],
@@ -80,8 +106,9 @@ export async function getFriendActivity(
   // Gather each friend's additions into batches, newest first
   const added: Extract<FriendActivity, { kind: "added" }>[] = [];
   const openBatch = new Map<string, (typeof added)[number]>();
-  for (const { user, createdAt, ...book } of books) {
+  for (const { user, createdAt, ...rest } of books) {
     if (!user) continue;
+    const book = feedBook({ ...rest, user });
     const batch = openBatch.get(user.id);
     if (batch && batch.at.getTime() - createdAt.getTime() <= BATCH_WINDOW) {
       batch.books.push(book);
@@ -103,7 +130,7 @@ export async function getFriendActivity(
     id: `note-${note.id}`,
     at: note.updatedAt,
     friend: note.user,
-    book: note.book,
+    book: feedBook(note.book),
     loved: note.loved,
     body: note.body,
   }));
