@@ -66,49 +66,53 @@ function Cover({ book, className }: { book: HomeBook; className: string }) {
   );
 }
 
-// One line in "Coming up": overdue or due within the week, either way
+// A due date to keep an eye on: overdue, or within the week, either way
 interface DueItem {
   book: HomeBook & { dueDate: string };
   person: Person;
   direction: "borrowed" | "lent";
 }
 
+// Inside Loans, in the same style as the lists beside it: the date leads
+// in its own column, so the eye can run down it, and the rest can wrap
 function ComingUp({ items }: { items: DueItem[] }) {
   if (items.length === 0) return null;
   return (
-    <section
-      aria-labelledby="coming-up"
-      className="mb-6 flex flex-wrap items-center gap-x-6 border-b border-stone-200 dark:border-stone-800 pb-4"
-    >
-      {/* One line: a small label, then the items (wrapping on phones) */}
-      <h2 id="coming-up" className="whitespace-nowrap text-sm font-semibold text-stone-500 dark:text-stone-400">
+    <section aria-labelledby="coming-up" className="mb-6">
+      <h3 id="coming-up" className={subheadingClass}>
         Coming up
-      </h2>
-      <ul className="flex flex-wrap gap-x-8">
+        <span className="font-normal text-stone-400 dark:text-stone-500">
+          {items.length}
+        </span>
+      </h3>
+      <ul className="divide-y divide-stone-100 dark:divide-stone-900">
         {items.map(({ book, person, direction }) => {
           const days = daysUntil(book.dueDate);
           const overdue = days < 0;
-          const who = `${person.firstname} ${person.surname}`;
           const when = overdue
             ? `${-days} ${days === -1 ? "day" : "days"} late`
-            : inDays(days);
+            : inDays(days).replace(/^in /, "In ");
           return (
             <li key={book.id}>
               <Link
                 to={`/books/${book.id}`}
-                className="-mx-2 block rounded-md px-2 py-1 text-sm text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+                className="-mx-2 flex items-baseline gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
               >
-                <span className="font-semibold text-stone-900 dark:text-stone-100">
-                  {book.title}
-                </span>{" "}
-                {direction === "borrowed" ? "goes back to" : "is with"} {who}
-                {" · "}
                 <span
-                  className={
-                    overdue ? "font-semibold text-stone-900 dark:text-stone-100" : ""
-                  }
+                  className={`w-20 flex-shrink-0 ${
+                    overdue
+                      ? "font-semibold text-stone-900 dark:text-stone-100"
+                      : "text-stone-500 dark:text-stone-400"
+                  }`}
                 >
                   {when}
+                </span>
+                <span className="min-w-0 text-stone-500 dark:text-stone-400">
+                  <span className="font-medium text-stone-900 dark:text-stone-100">
+                    {book.title}
+                  </span>{" "}
+                  {direction === "borrowed" ? "back to" : "with"} {person.firstname}{" "}
+                  {person.surname}
                 </span>
               </Link>
             </li>
@@ -405,7 +409,6 @@ export default function Home({
   return (
     <main className="px-4 md:px-8 pt-4 md:pt-8 pb-8 md:pb-10">
       <h1 className="sr-only">Home</h1>
-      <ComingUp items={comingUp} />
       {setupDone ? null : (
         <Welcome
           bookCount={ownCount}
@@ -428,6 +431,7 @@ export default function Home({
             <h2 id="loans" className={`${headingClass} mb-3`}>
               Loans
             </h2>
+            <ComingUp items={comingUp} />
             <div className="grid gap-8 sm:grid-cols-2 sm:gap-10">
               <LoanList
                 id="borrowing"
