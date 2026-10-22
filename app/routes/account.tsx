@@ -4,7 +4,7 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Link, useLoaderData, Form, useActionData } from "@remix-run/react";
+import { Link, useLoaderData, Form, useActionData, useFetcher } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
 import Avatar, {
@@ -12,7 +12,14 @@ import Avatar, {
   AvatarGlyph,
   isAvatarIcon,
 } from "~/components/avatar";
-import { BookIcon, BorrowedIcon, LentIcon } from "~/components/icons";
+import {
+  BookIcon,
+  BorrowedIcon,
+  CheckCircleIcon,
+  GroupIcon,
+  ImportIcon,
+  LentIcon,
+} from "~/components/icons";
 import Layout from "~/components / Layout/Layout";
 import { getBookStats } from "~/models/book.server";
 import { getDemoGroup } from "~/models/demo.server";
@@ -307,27 +314,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 };
 
+const inputClass =
+  "w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors";
+const primaryButton =
+  "rounded-md bg-forest-600 dark:bg-forest-500 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors";
+const quietButton =
+  "rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
+const textButton =
+  "text-sm text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200";
+
 export default function Account() {
   const data = useLoaderData<typeof loader>();
-  const { household } = data;
+  const { household, user } = data;
   const actionData = useActionData<typeof action>();
-  const [copied, setCopied] = useState(false);
 
   const firstnameRef = useRef<HTMLInputElement>(null);
   const surnameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
 
-  const shareUrl = data.user?.shareToken
-    ? `${data.origin}/share/${data.user.shareToken}`
-    : null;
-
-  const handleCopy = async () => {
-    if (shareUrl) {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+  const shareUrl = user?.shareToken ? `${data.origin}/share/${user.shareToken}` : null;
 
   useEffect(() => {
     if (actionData?.errors?.firstname) {
@@ -339,492 +344,426 @@ export default function Account() {
     }
   }, [actionData]);
 
+  const stats = [
+    { label: "Friends", value: user?.following.length ?? 0, Icon: GroupIcon },
+    { label: "Books", value: data.bookStats.totalBooks, Icon: BookIcon },
+    { label: "Borrowed", value: data.bookStats.borrowedBooks, Icon: BorrowedIcon },
+    { label: "Lent out", value: data.bookStats.lentBooks, Icon: LentIcon },
+  ];
+
   return (
-    <>
-      <Layout title="Account">
-        <section>
-          <h2 className="text-lg font-semibold mb-4">Account Details</h2>
-          <dl className="space-y-3">
-            <div>
-              <dt className="text-sm font-medium text-stone-500">Name</dt>
-              <dd className="text-lg">
-                {data.user?.firstname} {data.user?.surname}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-stone-500">Email</dt>
-              <dd className="text-lg">
-                {data.user?.demoGroup ? "Demo account" : data.user?.email}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-stone-500">Friends</dt>
-              <dd className="text-lg">{data.user?.following.length || 0}</dd>
-            </div>
-          </dl>
-
-          <div className="mt-6 pt-6 border-t">
-            <h3 className="text-sm font-medium text-stone-500 mb-3">
-              Library Stats
-            </h3>
-            <dl className="grid grid-cols-3 gap-4 text-center">
-              {[
-                { label: "Books", value: data.bookStats.totalBooks, Icon: BookIcon },
-                { label: "Borrowed", value: data.bookStats.borrowedBooks, Icon: BorrowedIcon },
-                { label: "Lent out", value: data.bookStats.lentBooks, Icon: LentIcon },
-              ].map(({ label, value, Icon }) => (
-                // Number above its label, though the label comes first in the markup
-                <div
-                  key={label}
-                  className="flex flex-col-reverse rounded-lg bg-stone-50 dark:bg-stone-900 p-3"
-                >
-                  <dt className="inline-flex items-center justify-center gap-1 text-sm text-stone-500 dark:text-stone-400">
-                    <Icon size={13} />
-                    {label}
-                  </dt>
-                  <dd className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
-                    {value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+    <Layout title="Account">
+      {/* Who you are, at a glance */}
+      <section className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="flex min-w-0 items-center gap-4">
+          <Avatar
+            firstname={user?.firstname}
+            surname={user?.surname}
+            icon={user?.profileEmoji}
+            size="lg"
+          />
+          <div className="min-w-0">
+            <p className="truncate text-xl font-semibold text-stone-900 dark:text-stone-50">
+              {user?.firstname} {user?.surname}
+            </p>
+            <p className="truncate text-stone-500 dark:text-stone-400">
+              {user?.demoGroup ? "Demo account" : user?.email}
+            </p>
           </div>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold mb-2">Appearance</h2>
-          <p className="text-stone-600 dark:text-stone-400 mb-4">
-            Customize how Stacks looks on your device.
-          </p>
-          <Form method="post" className="flex items-center justify-between">
-            <input type="hidden" name="intent" value="toggleDarkMode" />
-            <input
-              type="hidden"
-              name="darkMode"
-              value={data.user?.darkMode ? "false" : "true"}
-            />
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium">Dark Mode</span>
-            </div>
-            <button
-              type="submit"
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                data.user?.darkMode
-                  ? "bg-stone-900 dark:bg-stone-400"
-                  : "bg-stone-300 dark:bg-stone-700"
-              }`}
+        </div>
+        <dl className="grid grid-cols-4 gap-2 sm:gap-3">
+          {stats.map(({ label, value, Icon }) => (
+            // Number above its label, though the label comes first in the markup
+            <div
+              key={label}
+              className="flex flex-col-reverse items-center rounded-lg bg-stone-50 dark:bg-stone-900 px-2 py-2.5 sm:px-4"
             >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  data.user?.darkMode ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </button>
-          </Form>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold mb-2">Notifications</h2>
-          <p className="text-stone-600 dark:text-stone-400 mb-4">
-            Control how you receive notifications.
-          </p>
-          <Form method="post" className="flex items-center justify-between">
-            <input
-              type="hidden"
-              name="intent"
-              value="toggleEmailNotifications"
-            />
-            <input
-              type="hidden"
-              name="emailNotifications"
-              value={data.user?.emailNotifications ? "false" : "true"}
-            />
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">Email Notifications</span>
-              <span className="text-xs text-stone-500 dark:text-stone-400">
-                Receive emails for book requests
-              </span>
+              <dt className="inline-flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
+                <Icon size={12} />
+                {label}
+              </dt>
+              <dd className="text-xl font-semibold text-stone-900 dark:text-stone-100">{value}</dd>
             </div>
-            <button
-              type="submit"
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                data.user?.emailNotifications
-                  ? "bg-stone-900 dark:bg-stone-400"
-                  : "bg-stone-300 dark:bg-stone-700"
-              }`}
+          ))}
+        </dl>
+      </section>
+
+      <Section
+        title="Profile"
+        description="Your name and picture are what friends see beside your books and notes."
+      >
+        <Form method="post" className="grid gap-4 sm:grid-cols-2">
+          <Field label="First name" id="firstname" error={actionData?.errors?.firstname}>
+            <input
+              ref={firstnameRef}
+              id="firstname"
+              name="firstname"
+              type="text"
+              autoComplete="given-name"
+              defaultValue={user?.firstname}
+              aria-invalid={actionData?.errors?.firstname ? true : undefined}
+              aria-describedby="firstname-error"
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Last name" id="surname" error={actionData?.errors?.surname}>
+            <input
+              ref={surnameRef}
+              id="surname"
+              name="surname"
+              type="text"
+              autoComplete="family-name"
+              defaultValue={user?.surname}
+              aria-invalid={actionData?.errors?.surname ? true : undefined}
+              aria-describedby="surname-error"
+              className={inputClass}
+            />
+          </Field>
+          {/* A demo account's address is a placeholder, so it's sent but not shown */}
+          {user?.demoGroup ? (
+            <input type="hidden" name="email" value={user.email} />
+          ) : (
+            <Field
+              label="Email address"
+              id="email"
+              error={actionData?.errors?.email}
+              className="sm:col-span-2"
             >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  data.user?.emailNotifications
-                    ? "translate-x-6"
-                    : "translate-x-1"
-                }`}
+              <input
+                ref={emailRef}
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                defaultValue={user?.email}
+                aria-invalid={actionData?.errors?.email ? true : undefined}
+                aria-describedby="email-error"
+                className={inputClass}
               />
+            </Field>
+          )}
+          <div className="flex items-center gap-3 sm:col-span-2">
+            <button type="submit" className={primaryButton}>
+              Save changes
             </button>
-          </Form>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold mb-2">Profile Picture</h2>
-          <p className="text-stone-600 dark:text-stone-400 mb-4">
-            Choose an icon to represent you, or use your initials.
-          </p>
-
-          {actionData?.emojiSuccess ? (
-            <div className="p-3 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-100 mb-4">
-              Profile picture updated.
-            </div>
-          ) : null}
-
-          <div className="flex items-center gap-4 mb-4">
-            <Avatar
-              firstname={data.user?.firstname}
-              surname={data.user?.surname}
-              icon={data.user?.profileEmoji}
-              size="lg"
-            />
-            <div className="text-sm text-stone-600 dark:text-stone-400">
-              {isAvatarIcon(data.user?.profileEmoji)
-                ? "Using an icon"
-                : "Using initials"}
-            </div>
+            {actionData?.success ? <Saved>Saved</Saved> : null}
           </div>
+        </Form>
 
-          <Form method="post">
+        <div className="mt-8 border-t border-stone-100 dark:border-stone-800 pt-6">
+          <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">Picture</h3>
+          <Form method="post" className="mt-3 flex flex-wrap gap-2">
             <input type="hidden" name="intent" value="updateProfileEmoji" />
-            <div className="flex flex-wrap gap-2 mb-4">
-              {AVATAR_ICONS.map((icon) => (
+            {/* Initials first, then the icons */}
+            {[null, ...AVATAR_ICONS].map((icon) => {
+              const chosen = icon
+                ? user?.profileEmoji === icon
+                : !isAvatarIcon(user?.profileEmoji);
+              return (
                 <button
-                  key={icon}
+                  key={icon ?? "initials"}
                   type="submit"
                   name="emoji"
-                  value={icon}
-                  aria-label={`Use the ${icon} icon`}
-                  aria-pressed={data.user?.profileEmoji === icon}
-                  className={`w-11 h-11 rounded-full border transition-colors flex items-center justify-center text-stone-700 dark:text-stone-200 ${
-                    data.user?.profileEmoji === icon
-                      ? "border-stone-900 dark:border-stone-100 bg-stone-100 dark:bg-stone-800"
+                  value={icon ?? ""}
+                  aria-label={icon ? `Use the ${icon} icon` : "Use my initials"}
+                  aria-pressed={chosen}
+                  className={`flex h-11 w-11 items-center justify-center rounded-full border text-stone-700 dark:text-stone-200 transition-colors ${
+                    chosen
+                      ? "border-forest-600 dark:border-forest-400 ring-1 ring-forest-600 dark:ring-forest-400 bg-stone-50 dark:bg-stone-800"
                       : "border-stone-200 dark:border-stone-700 hover:border-stone-400 dark:hover:border-stone-500"
                   }`}
                 >
-                  <AvatarGlyph icon={icon} size={22} />
+                  {icon ? (
+                    <AvatarGlyph icon={icon} size={22} />
+                  ) : (
+                    <span className="text-xs font-semibold">
+                      {user?.firstname?.[0]}
+                      {user?.surname?.[0]}
+                    </span>
+                  )}
                 </button>
-              ))}
-            </div>
-            {isAvatarIcon(data.user?.profileEmoji) ? (
-              <button
-                type="submit"
-                name="emoji"
-                value=""
-                className="text-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 underline"
-              >
-                Use my initials instead
-              </button>
-            ) : null}
+              );
+            })}
           </Form>
-        </section>
+        </div>
+      </Section>
 
-        <section>
-          <h2 className="text-lg font-semibold mb-2">Share a Shelf</h2>
-          <p className="text-stone-600 mb-4">
-            Live with someone whose books are your books? Share one shelf: you both see and
-            lend everything, and keep your own notes, hearts and friends.
-          </p>
-          <HouseholdPanel household={household} />
-        </section>
+      <Section title="Preferences" description="How Stacks looks, and what it emails you.">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Toggle
+            intent="toggleDarkMode"
+            name="darkMode"
+            on={Boolean(user?.darkMode)}
+            label="Dark mode"
+            hint="On every device you sign in on"
+          />
+          <Toggle
+            intent="toggleEmailNotifications"
+            name="emailNotifications"
+            on={Boolean(user?.emailNotifications)}
+            label="Email me"
+            hint="Borrow requests and a weekly roundup"
+          />
+        </div>
+      </Section>
 
-        <section>
-          <h2 className="text-lg font-semibold mb-2">Import Your Books</h2>
-          <p className="text-stone-600 mb-4">
-            Bring your shelf over from Goodreads or StoryGraph in one go.
-          </p>
-          <Link
-            to="/import"
-            className="inline-block rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-          >
-            Import from a file
-          </Link>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold mb-2">Share Your Bookshelf</h2>
-          <p className="text-stone-600 mb-4">
-            Anyone with this link can view your bookshelf without logging in.
-          </p>
-
-          {shareUrl ? (
-            <div className="space-y-4">
-              <input
-                type="text"
-                readOnly
-                value={shareUrl}
-                className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-3 py-2 text-sm text-stone-700 dark:text-stone-300"
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="rounded-md bg-forest-600 dark:bg-forest-500 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
-                >
-                  {copied ? "Copied!" : "Copy Link"}
-                </button>
+      <Section
+        title="Sharing"
+        description="Show your shelf to anyone with a link, or share one shelf with someone you live with."
+      >
+        <div className="space-y-8">
+          <div>
+            <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">Public link</h3>
+            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+              Anyone with it can see your bookshelf without signing in.
+            </p>
+            <div className="mt-3">
+              {shareUrl ? (
+                <>
+                  <CopyField value={shareUrl} label="Public link to your shelf" />
+                  <Form method="post" className="mt-2">
+                    <input type="hidden" name="intent" value="revokeShareToken" />
+                    <button type="submit" className={textButton}>
+                      Turn this link off
+                    </button>
+                  </Form>
+                </>
+              ) : (
                 <Form method="post">
-                  <input type="hidden" name="intent" value="revokeShareToken" />
-                  <button
-                    type="submit"
-                    className="rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-                  >
-                    Revoke Access
+                  <input type="hidden" name="intent" value="generateShareToken" />
+                  <button type="submit" className={quietButton}>
+                    Make a link
                   </button>
                 </Form>
-              </div>
+              )}
             </div>
-          ) : (
-            <Form method="post">
-              <input type="hidden" name="intent" value="generateShareToken" />
-              <button
-                type="submit"
-                className="rounded-md bg-forest-600 dark:bg-forest-500 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
-              >
-                Generate Share Link
-              </button>
-            </Form>
-          )}
-        </section>
+          </div>
 
-        <section>
-          <Form method="post" className="space-y-4">
-            <h2 className="text-lg font-semibold mb-2">Update Profile</h2>
-            <p className="text-stone-600">
-              Change your name or email address below.
+          <div>
+            <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">
+              Share a shelf
+            </h3>
+            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+              Live with someone whose books are your books? You both see and lend everything,
+              and keep your own notes, hearts and friends.
             </p>
-
-            {actionData?.success ? (
-              <div className="p-3 rounded-lg bg-stone-100 text-stone-900 dark:text-stone-100">
-                Your profile has been updated successfully.
-              </div>
-            ) : null}
-
-            <div>
-              <label
-                htmlFor="firstname"
-                className="block text-sm font-medium text-stone-700"
-              >
-                First name
-              </label>
-              <div className="mt-1">
-                <input
-                  ref={firstnameRef}
-                  id="firstname"
-                  name="firstname"
-                  type="text"
-                  defaultValue={data.user?.firstname}
-                  aria-invalid={
-                    actionData?.errors?.firstname ? true : undefined
-                  }
-                  aria-describedby="firstname-error"
-                  className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
-                />
-                {actionData?.errors?.firstname ? (
-                  <div
-                    className="pt-1 text-stone-900 dark:text-stone-100"
-                    id="firstname-error"
-                  >
-                    {actionData.errors.firstname}
-                  </div>
-                ) : null}
-              </div>
+            <div className="mt-3">
+              <HouseholdPanel household={household} />
             </div>
+          </div>
+        </div>
+      </Section>
 
-            <div>
-              <label
-                htmlFor="surname"
-                className="block text-sm font-medium text-stone-700"
-              >
-                Last name
-              </label>
-              <div className="mt-1">
-                <input
-                  ref={surnameRef}
-                  id="surname"
-                  name="surname"
-                  type="text"
-                  defaultValue={data.user?.surname}
-                  aria-invalid={actionData?.errors?.surname ? true : undefined}
-                  aria-describedby="surname-error"
-                  className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
-                />
-                {actionData?.errors?.surname ? (
-                  <div
-                    className="pt-1 text-stone-900 dark:text-stone-100"
-                    id="surname-error"
-                  >
-                    {actionData.errors.surname}
-                  </div>
-                ) : null}
-              </div>
-            </div>
+      <Section
+        title="Import"
+        description="Bring your shelf over from Goodreads or StoryGraph in one go."
+      >
+        <Link to="/import" className={`inline-flex items-center gap-2 ${quietButton}`}>
+          <ImportIcon size={16} />
+          Import from a file
+        </Link>
+      </Section>
 
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-stone-700"
-              >
-                Email address
-              </label>
-              <div className="mt-1">
-                <input
-                  ref={emailRef}
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  defaultValue={data.user?.email}
-                  readOnly={Boolean(data.user?.demoGroup)}
-                  aria-invalid={actionData?.errors?.email ? true : undefined}
-                  aria-describedby="email-error"
-                  className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
-                />
-                {actionData?.errors?.email ? (
-                  <div
-                    className="pt-1 text-stone-900 dark:text-stone-100"
-                    id="email-error"
-                  >
-                    {actionData.errors.email}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="rounded-md bg-forest-600 dark:bg-forest-500 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
+      {!user?.demoGroup ? (
+        <Section title="Password" description="At least 8 characters.">
+          <Form method="post" className="grid gap-4 sm:grid-cols-2">
+            <input type="hidden" name="intent" value="changePassword" />
+            <Field
+              label="Current password"
+              id="currentPassword"
+              error={actionData?.passwordErrors?.currentPassword}
             >
-              Save changes
-            </button>
-          </Form>
-        </section>
-
-        {!data.user?.demoGroup ? (
-          <section>
-            <Form method="post" className="space-y-4">
-              <input type="hidden" name="intent" value="changePassword" />
-              <h2 className="text-lg font-semibold mb-2">Change Password</h2>
-              <p className="text-stone-600">
-                Update your password to keep your account secure.
-              </p>
-
-              {actionData?.passwordSuccess ? (
-                <div className="p-3 rounded-lg bg-stone-100 text-stone-900 dark:text-stone-100">
-                  Your password has been changed successfully.
-                </div>
-              ) : null}
-
-              <div>
-                <label
-                  htmlFor="currentPassword"
-                  className="block text-sm font-medium text-stone-700"
-                >
-                  Current password
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="currentPassword"
-                    name="currentPassword"
-                    type="password"
-                    autoComplete="current-password"
-                    aria-invalid={
-                      actionData?.passwordErrors?.currentPassword
-                        ? true
-                        : undefined
-                    }
-                    aria-describedby="currentPassword-error"
-                    className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
-                  />
-                  {actionData?.passwordErrors?.currentPassword ? (
-                    <div
-                      className="pt-1 text-stone-900 dark:text-stone-100"
-                      id="currentPassword-error"
-                    >
-                      {actionData.passwordErrors.currentPassword}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="newPassword"
-                  className="block text-sm font-medium text-stone-700"
-                >
-                  New password
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="newPassword"
-                    name="newPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    aria-invalid={
-                      actionData?.passwordErrors?.newPassword ? true : undefined
-                    }
-                    aria-describedby="newPassword-error"
-                    className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
-                  />
-                  {actionData?.passwordErrors?.newPassword ? (
-                    <div
-                      className="pt-1 text-stone-900 dark:text-stone-100"
-                      id="newPassword-error"
-                    >
-                      {actionData.passwordErrors.newPassword}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="confirmPassword"
-                  className="block text-sm font-medium text-stone-700"
-                >
-                  Confirm new password
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    aria-invalid={
-                      actionData?.passwordErrors?.confirmPassword
-                        ? true
-                        : undefined
-                    }
-                    aria-describedby="confirmPassword-error"
-                    className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
-                  />
-                  {actionData?.passwordErrors?.confirmPassword ? (
-                    <div
-                      className="pt-1 text-stone-900 dark:text-stone-100"
-                      id="confirmPassword-error"
-                    >
-                      {actionData.passwordErrors.confirmPassword}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="rounded-md bg-forest-600 dark:bg-forest-500 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
-              >
-                Change Password
+              <input
+                id="currentPassword"
+                name="currentPassword"
+                type="password"
+                autoComplete="current-password"
+                aria-invalid={actionData?.passwordErrors?.currentPassword ? true : undefined}
+                aria-describedby="currentPassword-error"
+                className={inputClass}
+              />
+            </Field>
+            <Field
+              label="New password"
+              id="newPassword"
+              error={actionData?.passwordErrors?.newPassword}
+              className="sm:col-start-1"
+            >
+              <input
+                id="newPassword"
+                name="newPassword"
+                type="password"
+                autoComplete="new-password"
+                aria-invalid={actionData?.passwordErrors?.newPassword ? true : undefined}
+                aria-describedby="newPassword-error"
+                className={inputClass}
+              />
+            </Field>
+            <Field
+              label="Confirm new password"
+              id="confirmPassword"
+              error={actionData?.passwordErrors?.confirmPassword}
+            >
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                aria-invalid={actionData?.passwordErrors?.confirmPassword ? true : undefined}
+                aria-describedby="confirmPassword-error"
+                className={inputClass}
+              />
+            </Field>
+            <div className="flex items-center gap-3 sm:col-span-2">
+              <button type="submit" className={primaryButton}>
+                Change password
               </button>
-            </Form>
-          </section>
-        ) : null}
-      </Layout>
-    </>
+              {actionData?.passwordSuccess ? <Saved>Password changed</Saved> : null}
+            </div>
+          </Form>
+        </Section>
+      ) : null}
+    </Layout>
+  );
+}
+
+// A settings group: its name and a line about it on the left, the
+// controls on the right (stacked on a phone)
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="grid gap-5 md:grid-cols-3 md:gap-10">
+      <div>
+        <h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">{title}</h2>
+        <p className="mt-1 text-pretty text-sm text-stone-500 dark:text-stone-400">
+          {description}
+        </p>
+      </div>
+      <div className="max-w-xl md:col-span-2">{children}</div>
+    </section>
+  );
+}
+
+function Field({
+  label,
+  id,
+  error,
+  className = "",
+  children,
+}: {
+  label: string;
+  id: string;
+  error?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={className}>
+      <label htmlFor={id} className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+        {label}
+      </label>
+      <div className="mt-1">{children}</div>
+      {error ? (
+        <p className="mt-1 text-sm text-rose-700 dark:text-rose-400" id={`${id}-error`}>
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function Saved({ children }: { children: React.ReactNode }) {
+  return (
+    <span role="status" className="inline-flex items-center gap-1 text-sm text-stone-500 dark:text-stone-400">
+      <CheckCircleIcon size={16} className="text-forest-600 dark:text-forest-400" />
+      {children}
+    </span>
+  );
+}
+
+// A switch with its label right beside it; flips straight away and
+// saves in the background
+function Toggle({
+  intent,
+  name,
+  on,
+  label,
+  hint,
+}: {
+  intent: string;
+  name: string;
+  on: boolean;
+  label: string;
+  hint: string;
+}) {
+  const fetcher = useFetcher();
+  const checked = fetcher.formData ? fetcher.formData.get(name) === "true" : on;
+  return (
+    <fetcher.Form method="post">
+      <input type="hidden" name="intent" value={intent} />
+      <input type="hidden" name={name} value={checked ? "false" : "true"} />
+      <button
+        type="submit"
+        role="switch"
+        aria-checked={checked}
+        className="flex w-full items-center gap-3 rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3 text-left hover:border-stone-300 dark:hover:border-stone-700 transition-colors"
+      >
+        <span
+          aria-hidden="true"
+          className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+            checked ? "bg-forest-600 dark:bg-forest-500" : "bg-stone-300 dark:bg-stone-700"
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+              checked ? "translate-x-6" : "translate-x-1"
+            }`}
+          />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-sm font-medium text-stone-900 dark:text-stone-100">
+            {label}
+          </span>
+          <span className="block text-sm text-stone-500 dark:text-stone-400">{hint}</span>
+        </span>
+      </button>
+    </fetcher.Form>
+  );
+}
+
+// A link to hand on, with a button to copy it
+function CopyField({ value, label }: { value: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard can be blocked; the link is right there to select
+    }
+  };
+  return (
+    <div className="flex gap-2">
+      <input
+        type="text"
+        readOnly
+        value={value}
+        aria-label={label}
+        onFocus={(event) => event.currentTarget.select()}
+        className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-3 py-2 text-sm text-stone-700 dark:text-stone-300"
+      />
+      <button type="button" onClick={copy} className={`flex-shrink-0 ${quietButton}`}>
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </div>
   );
 }
 
@@ -837,24 +776,12 @@ function HouseholdPanel({
     inviteUrl: string | null;
   } | null;
 }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    if (!household?.inviteUrl) return;
-    try {
-      await navigator.clipboard.writeText(household.inviteUrl);
-      setCopied(true);
-    } catch {
-      // Clipboard can be blocked; the link is right there to select
-    }
-  };
-  const button =
-    "rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
   const others = household?.members.length ?? 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {household && others > 1 ? (
-        <ul className="flex flex-wrap gap-3">
+        <ul className="flex flex-wrap gap-x-4 gap-y-2">
           {household.members.map((member) => (
             <li key={member.id} className="flex items-center gap-2 text-sm text-stone-800 dark:text-stone-200">
               <Avatar
@@ -870,36 +797,22 @@ function HouseholdPanel({
       ) : null}
 
       {household?.inviteUrl ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           <p className="text-sm text-stone-600 dark:text-stone-300">
-            Send this link to the person you share with. They&apos;ll join your shelf when they open it.
+            Send this to the person you share with. They&apos;ll join your shelf when they open it.
           </p>
-          <input
-            type="text"
-            readOnly
-            value={household.inviteUrl}
-            className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-3 py-2 text-sm text-stone-700 dark:text-stone-300"
-          />
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={copy}
-              className="rounded-md bg-stone-700 dark:bg-stone-200 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
-            >
-              {copied ? "Copied!" : "Copy Link"}
+          <CopyField value={household.inviteUrl} label="Invite link for your shelf" />
+          <Form method="post">
+            <input type="hidden" name="intent" value="householdRevoke" />
+            <button type="submit" className={textButton}>
+              Turn this link off
             </button>
-            <Form method="post">
-              <input type="hidden" name="intent" value="householdRevoke" />
-              <button type="submit" className={button}>
-                Stop sharing this link
-              </button>
-            </Form>
-          </div>
+          </Form>
         </div>
       ) : (
         <Form method="post">
           <input type="hidden" name="intent" value="householdInvite" />
-          <button type="submit" className={button}>
+          <button type="submit" className={quietButton}>
             {others > 1 ? "Invite someone else" : "Make an invite link"}
           </button>
         </Form>
@@ -915,10 +828,7 @@ function HouseholdPanel({
           }}
         >
           <input type="hidden" name="intent" value="householdLeave" />
-          <button
-            type="submit"
-            className="text-sm text-stone-500 dark:text-stone-400 underline underline-offset-2 hover:text-stone-800 dark:hover:text-stone-200"
-          >
+          <button type="submit" className={textButton}>
             Leave this shelf
           </button>
         </Form>
