@@ -70,7 +70,7 @@ function Cover({ cover, title, author }: { cover: string; title: string; author:
       <CoverPlaceholder title={title} author={author} className="absolute inset-0" />
       {!failed ? (
         <img
-          src={coverSrc(cover)}
+          src={coverSrc(cover, "M")}
           alt=""
           loading="lazy"
           className="relative h-full w-full object-cover"

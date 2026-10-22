@@ -13,6 +13,7 @@ import {
 } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 
+import { getInviter } from "~/models/friend.server";
 import { getHouseholdByInvite } from "~/models/household.server";
 import {
   createNotification,
@@ -34,9 +35,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Or from a shared-shelf invite: name the people on it
   const household = url.searchParams.get("household");
   const shelf = household ? await getHouseholdByInvite(household) : null;
+  // Or from someone's personal invite link: you'll be friends once you're in
+  const friend = url.searchParams.get("friend");
+  const friendInviter = friend ? await getInviter(friend) : null;
   return json({
     inviterName: inviter ? `${inviter.firstname} ${inviter.surname}` : null,
     shelfNames: shelf ? shelf.members.map((m) => m.firstname) : null,
+    friendName: friendInviter ? friendInviter.firstname : null,
   });
 };
 
@@ -164,7 +169,7 @@ export default function Join() {
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? undefined;
   const invite = searchParams.get("invite") ?? undefined;
-  const { inviterName, shelfNames } = useLoaderData<typeof loader>();
+  const { inviterName, shelfNames, friendName } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -189,6 +194,15 @@ export default function Join() {
               {shelfNames.join(" and ")}
             </strong>
             . You&apos;ll see and lend each other&apos;s books, with your own notes and hearts.
+          </p>
+        ) : null}
+        {friendName ? (
+          <p className="mb-8 text-stone-600 dark:text-stone-300">
+            Create an account and you&apos;ll be friends with{" "}
+            <strong className="font-semibold text-stone-900 dark:text-stone-100">
+              {friendName}
+            </strong>{" "}
+            straight away, free to borrow from their shelf.
           </p>
         ) : null}
         {inviterName ? (

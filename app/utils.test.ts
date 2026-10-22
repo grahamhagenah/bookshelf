@@ -110,3 +110,10 @@ describe("stripMarkdown", () => {
     expect(stripMarkdown("One.\r\n\n\n\nTwo.")).toBe("One.\n\nTwo.");
   });
 });
+
+test("coverSrc can ask Open Library for a smaller size", () => {
+  expect(coverSrc("https://covers.openlibrary.org/b/isbn/9780441172719-L.jpg", "M")).toBe(
+    "/covers/b/isbn/9780441172719-M.jpg",
+  );
+  expect(coverSrc("https://example.com/cover.jpg", "M")).toBe("https://example.com/cover.jpg");
+});

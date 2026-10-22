@@ -23,6 +23,7 @@ import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import {
   answerFriendRequest,
   getFriendCards,
+  getFriendInvite,
   getIncomingFriendRequests,
   removeFriend,
 } from "~/models/friend.server";
@@ -33,6 +34,7 @@ import {
   getSuggestedFriends,
   getPendingFriendRequests,
 } from "~/models/user.server";
+import { publicOrigin } from "~/origin.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 import { coverSrc, isDemoEmail } from "~/utils";
@@ -46,13 +48,20 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [friends, incoming, suggestedFriends, pendingRequests] = await Promise.all([
+  const [friends, incoming, suggestedFriends, pendingRequests, invite] = await Promise.all([
     getFriendCards(userId),
     getIncomingFriendRequests(userId),
     getSuggestedFriends(userId, 5),
     getPendingFriendRequests(userId),
+    getFriendInvite(userId),
   ]);
-  return json({ friends, incoming, suggestedFriends, pendingRequests });
+  return json({
+    friends,
+    incoming,
+    suggestedFriends,
+    pendingRequests,
+    inviteUrl: `${publicOrigin(request)}/invite/${invite}`,
+  });
 };
 
 interface ActionData { errors: { email?: string } | null; success: boolean; friendId?: string }
@@ -249,6 +258,12 @@ export default function Friends() {
 
       <section id="find" className="scroll-mt-20">
         <h2 className="text-lg font-semibold">Find friends</h2>
+
+        <InviteLink url={data.inviteUrl} />
+
+        <h3 className="mt-8 font-medium text-stone-900 dark:text-stone-100">
+          Already on Stacks?
+        </h3>
         <p className="mt-1 text-stone-500 dark:text-stone-400">
           Search by name or email, then send a request. Once they say yes, you can see
           each other&apos;s shelves and borrow.
@@ -351,6 +366,54 @@ export default function Friends() {
         </details>
       </section>
     </Layout>
+  );
+}
+
+// Your personal invite: whoever opens it becomes your friend, signing up
+// first if they need to
+function InviteLink({ url }: { url: string }) {
+  const [copied, setCopied] = useState(false);
+  const [canShare, setCanShare] = useState(false);
+  useEffect(() => setCanShare(typeof navigator.share === "function"), []);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard can be blocked; the link is right there to select
+    }
+  };
+  const share = () =>
+    navigator.share({ title: "Join me on Stacks", text: "Borrow books from my shelf on Stacks", url }).catch(() => {
+      // Closing the share sheet isn't an error worth showing
+    });
+  return (
+    <div className="mt-4 max-w-xl rounded-xl border border-stone-200 dark:border-stone-800 p-4">
+      <h3 className="font-medium text-stone-900 dark:text-stone-100">Invite someone new</h3>
+      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+        Send this link to a friend. When they open it and sign up, you&apos;re friends
+        straight away, no request needed.
+      </p>
+      <div className="mt-3 flex gap-2">
+        <input
+          type="text"
+          readOnly
+          value={url}
+          aria-label="Your invite link"
+          onFocus={(event) => event.currentTarget.select()}
+          className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-300"
+        />
+        <button type="button" onClick={copy} className={`flex-shrink-0 ${quietButton}`}>
+          {copied ? "Copied" : "Copy"}
+        </button>
+        {canShare ? (
+          <button type="button" onClick={share} className={`flex-shrink-0 ${primaryButton}`}>
+            Share
+          </button>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -489,7 +552,7 @@ function MiniCover({ cover, title, author }: { cover: string; title: string; aut
       <CoverPlaceholder title={title} author={author} className="absolute inset-0" />
       {cover ? (
         <img
-          src={coverSrc(cover)}
+          src={coverSrc(cover, "M")}
           alt={title}
           loading="lazy"
           // Open Library answers a missing cover with a 1px image

@@ -13,6 +13,8 @@ model User {
   firstname          String
   surname            String
   shareToken         String? @unique
+  // A personal link that makes whoever opens it your friend straight away
+  friendInvite       String? @unique
   isAdmin            Boolean @default(false)
   // Superseded by theme; still read for accounts that haven't picked one
   darkMode           Boolean @default(false)

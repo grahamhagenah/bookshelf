@@ -68,6 +68,9 @@ const PATHS: Record<string, React.ReactNode> = {
   ),
 };
 
+// Joining from an invite looks like the friend request it stands in for
+PATHS.FRIEND_JOINED = PATHS.FRIEND_REQUEST;
+
 const FALLBACK = <circle cx="12" cy="12" r="2.5" />;
 
 export default function ActivityIcon({

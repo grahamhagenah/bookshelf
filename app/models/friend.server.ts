@@ -4,6 +4,7 @@ import { prisma } from "~/db.server";
 import { isDemoEmail } from "~/utils";
 import { sameWork } from "~/works";
 
+import { canInteract } from "./demo.server";
 import { shelfIds, shelfIdsFor } from "./household.server";
 import { createFriendship } from "./user.server";
 
@@ -164,4 +165,85 @@ export async function removeFriend(userId: User["id"], friendId: User["id"]) {
       },
     }),
   ]);
+}
+
+// Your personal invite link: anyone who opens it (signing up first if they
+// need to) becomes your friend straight away. Made the first time it's
+// asked for, then the same link from then on.
+export async function getFriendInvite(userId: User["id"]) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { friendInvite: true },
+  });
+  if (user?.friendInvite) return user.friendInvite;
+  const token = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+  await prisma.user.update({ where: { id: userId }, data: { friendInvite: token } });
+  return token;
+}
+
+// Who a link belongs to, with a glimpse of their shelf for the welcome page
+export async function getInviter(token: string) {
+  const inviter = await prisma.user.findUnique({
+    where: { friendInvite: token },
+    select: { id: true, firstname: true, surname: true, profileEmoji: true },
+  });
+  if (!inviter) return null;
+  const shelf = await shelfIds(inviter.id);
+  const [bookCount, recent] = await Promise.all([
+    prisma.book.count({ where: { userId: { in: shelf } } }),
+    prisma.book.findMany({
+      where: { userId: { in: shelf } },
+      select: { id: true, title: true, author: true, cover: true },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    }),
+  ]);
+  return { ...inviter, bookCount, recent };
+}
+
+export type InviteResult =
+  | { ok: true; inviterId: string }
+  | { ok: false; reason: "no-such-invite" | "own-invite" | "demo-boundary" };
+
+// Opening someone's invite: you're friends from now on, any request between
+// you is settled, and they hear that you've joined
+export async function acceptFriendInvite(userId: User["id"], token: string): Promise<InviteResult> {
+  const inviter = await prisma.user.findUnique({
+    where: { friendInvite: token },
+    select: { id: true },
+  });
+  if (!inviter) return { ok: false, reason: "no-such-invite" };
+  if (inviter.id === userId) return { ok: false, reason: "own-invite" };
+  if (!(await canInteract(userId, inviter.id))) return { ok: false, reason: "demo-boundary" };
+
+  const already = await prisma.user.count({
+    where: { id: userId, following: { some: { id: inviter.id } } },
+  });
+  if (already) return { ok: true, inviterId: inviter.id };
+
+  await createFriendship(userId, inviter.id);
+  await prisma.notification.updateMany({
+    where: {
+      type: "FRIEND_REQUEST",
+      actionTaken: null,
+      OR: [
+        { senderId: userId, receiverId: inviter.id },
+        { senderId: inviter.id, receiverId: userId },
+      ],
+    },
+    data: { read: true, actionTaken: "accepted" },
+  });
+  const me = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { firstname: true, surname: true },
+  });
+  await prisma.notification.create({
+    data: {
+      type: "FRIEND_JOINED",
+      senderId: userId,
+      receiverId: inviter.id,
+      senderName: `${me.firstname} ${me.surname}`,
+    },
+  });
+  return { ok: true, inviterId: inviter.id };
 }

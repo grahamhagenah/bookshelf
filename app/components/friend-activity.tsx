@@ -41,7 +41,7 @@ function FeedCover({
       <CoverPlaceholder title={book.title} author={book.author} className="absolute inset-0" />
       {book.cover ? (
         <img
-          src={coverSrc(book.cover)}
+          src={coverSrc(book.cover, "M")}
           alt=""
           loading="lazy"
           className="relative h-full w-full object-cover"

@@ -2,6 +2,7 @@ import type { Password, User, Notification } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "~/db.server";
+import { shelfIds } from "~/models/household.server";
 import type { CoverSize, LibraryView, Theme } from "~/utils";
 
 export type { User } from "@prisma/client";
@@ -23,7 +24,6 @@ export async function getUserById(id: User["id"]) {
       profileEmoji: true,
       emailNotifications: true,
       demoGroup: true,
-      notificationsSent: true,
       notificationsReceived: {
         where: { read: false },
         orderBy: { createdAt: "desc" },
@@ -569,6 +569,15 @@ export async function getPendingBookRequests(userId: string) {
   return pendingRequests;
 }
 
+// Everyone this person has ever sent a friend request to
+export async function getFriendRequestReceiverIds(userId: string) {
+  const sent = await prisma.notification.findMany({
+    where: { senderId: userId, type: "FRIEND_REQUEST" },
+    select: { receiverId: true },
+  });
+  return sent.map((request) => request.receiverId);
+}
+
 export async function getPendingFriendRequests(userId: string) {
   // Get friend requests sent by this user that haven't been accepted yet
   const pendingRequests = await prisma.notification.findMany({
@@ -606,12 +615,14 @@ export async function getSuggestedFriends(userId: string, limit = 5) {
   });
 
   const friendIds = currentUser?.following.map((f) => f.id) || [];
+  // Nor anyone you already share a shelf with
+  const housemates = await shelfIds(userId);
 
   // Get recently joined users, excluding current user and existing friends
   const suggestedUsers = await prisma.user.findMany({
     where: {
       id: {
-        notIn: [userId, ...friendIds],
+        notIn: [userId, ...friendIds, ...housemates],
       },
       demoGroup: await getVisibleGroup(userId),
     },

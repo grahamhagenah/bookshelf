@@ -82,11 +82,13 @@ export function isDemoEmail(email: string) {
 }
 
 // Open Library covers are served through this site's /covers route, which
-// caches them; other cover URLs (pasted by hand) are used as they are
-export function coverSrc(url: string) {
-  return url.startsWith("https://covers.openlibrary.org/")
-    ? url.replace("https://covers.openlibrary.org/", "/covers/")
-    : url;
+// caches them; other cover URLs (pasted by hand) are used as they are.
+// Open Library keeps each cover in three sizes, S (~45px wide), M (~180px)
+// and L (~400px+): thumbnails ask for M, which is a fraction of L's weight.
+export function coverSrc(url: string, size?: "M" | "L") {
+  if (!url.startsWith("https://covers.openlibrary.org/")) return url;
+  const local = url.replace("https://covers.openlibrary.org/", "/covers/");
+  return size ? local.replace(/-[SML]\.jpg$/, `-${size}.jpg`) : local;
 }
 
 // Open Library subjects mix real topics with catalog codes and library

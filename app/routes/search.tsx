@@ -287,7 +287,7 @@ function SmallCover({
       <div className="absolute inset-0 bg-stone-200 dark:bg-stone-800" />
       {src && !failed ? (
         <img
-          src={coverSrc(src)}
+          src={coverSrc(src, "M")}
           alt={`${title} by ${author}`}
           loading="lazy"
           className="relative h-full w-full object-cover"

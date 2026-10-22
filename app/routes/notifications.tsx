@@ -328,6 +328,15 @@ function ActivityItem({
         </a>
       );
       break;
+    case "FRIEND_JOINED":
+      // Someone signed up (or came over) from your invite link
+      text = <>{name} joined from your invite. You&apos;re friends now.</>;
+      actions = (
+        <a href={`/friend/${notification.senderId}`} className={secondaryButton}>
+          See their shelf
+        </a>
+      );
+      break;
     case "BOOK_APPROVED":
       text = <>{name} is lending you {book}</>;
       break;
@@ -410,6 +419,8 @@ const getHistoryText = (
       return <>Friend request from {name}, {action}</>;
     case "BOOK_REQUEST":
       return <>{name} asked to borrow {book}, {action}</>;
+    case "FRIEND_JOINED":
+      return <>{name} joined from your invite</>;
     case "BOOK_APPROVED":
       return <>{name} lent you {book}</>;
     case "HOLD_READY":
