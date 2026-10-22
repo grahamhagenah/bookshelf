@@ -15,7 +15,7 @@ export function getHolds(bookId: Book["id"]) {
     select: {
       id: true,
       createdAt: true,
-      user: { select: { id: true, firstname: true, surname: true } },
+      user: { select: { id: true, firstname: true, surname: true, profileEmoji: true } },
     },
   });
 }

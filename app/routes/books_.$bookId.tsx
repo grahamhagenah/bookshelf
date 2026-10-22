@@ -365,7 +365,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     // Who's waiting is shown to the owner and the borrower; others just
     // see their own place
     waiting:
-      isOwner || isBorrower ? holds.map((hold) => hold.user.firstname) : [],
+      isOwner || isBorrower
+        ? holds.map((hold) => ({ ...hold.user, since: hold.createdAt }))
+        : [],
     linePosition: holdIndex === -1 ? null : holdIndex + 1,
     author,
     friendIds: followingIds,
@@ -897,21 +899,80 @@ function BookFacts({ data }: { data: BookData }) {
   if (!data.isOwner && !data.isBorrower && book.borrower) {
     rows.push(["Status", "Out on loan"]);
   }
-  if (data.waiting.length > 0) {
-    rows.push(["Waiting", data.waiting.join(", ")]);
-  }
-  if (rows.length === 0) return null;
+  if (rows.length === 0 && data.waiting.length === 0) return null;
 
   return (
-    // Short labels in a narrow column, values right beside them
-    <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
-      {rows.map(([label, value]) => (
-        <div key={label} className="contents">
-          <dt className="text-stone-500 dark:text-stone-400">{label}</dt>
-          <dd className="text-stone-800 dark:text-stone-200">{value}</dd>
-        </div>
-      ))}
-    </dl>
+    <>
+      {rows.length > 0 ? (
+        // Short labels in a narrow column, values right beside them
+        <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
+          {rows.map(([label, value]) => (
+            <div key={label} className="contents">
+              <dt className="text-stone-500 dark:text-stone-400">{label}</dt>
+              <dd className="text-stone-800 dark:text-stone-200">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+      {data.waiting.length > 0 ? <WaitingLine data={data} /> : null}
+    </>
+  );
+}
+
+// "2 days", "3 weeks": how long someone's been in line
+function waitedFor(since: string) {
+  const days = Math.floor((Date.now() - new Date(since).getTime()) / 86_400_000);
+  if (days < 1) return "today";
+  if (days < 14) return `${days} ${days === 1 ? "day" : "days"}`;
+  return `${Math.floor(days / 7)} weeks`;
+}
+
+// Who's waiting for this copy, in order, for the owner and the borrower
+function WaitingLine({ data }: { data: BookData }) {
+  const { waiting, book } = data;
+  const next = waiting[0];
+  return (
+    <section
+      aria-label="Waiting in line"
+      className="rounded-lg border border-stone-200 dark:border-stone-800 text-sm"
+    >
+      <p className="flex items-baseline justify-between border-b border-stone-100 dark:border-stone-800 px-3 py-2 font-medium text-stone-700 dark:text-stone-300">
+        In line for it
+        <span className="font-normal text-stone-400 dark:text-stone-500">{waiting.length}</span>
+      </p>
+      <ol className="space-y-2 px-3 py-2.5">
+        {waiting.map((person, index) => (
+          <li key={person.id} className="flex items-center gap-2.5">
+            <span className="w-4 flex-shrink-0 text-center text-xs tabular-nums text-stone-400 dark:text-stone-500">
+              {index + 1}
+            </span>
+            <Avatar
+              firstname={person.firstname}
+              surname={person.surname}
+              icon={person.profileEmoji}
+              size="xs"
+            />
+            <span className="min-w-0 flex-1 truncate text-stone-800 dark:text-stone-200">
+              <PersonLink
+                id={person.id}
+                name={person.firstname}
+                friendIds={data.friendIds}
+              />
+            </span>
+            <span className="flex-shrink-0 text-xs text-stone-400 dark:text-stone-500">
+              {waitedFor(person.since)}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <p className="border-t border-stone-100 dark:border-stone-800 px-3 py-2 text-xs text-stone-500 dark:text-stone-400">
+        {data.isBorrower
+          ? `${next.firstname} is next after you.`
+          : book.borrower
+            ? `When it's back, ${next.firstname} is next.`
+            : `${next.firstname} is next.`}
+      </p>
+    </section>
   );
 }
 

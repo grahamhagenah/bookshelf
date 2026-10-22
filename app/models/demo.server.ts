@@ -934,14 +934,12 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     });
   }
 
-  // Priya is waiting for Piranesi, which Sam still has
-  await prisma.hold.create({
-    data: {
-      bookId: books["Piranesi"],
-      userId: ids.priya,
-      createdAt: ago(2 * day),
-    },
-  });
+  // Priya and then Lena are waiting for Piranesi, which Sam still has
+  for (const [person, waited] of [["priya", 9], ["lena", 2]] as const) {
+    await prisma.hold.create({
+      data: { bookId: books["Piranesi"], userId: ids[person], createdAt: ago(waited * day) },
+    });
+  }
 
   // The visitor has read a good part of their own shelf
   const read: [string, number][] = [
