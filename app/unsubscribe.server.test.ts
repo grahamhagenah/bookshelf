@@ -1,11 +1,15 @@
 // @vitest-environment node
 import { makeUser, prisma } from "../test/db";
 
+// The route signs people in, which needs a secret; set it before the
+// imports run (CI has no .env)
+vi.hoisted(() => {
+  process.env.SESSION_SECRET ??= "test-secret";
+});
+
 import { renderDigest } from "./email.server";
 import { action } from "./routes/unsubscribe";
 import { readUnsubscribe, unsubscribeUrl } from "./unsubscribe.server";
-
-process.env.SESSION_SECRET ??= "test-secret";
 
 const settings = (id: string) =>
   prisma.user.findUniqueOrThrow({
