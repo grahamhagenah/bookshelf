@@ -990,9 +990,9 @@ function LendingHistory({
 }) {
   return (
     <div>
-      <h2 className="mb-1 text-sm font-semibold text-stone-500 dark:text-stone-400">
+      <h2 className="mb-2 text-lg font-semibold text-stone-900 dark:text-stone-100">
         Lending history
-        <span className="ml-1.5 font-normal text-stone-400 dark:text-stone-500">
+        <span className="ml-2 text-sm font-normal text-stone-400 dark:text-stone-500">
           lent {lendCount} {lendCount === 1 ? "time" : "times"}
         </span>
       </h2>
