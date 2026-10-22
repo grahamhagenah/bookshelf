@@ -176,13 +176,14 @@ function Stat({
   tone?: Tone;
 }) {
   return (
-    <div className="flex gap-3">
+    // The tile is centred on the label and figure, close to their height
+    <div className="flex items-center gap-3">
       {Icon ? (
         <span
-          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${tones[tone].tile}`}
+          className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${tones[tone].tile}`}
           aria-hidden
         >
-          <Icon size={18} />
+          <Icon size={20} />
         </span>
       ) : null}
       <div>
