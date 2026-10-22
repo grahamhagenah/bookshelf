@@ -128,8 +128,8 @@ export default function ReaderNotes({
   );
 
   return (
-    <div className="mt-10">
-      <h2 id="notes" className="mb-1 text-sm font-semibold text-stone-500 dark:text-stone-400">
+    <div className="mt-12 border-t border-stone-200 dark:border-stone-800 pt-8">
+      <h2 id="notes" className="mb-2 text-lg font-semibold text-stone-900 dark:text-stone-100">
         Reader notes
       </h2>
 
