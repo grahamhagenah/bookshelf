@@ -25,22 +25,56 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getFriendActivity(userId, { days: 90, limit: 50 }),
   ]);
   const friendIds = user?.following.map((friend) => friend.id) ?? [];
-  return json({ activity, friendIds });
+  return json({ userId, activity, friendIds });
 };
 
+const DAY = 24 * 60 * 60 * 1000;
+
+// "Today", "Yesterday", the weekday for the last week, then the date
+function dayLabel(date: string) {
+  const startOfToday = new Date().setHours(0, 0, 0, 0);
+  const day = new Date(date).setHours(0, 0, 0, 0);
+  const daysAgo = Math.round((startOfToday - day) / DAY);
+  if (daysAgo === 0) return "Today";
+  if (daysAgo === 1) return "Yesterday";
+  if (daysAgo < 7) return new Date(date).toLocaleDateString(undefined, { weekday: "long" });
+  return new Date(date).toLocaleDateString(undefined, { month: "long", day: "numeric" });
+}
+
 export default function Feed() {
-  const { activity, friendIds } = useLoaderData<typeof loader>();
+  const { userId, activity, friendIds } = useLoaderData<typeof loader>();
+
+  // Entries grouped under the day they happened
+  const days: { label: string; items: typeof activity }[] = [];
+  for (const item of activity) {
+    const label = dayLabel(item.at);
+    const last = days[days.length - 1];
+    if (last && last.label === label) last.items.push(item);
+    else days.push({ label, items: [item] });
+  }
 
   return (
     <Layout title="Friend activity">
       {activity.length > 0 ? (
-        <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-          {activity.map((item) => (
-            <li key={item.id}>
-              <FriendActivityItem item={item} friendIds={friendIds} />
-            </li>
-          ))}
-        </ul>
+        days.map((day) => (
+          <section key={day.label} aria-label={day.label}>
+            <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400">
+              {day.label}
+            </h2>
+            <ul className="divide-y divide-stone-100 dark:divide-stone-800">
+              {day.items.map((item) => (
+                <li key={item.id}>
+                  <FriendActivityItem
+                    item={item}
+                    friendIds={friendIds}
+                    userId={userId}
+                    layout="full"
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
       ) : (
         <div className="py-16 text-center text-stone-500 dark:text-stone-400">
           {friendIds.length === 0 ? (
