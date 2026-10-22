@@ -4,7 +4,7 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form, Link, useFetcher, useLoaderData, useLocation } from "@remix-run/react";
+import { Form, Link, useActionData, useFetcher, useLoaderData, useLocation } from "@remix-run/react";
 import { useState } from "react";
 
 import CoverPlaceholder from "~/components/cover-placeholder";
@@ -19,6 +19,8 @@ import {
   moveToShelf,
   removeWantToRead,
 } from "~/models/wish.server";
+import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
+import { roomForBooks } from "~/plan.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 import { coverSrc } from "~/utils";
@@ -55,6 +57,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({ ok: true });
   }
   if (form.get("intent") === "gotIt") {
+    if ((await roomForBooks(userId)) < 1) {
+      return json({ error: LIMIT_MESSAGES.books, limit: true }, { status: 403 });
+    }
     const book = await moveToShelf(id, userId);
     return book ? redirect(`/books/${book.id}`) : json({ ok: true });
   }
@@ -172,6 +177,9 @@ function WantRow({
 export default function WantToRead() {
   const { items, friendIds, counts } = useLoaderData<typeof loader>();
   const matched = items.filter((item) => item.copies.length > 0).length;
+  // "Got a copy" with a full shelf on the free plan
+  const actionData = useActionData<typeof action>();
+  const limit = actionData && "limit" in actionData && "error" in actionData ? actionData.error : null;
 
   return (
     <Layout title="Want to read">
@@ -193,6 +201,15 @@ export default function WantToRead() {
             Add a book
           </Link>
         </div>
+
+        {limit ? (
+          <p role="alert" className="mt-4 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200">
+            {limit}{" "}
+            <Link to={UPGRADE_PATH} className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2">
+              See Stacks Plus
+            </Link>
+          </p>
+        ) : null}
 
         {items.length === 0 ? (
           <div className="mt-10 flex flex-col items-center py-10 text-center">

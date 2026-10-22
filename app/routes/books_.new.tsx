@@ -7,6 +7,8 @@ import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 
 import { createBook } from "~/models/book.server";
+import { LIMIT_MESSAGES } from "~/plan";
+import { roomForBooks } from "~/plan.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -80,6 +82,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         },
       },
       { status: 400 },
+    );
+  }
+
+  if ((await roomForBooks(userId)) < 1) {
+    return json(
+      { errors: { title: LIMIT_MESSAGES.books, author: null, body: null, cover: null, datePublished: null } },
+      { status: 403 },
     );
   }
 

@@ -35,6 +35,8 @@ import {
   getPendingFriendRequests,
 } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
+import { friendLimitMessage, LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
+import { roomForFriend } from "~/plan.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 import { coverSrc, isDemoEmail } from "~/utils";
@@ -64,7 +66,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
 };
 
-interface ActionData { errors: { email?: string } | null; success: boolean; friendId?: string }
+interface ActionData {
+  errors: { email?: string } | null;
+  success: boolean;
+  friendId?: string;
+  // A friendship the free plan's limit stopped
+  limit?: string;
+}
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -79,7 +87,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const notificationId = formData.get("notificationId");
   if ((intent === "accept" || intent === "decline") && typeof notificationId === "string") {
-    await answerFriendRequest(userId, notificationId, intent === "accept");
+    const result = await answerFriendRequest(userId, notificationId, intent === "accept");
+    if (result === "full" || result === "they-are-full") {
+      return json<ActionData>({ errors: null, success: false, limit: friendLimitMessage(result) }, { status: 403 });
+    }
     return json<ActionData>({ errors: null, success: true });
   }
 
@@ -88,6 +99,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json<ActionData>({ errors: { email: "User not found" }, success: false }, { status: 404 });
   }
   const senderName = `${user.firstname} ${user.surname}`;
+
+  // No new requests once the free plan's friends are all taken
+  if (!(await roomForFriend(userId))) {
+    return json<ActionData>({ errors: null, success: false, limit: LIMIT_MESSAGES.friends }, { status: 403 });
+  }
 
   // A request to someone found in search or suggestions
   if (typeof friendId === "string" && friendId.length > 0) {
@@ -182,6 +198,9 @@ export default function Friends() {
   const sendRequest = (friendId: string) =>
     requestFetcher.submit({ friendId }, { method: "post", action: "/friends" });
 
+  // A request the free plan's friend limit stopped, from search or the email form
+  const limit = requestFetcher.data?.limit ?? actionData?.limit ?? null;
+
   const { friends, incoming, pendingRequests } = data;
   const pendingIds = new Set(pendingRequests.map((r) => r.receiver.id));
   const askedMe = new Set(incoming.map((request) => request.sender.id));
@@ -193,6 +212,14 @@ export default function Friends() {
 
   return (
     <Layout title="Friends">
+      {limit ? (
+        <p role="alert" className="rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200">
+          {limit}{" "}
+          <Link to={UPGRADE_PATH} className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2">
+            See Stacks Plus
+          </Link>
+        </p>
+      ) : null}
       {incoming.length > 0 ? (
         <section>
           <h2 className="text-lg font-semibold">Friend requests</h2>
@@ -572,8 +599,9 @@ function IncomingRequest({
 }: {
   request: SerializeFrom<typeof loader>["incoming"][number];
 }) {
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<ActionData>();
   const answering = fetcher.formData?.get("intent");
+  const limit = fetcher.data?.limit;
   return (
     <li className="flex items-center gap-3 rounded-xl border border-stone-200 dark:border-stone-800 p-4">
       <Avatar
@@ -585,7 +613,16 @@ function IncomingRequest({
         <p className="truncate font-medium text-stone-900 dark:text-stone-100">
           {request.sender.firstname} {request.sender.surname}
         </p>
-        <p className="text-sm text-stone-500 dark:text-stone-400">Asked {ago(request.createdAt)}</p>
+        {limit ? (
+          <p className="text-sm text-stone-600 dark:text-stone-300">
+            {limit}{" "}
+            <Link to={UPGRADE_PATH} className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2">
+              See Stacks Plus
+            </Link>
+          </p>
+        ) : (
+          <p className="text-sm text-stone-500 dark:text-stone-400">Asked {ago(request.createdAt)}</p>
+        )}
       </div>
       <fetcher.Form method="post" className="flex flex-shrink-0 gap-2">
         <input type="hidden" name="notificationId" value={request.id} />

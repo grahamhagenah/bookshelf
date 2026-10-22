@@ -2,6 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { isValidElement } from "react";
 
+import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
 import { seo, structuredData } from "~/seo";
 
 // Plain answers to the questions people ask about Stacks: what it is,
@@ -102,7 +103,13 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         q: "Does it cost anything?",
         a: (
           <>
-            No. Stacks is free and{" "}
+            It&apos;s free for up to {FREE_LIMITS.books} books and {FREE_LIMITS.friends} friends,
+            which covers most home libraries. Stacks Plus lifts both limits for $
+            {PLUS_PRICES.monthly} a month or ${PLUS_PRICES.yearly} a year;{" "}
+            <Link to="/pricing" className={link}>
+              see pricing
+            </Link>
+            . Stacks is also{" "}
             <a
               href="https://github.com/grahamhagenah/bookshelf"
               target="_blank"

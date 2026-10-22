@@ -3,7 +3,9 @@ import type { User } from "@prisma/client";
 import { prisma } from "~/db.server";
 import type { ImportRow, ShelfChoice } from "~/import-books";
 import { goesOnShelf } from "~/import-books";
+import { roomForBooks } from "~/plan.server";
 import { normalizeTitle, sameWork } from "~/works";
+
 
 import { shelfIds } from "./household.server";
 import { notifyWanters } from "./wish.server";
@@ -14,7 +16,9 @@ const coverFor = (isbn: string | null) =>
   isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg` : "";
 
 // Adds the rows to the shelf or the want-to-read list, skipping anything
-// already there (in the library, on the list, or earlier in the file)
+// already there (in the library, on the list, or earlier in the file). On
+// the free plan the shelf fills to its limit and the rest wait; the
+// want-to-read list has no limit.
 export async function importBooks(
   userId: User["id"],
   rows: ImportRow[],
@@ -46,6 +50,10 @@ export async function importBooks(
     if (goesOnShelf(row, shelf)) toShelf.push(row);
     else if (wantToRead && row.status === "to-read") toList.push(row);
   }
+
+  const room = await roomForBooks(userId);
+  const overLimit = Math.max(0, toShelf.length - room);
+  if (overLimit) toShelf.splice(room);
 
   const now = Date.now();
   // Keep the file's order on the shelf: later rows were added later
@@ -91,6 +99,7 @@ export async function importBooks(
     added: books.length,
     wanted: toList.length,
     skipped,
+    overLimit,
     bookIds: books.map((book) => book.id),
   };
 }

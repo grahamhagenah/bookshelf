@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+import { UPGRADE_PATH } from "~/plan";
 import type { ScanResponse } from "~/routes/api.scan";
 
 // Point the phone at the barcode on the back of a book and it's added.
@@ -12,7 +13,7 @@ import type { ScanResponse } from "~/routes/api.scan";
 
 interface Scanned {
   isbn: string;
-  state: "adding" | "added" | "already" | "missing" | "failed";
+  state: "adding" | "added" | "already" | "missing" | "full" | "failed";
   title?: string;
 }
 
@@ -142,7 +143,9 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
               ? { isbn, state: "added", title: data.added.title }
               : "alreadyExists" in data
                 ? { isbn, state: "already", title: data.title }
-                : { isbn, state: "missing" },
+                : "limit" in data
+                  ? { isbn, state: "full" }
+                  : { isbn, state: "missing" },
         ),
       );
     } catch {
@@ -328,7 +331,13 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
                     ? "Already on your shelf"
                     : scan.state === "missing"
                       ? "Not on Open Library"
-                      : "Couldn't add"}
+                      : scan.state === "full"
+                        ? (
+                          <a href={UPGRADE_PATH} className="text-stone-200 underline underline-offset-2">
+                            Shelf full on the free plan
+                          </a>
+                        )
+                        : "Couldn't add"}
             </span>
           </li>
         ))}

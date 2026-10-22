@@ -49,6 +49,7 @@ export default function Footer() {
           </ul>
           <ul className="space-y-2">
             <li><Link to="/faq" className={linkClass}>FAQ</Link></li>
+            <li><Link to="/pricing" className={linkClass}>Pricing</Link></li>
             <li><Link to="/lend-books-to-friends" className={linkClass}>Lending books</Link></li>
             <li><Link to="/goodreads-alternative" className={linkClass}>vs Goodreads</Link></li>
             <li>
@@ -78,7 +79,12 @@ export default function Footer() {
             Graham Hagenah
           </a>
         </p>
-        <p>Book data and covers courtesy of Open Library.</p>
+        <p>
+          <Link to="/terms" className="hover:text-stone-900 dark:hover:text-stone-100 transition-colors">Terms</Link>
+          {" · "}
+          <Link to="/privacy" className="hover:text-stone-900 dark:hover:text-stone-100 transition-colors">Privacy</Link>
+          {" · "}Book data and covers courtesy of Open Library.
+        </p>
       </div>
     </footer>
   );

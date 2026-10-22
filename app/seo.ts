@@ -75,7 +75,10 @@ export const ABOUT_STACKS = {
       applicationCategory: "LifestyleApplication",
       operatingSystem: "Any",
       browserRequirements: "Requires a modern web browser",
-      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      offers: [
+        { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
+        { "@type": "Offer", name: "Stacks Plus", price: "3", priceCurrency: "USD", url: `${SITE_URL}/pricing` },
+      ],
       featureList: [
         "Catalog the books you own by search, barcode scan or import from Goodreads and StoryGraph",
         "Lend books to friends with due dates and reminders",

@@ -65,10 +65,10 @@ test("only the person a request was sent to can accept it", async () => {
   const stranger = await makeUser("Stranger");
   const request = await createNotification(sender.id, receiver.id, "Sender Reader");
 
-  expect(await answerFriendRequest(stranger.id, request.id, true)).toBe(false);
+  expect(await answerFriendRequest(stranger.id, request.id, true)).toBe("not-found");
   expect(await getFriendStatus(stranger.id, sender.id)).not.toBe("friends");
 
-  expect(await answerFriendRequest(receiver.id, request.id, true)).toBe(true);
+  expect(await answerFriendRequest(receiver.id, request.id, true)).toBe("done");
   expect(await getFriendStatus(receiver.id, sender.id)).toBe("friends");
 });
 

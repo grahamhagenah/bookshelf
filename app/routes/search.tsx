@@ -30,6 +30,8 @@ import {
   getWantToReadWorks,
   notifyWanters,
 } from "~/models/wish.server";
+import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
+import { roomForBooks } from "~/plan.server";
 import { seo } from "~/seo";
 import { requireUserId, getUserId } from "~/session.server";
 import {
@@ -239,6 +241,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         addedKey: openLibraryKey,
       });
     }
+  }
+
+  // The free plan's shelf is full
+  if ((await roomForBooks(userId)) < 1) {
+    return json({ success: false, limit: LIMIT_MESSAGES.books, addedKey: openLibraryKey }, { status: 403 });
   }
 
   const description =
@@ -486,6 +493,14 @@ function SearchResultItem({
             </button>
           )}
           </div>
+          {fetcher.data && "limit" in fetcher.data && typeof fetcher.data.limit === "string" ? (
+            <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
+              {fetcher.data.limit}{" "}
+              <Link to={UPGRADE_PATH} className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2">
+                See Stacks Plus
+              </Link>
+            </p>
+          ) : null}
         </div>
       </fetcher.Form>
     </li>

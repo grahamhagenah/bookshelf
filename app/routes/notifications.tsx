@@ -4,7 +4,7 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { Link, useActionData, useLoaderData } from "@remix-run/react";
 
 import ActivityIcon from "~/components/activity-icon";
 import Avatar from "~/components/avatar";
@@ -28,6 +28,7 @@ import {
   getReceivedNotification,
   dismissUpdates,
 } from "~/models/user.server";
+import { friendLimitMessage, UPGRADE_PATH } from "~/plan";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -77,7 +78,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (type === "FRIEND_REQUEST") {
     const answer = formData.get("friend_request");
     if (answer === "accept" || answer === "decline") {
-      await answerFriendRequest(userId, notification.id, answer === "accept");
+      const result = await answerFriendRequest(userId, notification.id, answer === "accept");
+      if (result === "full" || result === "they-are-full") {
+        return json({ limit: friendLimitMessage(result) }, { status: 403 });
+      }
     }
     return null;
   }
@@ -468,6 +472,9 @@ const BUCKETS = ["Today", "Yesterday", "This week", "This month", "Older"];
 
 export default function Activity() {
   const data = useLoaderData<typeof loader>();
+  // A friend request the free plan's limit stopped
+  const actionData = useActionData<typeof action>();
+  const limit = actionData && "limit" in actionData ? actionData.limit : null;
   const unread = data.user?.notificationsReceived ?? [];
   const needsAction = unread.filter((n) => NEEDS_ACTION.has(n.type || "FRIEND_REQUEST"));
   const updates = unread.filter((n) => !NEEDS_ACTION.has(n.type || "FRIEND_REQUEST"));
@@ -485,6 +492,14 @@ export default function Activity() {
   return (
     <Layout title="Activity">
       <section className={section}>
+        {limit ? (
+          <p role="alert" className="mb-4 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200">
+            {limit}{" "}
+            <Link to={UPGRADE_PATH} className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2">
+              See Stacks Plus
+            </Link>
+          </p>
+        ) : null}
         <SectionHeading title="Needs you" count={needsAction.length} />
         {needsAction.length > 0 ? (
           <ul className={list}>
