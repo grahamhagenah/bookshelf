@@ -93,3 +93,24 @@ test("stops at the limit", async () => {
   }
   expect(await getFriendActivity(me.id, { limit: 3 })).toHaveLength(3);
 });
+
+test("feed books carry hearts, notes and where you stand with them", async () => {
+  const { me, friend } = await setup();
+  const other = await makeUser("Other");
+  await createFriendship(friend.id, other.id);
+  const book = await bookAddedAt(friend.id, "Circe", daysAgo(1));
+  await saveReaderNote(friend.id, book.id, { loved: true, body: "Lovely." });
+  await saveReaderNote(other.id, book.id, { loved: true });
+
+  const [item] = await getFriendActivity(me.id);
+  const seen = item.kind === "added" ? item.books[0] : item.book;
+  expect(seen).toMatchObject({ loves: 2, notes: 1, available: true });
+  // Not a reader of this copy, but a friend of its owner
+  expect(seen.viewer).toEqual({
+    loved: false,
+    canLove: false,
+    canRequest: true,
+    requested: false,
+    inLine: false,
+  });
+});
