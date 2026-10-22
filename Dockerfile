@@ -44,6 +44,11 @@ ENV DATABASE_URL=file:/data/sqlite.db
 ENV PORT="8080"
 ENV NODE_ENV="production"
 
+# Litestream, for continuous backups (only runs when start.sh is configured
+# for it)
+ADD https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-amd64.deb /tmp/litestream.deb
+RUN dpkg -i /tmp/litestream.deb && rm /tmp/litestream.deb
+
 # add shortcut for connecting to database CLI
 RUN echo "#!/bin/sh\nset -x\nsqlite3 \$DATABASE_URL" > /usr/local/bin/database-cli && chmod +x /usr/local/bin/database-cli
 
@@ -58,6 +63,7 @@ COPY --from=build /myapp/build /myapp/build
 COPY --from=build /myapp/public /myapp/public
 COPY --from=build /myapp/package.json /myapp/package.json
 COPY --from=build /myapp/start.sh /myapp/start.sh
+COPY --from=build /myapp/litestream.yml /etc/litestream.yml
 COPY --from=build /myapp/prisma /myapp/prisma
 
 ENTRYPOINT [ "./start.sh" ]

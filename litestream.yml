@@ -1,0 +1,17 @@
+# Continuous backups of the SQLite database to Cloudflare R2 (or any
+# S3-compatible store). Used by start.sh only when LITESTREAM_BUCKET is set;
+# the values come from Fly secrets. See "Backups" in the README.
+dbs:
+  - path: /data/sqlite.db
+    replicas:
+      - type: s3
+        bucket: ${LITESTREAM_BUCKET}
+        path: stacks
+        endpoint: ${LITESTREAM_ENDPOINT}
+        region: auto
+        access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+        secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
+        # A fresh full copy every day, and every change since kept for
+        # 30 days, so the database can be restored to any point in that time
+        snapshot-interval: 24h
+        retention: 720h

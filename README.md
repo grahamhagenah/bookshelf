@@ -176,6 +176,22 @@ fly status
 fly secrets set KEY=value
 ```
 
+### Backups
+
+The database is backed up continuously with [Litestream](https://litestream.io) to Cloudflare R2: every change, kept for 30 days, so it can be restored to any point in that time. It's off until these four secrets are set; without them the app starts as it always has.
+
+1. In Cloudflare, create an R2 bucket (for example `stacks-backups`).
+2. Under R2 > Manage API tokens, create a token with **Object Read & Write** on that bucket. Note the access key ID, the secret, and the S3 endpoint (`https://<account-id>.r2.cloudflarestorage.com`).
+3. Set them on Fly (this redeploys):
+
+```sh
+fly secrets set LITESTREAM_BUCKET=stacks-backups LITESTREAM_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com LITESTREAM_ACCESS_KEY_ID=... LITESTREAM_SECRET_ACCESS_KEY=...
+```
+
+Check it's working with `fly logs` (look for `litestream` lines) or, on the machine, `litestream snapshots -config /etc/litestream.yml /data/sqlite.db`.
+
+To restore: if the volume comes up empty, `start.sh` restores the latest backup by itself. To roll back to a moment in time, on the machine: `litestream restore -config /etc/litestream.yml -timestamp 2026-10-22T09:00:00Z -o /data/restored.db /data/sqlite.db`, then stop the app and swap the files.
+
 ## Project Structure
 
 ```
