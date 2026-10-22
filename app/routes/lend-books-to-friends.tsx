@@ -97,7 +97,7 @@ export default function LendBooksToFriends() {
           and you&apos;ll hear when a friend adds one of those books to their shelf.
         </p>
         <p>
-          It&apos;s free and works in your phone&apos;s browser. Wondering how it compares with
+          It&apos;s free to start and works in your phone&apos;s browser. Wondering how it compares with
           Goodreads?{" "}
           <Link to="/goodreads-alternative" className={proseLink}>
             Here&apos;s an honest comparison

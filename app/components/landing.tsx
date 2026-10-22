@@ -1,5 +1,7 @@
 import { Link } from "@remix-run/react";
 
+import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
+
 import DemoButton from "./demo-button";
 import { CameraIcon, HomeIcon } from "./icons";
 import Showcase, { ShowcaseFriends, ShowcaseNotes, ShowcaseWant } from "./showcase";
@@ -102,7 +104,16 @@ const QUESTIONS: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "Does it cost anything?",
-    a: <>No. Stacks is free and open source.</>,
+    a: (
+      <>
+        It&apos;s free for up to {FREE_LIMITS.books} books and {FREE_LIMITS.friends} friends.
+        Stacks Plus lifts both limits for ${PLUS_PRICES.monthly} a month or ${PLUS_PRICES.yearly} a
+        year.{" "}
+        <Link to="/pricing" className="underline underline-offset-2">
+          See pricing
+        </Link>
+      </>
+    ),
   },
 ];
 
@@ -244,7 +255,7 @@ export default function Landing() {
             Start your shelf
           </h2>
           <p className="mt-3 text-lg text-stone-600 dark:text-stone-300">
-            It&apos;s free, and takes a minute.
+            It&apos;s free to start, and takes a minute.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link

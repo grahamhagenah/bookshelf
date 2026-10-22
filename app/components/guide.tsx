@@ -14,11 +14,14 @@ export function GuidePage({
   title,
   intro,
   children,
+  cta = true,
 }: {
   eyebrow: string;
   title: string;
   intro: React.ReactNode;
   children: React.ReactNode;
+  // The closing invitation; the legal pages leave it off
+  cta?: boolean;
 }) {
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10 md:px-8 md:py-14">
@@ -30,7 +33,7 @@ export function GuidePage({
         {intro}
       </p>
       <div className="mt-10 space-y-10">{children}</div>
-      <GuideCta />
+      {cta ? <GuideCta /> : null}
     </main>
   );
 }
@@ -55,7 +58,7 @@ function GuideCta() {
         Start your shelf
       </p>
       <p className="mt-2 text-stone-600 dark:text-stone-300">
-        Free, no ads, and it takes a minute. Or look around a demo library first.
+        Free to start, no ads, and it takes a minute. Or look around a demo library first.
       </p>
       <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <Link

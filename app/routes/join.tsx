@@ -386,6 +386,11 @@ export default function Join() {
           >
             Create Account
           </button>
+          <p className="text-center text-xs text-stone-500 dark:text-stone-400">
+            By creating an account you agree to the{" "}
+            <Link to="/terms" className="underline underline-offset-2">terms</Link> and{" "}
+            <Link to="/privacy" className="underline underline-offset-2">privacy policy</Link>.
+          </p>
           <div className="flex items-center justify-center">
             <div className="text-center text-sm text-stone-500">
               Already have an account?{" "}
