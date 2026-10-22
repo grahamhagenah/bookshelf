@@ -86,5 +86,10 @@ export async function importBooks(
   );
   await notifyWanters(userId, books);
 
-  return { added: books.length, wanted: toList.length, skipped };
+  return {
+    added: books.length,
+    wanted: toList.length,
+    skipped,
+    bookIds: books.map((book) => book.id),
+  };
 }

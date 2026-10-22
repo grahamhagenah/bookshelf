@@ -22,6 +22,7 @@ import {
   bookExistsInLibrary,
   searchFriendsBooks,
 } from "~/models/book.server";
+import { fetchDescription } from "~/models/openlibrary.server";
 import {
   addWantToRead,
   getWantToReadWorks,
@@ -230,26 +231,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
-  // Fetch description from Open Library Works API
-  let description = "";
-  if (typeof openLibraryKey === "string" && openLibraryKey.length > 0) {
-    try {
-      const workRes = await fetch(
-        `https://openlibrary.org${openLibraryKey}.json`,
-      );
-      if (workRes.ok) {
-        const workData = await workRes.json();
-        // Description can be a string or an object with a "value" property
-        if (typeof workData.description === "string") {
-          description = workData.description;
-        } else if (workData.description?.value) {
-          description = workData.description.value;
-        }
-      }
-    } catch {
-      // Silently fail - we'll just have no description
-    }
-  }
+  const description =
+    typeof openLibraryKey === "string" && openLibraryKey.length > 0
+      ? await fetchDescription(openLibraryKey)
+      : "";
 
   const book = await createBook({
     title: typeof title === "string" ? title : "",

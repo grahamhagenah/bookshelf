@@ -31,7 +31,7 @@ test("owned books go on the shelf, to-read books on the list, repeats are skippe
     row({ title: "Circe", status: "read" }),
   ];
 
-  expect(await importBooks(me.id, rows, { shelf: "owned", wantToRead: true })).toEqual({
+  expect(await importBooks(me.id, rows, { shelf: "owned", wantToRead: true })).toMatchObject({
     added: 1,
     wanted: 1,
     skipped: 2,
@@ -47,7 +47,7 @@ test("owned books go on the shelf, to-read books on the list, repeats are skippe
   expect(list.map((item) => item.title)).toEqual(["Piranesi"]);
 
   // Importing again with a wider net only adds what's new
-  expect(await importBooks(me.id, rows, { shelf: "read", wantToRead: true })).toEqual({
+  expect(await importBooks(me.id, rows, { shelf: "read", wantToRead: true })).toMatchObject({
     added: 1,
     wanted: 0,
     skipped: 4,

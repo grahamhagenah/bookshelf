@@ -681,16 +681,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         openLibraryKey: bookData.key || null,
         body: description,
       });
-      await ensureBookDetails(
-        {
-          id: book.id,
-          title: book.title,
-          author: book.author,
-          openLibraryKey: bookData.key || null,
-          detailsFetchedAt: null,
-        },
-        { force: true },
-      );
+      await ensureBookDetails({ id: book.id, detailsFetchedAt: null }, { force: true });
       return json({
         refreshed: true,
         message: "Book info updated from Open Library!",
