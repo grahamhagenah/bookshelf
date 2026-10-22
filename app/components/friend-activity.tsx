@@ -34,17 +34,24 @@ function FeedCover({
   book: Pick<FeedBook, "title" | "author" | "cover">;
   className: string;
 }) {
+  // A cover that fails to load leaves the placeholder, not a broken image
+  const [failed, setFailed] = useState(false);
   return (
     <span
       className={`relative block flex-shrink-0 overflow-hidden rounded-xs bg-stone-100 dark:bg-stone-800 ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}
     >
       <CoverPlaceholder title={book.title} author={book.author} className="absolute inset-0" />
-      {book.cover ? (
+      {book.cover && !failed ? (
         <img
           src={coverSrc(book.cover, "M")}
           alt=""
           loading="lazy"
           className="relative h-full w-full object-cover"
+          // A cover can fail before React hydrates and attaches onError
+          ref={(img) => {
+            if (img?.complete && img.naturalWidth === 0) setFailed(true);
+          }}
+          onError={() => setFailed(true)}
         />
       ) : null}
     </span>
@@ -141,12 +148,13 @@ const actionClass =
   "inline-flex items-center gap-1.5 rounded-md px-2 py-1 -mx-2 text-sm text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-900 hover:text-stone-900 dark:hover:text-stone-100 transition-colors";
 const stateClass = "inline-flex items-center gap-1.5 py-1 text-sm text-stone-400 dark:text-stone-500";
 
-// A cover with the title and author under it, as in the library grid
+// A cover with the title and author under it, as in the library grid. It
+// fills its column, at a book's 2:3 shape.
 function BookTile({ book }: { book: FeedBook }) {
   return (
-    <li className="w-[88px]">
+    <li className="min-w-0">
       <Link to={`/books/${book.id}`} title={book.title} className="group block">
-        <FeedCover book={book} className="h-[132px] w-[88px] transition-opacity group-hover:opacity-90" />
+        <FeedCover book={book} className="aspect-[2/3] w-full transition-opacity group-hover:opacity-90" />
         <span className="mt-1.5 block truncate text-sm font-medium text-stone-900 dark:text-stone-100">
           {book.title}
         </span>
@@ -346,7 +354,8 @@ export function FeedPost({
 
       {item.kind === "added" && item.books.length > 1 ? (
         <>
-          <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-3">
+          {/* Even columns: three across on phones, four on wider screens */}
+          <ul className="mt-3 grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-4">
             {books.map((book) => (
               <BookTile key={book.id} book={book} />
             ))}
