@@ -21,7 +21,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     if (digestIsEmpty(digest)) {
       return new Response("Nothing to send this week.", { headers: { "Content-Type": "text/plain" } });
     }
-    const { html } = renderDigest({ toName: user.firstname, digest });
+    const { html } = renderDigest({ toUserId: user.id, toName: user.firstname, digest });
     return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
   }
 
@@ -38,7 +38,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       skipped++;
       continue;
     }
-    const result = await sendDigestEmail({ toEmail: user.email, toName: user.firstname, digest });
+    const result = await sendDigestEmail({
+      toEmail: user.email,
+      toUserId: user.id,
+      toName: user.firstname,
+      digest,
+    });
     if (result.success) sent++;
     else skipped++;
   }

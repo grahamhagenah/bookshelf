@@ -679,6 +679,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
         surname: person.surname,
         profileEmoji: person.profileEmoji,
         emailNotifications: false,
+        weeklyDigest: false,
         // createdAt stays real: expiry of the sandbox is measured from it
         demoGroup,
       },

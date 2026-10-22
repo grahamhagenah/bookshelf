@@ -120,6 +120,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (owner && owner.emailNotifications && owner.emailVerifiedAt) {
       await sendBookRequestEmail({
         toEmail: owner.email,
+        toUserId: book.userId,
         toName: owner.firstname || "there",
         requesterName: senderName,
         bookTitle: book.title,

@@ -80,7 +80,7 @@ export const digestIsEmpty = (digest: Digest) =>
 // friend, or a book out on loan either way
 export async function getDigestRecipients() {
   const users = await prisma.user.findMany({
-    where: { demoGroup: null, emailNotifications: true, emailVerifiedAt: { not: null } },
+    where: { demoGroup: null, weeklyDigest: true, emailVerifiedAt: { not: null } },
     select: {
       id: true,
       email: true,

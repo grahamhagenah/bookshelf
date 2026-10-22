@@ -42,7 +42,7 @@ import {
   revokeShareToken,
   changePassword,
   setAppearance,
-  toggleEmailNotifications,
+  setEmailSetting,
 } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
 import { seo } from "~/seo";
@@ -174,10 +174,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
-  // Handle email notifications toggle
-  if (intent === "toggleEmailNotifications") {
-    const enabled = formData.get("emailNotifications") === "true";
-    await toggleEmailNotifications(userId, enabled);
+  // The two email switches: borrow requests, and the weekly roundup
+  if (intent === "toggleEmailNotifications" || intent === "toggleWeeklyDigest") {
+    const requests = intent === "toggleEmailNotifications";
+    const on = formData.get(requests ? "emailNotifications" : "weeklyDigest") === "true";
+    await setEmailSetting(userId, requests ? "requests" : "weekly", on);
     return json({
       errors: null,
       passwordErrors: null,
@@ -511,7 +512,7 @@ export default function Account() {
 
       <Section
         title="Preferences"
-        description="How Stacks looks and what it emails you. These follow you to every device you sign in on."
+        description="How Stacks looks. These follow you to every device you sign in on."
       >
         <div className="grid gap-3 sm:grid-cols-2">
           <Choice
@@ -545,14 +546,34 @@ export default function Account() {
               ["small", "Small"],
             ]}
           />
+        </div>
+      </Section>
+
+      <Section
+        title="Email"
+        description="What Stacks emails you. Every email also has a link at the bottom to turn it off."
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
           <Toggle
             intent="toggleEmailNotifications"
             name="emailNotifications"
             on={Boolean(user?.emailNotifications)}
-            label="Email me"
-            hint="Borrow requests and a weekly roundup"
+            label="Borrow requests"
+            hint="When a friend asks to borrow one of your books"
+          />
+          <Toggle
+            intent="toggleWeeklyDigest"
+            name="weeklyDigest"
+            on={Boolean(user?.weeklyDigest)}
+            label="Weekly roundup"
+            hint="What's due back, and what friends added and read"
           />
         </div>
+        {user && !user.emailVerifiedAt && !user.demoGroup ? (
+          <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
+            Nothing is sent until you confirm your email address.
+          </p>
+        ) : null}
       </Section>
 
       <Section

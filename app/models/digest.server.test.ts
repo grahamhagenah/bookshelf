@@ -53,7 +53,11 @@ test("only real accounts who want email and have something going on get one", as
   await createFriendship(social.id, friend.id);
   const optedOut = await makeUser("Out");
   await createFriendship(optedOut.id, friend.id);
-  await prisma.user.update({ where: { id: optedOut.id }, data: { emailNotifications: false } });
+  await prisma.user.update({ where: { id: optedOut.id }, data: { weeklyDigest: false } });
+  // Turning off request emails leaves the roundup on
+  const requestsOff = await makeUser("RequestsOff");
+  await createFriendship(requestsOff.id, friend.id);
+  await prisma.user.update({ where: { id: requestsOff.id }, data: { emailNotifications: false } });
   const demo = await makeUser("Demo", { demoGroup: "digest-test" });
   await createFriendship(demo.id, friend.id);
   const unconfirmed = await makeUser("Unconfirmed", { emailVerifiedAt: null });
@@ -62,6 +66,7 @@ test("only real accounts who want email and have something going on get one", as
   const ids = (await getDigestRecipients()).map((user) => user.id);
   expect(ids).toContain(social.id);
   expect(ids).toContain(friend.id);
+  expect(ids).toContain(requestsOff.id);
   expect(ids).not.toContain(quiet.id);
   expect(ids).not.toContain(optedOut.id);
   expect(ids).not.toContain(demo.id);

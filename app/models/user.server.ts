@@ -23,6 +23,7 @@ export async function getUserById(id: User["id"]) {
       coverSize: true,
       profileEmoji: true,
       emailNotifications: true,
+      weeklyDigest: true,
       emailVerifiedAt: true,
       demoGroup: true,
       notificationsReceived: {
@@ -510,13 +511,13 @@ export async function setAppearance(
   await prisma.user.update({ where: { id: userId }, data: appearance });
 }
 
-export async function toggleEmailNotifications(
-  userId: string,
-  enabled: boolean,
-) {
+// The two kinds of email, each with its own switch
+export type EmailKind = "requests" | "weekly";
+
+export async function setEmailSetting(userId: string, kind: EmailKind, on: boolean) {
   await prisma.user.update({
     where: { id: userId },
-    data: { emailNotifications: enabled },
+    data: kind === "requests" ? { emailNotifications: on } : { weeklyDigest: on },
   });
 }
 

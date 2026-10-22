@@ -24,7 +24,9 @@ model User {
   libraryView        String  @default("cover")
   coverSize          String  @default("large")
   profileEmoji       String?
+  // Two email switches: borrow requests, and the weekly roundup
   emailNotifications Boolean @default(true)
+  weeklyDigest       Boolean @default(true)
   // When they clicked the link we emailed; no digests or request emails
   // go out before then
   emailVerifiedAt    DateTime?

@@ -1,6 +1,8 @@
 import { Resend } from "resend";
 
 import type { Digest } from "~/models/digest.server";
+import type { EmailKind } from "~/models/user.server";
+import { unsubscribeUrl } from "~/unsubscribe.server";
 import { coverSrc, isDemoEmail } from "~/utils";
 
 const resend = process.env.RESEND_API_KEY
@@ -61,7 +63,24 @@ function button(href: string, label: string) {
 const footerLink = (href: string, label: string) =>
   `<a href="${href}" style="color: ${muted};">${esc(label)}</a>`;
 
-const settingsFooter = `You get these because email is on in your ${footerLink(`${APP_URL}/account`, "account settings")}.`;
+// Every email someone can opt out of ends with a link that turns off just
+// that kind, no sign-in needed, beside a link to all their settings
+const optOutFooter = (userId: string | undefined, kind: EmailKind, label: string) =>
+  [
+    userId ? footerLink(unsubscribeUrl(userId, kind), label) : null,
+    footerLink(`${APP_URL}/account`, "Email settings"),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+const optOutText = (userId: string | undefined, kind: EmailKind, label: string) =>
+  userId ? `${label}: ${unsubscribeUrl(userId, kind)}` : `Email settings: ${APP_URL}/account`;
+
+// Lets inboxes show their own Unsubscribe button (RFC 8058)
+const optOutHeaders = (userId: string, kind: EmailKind) => ({
+  "List-Unsubscribe": `<${unsubscribeUrl(userId, kind)}>`,
+  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+});
 
 // Covers go out as full addresses; a book without one gets a plain tile
 function cover(url: string | null | undefined, width: number) {
@@ -78,7 +97,13 @@ const bookLink = (id: string | null, title: string) =>
     ? `<a href="${APP_URL}/books/${id}" style="color: ${ink}; font-weight: 600; text-decoration: none;">${esc(title)}</a>`
     : `<strong style="color: ${ink};">${esc(title)}</strong>`;
 
-async function send(message: { to: string; subject: string; html: string; text: string }) {
+async function send(message: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  headers?: Record<string, string>;
+}) {
   if (!resend) {
     console.log("Email not sent (RESEND_API_KEY not configured):", { to: message.to, subject: message.subject });
     return { success: false, error: "Email service not configured" };
@@ -99,12 +124,14 @@ async function send(message: { to: string; subject: string; html: string; text: 
 // ---- Someone wants to borrow a book ----
 
 export function renderBookRequest({
+  toUserId,
   toName,
   requesterName,
   bookTitle,
   bookAuthor,
   bookCover,
 }: {
+  toUserId?: string;
   toName: string;
   requesterName: string;
   bookTitle: string;
@@ -127,7 +154,7 @@ export function renderBookRequest({
           </tr>
         </table>
         ${button(link, "See the request")}`,
-    footer: `You can say yes or no from your notifications in Stacks. ${settingsFooter}`,
+    footer: optOutFooter(toUserId, "requests", "Stop emails about borrow requests"),
   });
   const text = `Hi ${toName},
 
@@ -135,17 +162,21 @@ ${requesterName} would like to borrow ${bookTitle}${bookAuthor ? ` by ${bookAuth
 
 Say yes or no here: ${link}
 
-You get these because email is on in your account settings: ${APP_URL}/account`;
+${optOutText(toUserId, "requests", "Stop emails about borrow requests")}`;
   return { subject, html, text };
 }
 
 export async function sendBookRequestEmail({
   toEmail,
   ...details
-}: Parameters<typeof renderBookRequest>[0] & { toEmail: string }) {
+}: Parameters<typeof renderBookRequest>[0] & { toEmail: string; toUserId: string }) {
   // Demo sandbox addresses are undeliverable by design
   if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
-  return send({ to: toEmail, ...renderBookRequest(details) });
+  return send({
+    to: toEmail,
+    ...renderBookRequest(details),
+    headers: optOutHeaders(details.toUserId, "requests"),
+  });
 }
 
 // ---- A temporary password ----
@@ -271,7 +302,15 @@ function wantedRow(item: Digest["wanted"][number]) {
   return textOnly(`<strong style="color: ${ink};">${esc(item.friend)}</strong> added ${bookLink(item.bookId, item.title)}, which is on your want-to-read list`);
 }
 
-export function renderDigest({ toName, digest }: { toName: string; digest: Digest }) {
+export function renderDigest({
+  toUserId,
+  toName,
+  digest,
+}: {
+  toUserId?: string;
+  toName: string;
+  digest: Digest;
+}) {
   const lines = digestLines(digest);
   const sections: [string, string[], string][] = [
     ["Due back", digest.due.map(dueRow), `${APP_URL}/`],
@@ -295,7 +334,7 @@ export function renderDigest({ toName, digest }: { toName: string; digest: Diges
         <p style="margin: 4px 0 0;"><a href="${link}" style="font-size: 14px; font-weight: 600; color: ${green}; text-decoration: none;">Open in Stacks →</a></p>`,
           )
           .join("")}`,
-    footer: `You get this once a week because email is on in your ${footerLink(`${APP_URL}/account`, "account settings")}.`,
+    footer: optOutFooter(toUserId, "weekly", "Stop the weekly roundup"),
   });
 
   const text = [
@@ -308,7 +347,7 @@ export function renderDigest({ toName, digest }: { toName: string; digest: Diges
       .filter(([, items]) => items.length > 0)
       .flatMap(([title, items, link]) => ["", title.toUpperCase(), ...items.map((item) => `- ${item}`), link]),
     "",
-    `You get this once a week because email is on in your account settings: ${APP_URL}/account`,
+    optOutText(toUserId, "weekly", "Stop the weekly roundup"),
   ].join("\n");
 
   const subject =
@@ -320,15 +359,14 @@ export function renderDigest({ toName, digest }: { toName: string; digest: Diges
 
 export async function sendDigestEmail({
   toEmail,
-  toName,
-  digest,
-}: {
-  toEmail: string;
-  toName: string;
-  digest: Digest;
-}) {
+  ...details
+}: Parameters<typeof renderDigest>[0] & { toEmail: string; toUserId: string }) {
   if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
-  return send({ to: toEmail, ...renderDigest({ toName, digest }) });
+  return send({
+    to: toEmail,
+    ...renderDigest(details),
+    headers: optOutHeaders(details.toUserId, "weekly"),
+  });
 }
 
 // ---- A note to the admins when someone sends feedback ----
