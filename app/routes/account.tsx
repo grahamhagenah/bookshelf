@@ -5,7 +5,7 @@ import type {
   SerializeFrom,
 } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Link, useLoaderData, Form, useActionData, useFetcher } from "@remix-run/react";
+import { Link, useLoaderData, Form, useActionData, useFetcher, useNavigation } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import type { ComponentType } from "react";
 
@@ -45,12 +45,13 @@ import {
   changePassword,
   setAppearance,
   setEmailSetting,
+  deleteUsers,
 } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
 import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
 import { getPlanUsage } from "~/plan.server";
 import { seo } from "~/seo";
-import { requireUserId } from "~/session.server";
+import { getSession, requireUserId, sessionStorage } from "~/session.server";
 import {
   coverSizeOf,
   isCoverSize,
@@ -223,6 +224,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Handle password change
+  // Deleting your own account: everything goes, any subscription is
+  // cancelled, and you're signed out. The demo resets on its own instead.
+  if (intent === "deleteAccount" && !isDemo) {
+    await deleteUsers([userId]);
+    const session = await getSession(request);
+    return redirect("/?deleted=1", {
+      headers: { "Set-Cookie": await sessionStorage.destroySession(session) },
+    });
+  }
+
   if (intent === "changePassword" && !isDemo) {
     const currentPassword = formData.get("currentPassword");
     const newPassword = formData.get("newPassword");
@@ -738,6 +749,18 @@ export default function Account() {
           </Form>
         </Section>
       ) : null}
+
+      {!user?.demoGroup ? (
+        <Section
+          title="Delete account"
+          description="Gone for good, with nothing left to bill."
+        >
+          <DeleteAccount
+            plus={Boolean(data.plan.own?.paid)}
+            shared={data.plan.shared}
+          />
+        </Section>
+      ) : null}
     </Layout>
   );
 }
@@ -1166,6 +1189,60 @@ function Meter({ label, used, limit }: { label: string; used: number; limit: num
           style={{ width: `${Math.min(100, (used / limit) * 100)}%` }}
         />
       </div>
+    </div>
+  );
+}
+
+// Two clicks: the first arms it and says what goes, the second deletes.
+// It disarms on its own, or when focus moves away.
+function DeleteAccount({ plus, shared }: { plus: boolean; shared: boolean }) {
+  const [armed, setArmed] = useState(false);
+  const navigation = useNavigation();
+  const deleting =
+    navigation.state !== "idle" && navigation.formData?.get("intent") === "deleteAccount";
+
+  useEffect(() => {
+    if (!armed) return;
+    const timer = setTimeout(() => setArmed(false), 5000);
+    return () => clearTimeout(timer);
+  }, [armed]);
+
+  return (
+    <div className="space-y-3 text-sm text-stone-600 dark:text-stone-300">
+      <p>
+        This deletes your account with your books, notes, hearts, friendships and lending history.
+        {shared ? " The books you added leave the shared shelf; everyone else keeps theirs." : ""}
+        {plus ? " Your Stacks Plus subscription is cancelled, so you won't be billed again." : ""}{" "}
+        It can&apos;t be undone, so you might{" "}
+        <a href="/export" download className="underline underline-offset-2">
+          download your shelf
+        </a>{" "}
+        first.
+      </p>
+      <Form
+        method="post"
+        onSubmit={(event) => {
+          if (!armed) {
+            event.preventDefault();
+            setArmed(true);
+          }
+        }}
+      >
+        <input type="hidden" name="intent" value="deleteAccount" />
+        <button
+          type="submit"
+          disabled={deleting}
+          onBlur={() => setArmed(false)}
+          // Same width either way, so nothing moves
+          className={`w-48 rounded-md px-4 py-2 text-sm font-medium ring-1 ring-inset transition-colors disabled:opacity-60 ${
+            armed || deleting
+              ? "bg-red-600 text-white ring-red-600 hover:bg-red-700"
+              : "text-red-700 ring-red-200 hover:bg-red-50 dark:text-red-400 dark:ring-red-900 dark:hover:bg-red-950/40"
+          }`}
+        >
+          {deleting ? "Deleting…" : armed ? "Click again to delete" : "Delete my account"}
+        </button>
+      </Form>
     </div>
   );
 }

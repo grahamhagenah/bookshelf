@@ -120,11 +120,11 @@ export default function Privacy() {
       <GuideSection title="Taking it with you, or deleting it">
         <p>
           You can download your shelf as a spreadsheet from Settings, and change your details
-          there any time. To delete your account and everything in it,{" "}
-          <Link to="/feedback?from=/privacy" className={proseLink}>ask through the feedback page</Link>
-          . Deleted data is gone from the live site
-          straight away and from backups within 30 days. Demo accounts delete themselves after a
-          day.
+          there any time. To delete your account and everything in it, use{" "}
+          <strong className={strong}>Delete account</strong> at the bottom of Settings; it also
+          cancels any subscription. Deleted data is gone from the live site straight away and from
+          backups within 30 days. Feedback you&apos;ve sent is kept without your name attached.
+          Demo accounts delete themselves after a day.
         </p>
         <p>
           Wherever you live, you can ask what Stacks keeps about you, have it corrected, or have it

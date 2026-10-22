@@ -28,7 +28,10 @@ export const meta: MetaFunction<typeof loader> = ({ data }) =>
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
   const user = userId ? await getUserById(userId) : null;
-  if (!user) return json({ home: null });
+  if (!user) {
+    // Just deleted their account from Settings
+    return json({ home: null, deleted: new URL(request.url).searchParams.has("deleted") });
+  }
 
   const [books, activity, sentRequests, wanted] = await Promise.all([
     getHomeBooks(user.id, await shelfIds(user.id)),
@@ -77,7 +80,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function Index() {
-  const { home } = useLoaderData<typeof loader>();
-  if (home) return <Home {...home} />;
-  return <Landing />;
+  const data = useLoaderData<typeof loader>();
+  if (data.home) return <Home {...data.home} />;
+  return (
+    <>
+      {"deleted" in data && data.deleted ? (
+        <p role="status" className="mx-4 mt-6 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-center text-sm text-stone-700 dark:text-stone-200 md:mx-8">
+          Your account and everything in it has been deleted. Thanks for being part of Stacks.
+        </p>
+      ) : null}
+      <Landing />
+    </>
+  );
 }

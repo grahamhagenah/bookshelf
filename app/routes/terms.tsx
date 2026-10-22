@@ -115,11 +115,9 @@ export default function Terms() {
 
       <GuideSection title="Stopping">
         <p>
-          You can stop using Stacks whenever you like. You can export your shelf from Settings, and
-          ask for your account to be deleted through the{" "}
-          <Link to="/feedback?from=/terms" className={proseLink}>feedback page</Link>. Deleting an
-          account cancels its subscription. Stacks may close an account that breaks these terms,
-          and will tell you why.
+          You can stop using Stacks whenever you like. You can export your shelf, and delete your
+          account, from Settings; deleting it cancels any subscription. Stacks may close an account
+          that breaks these terms, and will tell you why.
         </p>
       </GuideSection>
 
