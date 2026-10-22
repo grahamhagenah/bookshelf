@@ -402,25 +402,25 @@ export function NotePrompt({ books }: { books: PromptBook[] }) {
   return (
     <section
       aria-label="Leave a note"
-      className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-4 py-3.5"
+      className="rounded-xl border border-stone-200 dark:border-stone-800 px-4 py-3"
     >
       {/* Like a post: a header with the book, then the body */}
       <div className="flex items-center gap-3">
         <Link to={`/books/${book.id}`} className="flex-shrink-0">
-          <FeedCover book={book} className="h-[60px] w-10" />
+          <FeedCover book={book} className="h-12 w-8" />
         </Link>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold leading-snug text-stone-900 dark:text-stone-100">
+          <p className="leading-snug text-stone-800 dark:text-stone-200">
             What did you think of{" "}
             <Link
               to={`/books/${book.id}`}
-              className="underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+              className="font-medium text-stone-900 dark:text-stone-100 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
             >
               {book.title}
             </Link>
             ?
           </p>
-          <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
+          <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
             {book.returned ? "You borrowed it" : "You're borrowing it"} from {book.owner.firstname}.
             Your note stays with the book for the next reader.
           </p>
@@ -430,7 +430,11 @@ export function NotePrompt({ books }: { books: PromptBook[] }) {
           <fetcher.Form
             method="post"
             className="mt-3"
-            onSubmit={() => {
+            onSubmit={(event) => {
+              if (!body.trim()) {
+                event.preventDefault();
+                return;
+              }
               // Clear and move on; the saved note shows on the book page
               setTimeout(() => {
                 setBody("");
@@ -444,7 +448,7 @@ export function NotePrompt({ books }: { books: PromptBook[] }) {
               name="body"
               value={body}
               onChange={(event) => setBody(event.target.value)}
-              rows={2}
+              rows={1}
               maxLength={500}
               required
               placeholder={questionFor(book.id)}
@@ -454,8 +458,10 @@ export function NotePrompt({ books }: { books: PromptBook[] }) {
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
               <button
                 type="submit"
-                disabled={saving || !body.trim()}
-                className="rounded-md bg-forest-600 dark:bg-forest-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors disabled:opacity-50"
+                // Always full strength; an empty note is stopped by the box
+                // being required, not by a faded button
+                disabled={saving}
+                className="rounded-md bg-forest-600 dark:bg-forest-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors disabled:cursor-wait"
               >
                 {saving ? "Saving…" : "Leave a note"}
               </button>
