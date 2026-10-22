@@ -3,7 +3,7 @@ import { Link, useFetcher, useLocation } from "@remix-run/react";
 
 import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
-import { HeartIcon } from "~/components/icons";
+import { HeartIcon, StacksLogo } from "~/components/icons";
 import Library from "~/components/library";
 import type { FriendStatus } from "~/models/user.server";
 import { UPGRADE_PATH } from "~/plan";
@@ -50,16 +50,18 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
     <header className="pb-2">
       {/* One compact block, so the books start high on the page: the
           picture beside the name, bio and numbers */}
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-3 sm:gap-4">
         <Avatar
           firstname={data.ownerFirstname}
           surname={data.ownerSurname}
           icon={data.ownerIcon}
-          size="lg"
+          size="md"
+          // Bigger from tablet width up; on a phone the bio gets the room
+          className="sm:h-16 sm:w-16 sm:text-xl"
         />
         <div className="min-w-0">
           {/* The handle is already in the address, so it isn't repeated here */}
-          <h1 className="text-balance text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+          <h1 className="text-balance text-xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-2xl">
             {data.ownerName}
           </h1>
           {profile.bio ? (
@@ -128,6 +130,8 @@ function Invite({ data }: { data: SharedShelfData }) {
   let actions: React.ReactNode = null;
 
   if (!signedIn) {
+    // On a phone the profile below says whose shelf this is; the bar keeps
+    // to the logo and the two buttons
     text = (
       <>
         <strong className="font-semibold text-stone-900 dark:text-stone-100">{ownerName}</strong>{" "}
@@ -140,7 +144,7 @@ function Invite({ data }: { data: SharedShelfData }) {
           to={`/join?${new URLSearchParams({ invite: token, redirectTo: here })}`}
           className={primaryButton}
         >
-          Join Stacks
+          Join free
         </Link>
         <Link
           // Carries the invite in case they switch to signing up
@@ -208,11 +212,28 @@ function Invite({ data }: { data: SharedShelfData }) {
     return null;
   }
 
+  // A slim bar, like a small site's: Stacks on the left, the note and
+  // what to do on the right. A long note wraps to its own line on a phone.
   return (
-    <div className="px-4 md:px-8 pt-6 md:pt-8">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-stone-200 dark:border-stone-800 pb-5 text-sm text-stone-600 dark:text-stone-300">
-        <p className="min-w-0 flex-1">{text}</p>
-        {actions ? <div className="flex flex-shrink-0 gap-2">{actions}</div> : null}
+    <div className="px-4 md:px-8 pt-3 md:pt-5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-stone-200 dark:border-stone-800 pb-3 md:pb-4 text-sm text-stone-600 dark:text-stone-300">
+        <Link
+          to="/"
+          className="flex flex-shrink-0 items-center gap-1.5 font-semibold text-stone-900 dark:text-stone-100"
+        >
+          <StacksLogo size={22} />
+          Stacks
+        </Link>
+        <p
+          className={`min-w-0 flex-1 leading-snug ${
+            // Signed out, or on your own page, the note is wide-screen only and
+            // mustn't hold space on a phone
+            !signedIn || status === "self" ? "hidden sm:block" : "basis-48"
+          }`}
+        >
+          {text}
+        </p>
+        {actions ? <div className="ml-auto flex flex-shrink-0 gap-2">{actions}</div> : null}
       </div>
     </div>
   );
