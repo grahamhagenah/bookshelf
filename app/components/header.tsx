@@ -29,8 +29,8 @@ export default function Header() {
             className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0"
           >
             <StacksLogo
-              size={28}
-              className="text-stone-900 dark:text-stone-100"
+              size={32}
+              className="h-8 w-8 sm:h-9 sm:w-9 text-stone-900 dark:text-stone-100"
             />
             <span className="text-lg sm:text-xl">Stacks</span>
           </a>
