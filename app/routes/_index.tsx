@@ -12,6 +12,7 @@ import { getFriendActivity } from "~/models/activity.server";
 import { getHomeBooks } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
 import { getPendingFriendRequests, getUserById } from "~/models/user.server";
+import { getWantToRead } from "~/models/wish.server";
 import { publicOrigin } from "~/origin.server";
 import { seo } from "~/seo";
 import { getUserId, requireUserId } from "~/session.server";
@@ -27,15 +28,26 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = userId ? await getUserById(userId) : null;
   if (!user) return json({ home: null });
 
-  const [books, activity, sentRequests] = await Promise.all([
+  const [books, activity, sentRequests, wanted] = await Promise.all([
     getHomeBooks(user.id, await shelfIds(user.id)),
     getFriendActivity(user.id, { limit: 6 }),
     getPendingFriendRequests(user.id),
+    getWantToRead(user.id),
   ]);
   return json({
     home: {
       books,
       activity,
+      // The want-to-read list, ones a friend has first
+      wanted: [...wanted]
+        .sort((a, b) => Number(b.copies.length > 0) - Number(a.copies.length > 0))
+        .map(({ id, title, author, cover, copies }) => ({
+          id,
+          title,
+          author,
+          cover,
+          owner: copies[0]?.owner.firstname ?? null,
+        })),
       friendIds: user.following.map((friend) => friend.id),
       requestsSent: sentRequests.length,
       welcomeDismissed: welcomeDismissed(request),

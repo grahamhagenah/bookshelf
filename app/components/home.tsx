@@ -8,9 +8,9 @@ import { coverSrc } from "~/utils";
 
 import FriendActivityItem from "./friend-activity";
 
-// The signed-in home page, ordered by how soon things need you: what's due
-// at the top, then your loans both ways side by side, your newest books,
-// and what friends have been up to alongside (below, on phones)
+// The signed-in home page: a row of your newest books, a row from your
+// want-to-read list, then your loans both ways side by side, with what
+// friends have been up to alongside (below, on phones)
 
 type HomeBooks = SerializeFrom<Awaited<ReturnType<typeof getHomeBooks>>>;
 interface HomeBook {
@@ -70,17 +70,19 @@ const headingClass = "text-lg font-semibold text-stone-900 dark:text-stone-100";
 const subheadingClass =
   "mb-1 flex items-baseline gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400";
 
-function Cover({ book, className }: { book: HomeBook; className: string }) {
+function Cover({ book, className }: { book: { cover: string }; className: string }) {
   return (
     <span
       className={`block flex-shrink-0 overflow-hidden rounded-xs bg-stone-100 dark:bg-stone-800 ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}
     >
-      <img
-        src={coverSrc(book.cover)}
-        alt=""
-        loading="lazy"
-        className="h-full w-full object-cover"
-      />
+      {book.cover ? (
+        <img
+          src={coverSrc(book.cover)}
+          alt=""
+          loading="lazy"
+          className="h-full w-full object-cover"
+        />
+      ) : null}
     </span>
   );
 }
@@ -313,8 +315,43 @@ function Welcome({
   );
 }
 
+interface Wanted {
+  id: string;
+  title: string;
+  author: string;
+  cover: string;
+  // First name of a friend who has it, if any
+  owner: string | null;
+}
+
+// One row of covers: four on phones, six on wider screens
+function CoverRow({
+  items,
+  caption,
+}: {
+  items: { id: string; title: string; cover: string; to: string }[];
+  caption: (index: number) => React.ReactNode;
+}) {
+  return (
+    <ul className="grid grid-cols-4 gap-3 sm:grid-cols-6">
+      {items.slice(0, 6).map((item, index) => (
+        <li key={item.id} className={index >= 4 ? "hidden sm:block" : undefined}>
+          <Link to={item.to} title={item.title} className="block hover:opacity-90 transition-opacity">
+            <Cover book={item} className="w-full aspect-[2/3]" />
+            <span className="mt-1.5 block truncate text-xs text-stone-600 dark:text-stone-300">
+              {item.title}
+            </span>
+            {caption(index)}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function Home({
   books,
+  wanted,
   activity,
   friendIds,
   requestsSent,
@@ -322,6 +359,7 @@ export default function Home({
   welcomeDismissed,
 }: {
   books: HomeBooks;
+  wanted: Wanted[];
   activity: SerializeFrom<FriendActivity>[];
   friendIds: string[];
   requestsSent: number;
@@ -341,8 +379,11 @@ export default function Home({
     (ownCount > 0 && friendIds.length + requestsSent > 0);
   const showLoans = setupDone || books.borrowed.length + books.lent.length > 0;
   const showRecent = setupDone || ownCount > 0;
+  const showWanted = setupDone || wanted.length > 0;
   const showFeed = setupDone || friendIds.length > 0;
-  const showMain = showLoans || showRecent;
+  const showMain = showLoans || showRecent || showWanted;
+  // Every section after the first is set off by a rule
+  const divided = "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6";
 
   return (
     <main className="px-4 md:px-8 pt-4 md:pt-8 pb-8 md:pb-10">
@@ -364,36 +405,10 @@ export default function Home({
       >
         {showMain ? (
         <div className={showFeed ? "lg:pr-12" : undefined}>
-          {showLoans ? (
-          <section aria-labelledby="loans">
-            <h2 id="loans" className={`${headingClass} mb-3`}>
-              Loans
-            </h2>
-            <div className="grid gap-8 sm:grid-cols-2 sm:gap-10">
-              <LoanList
-                id="borrowing"
-                title="Borrowing"
-                books={books.borrowed.map((book) => ({ book, person: book.owner }))}
-                personLabel="From"
-                empty="Nothing borrowed right now."
-              />
-              <LoanList
-                id="lent-out"
-                title="Lent out"
-                books={books.lent.map((book) => ({ book, person: book.borrower }))}
-                personLabel="To"
-                empty="Everything's on your shelf."
-              />
-            </div>
-          </section>
-          ) : null}
-
           {showRecent ? (
           <section
             aria-labelledby="recently-added"
-            className={
-              showLoans ? "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6" : undefined
-            }
+
           >
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 id="recently-added" className={`${headingClass} whitespace-nowrap`}>
@@ -427,24 +442,10 @@ export default function Home({
               </div>
             </div>
             {books.recent.length > 0 ? (
-              // Two rows: four across on phones (the newest eight), six on
-              // wider screens
-              <ul className="grid grid-cols-4 gap-3 sm:grid-cols-6">
-                {books.recent.map((book, index) => (
-                  <li key={book.id} className={index >= 8 ? "hidden sm:block" : undefined}>
-                    <Link
-                      to={`/books/${book.id}`}
-                      title={book.title}
-                      className="block hover:opacity-90 transition-opacity"
-                    >
-                      <Cover book={book} className="w-full aspect-[2/3]" />
-                      <span className="mt-1.5 block truncate text-xs text-stone-600 dark:text-stone-300">
-                        {book.title}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <CoverRow
+                items={books.recent.map((book) => ({ ...book, to: `/books/${book.id}` }))}
+                caption={() => null}
+              />
             ) : (
               <p className="py-6 text-center text-stone-500 dark:text-stone-400">
                 Nothing here yet.{" "}
@@ -465,6 +466,71 @@ export default function Home({
             )}
           </section>
           ) : null}
+          {showWanted ? (
+          <section aria-labelledby="want-to-read" className={showRecent ? divided : undefined}>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 id="want-to-read" className={`${headingClass} whitespace-nowrap`}>
+                Want to read
+              </h2>
+              <div className="flex items-center gap-4 whitespace-nowrap">
+                {wanted.length > 0 ? (
+                  <Link to="/want-to-read" className={linkClass}>
+                    All {wanted.length}
+                  </Link>
+                ) : null}
+                <Link to="/search" className={linkClass}>
+                  Find a book
+                </Link>
+              </div>
+            </div>
+            {wanted.length > 0 ? (
+              <CoverRow
+                items={wanted.map((item) => ({ ...item, to: "/want-to-read" }))}
+                caption={(index) => (
+                  <span className="block truncate text-xs text-stone-400 dark:text-stone-500">
+                    {wanted[index].owner ? `${wanted[index].owner} has it` : "\u00a0"}
+                  </span>
+                )}
+              />
+            ) : (
+              <p className="py-6 text-center text-stone-500 dark:text-stone-400">
+                Books you&apos;d like to read go here, and you&apos;ll hear when a friend
+                has one.{" "}
+                <Link
+                  to="/search"
+                  className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                >
+                  Find one
+                </Link>
+              </p>
+            )}
+          </section>
+          ) : null}
+
+          {showLoans ? (
+          <section aria-labelledby="loans" className={showRecent || showWanted ? divided : undefined}>
+            <h2 id="loans" className={`${headingClass} mb-3`}>
+              Loans
+            </h2>
+            <div className="grid gap-8 sm:grid-cols-2 sm:gap-10">
+              <LoanList
+                id="borrowing"
+                title="Borrowing"
+                books={books.borrowed.map((book) => ({ book, person: book.owner }))}
+                personLabel="From"
+                empty="Nothing borrowed right now."
+              />
+              <LoanList
+                id="lent-out"
+                title="Lent out"
+                books={books.lent.map((book) => ({ book, person: book.borrower }))}
+                personLabel="To"
+                empty="Everything's on your shelf."
+              />
+            </div>
+          </section>
+          ) : null}
+
         </div>
         ) : null}
 
