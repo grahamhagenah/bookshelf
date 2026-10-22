@@ -65,7 +65,17 @@ export default function Footer() {
       </div>
 
       <div className="mx-auto max-w-5xl px-4 md:px-8 pb-8 flex flex-col gap-1 sm:flex-row sm:justify-between text-xs text-stone-400 dark:text-stone-500">
-        <p>© {new Date().getFullYear()} Stacks</p>
+        <p>
+          © {new Date().getFullYear()} Stacks · Made by{" "}
+          <a
+            href="https://grahamhagenah.com"
+            target="_blank"
+            rel="noreferrer"
+            className="underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline transition-colors"
+          >
+            Graham Hagenah
+          </a>
+        </p>
         <p>Book data and covers courtesy of Open Library.</p>
       </div>
     </footer>
