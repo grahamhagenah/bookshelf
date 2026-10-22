@@ -575,6 +575,15 @@ export default function Search() {
           <p className="mt-2 text-sm text-stone-400 dark:text-stone-500">
             Search once and you&apos;ll see both.
           </p>
+          <p className="mt-6 text-sm text-stone-500 dark:text-stone-400">
+            Already keep your books on Goodreads or StoryGraph?{" "}
+            <Link
+              to="/import"
+              className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+            >
+              Import them
+            </Link>
+          </p>
         </div>
       ) : (
         <div className={isSearching ? "opacity-60 transition-opacity" : ""}>

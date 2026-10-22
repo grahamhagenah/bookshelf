@@ -229,6 +229,16 @@ export function ReadIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
+// Arrow into a tray: bringing books in from elsewhere
+export function ImportIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3v11M7.5 9.5L12 14l4.5-4.5" />
+      <path d="M4 15v3.5A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5V15" />
+    </svg>
+  );
+}
+
 export function BookmarkIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
