@@ -206,7 +206,7 @@ export default function ShowcaseLending() {
                   <path d="M6 9l6 6 6-6" />
                 </svg>
               </span>
-              <span className="rounded-md bg-stone-700 dark:bg-stone-200 px-2 py-0.5 text-xs font-medium text-white dark:text-stone-900">
+              <span className="rounded-md bg-forest-600 dark:bg-forest-500 px-2 py-0.5 text-xs font-medium text-white">
                 Lend it
               </span>
             </div>
@@ -215,7 +215,7 @@ export default function ShowcaseLending() {
       </div>
 
       {/* A nudge already on its way */}
-      <div className="absolute bottom-0 right-[2%] z-30 flex -rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
+      <div className="absolute bottom-0 right-[2%] z-30 flex -rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white shadow-soft">
         <Check />
         Reminder sent to Priya
       </div>
@@ -242,7 +242,7 @@ export function ShowcaseFriends() {
             <span className="font-medium">Never Let Me Go</span>
             <span className="block text-xs text-stone-500 dark:text-stone-400">Priya Patel</span>
           </p>
-          <span className="rounded-md bg-stone-700 dark:bg-stone-200 px-2 py-0.5 text-xs font-medium text-white dark:text-stone-900">
+          <span className="rounded-md bg-forest-600 dark:bg-forest-500 px-2 py-0.5 text-xs font-medium text-white">
             Ask to borrow
           </span>
         </div>
@@ -278,7 +278,7 @@ export function ShowcaseFriends() {
         </div>
       </div>
 
-      <div className="absolute bottom-0 right-0 z-30 flex rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
+      <div className="absolute bottom-0 right-0 z-30 flex rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white shadow-soft">
         <Check />
         Asked Priya for Never Let Me Go
       </div>
@@ -372,7 +372,7 @@ export function ShowcaseShare() {
           <span className="min-w-0 flex-1 truncate rounded-md border border-stone-200 dark:border-stone-700 px-2.5 py-1 text-xs text-stone-500 dark:text-stone-400">
             bookstacks.site/share/jordan-avery
           </span>
-          <span className="rounded-md bg-stone-700 dark:bg-stone-200 px-2.5 py-1 text-xs font-medium text-white dark:text-stone-900">
+          <span className="rounded-md bg-forest-600 dark:bg-forest-500 px-2.5 py-1 text-xs font-medium text-white">
             Copy
           </span>
         </div>
@@ -398,7 +398,7 @@ export function ShowcaseShare() {
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-[4%] z-30 flex -rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
+      <div className="absolute bottom-0 left-[4%] z-30 flex -rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white shadow-soft">
         <Check />
         Link copied
       </div>

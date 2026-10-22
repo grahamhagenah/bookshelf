@@ -161,7 +161,7 @@ export default function ReaderNotes({
             <button
               type="submit"
               disabled={isSaving}
-              className={`rounded-md bg-stone-700 dark:bg-stone-200 px-3 py-1.5 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors ${isSaving ? "opacity-60 cursor-wait" : ""}`}
+              className={`rounded-md bg-forest-600 dark:bg-forest-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors ${isSaving ? "opacity-60 cursor-wait" : ""}`}
             >
               {isSaving ? "Saving…" : "Save note"}
             </button>

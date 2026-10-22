@@ -58,7 +58,7 @@ export default function Landing() {
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <Link
               to="/join"
-              className="inline-flex items-center justify-center rounded-md bg-stone-700 dark:bg-stone-200 px-6 py-3 text-lg font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+              className="inline-flex items-center justify-center rounded-md bg-forest-600 dark:bg-forest-500 px-6 py-3 text-lg font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
             >
               Create an account
             </Link>
@@ -121,7 +121,7 @@ export default function Landing() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               to="/join"
-              className="inline-flex items-center justify-center rounded-md bg-stone-700 dark:bg-stone-200 px-6 py-3 text-lg font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+              className="inline-flex items-center justify-center rounded-md bg-forest-600 dark:bg-forest-500 px-6 py-3 text-lg font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
             >
               Create an account
             </Link>
