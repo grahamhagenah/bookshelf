@@ -30,6 +30,14 @@ model User {
   // "free" or "plus". Plus lifts the book and friend limits for everyone
   // on the shelf; set by a subscription, or by an admin as a gift
   plan               String  @default("free")
+  // The Stripe subscription behind Plus, kept in step by its webhook:
+  // Stripe's status (active, past_due, canceled...), when the paid period
+  // renews, and when it ends if they've cancelled
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?
+  subscriptionStatus   String?
+  planRenewsAt         DateTime?
+  planEndsAt           DateTime?
   // When they clicked the link we emailed; no digests or request emails
   // go out before then
   emailVerifiedAt    DateTime?

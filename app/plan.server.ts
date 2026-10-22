@@ -20,15 +20,42 @@ export async function hasPlus(userId: User["id"]) {
 const friendCount = (userId: User["id"]) =>
   prisma.user.count({ where: { followedBy: { some: { id: userId } } } });
 
-// What Settings shows: the plan, and how much of each limit is used
+// What Settings shows: the plan, how much of each limit is used, and
+// where Plus comes from (their own subscription, a gift, or a housemate's)
 export async function getPlanUsage(userId: User["id"]) {
   const ids = await shelfIds(userId);
-  const [plus, books, friends] = await Promise.all([
+  const [plus, books, friends, members] = await Promise.all([
     hasPlus(userId),
     prisma.book.count({ where: { userId: { in: ids } } }),
     friendCount(userId),
+    prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        firstname: true,
+        plan: true,
+        stripeSubscriptionId: true,
+        subscriptionStatus: true,
+        planRenewsAt: true,
+        planEndsAt: true,
+      },
+    }),
   ]);
-  return { plus, books, friends, shared: ids.length > 1, limits: FREE_LIMITS };
+  const me = members.find((member) => member.id === userId);
+  const payer = members.find((member) => member.plan === "plus" && member.id !== userId);
+  return {
+    plus,
+    books,
+    friends,
+    shared: ids.length > 1,
+    limits: FREE_LIMITS,
+    // Their own Plus: paid through Stripe, or given by an admin
+    own: me?.plan === "plus" ? { paid: Boolean(me.stripeSubscriptionId), pastDue: me.subscriptionStatus === "past_due", renewsAt: me.planRenewsAt, endsAt: me.planEndsAt } : null,
+    // Someone on the shared shelf whose Plus covers them
+    coveredBy: me?.plan !== "plus" && payer ? payer.firstname : null,
+    // A Stripe customer can always reach the portal, even after cancelling
+    canManage: Boolean(me?.stripeSubscriptionId),
+  };
 }
 
 // How many more books fit on the shelf: all of them on Plus

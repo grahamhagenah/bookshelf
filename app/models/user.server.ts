@@ -1,6 +1,7 @@
 import type { Password, User, Notification } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
+import { cancelBilling } from "~/billing.server";
 import { prisma } from "~/db.server";
 import { shelfIds } from "~/models/household.server";
 import type { CoverSize, LibraryView, Theme } from "~/utils";
@@ -416,6 +417,8 @@ export async function deleteUserByEmail(email: User["email"]) {
 // don't, and books they'd borrowed go back to their owners.
 export async function deleteUsers(ids: User["id"][]) {
   if (ids.length === 0) return;
+  // Stop any subscription first, so nobody is billed for a deleted account
+  await cancelBilling(ids);
   await prisma.notification.deleteMany({
     where: {
       OR: [

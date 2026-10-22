@@ -2,12 +2,14 @@ import type {
   LoaderFunctionArgs,
   ActionFunctionArgs,
   MetaFunction,
+  SerializeFrom,
 } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { Link, useLoaderData, Form, useActionData, useFetcher } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import type { ComponentType } from "react";
 
+import { billingEnabled, confirmCheckout } from "~/billing.server";
 import Avatar, {
   AVATAR_ICONS,
   AvatarGlyph,
@@ -68,6 +70,16 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
+  // Back from Stripe's checkout: confirm the upgrade now, then tidy the URL
+  const checkout = new URL(request.url).searchParams.get("checkout");
+  if (checkout && billingEnabled()) {
+    try {
+      await confirmCheckout(userId, checkout);
+    } catch (error) {
+      console.error("Couldn't confirm a checkout; the webhook will", error);
+    }
+    return redirect("/account?upgraded=1#plan");
+  }
   const [user, bookStats, household, plan] = await Promise.all([
     getUserById(userId),
     getBookStats(userId, await shelfIds(userId)),
@@ -77,6 +89,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return {
     user,
     plan,
+    billing: billingEnabled(),
+    upgraded: new URL(request.url).searchParams.has("upgraded"),
     origin: publicOrigin(request),
     bookStats,
     household: household
@@ -519,7 +533,12 @@ export default function Account() {
         title="Plan"
         description={`Free holds ${FREE_LIMITS.books} books and ${FREE_LIMITS.friends} friends. Stacks Plus has no limits.`}
       >
-        <PlanPanel plan={data.plan} demo={Boolean(user?.demoGroup)} />
+        <PlanPanel
+          plan={data.plan}
+          demo={Boolean(user?.demoGroup)}
+          billing={data.billing}
+          upgraded={data.upgraded}
+        />
       </Section>
 
       <Section
@@ -987,49 +1006,134 @@ function HouseholdPanel({
   );
 }
 
-// How full the free plan is, and what Plus costs. Payments come later, so
-// the button says so for now.
+const longDate = (date: string | Date) =>
+  new Date(date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
+// How full the free plan is and what Plus costs, or where their Plus comes
+// from and how to manage it
 function PlanPanel({
   plan,
   demo,
+  billing,
+  upgraded,
 }: {
-  plan: { plus: boolean; books: number; friends: number; shared: boolean };
+  plan: SerializeFrom<typeof loader>["plan"];
   demo: boolean;
+  billing: boolean;
+  upgraded: boolean;
 }) {
+  const usage = `${plan.books} ${plan.books === 1 ? "book" : "books"} · ${plan.friends} ${
+    plan.friends === 1 ? "friend" : "friends"
+  }`;
+
   if (plan.plus) {
+    const own = plan.own;
+    const detail = demo
+      ? usage
+      : plan.coveredBy
+        ? `Covered by ${plan.coveredBy}'s Plus, for everyone on your shared shelf. ${usage}`
+        : own?.pastDue
+          ? "Your last payment didn't go through. Stripe will try again; you can update your card below."
+          : own?.endsAt
+            ? `Cancelled. Plus stays on until ${longDate(own.endsAt)}.`
+            : own?.renewsAt
+              ? `Renews ${longDate(own.renewsAt)}. ${usage}`
+              : own && !own.paid
+                ? `A gift from Stacks. ${usage}`
+                : usage;
     return (
       <div className="rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3">
+        {upgraded ? (
+          <p className="mb-2 text-sm font-medium text-forest-700 dark:text-forest-400" role="status">
+            Welcome to Stacks Plus. Thank you!
+          </p>
+        ) : null}
         <p className="font-medium text-stone-900 dark:text-stone-100">
           {demo ? "The demo has no limits" : "You're on Stacks Plus"}
         </p>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-          {plan.books} {plan.books === 1 ? "book" : "books"} · {plan.friends}{" "}
-          {plan.friends === 1 ? "friend" : "friends"}
-          {!demo && plan.shared ? " · covers everyone on your shared shelf" : ""}
-        </p>
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{detail}</p>
+        {billing && plan.canManage && !demo ? (
+          <BillingButton intent="portal" className={`mt-3 ${quietButton}`}>
+            Manage subscription
+          </BillingButton>
+        ) : null}
       </div>
     );
   }
+
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
-        <Meter label={plan.shared ? "Books on your shared shelf" : "Books"} used={plan.books} limit={FREE_LIMITS.books} />
+        <Meter
+          label={plan.shared ? "Books on your shared shelf" : "Books"}
+          used={plan.books}
+          limit={FREE_LIMITS.books}
+        />
         <Meter label="Friends" used={plan.friends} limit={FREE_LIMITS.friends} />
       </div>
       <div className="rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3">
         <p className="font-medium text-stone-900 dark:text-stone-100">Stacks Plus</p>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
-          Unlimited books and friends, for everyone on your shelf. ${PLUS_PRICES.monthly} a month,
-          or ${PLUS_PRICES.yearly} a year.
+          Unlimited books and friends, for everyone on your shelf. Cancel any time.
         </p>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <button type="button" disabled className={`${primaryButton} disabled:opacity-60`}>
-            Upgrade
-          </button>
-          <span className="text-sm text-stone-500 dark:text-stone-400">Coming soon</span>
-        </div>
+        {demo ? (
+          <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
+            The demo already has everything; sign up to subscribe.
+          </p>
+        ) : billing ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <BillingButton intent="checkout" interval="monthly" className={primaryButton}>
+              ${PLUS_PRICES.monthly} a month
+            </BillingButton>
+            <BillingButton intent="checkout" interval="yearly" className={quietButton}>
+              ${PLUS_PRICES.yearly} a year
+            </BillingButton>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button type="button" disabled className={`${primaryButton} disabled:opacity-60`}>
+              Upgrade
+            </button>
+            <span className="text-sm text-stone-500 dark:text-stone-400">Coming soon</span>
+          </div>
+        )}
+        {plan.canManage ? (
+          <BillingButton intent="portal" className="mt-3 text-sm text-stone-500 dark:text-stone-400 underline underline-offset-2">
+            Billing history
+          </BillingButton>
+        ) : null}
       </div>
     </div>
+  );
+}
+
+// Off to Stripe: a full page post, since Stripe's pages aren't ours
+function BillingButton({
+  intent,
+  interval,
+  className,
+  children,
+}: {
+  intent: "checkout" | "portal";
+  interval?: "monthly" | "yearly";
+  className: string;
+  children: React.ReactNode;
+}) {
+  const [going, setGoing] = useState(false);
+  // Coming back with the browser's Back button shows the button again
+  useEffect(() => {
+    const reset = () => setGoing(false);
+    window.addEventListener("pageshow", reset);
+    return () => window.removeEventListener("pageshow", reset);
+  }, []);
+  return (
+    <Form method="post" action="/api/billing" reloadDocument onSubmit={() => setGoing(true)}>
+      <input type="hidden" name="intent" value={intent} />
+      {interval ? <input type="hidden" name="interval" value={interval} /> : null}
+      <button type="submit" className={className}>
+        {going ? "Opening Stripe…" : children}
+      </button>
+    </Form>
   );
 }
 
