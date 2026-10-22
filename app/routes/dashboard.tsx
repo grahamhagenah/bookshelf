@@ -263,7 +263,8 @@ function Health({ health }: { health: Data["health"] }) {
       <h2 id="health" className={headingClass}>
         Health
       </h2>
-      <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
+      {/* One card, so the five read as a set */}
+      <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5 rounded-xl border border-stone-200 bg-stone-50/60 p-4 dark:border-stone-800 dark:bg-stone-900/40 sm:grid-cols-3 sm:p-5 lg:grid-cols-5">
         <Stat
           label="People"
           value={health.users}
