@@ -20,6 +20,7 @@ import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
+import { LentIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import ReaderNotes, { LoveButton } from "~/components/reader-notes";
 import { sendBookRequestEmail } from "~/email.server";
@@ -967,7 +968,7 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
         </>
       ) : (
         <>
-          Haven&apos;t read it yet?{" "}
+          Finished it?{" "}
           <button type="submit" className={buttonClass}>
             Mark as read
           </button>
@@ -975,6 +976,159 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
       )}
     </fetcher.Form>
   );
+}
+
+// The loan that's out right now, as the top entry of your copy's lending
+// history: who, until when, and what you can do about it, each choice
+// under a line saying what it's for
+function LoanCard({ data }: { data: BookData }) {
+  const reminder = useFetcher<{ reminderSent?: boolean }>();
+  const extend = useFetcher();
+  const returned = useFetcher();
+  const borrower = data.book.borrower;
+  if (!borrower) return null;
+
+  const due = data.book.dueDate ? new Date(data.book.dueDate) : null;
+  const daysLeft = due ? Math.ceil((due.getTime() - Date.now()) / 86_400_000) : null;
+  const overdue = daysLeft !== null && daysLeft < 0;
+  const status =
+    daysLeft === null
+      ? null
+      : overdue
+        ? `${-daysLeft} ${daysLeft === -1 ? "day" : "days"} late`
+        : daysLeft === 0
+          ? "Due today"
+          : daysLeft === 1
+            ? "Due tomorrow"
+            : daysLeft < 14
+              ? `Due in ${daysLeft} days`
+              : `Due in ${Math.round(daysLeft / 7)} weeks`;
+  const reminderSent = reminder.data?.reminderSent === true;
+  const sendingReminder = reminder.state !== "idle";
+  const extendingBy = extend.formData?.get("weeks");
+  const name = borrower.firstname;
+  const label = "text-sm text-stone-500 dark:text-stone-400";
+  const chip = `flex-shrink-0 rounded-full bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 text-xs ${
+    overdue ? "font-semibold text-stone-900 dark:text-stone-100" : "text-stone-500 dark:text-stone-400"
+  }`;
+  const button =
+    "rounded-md border border-stone-200 dark:border-stone-700 px-2 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
+  const divider = "border-t border-stone-100 dark:border-stone-800";
+
+  return (
+    <div
+      className={`rounded-xl border border-stone-200 dark:border-stone-800 text-sm transition-opacity ${
+        returned.state !== "idle" ? "opacity-50" : ""
+      }`}
+    >
+      <div className="flex items-start gap-3 p-4 sm:items-center">
+        <Avatar
+          firstname={borrower.firstname}
+          surname={borrower.surname}
+          icon={borrower.profileEmoji}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="text-base text-stone-900 dark:text-stone-100">
+            <span className="font-semibold">
+              <PersonLink
+                id={borrower.id}
+                name={`${borrower.firstname} ${borrower.surname}`}
+                friendIds={data.friendIds}
+              />
+            </span>{" "}
+            has your copy
+          </p>
+          <p className="text-stone-500 dark:text-stone-400">
+            {[
+              data.book.borrowedAt ? `Since ${monthDay(data.book.borrowedAt)}` : null,
+              due ? `due ${monthDay(due)}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+          {/* On phones the status goes under the dates, leaving the name room */}
+          {status ? <span className={`mt-2 inline-flex sm:hidden ${chip}`}>{status}</span> : null}
+        </div>
+        {status ? <span className={`hidden sm:inline-flex ${chip}`}>{status}</span> : null}
+      </div>
+
+      <div className={`grid gap-4 p-4 sm:grid-cols-2 ${divider}`}>
+        <div>
+          <p className={label}>Give {name} more time</p>
+          <extend.Form method="post" className="mt-2 flex gap-1.5">
+            <input type="hidden" name="intent" value="extendLoan" />
+            {data.extendWeeks.map((weeks) => (
+              <button
+                key={weeks}
+                type="submit"
+                name="weeks"
+                value={weeks}
+                disabled={extend.state !== "idle"}
+                className={`flex-1 whitespace-nowrap ${button} disabled:opacity-60`}
+              >
+                {extendingBy === String(weeks) ? "Extending…" : `+${weeks} ${weeks === 1 ? "week" : "weeks"}`}
+              </button>
+            ))}
+          </extend.Form>
+        </div>
+        <div>
+          <p className={label}>{overdue ? `Ask ${name} to bring it back` : `Remind ${name} it's due`}</p>
+          <reminder.Form method="post" className="mt-2">
+            <input type="hidden" name="intent" value="sendReminder" />
+            <button
+              type="submit"
+              disabled={sendingReminder || reminderSent}
+              className={`w-full ${
+                reminderSent
+                  ? `${quietLabel} py-1.5`
+                  : overdue
+                    ? `${primaryButton} py-1.5`
+                    : button
+              } disabled:cursor-default`}
+            >
+              {reminderSent ? "Reminder sent" : sendingReminder ? "Sending…" : "Send a reminder"}
+            </button>
+          </reminder.Form>
+        </div>
+      </div>
+
+      <div className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 ${divider}`}>
+        <p className="text-stone-500 dark:text-stone-400">Got it back in person?</p>
+        <returned.Form
+          method="post"
+          onSubmit={(event) => {
+            if (!confirm(`Mark ${data.book.title} as returned?`)) event.preventDefault();
+          }}
+        >
+          <input type="hidden" name="intent" value="markReturned" />
+          <button
+            type="submit"
+            className="text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:decoration-stone-500"
+          >
+            Mark as returned
+          </button>
+        </returned.Form>
+      </div>
+    </div>
+  );
+}
+
+// When the copy that's out is due back. The owner and the borrower are
+// told if it's late; anyone else just sees that someone has it.
+function CurrentLoan({ data }: { data: BookData }) {
+  const due = data.book.dueDate;
+  if (!due) return <>has it now</>;
+  const late = new Date(due) < new Date();
+  if (data.isOwner || data.isBorrower) {
+    return late ? (
+      <span className="font-semibold text-stone-900 dark:text-stone-100">
+        overdue since {monthDay(due)}
+      </span>
+    ) : (
+      <>due {monthDay(due)}</>
+    );
+  }
+  return late ? <>has it now</> : <>due back {monthDay(due)}</>;
 }
 
 // Everyone who has had this copy, newest first, down to the day it
@@ -1012,6 +1166,13 @@ function LendingHistory({ data }: { data: BookData }) {
       </h2>
       <ul className="space-y-3">
         {entries.map((entry) => {
+          if (!entry.returnedAt && isOwner && book.borrower?.id === entry.borrower.id) {
+            return (
+              <li key={entry.id}>
+                <LoanCard data={data} />
+              </li>
+            );
+          }
           const person = entry.isCurrentUser && currentUser ? currentUser : entry.borrower;
           const name = `${entry.borrower.firstname} ${entry.borrower.surname}`;
           return (
@@ -1048,9 +1209,13 @@ function LendingHistory({ data }: { data: BookData }) {
                   )}
                 </p>
                 <p className="text-sm text-stone-500 dark:text-stone-400">
-                  {entry.returnedAt
-                    ? `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
-                    : `Since ${monthDay(entry.borrowedAt)} · has it now`}
+                  {entry.returnedAt ? (
+                    `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
+                  ) : (
+                    <>
+                      Since {monthDay(entry.borrowedAt)} · <CurrentLoan data={data} />
+                    </>
+                  )}
                 </p>
               </div>
             </li>
@@ -1107,15 +1272,11 @@ export default function BookDetailsPage() {
   const isSendingFriendRequest =
     navigation.state === "submitting" &&
     navigation.formData?.get("intent") === "friendRequest";
-  const isSendingReminder =
-    navigation.state === "submitting" &&
-    navigation.formData?.get("intent") === "sendReminder";
   const isSaving =
     navigation.state === "submitting" &&
     navigation.formData?.get("intent") === "edit";
   const requestSent = actionData?.success === true;
   const friendRequestSent = actionData?.friendRequestSent === true;
-  const reminderSent = actionData?.reminderSent === true;
   const refreshResult = actionData?.refreshed !== undefined ? actionData : null;
 
   // Close edit mode after successful save
@@ -1184,13 +1345,22 @@ export default function BookDetailsPage() {
             ) : null}
           </div>
           {/* Your own copy: where it is, as a label that looks like the
-              button a friend would see here */}
+              button a friend would see here. While it's out, it takes you
+              down to the loan in the lending history. */}
           {data.isOwner && !isEditing ? (
-            <p className="w-full cursor-default rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-center text-sm text-stone-500 dark:text-stone-400">
-              {data.book.borrower
-                ? `Lent to ${data.book.borrower.firstname}`
-                : "On your shelf"}
-            </p>
+            data.book.borrower ? (
+              <a
+                href="#lending"
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+              >
+                <LentIcon size={14} className="text-stone-400 dark:text-stone-500" />
+                Lent to {data.book.borrower.firstname}
+              </a>
+            ) : (
+              <p className="w-full cursor-default rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-center text-sm text-stone-500 dark:text-stone-400">
+                On your shelf
+              </p>
+            )
           ) : null}
           {data.isOwner && !isEditing && !data.book.borrower ? (
             <LendToFriend
@@ -1254,46 +1424,14 @@ export default function BookDetailsPage() {
               </Form>
             </div>
           ) : null}
+          {/* Whose it is and when it's due are in the lending history */}
           {data.isBorrower ? (
-            <div className={panel}>
-              {data.book.user ? (
-                <div className="mb-3 space-y-0.5">
-                  <p className="text-stone-800 dark:text-stone-200 [overflow-wrap:anywhere]">
-                    Borrowed from{" "}
-                    <span className="font-semibold">
-                      <PersonLink
-                        id={data.book.user.id}
-                        name={`${data.book.user.firstname} ${data.book.user.surname}`}
-                        friendIds={data.friendIds}
-                      />
-                    </span>
-                  </p>
-                  {data.book.borrowedAt || data.book.dueDate ? (
-                    <p className="text-stone-500 dark:text-stone-400">
-                      {data.book.borrowedAt
-                        ? `Since ${monthDay(data.book.borrowedAt)}`
-                        : null}
-                      {data.book.borrowedAt && data.book.dueDate ? " · " : null}
-                      {data.book.dueDate ? (
-                        new Date(data.book.dueDate) < new Date() ? (
-                          <span className="font-semibold text-stone-900 dark:text-stone-100">
-                            Overdue since {monthDay(data.book.dueDate)}
-                          </span>
-                        ) : (
-                          <>Due {monthDay(data.book.dueDate)}</>
-                        )
-                      ) : null}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-              <Form method="post">
-                <input type="hidden" name="intent" value="return" />
-                <button type="submit" className={`w-full ${secondaryButton}`}>
-                  Return book
-                </button>
-              </Form>
-            </div>
+            <Form method="post">
+              <input type="hidden" name="intent" value="return" />
+              <button type="submit" className={`w-full ${secondaryButton}`}>
+                {data.book.user ? `Return book to ${data.book.user.firstname}` : "Return book"}
+              </button>
+            </Form>
           ) : null}
           {/* The heart comes after whatever you can do with the book */}
           {!isEditing ? (
@@ -1549,127 +1687,6 @@ export default function BookDetailsPage() {
             </>
           )}
 
-          {!isEditing && data.isOwner && data.isBorrowed && data.book.borrower
-            ? (() => {
-                const dueDate = data.book.dueDate
-                  ? new Date(data.book.dueDate)
-                  : null;
-                const now = new Date();
-                const isOverdue = dueDate && dueDate < now;
-                const daysLeft = dueDate
-                  ? Math.ceil(
-                      (dueDate.getTime() - now.getTime()) /
-                        (1000 * 60 * 60 * 24),
-                    )
-                  : null;
-
-                return (
-                  <div className={`${panel} mt-6 space-y-3`}>
-                    <p className="text-stone-800 dark:text-stone-200">
-                      Lent to{" "}
-                      <span className="font-semibold">
-                        <PersonLink
-                          id={data.book.borrower.id}
-                          name={`${data.book.borrower.firstname} ${data.book.borrower.surname}`}
-                          friendIds={data.friendIds}
-                        />
-                      </span>
-                      {data.book.borrowedAt ? (
-                        <span className="text-stone-500 dark:text-stone-400">
-                          {" "}
-                          since {monthDay(data.book.borrowedAt)}
-                        </span>
-                      ) : null}
-                      {dueDate ? (
-                        <span
-                          className={
-                            isOverdue
-                              ? "font-semibold text-stone-900 dark:text-stone-100"
-                              : "text-stone-500 dark:text-stone-400"
-                          }
-                        >
-                          {" · "}
-                          {isOverdue ? (
-                            <>
-                              overdue by {Math.abs(daysLeft!)}{" "}
-                              {Math.abs(daysLeft!) === 1 ? "day" : "days"}
-                            </>
-                          ) : daysLeft !== null && daysLeft <= 3 ? (
-                            <>
-                              due in {daysLeft} {daysLeft === 1 ? "day" : "days"}
-                            </>
-                          ) : (
-                            <>due {monthDay(dueDate)}</>
-                          )}
-                        </span>
-                      ) : null}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-2">
-                    <Form method="post">
-                      <input type="hidden" name="intent" value="sendReminder" />
-                      <button
-                        type="submit"
-                        disabled={isSendingReminder || reminderSent}
-                        className={
-                          reminderSent
-                            ? quietLabel
-                            : isSendingReminder
-                              ? `${secondaryButton} opacity-60 cursor-wait`
-                              : isOverdue
-                                ? primaryButton
-                                : secondaryButton
-                        }
-                      >
-                        {reminderSent
-                          ? "Reminder sent"
-                          : isSendingReminder
-                            ? "Sending…"
-                            : "Send a reminder"}
-                      </button>
-                    </Form>
-                      <Form method="post" className="flex items-center gap-2">
-                        <input type="hidden" name="intent" value="extendLoan" />
-                        <label htmlFor="extend-weeks" className="sr-only">
-                          Extend by
-                        </label>
-                        <select
-                          id="extend-weeks"
-                          name="weeks"
-                          defaultValue={data.extendWeeks[1]}
-                          className="h-[38px] rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-700 dark:text-stone-200 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10"
-                        >
-                          {data.extendWeeks.map((weeks) => (
-                            <option key={weeks} value={weeks}>
-                              +{weeks} {weeks === 1 ? "week" : "weeks"}
-                            </option>
-                          ))}
-                        </select>
-                        <button type="submit" className={secondaryButton}>
-                          Extend
-                        </button>
-                      </Form>
-                      <Form
-                        method="post"
-                        onSubmit={(event) => {
-                          if (!confirm(`Mark ${data.book.title} as returned?`)) {
-                            event.preventDefault();
-                          }
-                        }}
-                      >
-                        <input type="hidden" name="intent" value="markReturned" />
-                        <button
-                          type="submit"
-                          className="rounded-md px-3 py-2 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
-                        >
-                          Mark returned
-                        </button>
-                      </Form>
-                    </div>
-                  </div>
-                );
-              })()
-            : null}
-
           {!isEditing && data.book.firstSentence ? (
             <div className="mt-8">
               <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
@@ -1706,7 +1723,7 @@ export default function BookDetailsPage() {
           ) : null}
 
           {!isEditing ? (
-            <div className="mt-10">
+            <div id="lending" className="mt-10 scroll-mt-6">
               <LendingHistory data={data} />
             </div>
           ) : null}
