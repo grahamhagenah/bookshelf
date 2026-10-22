@@ -7,6 +7,7 @@ import {
   extendLoan,
   getHomeBooks,
   lendBook,
+  lendToFriend,
   loanWeeks,
   returnBook,
 } from "./book.server";
@@ -182,5 +183,43 @@ describe("getHomeBooks", () => {
       "Due sooner",
       "Due later",
     ]);
+  });
+});
+
+describe("lendToFriend", () => {
+  test("lends the book and answers the friend's pending request", async () => {
+    const owner = await makeUser("Owner");
+    const friend = await makeUser("Friend");
+    const other = await makeUser("Other");
+    const book = await makeBook(owner.id, "Gilead");
+    const request = (from: string) =>
+      prisma.notification.create({
+        data: {
+          type: "BOOK_REQUEST",
+          senderId: from,
+          receiverId: owner.id,
+          senderName: "Someone",
+          bookId: book.id,
+          bookTitle: book.title,
+        },
+      });
+    const friendsRequest = await request(friend.id);
+    const othersRequest = await request(other.id);
+
+    await lendToFriend(book.id, owner.id, friend.id, 2);
+
+    const lent = await prisma.book.findUniqueOrThrow({ where: { id: book.id } });
+    expect(lent.borrowerId).toBe(friend.id);
+    expect(lent.dueDate!.getTime() - lent.borrowedAt!.getTime()).toBe(2 * WEEK);
+
+    const answered = await prisma.notification.findUniqueOrThrow({
+      where: { id: friendsRequest.id },
+    });
+    expect(answered).toMatchObject({ read: true, actionTaken: "approved" });
+    // Someone else's request is left for the owner to deal with
+    const untouched = await prisma.notification.findUniqueOrThrow({
+      where: { id: othersRequest.id },
+    });
+    expect(untouched.actionTaken).toBeNull();
   });
 });
