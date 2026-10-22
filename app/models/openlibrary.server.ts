@@ -1,7 +1,16 @@
 import type { Book } from "@prisma/client";
 
 import { prisma } from "~/db.server";
-import { cleanSubjects } from "~/utils";
+import {
+  cleanSubjects,
+  editionPublisher,
+  ENGLISH_EDITION_FIELDS,
+  ENGLISH_EDITION_PARAMS,
+  englishTitle,
+  isLatin,
+  readableName,
+} from "~/utils";
+import type { WithEnglishEdition } from "~/utils";
 
 // Open Library can be slow; never hold a page up for long
 const TIMEOUT_MS = 4000;
@@ -96,8 +105,11 @@ function cleanBio(bio: string | null): string | null {
 
 async function refreshAuthor(key: string) {
   const existing = await prisma.author.findUnique({ where: { key } });
+  // A name saved in another script before names were put into English is
+  // looked up again
   if (
     existing &&
+    isLatin(existing.name) &&
     Date.now() - existing.updatedAt.getTime() < AUTHOR_MAX_AGE_MS
   ) {
     return;
@@ -110,7 +122,7 @@ async function refreshAuthor(key: string) {
     links.find((link) => link.url?.includes("wikipedia.org"))?.url ??
     null;
   const author = {
-    name: typeof data.name === "string" ? data.name : "",
+    name: readableName(data),
     bio: cleanBio(textValue(data.bio)),
     birthDate: typeof data.birth_date === "string" ? data.birth_date : null,
     deathDate: typeof data.death_date === "string" ? data.death_date : null,
@@ -123,8 +135,55 @@ async function refreshAuthor(key: string) {
   });
 }
 
+// An author's name in English, for one Open Library gave in another script
+// (村上春樹 is Haruki Murakami). Looks the author up once and keeps them;
+// gives back the name it was handed if that fails.
+export async function englishAuthorName(key: string | null | undefined, name: string) {
+  if (!key || isLatin(name)) return name;
+  try {
+    await refreshAuthor(key);
+    const author = await prisma.author.findUnique({ where: { key }, select: { name: true } });
+    return author?.name || name;
+  } catch {
+    return name;
+  }
+}
+
+// A book saved with its author in another script gets the English name
+// when it's opened. Returns the new name, or undefined if nothing changed.
+export async function tidyAuthor(book: Pick<Book, "id" | "author" | "authorKey">) {
+  if (!book.authorKey || isLatin(book.author)) return undefined;
+  const author = await englishAuthorName(book.authorKey, book.author);
+  if (author === book.author) return undefined;
+  await prisma.book.update({ where: { id: book.id }, data: { author } });
+  return author;
+}
+
+// Search results with English titles and author names, for showing and
+// adding. Each author in another script is looked up once.
+export async function inEnglish<
+  T extends WithEnglishEdition & { title?: string; author_name?: string[]; author_key?: string[] },
+>(docs: T[]): Promise<T[]> {
+  const names = new Map<string, Promise<string>>();
+  return Promise.all(
+    docs.map(async (doc) => {
+      const title =
+        typeof doc.title === "string" ? englishTitle(doc.title, doc.editions?.docs?.[0]) : doc.title;
+      const [first, ...rest] = doc.author_name ?? [];
+      const key = doc.author_key?.[0];
+      if (!first || !key || isLatin(first)) return { ...doc, title };
+      let name = names.get(key);
+      if (!name) {
+        name = englishAuthorName(key, first);
+        names.set(key, name);
+      }
+      return { ...doc, title, author_name: [await name, ...rest] };
+    }),
+  );
+}
+
 const SEARCH_FIELDS =
-  "key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,publisher,first_sentence,author_key,isbn";
+  `key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,first_sentence,author_key,isbn,${ENGLISH_EDITION_FIELDS}`;
 
 interface Found {
   title: string | null;
@@ -154,19 +213,20 @@ export async function lookupWork(book: {
       ? `q=${encodeURIComponent(`isbn:${book.isbn}`)}`
       : `title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}`;
   const data = await getJson(
-    `https://openlibrary.org/search.json?${query}&limit=1&fields=${SEARCH_FIELDS}`,
+    `https://openlibrary.org/search.json?${query}&limit=1&${ENGLISH_EDITION_PARAMS}&fields=${SEARCH_FIELDS}`,
   );
   const doc = data.docs?.[0];
   if (!doc) return null;
+  const name = doc.author_name?.[0];
   return {
-    title: typeof doc.title === "string" ? doc.title : null,
-    author: doc.author_name?.[0] ?? null,
+    title: typeof doc.title === "string" ? englishTitle(doc.title, doc.editions?.docs?.[0]) : null,
+    author: name ? await englishAuthorName(doc.author_key?.[0], name) : null,
     key: typeof doc.key === "string" ? doc.key : null,
     cover: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : null,
     datePublished: doc.first_publish_year ? String(doc.first_publish_year) : null,
     pageCount: doc.number_of_pages_median ?? null,
     subjects: cleanSubjects(doc.subject).join(", ") || null,
-    publisher: doc.publisher?.[0] ?? null,
+    publisher: editionPublisher(doc),
     firstSentence: pickFirstSentence(doc.first_sentence),
     authorKey: doc.author_key?.[0] ?? null,
     isbn: Array.isArray(doc.isbn) ? (doc.isbn.find((n: string) => n.length === 13) ?? doc.isbn[0] ?? null) : null,

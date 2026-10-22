@@ -24,7 +24,7 @@ import {
   searchFriendsBooks,
 } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
-import { fetchDescription } from "~/models/openlibrary.server";
+import { fetchDescription, inEnglish } from "~/models/openlibrary.server";
 import {
   addWantToRead,
   getWantToReadWorks,
@@ -32,7 +32,13 @@ import {
 } from "~/models/wish.server";
 import { seo } from "~/seo";
 import { requireUserId, getUserId } from "~/session.server";
-import { cleanSubjects, coverSrc } from "~/utils";
+import {
+  cleanSubjects,
+  coverSrc,
+  editionPublisher,
+  ENGLISH_EDITION_FIELDS,
+  ENGLISH_EDITION_PARAMS,
+} from "~/utils";
 import { sameWork } from "~/works";
 
 export const meta: MetaFunction = () =>
@@ -45,11 +51,12 @@ export const handle = {
 interface OpenLibraryBook {
   title: string;
   author_name?: string[];
+  author_key?: string[];
   cover_i?: number;
   first_publish_year?: number;
   number_of_pages_median?: number;
   subject?: string[];
-  publisher?: string[];
+  editions?: { docs?: { title?: string; language?: string[]; publisher?: string[] }[] };
   key?: string;
   language?: string[];
 }
@@ -119,13 +126,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const fields = [
     "title",
     "author_name",
+    "author_key",
     "cover_i",
     "first_publish_year",
     "number_of_pages_median",
     "subject",
-    "publisher",
     "key",
     "language",
+    ENGLISH_EDITION_FIELDS,
   ].join(",");
 
   // Build the query with language filter if specified
@@ -159,11 +167,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   let data: OpenLibraryResponse = { docs: [], numFound: 0 };
   try {
     const res = await fetch(
-      `https://openlibrary.org/search.json?${searchQuery}&limit=${RESULTS_PER_PAGE}&offset=${offset}&fields=${fields}`,
+      `https://openlibrary.org/search.json?${searchQuery}&limit=${RESULTS_PER_PAGE}&offset=${offset}&${ENGLISH_EDITION_PARAMS}&fields=${fields}`,
       { signal: AbortSignal.timeout(8000) },
     );
     const body = await res.json();
-    if (res.ok && Array.isArray(body.docs)) data = body;
+    if (res.ok && Array.isArray(body.docs)) data = { ...body, docs: await inEnglish(body.docs) };
   } catch {
     // keep the empty result
   }
@@ -377,7 +385,7 @@ function SearchResultItem({
   const details = [
     book.first_publish_year,
     book.number_of_pages_median ? `${book.number_of_pages_median} pages` : null,
-    book.publisher?.[0],
+    editionPublisher(book),
   ].filter(Boolean);
 
   return (
@@ -429,7 +437,7 @@ function SearchResultItem({
           <input
             type="hidden"
             name="publisher"
-            value={book.publisher?.[0] ?? ""}
+            value={editionPublisher(book) ?? ""}
           />
           <input type="hidden" name="openLibraryKey" value={book.key ?? ""} />
 

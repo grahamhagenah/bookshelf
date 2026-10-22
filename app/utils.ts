@@ -130,12 +130,104 @@ const SUBJECT_NOISE = new Set([
   "english language",
 ]);
 
+// Open Library names some authors in their own script (村上春樹) and some
+// works by their original title (海辺のカフカ). These pick the English.
+
+// Written in the Latin alphabet, accents and all
+export const isLatin = (text: string) => /^[\p{Script=Latin}\p{M}\p{N}\p{P}\p{S}\s]*$/u.test(text);
+
+const shouting = (name: string) => name.split(/\s+/).some((word) => word.length > 1 && word === word.toUpperCase());
+
+// An author's name in English: their own when it's already in the Latin
+// alphabet; else "Murakami, Haruki" turned round; else the first plainly
+// written Latin form among their other names
+export function readableName(author: {
+  name?: string | null;
+  personal_name?: string | null;
+  alternate_names?: string[] | null;
+}): string {
+  const name = author.name?.trim() ?? "";
+  if (name && isLatin(name)) return name;
+  const personal = author.personal_name?.trim();
+  if (personal && isLatin(personal)) {
+    const [last, first] = personal.split(/\s*,\s*/);
+    return first ? `${first} ${last}` : personal;
+  }
+  const alternate = author.alternate_names?.find(
+    (other) => isLatin(other) && !other.includes(",") && !shouting(other) && other.trim().includes(" "),
+  );
+  return alternate?.trim() || name;
+}
+
+// A translated book's title as its English edition has it. Only when they
+// really differ, so "Sapiens" keeps its short title and its capitals.
+export function englishTitle(
+  workTitle: string,
+  edition: { title?: string; language?: string[] } | undefined,
+): string {
+  const title = edition?.title?.trim();
+  if (!title || !edition?.language?.includes("eng")) return workTitle;
+  const main = (text: string) => text.split(":")[0].trim().toLowerCase();
+  return main(title) === main(workTitle) ? workTitle : title;
+}
+
+// A work's publisher list mixes in every translation's, in no useful order
+// (a Basque publisher first for Raymond Carver). Searching with these asks
+// for the English edition too, whose publisher matches the copy people own.
+export const ENGLISH_EDITION_PARAMS = "lang=en";
+export const ENGLISH_EDITION_FIELDS =
+  "editions,editions.key,editions.title,editions.language,editions.publisher";
+
+export interface WithEnglishEdition {
+  editions?: { docs?: { title?: string; language?: string[]; publisher?: string[] }[] };
+}
+
+export function editionPublisher(doc: WithEnglishEdition): string | null {
+  const raw = doc.editions?.docs?.[0]?.publisher?.[0];
+  if (!raw) return null;
+  // Some arrive with library catalog codes: "#bVintage, #c2009." is Vintage
+  const parts = raw
+    .replace(/#[a-z]/g, "")
+    .split(",")
+    .map((part) => part.trim().replace(/[.;:]+$/, ""))
+    .filter((part) => part && !/^\[?c?\d{4}\]?$/.test(part));
+  return parts.join(", ") || null;
+}
+
+// Open Library lists every translation's subjects alongside the book's own:
+// "Translations into Korean", "Korean short stories", "Chinese language
+// materials". Those notes go, and so does any subject led by a language the
+// book was translated into (English aside, since that's the copy people own).
+const TRANSLATION_NOTE = /^translations? (into|from) |\blanguage materials$/i;
+
+// Whether a stored list still carries those notes, from before they were
+// filtered out
+export const hasTranslationSubjects = (subjects: string) =>
+  subjects.split(",").some((subject) => TRANSLATION_NOTE.test(subject.trim()));
+
+function translatedInto(list: string[]) {
+  const languages = new Set<string>();
+  for (const subject of list) {
+    const match = subject.trim().match(/^translations? into (.+?)\.?$/i);
+    if (match && match[1].toLowerCase() !== "english") languages.add(match[1].toLowerCase());
+  }
+  return [...languages];
+}
+
 export function cleanSubjects(subjects: string[] | string | null | undefined, max = 5) {
   const list = Array.isArray(subjects) ? subjects : (subjects ?? "").split(",");
+  const translations = translatedInto(list);
   const seen = new Set<string>();
   const kept: string[] = [];
   for (const raw of list) {
     let subject = raw.trim().replace(/\.$/, "");
+    const lower = subject.toLowerCase();
+    if (
+      TRANSLATION_NOTE.test(subject) ||
+      translations.some((language) => lower.startsWith(`${language} `))
+    ) {
+      continue;
+    }
     // "genre:fantasy" carries a real topic; other "code:value" tags don't
     const genre = subject.match(/^genre:(.+)$/i);
     if (genre) subject = genre[1].replace(/[_-]+/g, " ");

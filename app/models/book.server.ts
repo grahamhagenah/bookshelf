@@ -1,7 +1,7 @@
 import type { User, Book } from "@prisma/client";
 
 import { prisma } from "~/db.server";
-import { cleanSubjects } from "~/utils";
+import { cleanSubjects, hasTranslationSubjects } from "~/utils";
 
 import { shelfIdsFor } from "./household.server";
 
@@ -575,4 +575,14 @@ export async function getExportBooks(userId: User["id"], ownerIds: User["id"][])
     loved: book.readerNotes[0]?.loved ?? false,
     note: book.readerNotes[0]?.body ?? null,
   }));
+}
+
+// Books added before translations' subjects were filtered out still store
+// them ("Translations into Korean"). Tidy one when it's opened; returns the
+// cleaned list (which may be null), or undefined when there was nothing to do.
+export async function tidySubjects(book: Pick<Book, "id" | "subjects">) {
+  if (!book.subjects || !hasTranslationSubjects(book.subjects)) return undefined;
+  const subjects = cleanSubjects(book.subjects).join(", ") || null;
+  await prisma.book.update({ where: { id: book.id }, data: { subjects } });
+  return subjects;
 }

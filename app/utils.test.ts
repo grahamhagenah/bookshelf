@@ -1,6 +1,10 @@
 import {
   cleanSubjects,
   coverSrc,
+  editionPublisher,
+  englishTitle,
+  isLatin,
+  readableName,
   isDemoEmail,
   looksLikeBot,
   MIN_SIGNUP_MS,
@@ -67,6 +71,34 @@ describe("cleanSubjects", () => {
     ).toEqual(["Fantasy", "Labyrinths"]);
   });
 
+  test("drops what belongs to translations, not the book", () => {
+    // Open Library's real list for What We Talk About When We Talk About Love
+    const carver = [
+      "Translations from American",
+      "Korean Short stories",
+      "American Short stories",
+      "Translations into Korean",
+      "Fiction",
+      "Manners and customs",
+      "Short stories",
+      "American fiction (fictional works by one author)",
+      "Chinese language materials",
+    ];
+    expect(cleanSubjects(carver)).toEqual(["American Short stories", "Manners and customs", "Short stories"]);
+    // The same, from the five stored on a book before this fix
+    expect(
+      cleanSubjects(
+        "Translations from American, Korean Short stories, American Short stories, Translations into Korean, Manners and customs",
+      ),
+    ).toEqual(["American Short stories", "Manners and customs"]);
+  });
+
+  test("keeps the book's own language, and translation as a topic", () => {
+    expect(
+      cleanSubjects(["Translations into English", "Russian fiction", "Translation", "English fiction"]),
+    ).toEqual(["Russian fiction", "Translation", "English fiction"]);
+  });
+
   test("keeps genre tags as plain topics", () => {
     expect(cleanSubjects(["genre:science_fiction"])).toEqual(["Science fiction"]);
   });
@@ -111,6 +143,49 @@ describe("stripMarkdown", () => {
   test("collapses runs of blank lines", () => {
     expect(stripMarkdown("One.\r\n\n\n\nTwo.")).toBe("One.\n\nTwo.");
   });
+});
+
+test("editionPublisher takes the English edition's, minus catalog codes", () => {
+  const edition = (publisher: string) => ({ editions: { docs: [{ publisher: [publisher] }] } });
+  expect(editionPublisher(edition("Collins"))).toBe("Collins");
+  expect(editionPublisher(edition("#bVintage, #c2009."))).toBe("Vintage");
+  expect(editionPublisher(edition("Picador, Pan Bks"))).toBe("Picador, Pan Bks");
+  expect(editionPublisher({})).toBeNull();
+});
+
+test("isLatin tells the alphabet apart from other scripts", () => {
+  expect(isLatin("Gabriel García Márquez")).toBe(true);
+  expect(isLatin("Ngũgĩ wa Thiong'o")).toBe(true);
+  expect(isLatin("村上春樹")).toBe(false);
+  expect(isLatin("Харуки Мураками")).toBe(false);
+});
+
+test("readableName puts an author's name into English", () => {
+  // Open Library's record for Haruki Murakami
+  const murakami = {
+    name: "村上春樹",
+    personal_name: "Murakami, Haruki",
+    alternate_names: ["春樹 村上", "HARUKI MURAKAMI", "Haruki MURAKAMI", "Murakami Haruki", "Haruki Murakami"],
+  };
+  expect(readableName(murakami)).toBe("Haruki Murakami");
+  // Without a personal name, the first plainly written form
+  expect(readableName({ ...murakami, personal_name: null })).toBe("Murakami Haruki");
+  expect(readableName({ name: "Susanna Clarke", personal_name: "Clarke, Susanna" })).toBe("Susanna Clarke");
+  expect(readableName({ name: "莫言" })).toBe("莫言");
+});
+
+test("englishTitle uses the English edition's title only for a translation", () => {
+  const english = (title: string) => ({ title, language: ["eng"] });
+  expect(englishTitle("海辺のカフカ", english("Kafka on the Shore"))).toBe("Kafka on the Shore");
+  expect(englishTitle("Cien años de soledad", english("One Hundred Years of Solitude"))).toBe(
+    "One Hundred Years of Solitude",
+  );
+  expect(englishTitle("Sapiens", english("Sapiens: A Brief History of Humankind"))).toBe("Sapiens");
+  expect(
+    englishTitle("What We Talk About When We Talk About Love", english("What we talk about when we talk about love")),
+  ).toBe("What We Talk About When We Talk About Love");
+  expect(englishTitle("海辺のカフカ", { title: "Kafka am Strand", language: ["ger"] })).toBe("海辺のカフカ");
+  expect(englishTitle("Piranesi", undefined)).toBe("Piranesi");
 });
 
 test("coverSrc can ask Open Library for a smaller size", () => {
