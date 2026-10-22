@@ -22,6 +22,7 @@ import {
   getFunnel,
   getHealth,
   getLending,
+  setPlan,
 } from "~/models/admin.server";
 import { deleteExpiredDemoGroups } from "~/models/demo.server";
 import { getFeedback, setFeedbackDone } from "~/models/feedback.server";
@@ -95,6 +96,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
     await updateUser(targetId, { firstname, surname, email });
     return json({ ok: true, saved: true });
+  }
+
+  if (intent === "setPlan") {
+    await setPlan(targetId, form.get("plus") === "true");
+    return json({ ok: true });
   }
 
   // Admins can't delete their own account from here
@@ -669,6 +675,7 @@ function EditUser({ user, isYou }: { user: AdminUser; isYou: boolean }) {
           </fetcher.Form>
         )}
       </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
       <p className="text-sm" role="status">
         {error ? (
           <span className={warnText}>{error}</span>
@@ -684,7 +691,26 @@ function EditUser({ user, isYou }: { user: AdminUser; isYou: boolean }) {
           <span className={mutedClass}>This is you, so it can&apos;t be deleted here.</span>
         ) : null}
       </p>
+      <PlanSwitch user={user} />
+      </div>
     </div>
+  );
+}
+
+// Give someone Plus for free, or take back a gift
+function PlanSwitch({ user }: { user: AdminUser }) {
+  const fetcher = useFetcher<typeof action>({ key: `plan-${user.id}` });
+  const plus = fetcher.formData ? fetcher.formData.get("plus") === "true" : user.plus;
+  return (
+    <fetcher.Form method="post" className="flex items-center gap-2 text-sm">
+      <input type="hidden" name="intent" value="setPlan" />
+      <input type="hidden" name="userId" value={user.id} />
+      <input type="hidden" name="plus" value={plus ? "false" : "true"} />
+      <span className={mutedClass}>{plus ? "On Stacks Plus" : "Free plan"}</span>
+      <button type="submit" className={outlineButton}>
+        {plus ? "End Plus" : "Give Plus"}
+      </button>
+    </fetcher.Form>
   );
 }
 
@@ -702,6 +728,11 @@ function UserRow({ user, isYou }: { user: AdminUser; isYou: boolean }) {
           {user.isAdmin ? (
             <span className="ml-2 rounded px-1.5 py-0.5 text-xs font-medium bg-forest-600/10 text-forest-700 dark:bg-forest-400/15 dark:text-forest-400">
               Admin
+            </span>
+          ) : null}
+          {user.plus ? (
+            <span className="ml-2 rounded px-1.5 py-0.5 text-xs font-medium bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+              Plus
             </span>
           ) : null}
           <span className={`block truncate ${mutedClass}`}>{user.email}</span>

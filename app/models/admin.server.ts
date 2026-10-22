@@ -149,6 +149,7 @@ export async function getAdminUsers() {
       firstname: true,
       surname: true,
       isAdmin: true,
+      plan: true,
       createdAt: true,
       books: {
         select: { title: true, createdAt: true },
@@ -186,6 +187,7 @@ export async function getAdminUsers() {
       surname: user.surname,
       name: `${user.firstname} ${user.surname}`,
       isAdmin: user.isAdmin,
+      plus: user.plan === "plus",
       createdAt: user.createdAt,
       lastActive,
       bookCount: user.books.length,
@@ -279,4 +281,9 @@ export async function getFunnel() {
     ];
   };
   return { allTime: steps(null), last30: steps(daysAgo(30)) };
+}
+
+// Plus as a gift, for friends and early users
+export function setPlan(userId: string, plus: boolean) {
+  return prisma.user.update({ where: { id: userId }, data: { plan: plus ? "plus" : "free" } });
 }

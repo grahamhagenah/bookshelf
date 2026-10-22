@@ -6,6 +6,7 @@ import { createBook } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
 import { lookupWork } from "~/models/openlibrary.server";
 import { notifyWanters } from "~/models/wish.server";
+import { roomForBooks } from "~/plan.server";
 import { requireUserId } from "~/session.server";
 import { sameWork } from "~/works";
 
@@ -18,6 +19,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (isbn.length !== 10 && isbn.length !== 13) {
     return json({ error: "That isn't an ISBN" }, { status: 400 });
   }
+
+  // The free plan's shelf is full
+  if ((await roomForBooks(userId)) < 1) return json({ limit: true as const }, { status: 403 });
 
   let found;
   try {
@@ -62,4 +66,5 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export type ScanResponse =
   | { added: { id: string; title: string; author: string; cover: string } }
   | { alreadyExists: true; title: string }
+  | { limit: true }
   | { error: string };

@@ -1,6 +1,7 @@
 import type { User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
+import { friendLimitBetween } from "~/plan.server";
 import { isDemoEmail } from "~/utils";
 import { sameWork } from "~/works";
 
@@ -125,7 +126,8 @@ export function getIncomingFriendRequests(userId: User["id"]) {
 }
 
 // Answers a request sent to this person, and only to them; the friend is
-// whoever sent it
+// whoever sent it. A request either side has no room for on the free plan
+// stays waiting.
 export async function answerFriendRequest(
   userId: User["id"],
   notificationId: string,
@@ -135,13 +137,17 @@ export async function answerFriendRequest(
     where: { id: notificationId, receiverId: userId, type: "FRIEND_REQUEST" },
     select: { senderId: true },
   });
-  if (!request) return false;
-  if (accept) await createFriendship(userId, request.senderId);
+  if (!request) return "not-found" as const;
+  if (accept) {
+    const limit = await friendLimitBetween(userId, request.senderId);
+    if (limit) return limit;
+    await createFriendship(userId, request.senderId);
+  }
   await prisma.notification.update({
     where: { id: notificationId },
     data: { read: true, actionTaken: accept ? "accepted" : "declined" },
   });
-  return true;
+  return "done" as const;
 }
 
 // Ends a friendship both ways. Books already lent stay lent until they come
@@ -203,7 +209,10 @@ export async function getInviter(token: string) {
 
 export type InviteResult =
   | { ok: true; inviterId: string }
-  | { ok: false; reason: "no-such-invite" | "own-invite" | "demo-boundary" };
+  | {
+      ok: false;
+      reason: "no-such-invite" | "own-invite" | "demo-boundary" | "full" | "they-are-full";
+    };
 
 // Opening someone's invite: you're friends from now on, any request between
 // you is settled, and they hear that you've joined
@@ -220,6 +229,9 @@ export async function acceptFriendInvite(userId: User["id"], token: string): Pro
     where: { id: userId, following: { some: { id: inviter.id } } },
   });
   if (already) return { ok: true, inviterId: inviter.id };
+
+  const limit = await friendLimitBetween(userId, inviter.id);
+  if (limit) return { ok: false, reason: limit };
 
   await createFriendship(userId, inviter.id);
   await prisma.notification.updateMany({

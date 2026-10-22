@@ -16,6 +16,7 @@ import type { ImportSource, ShelfChoice } from "~/import-books";
 import { defaultChoice, readExport, summarize } from "~/import-books";
 import { importBooks } from "~/models/import.server";
 import { fillInBooks } from "~/models/openlibrary.server";
+import { UPGRADE_PATH } from "~/plan";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -182,6 +183,15 @@ export default function Import() {
                 ? ` ${plural(result.skipped, "book")} ${result.skipped === 1 ? "was" : "were"} already there.`
                 : ""}
             </p>
+            {result.overLimit ? (
+              <p className="mt-3 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200">
+                Your shelf is full on the free plan, so {plural(result.overLimit, "book")} didn&apos;t
+                fit. With Stacks Plus you can import the file again to bring in the rest.{" "}
+                <Link to={UPGRADE_PATH} className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2">
+                  See Stacks Plus
+                </Link>
+              </p>
+            ) : null}
             <p className={`mt-1 text-sm ${muted}`}>
               Covers and details are filling in from Open Library now. Give it a minute or two.
             </p>

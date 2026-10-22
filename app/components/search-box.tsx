@@ -1,7 +1,9 @@
 import { useFetcher, useNavigate } from "@remix-run/react";
 import { useEffect, useId, useRef, useState } from "react";
 
+import { UPGRADE_PATH } from "~/plan";
 import type { SuggestResponse } from "~/routes/api.search-suggest";
+
 
 import { SearchIcon } from "./icons";
 
@@ -27,10 +29,24 @@ function AddFromSuggestion({
 }: {
   book: SuggestResponse["openLibrary"][number];
 }) {
-  const fetcher = useFetcher<{ success?: boolean; alreadyExists?: boolean }>();
+  const fetcher = useFetcher<{ success?: boolean; alreadyExists?: boolean; limit?: string }>();
   const added = fetcher.data?.success === true;
   const owned = book.inLibrary || fetcher.data?.alreadyExists === true;
   const adding = fetcher.state !== "idle";
+
+  // The free plan's shelf is full
+  if (fetcher.data?.limit) {
+    return (
+      <a
+        href={UPGRADE_PATH}
+        title={fetcher.data.limit}
+        onClick={(event) => event.stopPropagation()}
+        className="flex-shrink-0 text-xs font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2"
+      >
+        Shelf full
+      </a>
+    );
+  }
 
   if (owned || added) {
     return (

@@ -45,6 +45,8 @@ import {
   setEmailSetting,
 } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
+import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
+import { getPlanUsage } from "~/plan.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 import {
@@ -66,13 +68,15 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [user, bookStats, household] = await Promise.all([
+  const [user, bookStats, household, plan] = await Promise.all([
     getUserById(userId),
     getBookStats(userId, await shelfIds(userId)),
     getHousehold(userId),
+    getPlanUsage(userId),
   ]);
   return {
     user,
+    plan,
     origin: publicOrigin(request),
     bookStats,
     household: household
@@ -511,6 +515,14 @@ export default function Account() {
       </Section>
 
       <Section
+        id="plan"
+        title="Plan"
+        description={`Free holds ${FREE_LIMITS.books} books and ${FREE_LIMITS.friends} friends. Stacks Plus has no limits.`}
+      >
+        <PlanPanel plan={data.plan} demo={Boolean(user?.demoGroup)} />
+      </Section>
+
+      <Section
         title="Preferences"
         description="How Stacks looks. These follow you to every device you sign in on."
       >
@@ -708,16 +720,19 @@ export default function Account() {
 // A settings group: its name and a line about it on the left, the
 // controls on the right (stacked on a phone)
 function Section({
+  id,
   title,
   description,
   children,
 }: {
+  id?: string;
   title: string;
   description: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="grid gap-5 md:grid-cols-3 md:gap-10">
+    // Clear of the sticky header when linked to
+    <section id={id} className="grid scroll-mt-24 gap-5 md:grid-cols-3 md:gap-10">
       <div>
         <h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">{title}</h2>
         <p className="mt-1 text-pretty text-sm text-stone-500 dark:text-stone-400">
@@ -968,6 +983,79 @@ function HouseholdPanel({
           </button>
         </Form>
       ) : null}
+    </div>
+  );
+}
+
+// How full the free plan is, and what Plus costs. Payments come later, so
+// the button says so for now.
+function PlanPanel({
+  plan,
+  demo,
+}: {
+  plan: { plus: boolean; books: number; friends: number; shared: boolean };
+  demo: boolean;
+}) {
+  if (plan.plus) {
+    return (
+      <div className="rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3">
+        <p className="font-medium text-stone-900 dark:text-stone-100">
+          {demo ? "The demo has no limits" : "You're on Stacks Plus"}
+        </p>
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+          {plan.books} {plan.books === 1 ? "book" : "books"} · {plan.friends}{" "}
+          {plan.friends === 1 ? "friend" : "friends"}
+          {!demo && plan.shared ? " · covers everyone on your shared shelf" : ""}
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Meter label={plan.shared ? "Books on your shared shelf" : "Books"} used={plan.books} limit={FREE_LIMITS.books} />
+        <Meter label="Friends" used={plan.friends} limit={FREE_LIMITS.friends} />
+      </div>
+      <div className="rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3">
+        <p className="font-medium text-stone-900 dark:text-stone-100">Stacks Plus</p>
+        <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
+          Unlimited books and friends, for everyone on your shelf. ${PLUS_PRICES.monthly} a month,
+          or ${PLUS_PRICES.yearly} a year.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button type="button" disabled className={`${primaryButton} disabled:opacity-60`}>
+            Upgrade
+          </button>
+          <span className="text-sm text-stone-500 dark:text-stone-400">Coming soon</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Meter({ label, used, limit }: { label: string; used: number; limit: number }) {
+  const full = used >= limit;
+  return (
+    <div className="rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3">
+      <div className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="text-stone-700 dark:text-stone-300">{label}</span>
+        <span className="tabular-nums text-stone-500 dark:text-stone-400">
+          <span className="font-medium text-stone-900 dark:text-stone-100">{used}</span> of {limit}
+        </span>
+      </div>
+      <div
+        className="mt-2 h-1.5 rounded-full bg-stone-100 dark:bg-stone-800"
+        role="meter"
+        aria-label={label}
+        aria-valuenow={used}
+        aria-valuemin={0}
+        aria-valuemax={limit}
+      >
+        <div
+          className={`h-full rounded-full ${full ? "bg-amber-500" : "bg-forest-600 dark:bg-forest-400"}`}
+          style={{ width: `${Math.min(100, (used / limit) * 100)}%` }}
+        />
+      </div>
     </div>
   );
 }

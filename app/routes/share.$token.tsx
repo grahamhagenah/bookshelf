@@ -19,6 +19,8 @@ import {
   getUserByShareToken,
 } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
+import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
+import { roomForFriend } from "~/plan.server";
 import { seo } from "~/seo";
 import { getUserId, requireUserId } from "~/session.server";
 
@@ -97,6 +99,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   const viewer = await getUserById(viewerId);
   if (!viewer) throw new Response("Not Found", { status: 404 });
+  // No new requests once the free plan's friends are all taken
+  if (!(await roomForFriend(viewerId))) {
+    return json({ ok: false, limit: LIMIT_MESSAGES.friends }, { status: 403 });
+  }
   const friendRequest = await createNotification(
     viewerId,
     owner.id,
@@ -128,7 +134,9 @@ function Invite({
   signedIn: boolean;
   friendStatus: FriendStatus | null;
 }) {
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<{ ok: boolean; limit?: string }>();
+  // The free plan's friends are all taken
+  const limitMessage = fetcher.data?.limit;
   const here = `/share/${token}`;
   // Show the request as sent straight away
   const status =
@@ -160,6 +168,15 @@ function Invite({
           className={secondaryButton}
         >
           Sign in
+        </Link>
+      </>
+    );
+  } else if (status === "none" && limitMessage) {
+    text = (
+      <>
+        {limitMessage}{" "}
+        <Link to={UPGRADE_PATH} className="font-medium underline underline-offset-2">
+          See Stacks Plus
         </Link>
       </>
     );

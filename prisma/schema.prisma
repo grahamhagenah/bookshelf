@@ -27,6 +27,9 @@ model User {
   // Two email switches: borrow requests, and the weekly roundup
   emailNotifications Boolean @default(true)
   weeklyDigest       Boolean @default(true)
+  // "free" or "plus". Plus lifts the book and friend limits for everyone
+  // on the shelf; set by a subscription, or by an admin as a gift
+  plan               String  @default("free")
   // When they clicked the link we emailed; no digests or request emails
   // go out before then
   emailVerifiedAt    DateTime?
