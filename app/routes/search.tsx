@@ -24,7 +24,7 @@ import {
   searchFriendsBooks,
 } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
-import { fetchDescription } from "~/models/openlibrary.server";
+import { fetchDescription, inEnglish } from "~/models/openlibrary.server";
 import {
   addWantToRead,
   getWantToReadWorks,
@@ -51,11 +51,12 @@ export const handle = {
 interface OpenLibraryBook {
   title: string;
   author_name?: string[];
+  author_key?: string[];
   cover_i?: number;
   first_publish_year?: number;
   number_of_pages_median?: number;
   subject?: string[];
-  editions?: { docs?: { publisher?: string[] }[] };
+  editions?: { docs?: { title?: string; language?: string[]; publisher?: string[] }[] };
   key?: string;
   language?: string[];
 }
@@ -125,6 +126,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const fields = [
     "title",
     "author_name",
+    "author_key",
     "cover_i",
     "first_publish_year",
     "number_of_pages_median",
@@ -169,7 +171,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       { signal: AbortSignal.timeout(8000) },
     );
     const body = await res.json();
-    if (res.ok && Array.isArray(body.docs)) data = body;
+    if (res.ok && Array.isArray(body.docs)) data = { ...body, docs: await inEnglish(body.docs) };
   } catch {
     // keep the empty result
   }

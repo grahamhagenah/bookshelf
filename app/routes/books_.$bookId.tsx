@@ -54,7 +54,7 @@ import {
   getReaderNotes,
   saveReaderNote,
 } from "~/models/note.server";
-import { ensureBookDetails, getAuthor } from "~/models/openlibrary.server";
+import { ensureBookDetails, getAuthor, tidyAuthor } from "~/models/openlibrary.server";
 import {
   getUserById,
   getUserEmailById,
@@ -315,8 +315,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     await ensureBookDetails(book);
     book = (await getBookById(params.bookId)) ?? book;
   }
-  const tidied = await tidySubjects(book);
-  if (tidied !== undefined) book = { ...book, subjects: tidied };
+  const [subjects, authorName] = await Promise.all([tidySubjects(book), tidyAuthor(book)]);
+  if (subjects !== undefined) book = { ...book, subjects };
+  if (authorName !== undefined) book = { ...book, author: authorName };
 
   // Owner means anyone sharing the shelf the book is on
   const isOwner = (await shelfIds(userId)).includes(book.userId);

@@ -3,6 +3,7 @@ import { json } from "@remix-run/node";
 
 import { getUserLibraryKeys, searchFriendsBooks } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
+import { inEnglish } from "~/models/openlibrary.server";
 import { requireUserId } from "~/session.server";
 import {
   cleanSubjects,
@@ -89,15 +90,22 @@ function matchesTyped(typed: string, title: string, author: string | null) {
   );
 }
 
-async function searchOpenLibrary(q: string) {
+// Asking for the English edition (for its title and publisher) makes
+// wildcard searches several times slower, so only plain ones do
+const FIELDS = "key,title,author_name,author_key,cover_i,first_publish_year,number_of_pages_median,subject";
+
+async function searchOpenLibrary(q: string, { englishEdition }: { englishEdition: boolean }) {
+  const edition = englishEdition ? `&${ENGLISH_EDITION_PARAMS}&fields=${FIELDS},${ENGLISH_EDITION_FIELDS}` : `&fields=${FIELDS}`;
   try {
     const res = await fetch(
-      `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=40&${ENGLISH_EDITION_PARAMS}&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,${ENGLISH_EDITION_FIELDS}`,
+      `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=40${edition}`,
       { signal: AbortSignal.timeout(4000) },
     );
     if (!res.ok) return [];
     const body = await res.json();
-    return Array.isArray(body.docs) ? body.docs : [];
+    // Open Library's results, loosely typed as they always were here
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return Array.isArray(body.docs) ? await inEnglish<Record<string, any>>(body.docs) : [];
   } catch {
     return [];
   }
@@ -112,14 +120,19 @@ async function suggestFromOpenLibrary(
 ): Promise<OpenLibrarySuggestion[]> {
   const lastWord = words(query).at(-1) ?? "";
   const [prefixed, plain] = await Promise.all([
-    lastWord.length >= 2 ? searchOpenLibrary(`${query}*`) : [],
-    searchOpenLibrary(query),
+    lastWord.length >= 2 ? searchOpenLibrary(`${query}*`, { englishEdition: false }) : [],
+    searchOpenLibrary(query, { englishEdition: true }),
   ]);
+
+  // A book both searches found takes the plain one's English details. One
+  // only the wildcard found has no publisher yet; it's filled in once added.
+  const plainByKey = new Map(plain.map((doc) => [doc.key, doc]));
+  const ordered = [...prefixed.map((doc) => plainByKey.get(doc.key) ?? doc), ...plain];
 
   // Editions repeat; keep one suggestion per title and author
   const seen = new Set<string>();
   const candidates: OpenLibrarySuggestion[] = [];
-  for (const doc of [...prefixed, ...plain]) {
+  for (const doc of ordered) {
     if (typeof doc.title !== "string") continue;
     const author: string | null = doc.author_name?.[0] ?? null;
     if (!matchesTyped(query, doc.title, author)) continue;
