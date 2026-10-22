@@ -1,4 +1,4 @@
-import type { Prisma, User } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 
@@ -182,6 +182,8 @@ export async function getAdminUsers() {
     return {
       id: user.id,
       email: user.email,
+      firstname: user.firstname,
+      surname: user.surname,
       name: `${user.firstname} ${user.surname}`,
       isAdmin: user.isAdmin,
       createdAt: user.createdAt,
@@ -246,10 +248,6 @@ export async function getDataQuality() {
     expiredSandboxes: sandboxes.filter((sandbox) => sandbox.createdAt < daysAgo(1))
       .length,
   };
-}
-
-export function setAdmin(userId: User["id"], isAdmin: boolean) {
-  return prisma.user.update({ where: { id: userId }, data: { isAdmin } });
 }
 
 // How far people get after signing up: a book on their shelf, a real

@@ -8,6 +8,14 @@ import { json } from "@remix-run/node";
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import { useMemo, useState } from "react";
 
+import {
+  BookIcon,
+  ChevronRightIcon,
+  DashboardIcon,
+  GroupIcon,
+  LentIcon,
+  UserIcon,
+} from "~/components/icons";
 import Layout from "~/components / Layout/Layout";
 import {
   getAdminUsers,
@@ -15,13 +23,13 @@ import {
   getFunnel,
   getHealth,
   getLending,
-  setAdmin,
 } from "~/models/admin.server";
 import { deleteExpiredDemoGroups } from "~/models/demo.server";
 import { getFeedback, setFeedbackDone } from "~/models/feedback.server";
-import { deleteUsers, isUserAdmin } from "~/models/user.server";
+import { deleteUsers, getUserByEmail, isUserAdmin, updateUser } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+import { validateEmail } from "~/utils";
 
 export const meta: MetaFunction = () => seo({ title: "Admin", noindex: true });
 
@@ -71,14 +79,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (typeof targetId !== "string" || !targetId) {
     return json({ error: "No account given" }, { status: 400 });
   }
-  // Admins can't lock themselves out or delete their own account here
-  if (targetId === userId) {
-    return json({ error: "You can't change your own account here" }, { status: 400 });
+
+  if (intent === "updateUser") {
+    const firstname = String(form.get("firstname") ?? "").trim();
+    const surname = String(form.get("surname") ?? "").trim();
+    const email = String(form.get("email") ?? "").trim();
+    if (!firstname || !surname) {
+      return json({ error: "Both names are needed" }, { status: 400 });
+    }
+    if (!validateEmail(email)) {
+      return json({ error: "That email doesn't look right" }, { status: 400 });
+    }
+    const existing = await getUserByEmail(email);
+    if (existing && existing.id !== targetId) {
+      return json({ error: `${email} belongs to another account` }, { status: 400 });
+    }
+    await updateUser(targetId, { firstname, surname, email });
+    return json({ ok: true, saved: true });
   }
 
-  if (intent === "setAdmin") {
-    await setAdmin(targetId, form.get("isAdmin") === "true");
-    return json({ ok: true });
+  // Admins can't delete their own account from here
+  if (targetId === userId) {
+    return json({ error: "You can't delete your own account here" }, { status: 400 });
   }
   if (intent === "deleteUser") {
     await deleteUsers([targetId]);
@@ -110,16 +132,69 @@ function ago(date: string) {
   return new Date(date).toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
 
-function Stat({ label, value, note }: { label: string; value: number; note?: string }) {
+// One hue per kind of thing, so the eye can find people, books and loans
+// across the page: the stat's icon tile and its chart share it
+const tones = {
+  sky: {
+    tile: "bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300",
+    bar: "bg-sky-600 group-hover:bg-sky-800 dark:bg-sky-400 dark:group-hover:bg-sky-200",
+  },
+  amber: {
+    tile: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
+    bar: "bg-amber-500 group-hover:bg-amber-700 dark:bg-amber-400 dark:group-hover:bg-amber-200",
+  },
+  forest: {
+    tile: "bg-forest-600/10 text-forest-700 dark:bg-forest-400/15 dark:text-forest-400",
+    bar: "bg-forest-600 group-hover:bg-forest-700 dark:bg-forest-400 dark:group-hover:bg-forest-500",
+  },
+  violet: {
+    tile: "bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300",
+    bar: "bg-violet-600 group-hover:bg-violet-800 dark:bg-violet-400 dark:group-hover:bg-violet-200",
+  },
+  stone: {
+    tile: "bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300",
+    bar: "bg-stone-400 group-hover:bg-stone-600 dark:bg-stone-500 dark:group-hover:bg-stone-300",
+  },
+};
+type Tone = keyof typeof tones;
+
+// Overdue loans and open feedback: something to look at
+const warnText = "text-red-700 dark:text-red-400";
+
+function Stat({
+  label,
+  value,
+  note,
+  noteClass = mutedClass,
+  icon: Icon,
+  tone = "stone",
+}: {
+  label: string;
+  value: number;
+  note?: string;
+  noteClass?: string;
+  icon?: (props: { size?: number }) => JSX.Element;
+  tone?: Tone;
+}) {
   return (
-    <div>
-      <dt className={`text-sm ${mutedClass}`}>{label}</dt>
-      <dd className="mt-1 flex items-baseline gap-2">
-        <span className="text-2xl font-semibold tabular-nums text-stone-900 dark:text-stone-50">
-          {value.toLocaleString()}
+    <div className="flex gap-3">
+      {Icon ? (
+        <span
+          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${tones[tone].tile}`}
+          aria-hidden
+        >
+          <Icon size={18} />
         </span>
-        {note ? <span className={`text-sm ${mutedClass}`}>{note}</span> : null}
-      </dd>
+      ) : null}
+      <div>
+        <dt className={`text-sm ${mutedClass}`}>{label}</dt>
+        <dd className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
+          <span className="text-2xl font-semibold tabular-nums text-stone-900 dark:text-stone-50">
+            {value.toLocaleString()}
+          </span>
+          {note ? <span className={`text-sm ${noteClass}`}>{note}</span> : null}
+        </dd>
+      </div>
     </div>
   );
 }
@@ -131,7 +206,9 @@ function DailyBars({
   total,
   days,
   noun,
+  tone,
 }: {
+  tone: Tone;
   title: string;
   total: number;
   days: { day: string; count: number }[];
@@ -152,7 +229,7 @@ function DailyBars({
         {days.map((d) => (
           <div key={d.day} className="group relative flex h-full flex-1 items-end">
             <div
-              className="w-full rounded-t-sm bg-stone-400 group-hover:bg-stone-600 dark:bg-stone-500 dark:group-hover:bg-stone-300"
+              className={`w-full rounded-t-sm ${tones[tone].bar}`}
               style={{ height: d.count ? `${(d.count / max) * 100}%` : 0 }}
             />
             <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded bg-stone-900 px-2 py-1 text-xs text-white group-hover:block dark:bg-stone-100 dark:text-stone-900">
@@ -188,15 +265,30 @@ function Health({ health }: { health: Data["health"] }) {
         Health
       </h2>
       <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
-        <Stat label="People" value={health.users} note={`+${health.newUsers7} this week`} />
-        <Stat label="Books" value={health.books} note={`+${health.booksAdded7} this week`} />
+        <Stat
+          label="People"
+          value={health.users}
+          note={`+${health.newUsers7} this week`}
+          icon={UserIcon}
+          tone="sky"
+        />
+        <Stat
+          label="Books"
+          value={health.books}
+          note={`+${health.booksAdded7} this week`}
+          icon={BookIcon}
+          tone="amber"
+        />
         <Stat
           label="On loan"
           value={health.onLoan}
           note={health.overdue ? `${health.overdue} overdue` : undefined}
+          noteClass={warnText}
+          icon={LentIcon}
+          tone="forest"
         />
-        <Stat label="Friendships" value={health.friendships} />
-        <Stat label="Demo visits today" value={health.demosToday} />
+        <Stat label="Friendships" value={health.friendships} icon={GroupIcon} tone="violet" />
+        <Stat label="Demo visits today" value={health.demosToday} icon={DashboardIcon} />
       </dl>
       <div className="mt-8 grid gap-8 sm:grid-cols-2 sm:gap-10">
         <DailyBars
@@ -204,12 +296,14 @@ function Health({ health }: { health: Data["health"] }) {
           total={health.newUsers30}
           days={health.signupsPerDay}
           noun={["sign-up", "sign-ups"]}
+          tone="sky"
         />
         <DailyBars
           title="Loans started"
           total={health.loansStarted30}
           days={health.loansPerDay}
           noun={["loan", "loans"]}
+          tone="forest"
         />
       </div>
     </section>
@@ -217,7 +311,8 @@ function Health({ health }: { health: Data["health"] }) {
 }
 
 // How far people get after signing up. Each bar is out of everyone who
-// signed up; the small figure is how many made it from the step before.
+// signed up, labelled with that share; the chip on the right is how many
+// made it from the step before.
 function Funnel({ funnel }: { funnel: Data["funnel"] }) {
   const [range, setRange] = useState<"last30" | "allTime">("allTime");
   const steps = funnel[range];
@@ -243,7 +338,7 @@ function Funnel({ funnel }: { funnel: Data["funnel"] }) {
               onClick={() => setRange(value)}
               className={`rounded-full px-2.5 py-1 text-sm transition-colors ${
                 range === value
-                  ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
+                  ? "bg-forest-600/10 dark:bg-forest-400/15 text-forest-700 dark:text-forest-400 font-medium"
                   : "text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
               }`}
             >
@@ -255,29 +350,57 @@ function Funnel({ funnel }: { funnel: Data["funnel"] }) {
       {total === 0 ? (
         <p className={`mt-4 ${mutedClass}`}>Nobody signed up in this window.</p>
       ) : (
-        <ol className="mt-4 space-y-3">
-          {steps.map((step, index) => (
-            <li key={step.label} className="grid grid-cols-[9rem_minmax(0,1fr)_6rem] items-center gap-3 text-sm">
-              <span className="text-stone-700 dark:text-stone-300">{step.label}</span>
-              <span className="h-5 rounded-sm bg-stone-100 dark:bg-stone-900">
-                <span
-                  className="block h-full rounded-sm bg-stone-400 dark:bg-stone-500"
-                  style={{ width: `${percent(step.count, total)}%` }}
-                />
-              </span>
-              <span className="text-right tabular-nums text-stone-900 dark:text-stone-100">
-                {step.count.toLocaleString()}
-                <span className={`ml-1.5 ${mutedClass}`}>
-                  {index === 0 ? "" : `${percent(step.count, steps[index - 1].count)}%`}
+        <ol className="mt-4 space-y-2.5">
+          {steps.map((step, index) => {
+            const share = percent(step.count, total);
+            return (
+              <li
+                key={step.label}
+                className="grid grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-x-3 gap-y-1 text-sm sm:grid-cols-[9rem_minmax(0,1fr)_4.5rem]"
+              >
+                <span className="col-span-2 font-medium text-stone-800 dark:text-stone-200 sm:col-span-1">
+                  {step.label}
                 </span>
-              </span>
-            </li>
-          ))}
+                <span className="flex h-7 items-center rounded-md bg-forest-600/[0.07] dark:bg-forest-400/10">
+                  {/* The figures ride inside a wide bar, just past the end of a short one */}
+                  <span
+                    className="flex h-full items-center justify-end rounded-md bg-forest-600 dark:bg-forest-400"
+                    style={{ width: `${share}%` }}
+                  >
+                    {share >= 40 ? (
+                      <span className="px-2 text-xs font-semibold tabular-nums text-white dark:text-stone-950">
+                        {step.count.toLocaleString()}
+                        {index === 0 ? null : <span className="font-normal opacity-80"> · {share}%</span>}
+                      </span>
+                    ) : null}
+                  </span>
+                  {share < 40 ? (
+                    <span className="px-2 text-xs tabular-nums">
+                      <span className="font-semibold text-stone-900 dark:text-stone-50">
+                        {step.count.toLocaleString()}
+                      </span>
+                      {index === 0 ? null : <span className={mutedClass}> · {share}%</span>}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="text-right">
+                  {index === 0 ? null : (
+                    <span
+                      className="inline-block rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium tabular-nums text-stone-700 dark:bg-stone-800 dark:text-stone-200"
+                      title="Made it from the step above"
+                    >
+                      ↓ {percent(step.count, steps[index - 1].count)}%
+                    </span>
+                  )}
+                </span>
+              </li>
+            );
+          })}
         </ol>
       )}
       <p className={`mt-3 text-xs ${mutedClass}`}>
-        Real accounts only. The percentage beside each number is how many made it from the
-        step above.
+        Real accounts only. Each bar is a share of everyone who signed up; the ↓ figure is
+        how many made it from the step above.
       </p>
     </section>
   );
@@ -290,7 +413,11 @@ function Feedback({ feedback }: { feedback: Data["feedback"] }) {
     <section aria-labelledby="feedback-heading" id="feedback">
       <h2 id="feedback-heading" className={headingClass}>
         Feedback
-        {open ? <span className={`ml-2 text-sm font-normal ${mutedClass}`}>{open} open</span> : null}
+        {open ? (
+          <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 align-middle text-xs font-medium text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+            {open} open
+          </span>
+        ) : null}
       </h2>
       {feedback.length === 0 ? (
         <p className={`mt-4 ${mutedClass}`}>
@@ -404,7 +531,7 @@ function Lending({ lending }: { lending: Data["lending"] }) {
                       {book.borrower?.surname}
                     </span>
                   </span>
-                  <span className="whitespace-nowrap font-medium tabular-nums text-stone-700 dark:text-stone-300">
+                  <span className={`whitespace-nowrap font-medium tabular-nums ${warnText}`}>
                     {late}d late
                   </span>
                 </li>
@@ -465,61 +592,78 @@ const sorts = {
   },
 };
 
-// Every change asks first; your own account can't be changed here
-function UserActions({ user, isYou }: { user: AdminUser; isYou: boolean }) {
+const fieldLabel = `block text-xs font-medium ${mutedClass}`;
+const field =
+  "mt-1 w-full rounded-md bg-transparent px-3 py-1.5 text-sm text-stone-900 ring-1 ring-inset ring-stone-300 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-forest-600 dark:text-stone-100 dark:ring-stone-700 dark:focus:ring-forest-400";
+const saveButton =
+  "rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 disabled:opacity-50 transition-colors";
+
+// Name and email, right there to change; deleting asks first, and your
+// own account can't be deleted from here
+function EditUser({ user, isYou }: { user: AdminUser; isYou: boolean }) {
   const fetcher = useFetcher<typeof action>({ key: `admin-${user.id}` });
   const busy = fetcher.state !== "idle";
+  const deleting = busy && fetcher.formData?.get("intent") === "deleteUser";
   const error = fetcher.data && "error" in fetcher.data ? fetcher.data.error : null;
+  const saved = fetcher.state === "idle" && fetcher.data && "saved" in fetcher.data;
 
-  if (isYou) {
-    return (
-      <p className={`text-sm ${mutedClass}`}>
-        This is you, so there&apos;s nothing to change here.
-      </p>
-    );
-  }
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <fetcher.Form
-        method="post"
-        onSubmit={(event) => {
-          const message = user.isAdmin
-            ? `Remove ${user.name}'s admin access?`
-            : `Make ${user.name} an admin? They'll be able to see this page and change other accounts.`;
-          if (!confirm(message)) event.preventDefault();
-        }}
-      >
-        <input type="hidden" name="intent" value="setAdmin" />
+    <div className="space-y-3">
+      <fetcher.Form method="post" className="grid gap-3 sm:grid-cols-[1fr_1fr_1.6fr_auto] sm:items-end">
+        <input type="hidden" name="intent" value="updateUser" />
         <input type="hidden" name="userId" value={user.id} />
-        <input type="hidden" name="isAdmin" value={String(!user.isAdmin)} />
-        <button type="submit" disabled={busy} className={outlineButton}>
-          {user.isAdmin ? "Remove admin" : "Make admin"}
+        <label className={fieldLabel}>
+          First name
+          <input name="firstname" defaultValue={user.firstname} required className={field} />
+        </label>
+        <label className={fieldLabel}>
+          Surname
+          <input name="surname" defaultValue={user.surname} required className={field} />
+        </label>
+        <label className={fieldLabel}>
+          Email
+          <input name="email" type="email" defaultValue={user.email} required className={field} />
+        </label>
+        <button type="submit" disabled={busy} className={saveButton}>
+          {busy && !deleting ? "Saving…" : "Save"}
         </button>
       </fetcher.Form>
-      <fetcher.Form
-        method="post"
-        onSubmit={(event) => {
-          const books = `${user.bookCount} ${user.bookCount === 1 ? "book" : "books"}`;
-          const message = `Delete ${user.name}'s account? Their ${books}, notes and friendships go with it. This can't be undone.`;
-          if (!confirm(message)) event.preventDefault();
-        }}
-      >
-        <input type="hidden" name="intent" value="deleteUser" />
-        <input type="hidden" name="userId" value={user.id} />
-        <button
-          type="submit"
-          disabled={busy}
-          className={`${outlineButton} hover:text-red-700 hover:ring-red-300 dark:hover:text-red-400 dark:hover:ring-red-900`}
-        >
-          Delete account
-        </button>
-      </fetcher.Form>
-      {error ? <p className="text-sm text-red-700 dark:text-red-400">{error}</p> : null}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm" role="status">
+          {error ? (
+            <span className={warnText}>{error}</span>
+          ) : saved ? (
+            <span className="text-forest-700 dark:text-forest-400">Saved</span>
+          ) : null}
+        </p>
+        {isYou ? (
+          <p className={`text-sm ${mutedClass}`}>This is you, so it can&apos;t be deleted here.</p>
+        ) : (
+          <fetcher.Form
+            method="post"
+            onSubmit={(event) => {
+              const books = `${user.bookCount} ${user.bookCount === 1 ? "book" : "books"}`;
+              const message = `Delete ${user.name}'s account? Their ${books}, notes and friendships go with it. This can't be undone.`;
+              if (!confirm(message)) event.preventDefault();
+            }}
+          >
+            <input type="hidden" name="intent" value="deleteUser" />
+            <input type="hidden" name="userId" value={user.id} />
+            <button
+              type="submit"
+              disabled={busy}
+              className="rounded-md px-2.5 py-1 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-200 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:ring-red-900 dark:hover:bg-red-950/40 transition-colors"
+            >
+              {deleting ? "Deleting…" : "Delete account"}
+            </button>
+          </fetcher.Form>
+        )}
+      </div>
     </div>
   );
 }
 
-const userColumns = "sm:grid-cols-[minmax(0,1fr)_4rem_4rem_4.5rem_6rem]";
+const userColumns = "sm:grid-cols-[minmax(0,1fr)_4rem_4rem_4.5rem_7rem]";
 
 function UserRow({ user, isYou }: { user: AdminUser; isYou: boolean }) {
   const [open, setOpen] = useState(false);
@@ -534,7 +678,7 @@ function UserRow({ user, isYou }: { user: AdminUser; isYou: boolean }) {
         <span className="min-w-0">
           <span className="font-medium text-stone-900 dark:text-stone-100">{user.name}</span>
           {user.isAdmin ? (
-            <span className="ml-2 rounded px-1.5 py-0.5 text-xs font-medium text-stone-600 ring-1 ring-inset ring-stone-300 dark:text-stone-300 dark:ring-stone-700">
+            <span className="ml-2 rounded px-1.5 py-0.5 text-xs font-medium bg-forest-600/10 text-forest-700 dark:bg-forest-400/15 dark:text-forest-400">
               Admin
             </span>
           ) : null}
@@ -543,7 +687,13 @@ function UserRow({ user, isYou }: { user: AdminUser; isYou: boolean }) {
         <span className="hidden text-right tabular-nums sm:block">{user.bookCount}</span>
         <span className="hidden text-right tabular-nums sm:block">{user.friendCount}</span>
         <span className="hidden text-right tabular-nums sm:block">{user.borrowedCount}</span>
-        <span className={`text-right ${mutedClass}`}>{ago(user.lastActive)}</span>
+        <span className={`flex items-baseline justify-end gap-1.5 ${mutedClass}`}>
+          {ago(user.lastActive)}
+          <ChevronRightIcon
+            size={14}
+            className={`self-center transition-transform ${open ? "rotate-90" : ""}`}
+          />
+        </span>
       </button>
       {open ? (
         <div className="space-y-3 pb-4 text-sm text-stone-800 dark:text-stone-200">
@@ -569,7 +719,7 @@ function UserRow({ user, isYou }: { user: AdminUser; isYou: boolean }) {
               {user.friendNames.join(", ")}
             </p>
           ) : null}
-          <UserActions user={user} isYou={isYou} />
+          <EditUser user={user} isYou={isYou} />
         </div>
       ) : null}
     </li>
@@ -589,7 +739,7 @@ function People({ users, userId }: { users: Data["users"]; userId: string }) {
       .sort(sorts[sort].compare);
   }, [users, query, sort]);
 
-  const field =
+  const control =
     "rounded-md bg-transparent px-3 py-1.5 text-sm text-stone-900 ring-1 ring-inset ring-stone-300 placeholder:text-stone-400 focus:outline-none focus:ring-stone-500 dark:text-stone-100 dark:ring-stone-700";
   return (
     <section aria-labelledby="people">
@@ -604,13 +754,13 @@ function People({ users, userId }: { users: Data["users"]; userId: string }) {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search name or email"
             aria-label="Search people"
-            className={`${field} min-w-0 flex-1 sm:w-56`}
+            className={`${control} min-w-0 flex-1 sm:w-56`}
           />
           <select
             value={sort}
             onChange={(event) => setSort(event.target.value as keyof typeof sorts)}
             aria-label="Sort people"
-            className={`${field} dark:bg-stone-950`}
+            className={`${control} dark:bg-stone-950`}
           >
             {Object.entries(sorts).map(([key, { label }]) => (
               <option key={key} value={key}>
