@@ -25,6 +25,14 @@ export const meta: MetaFunction<typeof loader> = ({ data }) =>
 
 // Signed in, this is your home: your books and friends' activity.
 // Signed out, it's the landing page.
+// "Maya has it", "Maya and Sam have it", "Maya and 2 others have it"
+function haveIt(names: string[]) {
+  if (names.length === 0) return null;
+  if (names.length === 1) return `${names[0]} has it`;
+  if (names.length === 2) return `${names[0]} and ${names[1]} have it`;
+  return `${names[0]} and ${names.length - 1} others have it`;
+}
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
   const user = userId ? await getUserById(userId) : null;
@@ -44,17 +52,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       wanted: [...wanted]
         .sort((a, b) => Number(b.copies.length > 0) - Number(a.copies.length > 0))
         .map(({ id, title, author, cover, copies }) => {
-          // A friend's copy opens, one that's on their shelf if there is;
-          // with none, a search for it
-          const copy = copies.find((each) => each.available) ?? copies[0];
-          return {
-            id,
-            title,
-            author,
-            cover,
-            owner: copy?.owner.firstname ?? null,
-            to: copy ? `/books/${copy.bookId}` : `/search?q=${encodeURIComponent(title)}`,
-          };
+          // Friends with a copy on their shelf come first
+          const sorted = [...copies].sort((a, b) => Number(b.available) - Number(a.available));
+          const owners = [...new Set(sorted.map((copy) => copy.owner.firstname))];
+          const available = sorted.filter((copy) => copy.available);
+          // Where the cover goes: with a choice of copies to borrow, the
+          // book on the list to pick from; else the one copy (on a shelf if
+          // there is); with none, a search for it
+          const to =
+            available.length > 1
+              ? `/want-to-read#wish-${id}`
+              : sorted[0]
+                ? `/books/${sorted[0].bookId}`
+                : `/search?q=${encodeURIComponent(title)}`;
+          return { id, title, author, cover, owners: haveIt(owners), to };
         }),
       friendIds: user.following.map((friend) => friend.id),
       requestsSent: sentRequests.length,

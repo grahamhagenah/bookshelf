@@ -4,7 +4,7 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form, Link, useFetcher, useLoaderData } from "@remix-run/react";
+import { Form, Link, useFetcher, useLoaderData, useLocation } from "@remix-run/react";
 import { useState } from "react";
 
 import CoverPlaceholder from "~/components/cover-placeholder";
@@ -100,6 +100,9 @@ function WantRow({
   friendIds: string[];
 }) {
   const remove = useFetcher({ key: `remove-${item.id}` });
+  // Arriving from a cover on the home page with copies to pick from: the
+  // page scrolls here, and the book is lightly tinted
+  const picked = useLocation().hash === `#wish-${item.id}`;
   if (remove.state !== "idle") return null;
 
   // Available copies first, so the one you can ask for leads
@@ -107,7 +110,15 @@ function WantRow({
     (a, b) => Number(b.available) - Number(a.available),
   );
   return (
-    <li className="flex items-start gap-4 py-4">
+    <li
+      id={`wish-${item.id}`}
+      // The tint reaches past the row's edges with a shadow, so nothing moves
+      className={`flex scroll-mt-24 items-start gap-4 rounded-lg py-4 transition-colors ${
+        picked
+          ? "bg-forest-600/[0.06] shadow-[0_0_0_10px_rgb(31_107_78/0.06)] dark:bg-forest-400/10 dark:shadow-[0_0_0_10px_rgb(58_154_116/0.1)]"
+          : ""
+      }`}
+    >
       <Cover cover={item.cover} title={item.title} author={item.author} />
       <div className="min-w-0 flex-1">
         <p className="font-medium text-stone-900 dark:text-stone-100">{item.title}</p>

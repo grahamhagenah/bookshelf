@@ -329,9 +329,9 @@ interface Wanted {
   title: string;
   author: string;
   cover: string;
-  // First name of a friend who has it, if any
-  owner: string | null;
-  // Their copy, or a search when no friend has one
+  // "Maya and Sam have it", when friends do
+  owners: string | null;
+  // A copy, the book on the list to pick a copy, or a search for it
   to: string;
 }
 
@@ -498,8 +498,9 @@ export default function Home({
               <CoverRow
                 items={wanted}
                 caption={(index) => (
-                  <span className="block truncate text-xs text-stone-400 dark:text-stone-500">
-                    {wanted[index].owner ? `${wanted[index].owner} has it` : "\u00a0"}
+                  // Two lines, so "Maya and Sam have it" isn't cut short
+                  <span className="line-clamp-2 text-xs text-stone-400 dark:text-stone-500">
+                    {wanted[index].owners ?? "\u00a0"}
                   </span>
                 )}
               />
