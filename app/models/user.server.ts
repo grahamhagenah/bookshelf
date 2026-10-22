@@ -36,7 +36,6 @@ export async function getUserById(id: User["id"]) {
           bookTitle: true,
           createdAt: true,
           sender: { select: { profileEmoji: true } },
-          book: { select: { cover: true } },
         },
       },
       following: {
@@ -172,7 +171,6 @@ export async function getNotificationHistory(userId: string, limit = 10) {
       bookTitle: true,
       actionTaken: true,
       createdAt: true,
-      book: { select: { cover: true } },
     },
   });
 }

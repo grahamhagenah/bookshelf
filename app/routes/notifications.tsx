@@ -4,7 +4,7 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 
 import ActivityIcon from "~/components/activity-icon";
 import Avatar from "~/components/avatar";
@@ -30,7 +30,6 @@ import {
 } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
-import { coverSrc } from "~/utils";
 
 export const meta: MetaFunction = () =>
   seo({ title: "Activity", noindex: true });
@@ -170,30 +169,14 @@ interface ActivityNotification {
   bookTitle?: string | null;
   createdAt: string;
   sender?: { profileEmoji: string | null } | null;
-  book?: { cover: string } | null;
-}
-
-function SmallCover({ cover, href }: { cover: string; href: string }) {
-  return (
-    <Link
-      to={href}
-      tabIndex={-1}
-      aria-hidden="true"
-      className="block w-10 flex-shrink-0 self-start overflow-hidden rounded-xs bg-stone-100 dark:bg-stone-800 ring-1 ring-stone-900/5 dark:ring-white/10"
-    >
-      <img src={coverSrc(cover)} alt="" loading="lazy" className="aspect-[2/3] w-full object-cover" />
-    </Link>
-  );
 }
 
 // One notification, as a card of its own: who, what, when, and what you
-// can do, with the book's cover beside it
+// can do
 function Card({
   type,
   person,
   date,
-  cover,
-  bookHref,
   children,
   actions,
   dismiss,
@@ -201,8 +184,6 @@ function Card({
   type: string;
   person: { name: string; icon?: string | null };
   date?: string;
-  cover?: string | null;
-  bookHref?: string | null;
   children: React.ReactNode;
   actions?: React.ReactNode;
   dismiss?: boolean;
@@ -221,7 +202,6 @@ function Card({
         {date ? <p className="mt-0.5 text-xs text-stone-400 dark:text-stone-500">{date}</p> : null}
         {actions ? <div className="mt-3 flex flex-wrap items-center gap-2">{actions}</div> : null}
       </div>
-      {cover && bookHref ? <SmallCover cover={cover} href={bookHref} /> : null}
       {dismiss ? (
         <button
           type="submit"
@@ -388,8 +368,6 @@ function ActivityItem({
         type={type}
         person={{ name: notification.senderName, icon: notification.sender?.profileEmoji }}
         date={when(notification.createdAt)}
-        cover={notification.book?.cover}
-        bookHref={notification.bookId ? `/books/${notification.bookId}` : null}
         actions={actions}
         dismiss={dismissable}
       >
