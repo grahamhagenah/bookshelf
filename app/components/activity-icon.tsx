@@ -16,6 +16,13 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M12 6.5v13" />
     </>
   ),
+  // Arrow forward: your turn in line
+  HOLD_READY: (
+    <>
+      <path d="M4 12h14" />
+      <path d="M13 6.5l5.5 5.5-5.5 5.5" />
+    </>
+  ),
   // Check mark
   BOOK_APPROVED: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   // Arrow curling back

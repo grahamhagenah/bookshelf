@@ -650,6 +650,13 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       borrowedAt: ago(3 * day),
       dueDate: fromNow(25 * day),
     },
+    // Between friends, so the visitor can get in line for it
+    {
+      title: "Normal People",
+      borrower: "sam",
+      borrowedAt: ago(9 * day),
+      dueDate: fromNow(19 * day),
+    },
   ];
 
   for (const loan of loans) {
@@ -676,6 +683,11 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       },
     });
   }
+
+  // Priya is waiting for Piranesi, which Sam still has
+  await prisma.hold.create({
+    data: { bookId: books["Piranesi"], userId: ids.priya, createdAt: ago(2 * day) },
+  });
 
   // Reader notes: hearts and short notes from the owner and past borrowers
   const readerNotes: {
