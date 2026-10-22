@@ -377,6 +377,30 @@ export async function deleteUserByEmail(email: User["email"]) {
   return prisma.user.delete({ where: { email } });
 }
 
+// Remove accounts and everything that points at them. Their own books,
+// notes, holds and passwords cascade; notifications and borrowing records
+// don't, and books they'd borrowed go back to their owners.
+export async function deleteUsers(ids: User["id"][]) {
+  if (ids.length === 0) return;
+  await prisma.notification.deleteMany({
+    where: {
+      OR: [
+        { senderId: { in: ids } },
+        { receiverId: { in: ids } },
+        { book: { userId: { in: ids } } },
+      ],
+    },
+  });
+  await prisma.lendingHistory.deleteMany({
+    where: { borrowerId: { in: ids } },
+  });
+  await prisma.book.updateMany({
+    where: { borrowerId: { in: ids } },
+    data: { borrowerId: null, borrowedAt: null, dueDate: null },
+  });
+  await prisma.user.deleteMany({ where: { id: { in: ids } } });
+}
+
 // Real users only see real users; demo users only see their own sandbox
 async function getVisibleGroup(userId: string) {
   const user = await prisma.user.findUnique({
@@ -621,34 +645,6 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
     select: { isAdmin: true },
   });
   return user?.isAdmin ?? false;
-}
-
-export async function getAllUsersWithStats() {
-  const users = await prisma.user.findMany({
-    where: { demoGroup: null },
-    select: {
-      id: true,
-      email: true,
-      firstname: true,
-      surname: true,
-      isAdmin: true,
-      createdAt: true,
-      books: { select: { id: true } },
-      following: { select: { id: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  return users.map((user) => ({
-    id: user.id,
-    email: user.email,
-    firstname: user.firstname,
-    surname: user.surname,
-    isAdmin: user.isAdmin,
-    createdAt: user.createdAt,
-    bookCount: user.books.length,
-    friendCount: user.following.length,
-  }));
 }
 
 export async function verifyLogin(
