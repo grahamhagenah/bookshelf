@@ -4,7 +4,7 @@ import { json } from "@remix-run/node";
 import { generateShareToken, getUserById } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
 import { requireUserId } from "~/session.server";
-import { SHARE_PROMPT_COOKIE } from "~/share-prompt.server";
+import { SHARE_PROMPT_COOKIE, dismissCookie } from "~/share-prompt.server";
 
 // Backs the "Share your bookshelf" prompt: make the public link, or put
 // the prompt away for good
@@ -14,14 +14,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const intent = (await request.formData()).get("intent");
 
   if (intent === "dismiss") {
-    const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
     return json(
       { dismissed: true },
-      {
-        headers: {
-          "Set-Cookie": `${SHARE_PROMPT_COOKIE}; Path=/; Max-Age=31536000; SameSite=Lax; HttpOnly${secure}`,
-        },
-      },
+      { headers: { "Set-Cookie": dismissCookie(SHARE_PROMPT_COOKIE) } },
     );
   }
 
