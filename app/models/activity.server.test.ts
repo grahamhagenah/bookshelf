@@ -136,3 +136,26 @@ test("note prompts are the books you've borrowed and not written about", async (
   ]);
   expect(prompts[0].owner.firstname).toBe("Maya");
 });
+
+test("a longer page of the feed starts with the shorter one, so showing older adds below", async () => {
+  const me = await makeUser("Reader");
+  const friend = await makeUser("Friend");
+  await createFriendship(me.id, friend.id);
+  const DAY = 24 * 60 * 60 * 1000;
+  for (let i = 0; i < 8; i++) {
+    const book = await makeBook(friend.id, `Book ${i}`);
+    // Far enough apart that each is its own post
+    await prisma.book.update({ where: { id: book.id }, data: { createdAt: new Date(Date.now() - i * 10 * DAY) } });
+    if (i % 2) {
+      await prisma.readerNote.create({
+        data: { bookId: book.id, userId: friend.id, loved: true, updatedAt: new Date(Date.now() - i * 10 * DAY - 3600_000) },
+      });
+    }
+  }
+  const short = await getFriendActivity(me.id, { days: 365, limit: 5 });
+  const long = await getFriendActivity(me.id, { days: 365, limit: 10 });
+  expect(short).toHaveLength(5);
+  expect(long).toHaveLength(10);
+  expect(long.slice(0, 5).map((item) => item.id)).toEqual(short.map((item) => item.id));
+  expect(new Set(long.map((item) => item.id)).size).toBe(10);
+});

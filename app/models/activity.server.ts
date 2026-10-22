@@ -147,7 +147,8 @@ export async function getFriendActivity(
       where: { userId: { in: friendIds }, createdAt: { gte: since } },
       select: { ...bookFields, createdAt: true, user: person },
       orderBy: { createdAt: "desc" },
-      take: 200,
+      // Several books can share one post, so look a good way back
+      take: Math.max(200, limit * 5),
     }),
     prisma.readerNote.findMany({
       where: {

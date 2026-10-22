@@ -4,7 +4,7 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData, useNavigation } from "@remix-run/react";
 
 import { FeedPost, NotePrompt } from "~/components/friend-activity";
 import { sendBookRequestEmail } from "~/email.server";
@@ -32,15 +32,31 @@ export const handle = {
   breadcrumb: () => <span>Friend activity</span>,
 };
 
+// Posts at a time: "Show older" adds another page's worth below. How many
+// are showing lives in the URL (?shown=30), so acting on an older post and
+// reloading both keep your place.
+const PAGE = 15;
+const MOST = 300;
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
+  const asked = Number(new URL(request.url).searchParams.get("shown"));
+  const shown = Math.min(MOST, Math.max(PAGE, Number.isFinite(asked) ? Math.floor(asked) : PAGE));
   const [user, activity, prompts] = await Promise.all([
     getUserById(userId),
-    getFriendActivity(userId, { days: 90, limit: 50 }),
+    // One more than shown, to know whether there's anything older
+    getFriendActivity(userId, { days: 365, limit: shown + 1 }),
     getNotePrompts(userId),
   ]);
   const friendIds = user?.following.map((friend) => friend.id) ?? [];
-  return json({ userId, activity, friendIds, prompts });
+  return json({
+    userId,
+    activity: activity.slice(0, shown),
+    hasOlder: activity.length > shown,
+    shown,
+    friendIds,
+    prompts,
+  });
 };
 
 // The same things the book page lets you do, from the feed
@@ -127,7 +143,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function Feed() {
-  const { userId, activity, friendIds, prompts } = useLoaderData<typeof loader>();
+  const { userId, activity, hasOlder, shown, friendIds, prompts } = useLoaderData<typeof loader>();
+  const navigation = useNavigation();
+  const loadingOlder =
+    navigation.state === "loading" && navigation.location.pathname === "/feed";
 
   return (
     // A feed reads best in a narrow column
@@ -146,6 +165,26 @@ export default function Feed() {
             </li>
           ))}
         </ul>
+      ) : null}
+      {activity.length > 0 ? (
+        <div className="mt-6 text-center">
+          {hasOlder ? (
+            <Link
+              to={`?shown=${shown + PAGE}`}
+              replace
+              preventScrollReset
+              className={`inline-flex items-center justify-center rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors ${
+                loadingOlder ? "pointer-events-none opacity-60" : ""
+              }`}
+            >
+              {loadingOlder ? "Loading…" : "Show older"}
+            </Link>
+          ) : (
+            <p className="text-sm text-stone-400 dark:text-stone-500">
+              That&apos;s everything from the past year.
+            </p>
+          )}
+        </div>
       ) : (
         <div className="py-16 text-center text-stone-500 dark:text-stone-400">
           {friendIds.length === 0 ? (
