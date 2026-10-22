@@ -1,6 +1,7 @@
 import type { Book } from "@prisma/client";
 
 import { prisma } from "~/db.server";
+import { cleanSubjects } from "~/utils";
 
 // Open Library can be slow; never hold a page up for long
 const TIMEOUT_MS = 4000;
@@ -122,46 +123,195 @@ async function refreshAuthor(key: string) {
   });
 }
 
-// Looks up a book's opening sentence and author once, then remembers it.
-// Failures are quiet: the page shows what it has and tries again next time.
-export async function ensureBookDetails(
-  book: Pick<
-    Book,
-    "id" | "title" | "author" | "openLibraryKey" | "detailsFetchedAt"
-  >,
-  { force = false } = {},
-) {
-  if (book.detailsFetchedAt && !force) return;
+const SEARCH_FIELDS =
+  "key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,publisher,first_sentence,author_key,isbn";
 
-  // Books added by hand have no work key, so match on title and author
+interface Found {
+  title: string | null;
+  author: string | null;
+  key: string | null;
+  cover: string | null;
+  datePublished: string | null;
+  pageCount: number | null;
+  subjects: string | null;
+  publisher: string | null;
+  firstSentence: string | null;
+  authorKey: string | null;
+  isbn: string | null;
+}
+
+// Open Library's best match for a book: by ISBN when there is one, else
+// by title and author. Null when it has nothing.
+export async function lookupWork(book: {
+  title: string;
+  author: string;
+  isbn?: string | null;
+  openLibraryKey?: string | null;
+}): Promise<Found | null> {
   const query = book.openLibraryKey
     ? `q=${encodeURIComponent(`key:"${book.openLibraryKey}"`)}`
-    : `title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}`;
+    : book.isbn
+      ? `q=${encodeURIComponent(`isbn:${book.isbn}`)}`
+      : `title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}`;
+  const data = await getJson(
+    `https://openlibrary.org/search.json?${query}&limit=1&fields=${SEARCH_FIELDS}`,
+  );
+  const doc = data.docs?.[0];
+  if (!doc) return null;
+  return {
+    title: typeof doc.title === "string" ? doc.title : null,
+    author: doc.author_name?.[0] ?? null,
+    key: typeof doc.key === "string" ? doc.key : null,
+    cover: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : null,
+    datePublished: doc.first_publish_year ? String(doc.first_publish_year) : null,
+    pageCount: doc.number_of_pages_median ?? null,
+    subjects: cleanSubjects(doc.subject).join(", ") || null,
+    publisher: doc.publisher?.[0] ?? null,
+    firstSentence: pickFirstSentence(doc.first_sentence),
+    authorKey: doc.author_key?.[0] ?? null,
+    isbn: Array.isArray(doc.isbn) ? (doc.isbn.find((n: string) => n.length === 13) ?? doc.isbn[0] ?? null) : null,
+  };
+}
+
+// Every cover Open Library has for a book: the work's own, then its
+// editions', newest-listed first. For the owner to pick from.
+export async function findCovers(book: {
+  title: string;
+  author: string;
+  isbn?: string | null;
+  openLibraryKey?: string | null;
+}) {
+  const query = book.openLibraryKey
+    ? `q=${encodeURIComponent(`key:"${book.openLibraryKey}"`)}`
+    : book.isbn
+      ? `q=${encodeURIComponent(`isbn:${book.isbn}`)}`
+      : `title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}`;
+  const data = await getJson(
+    `https://openlibrary.org/search.json?${query}&limit=3&fields=key,cover_i`,
+  );
+  const docs: { key?: string; cover_i?: number }[] = data.docs ?? [];
+  const ids: number[] = docs.flatMap((doc) => (doc.cover_i ? [doc.cover_i] : []));
+
+  const key = book.openLibraryKey ?? docs[0]?.key;
+  if (key) {
+    try {
+      const editions = await getJson(`https://openlibrary.org${key}/editions.json?limit=50`);
+      for (const edition of editions.entries ?? []) {
+        for (const id of edition.covers ?? []) {
+          if (typeof id === "number" && id > 0) ids.push(id);
+        }
+      }
+    } catch {
+      // The work's own cover is still something
+    }
+  }
+
+  return [...new Set(ids)].slice(0, 18).map((id) => ({
+    id,
+    thumb: `https://covers.openlibrary.org/b/id/${id}-M.jpg`,
+    full: `https://covers.openlibrary.org/b/id/${id}-L.jpg`,
+  }));
+}
+
+// A work's description, which the search results don't carry
+export async function fetchDescription(key: string): Promise<string> {
+  try {
+    const work = await getJson(`https://openlibrary.org${key}.json`);
+    return textValue(work.description) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+// Covers by ISBN come straight from Open Library's cover server, which
+// answers a blank image when it has none. Ask it to say so instead.
+async function coverExists(url: string) {
+  try {
+    const res = await fetch(`${url}?default=false`, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    return res.ok;
+  } catch {
+    return true;
+  }
+}
+
+// Fills in whatever a book is missing (cover, description, details, the
+// opening line, the author) from Open Library, and remembers it was
+// looked up. Leaves what the owner already has alone.
+export async function fillInBook(bookId: Book["id"]) {
+  const book = await prisma.book.findUnique({
+    where: { id: bookId },
+    select: {
+      id: true,
+      title: true,
+      author: true,
+      cover: true,
+      body: true,
+      isbn: true,
+      openLibraryKey: true,
+      datePublished: true,
+      pageCount: true,
+      subjects: true,
+      publisher: true,
+    },
+  });
+  if (!book) return;
 
   try {
-    const data = await getJson(
-      `https://openlibrary.org/search.json?${query}&limit=1&fields=key,first_sentence,author_key`,
-    );
-    const doc = data.docs?.[0];
-    const authorKey: string | null = doc?.author_key?.[0] ?? null;
+    const found = await lookupWork(book);
+    const key = book.openLibraryKey ?? found?.key ?? null;
+    const description = !book.body && key ? await fetchDescription(key) : "";
+    if (found?.authorKey) await refreshAuthor(found.authorKey);
 
-    if (authorKey) await refreshAuthor(authorKey);
+    // A cover made from the ISBN may be blank; swap it for the work's
+    let cover = book.cover;
+    if (found?.cover && (!cover || (cover.includes("/b/isbn/") && !(await coverExists(cover))))) {
+      cover = found.cover;
+    }
 
     await prisma.book.update({
       where: { id: book.id },
       data: {
-        firstSentence: pickFirstSentence(doc?.first_sentence),
-        authorKey,
-        // Imported books arrive with no work key; keep the one we found
-        openLibraryKey:
-          book.openLibraryKey ??
-          (typeof doc?.key === "string" ? doc.key : null),
+        cover,
+        body: book.body || description,
+        openLibraryKey: key,
+        isbn: book.isbn ?? found?.isbn ?? null,
+        datePublished: book.datePublished ?? found?.datePublished ?? null,
+        pageCount: book.pageCount ?? found?.pageCount ?? null,
+        subjects: book.subjects ?? found?.subjects ?? null,
+        publisher: book.publisher ?? found?.publisher ?? null,
+        firstSentence: found?.firstSentence ?? null,
+        authorKey: found?.authorKey ?? null,
         detailsFetchedAt: new Date(),
       },
     });
   } catch {
     // Open Library unreachable or slow; leave it for the next visit
   }
+}
+
+// After an import: fill in the new books a few at a time, in the
+// background, so the import itself stays quick
+export async function fillInBooks(bookIds: Book["id"][], concurrency = 3) {
+  const queue = [...bookIds];
+  const worker = async () => {
+    for (let id = queue.shift(); id; id = queue.shift()) {
+      await fillInBook(id);
+    }
+  };
+  await Promise.all(Array.from({ length: concurrency }, worker));
+}
+
+// Looks up a book's details once, then remembers it. Failures are quiet:
+// the page shows what it has and tries again next time.
+export async function ensureBookDetails(
+  book: Pick<Book, "id" | "detailsFetchedAt">,
+  { force = false } = {},
+) {
+  if (book.detailsFetchedAt && !force) return;
+  await fillInBook(book.id);
 }
 
 export function getAuthor(key: string | null) {

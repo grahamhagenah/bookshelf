@@ -1,10 +1,11 @@
 import { Resend } from "resend";
 
+import type { Digest } from "~/models/digest.server";
+import { isDemoEmail } from "~/utils";
+
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
-
-import { isDemoEmail } from "~/utils";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 const FROM_EMAIL = process.env.FROM_EMAIL || "Stacks <onboarding@resend.dev>";
@@ -199,6 +200,118 @@ If you didn't request this password reset, please ignore this email. Your passwo
     return { success: true, id: data?.id };
   } catch (error) {
     console.error("Error sending password reset email:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
+// ---- The weekly digest ----
+
+const esc = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
+
+// "in 2 days", "tomorrow", "today", "3 days late"
+function dueWords(days: number) {
+  if (days < 0) return `${plural(-days, "day")} late`;
+  if (days === 0) return "due today";
+  if (days === 1) return "due tomorrow";
+  return `due in ${days} days`;
+}
+
+// The email as lines of plain text and HTML list items, so both versions
+// say the same thing
+function digestLines(digest: Digest) {
+  const activity = digest.activity.map((item) => {
+    const name = `${item.friend.firstname} ${item.friend.surname}`;
+    if (item.kind === "added") {
+      const titles = item.books.slice(0, 3).map((book) => book.title);
+      const more = item.books.length - titles.length;
+      return `${name} added ${item.books.length === 1 ? "" : `${item.books.length} books: `}${titles.join(", ")}${more > 0 ? ` and ${more} more` : ""}`;
+    }
+    if (item.kind === "loved") return `${name} loved ${item.book.title}`;
+    return `${name} wrote about ${item.book.title}${item.body ? `: “${item.body}”` : ""}`;
+  });
+  const due = digest.due.map(
+    (item) =>
+      `${item.title} · ${item.direction === "borrowed" ? "back to" : "with"} ${item.person} · ${dueWords(item.days)}`,
+  );
+  const wanted = digest.wanted.map((item) => `${item.friend} added ${item.title}`);
+  return { activity, due, wanted };
+}
+
+export function renderDigest({ toName, digest }: { toName: string; digest: Digest }) {
+  const lines = digestLines(digest);
+  const sections: [string, string[], string][] = [
+    ["Due back", lines.due, `${APP_URL}/`],
+    ["From your want-to-read list", lines.wanted, `${APP_URL}/want-to-read`],
+    ["This week from your friends", lines.activity, `${APP_URL}/feed`],
+  ];
+  const filled = sections.filter(([, items]) => items.length > 0);
+
+  const html = `<!DOCTYPE html>
+<html>
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+  <body style="margin: 0; padding: 24px 16px; background: #fafaf9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1c1917;">
+    <div style="max-width: 560px; margin: 0 auto;">
+      <p style="margin: 0 0 20px; font-size: 18px; font-weight: 600;">Stacks</p>
+      <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #44403c;">Hi ${esc(toName)}, here's your week.</p>
+      ${filled
+        .map(
+          ([title, items, link]) => `
+      <h2 style="margin: 24px 0 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; color: #78716c;">${esc(title)}</h2>
+      <ul style="margin: 0; padding: 0; list-style: none;">
+        ${items
+          .map(
+            (line) =>
+              `<li style="padding: 8px 0; border-top: 1px solid #e7e5e4; font-size: 15px; line-height: 1.5;">${esc(line)}</li>`,
+          )
+          .join("")}
+      </ul>
+      <p style="margin: 8px 0 0;"><a href="${link}" style="font-size: 14px; color: #44403c;">Open in Stacks →</a></p>`,
+        )
+        .join("")}
+      <p style="margin: 32px 0 0; padding-top: 16px; border-top: 1px solid #e7e5e4; font-size: 12px; line-height: 1.5; color: #a8a29e;">
+        You get this once a week because email is on in your <a href="${APP_URL}/account" style="color: #78716c;">account settings</a>.
+      </p>
+    </div>
+  </body>
+</html>`;
+
+  const text = [
+    `Hi ${toName}, here's your week on Stacks.`,
+    ...filled.flatMap(([title, items, link]) => ["", title.toUpperCase(), ...items.map((line) => `- ${line}`), link]),
+    "",
+    `You get this once a week because email is on in your account settings: ${APP_URL}/account`,
+  ].join("\n");
+
+  const subject =
+    lines.due.length > 0
+      ? `Stacks: ${plural(lines.due.length, "book")} due back this week`
+      : `Stacks: your week with ${plural(lines.activity.length + lines.wanted.length, "update")}`;
+  return { subject, html, text };
+}
+
+export async function sendDigestEmail({
+  toEmail,
+  toName,
+  digest,
+}: {
+  toEmail: string;
+  toName: string;
+  digest: Digest;
+}) {
+  if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
+  const { subject, html, text } = renderDigest({ toName, digest });
+  if (!resend) {
+    console.log("Email not sent (RESEND_API_KEY not configured):", { to: toEmail, subject });
+    return { success: false, error: "Email service not configured" };
+  }
+  try {
+    const { data, error } = await resend.emails.send({ from: FROM_EMAIL, to: toEmail, subject, html, text });
+    if (error) return { success: false, error: error.message };
+    return { success: true, id: data?.id };
+  } catch (error) {
     return { success: false, error: String(error) };
   }
 }

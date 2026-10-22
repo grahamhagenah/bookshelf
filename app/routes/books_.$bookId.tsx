@@ -62,6 +62,7 @@ import {
   createLoanExtendedNotification,
   createReaderNoteNotification,
 } from "~/models/user.server";
+import type { CoversResponse } from "~/routes/api.covers";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 import { cleanSubjects, coverSrc, stripMarkdown } from "~/utils";
@@ -681,16 +682,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         openLibraryKey: bookData.key || null,
         body: description,
       });
-      await ensureBookDetails(
-        {
-          id: book.id,
-          title: book.title,
-          author: book.author,
-          openLibraryKey: bookData.key || null,
-          detailsFetchedAt: null,
-        },
-        { force: true },
-      );
+      await ensureBookDetails({ id: book.id, detailsFetchedAt: null }, { force: true });
       return json({
         refreshed: true,
         message: "Book info updated from Open Library!",
@@ -907,6 +899,65 @@ function BookFacts({ data }: { data: BookData }) {
   );
 }
 
+// Covers Open Library has for this book, to choose from instead of
+// pasting a URL. Loads only when asked for.
+function CoverPicker({
+  bookId,
+  selected,
+  onPick,
+}: {
+  bookId: string;
+  selected: string;
+  onPick: (url: string) => void;
+}) {
+  const fetcher = useFetcher<{ covers: CoversResponse }>({ key: `covers-${bookId}` });
+  const covers = fetcher.data?.covers;
+  const loading = fetcher.state !== "idle";
+
+  if (!covers) {
+    return (
+      <button
+        type="button"
+        disabled={loading}
+        onClick={() => fetcher.load(`/api/covers?bookId=${bookId}`)}
+        className="mt-3 text-sm text-stone-700 dark:text-stone-200 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline disabled:opacity-60"
+      >
+        {loading ? "Looking on Open Library…" : "Or pick a cover from Open Library"}
+      </button>
+    );
+  }
+  if (covers.length === 0) {
+    return (
+      <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
+        Open Library has no covers for this book.
+      </p>
+    );
+  }
+  return (
+    <ul className="mt-3 flex flex-wrap gap-2" aria-label="Covers on Open Library">
+      {covers.map((cover) => {
+        const picked = selected === cover.full;
+        return (
+          <li key={cover.id}>
+            <button
+              type="button"
+              onClick={() => onPick(cover.full)}
+              aria-pressed={picked}
+              className={`block h-24 w-16 overflow-hidden rounded-xs bg-stone-100 dark:bg-stone-800 transition-shadow ${
+                picked
+                  ? "ring-2 ring-stone-900 dark:ring-stone-100"
+                  : "ring-1 ring-stone-900/10 dark:ring-white/10 hover:ring-stone-400"
+              }`}
+            >
+              <img src={cover.thumb} alt="" loading="lazy" className="h-full w-full object-cover" />
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 // The owner's own note of having read it, changed in place
 function ReadToggle({ readAt }: { readAt: string | null }) {
   const fetcher = useFetcher({ key: "read" });
@@ -1008,6 +1059,8 @@ export default function BookDetailsPage() {
   } | null;
   const navigation = useNavigation();
   const [isEditing, setIsEditing] = useState(false);
+  // The cover field is controlled so the picker below it can fill it in
+  const [cover, setCover] = useState(data.book.cover);
 
   const isSubmitting =
     navigation.state === "submitting" &&
@@ -1336,13 +1389,15 @@ export default function BookDetailsPage() {
                   type="url"
                   id="cover"
                   name="cover"
-                  defaultValue={data.book.cover}
+                  value={cover}
+                  onChange={(event) => setCover(event.target.value)}
                   placeholder="https://covers.openlibrary.org/..."
                   className={inputClass}
                 />
                 <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
                   The preview on the left updates after you save.
                 </p>
+                <CoverPicker bookId={data.book.id} selected={cover} onPick={setCover} />
               </div>
 
                 <div className="flex items-center gap-2 pt-2">

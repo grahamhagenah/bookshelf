@@ -11,10 +11,11 @@ import {
   Link,
   useFetcher,
   Form,
-} from "@remix-run/react";
+ useRevalidator } from "@remix-run/react";
 import { useState } from "react";
 
-import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
+import BarcodeScanner from "~/components/barcode-scanner";
+import { BookmarkIcon, CameraIcon, CheckCircleIcon } from "~/components/icons";
 import SearchBox from "~/components/search-box";
 import {
   createBook,
@@ -22,6 +23,7 @@ import {
   bookExistsInLibrary,
   searchFriendsBooks,
 } from "~/models/book.server";
+import { fetchDescription } from "~/models/openlibrary.server";
 import {
   addWantToRead,
   getWantToReadWorks,
@@ -230,26 +232,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
-  // Fetch description from Open Library Works API
-  let description = "";
-  if (typeof openLibraryKey === "string" && openLibraryKey.length > 0) {
-    try {
-      const workRes = await fetch(
-        `https://openlibrary.org${openLibraryKey}.json`,
-      );
-      if (workRes.ok) {
-        const workData = await workRes.json();
-        // Description can be a string or an object with a "value" property
-        if (typeof workData.description === "string") {
-          description = workData.description;
-        } else if (workData.description?.value) {
-          description = workData.description.value;
-        }
-      }
-    } catch {
-      // Silently fail - we'll just have no description
-    }
-  }
+  const description =
+    typeof openLibraryKey === "string" && openLibraryKey.length > 0
+      ? await fetchDescription(openLibraryKey)
+      : "";
 
   const book = await createBook({
     title: typeof title === "string" ? title : "",
@@ -501,6 +487,8 @@ export default function Search() {
   const data = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const navigation = useNavigation();
+  const revalidator = useRevalidator();
+  const [scanning, setScanning] = useState(false);
 
   const isSearching =
     navigation.state === "loading" &&
@@ -550,6 +538,15 @@ export default function Search() {
     <main className="w-full max-w-5xl mx-auto px-4 py-8 md:px-8 md:py-10">
       <h1 className="sr-only">Search</h1>
 
+      {scanning ? (
+        <BarcodeScanner
+          onClose={() => {
+            setScanning(false);
+            // Anything scanned is on the shelf now; refresh the "in your library" marks
+            revalidator.revalidate();
+          }}
+        />
+      ) : null}
       <Form method="get" className="mb-10">
         <div className="flex gap-2">
           <SearchBox defaultValue={currentQuery} />
@@ -559,6 +556,17 @@ export default function Search() {
             className="px-5 rounded-md bg-stone-700 dark:bg-stone-200 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors disabled:opacity-60"
           >
             {isSearching ? "Searching…" : "Search"}
+          </button>
+          {/* Scan the barcode on the back of a book instead of typing */}
+          <button
+            type="button"
+            onClick={() => setScanning(true)}
+            title="Scan a barcode"
+            aria-label="Scan a barcode"
+            className="inline-flex items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
+          >
+            <CameraIcon size={18} />
+            <span className="hidden sm:inline">Scan</span>
           </button>
         </div>
         {/* Keep the Open Library filters through new searches */}
@@ -576,6 +584,17 @@ export default function Search() {
             Search once and you&apos;ll see both.
           </p>
           <p className="mt-6 text-sm text-stone-500 dark:text-stone-400">
+            Adding a stack of real books? Hit{" "}
+            <button
+              type="button"
+              onClick={() => setScanning(true)}
+              className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+            >
+              Scan
+            </button>{" "}
+            and point your phone at each barcode.
+          </p>
+          <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
             Already keep your books on Goodreads or StoryGraph?{" "}
             <Link
               to="/import"

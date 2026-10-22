@@ -15,6 +15,7 @@ import Layout from "~/components / Layout/Layout";
 import type { ImportSource, ShelfChoice } from "~/import-books";
 import { defaultChoice, readExport, summarize } from "~/import-books";
 import { importBooks } from "~/models/import.server";
+import { fillInBooks } from "~/models/openlibrary.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -63,12 +64,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const shelf = form.get("shelf");
-  const result = await importBooks(userId, rows, {
+  const { bookIds, ...result } = await importBooks(userId, rows, {
     shelf: SHELF_CHOICES.includes(shelf as ShelfChoice)
       ? (shelf as ShelfChoice)
       : defaultChoice(rows),
     wantToRead: form.get("wantToRead") === "on",
   });
+  // Covers and details come from Open Library after the reply goes out
+  void fillInBooks(bookIds);
   return json({ source, ...result });
 };
 
@@ -180,7 +183,7 @@ export default function Import() {
                 : ""}
             </p>
             <p className={`mt-1 text-sm ${muted}`}>
-              Covers and details fill in from Open Library as you open each book.
+              Covers and details are filling in from Open Library now. Give it a minute or two.
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <Link
