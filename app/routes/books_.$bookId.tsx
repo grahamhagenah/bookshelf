@@ -115,7 +115,8 @@ function AboutAuthor({
   const linkClass =
     "text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200";
 
-  // Just the label shows; the name, bio and links unfold on request
+  // Just the label shows; the years, bio and links unfold on request.
+  // The name itself is already at the top of the page.
   return (
     <details className="group mt-8">
       <summary className="flex cursor-pointer list-none items-center gap-2 text-stone-900 dark:text-stone-100 [&::-webkit-details-marker]:hidden">
@@ -137,12 +138,10 @@ function AboutAuthor({
           <path d="M6 9l6 6 6-6" />
         </svg>
       </summary>
-      <p className="mt-2 text-stone-900 dark:text-stone-100">
-        <span className="font-medium">{author.name}</span>
-        {years ? (
-          <span className="ml-2 text-sm text-stone-400 dark:text-stone-500">{years}</span>
-        ) : null}
-      </p>
+      {/* The name is already at the top of the page */}
+      {years ? (
+        <p className="mt-2 text-sm text-stone-400 dark:text-stone-500">{years}</p>
+      ) : null}
       {author.bio ? (
         <p className="summary mt-1 max-w-prose text-pretty leading-relaxed text-stone-700 dark:text-stone-300">
           {author.bio}
