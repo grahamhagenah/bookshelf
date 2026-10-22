@@ -74,6 +74,23 @@ export function useUser(): User {
 export function validateEmail(email: unknown): email is string {
   return typeof email === "string" && email.length > 3 && email.includes("@");
 }
+// Signup bot checks: a hidden field people never see but form-filling bots
+// do, and a minimum time between the form loading and being sent
+export const HONEYPOT_FIELD = "website";
+export const MIN_SIGNUP_MS = 2000;
+
+export function looksLikeBot(
+  formData: FormData,
+  now = Date.now(),
+): "honeypot" | "too-fast" | null {
+  const trap = formData.get(HONEYPOT_FIELD);
+  if (typeof trap === "string" && trap.length > 0) return "honeypot";
+  const renderedAt = Number(formData.get("renderedAt"));
+  if (!Number.isFinite(renderedAt) || renderedAt <= 0) return "too-fast";
+  if (now - renderedAt < MIN_SIGNUP_MS) return "too-fast";
+  return null;
+}
+
 // Demo sandbox accounts use this reserved, undeliverable domain
 export const DEMO_EMAIL_DOMAIN = "demo.stacks.invalid";
 
