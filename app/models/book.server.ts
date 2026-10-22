@@ -546,3 +546,33 @@ export async function searchFriendsBooks(userId: User["id"], query: string) {
     take: 30,
   });
 }
+
+// A whole shelf for the CSV download, each copy with the viewer's own
+// read date, heart and note
+export async function getExportBooks(userId: User["id"], ownerIds: User["id"][]) {
+  const books = await prisma.book.findMany({
+    where: { userId: { in: ownerIds } },
+    select: {
+      title: true,
+      author: true,
+      isbn: true,
+      publisher: true,
+      pageCount: true,
+      datePublished: true,
+      createdAt: true,
+      userId: true,
+      readAt: true,
+      readerNotes: {
+        where: { userId },
+        select: { userId: true, readAt: true, loved: true, body: true },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  return books.map((book) => ({
+    ...book,
+    readAt: readAtFor(userId, book),
+    loved: book.readerNotes[0]?.loved ?? false,
+    note: book.readerNotes[0]?.body ?? null,
+  }));
+}

@@ -17,6 +17,7 @@ import {
   BookIcon,
   BorrowedIcon,
   CheckCircleIcon,
+  ExportIcon,
   GridViewIcon,
   GroupIcon,
   ImportIcon,
@@ -599,13 +600,22 @@ export default function Account() {
       </Section>
 
       <Section
-        title="Import"
-        description="Bring your shelf over from Goodreads or StoryGraph in one go."
+        title="Import and export"
+        description="Bring your shelf over from Goodreads or StoryGraph in one go, or take a copy of it with you."
       >
-        <Link to="/import" className={`inline-flex items-center gap-2 ${quietButton}`}>
-          <ImportIcon size={16} />
-          Import from a file
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link to="/import" className={`inline-flex items-center gap-2 ${quietButton}`}>
+            <ImportIcon size={16} />
+            Import from a file
+          </Link>
+          <a href="/export" download className={`inline-flex items-center gap-2 ${quietButton}`}>
+            <ExportIcon size={16} />
+            Export as CSV
+          </a>
+        </div>
+        <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
+          Uses Goodreads&apos; columns, so Goodreads, StoryGraph and Stacks can all read it back.
+        </p>
       </Section>
 
       {!user?.demoGroup ? (
