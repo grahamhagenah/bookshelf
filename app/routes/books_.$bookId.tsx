@@ -1014,7 +1014,7 @@ function LoanCard({ data }: { data: BookData }) {
 
   return (
     <div
-      className={`mt-6 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 text-sm transition-opacity ${
+      className={`mt-8 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 text-sm transition-opacity ${
         returned.state !== "idle" ? "opacity-50" : ""
       }`}
     >
@@ -1669,10 +1669,6 @@ export default function BookDetailsPage() {
             </>
           )}
 
-          {!isEditing && data.isOwner && data.isBorrowed && data.book.borrower ? (
-            <LoanCard data={data} />
-          ) : null}
-
           {!isEditing && data.book.firstSentence ? (
             <div className="mt-8">
               <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
@@ -1696,6 +1692,12 @@ export default function BookDetailsPage() {
           ) : null}
 
           {!isEditing && data.author ? <AboutAuthor author={data.author} /> : null}
+
+          {/* Your copy while it's out, after the book and before what readers
+              thought of it */}
+          {!isEditing && data.isOwner && data.isBorrowed && data.book.borrower ? (
+            <LoanCard data={data} />
+          ) : null}
 
           {!isEditing ? (
             <ReaderNotes
