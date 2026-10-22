@@ -3,7 +3,12 @@ import { makeBook, makeUser, prisma } from "../../test/db";
 
 import { lendBook } from "./book.server";
 import { answerFriendRequest, getFriendCards, removeFriend } from "./friend.server";
-import { createFriendship, createNotification, getFriendStatus } from "./user.server";
+import {
+  createFriendship,
+  createNotification,
+  getFriendStatus,
+  getReceivedNotification,
+} from "./user.server";
 
 test("a friend's card counts their shelf, the loans between you and your wishes", async () => {
   const me = await makeUser("Me");
@@ -58,4 +63,17 @@ test("only the person a request was sent to can accept it", async () => {
 
   expect(await answerFriendRequest(receiver.id, request.id, true)).toBe(true);
   expect(await getFriendStatus(receiver.id, sender.id)).toBe("friends");
+});
+
+test("a notification can only be looked up by the person it was sent to", async () => {
+  const sender = await makeUser("Sender");
+  const receiver = await makeUser("Receiver");
+  const stranger = await makeUser("Stranger");
+  const request = await createNotification(sender.id, receiver.id, "Sender Reader");
+
+  expect(await getReceivedNotification(stranger.id, request.id)).toBeNull();
+  expect(await getReceivedNotification(receiver.id, request.id)).toMatchObject({
+    senderId: sender.id,
+    type: "FRIEND_REQUEST",
+  });
 });

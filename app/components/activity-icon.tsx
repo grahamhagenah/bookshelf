@@ -77,10 +77,10 @@ export default function ActivityIcon({
 }: {
   type: string;
   urgent?: boolean;
-  size?: "sm" | "md";
+  size?: "xs" | "sm" | "md";
 }) {
-  const box = size === "sm" ? "w-7 h-7" : "w-8 h-8";
-  const icon = size === "sm" ? 14 : 16;
+  const box = size === "xs" ? "w-5 h-5" : size === "sm" ? "w-7 h-7" : "w-8 h-8";
+  const icon = size === "xs" ? 11 : size === "sm" ? 14 : 16;
   return (
     <span
       aria-hidden="true"

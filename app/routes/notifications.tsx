@@ -4,11 +4,13 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 
 import ActivityIcon from "~/components/activity-icon";
+import Avatar from "~/components/avatar";
 import PersonLink from "~/components/person-link";
 import Layout from "~/components / Layout/Layout";
+import { prisma } from "~/db.server";
 import {
   DEFAULT_LOAN_WEEKS,
   LOAN_WEEKS,
@@ -16,15 +18,19 @@ import {
   loanWeeks,
 } from "~/models/book.server";
 import { answerFriendRequest } from "~/models/friend.server";
+import { shelfIds } from "~/models/household.server";
 import {
   getUserById,
   markNotificationAsRead,
   createBookApprovedNotification,
   getNotificationHistory,
   getPendingBookRequests,
+  getReceivedNotification,
+  dismissUpdates,
 } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+import { coverSrc } from "~/utils";
 
 export const meta: MetaFunction = () =>
   seo({ title: "Activity", noindex: true });
@@ -37,7 +43,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const [user, history, pendingBookRequests] = await Promise.all([
     getUserById(userId),
-    getNotificationHistory(userId, 10),
+    getNotificationHistory(userId, 30),
     getPendingBookRequests(userId),
   ]);
   const friendIds = user?.following.map((friend) => friend.id) ?? [];
@@ -53,87 +59,62 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   const formData = await request.formData();
-  const senderId = formData.get("senderId");
   const notificationId = formData.get("notificationId");
-  const notificationType = formData.get("notificationType");
 
-  if (typeof senderId !== "string" || typeof notificationId !== "string") {
+  if (formData.get("intent") === "dismissAll") {
+    await dismissUpdates(userId, [...NEEDS_ACTION]);
     return null;
   }
 
-  // Handle friend request
-  // (only a request that was sent to you; the friend is whoever sent it)
-  const answer = formData.get("friend_request");
-  if (answer === "accept" || answer === "decline") {
-    await answerFriendRequest(userId, notificationId, answer === "accept");
+  // Everything below acts on a notification sent to you, and on what it
+  // says (who sent it, which book), never on ids from the form
+  const notification =
+    typeof notificationId === "string"
+      ? await getReceivedNotification(userId, notificationId)
+      : null;
+  if (!notification) return null;
+  const type = notification.type || "FRIEND_REQUEST";
+
+  if (type === "FRIEND_REQUEST") {
+    const answer = formData.get("friend_request");
+    if (answer === "accept" || answer === "decline") {
+      await answerFriendRequest(userId, notification.id, answer === "accept");
+    }
+    return null;
   }
 
-  // Handle book request
-  if (notificationType === "BOOK_REQUEST") {
-    const bookId = formData.get("bookId");
-    const bookTitle = formData.get("bookTitle");
-
-    if (typeof bookId !== "string" || typeof bookTitle !== "string") {
-      return null;
-    }
-
-    if (formData.get("book_request") === "approve") {
-      // Lend the book to the requester
-      await lendBook(bookId, senderId, loanWeeks(formData.get("weeks")));
-
-      // Get current user's name for the approval notification
+  if (type === "BOOK_REQUEST") {
+    const answer = formData.get("book_request");
+    const book = notification.bookId
+      ? await prisma.book.findUnique({
+          where: { id: notification.bookId },
+          select: { userId: true, borrowerId: true, title: true },
+        })
+      : null;
+    if (answer === "approve" && book && !book.borrowerId) {
+      // Only a book on your own shelf (yours or your household's)
+      if (!(await shelfIds(userId)).includes(book.userId)) return null;
+      await lendBook(notification.bookId!, notification.senderId, loanWeeks(formData.get("weeks")));
       const currentUser = await getUserById(userId);
       if (currentUser) {
-        const senderName = `${currentUser.firstname} ${currentUser.surname}`;
         await createBookApprovedNotification(
           userId,
-          senderId,
-          senderName,
-          bookTitle,
+          notification.senderId,
+          `${currentUser.firstname} ${currentUser.surname}`,
+          notification.bookTitle ?? book.title,
         );
       }
-
-      await markNotificationAsRead(notificationId, "approved");
-    } else if (formData.get("book_request") === "decline") {
-      await markNotificationAsRead(notificationId, "declined");
+      await markNotificationAsRead(notification.id, "approved");
+    } else if (answer === "decline") {
+      await markNotificationAsRead(notification.id, "declined");
     }
+    return null;
   }
 
-  // Handle book approved notification (just dismiss it)
-  if (notificationType === "BOOK_APPROVED") {
-    if (formData.get("dismiss") === "true") {
-      await markNotificationAsRead(notificationId, "dismissed");
-    }
+  // Everything else only needs dismissing
+  if (formData.get("dismiss") === "true") {
+    await markNotificationAsRead(notification.id, "dismissed");
   }
-
-  // Reader notes and loan extensions only need dismissing
-  if (
-    notificationType === "READER_NOTE" ||
-    notificationType === "LOAN_EXTENDED" ||
-    notificationType === "WANT_MATCH"
-  ) {
-    if (formData.get("dismiss") === "true") {
-      await markNotificationAsRead(notificationId, "dismissed");
-    }
-  }
-
-  // Handle book returned notification (just dismiss it)
-  if (notificationType === "BOOK_RETURNED") {
-    if (formData.get("dismiss") === "true") {
-      await markNotificationAsRead(notificationId, "dismissed");
-    }
-  }
-
-  // Handle overdue/due soon reminders (just dismiss them)
-  if (
-    notificationType === "OVERDUE_REMINDER" ||
-    notificationType === "DUE_SOON_REMINDER"
-  ) {
-    if (formData.get("dismiss") === "true") {
-      await markNotificationAsRead(notificationId, "dismissed");
-    }
-  }
-
   return null;
 };
 
@@ -149,15 +130,36 @@ const primaryButton =
   "rounded-md bg-forest-600 dark:bg-forest-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors text-center";
 const secondaryButton =
   "rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors text-center";
-const quietButton =
-  "rounded-md px-2 py-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors";
 
-const formatDate = (dateString: string, withTime = false) =>
-  new Date(dateString).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    ...(withTime ? { hour: "numeric", minute: "2-digit" } : {}),
-  });
+const DAY = 24 * 60 * 60 * 1000;
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+// "Today", "Yesterday", then the date
+function when(dateString: string, withTime = false) {
+  const date = new Date(dateString);
+  const days = Math.round((startOfDay(new Date()) - startOfDay(date)) / DAY);
+  const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const day =
+    days === 0
+      ? "Today"
+      : days === 1
+        ? "Yesterday"
+        : date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return withTime || days <= 1 ? `${day}, ${time}` : day;
+}
+
+// Which bunch an older notification goes in
+function bucket(dateString: string) {
+  const days = Math.round((startOfDay(new Date()) - startOfDay(new Date(dateString))) / DAY);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return "This week";
+  if (days < 31) return "This month";
+  return "Older";
+}
 
 interface ActivityNotification {
   id: string;
@@ -167,38 +169,72 @@ interface ActivityNotification {
   bookId?: string | null;
   bookTitle?: string | null;
   createdAt: string;
+  sender?: { profileEmoji: string | null } | null;
+  book?: { cover: string } | null;
 }
 
-function Row({
-  icon,
+function SmallCover({ cover, href }: { cover: string; href: string }) {
+  return (
+    <Link
+      to={href}
+      tabIndex={-1}
+      aria-hidden="true"
+      className="block w-10 flex-shrink-0 self-start overflow-hidden rounded-xs bg-stone-100 dark:bg-stone-800 ring-1 ring-stone-900/5 dark:ring-white/10"
+    >
+      <img src={coverSrc(cover)} alt="" loading="lazy" className="aspect-[2/3] w-full object-cover" />
+    </Link>
+  );
+}
+
+// One notification, as a card of its own: who, what, when, and what you
+// can do, with the book's cover beside it
+function Card({
+  type,
+  person,
   date,
+  cover,
+  bookHref,
   children,
   actions,
+  dismiss,
 }: {
-  icon: React.ReactNode;
+  type: string;
+  person: { name: string; icon?: string | null };
   date?: string;
+  cover?: string | null;
+  bookHref?: string | null;
   children: React.ReactNode;
   actions?: React.ReactNode;
+  dismiss?: boolean;
 }) {
+  const [firstname, ...rest] = person.name.split(" ");
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 py-3">
-      <div className="flex items-start gap-3 flex-1 min-w-0">
-        {icon}
-        <div className="min-w-0 pt-1">
-          <p className="text-stone-800 dark:text-stone-200 leading-snug">
-            {children}
-          </p>
-          {date ? (
-            <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
-              {date}
-            </p>
-          ) : null}
-        </div>
+    <div className="flex gap-3 rounded-xl border border-stone-200 dark:border-stone-800 p-4">
+      <span className="relative h-10 flex-shrink-0">
+        <Avatar firstname={firstname} surname={rest.join(" ")} icon={person.icon} />
+        <span className="absolute -bottom-1 -right-1 rounded-full ring-2 ring-white dark:ring-stone-950">
+          <ActivityIcon type={type} urgent={type === "OVERDUE_REMINDER"} size="xs" />
+        </span>
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="leading-snug text-stone-800 dark:text-stone-200">{children}</p>
+        {date ? <p className="mt-0.5 text-xs text-stone-400 dark:text-stone-500">{date}</p> : null}
+        {actions ? <div className="mt-3 flex flex-wrap items-center gap-2">{actions}</div> : null}
       </div>
-      {actions ? (
-        <div className="flex items-center gap-2 pl-11 sm:pl-0 flex-shrink-0">
-          {actions}
-        </div>
+      {cover && bookHref ? <SmallCover cover={cover} href={bookHref} /> : null}
+      {dismiss ? (
+        <button
+          type="submit"
+          name="dismiss"
+          value="true"
+          aria-label="Dismiss"
+          title="Dismiss"
+          className="-mr-2 -mt-2 flex h-7 w-7 flex-shrink-0 items-center justify-center self-start rounded-full text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
       ) : null}
     </div>
   );
@@ -288,14 +324,9 @@ function ActivityItem({
           </>
         );
       actions = (
-        <>
-          <a href={`/books/${notification.bookId}`} className={secondaryButton}>
-            View book
-          </a>
-          <button className={quietButton} type="submit" name="dismiss" value="true">
-            Dismiss
-          </button>
-        </>
+        <a href={`/books/${notification.bookId}`} className={secondaryButton}>
+          View book
+        </a>
       );
       break;
     case "WANT_MATCH":
@@ -306,14 +337,9 @@ function ActivityItem({
         </>
       );
       actions = (
-        <>
-          <a href={`/books/${notification.bookId}`} className={secondaryButton}>
-            View book
-          </a>
-          <button className={quietButton} type="submit" name="dismiss" value="true">
-            Dismiss
-          </button>
-        </>
+        <a href={`/books/${notification.bookId}`} className={secondaryButton}>
+          View book
+        </a>
       );
       break;
     case "BOOK_APPROVED":
@@ -334,60 +360,41 @@ function ActivityItem({
     case "LOAN_EXTENDED":
       text = <>{name} gave you more time with {book}</>;
       actions = (
-        <>
-          <a href={`/books/${notification.bookId}`} className={secondaryButton}>
-            View book
-          </a>
-          <button className={quietButton} type="submit" name="dismiss" value="true">
-            Dismiss
-          </button>
-        </>
+        <a href={`/books/${notification.bookId}`} className={secondaryButton}>
+          View book
+        </a>
       );
       break;
     case "READER_NOTE":
       text = <>{name} shared their thoughts on {book}</>;
       actions = (
-        <>
-          <a href={`/books/${notification.bookId}`} className={secondaryButton}>
-            Read it
-          </a>
-          <button className={quietButton} type="submit" name="dismiss" value="true">
-            Dismiss
-          </button>
-        </>
+        <a href={`/books/${notification.bookId}#notes`} className={secondaryButton}>
+          Read it
+        </a>
       );
       break;
     default:
       text = <>New activity from {name}</>;
   }
 
-  // Updates only need dismissing
-  if (!actions) {
-    actions = (
-      <button className={quietButton} type="submit" name="dismiss" value="true">
-        Dismiss
-      </button>
-    );
-  }
+  // Anything but a request can simply be dismissed
+  const dismissable = type !== "FRIEND_REQUEST" && type !== "BOOK_REQUEST";
 
   return (
     <form method="post">
-      <input type="hidden" name="senderId" value={notification.senderId} />
+      {/* The server looks the rest up from the notification itself */}
       <input type="hidden" name="notificationId" value={notification.id} />
-      <input type="hidden" name="notificationType" value={type} />
-      {type === "BOOK_REQUEST" ? (
-        <>
-          <input type="hidden" name="bookId" value={notification.bookId || ""} />
-          <input type="hidden" name="bookTitle" value={notification.bookTitle || ""} />
-        </>
-      ) : null}
-      <Row
-        icon={<ActivityIcon type={type} urgent={type === "OVERDUE_REMINDER"} />}
-        date={formatDate(notification.createdAt)}
+      <Card
+        type={type}
+        person={{ name: notification.senderName, icon: notification.sender?.profileEmoji }}
+        date={when(notification.createdAt)}
+        cover={notification.book?.cover}
+        bookHref={notification.bookId ? `/books/${notification.bookId}` : null}
         actions={actions}
+        dismiss={dismissable}
       >
         {text}
-      </Row>
+      </Card>
     </form>
   );
 }
@@ -440,18 +447,29 @@ const getHistoryText = (
   }
 };
 
-function SectionHeading({ title, count }: { title: string; count?: number }) {
+function SectionHeading({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count?: number;
+  children?: React.ReactNode;
+}) {
   return (
-    <h2 className="text-lg font-semibold mb-2 flex items-baseline gap-2">
-      {title}
-      {count ? (
-        <span className="text-sm font-normal text-stone-400 dark:text-stone-500">
-          {count}
-        </span>
-      ) : null}
-    </h2>
+    <div className="mb-3 flex items-baseline justify-between gap-3">
+      <h2 className="flex items-baseline gap-2 text-lg font-semibold">
+        {title}
+        {count ? (
+          <span className="text-sm font-normal text-stone-400 dark:text-stone-500">{count}</span>
+        ) : null}
+      </h2>
+      {children}
+    </div>
   );
 }
+
+const BUCKETS = ["Today", "Yesterday", "This week", "This month", "Older"];
 
 export default function Activity() {
   const data = useLoaderData<typeof loader>();
@@ -462,13 +480,19 @@ export default function Activity() {
   const history = [...(data.history ?? [])].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
+  const earlier = BUCKETS.map((label) => ({
+    label,
+    items: history.filter((n) => bucket(n.createdAt) === label),
+  })).filter((group) => group.items.length > 0);
+  const section = "max-w-3xl";
+  const list = "space-y-3";
 
   return (
     <Layout title="Activity">
-      <section>
-        <SectionHeading title="Needs your attention" count={needsAction.length} />
+      <section className={section}>
+        <SectionHeading title="Needs you" count={needsAction.length} />
         {needsAction.length > 0 ? (
-          <ul>
+          <ul className={list}>
             {needsAction.map((notification) => (
               <li key={notification.id}>
                 <ActivityItem
@@ -480,16 +504,26 @@ export default function Activity() {
             ))}
           </ul>
         ) : (
-          <p className="text-stone-500 dark:text-stone-400 py-2">
+          <p className="rounded-xl border border-dashed border-stone-200 dark:border-stone-800 px-4 py-6 text-center text-stone-500 dark:text-stone-400">
             You&apos;re all caught up.
           </p>
         )}
       </section>
 
       {updates.length > 0 ? (
-        <section>
-          <SectionHeading title="Updates" count={updates.length} />
-          <ul>
+        <section className={section}>
+          <SectionHeading title="New" count={updates.length}>
+            <form method="post">
+              <input type="hidden" name="intent" value="dismissAll" />
+              <button
+                type="submit"
+                className="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+              >
+                Mark all as read
+              </button>
+            </form>
+          </SectionHeading>
+          <ul className={list}>
             {updates.map((notification) => (
               <li key={notification.id}>
                 <ActivityItem
@@ -504,13 +538,15 @@ export default function Activity() {
       ) : null}
 
       {pending.length > 0 ? (
-        <section>
+        <section className={section}>
           <SectionHeading title="Waiting on others" count={pending.length} />
-          <ul>
+          <ul className={list}>
             {pending.map((request) => (
               <li key={request.id}>
-                <Row
-                  icon={<ActivityIcon type="PENDING" />}
+                <Card
+                  type="PENDING"
+                  person={{ name: `${request.receiver.firstname} ${request.receiver.surname}` }}
+                  date={`Asked ${when(request.createdAt).toLowerCase()}`}
                   actions={
                     <a href={`/books/${request.bookId}`} className={secondaryButton}>
                       View book
@@ -527,30 +563,41 @@ export default function Activity() {
                   </strong>{" "}
                   to borrow{" "}
                   <strong className="font-semibold">{request.bookTitle}</strong>
-                </Row>
+                </Card>
               </li>
             ))}
           </ul>
         </section>
       ) : null}
 
-      {history.length > 0 ? (
-        <section>
+      {earlier.length > 0 ? (
+        <section className={section}>
           <SectionHeading title="Earlier" />
-          <ul>
-            {history.map((notification) => (
-              <li
-                key={notification.id}
-                className="flex items-center gap-3 py-2 text-sm text-stone-500 dark:text-stone-400"
-              >
-                <ActivityIcon type={notification.type} size="sm" />
-                <span className="flex-1 min-w-0">{getHistoryText(notification, data.friendIds)}</span>
-                <span className="text-xs text-stone-400 dark:text-stone-500 flex-shrink-0">
-                  {formatDate(notification.createdAt, true)}
-                </span>
-              </li>
+          <div className="space-y-5">
+            {earlier.map((group) => (
+              <div key={group.label}>
+                <h3 className="mb-1.5 text-xs font-medium uppercase tracking-wide text-stone-400 dark:text-stone-500">
+                  {group.label}
+                </h3>
+                <ul className="divide-y divide-stone-100 dark:divide-stone-800 rounded-xl border border-stone-200 dark:border-stone-800">
+                  {group.items.map((notification) => (
+                    <li
+                      key={notification.id}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-stone-500 dark:text-stone-400"
+                    >
+                      <ActivityIcon type={notification.type} size="sm" />
+                      <span className="min-w-0 flex-1">
+                        {getHistoryText(notification, data.friendIds)}
+                      </span>
+                      <span className="flex-shrink-0 text-xs text-stone-400 dark:text-stone-500">
+                        {when(notification.createdAt, true)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         </section>
       ) : null}
     </Layout>
