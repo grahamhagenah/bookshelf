@@ -23,6 +23,7 @@ export async function getUserById(id: User["id"]) {
       coverSize: true,
       profileEmoji: true,
       emailNotifications: true,
+      emailVerifiedAt: true,
       demoGroup: true,
       notificationsReceived: {
         where: { read: false },
@@ -73,6 +74,7 @@ export async function getUserEmailById(id: User["id"]) {
       firstname: true,
       surname: true,
       emailNotifications: true,
+      emailVerifiedAt: true,
     },
   });
 }
@@ -86,9 +88,16 @@ export async function updateUser(
     profileEmoji?: string | null;
   },
 ) {
-  return prisma.user.update({
+  // A new address has to be confirmed again
+  const current = data.email
+    ? await prisma.user.findUnique({ where: { id }, select: { email: true } })
+    : null;
+  const emailChanged = Boolean(current && current.email !== data.email);
+  const user = await prisma.user.update({
     where: { id },
-    data,
+    data: emailChanged
+      ? { ...data, emailVerifiedAt: null, verificationSentAt: null }
+      : data,
     select: {
       id: true,
       email: true,
@@ -97,6 +106,7 @@ export async function updateUser(
       profileEmoji: true,
     },
   });
+  return { ...user, emailChanged };
 }
 
 export function generateUserSlug(firstname: string, surname: string): string {

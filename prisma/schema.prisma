@@ -25,6 +25,12 @@ model User {
   coverSize          String  @default("large")
   profileEmoji       String?
   emailNotifications Boolean @default(true)
+  // When they clicked the link we emailed; no digests or request emails
+  // go out before then
+  emailVerifiedAt    DateTime?
+  // The last confirmation email, so the resend button can't be used to
+  // flood an inbox
+  verificationSentAt DateTime?
   // Set on throwaway demo accounts; everyone in one demo sandbox shares it
   demoGroup          String?
   // People who share one shelf: each other's books count as their own

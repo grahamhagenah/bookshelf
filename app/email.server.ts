@@ -353,3 +353,44 @@ export async function sendFeedbackEmail({
   if (error) return { success: false, error: error.message };
   return { success: true, id: data?.id };
 }
+
+// The link that confirms an address is really theirs
+export async function sendVerificationEmail({
+  toEmail,
+  toName,
+  token,
+}: {
+  toEmail: string;
+  toName: string;
+  token: string;
+}) {
+  if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
+  const link = `${APP_URL}/verify-email?token=${encodeURIComponent(token)}`;
+  const subject = "Confirm your email for Stacks";
+  if (!resend) {
+    console.log("Email not sent (RESEND_API_KEY not configured):", { to: toEmail, subject, link });
+    return { success: false, error: "Email service not configured" };
+  }
+  const html = `<!DOCTYPE html>
+<html>
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+  <body style="margin: 0; padding: 24px 16px; background: #fafaf9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1c1917;">
+    <div style="max-width: 560px; margin: 0 auto;">
+      <p style="margin: 0 0 20px; font-size: 18px; font-weight: 600;">Stacks</p>
+      <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #44403c;">Hi ${escapeHtml(toName)}, tap the button to confirm this is your email address.</p>
+      <p style="margin: 0 0 24px;"><a href="${link}" style="display: inline-block; background: #1c1917; color: #ffffff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-size: 15px; font-weight: 500;">Confirm email</a></p>
+      <p style="margin: 32px 0 0; padding-top: 16px; border-top: 1px solid #e7e5e4; font-size: 12px; line-height: 1.5; color: #a8a29e;">
+        The link works for a week. If you didn't sign up for Stacks, ignore this email and nothing will happen.
+      </p>
+    </div>
+  </body>
+</html>`;
+  const text = `Hi ${toName}, confirm this is your email address for Stacks:\n\n${link}\n\nThe link works for a week. If you didn't sign up for Stacks, ignore this email and nothing will happen.`;
+  try {
+    const { data, error } = await resend.emails.send({ from: FROM_EMAIL, to: toEmail, subject, html, text });
+    if (error) return { success: false, error: error.message };
+    return { success: true, id: data?.id };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}

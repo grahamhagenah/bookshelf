@@ -7,13 +7,14 @@ import { prisma } from "~/db.server";
 
 export function makeUser(
   firstname = "Test",
-  data: { demoGroup?: string; shareToken?: string } = {},
+  data: { demoGroup?: string; shareToken?: string; emailVerifiedAt?: Date | null } = {},
 ) {
   return prisma.user.create({
     data: {
       email: `${firstname.toLowerCase()}.${crypto.randomUUID()}@example.test`,
       firstname,
       surname: "Reader",
+      emailVerifiedAt: new Date(),
       ...data,
     },
   });

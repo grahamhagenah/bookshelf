@@ -55,6 +55,7 @@ import {
   libraryViewOf,
   themeOf,
 } from "~/utils";
+import { sendVerification } from "~/verify-email.server";
 
 export const meta: MetaFunction = () =>
   seo({ title: "Account", noindex: true });
@@ -317,11 +318,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  await updateUser(userId, {
+  const updated = await updateUser(userId, {
     firstname: (firstname as string).trim(),
     surname: (surname as string).trim(),
     email: isDemo ? undefined : (email as string).trim(),
   });
+  // A changed address gets its own confirmation link
+  if (updated.emailChanged) await sendVerification(userId);
 
   return json({
     errors: null,
