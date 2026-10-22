@@ -873,14 +873,6 @@ function BookFacts({ data }: { data: BookData }) {
       rows.push(["Added", `${monthDay(book.createdAt)} by ${owner.firstname}`]);
     }
   }
-  if (book.lendCount > 0 || data.isOwner) {
-    rows.push([
-      "Lent",
-      book.lendCount === 0
-        ? "Not yet"
-        : `${book.lendCount} ${book.lendCount === 1 ? "time" : "times"}`,
-    ]);
-  }
   if (data.waiting.length > 0) {
     rows.push(["Waiting", data.waiting.join(", ")]);
   }
@@ -990,14 +982,19 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
 function LendingHistory({
   entries,
   currentUser,
+  lendCount,
 }: {
   entries: BookData["lendingHistory"];
   currentUser: BookData["currentUser"];
+  lendCount: number;
 }) {
   return (
     <div>
       <h2 className="mb-1 text-sm font-semibold text-stone-500 dark:text-stone-400">
         Lending history
+        <span className="ml-1.5 font-normal text-stone-400 dark:text-stone-500">
+          lent {lendCount} {lendCount === 1 ? "time" : "times"}
+        </span>
       </h2>
       <ul className="divide-y divide-stone-100 dark:divide-stone-800">
         {entries.map((entry) => {
@@ -1268,14 +1265,6 @@ export default function BookDetailsPage() {
             />
           ) : null}
           {!isEditing ? <BookFacts data={data} /> : null}
-          {!isEditing && data.lendingHistory.length > 0 ? (
-            <div className="hidden md:block">
-              <LendingHistory
-                entries={data.lendingHistory}
-                currentUser={data.currentUser}
-              />
-            </div>
-          ) : null}
         </section>
         <section className="flex-1 min-w-0">
           {isEditing ? (
@@ -1677,10 +1666,11 @@ export default function BookDetailsPage() {
 
           {/* On phones the history comes last, after the book's details */}
           {!isEditing && data.lendingHistory.length > 0 ? (
-            <div className="mt-10 md:hidden">
+            <div className="mt-10">
               <LendingHistory
                 entries={data.lendingHistory}
                 currentUser={data.currentUser}
+                lendCount={data.book.lendCount}
               />
             </div>
           ) : null}
