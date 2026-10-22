@@ -67,7 +67,7 @@ import {
 import type { CoversResponse } from "~/routes/api.covers";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
-import { cleanSubjects, coverSrc, stripMarkdown } from "~/utils";
+import { cleanSubjects, coverSrc, normalizeOpeningLine, stripMarkdown } from "~/utils";
 
 // "Oct 21", adding the year only when it isn't this year
 const monthDay = (date: string | Date) => {
@@ -1676,7 +1676,7 @@ export default function BookDetailsPage() {
                 Opening line
               </h2>
               <blockquote className="border-l-2 border-stone-200 dark:border-stone-700 pl-4 italic text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
-                “{data.book.firstSentence}”
+                “{normalizeOpeningLine(data.book.firstSentence)}”
               </blockquote>
             </div>
           ) : null}

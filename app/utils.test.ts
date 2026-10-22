@@ -2,6 +2,7 @@ import {
   cleanSubjects,
   coverSrc,
   isDemoEmail,
+  normalizeOpeningLine,
   safeRedirect,
   stripMarkdown,
   validateEmail,
@@ -109,4 +110,27 @@ describe("stripMarkdown", () => {
   test("collapses runs of blank lines", () => {
     expect(stripMarkdown("One.\r\n\n\n\nTwo.")).toBe("One.\n\nTwo.");
   });
+});
+
+test("normalizeOpeningLine puts a shouted start back into sentence case", () => {
+  expect(normalizeOpeningLine("SOME YEARS AGO there was in the city of York a society of magicians.")).toBe(
+    "Some years ago there was in the city of York a society of magicians.",
+  );
+  expect(normalizeOpeningLine("A SCREAMING comes across the sky.")).toBe("A screaming comes across the sky.");
+  expect(normalizeOpeningLine("MR. AND MRS. DURSLEY, of number four, Privet Drive")).toBe(
+    "Mr. and Mrs. Dursley, of number four, Privet Drive",
+  );
+  expect(normalizeOpeningLine("WHEN I WAS born, the name did not exist.")).toBe("When I was born, the name did not exist.");
+  expect(normalizeOpeningLine("“IT WAS a bright cold day in April”")).toBe("“It was a bright cold day in April”");
+});
+
+test("normalizeOpeningLine leaves ordinary lines alone", () => {
+  for (const line of [
+    "In a hole in the ground there lived a hobbit.",
+    "I told you last night that I might be gone sometime.",
+    "A long time ago, NASA said so.",
+    "\"What's two plus two?\"",
+  ]) {
+    expect(normalizeOpeningLine(line)).toBe(line);
+  }
 });

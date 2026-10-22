@@ -153,6 +153,50 @@ export function stripMarkdown(text: string) {
     .trim();
 }
 
+// Books often set their first few words in capitals ("SOME YEARS AGO there
+// was..."), and catalogues copy them that way. This puts the shouted run
+// back into sentence case. Names in it can't be told apart from other
+// words, except after a title like Mr., so those are capitalised.
+const HONORIFICS = new Set(["mr.", "mrs.", "ms.", "dr.", "st.", "mr", "mrs", "ms", "dr"]);
+
+export function normalizeOpeningLine(text: string) {
+  const words = text.split(/(\s+)/);
+  const isShouted = (word: string) => /[A-Z]/.test(word) && !/[a-z]/.test(word);
+  // How many words at the start are in capitals
+  let run = 0;
+  let shouted = 0;
+  for (let i = 0; i < words.length; i += 2) {
+    const word = words[i];
+    if (!/[A-Za-z]/.test(word)) {
+      run = i + 1;
+      continue;
+    }
+    if (!isShouted(word)) break;
+    // A lone "I" or "A" isn't shouting by itself
+    if (word.replace(/[^A-Z]/g, "").length > 1) shouted++;
+    run = i + 1;
+  }
+  if (shouted === 0) return text;
+
+  let afterTitle = false;
+  let first = true;
+  for (let i = 0; i < run; i += 2) {
+    const word = words[i];
+    if (!/[A-Za-z]/.test(word)) continue;
+    const bare = word.toLowerCase().replace(/^[^a-z]+|[^a-z.]+$/g, "");
+    let next = word.toLowerCase();
+    // ("Mr. and Mrs. Dursley": the name after a title, not the "and")
+    const nameAfterTitle = afterTitle && bare !== "and" && bare !== "or";
+    if (first || nameAfterTitle || HONORIFICS.has(bare) || bare === "i" || bare.startsWith("i'")) {
+      next = next.replace(/[a-z]/, (letter) => letter.toUpperCase());
+    }
+    afterTitle = HONORIFICS.has(bare);
+    first = false;
+    words[i] = next;
+  }
+  return words.join("");
+}
+
 // Appearance settings, kept on the account so they follow you between devices
 export const THEMES = ["light", "dark", "system"] as const;
 export type Theme = (typeof THEMES)[number];
