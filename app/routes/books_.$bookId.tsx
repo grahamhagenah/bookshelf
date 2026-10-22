@@ -37,6 +37,12 @@ import {
 } from "~/models/book.server";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import {
+  getHolds,
+  leaveHold,
+  passToNextInLine,
+  placeHold,
+} from "~/models/hold.server";
+import {
   NOTE_MAX_LENGTH,
   canLeaveNote,
   getReaderNotes,
@@ -293,12 +299,15 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   // Fetch lending history and reader notes for the book
-  const [lendingHistory, readerNotes, canNote, author] = await Promise.all([
+  const [lendingHistory, readerNotes, canNote, author, holds] = await Promise.all([
     getLendingHistory(params.bookId),
     getReaderNotes(params.bookId),
     canLeaveNote(userId, book),
     getAuthor(book.authorKey),
+    getHolds(params.bookId),
   ]);
+  // Where you are in line for this book, counting from 1
+  const holdIndex = holds.findIndex((hold) => hold.user.id === userId);
 
   // Mark which borrowers in history are friends
   const lendingHistoryWithFriendStatus = lendingHistory.map((entry) => ({
@@ -321,10 +330,25 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     noteMaxLength: NOTE_MAX_LENGTH,
     extendWeeks: EXTEND_WEEKS,
     loanChoices: { weeks: LOAN_WEEKS, defaultWeeks: DEFAULT_LOAN_WEEKS },
+    // Who's waiting is shown to the owner and the borrower; others just
+    // see their own place
+    waiting:
+      isOwner || isBorrower ? holds.map((hold) => hold.user.firstname) : [],
+    linePosition: holdIndex === -1 ? null : holdIndex + 1,
     author,
     friendIds: followingIds,
   });
 };
+
+// When a book comes back, ask for it on behalf of whoever is first in line.
+// A demo friend who owns it answers straight away, but never on behalf of
+// the person who just marked it returned: that's theirs to decide.
+async function handOn(bookId: string, actingUserId: string) {
+  const request = await passToNextInLine(bookId);
+  if (request && request.receiverId !== actingUserId) {
+    await respondAsDemoPersona(request.id);
+  }
+}
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -428,6 +452,28 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     return json({ success: true, message: "Book request sent!" });
   }
 
+  if (intent === "placeHold" || intent === "leaveHold") {
+    if (intent === "leaveHold") {
+      await leaveHold(book.id, userId);
+      return json({ leftLine: true });
+    }
+    // Only for a friend's book that someone else has right now
+    const viewer = await getUserById(userId);
+    const isFriend =
+      viewer?.following.some((friend) => friend.id === book.userId) ?? false;
+    if (
+      book.userId === userId ||
+      !book.borrowerId ||
+      book.borrowerId === userId ||
+      !isFriend ||
+      !(await canInteract(userId, book.userId))
+    ) {
+      throw new Response("Can't wait for this book", { status: 400 });
+    }
+    await placeHold(book.id, userId);
+    return json({ joinedLine: true });
+  }
+
   if (intent === "lendTo") {
     // The owner hands their own book to a friend
     if (book.userId !== userId) {
@@ -476,6 +522,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     );
 
     await returnBook(book.id);
+    await handOn(book.id, userId);
     return redirect("/books");
   }
 
@@ -524,6 +571,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     if (intent === "markReturned") {
       // The book came back in person, without the borrower pressing Return
       await returnBook(book.id);
+      await handOn(book.id, userId);
       return json({ markedReturned: true });
     }
 
@@ -683,6 +731,48 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   return null;
 };
 
+// For a friend's book that's out on loan: join the line for it, or see
+// your place in it
+function WaitInLine({ position }: { position: number | null }) {
+  const navigation = useNavigation();
+  const pending = navigation.formData?.get("intent");
+
+  if (position === null) {
+    return (
+      <Form method="post">
+        <input type="hidden" name="intent" value="placeHold" />
+        <button
+          type="submit"
+          disabled={pending === "placeHold"}
+          className={`w-full ${primaryButton} ${pending === "placeHold" ? "opacity-60 cursor-wait" : ""}`}
+        >
+          {pending === "placeHold" ? "Joining…" : "Get in line"}
+        </button>
+        <p className="mt-1.5 text-xs text-stone-500 dark:text-stone-400">
+          When it comes back, we&apos;ll ask for it for you.
+        </p>
+      </Form>
+    );
+  }
+
+  return (
+    <div>
+      <p className="w-full cursor-default rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-center text-sm text-stone-600 dark:text-stone-300">
+        {position === 1 ? "You're next in line" : `You're #${position} in line`}
+      </p>
+      <Form method="post" className="mt-1.5 text-center">
+        <input type="hidden" name="intent" value="leaveHold" />
+        <button
+          type="submit"
+          className="text-xs text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200"
+        >
+          Leave the line
+        </button>
+      </Form>
+    </div>
+  );
+}
+
 // Lend your book to a friend directly, without waiting for them to ask
 function LendToFriend({
   friends,
@@ -787,6 +877,9 @@ function BookFacts({ data }: { data: BookData }) {
         ? "Not yet"
         : `${book.lendCount} ${book.lendCount === 1 ? "time" : "times"}`,
     ]);
+  }
+  if (data.waiting.length > 0) {
+    rows.push(["Waiting", data.waiting.join(", ")]);
   }
   if (rows.length === 0) return null;
 
@@ -907,6 +1000,9 @@ export default function BookDetailsPage() {
   const canRequestBook =
     !data.isOwner && !data.isBorrowed && !data.isBorrower && data.isFriend;
   const needsFriendship = !data.isOwner && !data.isFriend;
+  // A friend's book someone else has right now: you can wait for it
+  const canWaitInLine =
+    !data.isOwner && data.isBorrowed && !data.isBorrower && data.isFriend;
   const details = [
     data.book.datePublished,
     data.book.pageCount ? `${data.book.pageCount} pages` : null,
@@ -995,6 +1091,9 @@ export default function BookDetailsPage() {
                     : "Ask to borrow"}
               </button>
             </Form>
+          ) : null}
+          {canWaitInLine && !isEditing ? (
+            <WaitInLine position={data.linePosition} />
           ) : null}
           {needsFriendship && data.book.user ? (
             <div className={panel}>

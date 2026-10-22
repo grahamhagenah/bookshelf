@@ -234,6 +234,9 @@ export async function lendBook(
     },
   });
 
+  // Whoever gets the book no longer needs to wait for it
+  await prisma.hold.deleteMany({ where: { bookId, userId: borrowerId } });
+
   return prisma.book.update({
     where: { id: bookId },
     data: {

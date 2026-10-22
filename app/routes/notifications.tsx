@@ -298,6 +298,15 @@ function ActivityItem({
     case "BOOK_APPROVED":
       text = <>{name} is lending you {book}</>;
       break;
+    case "HOLD_READY":
+      // You were first in line when the book came back
+      text = (
+        <>
+          {book} is back, and you were next in line. We&apos;ve asked {name} for
+          you.
+        </>
+      );
+      break;
     case "BOOK_RETURNED":
       text = <>{name} returned {book}</>;
       break;
@@ -391,6 +400,8 @@ const getHistoryText = (
       return <>{name} asked to borrow {book}, {action}</>;
     case "BOOK_APPROVED":
       return <>{name} lent you {book}</>;
+    case "HOLD_READY":
+      return <>Your turn came up for {book}</>;
     case "BOOK_RETURNED":
       return <>{name} returned {book}</>;
     case "READER_NOTE":

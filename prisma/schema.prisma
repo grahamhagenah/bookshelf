@@ -29,6 +29,7 @@ model User {
   borrowedBooks Book[] @relation("borrowedBooks")
   lendingHistory LendingHistory[]
   readerNotes    ReaderNote[]
+  holds          Hold[]
 
   notificationsSent     Notification[] @relation("sender")
   notificationsReceived Notification[] @relation("receiver")
@@ -77,6 +78,7 @@ model Book {
   notifications Notification[]
   lendingHistory LendingHistory[]
   readerNotes    ReaderNote[]
+  holds          Hold[]
 }
 
 model LendingHistory {
@@ -149,4 +151,21 @@ model Author {
   deathDate String?
   wikipedia String?
   updatedAt DateTime @updatedAt
+}
+
+// A friend waiting for a book that's out on loan. First come, first
+// served: when the book comes back, the earliest hold becomes a request.
+model Hold {
+  id String @id @default(cuid())
+
+  book   Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  bookId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([bookId, userId])
+  @@index([bookId])
 }
