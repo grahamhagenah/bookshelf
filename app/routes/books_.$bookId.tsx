@@ -22,7 +22,7 @@ import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
 import { LentIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
-import ReaderNotes, { LoveButton } from "~/components/reader-notes";
+import ReaderNotes from "~/components/reader-notes";
 import { sendBookRequestEmail } from "~/email.server";
 import {
   deleteBook,
@@ -1453,14 +1453,6 @@ export default function BookDetailsPage() {
                 {data.book.user ? `Return book to ${data.book.user.firstname}` : "Return book"}
               </button>
             </Form>
-          ) : null}
-          {/* The heart comes after whatever you can do with the book */}
-          {!isEditing ? (
-            <LoveButton
-              notes={data.readerNotes}
-              myNote={data.myNote}
-              canNote={data.canNote}
-            />
           ) : null}
           {!isEditing ? <BookFacts data={data} /> : null}
         </section>
