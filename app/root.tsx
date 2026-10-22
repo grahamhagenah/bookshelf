@@ -14,6 +14,7 @@ import {
   ScrollRestoration,
   useLoaderData,
   useLocation,
+  useMatches,
 } from "@remix-run/react";
 import { useEffect } from "react";
 
@@ -75,6 +76,11 @@ export default function App() {
   const { user, sharePrompt } = useLoaderData<typeof loader>();
   const { pathname } = useLocation();
   const theme = themeOf(user);
+  // A page that stands on its own (a public shelf) leaves out the app's
+  // header, banners and breadcrumbs, and keeps the footer
+  const standalone = useMatches().some(
+    (match) => (match.handle as { standalone?: boolean } | undefined)?.standalone,
+  );
 
   useEffect(() => {
     if (theme !== "system") return;
@@ -108,15 +114,19 @@ export default function App() {
         <Links />
       </head>
       <body className="min-h-full flex flex-col bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors">
-        <Header />
-        {user?.demoGroup ? <DemoBanner /> : null}
-        {user && !user.demoGroup && !user.emailVerifiedAt ? (
-          <VerifyEmailBanner email={user.email} />
-        ) : null}
-        {user ? <SharePrompt show={showSharePrompt} /> : null}
+        {standalone ? null : (
+          <>
+            <Header />
+            {user?.demoGroup ? <DemoBanner /> : null}
+            {user && !user.demoGroup && !user.emailVerifiedAt ? (
+              <VerifyEmailBanner email={user.email} />
+            ) : null}
+            {user ? <SharePrompt show={showSharePrompt} /> : null}
+          </>
+        )}
         {/* One shared page width; the header and banner backgrounds stay full-bleed */}
         <div className="mx-auto w-full max-w-5xl flex-1">
-          <Breadcrumbs />
+          {standalone ? null : <Breadcrumbs />}
           <Outlet />
         </div>
         <Footer />

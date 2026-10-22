@@ -194,10 +194,16 @@ function Invite({ data }: { data: SharedShelfData }) {
     );
   } else if (status === "self") {
     text = <>This is your shelf as others see it from your share link.</>;
+    // The page has no app header, so this is the way back
     actions = (
-      <Link to="/account#sharing" className={secondaryButton}>
-        Edit your page
-      </Link>
+      <>
+        <Link to="/books" className={secondaryButton}>
+          My library
+        </Link>
+        <Link to="/account#sharing" className={secondaryButton}>
+          Edit your page
+        </Link>
+      </>
     );
   } else {
     // A demo visitor on a real person's shelf
