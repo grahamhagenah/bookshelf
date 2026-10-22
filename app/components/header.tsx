@@ -1,7 +1,7 @@
-import { useMatches } from "@remix-run/react";
+import { NavLink, useMatches } from "@remix-run/react";
 
 import Breadcrumbs from "./breadcrumbs";
-import { PulseIcon, StacksLogo } from "./icons";
+import { BookIcon, PulseIcon, StacksLogo } from "./icons";
 import PositionedMenu from "./menu";
 import Notifications from "./notifications";
 import Search from "./search";
@@ -37,6 +37,24 @@ export default function Header() {
           <Breadcrumbs />
         </div>
         <div className="flex items-center gap-0.5 md:gap-2 flex-shrink-0">
+          {/* Your shelf is what you come back for, so on wider screens it
+              gets a link of its own rather than living in the menu */}
+          {user ? (
+            <NavLink
+              to="/books"
+              end
+              className={({ isActive }) =>
+                `hidden md:inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-sm transition-colors ${
+                  isActive
+                    ? "bg-stone-100 dark:bg-stone-800 font-medium text-stone-900 dark:text-stone-100"
+                    : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800"
+                }`
+              }
+            >
+              <BookIcon size={16} />
+              My library
+            </NavLink>
+          ) : null}
           {user ? <Search /> : null}
           {user ? (
             <a
