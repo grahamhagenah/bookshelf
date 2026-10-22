@@ -772,10 +772,28 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     { title: "Normal People", by: "maya", loved: true, at: ago(300 * day) },
     { title: "Anxious People", by: "you", loved: true, at: ago(45 * day) },
     { title: "Anxious People", by: "priya", loved: true, at: ago(250 * day) },
-    { title: "The Overstory", by: "maya", loved: true, at: ago(200 * day) },
-    { title: "Tomorrow, and Tomorrow, and Tomorrow", by: "maya", loved: true, at: ago(90 * day) },
-    { title: "The Road", by: "sam", loved: true, at: ago(150 * day) },
-    { title: "The Midnight Library", by: "priya", loved: true, at: ago(120 * day) },
+    { title: "Tomorrow, and Tomorrow, and Tomorrow", by: "maya", loved: true, at: ago(12 * day) },
+    {
+      title: "The Road",
+      by: "sam",
+      loved: true,
+      body: "Bleak and beautiful. I read it in one sitting and then sat there for a while.",
+      at: ago(9 * day),
+    },
+    {
+      title: "The Midnight Library",
+      by: "priya",
+      loved: true,
+      body: "Lighter than it sounds. A good one to pass around.",
+      at: ago(5 * day),
+    },
+    {
+      title: "The Overstory",
+      by: "maya",
+      loved: true,
+      body: "Trees as the main characters, and it works. Happy to lend it.",
+      at: ago(2 * day),
+    },
   ];
 
   for (const note of readerNotes) {
