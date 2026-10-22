@@ -111,51 +111,44 @@ function AboutAuthor({
     wikipedia: string | null;
   };
 }) {
-  const [expanded, setExpanded] = useState(false);
   const years = lifespan(author.birthDate, author.deathDate);
-  const isLong = (author.bio?.length ?? 0) > 320;
+  const linkClass =
+    "text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200";
 
+  // The name is always there; the bio and links unfold on request
   return (
-    <div className="mt-8">
-      <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
-        About the author
-      </h2>
-      <p className="text-stone-900 dark:text-stone-100">
+    <details className="group mt-8">
+      <summary className="flex cursor-pointer list-none items-center gap-2 text-stone-900 dark:text-stone-100 [&::-webkit-details-marker]:hidden">
+        <span className="text-sm font-semibold text-stone-500 dark:text-stone-400">
+          About the author
+        </span>
         <span className="font-medium">{author.name}</span>
         {years ? (
-          <span className="ml-2 text-sm text-stone-400 dark:text-stone-500">
-            {years}
-          </span>
+          <span className="text-sm text-stone-400 dark:text-stone-500">{years}</span>
         ) : null}
-      </p>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className="text-stone-400 transition-transform group-open:rotate-180"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </summary>
       {author.bio ? (
-        <>
-          <p
-            className={`summary mt-1 text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose ${
-              isLong && !expanded ? "line-clamp-4" : ""
-            }`}
-          >
-            {author.bio}
-          </p>
-          {isLong ? (
-            <button
-              type="button"
-              onClick={() => setExpanded(!expanded)}
-              className="mt-1 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
-            >
-              {expanded ? "Show less" : "Read more"}
-            </button>
-          ) : null}
-        </>
+        <p className="summary mt-2 max-w-prose text-pretty leading-relaxed text-stone-700 dark:text-stone-300">
+          {author.bio}
+        </p>
       ) : null}
       <p className="mt-2 flex gap-4 text-sm">
         {author.wikipedia ? (
-          <a
-            href={author.wikipedia}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200"
-          >
+          <a href={author.wikipedia} target="_blank" rel="noopener noreferrer" className={linkClass}>
             Wikipedia
           </a>
         ) : null}
@@ -163,12 +156,12 @@ function AboutAuthor({
           href={`https://openlibrary.org/authors/${author.key}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200"
+          className={linkClass}
         >
           More on Open Library
         </a>
       </p>
-    </div>
+    </details>
   );
 }
 
