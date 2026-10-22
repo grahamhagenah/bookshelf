@@ -1,12 +1,14 @@
 // @vitest-environment node
 import { makeBook, makeUser, prisma } from "../../test/db";
 
+import { getReadAt } from "./book.server";
 import {
   canInteract,
   createDemoSandbox,
   deleteDemoGroup,
   respondAsDemoPersona,
 } from "./demo.server";
+import { shelfIds } from "./household.server";
 import { createNotification } from "./user.server";
 
 describe("createDemoSandbox", () => {
@@ -43,6 +45,22 @@ describe("createDemoSandbox", () => {
       where: { userId: visitorId, loved: true },
     });
     expect(loved).toBeGreaterThan(10);
+
+    // Noah shares the visitor's shelf, so it holds both their books
+    const shelf = await shelfIds(visitorId);
+    const housemates = await prisma.user.findMany({
+      where: { id: { in: shelf, not: visitorId } },
+      select: { firstname: true },
+    });
+    expect(housemates.map((person) => person.firstname)).toEqual(["Noah"]);
+    expect(await prisma.book.count({ where: { userId: { in: shelf } } })).toBe(19);
+
+    // A book the visitor both hearted and read shows as read
+    const circe = await prisma.book.findFirstOrThrow({
+      where: { userId: visitorId, title: "Circe" },
+      select: { id: true, userId: true, readAt: true },
+    });
+    expect(await getReadAt(visitorId, circe)).not.toBeNull();
   });
 
   test("deleteDemoGroup removes the whole sandbox", async () => {

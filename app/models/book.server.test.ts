@@ -6,10 +6,12 @@ import {
   EXTEND_WEEKS,
   extendLoan,
   getHomeBooks,
+  getReadAt,
   lendBook,
   lendToFriend,
   loanWeeks,
   returnBook,
+  setRead,
 } from "./book.server";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -222,4 +224,22 @@ describe("lendToFriend", () => {
     });
     expect(untouched.actionTaken).toBeNull();
   });
+});
+
+test("a heart doesn't hide a book you'd already marked read, and unmarking sticks", async () => {
+  const me = await makeUser("Reader");
+  const book = await makeBook(me.id, "Middlemarch");
+  // Marked read the old way, on the copy itself, then hearted
+  await prisma.book.update({ where: { id: book.id }, data: { readAt: new Date("2025-01-01") } });
+  await prisma.readerNote.create({ data: { bookId: book.id, userId: me.id, loved: true } });
+  const current = () =>
+    prisma.book.findUniqueOrThrow({ where: { id: book.id }, select: { id: true, userId: true, readAt: true } });
+
+  expect(await getReadAt(me.id, await current())).toEqual(new Date("2025-01-01"));
+
+  await setRead(book.id, me.id, false);
+  expect(await getReadAt(me.id, await current())).toBeNull();
+
+  await setRead(book.id, me.id, true);
+  expect(await getReadAt(me.id, await current())).not.toBeNull();
 });

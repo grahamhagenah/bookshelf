@@ -196,8 +196,13 @@ export function createBook({
 
 // Whether this person has read this copy: kept on their reader note, so
 // two people sharing a shelf each have their own
-export function setRead(bookId: Book["id"], userId: User["id"], read: boolean) {
+export async function setRead(bookId: Book["id"], userId: User["id"], read: boolean) {
   const readAt = read ? new Date() : null;
+  // Unmarking clears the copy's old read date too, if it's yours, so it
+  // can't show through
+  if (!read) {
+    await prisma.book.updateMany({ where: { id: bookId, userId }, data: { readAt: null } });
+  }
   return prisma.readerNote.upsert({
     where: { bookId_userId: { bookId, userId } },
     create: { bookId, userId, readAt },
@@ -222,8 +227,9 @@ export function readAtFor(
   userId: User["id"],
   book: { userId: string; readAt: Date | null; readerNotes: { userId: string; readAt: Date | null }[] },
 ) {
+  // A note row can exist just for a heart, with no read date of its own
   const mine = book.readerNotes.find((note) => note.userId === userId);
-  if (mine) return mine.readAt;
+  if (mine?.readAt) return mine.readAt;
   return book.userId === userId ? book.readAt : null;
 }
 

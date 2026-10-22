@@ -42,14 +42,17 @@ const VISITOR = {
   profileEmoji: null,
 };
 
-// Everyone shows initials; picking an icon is left for the visitor to try
+// Friends have picked icons; the visitor shows initials, so choosing one is
+// theirs to try
 const PERSONAS = {
-  maya: { firstname: "Maya", surname: "Chen", profileEmoji: null },
-  sam: { firstname: "Sam", surname: "Okafor", profileEmoji: null },
-  priya: { firstname: "Priya", surname: "Patel", profileEmoji: null },
+  maya: { firstname: "Maya", surname: "Chen", profileEmoji: "leaf" },
+  sam: { firstname: "Sam", surname: "Okafor", profileEmoji: "rocket" },
+  priya: { firstname: "Priya", surname: "Patel", profileEmoji: "coffee" },
   // Theo has sent the visitor a friend request; Lena shows up as a suggestion
-  theo: { firstname: "Theo", surname: "Martin", profileEmoji: null },
+  theo: { firstname: "Theo", surname: "Martin", profileEmoji: "compass" },
   lena: { firstname: "Lena", surname: "Fischer", profileEmoji: null },
+  // The visitor's housemate: one shared shelf, their own notes and friends
+  noah: { firstname: "Noah", surname: "Kim", profileEmoji: "cat" },
 } as const;
 
 type PersonaKey = keyof typeof PERSONAS;
@@ -200,6 +203,16 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
   ],
   maya: [
     {
+      title: "Hamnet",
+      author: "Maggie O'Farrell",
+      isbn: "9780525657606",
+      datePublished: "2020",
+      pageCount: 305,
+      publisher: "Knopf",
+      subjects: "Historical fiction, Grief, Shakespeare",
+      body: "In plague-era Warwickshire, a mother and her family live through the loss of a son whose name will one day be given to a famous play.",
+    },
+    {
       title: "Tomorrow, and Tomorrow, and Tomorrow",
       author: "Gabrielle Zevin",
       isbn: "9780593321201",
@@ -259,8 +272,38 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       subjects: "Literary fiction, Slavery, Memory",
       body: "In post-Civil War Ohio, a woman who escaped slavery is haunted by her past and by the mysterious young woman who arrives at her door.",
     },
+    {
+      title: "The Song of Achilles",
+      author: "Madeline Miller",
+      isbn: "9780062060624",
+      datePublished: "2011",
+      pageCount: 378,
+      publisher: "Ecco",
+      subjects: "Greek mythology, Romance, War",
+      body: "Patroclus tells the story of his life beside Achilles, from boyhood exile to the walls of Troy.",
+    },
+    {
+      title: "Cloud Cuckoo Land",
+      author: "Anthony Doerr",
+      isbn: "9781982168438",
+      datePublished: "2021",
+      pageCount: 622,
+      publisher: "Scribner",
+      subjects: "Literary fiction, Libraries, Time",
+      body: "An ancient Greek tale links lives across centuries, from besieged Constantinople to a small-town library to a ship bound for another world.",
+    },
   ],
   sam: [
+    {
+      title: "Exhalation",
+      author: "Ted Chiang",
+      isbn: "9781101947883",
+      datePublished: "2019",
+      pageCount: 350,
+      publisher: "Knopf",
+      subjects: "Science fiction, Short stories, Philosophy",
+      body: "Stories about time travel, free will and artificial minds, each built around one big idea worked out with care.",
+    },
     {
       title: "Sapiens",
       author: "Yuval Noah Harari",
@@ -311,8 +354,38 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       subjects: "Post-apocalyptic fiction, Fathers and sons",
       body: "A father and his son walk south through a burned and empty America, carrying only what they need to survive.",
     },
+    {
+      title: "Hyperion",
+      author: "Dan Simmons",
+      isbn: "9780553283686",
+      datePublished: "1989",
+      pageCount: 482,
+      publisher: "Bantam",
+      subjects: "Science fiction, Space opera, Pilgrimage",
+      body: "Seven pilgrims travel to the Time Tombs on a far-off world, each telling the story of why they came.",
+    },
+    {
+      title: "Neuromancer",
+      author: "William Gibson",
+      isbn: "9780441569595",
+      datePublished: "1984",
+      pageCount: 271,
+      publisher: "Ace",
+      subjects: "Science fiction, Cyberpunk, Hackers",
+      body: "A washed-up hacker is hired for one last job inside a vast computer network, in the book that gave cyberspace its name.",
+    },
   ],
   priya: [
+    {
+      title: "Lessons in Chemistry",
+      author: "Bonnie Garmus",
+      isbn: "9780385547345",
+      datePublished: "2022",
+      pageCount: 390,
+      publisher: "Doubleday",
+      subjects: "Historical fiction, Science, Women",
+      body: "A chemist in 1960s California ends up hosting a cooking show and uses it to teach a nation of housewives to think for themselves.",
+    },
     {
       title: "Jonathan Strange & Mr Norrell",
       author: "Susanna Clarke",
@@ -363,6 +436,26 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       subjects: "Fiction, North Carolina, Marshes",
       body: "Abandoned as a child, Kya grows up alone in the marshes of the North Carolina coast and becomes a suspect in a local man's death.",
     },
+    {
+      title: "The Seven Husbands of Evelyn Hugo",
+      author: "Taylor Jenkins Reid",
+      isbn: "9781501161933",
+      datePublished: "2017",
+      pageCount: 389,
+      publisher: "Atria",
+      subjects: "Historical fiction, Hollywood, Romance",
+      body: "An aging film star finally tells her life story, all seven marriages of it, to an unknown magazine writer.",
+    },
+    {
+      title: "Mexican Gothic",
+      author: "Silvia Moreno-Garcia",
+      isbn: "9780525620785",
+      datePublished: "2020",
+      pageCount: 301,
+      publisher: "Del Rey",
+      subjects: "Gothic fiction, Horror, Mexico",
+      body: "A socialite travels to a decaying mansion in the Mexican countryside after her cousin sends a frantic letter.",
+    },
   ],
   theo: [
     {
@@ -385,8 +478,38 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       subjects: "Fantasy, War, Magic",
       body: "On a storm-wracked world, a slave, a scholar and a highprince are drawn into a war that may decide the fate of everything.",
     },
+    {
+      title: "The Fifth Season",
+      author: "N. K. Jemisin",
+      isbn: "9780316229296",
+      datePublished: "2015",
+      pageCount: 468,
+      publisher: "Orbit",
+      subjects: "Fantasy, Science fiction, Apocalypse",
+      body: "On a continent wracked by catastrophic quakes, a woman searches for her daughter as the world ends again.",
+    },
   ],
   lena: [
+    {
+      title: "Persuasion",
+      author: "Jane Austen",
+      isbn: "9780141439686",
+      datePublished: "1817",
+      pageCount: 249,
+      publisher: "Penguin Classics",
+      subjects: "Classics, Romance, Second chances",
+      body: "Eight years after being persuaded to break off her engagement, Anne Elliot meets the man she gave up again.",
+    },
+    {
+      title: "Mrs Dalloway",
+      author: "Virginia Woolf",
+      isbn: "9780156628709",
+      datePublished: "1925",
+      pageCount: 194,
+      publisher: "Harcourt",
+      subjects: "Classics, Modernism, London",
+      body: "A single June day in London, as Clarissa Dalloway prepares for a party and the past keeps breaking in.",
+    },
     {
       title: "Middlemarch",
       author: "George Eliot",
@@ -416,6 +539,58 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       publisher: "Harper",
       subjects: "Gothic fiction, Suspense, Cornwall",
       body: "A young bride arrives at Manderley, her husband's grand estate, and finds it still ruled by the memory of his first wife.",
+    },
+  ],
+  noah: [
+    {
+      title: "Salt, Fat, Acid, Heat",
+      author: "Samin Nosrat",
+      isbn: "9781476753836",
+      datePublished: "2017",
+      pageCount: 480,
+      publisher: "Simon & Schuster",
+      subjects: "Cooking, Food science, Illustrated",
+      body: "Four elements of good cooking, explained so you can cook well without a recipe.",
+    },
+    {
+      title: "Crying in H Mart",
+      author: "Michelle Zauner",
+      isbn: "9780525657743",
+      datePublished: "2021",
+      pageCount: 239,
+      publisher: "Knopf",
+      subjects: "Memoir, Food, Grief",
+      body: "A musician remembers her mother through the Korean food they shared, and learns to cook it after she's gone.",
+    },
+    {
+      title: "Lincoln in the Bardo",
+      author: "George Saunders",
+      isbn: "9780812995343",
+      datePublished: "2017",
+      pageCount: 343,
+      publisher: "Random House",
+      subjects: "Literary fiction, History, Ghosts",
+      body: "On the night of his son's funeral, the president visits the cemetery, where a chorus of restless spirits watches.",
+    },
+    {
+      title: "The House in the Cerulean Sea",
+      author: "TJ Klune",
+      isbn: "9781250217288",
+      datePublished: "2020",
+      pageCount: 398,
+      publisher: "Tor",
+      subjects: "Fantasy, Found family, Humor",
+      body: "A by-the-book caseworker is sent to inspect an island orphanage for magical children and finds more than he expected.",
+    },
+    {
+      title: "Quiet",
+      author: "Susan Cain",
+      isbn: "9780307352156",
+      datePublished: "2012",
+      pageCount: 333,
+      publisher: "Broadway Books",
+      subjects: "Psychology, Introversion, Nonfiction",
+      body: "Why introverts are undervalued in a culture that prizes talking, and what they bring that others don't.",
     },
   ],
 };
@@ -501,6 +676,15 @@ export async function createDemoSandbox(): Promise<User["id"]> {
   await createFriendship(ids.maya, ids.sam);
   await createFriendship(ids.sam, ids.priya);
   await createFriendship(ids.priya, ids.lena);
+  // Noah keeps his own friends: Maya and Priya
+  await createFriendship(ids.noah, ids.maya);
+  await createFriendship(ids.noah, ids.priya);
+
+  // The visitor and Noah share one shelf: his books show on theirs as
+  // "Noah's", and either can lend them
+  await prisma.household.create({
+    data: { members: { connect: [{ id: ids.you }, { id: ids.noah }] } },
+  });
 
   // Lending: past loans (returned) and current ones
   const loans: {
@@ -582,7 +766,46 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       borrowedAt: ago(65 * day),
       returnedAt: ago(45 * day),
     },
+    // Noah's books get around too
+    {
+      title: "Crying in H Mart",
+      borrower: "maya",
+      borrowedAt: ago(45 * day),
+      returnedAt: ago(30 * day),
+    },
+    // Between friends: their copies have a history of their own
+    {
+      title: "The Song of Achilles",
+      borrower: "priya",
+      borrowedAt: ago(95 * day),
+      returnedAt: ago(80 * day),
+    },
+    {
+      title: "Exhalation",
+      borrower: "maya",
+      borrowedAt: ago(50 * day),
+      returnedAt: ago(36 * day),
+    },
+    {
+      title: "Lincoln in the Bardo",
+      borrower: "priya",
+      borrowedAt: ago(130 * day),
+      returnedAt: ago(110 * day),
+    },
+    // Long ago: the visitor loved it but never said why, so History asks
+    {
+      title: "Hyperion",
+      borrower: "you",
+      borrowedAt: ago(170 * day),
+      returnedAt: ago(150 * day),
+    },
     // Current loans
+    {
+      title: "Salt, Fat, Acid, Heat",
+      borrower: "priya",
+      borrowedAt: ago(10 * day),
+      dueDate: fromNow(18 * day),
+    },
     {
       title: "Project Hail Mary",
       borrower: "maya",
@@ -673,8 +896,40 @@ export async function createDemoSandbox(): Promise<User["id"]> {
 
   // Priya is waiting for Piranesi, which Sam still has
   await prisma.hold.create({
-    data: { bookId: books["Piranesi"], userId: ids.priya, createdAt: ago(2 * day) },
+    data: {
+      bookId: books["Piranesi"],
+      userId: ids.priya,
+      createdAt: ago(2 * day),
+    },
   });
+
+  // The visitor has read a good part of their own shelf
+  const read: [string, number][] = [
+    ["Project Hail Mary", 60],
+    ["Circe", 30],
+    ["The Remains of the Day", 90],
+    ["Station Eleven", 140],
+    ["Braiding Sweetgrass", 120],
+    ["A Gentleman in Moscow", 180],
+    ["Pachinko", 220],
+    ["The Hobbit", 300],
+    ["Dune", 130],
+    ["The Left Hand of Darkness", 200],
+    // From the shared shelf
+    ["Crying in H Mart", 100],
+  ];
+  // Kept as the visitor's own mark; any heart or note is added to it below
+  for (const [title, days] of read) {
+    await prisma.readerNote.create({
+      data: {
+        bookId: books[title],
+        userId: ids.you,
+        readAt: ago(days * day),
+        createdAt: ago(days * day),
+        updatedAt: ago(days * day),
+      },
+    });
+  }
 
   // Reader notes: hearts and short notes from the owner and past borrowers
   const readerNotes: {
@@ -731,7 +986,12 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     { title: "Station Eleven", by: "maya", loved: true, at: ago(128 * day) },
     { title: "Circe", by: "you", loved: true, at: ago(30 * day) },
-    { title: "The Remains of the Day", by: "you", loved: true, at: ago(90 * day) },
+    {
+      title: "The Remains of the Day",
+      by: "you",
+      loved: true,
+      at: ago(90 * day),
+    },
     {
       title: "Braiding Sweetgrass",
       by: "maya",
@@ -739,8 +999,18 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       body: "Changed how I look at my garden. Take it slow, a chapter at a time.",
       at: ago(70 * day),
     },
-    { title: "Braiding Sweetgrass", by: "you", loved: true, at: ago(120 * day) },
-    { title: "The Left Hand of Darkness", by: "you", loved: true, at: ago(200 * day) },
+    {
+      title: "Braiding Sweetgrass",
+      by: "you",
+      loved: true,
+      at: ago(120 * day),
+    },
+    {
+      title: "The Left Hand of Darkness",
+      by: "you",
+      loved: true,
+      at: ago(200 * day),
+    },
     {
       title: "Educated",
       by: "priya",
@@ -757,7 +1027,12 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     { title: "The Hobbit", by: "sam", loved: true, at: ago(40 * day) },
     { title: "The Hobbit", by: "you", loved: true, at: ago(300 * day) },
-    { title: "A Gentleman in Moscow", by: "you", loved: true, at: ago(180 * day) },
+    {
+      title: "A Gentleman in Moscow",
+      by: "you",
+      loved: true,
+      at: ago(180 * day),
+    },
     { title: "Pachinko", by: "you", loved: true, at: ago(220 * day) },
     // Friends' shelves
     { title: "The Martian", by: "you", loved: true, at: ago(85 * day) },
@@ -772,7 +1047,12 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     { title: "Normal People", by: "maya", loved: true, at: ago(300 * day) },
     { title: "Anxious People", by: "you", loved: true, at: ago(45 * day) },
     { title: "Anxious People", by: "priya", loved: true, at: ago(250 * day) },
-    { title: "Tomorrow, and Tomorrow, and Tomorrow", by: "maya", loved: true, at: ago(12 * day) },
+    {
+      title: "Tomorrow, and Tomorrow, and Tomorrow",
+      by: "maya",
+      loved: true,
+      at: ago(12 * day),
+    },
     {
       title: "The Road",
       by: "sam",
@@ -794,48 +1074,131 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       body: "Trees as the main characters, and it works. Happy to lend it.",
       at: ago(2 * day),
     },
+    // New on friends' shelves
+    {
+      title: "Hamnet",
+      by: "maya",
+      loved: true,
+      body: "The chapter about the fleas and the plague is one of the best things I've read.",
+      at: ago(4 * day),
+    },
+    {
+      title: "The Song of Achilles",
+      by: "priya",
+      loved: true,
+      body: "I knew how it ended and still wasn't ready.",
+      at: ago(80 * day),
+    },
+    {
+      title: "The Song of Achilles",
+      by: "maya",
+      loved: true,
+      at: ago(300 * day),
+    },
+    {
+      title: "Exhalation",
+      by: "maya",
+      loved: true,
+      body: "The parrot story made me cry on a bus. Start with that one.",
+      at: ago(36 * day),
+    },
+    { title: "Exhalation", by: "sam", loved: true, at: ago(6 * day) },
+    { title: "Hyperion", by: "you", loved: true, at: ago(150 * day) },
+    { title: "Hyperion", by: "sam", loved: true, at: ago(500 * day) },
+    {
+      title: "Lessons in Chemistry",
+      by: "priya",
+      loved: true,
+      body: "Six-Thirty the dog deserves his own book.",
+      at: ago(3 * day),
+    },
+    { title: "The Fifth Season", by: "theo", loved: true, at: ago(20 * day) },
+    {
+      title: "Persuasion",
+      by: "lena",
+      loved: true,
+      body: "The letter. You'll know it when you get there.",
+      at: ago(8 * day),
+    },
+    // The household: Noah's own notes, on his books and on the visitor's
+    {
+      title: "Salt, Fat, Acid, Heat",
+      by: "noah",
+      loved: true,
+      body: "Changed how I cook more than any recipe ever has. Read the salt chapter twice.",
+      at: ago(200 * day),
+    },
+    {
+      title: "Crying in H Mart",
+      by: "maya",
+      loved: true,
+      body: "Made me call my mum. Bring tissues and something to eat.",
+      at: ago(30 * day),
+    },
+    { title: "Crying in H Mart", by: "noah", loved: true, at: ago(250 * day) },
+    {
+      title: "Lincoln in the Bardo",
+      by: "priya",
+      loved: false,
+      body: "Took me fifty pages to get the hang of it. Worth it.",
+      at: ago(110 * day),
+    },
+    {
+      title: "Dune",
+      by: "noah",
+      loved: false,
+      body: "Finally read it because it lives on our shelf. The worm scenes, though.",
+      at: ago(40 * day),
+    },
+    {
+      title: "The House in the Cerulean Sea",
+      by: "noah",
+      loved: true,
+      at: ago(90 * day),
+    },
   ];
 
   for (const note of readerNotes) {
-    await prisma.readerNote.create({
-      data: {
-        bookId: books[note.title],
-        userId: ids[note.by],
-        loved: note.loved,
-        body: note.body ?? null,
-        createdAt: note.at,
-        updatedAt: note.at,
+    const content = {
+      loved: note.loved,
+      body: note.body ?? null,
+      createdAt: note.at,
+      updatedAt: note.at,
+    };
+    await prisma.readerNote.upsert({
+      where: {
+        bookId_userId: { bookId: books[note.title], userId: ids[note.by] },
       },
+      create: { bookId: books[note.title], userId: ids[note.by], ...content },
+      update: content,
     });
   }
 
-  // The visitor has read a good part of their own shelf
-  const read: [string, number][] = [
-    ["Project Hail Mary", 60],
-    ["Circe", 30],
-    ["The Remains of the Day", 90],
-    ["Station Eleven", 140],
-    ["Braiding Sweetgrass", 120],
-    ["A Gentleman in Moscow", 180],
-    ["Pachinko", 220],
-    ["The Hobbit", 300],
-  ];
-  for (const [title, days] of read) {
-    await prisma.book.update({
-      where: { id: books[title] },
-      data: { readAt: ago(days * day) },
-    });
-  }
-
-  // ...and a few books they're after. Two are on friends' shelves.
+  // ...and a few books they're after. Three are on friends' shelves.
   const wanted = [
     { title: "The Overstory", author: "Richard Powers", isbn: "9780393635522" },
-    { title: "Where the Crawdads Sing", author: "Delia Owens", isbn: "9780735219090" },
+    {
+      title: "Where the Crawdads Sing",
+      author: "Delia Owens",
+      isbn: "9780735219090",
+    },
     { title: "Lonesome Dove", author: "Larry McMurtry", isbn: "9780671683900" },
+    { title: "Hamnet", author: "Maggie O'Farrell", isbn: "9780525657606" },
+    {
+      title: "Demon Copperhead",
+      author: "Barbara Kingsolver",
+      isbn: "9780063251922",
+    },
   ];
   for (const [i, { isbn, ...book }] of wanted.entries()) {
     await prisma.wantToRead.create({
-      data: { ...book, isbn, cover: cover(isbn), userId: ids.you, createdAt: ago((i + 2) * 9 * day) },
+      data: {
+        ...book,
+        isbn,
+        cover: cover(isbn),
+        userId: ids.you,
+        createdAt: ago((i + 2) * 9 * day),
+      },
     });
   }
 
@@ -948,6 +1311,37 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       title: "Project Hail Mary",
       at: ago(55 * day),
       actionTaken: "dismissed",
+    },
+    {
+      type: "WANT_MATCH",
+      from: "maya",
+      to: "you",
+      title: "Hamnet",
+      at: ago(3 * day),
+      actionTaken: "dismissed",
+    },
+    {
+      type: "READER_NOTE",
+      from: "priya",
+      to: "you",
+      title: "Dune",
+      at: ago(48 * day),
+      actionTaken: "dismissed",
+    },
+    // When each friendship started, for the friends page
+    {
+      type: "FRIEND_REQUEST",
+      from: "you",
+      to: "maya",
+      at: ago(400 * day),
+      actionTaken: "accepted",
+    },
+    {
+      type: "FRIEND_REQUEST",
+      from: "sam",
+      to: "you",
+      at: ago(230 * day),
+      actionTaken: "accepted",
     },
   ];
 
