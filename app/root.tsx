@@ -23,6 +23,7 @@ import { sharePromptDismissed } from "~/share-prompt.server";
 import stylesheet from "~/styles/tailwind.css";
 import { themeOf } from "~/utils";
 
+import Breadcrumbs from "./components/breadcrumbs";
 import DemoBanner from "./components/demo-banner";
 import Footer from "./components/footer";
 import Header from "./components/header";
@@ -104,6 +105,7 @@ export default function App() {
         {user ? <SharePrompt show={showSharePrompt} /> : null}
         {/* One shared page width; the header and banner backgrounds stay full-bleed */}
         <div className="mx-auto w-full max-w-5xl flex-1">
+          <Breadcrumbs />
           <Outlet />
         </div>
         <Footer />
