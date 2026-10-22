@@ -3,8 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import type { ScanResponse } from "~/routes/api.scan";
 
 // Point the phone at the barcode on the back of a book and it's added.
-// The camera stays on, so a shelf can be done in one go. The decoder is
-// loaded only when this opens, since it's a big library.
+// The camera stays on, so a shelf can be done in one go.
+//
+// Reading the barcode: the browser's own BarcodeDetector where it exists
+// (Chrome and Android, fast and built in), otherwise @zxing/browser,
+// loaded only when this opens. Either way only retail barcodes (EAN and
+// UPC) are looked for, which keeps the decoder quick.
 
 interface Scanned {
   isbn: string;
@@ -12,23 +16,115 @@ interface Scanned {
   title?: string;
 }
 
+type Phase = "starting" | "looking" | "found" | "nocamera";
+
 const ISBN = /^(97[89]\d{10}|\d{9}[\dXx])$/;
+
+// A barcode is read many times a second while it's in view
+const SAME_CODE_MS = 4000;
+
+// Stop the scanner this returns; it reads the video until then
+type Stop = () => void;
+
+async function startNative(
+  video: HTMLVideoElement,
+  stream: MediaStream,
+  onCode: (code: string) => void,
+): Promise<Stop | null> {
+  const Detector = (window as unknown as { BarcodeDetector?: BarcodeDetectorClass }).BarcodeDetector;
+  if (!Detector) return null;
+  const supported = await Detector.getSupportedFormats?.();
+  if (supported && !supported.includes("ean_13")) return null;
+  const detector = new Detector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e"] });
+
+  video.srcObject = stream;
+  await video.play();
+  let live = true;
+  const tick = async () => {
+    if (!live) return;
+    try {
+      if (video.readyState >= 2) {
+        for (const code of await detector.detect(video)) {
+          if (code.rawValue) onCode(code.rawValue);
+        }
+      }
+    } catch {
+      // A frame that couldn't be read; the next one will do
+    }
+    if (live) setTimeout(tick, 120);
+  };
+  tick();
+  return () => {
+    live = false;
+  };
+}
+
+async function startZxing(
+  video: HTMLVideoElement,
+  stream: MediaStream,
+  onCode: (code: string) => void,
+): Promise<Stop> {
+  const [{ BrowserMultiFormatReader }, { BarcodeFormat, DecodeHintType }] = await Promise.all([
+    import("@zxing/browser"),
+    import("@zxing/library"),
+  ]);
+  const hints = new Map();
+  hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+    BarcodeFormat.EAN_13,
+    BarcodeFormat.EAN_8,
+    BarcodeFormat.UPC_A,
+    BarcodeFormat.UPC_E,
+  ]);
+  const reader = new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 80 });
+  const controls = await reader.decodeFromStream(stream, video, (result) => {
+    if (result) onCode(result.getText());
+  });
+  return () => controls.stop();
+}
+
+// The back camera, as sharp as it'll go: small barcodes need the pixels
+async function openCamera() {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: {
+      facingMode: { ideal: "environment" },
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
+    },
+  });
+  const [track] = stream.getVideoTracks();
+  try {
+    // Keep refocusing as the phone moves between books
+    await track.applyConstraints({ advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet] });
+  } catch {
+    // Not every camera takes focus settings
+  }
+  return stream;
+}
 
 export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [scans, setScans] = useState<Scanned[]>([]);
-  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [phase, setPhase] = useState<Phase>("starting");
+  const [note, setNote] = useState<string | null>(null);
+  const [torch, setTorch] = useState<{ on: boolean; track: MediaStreamTrack } | null>(null);
   const [manual, setManual] = useState("");
-  // The same barcode comes through many times a second while it's in view
   const lastRef = useRef<{ isbn: string; at: number }>({ isbn: "", at: 0 });
+  const scansRef = useRef<Scanned[]>([]);
+  scansRef.current = scans;
 
   const add = async (raw: string) => {
     const isbn = raw.replace(/[^0-9Xx]/g, "");
     if (!ISBN.test(isbn)) return;
     const now = Date.now();
-    if (lastRef.current.isbn === isbn && now - lastRef.current.at < 4000) return;
+    if (lastRef.current.isbn === isbn && now - lastRef.current.at < SAME_CODE_MS) return;
     lastRef.current = { isbn, at: now };
-    if (scans.some((scan) => scan.isbn === isbn)) return;
+
+    // Say so straight away, before the lookup
+    setPhase("found");
+    navigator.vibrate?.(60);
+    setTimeout(() => setPhase((current) => (current === "found" ? "looking" : current)), 900);
+    if (scansRef.current.some((scan) => scan.isbn === isbn)) return;
 
     setScans((list) => [{ isbn, state: "adding" }, ...list]);
     try {
@@ -58,37 +154,60 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
   addRef.current = add;
 
   useEffect(() => {
-    let stop: (() => void) | null = null;
+    let stop: Stop | null = null;
+    let stream: MediaStream | null = null;
     let cancelled = false;
     (async () => {
+      const video = videoRef.current;
+      if (!video || !navigator.mediaDevices?.getUserMedia) {
+        setPhase("nocamera");
+        setNote("No camera here. You can still type an ISBN below.");
+        return;
+      }
       try {
-        const { BrowserMultiFormatReader } = await import("@zxing/browser");
-        if (cancelled || !videoRef.current) return;
-        const reader = new BrowserMultiFormatReader();
-        const controls = await reader.decodeFromVideoDevice(
-          undefined,
-          videoRef.current,
-          (result) => {
-            if (result) addRef.current(result.getText());
-          },
-        );
-        stop = () => controls.stop();
-        if (cancelled) controls.stop();
+        stream = await openCamera();
+        if (cancelled) return;
+        const [track] = stream.getVideoTracks();
+        const caps = track.getCapabilities?.() as { torch?: boolean } | undefined;
+        if (caps?.torch) setTorch({ on: false, track });
+
+        const onCode = (code: string) => addRef.current(code);
+        stop = (await startNative(video, stream, onCode)) ?? (await startZxing(video, stream, onCode));
+        if (cancelled) stop();
+        else setPhase("looking");
       } catch (error) {
-        setCameraError(
+        setPhase("nocamera");
+        setNote(
           error instanceof Error && /permission|denied|notallowed/i.test(error.name + error.message)
             ? "Camera access was turned down. You can still type an ISBN below."
-            : "No camera here. You can still type an ISBN below.",
+            : "The camera couldn't be started. You can still type an ISBN below.",
         );
       }
     })();
     return () => {
       cancelled = true;
       stop?.();
+      stream?.getTracks().forEach((track) => track.stop());
     };
   }, []);
 
+  const toggleTorch = async () => {
+    if (!torch) return;
+    try {
+      await torch.track.applyConstraints({
+        advanced: [{ torch: !torch.on } as MediaTrackConstraintSet],
+      });
+      setTorch({ ...torch, on: !torch.on });
+    } catch {
+      // Then it hasn't got one after all
+    }
+  };
+
   const added = scans.filter((scan) => scan.state === "added").length;
+  const frameClass =
+    phase === "found"
+      ? "border-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.35)]"
+      : "border-white/70";
 
   return (
     <div
@@ -99,44 +218,67 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
       <div className="flex items-center justify-between px-4 py-3">
         <p className="font-semibold">
           Scan barcodes
-          {added ? (
-            <span className="ml-2 font-normal text-stone-400">
-              {added} added
-            </span>
-          ) : null}
+          {added ? <span className="ml-2 font-normal text-stone-400">{added} added</span> : null}
         </p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-md px-3 py-1.5 text-sm font-medium ring-1 ring-inset ring-stone-600 hover:bg-stone-800 transition-colors"
-        >
-          Done
-        </button>
+        <div className="flex items-center gap-2">
+          {torch ? (
+            <button
+              type="button"
+              onClick={toggleTorch}
+              aria-pressed={torch.on}
+              className={`rounded-md px-3 py-1.5 text-sm ring-1 ring-inset transition-colors ${
+                torch.on ? "bg-stone-100 text-stone-900 ring-stone-100" : "ring-stone-600 hover:bg-stone-800"
+              }`}
+            >
+              Light
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md px-3 py-1.5 text-sm font-medium ring-1 ring-inset ring-stone-600 hover:bg-stone-800 transition-colors"
+          >
+            Done
+          </button>
+        </div>
       </div>
 
       <div className="relative mx-auto w-full max-w-lg px-4">
-        {cameraError ? (
-          <p className="rounded-md bg-stone-900 px-4 py-6 text-center text-sm text-stone-300">
-            {cameraError}
-          </p>
+        {phase === "nocamera" ? (
+          <p className="rounded-md bg-stone-900 px-4 py-6 text-center text-sm text-stone-300">{note}</p>
         ) : (
           <>
             <video
               ref={videoRef}
               muted
               playsInline
+              autoPlay
               className="aspect-[4/3] w-full rounded-md bg-stone-900 object-cover"
             />
-            {/* A frame to aim with */}
+            {/* The frame to put the stripes in; it goes green when one is read */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-12 top-1/2 h-20 -translate-y-1/2 rounded-md border-2 border-white/60"
+              className={`pointer-events-none absolute inset-x-8 top-1/2 h-24 -translate-y-1/2 rounded-lg border-2 transition-all duration-150 ${frameClass}`}
             />
           </>
         )}
-        <p className="mt-2 text-center text-sm text-stone-400">
-          Hold the barcode on the back of the book inside the frame.
+        <p className="mt-2 flex items-center justify-center gap-2 text-center text-sm text-stone-400" aria-live="polite">
+          {phase === "starting" ? (
+            "Starting the camera…"
+          ) : phase === "looking" ? (
+            <>
+              <span className="h-2 w-2 animate-pulse rounded-full bg-stone-400" aria-hidden="true" />
+              Looking for a barcode
+            </>
+          ) : phase === "found" ? (
+            <span className="text-emerald-300">Got it</span>
+          ) : null}
         </p>
+        {phase === "looking" || phase === "starting" ? (
+          <p className="mt-1 text-center text-xs text-stone-500">
+            Fill the frame with the black stripes (not the printed number), about a hand&apos;s width away, and hold still.
+          </p>
+        ) : null}
       </div>
 
       <form
@@ -189,4 +331,16 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
       </ul>
     </div>
   );
+}
+
+// The browser's barcode API, where it exists; TypeScript doesn't know it
+interface DetectedBarcode {
+  rawValue: string;
+}
+interface BarcodeDetectorInstance {
+  detect(source: HTMLVideoElement): Promise<DetectedBarcode[]>;
+}
+interface BarcodeDetectorClass {
+  new (options: { formats: string[] }): BarcodeDetectorInstance;
+  getSupportedFormats?: () => Promise<string[]>;
 }
