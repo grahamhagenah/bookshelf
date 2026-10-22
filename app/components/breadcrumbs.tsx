@@ -40,7 +40,9 @@ function useBreadcrumbs() {
 // current page is the darkest; on phones, earlier steps give way to it.
 export default function Breadcrumbs() {
   const crumbs = useBreadcrumbs();
-  if (crumbs.length === 0) return null;
+  // A lone page name isn't a trail; top-level pages say where you are
+  // themselves
+  if (crumbs.length < 2) return null;
 
   return (
     <nav aria-label="Breadcrumb" className="px-4 md:px-8 pt-4 md:pt-5 -mb-2 md:-mb-4">
