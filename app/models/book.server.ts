@@ -246,6 +246,28 @@ export async function lendBook(
 }
 
 // Pushes the due date back; an overdue loan is extended from today
+// Hand a book straight to a friend, without waiting for them to ask. Any
+// request they'd already sent for it counts as answered.
+export async function lendToFriend(
+  bookId: Book["id"],
+  ownerId: User["id"],
+  friendId: User["id"],
+  weeks: number,
+) {
+  const lent = await lendBook(bookId, friendId, weeks);
+  await prisma.notification.updateMany({
+    where: {
+      type: "BOOK_REQUEST",
+      bookId,
+      senderId: friendId,
+      receiverId: ownerId,
+      actionTaken: null,
+    },
+    data: { read: true, actionTaken: "approved" },
+  });
+  return lent;
+}
+
 export async function extendLoan(bookId: Book["id"], weeks: number) {
   const book = await prisma.book.findUnique({
     where: { id: bookId },

@@ -25,8 +25,11 @@ import { sendBookRequestEmail } from "~/email.server";
 import {
   deleteBook,
   getBookById,
+  DEFAULT_LOAN_WEEKS,
   EXTEND_WEEKS,
   extendLoan,
+  LOAN_WEEKS,
+  lendToFriend,
   loanWeeks,
   returnBook,
   updateBookMetadata,
@@ -43,6 +46,7 @@ import { ensureBookDetails, getAuthor } from "~/models/openlibrary.server";
 import {
   getUserById,
   getUserEmailById,
+  createBookApprovedNotification,
   createBookRequestNotification,
   createBookReturnedNotification,
   createNotification,
@@ -316,6 +320,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     canNote,
     noteMaxLength: NOTE_MAX_LENGTH,
     extendWeeks: EXTEND_WEEKS,
+    loanChoices: { weeks: LOAN_WEEKS, defaultWeeks: DEFAULT_LOAN_WEEKS },
     author,
     friendIds: followingIds,
   });
@@ -421,6 +426,34 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
 
     return json({ success: true, message: "Book request sent!" });
+  }
+
+  if (intent === "lendTo") {
+    // The owner hands their own book to a friend
+    if (book.userId !== userId) {
+      throw new Response("Unauthorized", { status: 403 });
+    }
+    if (book.borrowerId !== null) {
+      throw new Response("Book is already lent out", { status: 400 });
+    }
+    const friendId = formData.get("friendId");
+    const owner = await getUserById(userId);
+    const isFriend =
+      typeof friendId === "string" &&
+      (owner?.following.some((friend) => friend.id === friendId) ?? false);
+    if (!owner || !isFriend || !(await canInteract(userId, friendId))) {
+      throw new Response("Not a friend", { status: 400 });
+    }
+
+    await lendToFriend(book.id, userId, friendId, loanWeeks(formData.get("weeks")));
+    await createBookApprovedNotification(
+      userId,
+      friendId,
+      `${owner.firstname} ${owner.surname}`,
+      book.title,
+      book.id,
+    );
+    return json({ lentTo: friendId });
   }
 
   if (intent === "return") {
@@ -650,6 +683,84 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   return null;
 };
 
+// Lend your book to a friend directly, without waiting for them to ask
+function LendToFriend({
+  friends,
+  loanChoices,
+}: {
+  friends: { id: string; firstname: string; surname: string }[];
+  loanChoices: { weeks: readonly number[]; defaultWeeks: number };
+}) {
+  const [open, setOpen] = useState(false);
+  const navigation = useNavigation();
+  const lending = navigation.formData?.get("intent") === "lendTo";
+  const sorted = [...friends].sort((a, b) =>
+    `${a.firstname} ${a.surname}`.localeCompare(`${b.firstname} ${b.surname}`),
+  );
+  const field =
+    "h-9 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-800 dark:text-stone-200 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10";
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className={`w-full ${secondaryButton}`}>
+        Lend to a friend
+      </button>
+    );
+  }
+
+  if (sorted.length === 0) {
+    return (
+      <p className="text-sm text-stone-500 dark:text-stone-400">
+        Add friends to lend them books.{" "}
+        <Link to="/friends" className="text-stone-800 dark:text-stone-200 underline underline-offset-2">
+          Find friends
+        </Link>
+      </p>
+    );
+  }
+
+  return (
+    <Form method="post" className="space-y-2">
+      <input type="hidden" name="intent" value="lendTo" />
+      <label className="block text-xs font-medium text-stone-500 dark:text-stone-400">
+        Lend to
+        <select name="friendId" required className={`mt-1 ${field}`} defaultValue="">
+          <option value="" disabled>
+            Choose a friend
+          </option>
+          {sorted.map((friend) => (
+            <option key={friend.id} value={friend.id}>
+              {friend.firstname} {friend.surname}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block text-xs font-medium text-stone-500 dark:text-stone-400">
+        For
+        <select name="weeks" defaultValue={loanChoices.defaultWeeks} className={`mt-1 ${field}`}>
+          {loanChoices.weeks.map((weeks) => (
+            <option key={weeks} value={weeks}>
+              {weeks} {weeks === 1 ? "week" : "weeks"}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="flex gap-2 pt-1">
+        <button
+          type="submit"
+          disabled={lending}
+          className={`flex-1 ${primaryButton} ${lending ? "opacity-60 cursor-wait" : ""}`}
+        >
+          {lending ? "Lending…" : "Lend it"}
+        </button>
+        <button type="button" onClick={() => setOpen(false)} className={secondaryButton}>
+          Cancel
+        </button>
+      </div>
+    </Form>
+  );
+}
+
 type BookData = SerializeFrom<typeof loader>;
 
 // A few facts beside the cover: where the book is, when it arrived, how
@@ -856,6 +967,12 @@ export default function BookDetailsPage() {
                 ? `Lent to ${data.book.borrower.firstname}`
                 : "On your shelf"}
             </p>
+          ) : null}
+          {data.isOwner && !isEditing && !data.book.borrower ? (
+            <LendToFriend
+              friends={data.currentUser?.following ?? []}
+              loanChoices={data.loanChoices}
+            />
           ) : null}
           {canRequestBook ? (
             <Form method="post">

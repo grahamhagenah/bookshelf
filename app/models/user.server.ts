@@ -235,10 +235,12 @@ export async function createBookApprovedNotification(
   receiverId: User["id"],
   senderName: string,
   bookTitle: string,
+  bookId?: string,
 ) {
   return prisma.notification.create({
     data: {
       type: "BOOK_APPROVED",
+      ...(bookId ? { book: { connect: { id: bookId } } } : {}),
       receiver: {
         connect: { id: receiverId },
       },
