@@ -409,11 +409,11 @@ export default function Home({
 
       <div
         className={`grid gap-10 lg:gap-0 ${
-          showMain && showFeed ? "lg:grid-cols-[minmax(0,1fr)_20rem]" : ""
+          showMain && showFeed ? "lg:grid-cols-[minmax(0,1fr)_24rem]" : ""
         }`}
       >
         {showMain ? (
-        <div className={showFeed ? "lg:pr-12" : undefined}>
+        <div className={showFeed ? "lg:pr-10" : undefined}>
           {showRecent ? (
           <section
             aria-labelledby="recently-added"
@@ -549,7 +549,7 @@ export default function Home({
           aria-labelledby="friend-activity"
           className={
             showMain
-              ? "border-t border-stone-200 dark:border-stone-800 pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-12"
+              ? "border-t border-stone-200 dark:border-stone-800 pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8"
               : undefined
           }
         >
