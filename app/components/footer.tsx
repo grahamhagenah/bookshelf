@@ -47,6 +47,7 @@ export default function Footer() {
             )}
           </ul>
           <ul className="space-y-2">
+            <li><Link to="/faq" className={linkClass}>FAQ</Link></li>
             <li>
               <a href="https://openlibrary.org" target="_blank" rel="noreferrer" className={linkClass}>Open Library</a>
             </li>
