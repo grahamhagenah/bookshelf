@@ -48,7 +48,9 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
 
   return (
     <header className="pb-2">
-      <div className="flex items-center gap-4">
+      {/* One compact block, so the books start high on the page: the
+          picture beside the name, bio and numbers */}
+      <div className="flex items-start gap-4">
         <Avatar
           firstname={data.ownerFirstname}
           surname={data.ownerSurname}
@@ -56,23 +58,19 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
           size="lg"
         />
         <div className="min-w-0">
-          <h1 className="text-balance text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-3xl">
+          {/* The handle is already in the address, so it isn't repeated here */}
+          <h1 className="text-balance text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
             {data.ownerName}
           </h1>
-          {profile.handle ? (
-            <p className="text-stone-500 dark:text-stone-400">@{profile.handle}</p>
+          {profile.bio ? (
+            <p className="mt-1 max-w-xl text-pretty text-stone-700 dark:text-stone-300">{profile.bio}</p>
           ) : null}
+          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{facts.join(" · ")}</p>
         </div>
       </div>
-      {profile.bio ? (
-        <p className="mt-4 max-w-xl text-pretty text-lg leading-relaxed text-stone-700 dark:text-stone-300">
-          {profile.bio}
-        </p>
-      ) : null}
-      <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">{facts.join(" · ")}</p>
 
       {profile.favorites.length > 0 ? (
-        <section aria-labelledby="favorites" className="mt-8">
+        <section aria-labelledby="favorites" className="mt-6">
           <h2
             id="favorites"
             className="flex items-center gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400"
@@ -106,7 +104,7 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
         </section>
       ) : null}
 
-      <h2 className="mt-10 text-sm font-semibold text-stone-500 dark:text-stone-400">
+      <h2 className="mt-8 text-sm font-semibold text-stone-500 dark:text-stone-400">
         On the shelf <span className="font-normal">{stats.books.toLocaleString()}</span>
       </h2>
     </header>
