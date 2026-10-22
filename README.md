@@ -122,11 +122,9 @@ The app uses SQLite with Prisma ORM.
 # Visual database browser
 npx prisma studio
 
-# Push schema changes to database
-npx prisma db push
-
-# Regenerate Prisma client after schema changes
-npx prisma generate
+# After changing schema.prisma: write a migration, apply it locally and
+# regenerate the client (the live server applies it on its next start)
+npx prisma migrate dev --name what-changed
 
 # Reset database (destroys all data)
 npx prisma migrate reset

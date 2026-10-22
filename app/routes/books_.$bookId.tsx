@@ -250,8 +250,10 @@ export const handle = {
   breadcrumbs: (data: LoaderData) => {
     const crumbs: { label: string; href?: string }[] = [];
 
-    // If viewing a friend's book, add Friends and friend name
-    if (!data?.isOwner && data?.book?.user) {
+    // Your own book sits in your library; a friend's, on their shelf
+    if (data?.isOwner) {
+      crumbs.push({ label: "My library", href: "/books" });
+    } else if (data?.book?.user) {
       crumbs.push({ label: "Friends", href: "/friends" });
       crumbs.push({
         label: `${data.book.user.firstname} ${data.book.user.surname}`,
@@ -1344,23 +1346,17 @@ export default function BookDetailsPage() {
               </div>
             ) : null}
           </div>
-          {/* Your own copy: where it is, as a label that looks like the
-              button a friend would see here. While it's out, it takes you
-              down to the loan in the lending history. */}
-          {data.isOwner && !isEditing ? (
-            data.book.borrower ? (
-              <a
-                href="#lending"
-                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
-              >
-                <LentIcon size={14} className="text-stone-400 dark:text-stone-500" />
-                Lent to {data.book.borrower.firstname}
-              </a>
-            ) : (
-              <p className="w-full cursor-default rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-center text-sm text-stone-500 dark:text-stone-400">
-                On your shelf
-              </p>
-            )
+          {/* Your own copy while it's out: who has it, taking you down to the
+              loan in the lending history. On your shelf, Lend to a friend
+              says enough. */}
+          {data.isOwner && !isEditing && data.book.borrower ? (
+            <a
+              href="#lending"
+              className="flex w-full items-center justify-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+            >
+              <LentIcon size={14} className="text-stone-400 dark:text-stone-500" />
+              Lent to {data.book.borrower.firstname}
+            </a>
           ) : null}
           {data.isOwner && !isEditing && !data.book.borrower ? (
             <LendToFriend

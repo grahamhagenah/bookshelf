@@ -1,6 +1,6 @@
-import { NavLink, useMatches } from "@remix-run/react";
+import { NavLink, useLocation, useMatches } from "@remix-run/react";
 
-import { BookIcon, PulseIcon, StacksLogo } from "./icons";
+import { BookIcon, GroupIcon, StacksLogo } from "./icons";
 import PositionedMenu from "./menu";
 import Notifications from "./notifications";
 import Search from "./search";
@@ -14,12 +14,13 @@ interface RootLoaderData {
 const navClass = ({ isActive }: { isActive: boolean }) =>
   `inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-sm transition-colors ${
     isActive
-      ? "bg-stone-100 dark:bg-stone-800 font-medium text-stone-900 dark:text-stone-100"
+      ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
       : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800"
   }`;
 
 export default function Header() {
   const matches = useMatches();
+  const { pathname } = useLocation();
   const rootData = matches.find((m) => m.id === "root")?.data as
     | RootLoaderData
     | undefined;
@@ -47,12 +48,21 @@ export default function Header() {
               own; phones keep the icons */}
           {user ? (
             <nav aria-label="Main" className="hidden md:flex items-center gap-1">
-              <NavLink to="/books" end className={navClass}>
+              {/* Your want-to-read list and history are tabs of your library */}
+              <NavLink
+                to="/books"
+                end
+                className={({ isActive }) =>
+                  navClass({
+                    isActive: isActive || pathname === "/want-to-read" || pathname === "/history",
+                  })
+                }
+              >
                 <BookIcon size={16} />
                 My library
               </NavLink>
               <NavLink to="/feed" className={navClass}>
-                <PulseIcon size={16} />
+                <GroupIcon size={16} />
                 Friend activity
               </NavLink>
             </nav>
@@ -65,7 +75,7 @@ export default function Header() {
               title="Friend activity"
               className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             >
-              <PulseIcon size={20} />
+              <GroupIcon size={20} />
             </a>
           ) : null}
           {user ? <Notifications /> : null}

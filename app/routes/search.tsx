@@ -437,7 +437,10 @@ function SearchResultItem({
           <button
             type="submit"
             disabled={isAdding || isAdded || alreadyInLibrary}
-            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+            // Every state here is the same height (the transparent border
+            // matches the outlined button beside it), so the row, and the
+            // cover stretched to it, never change size
+            className={`inline-flex items-center gap-1.5 rounded-md border border-transparent px-3 py-1.5 text-sm transition-colors ${
               isAdded || alreadyInLibrary
                 ? "bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 cursor-default"
                 : isAdding
@@ -458,7 +461,7 @@ function SearchResultItem({
           </button>
           {/* Don't own it? Keep an eye out for it on friends' shelves */}
           {isAdded || alreadyInLibrary ? null : wanted ? (
-            <span className="inline-flex items-center gap-1.5 px-1 text-sm text-stone-500 dark:text-stone-400">
+            <span className="inline-flex items-center gap-1.5 border border-transparent px-1 py-1.5 text-sm text-stone-500 dark:text-stone-400">
               <BookmarkIcon size={14} />
               On your want-to-read list
             </span>

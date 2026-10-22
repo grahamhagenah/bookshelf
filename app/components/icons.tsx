@@ -84,14 +84,6 @@ export function SettingsIcon({ className = "", size = 24 }: IconProps) {
 }
 
 // A pulse line, for what friends have been up to
-export function PulseIcon({ className = "", size = 24 }: IconProps) {
-  return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 12h4l2.5-6 5 12 2.5-6h4"/>
-    </svg>
-  );
-}
-
 export function GroupIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

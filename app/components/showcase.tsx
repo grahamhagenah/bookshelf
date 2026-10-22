@@ -23,6 +23,9 @@ const COVERS = {
   piranesi: cover("9781635575637"),
   circe: cover("9780316556347"),
   dune: cover("9780441172719"),
+  overstory: cover("9780393635522"),
+  crawdads: cover("9780735219090"),
+  lonesomeDove: cover("9780671683900"),
 };
 
 const panel =
@@ -76,40 +79,31 @@ function Cover({ src, className = "" }: { src: string; className?: string }) {
 interface CardBook {
   title: string;
   cover: string;
-  status?: "lent" | "borrowed" | "available";
+  status?: "lent" | "borrowed";
   hearts?: number;
   className: string;
 }
 
-// A book as it appears in the library grid
+// A book as it appears in the library grid: where it is as a tag on the
+// cover, hearts beside the title
 function BookCard({ book, width = "w-[34%]" }: { book: CardBook; width?: string }) {
   return (
     <div className={`${panel} ${width} p-2 ${book.className}`}>
-      <Cover src={book.cover} className="w-full" />
-      <p className="mt-1.5 truncate text-xs text-stone-700 dark:text-stone-300">
-        {book.title}
-      </p>
-      <p className="mt-0.5 flex h-4 items-center justify-between gap-1 text-[11px]">
-        {book.status === "lent" ? (
-          <span className="inline-flex items-center gap-1 text-stone-500 dark:text-stone-400">
-            <LentIcon size={11} />
-            Lent out
+      <div className="relative">
+        <Cover src={book.cover} className="w-full" />
+        {book.status === "lent" || book.status === "borrowed" ? (
+          <span className="absolute left-1 top-1 inline-flex items-center gap-1 rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[10px] leading-4 text-stone-700 dark:text-stone-200 shadow-sm">
+            {book.status === "lent" ? <LentIcon size={10} /> : <BorrowedIcon size={10} />}
+            {book.status === "lent" ? "Lent out" : "Borrowed"}
           </span>
-        ) : book.status === "available" ? (
-          <span className="inline-flex items-center gap-1.5 text-stone-500 dark:text-stone-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-stone-400 dark:bg-stone-500" />
-            Available
-          </span>
-        ) : book.status === "borrowed" ? (
-          <span className="inline-flex items-center gap-1 font-medium text-stone-900 dark:text-stone-100">
-            <BorrowedIcon size={11} />
-            Borrowed
-          </span>
-        ) : (
-          <span />
-        )}
+        ) : null}
+      </div>
+      <p className="mt-1.5 flex items-center gap-1.5 text-xs">
+        <span className="min-w-0 flex-1 truncate text-stone-700 dark:text-stone-300">
+          {book.title}
+        </span>
         {book.hearts ? (
-          <span className="inline-flex items-center gap-1 text-stone-400 dark:text-stone-500">
+          <span className="inline-flex flex-shrink-0 items-center gap-1 text-[11px] text-stone-400 dark:text-stone-500">
             <Heart size={10} />
             {book.hearts}
           </span>
@@ -152,7 +146,7 @@ export default function ShowcaseLending() {
     <Stage>
       {/* What's due, both ways */}
       <div className={`${panel} left-0 right-[10%] top-0 z-30 -rotate-1 p-3.5`}>
-        <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">Coming up</p>
+        <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">Due soon</p>
         <p className="mt-1.5 text-sm text-stone-600 dark:text-stone-300">
           <span className="font-semibold text-stone-900 dark:text-stone-100">Station Eleven</span>{" "}
           is with Priya Patel ·{" "}
@@ -181,7 +175,6 @@ export default function ShowcaseLending() {
         {
           title: "The Hobbit",
           cover: COVERS.hobbit,
-          status: "available" as const,
           hearts: 4,
           className: "right-0 top-[25%] sm:top-[21%] rotate-6",
         },
@@ -360,47 +353,50 @@ export function ShowcaseNotes() {
   );
 }
 
-// A share link, and how it looks when you text it to someone
-export function ShowcaseShare() {
+// A friend adds a book from your want-to-read list, and you hear about it
+export function ShowcaseWant() {
   return (
-    <Stage height="h-[340px] sm:h-[420px]">
-      <div className={`${panel} left-0 right-[8%] top-0 z-20 -rotate-1 p-3.5`}>
-        <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
-          Share your bookshelf
+    <Stage height="h-[340px] sm:h-[360px]">
+      <div className={`${panel} left-[5%] right-0 top-0 z-30 rotate-1 p-3.5`}>
+        <div className="flex items-start gap-2.5">
+          <Initials text="MC" />
+          <p className="min-w-0 text-sm leading-snug text-stone-700 dark:text-stone-300">
+            <span className="font-semibold text-stone-900 dark:text-stone-100">Maya Chen</span>{" "}
+            added{" "}
+            <span className="font-semibold text-stone-900 dark:text-stone-100">The Overstory</span>,
+            which is on your want-to-read list
+            <span className="mt-0.5 block text-xs text-stone-400">Just now</span>
+          </p>
+        </div>
+      </div>
+
+      <div className={`${panel} left-0 right-[6%] top-[27%] z-20 -rotate-2 p-3.5`}>
+        <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">
+          Want to read <span className="font-normal text-stone-400">3</span>
         </p>
-        <div className="mt-2 flex items-center gap-2">
-          <span className="min-w-0 flex-1 truncate rounded-md border border-stone-200 dark:border-stone-700 px-2.5 py-1 text-xs text-stone-500 dark:text-stone-400">
-            bookstacks.site/share/jordan-avery
-          </span>
-          <span className="rounded-md bg-forest-600 dark:bg-forest-500 px-2.5 py-1 text-xs font-medium text-white">
-            Copy
-          </span>
-        </div>
+        {[
+          { src: COVERS.overstory, title: "The Overstory", note: "Maya has it", ask: true },
+          { src: COVERS.crawdads, title: "Where the Crawdads Sing", note: "Priya has it", ask: true },
+          { src: COVERS.lonesomeDove, title: "Lonesome Dove", note: "None of your friends yet" },
+        ].map((book) => (
+          <div key={book.title} className="mt-2.5 flex items-center gap-2.5">
+            <Cover src={book.src} className="w-7" />
+            <p className="min-w-0 flex-1 text-sm leading-tight text-stone-800 dark:text-stone-200">
+              <span className="block truncate font-medium">{book.title}</span>
+              <span className="block text-xs text-stone-500 dark:text-stone-400">{book.note}</span>
+            </p>
+            {book.ask ? (
+              <span className="rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-xs text-stone-700 dark:text-stone-200">
+                Ask to borrow
+              </span>
+            ) : null}
+          </div>
+        ))}
       </div>
 
-      {/* The link, unfurled in a message */}
-      <div className="absolute right-0 top-[30%] z-30 w-[80%] rotate-2 rounded-2xl rounded-br-md bg-stone-200 dark:bg-stone-800 p-1.5 shadow-soft">
-        <div className="overflow-hidden rounded-xl bg-white dark:bg-stone-900">
-          <div className="flex justify-center gap-2 bg-stone-100 dark:bg-stone-950 px-4 py-4">
-            {[COVERS.piranesi, COVERS.circe, COVERS.dune, COVERS.hailMary].map((src) => (
-              <Cover key={src} src={src} className="w-[22%] shadow-soft" />
-            ))}
-          </div>
-          <div className="px-3 py-2.5">
-            <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
-              Jordan Avery&apos;s bookshelf · Stacks
-            </p>
-            <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
-              14 books, including Piranesi, Circe and Dune.
-            </p>
-            <p className="mt-1 text-[11px] text-stone-400">bookstacks.site</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="absolute bottom-0 left-[4%] z-30 flex -rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white shadow-soft">
+      <div className="absolute bottom-0 right-[4%] z-30 flex rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white shadow-soft">
         <Check />
-        Link copied
+        Asked Maya for The Overstory
       </div>
     </Stage>
   );

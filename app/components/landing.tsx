@@ -1,11 +1,8 @@
 import { Link } from "@remix-run/react";
 
 import DemoButton from "./demo-button";
-import Showcase, {
-  ShowcaseFriends,
-  ShowcaseNotes,
-  ShowcaseShare,
-} from "./showcase";
+import { CameraIcon, HomeIcon } from "./icons";
+import Showcase, { ShowcaseFriends, ShowcaseNotes, ShowcaseWant } from "./showcase";
 
 // The signed-out home page: what Stacks is, beside a small, staged glimpse
 // of the app itself, so people see what they're signing up for
@@ -40,6 +37,74 @@ function Feature({
     </section>
   );
 }
+
+// Smaller things worth knowing, three across under the big features
+function Extra({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200">
+        {icon}
+      </span>
+      <h3 className="mt-4 text-lg font-semibold text-stone-900 dark:text-stone-50">{title}</h3>
+      <p className="mt-1.5 text-pretty leading-relaxed text-stone-600 dark:text-stone-300">
+        {children}
+      </p>
+    </div>
+  );
+}
+
+function LinkIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M10 14a4.5 4.5 0 006.4 0l3-3a4.5 4.5 0 00-6.4-6.4l-1 1" />
+      <path d="M14 10a4.5 4.5 0 00-6.4 0l-3 3a4.5 4.5 0 006.4 6.4l1-1" />
+    </svg>
+  );
+}
+
+// A few of the questions from the FAQ page, the ones people ask first
+const QUESTIONS: { q: string; a: React.ReactNode }[] = [
+  {
+    q: "How is this different from Goodreads or StoryGraph?",
+    a: (
+      <>
+        Those track your reading. Stacks is about the physical copies on your shelves and
+        the people around you: who has which book, and getting it into a friend&apos;s
+        hands. No ratings, no recommendation engine, no public profiles.
+      </>
+    ),
+  },
+  {
+    q: "Do I have to lend my books out?",
+    a: (
+      <>
+        No. Every request comes to you and you can say no. Plenty of people use Stacks as a
+        catalogue of what they own and mostly borrow.
+      </>
+    ),
+  },
+  {
+    q: "We share our books at home. Do we need two accounts?",
+    a: (
+      <>
+        One each, sharing a shelf. You both see and lend everything, and keep your own
+        notes, hearts, read marks and friends.
+      </>
+    ),
+  },
+  {
+    q: "Does it cost anything?",
+    a: <>No. Stacks is free and open source.</>,
+  },
+];
 
 export default function Landing() {
   return (
@@ -86,29 +151,92 @@ export default function Landing() {
           visual={<ShowcaseFriends />}
         >
           Search once and see which friends have a book, then ask to borrow it
-          with a tap. Anything nobody has yet, you can add to your own shelf.
+          with a tap. They pick how long you can keep it, and Stacks reminds you
+          both when it&apos;s due.
+        </Feature>
+
+        <Feature
+          eyebrow="Want to read"
+          title="Hear the moment a friend has it"
+          visual={<ShowcaseWant />}
+          flip
+        >
+          Keep a list of books you&apos;d like to read. When a friend adds one to
+          their shelf, you&apos;ll know, and you can ask for it straight away.
         </Feature>
 
         <Feature
           eyebrow="Notes"
           title="Every copy carries its story"
           visual={<ShowcaseNotes />}
-          flip
         >
           Leave a heart or a line for the next reader. Notes stay with the book
           as it moves between friends, so you can see where it&apos;s been and
           what everyone thought.
         </Feature>
 
-        <Feature
-          eyebrow="Share"
-          title="Share your shelf with anyone"
-          visual={<ShowcaseShare />}
-        >
-          Make a link to your library that anyone can browse, no account
-          needed. It looks good in a text, and friends can join to borrow from
-          you.
-        </Feature>
+        {/* The rest, briefly */}
+        <section className="border-t border-stone-200 dark:border-stone-800 pt-16 md:pt-20">
+          <h2 className="text-balance text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-4xl">
+            And a few more things
+          </h2>
+          <div className="mt-10 grid gap-10 sm:grid-cols-3 sm:gap-8">
+            <Extra icon={<CameraIcon size={18} />} title="Fill your shelf fast">
+              Scan the barcodes on a shelf of books with your phone, or bring your
+              list over from Goodreads or StoryGraph in one go.
+            </Extra>
+            <Extra icon={<HomeIcon size={18} />} title="One shelf for the household">
+              Live with someone whose books are your books? Share one shelf, with
+              your own logins, notes and friends.
+            </Extra>
+            <Extra icon={<LinkIcon />} title="A link to your library">
+              Send anyone a link to browse your books, no account needed. Friends
+              can join to borrow from you.
+            </Extra>
+          </div>
+        </section>
+
+        {/* The questions people ask first, and the way to the rest */}
+        <section className="border-t border-stone-200 dark:border-stone-800 pt-16 md:pt-20">
+          <div className="grid gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:gap-16">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-4xl">
+                Questions
+              </h2>
+              <Link
+                to="/faq"
+                className="mt-4 inline-block text-stone-700 dark:text-stone-200 font-medium underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+              >
+                Read them all →
+              </Link>
+            </div>
+            <div className="divide-y divide-stone-200 dark:divide-stone-800 border-y border-stone-200 dark:border-stone-800">
+              {QUESTIONS.map((item) => (
+                <details key={item.q} className="group py-4">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold text-stone-900 dark:text-stone-100 [&::-webkit-details-marker]:hidden">
+                    <span>{item.q}</span>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      aria-hidden="true"
+                      className="flex-shrink-0 text-stone-400 transition-transform group-open:rotate-180"
+                    >
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </summary>
+                  <p className="mt-2 max-w-prose text-pretty leading-relaxed text-stone-600 dark:text-stone-300">
+                    {item.a}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* One last nudge */}
         <section className="border-t border-stone-200 dark:border-stone-800 pt-16 text-center md:pt-20">

@@ -10,7 +10,9 @@ import { useState } from "react";
 import CoverPlaceholder from "~/components/cover-placeholder";
 import { BookmarkIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
+import ShelfTabs from "~/components/shelf-tabs";
 import Layout from "~/components / Layout/Layout";
+import { getShelfCounts } from "~/models/history.server";
 import { getUserById } from "~/models/user.server";
 import {
   getWantToRead,
@@ -30,13 +32,15 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [user, items] = await Promise.all([
+  const [user, items, counts] = await Promise.all([
     getUserById(userId),
     getWantToRead(userId),
+    getShelfCounts(userId),
   ]);
   return json({
     items,
     friendIds: user?.following.map((friend) => friend.id) ?? [],
+    counts,
   });
 };
 
@@ -155,21 +159,19 @@ function WantRow({
 }
 
 export default function WantToRead() {
-  const { items, friendIds } = useLoaderData<typeof loader>();
+  const { items, friendIds, counts } = useLoaderData<typeof loader>();
   const matched = items.filter((item) => item.copies.length > 0).length;
 
   return (
     <Layout title="Want to read">
       <section>
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
-            Want to read{" "}
-            {items.length ? (
-              <span className="font-normal text-stone-500 dark:text-stone-400">
-                {items.length}
-              </span>
-            ) : null}
-          </h2>
+        <ShelfTabs counts={{ ...counts, want: items.length }} />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
+            Books you don&apos;t own but would like to read. When a friend has one,
+            it shows up here, and you&apos;ll hear when they add one.
+            {matched ? ` ${matched} of these ${matched === 1 ? "is" : "are"} on a friend's shelf.` : ""}
+          </p>
           <Link
             to="/search"
             className="inline-flex h-8 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
@@ -180,11 +182,6 @@ export default function WantToRead() {
             Add a book
           </Link>
         </div>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-          Books you don&apos;t own but would like to read. When a friend has one,
-          it shows up here, and you&apos;ll hear when they add one.
-          {matched ? ` ${matched} of these ${matched === 1 ? "is" : "are"} on a friend's shelf.` : ""}
-        </p>
 
         {items.length === 0 ? (
           <div className="mt-10 flex flex-col items-center py-10 text-center">

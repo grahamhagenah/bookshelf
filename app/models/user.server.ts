@@ -35,6 +35,7 @@ export async function getUserById(id: User["id"]) {
           bookId: true,
           bookTitle: true,
           createdAt: true,
+          sender: { select: { profileEmoji: true } },
         },
       },
       following: {
@@ -171,6 +172,23 @@ export async function getNotificationHistory(userId: string, limit = 10) {
       actionTaken: true,
       createdAt: true,
     },
+  });
+}
+
+// A notification, only if it was sent to this person
+export function getReceivedNotification(userId: string, notificationId: string) {
+  return prisma.notification.findFirst({
+    where: { id: notificationId, receiverId: userId },
+    select: { id: true, type: true, senderId: true, bookId: true, bookTitle: true },
+  });
+}
+
+// Clears every unread update at once, leaving requests and reminders that
+// still need an answer
+export async function dismissUpdates(userId: string, keepTypes: string[]) {
+  await prisma.notification.updateMany({
+    where: { receiverId: userId, read: false, type: { notIn: keepTypes } },
+    data: { read: true, actionTaken: "dismissed" },
   });
 }
 

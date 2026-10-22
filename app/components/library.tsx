@@ -103,6 +103,9 @@ const OTHER_STATUSES: [Status, string][] = [
 interface LibraryProps {
   bookListItems: Book[];
   ownerName?: string; // If provided, this is someone else's library (friend or public)
+  // Shown above everything else, such as the tabs between your library
+  // and your want-to-read list
+  header?: React.ReactNode;
 }
 
 // One rounded box that clips both the image and its placeholder
@@ -165,7 +168,7 @@ function BookCover({
   );
 }
 
-export default function Library({ bookListItems, ownerName }: LibraryProps) {
+export default function Library({ bookListItems, ownerName, header }: LibraryProps) {
   // Set on the account page, and the same on every shelf you look at
   const viewer = useOptionalUser();
   const viewMode = libraryViewOf(viewer);
@@ -196,6 +199,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
         (book.author ?? "").toLowerCase().includes(term),
     );
   const isFiltered = Boolean(term) || status !== "all";
+  const showMarks = visibleBooks.some((book) => (book.readAt && !ownerName) || book.addedBy);
 
   return (
     <>
@@ -217,6 +221,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
       ) : bookListItems.length === 0 ? (
         // Empty state for own library - show onboarding
         <main className="min-h-[calc(100vh-60px)]">
+          {header ? <div className="px-4 md:px-8 pt-8 md:pt-10">{header}</div> : null}
           <section className="flex flex-col items-center justify-center min-h-[calc(100vh-60px)] px-4 py-12">
             <div className="text-center mb-12">
               <h1 className="text-4xl md:text-6xl font-bold text-stone-800 mb-4">
@@ -325,7 +330,8 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
           </section>
         </main>
       ) : (
-        <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8">
+        <main className="mt-8 md:mt-10 px-4 md:px-8 pb-8">
+          {header}
           {/* Filter bar: find, narrow and switch views, in one line on
               wider screens. On phones the pills drop to a second line of
               their own (and scroll if they run out of room) */}
@@ -353,7 +359,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                       onClick={() => setStatus(value)}
                       className={`flex-shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-sm transition-colors ${
                         status === value
-                          ? "bg-stone-100 dark:bg-stone-800 font-medium text-stone-900 dark:text-stone-100"
+                          ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
                           : "text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-900 hover:text-stone-800 dark:hover:text-stone-200"
                       }`}
                     >
@@ -404,51 +410,52 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
               {visibleBooks.map((book, index) => (
                 <li key={book.id} className="cover-wrapper">
                   <NavLink to={`/books/${book.id}`} className="group block">
-                    <BookCover
-                      cover={book.cover}
-                      eager={index < 7}
-                      sizes={grid.sizes}
-                      title={book.title}
-                      author={book.author}
-                      className="w-full aspect-[2/3] transition-opacity duration-200 group-hover:opacity-90"
-                    />
-                    <span className="mt-1.5 block truncate text-sm text-stone-700 dark:text-stone-300">
-                      {book.title}
+                    <div className="relative">
+                      <BookCover
+                        cover={book.cover}
+                        eager={index < 7}
+                        sizes={grid.sizes}
+                        title={book.title}
+                        author={book.author}
+                        className="w-full aspect-[2/3] transition-opacity duration-200 group-hover:opacity-90"
+                      />
+                      {/* Where the copy is, as a small tag on the cover itself */}
+                      {book.isBorrowed || book.isLending ? (
+                        <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[11px] leading-4 text-stone-700 dark:text-stone-200 shadow-sm">
+                          {book.isBorrowed ? <BorrowedIcon size={11} /> : <LentIcon size={11} />}
+                          {book.isBorrowed ? "Borrowed" : "Lent out"}
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className="mt-1.5 flex items-center gap-2 text-sm">
+                      <span className="min-w-0 flex-1 truncate text-stone-700 dark:text-stone-300">
+                        {book.title}
+                      </span>
+                      {book.loveCount ? (
+                        <span
+                          className="inline-flex flex-shrink-0 items-center gap-1 text-xs text-stone-400 dark:text-stone-500"
+                          title={`${book.loveCount} ${book.loveCount === 1 ? "reader loved" : "readers loved"} this`}
+                        >
+                          <HeartIcon size={11} filled className="text-rose-400" />
+                          {book.loveCount}
+                        </span>
+                      ) : null}
                     </span>
-                    {/* Always there, even when empty, so every row lines up */}
-                    <span className="mt-0.5 flex h-4 items-center justify-between gap-2 text-xs">
-                        {book.isBorrowed ? (
-                          <span className="inline-flex items-center gap-1 font-medium text-stone-900 dark:text-stone-100">
-                            <BorrowedIcon size={12} />
-                            Borrowed
-                          </span>
-                        ) : book.isLending ? (
-                          <span className="inline-flex items-center gap-1 text-stone-500 dark:text-stone-400">
-                            <LentIcon size={12} />
-                            Lent out
-                          </span>
-                        ) : book.readAt && !ownerName ? (
-                          <span className="inline-flex items-center gap-1 text-stone-400 dark:text-stone-500">
+                    {/* Read, or whose it is on a shared shelf. The line is kept
+                        (empty if need be) whenever any book has one, so the
+                        rows line up */}
+                    {showMarks ? (
+                      <span className="mt-0.5 flex h-4 items-center text-xs text-stone-400 dark:text-stone-500">
+                        {book.readAt && !ownerName ? (
+                          <span className="inline-flex items-center gap-1">
                             <ReadIcon size={11} />
                             Read
                           </span>
                         ) : book.addedBy ? (
-                          <span className="truncate text-stone-400 dark:text-stone-500">
-                            {book.addedBy}&apos;s
-                          </span>
-                        ) : (
-                          <span />
-                        )}
-                        {book.loveCount ? (
-                          <span
-                            className="inline-flex items-center gap-1 text-stone-400 dark:text-stone-500"
-                            title={`${book.loveCount} ${book.loveCount === 1 ? "reader loved" : "readers loved"} this`}
-                          >
-                            <HeartIcon size={11} filled className="text-rose-400" />
-                            {book.loveCount}
-                          </span>
+                          <span className="truncate">{book.addedBy}&apos;s</span>
                         ) : null}
                       </span>
+                    ) : null}
                   </NavLink>
                 </li>
               ))}
