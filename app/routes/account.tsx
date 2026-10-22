@@ -17,6 +17,13 @@ import Layout from "~/components / Layout/Layout";
 import { getBookStats } from "~/models/book.server";
 import { getDemoGroup } from "~/models/demo.server";
 import {
+  createHouseholdInvite,
+  getHousehold,
+  leaveHousehold,
+  revokeHouseholdInvite,
+  shelfIds,
+} from "~/models/household.server";
+import {
   getUserById,
   getUserByEmail,
   updateUser,
@@ -39,11 +46,29 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [user, bookStats] = await Promise.all([
+  const [user, bookStats, household] = await Promise.all([
     getUserById(userId),
-    getBookStats(userId),
+    getBookStats(userId, await shelfIds(userId)),
+    getHousehold(userId),
   ]);
-  return { user, origin: publicOrigin(request), bookStats };
+  return {
+    user,
+    origin: publicOrigin(request),
+    bookStats,
+    household: household
+      ? {
+          members: household.members.map(({ id, firstname, surname, profileEmoji }) => ({
+            id,
+            firstname,
+            surname,
+            profileEmoji,
+          })),
+          inviteUrl: household.inviteToken
+            ? `${publicOrigin(request)}/household/join/${household.inviteToken}`
+            : null,
+        }
+      : null,
+  };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -52,6 +77,38 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
   // Demo accounts keep their placeholder email and have no password
   const isDemo = (await getDemoGroup(userId)) !== null;
+
+  // Sharing the shelf with someone
+  if (intent === "householdInvite") {
+    await createHouseholdInvite(userId);
+    return json({
+      errors: null,
+      passwordErrors: null,
+      success: false,
+      passwordSuccess: false,
+      emojiSuccess: false,
+    });
+  }
+  if (intent === "householdRevoke") {
+    await revokeHouseholdInvite(userId);
+    return json({
+      errors: null,
+      passwordErrors: null,
+      success: false,
+      passwordSuccess: false,
+      emojiSuccess: false,
+    });
+  }
+  if (intent === "householdLeave") {
+    await leaveHousehold(userId);
+    return json({
+      errors: null,
+      passwordErrors: null,
+      success: false,
+      passwordSuccess: false,
+      emojiSuccess: false,
+    });
+  }
 
   // Handle share token actions
   if (intent === "generateShareToken") {
@@ -252,6 +309,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export default function Account() {
   const data = useLoaderData<typeof loader>();
+  const { household } = data;
   const actionData = useActionData<typeof action>();
   const [copied, setCopied] = useState(false);
 
@@ -464,6 +522,15 @@ export default function Account() {
               </button>
             ) : null}
           </Form>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-2">Share a Shelf</h2>
+          <p className="text-stone-600 mb-4">
+            Live with someone whose books are your books? Share one shelf: you both see and
+            lend everything, and keep your own notes, hearts and friends.
+          </p>
+          <HouseholdPanel household={household} />
         </section>
 
         <section>
@@ -758,5 +825,104 @@ export default function Account() {
         ) : null}
       </Layout>
     </>
+  );
+}
+
+// Who's on the shelf, the invite link to add someone, and the way out
+function HouseholdPanel({
+  household,
+}: {
+  household: {
+    members: { id: string; firstname: string; surname: string; profileEmoji: string | null }[];
+    inviteUrl: string | null;
+  } | null;
+}) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    if (!household?.inviteUrl) return;
+    try {
+      await navigator.clipboard.writeText(household.inviteUrl);
+      setCopied(true);
+    } catch {
+      // Clipboard can be blocked; the link is right there to select
+    }
+  };
+  const button =
+    "rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
+  const others = household?.members.length ?? 0;
+
+  return (
+    <div className="space-y-4">
+      {household && others > 1 ? (
+        <ul className="flex flex-wrap gap-3">
+          {household.members.map((member) => (
+            <li key={member.id} className="flex items-center gap-2 text-sm text-stone-800 dark:text-stone-200">
+              <Avatar
+                firstname={member.firstname}
+                surname={member.surname}
+                icon={member.profileEmoji}
+                size="sm"
+              />
+              {member.firstname} {member.surname}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {household?.inviteUrl ? (
+        <div className="space-y-3">
+          <p className="text-sm text-stone-600 dark:text-stone-300">
+            Send this link to the person you share with. They&apos;ll join your shelf when they open it.
+          </p>
+          <input
+            type="text"
+            readOnly
+            value={household.inviteUrl}
+            className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-3 py-2 text-sm text-stone-700 dark:text-stone-300"
+          />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={copy}
+              className="rounded-md bg-stone-700 dark:bg-stone-200 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+            >
+              {copied ? "Copied!" : "Copy Link"}
+            </button>
+            <Form method="post">
+              <input type="hidden" name="intent" value="householdRevoke" />
+              <button type="submit" className={button}>
+                Stop sharing this link
+              </button>
+            </Form>
+          </div>
+        </div>
+      ) : (
+        <Form method="post">
+          <input type="hidden" name="intent" value="householdInvite" />
+          <button type="submit" className={button}>
+            {others > 1 ? "Invite someone else" : "Make an invite link"}
+          </button>
+        </Form>
+      )}
+
+      {household && others > 1 ? (
+        <Form
+          method="post"
+          onSubmit={(event) => {
+            if (!confirm("Leave this shelf? Your own books come with you; theirs stay with them.")) {
+              event.preventDefault();
+            }
+          }}
+        >
+          <input type="hidden" name="intent" value="householdLeave" />
+          <button
+            type="submit"
+            className="text-sm text-stone-500 dark:text-stone-400 underline underline-offset-2 hover:text-stone-800 dark:hover:text-stone-200"
+          >
+            Leave this shelf
+          </button>
+        </Form>
+      ) : null}
+    </div>
   );
 }

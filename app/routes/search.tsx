@@ -23,6 +23,7 @@ import {
   bookExistsInLibrary,
   searchFriendsBooks,
 } from "~/models/book.server";
+import { shelfIds } from "~/models/household.server";
 import { fetchDescription } from "~/models/openlibrary.server";
 import {
   addWantToRead,
@@ -89,7 +90,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
 
   // Get user's existing library keys to show which books are already added
-  const libraryKeys = userId ? await getUserLibraryKeys(userId) : [];
+  const libraryKeys = userId ? await getUserLibraryKeys(await shelfIds(userId)) : [];
   const wishes = userId ? await getWantToReadWorks(userId) : [];
 
   // Friends' copies come first, so only look them up for the first page
@@ -222,7 +223,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Check if book already exists in user's library
   if (typeof openLibraryKey === "string" && openLibraryKey.length > 0) {
-    const exists = await bookExistsInLibrary(userId, openLibraryKey);
+    const exists = await bookExistsInLibrary(await shelfIds(userId), openLibraryKey);
     if (exists) {
       return json({
         success: false,

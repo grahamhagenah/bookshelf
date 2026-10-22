@@ -3,6 +3,7 @@ import { json } from "@remix-run/node";
 
 import { prisma } from "~/db.server";
 import { createBook } from "~/models/book.server";
+import { shelfIds } from "~/models/household.server";
 import { lookupWork } from "~/models/openlibrary.server";
 import { notifyWanters } from "~/models/wish.server";
 import { requireUserId } from "~/session.server";
@@ -29,7 +30,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // The same book, scanned twice or added some other way (older
   // copies may have neither ISBN nor work key, so titles count too)
   const shelf = await prisma.book.findMany({
-    where: { userId },
+    where: { userId: { in: await shelfIds(userId) } },
     select: { title: true, isbn: true, openLibraryKey: true },
   });
   const existing = shelf.find(

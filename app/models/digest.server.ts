@@ -5,6 +5,7 @@ import { prisma } from "~/db.server";
 import type { FriendActivity } from "./activity.server";
 import { getFriendActivity } from "./activity.server";
 import { getHomeBooks } from "./book.server";
+import { shelfIds } from "./household.server";
 
 // The weekly email: what friends did, what's due back, and anything from
 // the want-to-read list that turned up. Nothing is sent when there's
@@ -32,7 +33,7 @@ const daysUntil = (date: Date) => Math.round((date.getTime() - Date.now()) / DAY
 export async function buildDigest(userId: User["id"]): Promise<Digest> {
   const [activity, books, matches] = await Promise.all([
     getFriendActivity(userId, { days: WEEK, limit: 12 }),
-    getHomeBooks(userId),
+    getHomeBooks(userId, await shelfIds(userId)),
     prisma.notification.findMany({
       where: {
         type: "WANT_MATCH",

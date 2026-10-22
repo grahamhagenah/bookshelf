@@ -9,6 +9,7 @@ import invariant from "tiny-invariant";
 
 import Library from "~/components/library";
 import { getPublicBookListItems } from "~/models/book.server";
+import { shelfIds } from "~/models/household.server";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import type { FriendStatus } from "~/models/user.server";
 import {
@@ -59,7 +60,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const viewerId = await getUserId(request);
   const [bookListItems, friendStatus] = await Promise.all([
-    getPublicBookListItems(user.id),
+    getPublicBookListItems(await shelfIds(user.id)),
     // Demo accounts and real ones can't befriend each other, so a demo
     // visitor sees the shelf without an invite
     viewerId && (await canInteract(viewerId, user.id))

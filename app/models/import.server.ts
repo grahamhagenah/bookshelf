@@ -5,6 +5,7 @@ import type { ImportRow, ShelfChoice } from "~/import-books";
 import { goesOnShelf } from "~/import-books";
 import { normalizeTitle, sameWork } from "~/works";
 
+import { shelfIds } from "./household.server";
 import { notifyWanters } from "./wish.server";
 
 // Open Library serves covers by ISBN without any lookup; a book with no
@@ -21,7 +22,7 @@ export async function importBooks(
 ) {
   const [existing, wishes] = await Promise.all([
     prisma.book.findMany({
-      where: { userId },
+      where: { userId: { in: await shelfIds(userId) } },
       select: { title: true, openLibraryKey: true, isbn: true },
     }),
     prisma.wantToRead.findMany({

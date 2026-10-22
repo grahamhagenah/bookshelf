@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 
 import { getUserLibraryKeys, searchFriendsBooks } from "~/models/book.server";
+import { shelfIds } from "~/models/household.server";
 import { requireUserId } from "~/session.server";
 import { cleanSubjects } from "~/utils";
 
@@ -53,7 +54,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       friends: [],
       openLibrary: await suggestFromOpenLibrary(
         query,
-        new Set(await getUserLibraryKeys(userId)),
+        new Set(await getUserLibraryKeys(await shelfIds(userId))),
       ),
     });
   }

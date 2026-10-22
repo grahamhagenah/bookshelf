@@ -3,6 +3,7 @@ import { redirect } from "@remix-run/node";
 
 import { loadCover } from "~/covers.server";
 import { getPublicBookListItems } from "~/models/book.server";
+import { shelfIds } from "~/models/household.server";
 import { getUserByShareToken } from "~/models/user.server";
 
 // sharp's ES module build uses import syntax the Remix compiler can't
@@ -71,7 +72,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const user = params.token ? await getUserByShareToken(params.token) : null;
   if (!user) throw new Response("Not Found", { status: 404 });
 
-  const books = await getPublicBookListItems(user.id);
+  const books = await getPublicBookListItems(await shelfIds(user.id));
   // A few spares, in case some covers are missing
   const paths = books
     .map((book) => coverPath(book.cover))

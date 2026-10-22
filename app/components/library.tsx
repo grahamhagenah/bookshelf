@@ -48,6 +48,8 @@ interface Book {
   loveCount?: number;
   borrowerId?: string | null;
   readAt?: string | null;
+  // First name of the housemate who added it, when it wasn't you
+  addedBy?: string | null;
 }
 
 type Status =
@@ -474,6 +476,10 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                             <ReadIcon size={11} />
                             Read
                           </span>
+                        ) : book.addedBy ? (
+                          <span className="truncate text-stone-400 dark:text-stone-500">
+                            {book.addedBy}&apos;s
+                          </span>
                         ) : (
                           <span />
                         )}
@@ -551,6 +557,12 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                       {book.lendCount !== undefined && book.lendCount > 0 ? (
                         <span className="text-stone-400 dark:text-stone-500">
                           lent {book.lendCount}×
+                        </span>
+                      ) : null}
+                      {book.addedBy ? (
+                        <span className="text-stone-400 dark:text-stone-500">
+                          {" "}
+                          · {book.addedBy}&apos;s
                         </span>
                       ) : null}
                     </div>

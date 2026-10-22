@@ -26,6 +26,7 @@ import { sendBookRequestEmail } from "~/email.server";
 import {
   deleteBook,
   getBookById,
+  getReadAt,
   setRead,
   DEFAULT_LOAN_WEEKS,
   EXTEND_WEEKS,
@@ -44,6 +45,7 @@ import {
   passToNextInLine,
   placeHold,
 } from "~/models/hold.server";
+import { shelfIds } from "~/models/household.server";
 import {
   NOTE_MAX_LENGTH,
   canLeaveNote,
@@ -278,13 +280,16 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     book = (await getBookById(params.bookId)) ?? book;
   }
 
-  const isOwner = book.userId === userId;
+  // Owner means anyone sharing the shelf the book is on
+  const isOwner = (await shelfIds(userId)).includes(book.userId);
   const isBorrower = book.borrowerId === userId;
   const isBorrowed = book.borrowerId !== null;
 
   const currentUser = await getUserById(userId);
   const followingIds = currentUser?.following?.map((friend) => friend.id) ?? [];
-  const isFriend = followingIds.includes(book.userId);
+  // A friend of anyone on that shelf is a friend of the shelf
+  const ownerShelf = await shelfIds(book.userId);
+  const isFriend = ownerShelf.some((id) => followingIds.includes(id));
 
   // If not the owner, check if the owner is a friend, borrower, or has public sharing
   if (!isOwner && !isBorrower && !isFriend) {
@@ -315,6 +320,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   return json({
     book,
+    // The viewer's own read mark; their housemate has their own
+    readAt: await getReadAt(userId, book),
     isOwner,
     isBorrowed,
     isBorrower,
@@ -358,10 +365,12 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   if (!book) {
     throw new Response("Not Found", { status: 404 });
   }
+  // Anyone sharing the shelf the book is on can manage it
+  const managerIds = await shelfIds(userId);
 
   if (intent === "toggleRead") {
-    if (book.userId !== userId) {
-      throw new Response("Only the owner can mark a book read", { status: 403 });
+    if (!(await canLeaveNote(userId, book))) {
+      throw new Response("Only readers of this copy can mark it read", { status: 403 });
     }
     await setRead(book.id, userId, formData.get("read") === "true");
     return json({ ok: true });
@@ -406,7 +415,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   if (intent === "delete") {
     // Verify ownership before deleting
-    if (book.userId !== userId) {
+    if (!managerIds.includes(book.userId)) {
       throw new Response("Unauthorized", { status: 403 });
     }
     await deleteBook({ id: params.bookId, userId });
@@ -415,7 +424,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   if (intent === "request") {
     // Can't request your own book
-    if (book.userId === userId) {
+    if (managerIds.includes(book.userId)) {
       throw new Response("Cannot request your own book", { status: 400 });
     }
     // Can't request an already borrowed book
@@ -467,7 +476,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     const isFriend =
       viewer?.following.some((friend) => friend.id === book.userId) ?? false;
     if (
-      book.userId === userId ||
+      managerIds.includes(book.userId) ||
       !book.borrowerId ||
       book.borrowerId === userId ||
       !isFriend ||
@@ -481,7 +490,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   if (intent === "lendTo") {
     // The owner hands their own book to a friend
-    if (book.userId !== userId) {
+    if (!managerIds.includes(book.userId)) {
       throw new Response("Unauthorized", { status: 403 });
     }
     if (book.borrowerId !== null) {
@@ -566,7 +575,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   if (intent === "extendLoan" || intent === "markReturned") {
     // Only the owner manages a loan from this side
-    if (book.userId !== userId) {
+    if (!managerIds.includes(book.userId)) {
       throw new Response("Unauthorized", { status: 403 });
     }
     if (!book.borrowerId) {
@@ -596,7 +605,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   if (intent === "sendReminder") {
     // Only owner can send reminder
-    if (book.userId !== userId) {
+    if (!managerIds.includes(book.userId)) {
       throw new Response("Unauthorized", { status: 403 });
     }
 
@@ -624,7 +633,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   if (intent === "refresh") {
     // Only owner can refresh metadata
-    if (book.userId !== userId) {
+    if (!managerIds.includes(book.userId)) {
       throw new Response("Unauthorized", { status: 403 });
     }
 
@@ -691,7 +700,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   if (intent === "edit") {
     // Only owner can edit
-    if (book.userId !== userId) {
+    if (!managerIds.includes(book.userId)) {
       throw new Response("Unauthorized", { status: 403 });
     }
 
@@ -973,7 +982,7 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
 function LendingHistory({ data }: { data: BookData }) {
   const { book, currentUser, lendingHistory: entries, isOwner, isFriend } = data;
   const owner = book.user;
-  const ownerPerson = isOwner && currentUser ? currentUser : owner;
+  const ownerPerson = book.userId === currentUser?.id ? currentUser : owner;
   const lendCount = book.lendCount;
   const ownerLink = (text: string) =>
     isFriend && owner ? (
@@ -1057,7 +1066,11 @@ function LendingHistory({ data }: { data: BookData }) {
             />
             <div className="min-w-0 flex-1">
               <p className="truncate font-semibold text-stone-900 dark:text-stone-100">
-                {isOwner ? "You" : ownerLink(`${ownerPerson.firstname} ${ownerPerson.surname}`)}
+                {book.userId === currentUser?.id
+                  ? "You"
+                  : isOwner
+                    ? `${ownerPerson.firstname} ${ownerPerson.surname}`
+                    : ownerLink(`${ownerPerson.firstname} ${ownerPerson.surname}`)}
               </p>
               <p className="text-sm text-stone-500 dark:text-stone-400">
                 Added to {isOwner ? "your" : "their"} shelf · {monthDay(book.createdAt)}
@@ -1688,7 +1701,7 @@ export default function BookDetailsPage() {
               canNote={data.canNote}
               maxLength={data.noteMaxLength}
               friendIds={data.friendIds}
-              status={data.isOwner ? <ReadToggle readAt={data.book.readAt} /> : null}
+              status={data.canNote ? <ReadToggle readAt={data.readAt} /> : null}
             />
           ) : null}
 

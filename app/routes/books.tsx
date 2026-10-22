@@ -6,7 +6,8 @@ import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 
 import Library from "~/components/library";
-import { getBookListItems, getBorrowedBooks } from "~/models/book.server";
+import { getBookListItems, getBorrowedBooks, readAtFor } from "~/models/book.server";
+import { shelfIds } from "~/models/household.server";
 import { getLoveCounts } from "~/models/note.server";
 import { getUserById } from "~/models/user.server";
 import { seo } from "~/seo";
@@ -22,12 +23,15 @@ export const handle = {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const user = await getUserById(userId);
-  const ownedBooks = await getBookListItems(userId);
+  const ownedBooks = await getBookListItems(await shelfIds(userId));
   const borrowedBooks = await getBorrowedBooks(userId);
 
-  // Mark borrowed books and lending books, then combine
-  const ownedWithFlag = ownedBooks.map((book) => ({
+  // Mark borrowed books and lending books, then combine. Books someone
+  // else in the household added say so.
+  const ownedWithFlag = ownedBooks.map(({ readerNotes, user: addedBy, ...book }) => ({
     ...book,
+    readAt: readAtFor(userId, { ...book, readerNotes }),
+    addedBy: addedBy.id === userId ? null : addedBy.firstname,
     isBorrowed: false,
     isLending: book.borrowerId !== null,
   }));

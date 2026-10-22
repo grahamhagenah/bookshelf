@@ -10,6 +10,7 @@ import Home from "~/components/home";
 import Landing from "~/components/landing";
 import { getFriendActivity } from "~/models/activity.server";
 import { getHomeBooks } from "~/models/book.server";
+import { shelfIds } from "~/models/household.server";
 import { getPendingFriendRequests, getUserById } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
 import { seo } from "~/seo";
@@ -27,7 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (!user) return json({ home: null });
 
   const [books, activity, sentRequests] = await Promise.all([
-    getHomeBooks(user.id),
+    getHomeBooks(user.id, await shelfIds(user.id)),
     getFriendActivity(user.id, { limit: 6 }),
     getPendingFriendRequests(user.id),
   ]);

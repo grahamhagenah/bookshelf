@@ -19,6 +19,9 @@ model User {
   emailNotifications Boolean @default(true)
   // Set on throwaway demo accounts; everyone in one demo sandbox shares it
   demoGroup          String?
+  // People who share one shelf: each other's books count as their own
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -127,11 +130,13 @@ model Notification {
   @@index([receiverId], name: "receiver_id_index")
 }
 
-// A reader's heart and optional short note on one copy of a book
+// A reader's heart, optional short note, and whether they've read this
+// copy. One per person per copy.
 model ReaderNote {
   id     String  @id @default(cuid())
   loved  Boolean @default(false)
   body   String?
+  readAt DateTime?
 
   book   Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
   bookId String
@@ -191,4 +196,15 @@ model WantToRead {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// A shared shelf. Everyone in it can see and manage each other's books;
+// notes, hearts and friends stay their own.
+model Household {
+  id          String  @id @default(cuid())
+  // Hand this out to let someone join; null once revoked
+  inviteToken String? @unique
+  createdAt   DateTime @default(now())
+
+  members User[]
 }
