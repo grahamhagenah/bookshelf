@@ -9,8 +9,8 @@ import invariant from "tiny-invariant";
 
 import Library from "~/components/library";
 import { getPublicBookListItems } from "~/models/book.server";
-import { shelfIds } from "~/models/household.server";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
+import { shelfIds } from "~/models/household.server";
 import type { FriendStatus } from "~/models/user.server";
 import {
   createNotification,
