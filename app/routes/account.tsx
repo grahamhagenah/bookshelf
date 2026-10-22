@@ -816,7 +816,7 @@ function Choice({
             key={option}
             className={`flex cursor-pointer items-center justify-center gap-1.5 rounded px-2 py-1 text-sm transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-stone-400 ${
               current === option
-                ? "bg-white dark:bg-stone-950 font-medium text-stone-900 dark:text-stone-50 shadow-sm"
+                ? "bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-50 shadow-sm"
                 : "text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
             }`}
           >

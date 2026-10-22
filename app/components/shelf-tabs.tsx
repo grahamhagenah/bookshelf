@@ -11,10 +11,11 @@ export default function ShelfTabs({
   libraryCount: number;
   wantCount: number;
 }) {
+  // The same weight either way, so switching tabs never nudges the other
   const tab = ({ isActive }: { isActive: boolean }) =>
-    `-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-1 pb-2.5 transition-colors ${
+    `-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-1 pb-2.5 font-medium transition-colors ${
       isActive
-        ? "border-stone-900 dark:border-stone-100 font-semibold text-stone-900 dark:text-stone-100"
+        ? "border-stone-900 dark:border-stone-100 text-stone-900 dark:text-stone-100"
         : "border-transparent text-stone-500 dark:text-stone-400 hover:border-stone-300 dark:hover:border-stone-600 hover:text-stone-800 dark:hover:text-stone-200"
     }`;
   const count = "font-normal text-stone-400 dark:text-stone-500";

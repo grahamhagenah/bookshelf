@@ -14,7 +14,7 @@ interface RootLoaderData {
 const navClass = ({ isActive }: { isActive: boolean }) =>
   `inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-sm transition-colors ${
     isActive
-      ? "bg-stone-100 dark:bg-stone-800 font-medium text-stone-900 dark:text-stone-100"
+      ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
       : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800"
   }`;
 

@@ -358,7 +358,7 @@ export default function Library({ bookListItems, ownerName, header }: LibraryPro
                       onClick={() => setStatus(value)}
                       className={`flex-shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-sm transition-colors ${
                         status === value
-                          ? "bg-stone-100 dark:bg-stone-800 font-medium text-stone-900 dark:text-stone-100"
+                          ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
                           : "text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-900 hover:text-stone-800 dark:hover:text-stone-200"
                       }`}
                     >
