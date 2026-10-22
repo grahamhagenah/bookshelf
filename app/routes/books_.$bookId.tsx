@@ -1255,9 +1255,17 @@ export default function BookDetailsPage() {
             </div>
           ) : null}
           {data.isBorrower ? (
+            // The button first, under the cover like everyone else's, then
+            // whose it is and when it's due
             <div className={panel}>
+              <Form method="post">
+                <input type="hidden" name="intent" value="return" />
+                <button type="submit" className={`w-full ${secondaryButton}`}>
+                  Return book
+                </button>
+              </Form>
               {data.book.user ? (
-                <div className="mb-3 space-y-0.5">
+                <div className="mt-3 space-y-0.5">
                   <p className="text-stone-800 dark:text-stone-200 [overflow-wrap:anywhere]">
                     Borrowed from{" "}
                     <span className="font-semibold">
@@ -1287,12 +1295,6 @@ export default function BookDetailsPage() {
                   ) : null}
                 </div>
               ) : null}
-              <Form method="post">
-                <input type="hidden" name="intent" value="return" />
-                <button type="submit" className={`w-full ${secondaryButton}`}>
-                  Return book
-                </button>
-              </Form>
             </div>
           ) : null}
           {/* The heart comes after whatever you can do with the book */}
