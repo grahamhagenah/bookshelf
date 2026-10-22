@@ -11,6 +11,7 @@ import {
   SearchIcon,
   DashboardIcon,
   BookmarkIcon,
+  ImportIcon,
 } from "./icons";
 
 interface RootLoaderData {
@@ -93,6 +94,14 @@ export default function PositionedMenu() {
           >
             <SearchIcon size={18} />
             <span>Book Search</span>
+          </a>
+          <a
+            href="/import"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+          >
+            <ImportIcon size={18} />
+            <span>Import Books</span>
           </a>
           <a
             href="/account"

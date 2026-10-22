@@ -251,19 +251,16 @@ function Welcome({
   const steps = [
     {
       title: "Add your books",
-      text: "Search by title or author and add the books on your shelf.",
+      text: "Search by title or author, or bring your Goodreads or StoryGraph library over in one go.",
       done: bookCount > 0,
       doneText: `${bookCount} ${bookCount === 1 ? "book" : "books"} added`,
       action: (
-        <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="flex flex-wrap items-center gap-2">
           <Link to="/search" className={actionClass}>
             Add books
           </Link>
-          <Link
-            to="/import"
-            className="text-sm text-stone-500 dark:text-stone-400 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline"
-          >
-            or import from Goodreads
+          <Link to="/import" className={actionClass}>
+            Import from Goodreads
           </Link>
         </span>
       ),
@@ -474,6 +471,9 @@ export default function Home({
                     "Library"
                   )}
                 </Link>
+                <Link to="/import" className={linkClass}>
+                  Import
+                </Link>
                 <Link
                   to="/search"
                   className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
@@ -512,6 +512,13 @@ export default function Home({
                   className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
                 >
                   Add your first books
+                </Link>{" "}
+                or{" "}
+                <Link
+                  to="/import"
+                  className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                >
+                  import them
                 </Link>
               </p>
             )}
