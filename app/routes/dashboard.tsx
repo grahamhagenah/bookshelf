@@ -6,7 +6,7 @@ import type {
 } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   BookIcon,
@@ -597,14 +597,23 @@ const field =
 const saveButton =
   "rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 disabled:opacity-50 transition-colors";
 
-// Name and email, right there to change; deleting asks first, and your
-// own account can't be deleted from here
+// Name and email, right there to change. Delete takes two clicks: the
+// first arms it and says what goes, the second deletes. Your own account
+// can't be deleted from here.
 function EditUser({ user, isYou }: { user: AdminUser; isYou: boolean }) {
   const fetcher = useFetcher<typeof action>({ key: `admin-${user.id}` });
   const busy = fetcher.state !== "idle";
   const deleting = busy && fetcher.formData?.get("intent") === "deleteUser";
   const error = fetcher.data && "error" in fetcher.data ? fetcher.data.error : null;
   const saved = fetcher.state === "idle" && fetcher.data && "saved" in fetcher.data;
+  const [armed, setArmed] = useState(false);
+
+  // Disarm on its own after a few seconds
+  useEffect(() => {
+    if (!armed) return;
+    const timer = setTimeout(() => setArmed(false), 5000);
+    return () => clearTimeout(timer);
+  }, [armed]);
 
   return (
     <div className="space-y-2">
@@ -634,9 +643,10 @@ function EditUser({ user, isYou }: { user: AdminUser; isYou: boolean }) {
           <fetcher.Form
             method="post"
             onSubmit={(event) => {
-              const books = `${user.bookCount} ${user.bookCount === 1 ? "book" : "books"}`;
-              const message = `Delete ${user.name}'s account? Their ${books}, notes and friendships go with it. This can't be undone.`;
-              if (!confirm(message)) event.preventDefault();
+              if (!armed) {
+                event.preventDefault();
+                setArmed(true);
+              }
             }}
           >
             <input type="hidden" name="intent" value="deleteUser" />
@@ -644,9 +654,15 @@ function EditUser({ user, isYou }: { user: AdminUser; isYou: boolean }) {
             <button
               type="submit"
               disabled={busy}
-              className="w-full whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-200 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:ring-red-900 dark:hover:bg-red-950/40 transition-colors"
+              onBlur={() => setArmed(false)}
+              // Same width either way, so the fields beside it don't move
+              className={`w-full whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-1 ring-inset disabled:opacity-50 transition-colors sm:w-32 ${
+                armed || deleting
+                  ? "bg-red-600 text-white ring-red-600 hover:bg-red-700"
+                  : "text-red-700 ring-red-200 hover:bg-red-50 dark:text-red-400 dark:ring-red-900 dark:hover:bg-red-950/40"
+              }`}
             >
-              {deleting ? "Deleting…" : "Delete account"}
+              {deleting ? "Deleting…" : armed ? "Click to confirm" : "Delete account"}
             </button>
           </fetcher.Form>
         )}
@@ -654,6 +670,12 @@ function EditUser({ user, isYou }: { user: AdminUser; isYou: boolean }) {
       <p className="text-sm" role="status">
         {error ? (
           <span className={warnText}>{error}</span>
+        ) : armed ? (
+          <span className={warnText}>
+            Click again to delete {user.name} with their {user.bookCount}{" "}
+            {user.bookCount === 1 ? "book" : "books"}, notes and friendships. This can&apos;t be
+            undone.
+          </span>
         ) : saved ? (
           <span className="text-forest-700 dark:text-forest-400">Saved</span>
         ) : isYou ? (
