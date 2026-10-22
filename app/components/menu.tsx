@@ -8,10 +8,8 @@ import {
   SettingsIcon,
   GroupIcon,
   LogoutIcon,
-  SearchIcon,
   DashboardIcon,
   BookmarkIcon,
-  ImportIcon,
 } from "./icons";
 
 interface RootLoaderData {
@@ -19,10 +17,15 @@ interface RootLoaderData {
     id: string;
     firstname: string;
     surname: string;
+    email: string;
+    demoGroup?: string | null;
     isAdmin?: boolean;
     profileEmoji?: string | null;
   } | null;
 }
+
+const item =
+  "flex items-center gap-3 px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors";
 
 export default function PositionedMenu() {
   const matches = useMatches();
@@ -71,72 +74,47 @@ export default function PositionedMenu() {
 
       {open ? (
         <div className="absolute right-0 mt-1 w-52 bg-white dark:bg-stone-950 rounded-lg shadow-soft border border-stone-200/80 dark:border-stone-800 py-1 z-50 text-sm [&_svg]:text-stone-600 dark:[&_svg]:text-stone-300 [&_svg]:[stroke-width:1.75]">
-          <a
-            href="/books"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-          >
+          {user ? (
+            <div className="px-3 pt-1.5 pb-2 mb-1 border-b dark:border-stone-800">
+              <p className="truncate font-medium text-stone-900 dark:text-stone-100">
+                {user.firstname} {user.surname}
+              </p>
+              <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+                {user.demoGroup ? "Demo account" : user.email}
+              </p>
+            </div>
+          ) : null}
+          {/* The header has its own link on wider screens */}
+          <a href="/books" onClick={() => setOpen(false)} className={`md:hidden ${item}`}>
             <BookIcon size={18} />
-            <span>My Library</span>
+            <span>My library</span>
           </a>
-          <a
-            href="/want-to-read"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-          >
-            <BookmarkIcon size={18} />
-            <span>Want to Read</span>
-          </a>
-          <a
-            href="/search"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-          >
-            <SearchIcon size={18} />
-            <span>Book Search</span>
-          </a>
-          <a
-            href="/import"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-          >
-            <ImportIcon size={18} />
-            <span>Import Books</span>
-          </a>
-          <a
-            href="/account"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-          >
-            <SettingsIcon size={18} />
-            <span>Account Settings</span>
-          </a>
-          <a
-            href="/friends"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-          >
+          <a href="/friends" onClick={() => setOpen(false)} className={item}>
             <GroupIcon size={18} />
             <span>Friends</span>
           </a>
+          <a href="/want-to-read" onClick={() => setOpen(false)} className={item}>
+            <BookmarkIcon size={18} />
+            <span>Want to read</span>
+          </a>
+          <a href="/account" onClick={() => setOpen(false)} className={item}>
+            <SettingsIcon size={18} />
+            <span>Settings</span>
+          </a>
           {user?.isAdmin ? (
-            <a
-              href="/dashboard"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors text-stone-900 dark:text-stone-100 dark:text-stone-100"
-            >
+            <a href="/dashboard" onClick={() => setOpen(false)} className={item}>
               <DashboardIcon size={18} />
-              <span>Dashboard</span>
+              <span>Admin</span>
             </a>
           ) : null}
           <div className="border-t dark:border-stone-800 my-1" />
           <Form action="/logout" method="post">
             <button
               type="submit"
-              className="flex items-center gap-3 px-3 py-2 w-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors text-left"
+              className={`w-full text-left ${item}`}
             >
               <LogoutIcon size={18} />
-              <span>Logout</span>
+              <span>Sign out</span>
             </button>
           </Form>
         </div>
