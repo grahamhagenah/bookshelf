@@ -6,10 +6,12 @@ import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 
 import Library from "~/components/library";
+import ShelfTabs from "~/components/shelf-tabs";
 import { getBookListItems, getBorrowedBooks, readAtFor } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
 import { getLoveCounts } from "~/models/note.server";
 import { getUserById } from "~/models/user.server";
+import { countWantToRead } from "~/models/wish.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -47,7 +49,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     loveCount: loveCounts.get(book.id) ?? 0,
   }));
 
-  return json({ user, bookListItems });
+  return json({ user, bookListItems, wantCount: await countWantToRead(userId) });
 };
 
 export default function BooksPage() {
@@ -55,7 +57,12 @@ export default function BooksPage() {
 
   return (
     <>
-      <Library bookListItems={data.bookListItems} />
+      <Library
+        bookListItems={data.bookListItems}
+        header={
+          <ShelfTabs libraryCount={data.bookListItems.length} wantCount={data.wantCount} />
+        }
+      />
     </>
   );
 }

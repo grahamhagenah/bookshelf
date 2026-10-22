@@ -88,6 +88,10 @@ export async function addWantToRead(
   });
 }
 
+export function countWantToRead(userId: User["id"]) {
+  return prisma.wantToRead.count({ where: { userId } });
+}
+
 export function removeWantToRead(id: string, userId: User["id"]) {
   return prisma.wantToRead.deleteMany({ where: { id, userId } });
 }

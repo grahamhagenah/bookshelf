@@ -103,6 +103,9 @@ const OTHER_STATUSES: [Status, string][] = [
 interface LibraryProps {
   bookListItems: Book[];
   ownerName?: string; // If provided, this is someone else's library (friend or public)
+  // Shown above everything else, such as the tabs between your library
+  // and your want-to-read list
+  header?: React.ReactNode;
 }
 
 // One rounded box that clips both the image and its placeholder
@@ -165,7 +168,7 @@ function BookCover({
   );
 }
 
-export default function Library({ bookListItems, ownerName }: LibraryProps) {
+export default function Library({ bookListItems, ownerName, header }: LibraryProps) {
   // Set on the account page, and the same on every shelf you look at
   const viewer = useOptionalUser();
   const viewMode = libraryViewOf(viewer);
@@ -217,6 +220,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
       ) : bookListItems.length === 0 ? (
         // Empty state for own library - show onboarding
         <main className="min-h-[calc(100vh-60px)]">
+          {header ? <div className="px-4 md:px-8 pt-8 md:pt-10">{header}</div> : null}
           <section className="flex flex-col items-center justify-center min-h-[calc(100vh-60px)] px-4 py-12">
             <div className="text-center mb-12">
               <h1 className="text-4xl md:text-6xl font-bold text-stone-800 mb-4">
@@ -325,7 +329,8 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
           </section>
         </main>
       ) : (
-        <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8">
+        <main className="mt-8 md:mt-10 px-4 md:px-8 pb-8">
+          {header}
           {/* Filter bar: find, narrow and switch views, in one line on
               wider screens. On phones the pills drop to a second line of
               their own (and scroll if they run out of room) */}

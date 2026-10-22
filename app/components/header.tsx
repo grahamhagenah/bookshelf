@@ -1,4 +1,4 @@
-import { NavLink, useMatches } from "@remix-run/react";
+import { NavLink, useLocation, useMatches } from "@remix-run/react";
 
 import { BookIcon, PulseIcon, StacksLogo } from "./icons";
 import PositionedMenu from "./menu";
@@ -20,6 +20,7 @@ const navClass = ({ isActive }: { isActive: boolean }) =>
 
 export default function Header() {
   const matches = useMatches();
+  const { pathname } = useLocation();
   const rootData = matches.find((m) => m.id === "root")?.data as
     | RootLoaderData
     | undefined;
@@ -47,7 +48,14 @@ export default function Header() {
               own; phones keep the icons */}
           {user ? (
             <nav aria-label="Main" className="hidden md:flex items-center gap-1">
-              <NavLink to="/books" end className={navClass}>
+              {/* Your want-to-read list is a tab of your library */}
+              <NavLink
+                to="/books"
+                end
+                className={({ isActive }) =>
+                  navClass({ isActive: isActive || pathname === "/want-to-read" })
+                }
+              >
                 <BookIcon size={16} />
                 My library
               </NavLink>
