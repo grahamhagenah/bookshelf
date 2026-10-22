@@ -379,7 +379,7 @@ type PromptBook = SerializeFrom<Awaited<ReturnType<typeof getNotePrompts>>>[numb
 const QUESTIONS = [
   "Worth the hype? Who should read it next?",
   "Slow start, great ending, couldn't put it down? Say so.",
-  "What stayed with you? Anything to skip?",
+  "What stayed with you?",
   "Loved it, hated it, or somewhere in between? One line is plenty.",
   "What would you tell the next person who borrows it?",
 ];
