@@ -20,6 +20,7 @@ import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
+import { LentIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import ReaderNotes, { LoveButton } from "~/components/reader-notes";
 import { sendBookRequestEmail } from "~/email.server";
@@ -1352,10 +1353,8 @@ export default function BookDetailsPage() {
                 href="#lending"
                 className="flex w-full items-center justify-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
               >
+                <LentIcon size={14} className="text-stone-400 dark:text-stone-500" />
                 Lent to {data.book.borrower.firstname}
-                <span aria-hidden="true" className="text-stone-400 dark:text-stone-500">
-                  ↓
-                </span>
               </a>
             ) : (
               <p className="w-full cursor-default rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-center text-sm text-stone-500 dark:text-stone-400">
