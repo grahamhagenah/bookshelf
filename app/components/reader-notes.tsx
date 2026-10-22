@@ -129,7 +129,7 @@ export default function ReaderNotes({
 
   return (
     <div className="mt-10">
-      <h2 className="mb-1 text-sm font-semibold text-stone-500 dark:text-stone-400">
+      <h2 id="notes" className="mb-1 text-sm font-semibold text-stone-500 dark:text-stone-400">
         Reader notes
       </h2>
 

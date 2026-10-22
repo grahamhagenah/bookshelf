@@ -24,6 +24,20 @@ interface FeedBook {
   // Whose copy it is, and whether it's on their shelf right now
   owner: { id: string; firstname: string };
   available: boolean;
+  borrowerId: string | null;
+  // Hearts and written notes on this copy, from everyone
+  loves: number;
+  notes: number;
+  // Where the person looking stands with this copy
+  viewer: {
+    loved: boolean;
+    // Only readers of a copy (owner, borrower, past borrower) can heart it
+    canLove: boolean;
+    // A friend's copy they could ask for, or wait for
+    canRequest: boolean;
+    requested: boolean;
+    inLine: boolean;
+  };
 }
 
 export type FriendActivity =
@@ -62,7 +76,58 @@ function feedBook({
   borrowerId: string | null;
   user: { id: string; firstname: string };
 }): FeedBook {
-  return { ...book, owner: user, available: borrowerId === null };
+  return {
+    ...book,
+    owner: user,
+    available: borrowerId === null,
+    borrowerId,
+    loves: 0,
+    notes: 0,
+    viewer: { loved: false, canLove: false, canRequest: false, requested: false, inLine: false },
+  };
+}
+
+// Fill in the hearts, notes and the viewer's standing for every book in
+// the feed, in a few queries rather than one per book
+async function enrich(items: FriendActivity[], userId: User["id"], friendIds: string[]) {
+  const books = items.flatMap((item) => (item.kind === "added" ? item.books : [item.book]));
+  const ids = [...new Set(books.map((book) => book.id))];
+  if (ids.length === 0) return;
+
+  const [notes, pastLoans, holds, requests] = await Promise.all([
+    prisma.readerNote.findMany({
+      where: { bookId: { in: ids }, OR: [{ loved: true }, { body: { not: null } }] },
+      select: { bookId: true, userId: true, loved: true, body: true },
+    }),
+    prisma.lendingHistory.findMany({
+      where: { bookId: { in: ids }, borrowerId: userId },
+      select: { bookId: true },
+    }),
+    prisma.hold.findMany({ where: { bookId: { in: ids }, userId }, select: { bookId: true } }),
+    prisma.notification.findMany({
+      where: { type: "BOOK_REQUEST", senderId: userId, bookId: { in: ids }, read: false },
+      select: { bookId: true },
+    }),
+  ]);
+  const read = new Set(pastLoans.map((loan) => loan.bookId));
+  const waiting = new Set(holds.map((hold) => hold.bookId));
+  const asked = new Set(requests.map((request) => request.bookId));
+
+  for (const book of books) {
+    const own = notes.filter((note) => note.bookId === book.id);
+    const mine = own.find((note) => note.userId === userId);
+    book.loves = own.filter((note) => note.loved).length;
+    book.notes = own.filter((note) => note.body).length;
+    const isOwner = book.owner.id === userId;
+    const isBorrower = book.borrowerId === userId;
+    book.viewer = {
+      loved: mine?.loved ?? false,
+      canLove: isOwner || isBorrower || read.has(book.id),
+      canRequest: !isOwner && !isBorrower && friendIds.includes(book.owner.id),
+      requested: asked.has(book.id),
+      inLine: waiting.has(book.id),
+    };
+  }
 }
 
 export async function getFriendActivity(
@@ -135,7 +200,9 @@ export async function getFriendActivity(
     body: note.body,
   }));
 
-  return [...added, ...reactions]
+  const feed = [...added, ...reactions]
     .sort((a, b) => b.at.getTime() - a.at.getTime())
     .slice(0, limit);
+  await enrich(feed, userId, friendIds);
+  return feed;
 }

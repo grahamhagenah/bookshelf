@@ -1,15 +1,29 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 
-import FriendActivityItem from "~/components/friend-activity";
-import Layout from "~/components / Layout/Layout";
+import { FeedPost } from "~/components/friend-activity";
+import { sendBookRequestEmail } from "~/email.server";
 import { getFriendActivity } from "~/models/activity.server";
-import { getUserById } from "~/models/user.server";
+import { getBookById } from "~/models/book.server";
+import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
+import { leaveHold, placeHold } from "~/models/hold.server";
+import { canLeaveNote, saveReaderNote } from "~/models/note.server";
+import {
+  createBookRequestNotification,
+  createReaderNoteNotification,
+  getUserById,
+  getUserEmailById,
+} from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
-// What friends have been adding, loving and writing about lately
+// What friends have been adding, loving and writing about lately, as a
+// feed of posts you can act on
 
 export const meta: MetaFunction = () =>
   seo({ title: "Friend activity", noindex: true });
@@ -28,57 +42,99 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return json({ userId, activity, friendIds });
 };
 
-const DAY = 24 * 60 * 60 * 1000;
+// The same things the book page lets you do, from the feed
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const userId = await requireUserId(request);
+  const form = await request.formData();
+  const intent = form.get("intent");
+  const bookId = form.get("bookId");
+  const book = typeof bookId === "string" ? await getBookById(bookId) : null;
+  if (!book) throw new Response("Not Found", { status: 404 });
 
-// "Today", "Yesterday", the weekday for the last week, then the date
-function dayLabel(date: string) {
-  const startOfToday = new Date().setHours(0, 0, 0, 0);
-  const day = new Date(date).setHours(0, 0, 0, 0);
-  const daysAgo = Math.round((startOfToday - day) / DAY);
-  if (daysAgo === 0) return "Today";
-  if (daysAgo === 1) return "Yesterday";
-  if (daysAgo < 7) return new Date(date).toLocaleDateString(undefined, { weekday: "long" });
-  return new Date(date).toLocaleDateString(undefined, { month: "long", day: "numeric" });
-}
+  if (intent === "toggleLove") {
+    if (!(await canLeaveNote(userId, book))) {
+      throw new Response("Only readers of this copy can leave notes", { status: 403 });
+    }
+    const note = await saveReaderNote(userId, book.id, {
+      loved: form.get("loved") === "true",
+    });
+    // Let the owner know when a reader hearts their book
+    if (book.userId !== userId && note.loved) {
+      const reader = await getUserById(userId);
+      if (reader) {
+        await createReaderNoteNotification(
+          userId,
+          book.userId,
+          `${reader.firstname} ${reader.surname}`,
+          book.id,
+          book.title,
+        );
+      }
+    }
+    return json({ ok: true });
+  }
+
+  const viewer = await getUserById(userId);
+  const isFriend = viewer?.following.some((friend) => friend.id === book.userId) ?? false;
+  if (!viewer || book.userId === userId || !isFriend || !(await canInteract(userId, book.userId))) {
+    throw new Response("Not Found", { status: 404 });
+  }
+
+  if (intent === "request") {
+    if (book.borrowerId !== null) {
+      throw new Response("Book is already borrowed", { status: 400 });
+    }
+    const senderName = `${viewer.firstname} ${viewer.surname}`;
+    const bookRequest = await createBookRequestNotification(
+      userId,
+      book.userId,
+      senderName,
+      book.id,
+      book.title,
+    );
+    // Demo friends approve on the spot
+    await respondAsDemoPersona(bookRequest.id);
+    const owner = await getUserEmailById(book.userId);
+    if (owner && owner.emailNotifications) {
+      await sendBookRequestEmail({
+        toEmail: owner.email,
+        toName: owner.firstname || "there",
+        requesterName: senderName,
+        bookTitle: book.title,
+      });
+    }
+    return json({ ok: true });
+  }
+
+  if (intent === "placeHold") {
+    if (!book.borrowerId || book.borrowerId === userId) {
+      throw new Response("Can't wait for this book", { status: 400 });
+    }
+    await placeHold(book.id, userId);
+    return json({ ok: true });
+  }
+  if (intent === "leaveHold") {
+    await leaveHold(book.id, userId);
+    return json({ ok: true });
+  }
+  throw new Response("Unknown action", { status: 400 });
+};
 
 export default function Feed() {
   const { userId, activity, friendIds } = useLoaderData<typeof loader>();
 
-  // Entries grouped under the day they happened
-  const days: { label: string; items: typeof activity }[] = [];
-  for (const item of activity) {
-    const label = dayLabel(item.at);
-    const last = days[days.length - 1];
-    if (last && last.label === label) last.items.push(item);
-    else days.push({ label, items: [item] });
-  }
-
   return (
-    <Layout title="Friend activity">
+    // A feed reads best in a narrow column
+    <main className="mx-auto w-full max-w-[40rem] px-4 py-6 md:py-8">
+      <h1 className="sr-only">Friend activity</h1>
       {activity.length > 0 ? (
-        // One block, so the page's section padding applies once; days are
-        // set apart by a little space and their heading
-        <div>
-          {days.map((day, index) => (
-          <section key={day.label} aria-label={day.label} className={index > 0 ? "mt-6" : undefined}>
-            <h2 className="mb-1 text-sm font-semibold text-stone-500 dark:text-stone-400">
-              {day.label}
-            </h2>
-            <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-              {day.items.map((item) => (
-                <li key={item.id}>
-                  <FriendActivityItem
-                    item={item}
-                    friendIds={friendIds}
-                    userId={userId}
-                    layout="full"
-                  />
-                </li>
-              ))}
-            </ul>
-          </section>
+        <ul className="space-y-3">
+          {activity.map((item) => (
+            <li key={item.id}>
+              <FeedPost item={item} friendIds={friendIds} userId={userId} />
+            </li>
           ))}
-        </div>
+        </ul>
       ) : (
         <div className="py-16 text-center text-stone-500 dark:text-stone-400">
           {friendIds.length === 0 ? (
@@ -96,6 +152,6 @@ export default function Feed() {
           )}
         </div>
       )}
-    </Layout>
+    </main>
   );
 }
