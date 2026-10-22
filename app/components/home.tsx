@@ -124,7 +124,8 @@ function LoanList({
                 >
                   <Cover book={book} className="w-14 h-21" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium text-stone-900 dark:text-stone-100">
+                    {/* Up to two lines: still shorter than the cover, so rows keep their height */}
+                    <span className="line-clamp-2 font-medium leading-snug text-stone-900 dark:text-stone-100">
                       {book.title}
                     </span>
                     <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
