@@ -123,6 +123,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         toName: owner.firstname || "there",
         requesterName: senderName,
         bookTitle: book.title,
+        bookAuthor: book.author,
+        bookCover: book.cover,
       });
     }
     return json({ ok: true });

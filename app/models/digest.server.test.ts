@@ -35,7 +35,7 @@ test("the digest gathers friends' additions, due dates and want-to-read matches"
   const digest = await buildDigest(me.id);
   expect(digest.activity.map((item) => item.kind)).toEqual(["added"]);
   expect(digest.due).toEqual([
-    { title: "Piranesi", person: "Maya Reader", direction: "lent", days: -2 },
+    expect.objectContaining({ bookId: lent.id, title: "Piranesi", person: "Maya Reader", direction: "lent", days: -2 }),
   ]);
   expect(digest.wanted).toEqual([{ title: "The Overstory", friend: "Maya Reader", bookId: null }]);
 

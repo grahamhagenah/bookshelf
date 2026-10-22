@@ -15,7 +15,9 @@ const DAY = 24 * 60 * 60 * 1000;
 const WEEK = 7;
 
 export interface DueItem {
+  bookId: string;
   title: string;
+  cover: string;
   person: string;
   direction: "borrowed" | "lent";
   // Days until due; negative once it's late
@@ -48,12 +50,12 @@ export async function buildDigest(userId: User["id"]): Promise<Digest> {
   const due: DueItem[] = [
     ...books.borrowed.flatMap((book) =>
       book.dueDate
-        ? [{ title: book.title, person: `${book.owner.firstname} ${book.owner.surname}`, direction: "borrowed" as const, days: daysUntil(book.dueDate) }]
+        ? [{ bookId: book.id, title: book.title, cover: book.cover, person: `${book.owner.firstname} ${book.owner.surname}`, direction: "borrowed" as const, days: daysUntil(book.dueDate) }]
         : [],
     ),
     ...books.lent.flatMap((book) =>
       book.dueDate && book.borrower
-        ? [{ title: book.title, person: `${book.borrower.firstname} ${book.borrower.surname}`, direction: "lent" as const, days: daysUntil(book.dueDate) }]
+        ? [{ bookId: book.id, title: book.title, cover: book.cover, person: `${book.borrower.firstname} ${book.borrower.surname}`, direction: "lent" as const, days: daysUntil(book.dueDate) }]
         : [],
     ),
   ]

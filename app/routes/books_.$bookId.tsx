@@ -490,6 +490,8 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         toName: bookOwner.firstname || "there",
         requesterName: senderName,
         bookTitle: book.title,
+        bookAuthor: book.author,
+        bookCover: book.cover,
       });
     }
 
