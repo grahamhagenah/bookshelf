@@ -105,21 +105,15 @@ export default function FriendActivityItem({
   const more = item.kind === "added" ? item.books.length - books.length : 0;
 
   return (
-    // The avatar sits in the first line rather than a column of its own, so
-    // the note and covers get the sidebar's full width
-    <div className="py-3">
-      <div className="min-w-0">
-        <p className="text-stone-800 dark:text-stone-200 leading-snug">
-          <span className="mr-1.5 inline-block align-middle">
-            <Avatar
-              firstname={item.friend.firstname}
-              surname={item.friend.surname}
-              icon={item.friend.profileEmoji}
-              size="xs"
-            />
-          </span>
-          {text}
-        </p>
+    <div className="flex items-start gap-3 py-3">
+      <Avatar
+        firstname={item.friend.firstname}
+        surname={item.friend.surname}
+        icon={item.friend.profileEmoji}
+        size="sm"
+      />
+      <div className="min-w-0 flex-1 pt-1">
+        <p className="text-stone-800 dark:text-stone-200 leading-snug">{text}</p>
         {item.kind === "note" && item.body ? (
           <p className="mt-1 text-pretty text-sm text-stone-600 dark:text-stone-300 line-clamp-2">
             &ldquo;{item.body}&rdquo;
