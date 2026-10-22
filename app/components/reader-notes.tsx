@@ -103,12 +103,15 @@ export default function ReaderNotes({
   canNote,
   maxLength,
   friendIds,
+  status,
 }: {
   notes: ReaderNote[];
   myNote: ReaderNote | null;
   canNote: boolean;
   maxLength: number;
   friendIds: string[];
+  // A line about your own reading of it, for the owner
+  status?: React.ReactNode;
 }) {
   const { loved } = useLoved(notes, myNote);
   const noteFetcher = useFetcher<{ noteSaved?: boolean }>();
@@ -132,6 +135,9 @@ export default function ReaderNotes({
       <h2 id="notes" className="mb-2 text-lg font-semibold text-stone-900 dark:text-stone-100">
         Reader notes
       </h2>
+      {status ? (
+        <p className="mb-3 text-sm text-stone-600 dark:text-stone-300">{status}</p>
+      ) : null}
 
       {isWriting ? (
         <noteFetcher.Form method="post" className="py-3">
