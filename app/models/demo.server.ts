@@ -5,6 +5,7 @@ import { lendBook } from "~/models/book.server";
 import {
   createBookApprovedNotification,
   createFriendship,
+  deleteUsers,
   markNotificationAsRead,
 } from "~/models/user.server";
 import { DEMO_EMAIL_DOMAIN } from "~/utils";
@@ -424,24 +425,10 @@ export async function deleteDemoGroup(demoGroup: string) {
     where: { demoGroup },
     select: { id: true },
   });
-  const ids = users.map((u) => u.id);
-  if (ids.length === 0) return;
-
-  // These relations don't cascade, so clear them before removing the users
-  await prisma.notification.deleteMany({
-    where: { OR: [{ senderId: { in: ids } }, { receiverId: { in: ids } }] },
-  });
-  await prisma.lendingHistory.deleteMany({
-    where: { borrowerId: { in: ids } },
-  });
-  await prisma.book.updateMany({
-    where: { borrowerId: { in: ids } },
-    data: { borrowerId: null, borrowedAt: null, dueDate: null },
-  });
-  await prisma.user.deleteMany({ where: { id: { in: ids } } });
+  await deleteUsers(users.map((u) => u.id));
 }
 
-async function deleteExpiredDemoGroups() {
+export async function deleteExpiredDemoGroups() {
   const expired = await prisma.user.findMany({
     where: {
       demoGroup: { not: null },
