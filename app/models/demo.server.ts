@@ -52,7 +52,7 @@ const PERSONAS = {
   theo: { firstname: "Theo", surname: "Martin", profileEmoji: "compass" },
   lena: { firstname: "Lena", surname: "Fischer", profileEmoji: null },
   // The visitor's housemate: one shared shelf, their own notes and friends
-  noah: { firstname: "Noah", surname: "Kim", profileEmoji: "cat" },
+  noah: { firstname: "Noah", surname: "Brennan", profileEmoji: "cat" },
 } as const;
 
 type PersonaKey = keyof typeof PERSONAS;
@@ -101,14 +101,14 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       body: "Banished to an island by the gods, the daughter of Helios hones her craft in witchcraft and crosses paths with some of mythology's most famous figures.",
     },
     {
-      title: "The Remains of the Day",
-      author: "Kazuo Ishiguro",
-      isbn: "9780679731726",
-      datePublished: "1989",
-      pageCount: 245,
-      publisher: "Vintage",
-      subjects: "Literary fiction, England, Memory",
-      body: "An aging English butler takes a motoring trip across the countryside and looks back on decades of service and the choices he made along the way.",
+      title: "Do Androids Dream of Electric Sheep?",
+      author: "Philip K. Dick",
+      isbn: "9780345404473",
+      datePublished: "1968",
+      pageCount: 210,
+      publisher: "Del Rey",
+      subjects: "Science fiction, Androids, Empathy",
+      body: "In a dusty, half-empty San Francisco, a bounty hunter tracks down escaped androids and starts to wonder what makes anyone human.",
     },
     {
       title: "Station Eleven",
@@ -161,14 +161,14 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       body: "Four generations of a Korean family make a life in Japan over the course of the twentieth century, held together by love and endurance.",
     },
     {
-      title: "Thinking, Fast and Slow",
-      author: "Daniel Kahneman",
-      isbn: "9780374533557",
-      datePublished: "2011",
-      pageCount: 499,
-      publisher: "Farrar, Straus and Giroux",
-      subjects: "Psychology, Decision making, Behavioral economics",
-      body: "A tour of the two systems that drive the way we think, one fast and intuitive, the other slow and deliberate, and the biases each one brings.",
+      title: "Babel",
+      author: "R. F. Kuang",
+      isbn: "9780063021426",
+      datePublished: "2022",
+      pageCount: 545,
+      publisher: "Harper Voyager",
+      subjects: "Fantasy, Translation, Empire",
+      body: "At Oxford's royal institute of translation, where silver bars hold the magic of words lost between languages, a student begins to see whom the empire really serves.",
     },
     {
       title: "The Hobbit",
@@ -292,6 +292,16 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       subjects: "Literary fiction, Libraries, Time",
       body: "An ancient Greek tale links lives across centuries, from besieged Constantinople to a small-town library to a ship bound for another world.",
     },
+    {
+      title: "The Night Circus",
+      author: "Erin Morgenstern",
+      isbn: "9780385534635",
+      datePublished: "2011",
+      pageCount: 387,
+      publisher: "Doubleday",
+      subjects: "Fantasy, Magic, Romance",
+      body: "A circus that opens only at night is the arena for a duel between two young magicians who were never meant to fall in love.",
+    },
   ],
   sam: [
     {
@@ -374,17 +384,27 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       subjects: "Science fiction, Cyberpunk, Hackers",
       body: "A washed-up hacker is hired for one last job inside a vast computer network, in the book that gave cyberspace its name.",
     },
+    {
+      title: "A Memory Called Empire",
+      author: "Arkady Martine",
+      isbn: "9781250186430",
+      datePublished: "2019",
+      pageCount: 462,
+      publisher: "Tor",
+      subjects: "Science fiction, Empire, Diplomacy",
+      body: "A new ambassador arrives at the heart of a vast empire to find her predecessor dead and nobody willing to say how.",
+    },
   ],
   priya: [
     {
-      title: "Lessons in Chemistry",
-      author: "Bonnie Garmus",
-      isbn: "9780385547345",
-      datePublished: "2022",
-      pageCount: 390,
-      publisher: "Doubleday",
-      subjects: "Historical fiction, Science, Women",
-      body: "A chemist in 1960s California ends up hosting a cooking show and uses it to teach a nation of housewives to think for themselves.",
+      title: "Yellowface",
+      author: "R. F. Kuang",
+      isbn: "9780063250833",
+      datePublished: "2023",
+      pageCount: 336,
+      publisher: "William Morrow",
+      subjects: "Literary fiction, Publishing, Satire",
+      body: "When her rival dies, a struggling writer takes her unfinished manuscript and publishes it as her own, then has to live with the lie.",
     },
     {
       title: "Jonathan Strange & Mr Norrell",
@@ -456,8 +476,28 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       subjects: "Gothic fiction, Horror, Mexico",
       body: "A socialite travels to a decaying mansion in the Mexican countryside after her cousin sends a frantic letter.",
     },
+    {
+      title: "Light from Uncommon Stars",
+      author: "Ryka Aoki",
+      isbn: "9781250789068",
+      datePublished: "2021",
+      pageCount: 373,
+      publisher: "Tor",
+      subjects: "Fantasy, Science fiction, Music",
+      body: "A violin teacher who made a deal with the devil, a runaway trans girl with a gift, and an alien starship captain running a donut shop.",
+    },
   ],
   theo: [
+    {
+      title: "Gideon the Ninth",
+      author: "Tamsyn Muir",
+      isbn: "9781250313188",
+      datePublished: "2019",
+      pageCount: 448,
+      publisher: "Tor",
+      subjects: "Fantasy, Science fiction, Necromancy",
+      body: "A sword-fighting conscript and the necromancer she hates are summoned to a decaying palace to compete for immortality.",
+    },
     {
       title: "The Three-Body Problem",
       author: "Cixin Liu",
@@ -553,14 +593,14 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       body: "Four elements of good cooking, explained so you can cook well without a recipe.",
     },
     {
-      title: "Crying in H Mart",
-      author: "Michelle Zauner",
-      isbn: "9780525657743",
-      datePublished: "2021",
-      pageCount: 239,
-      publisher: "Knopf",
-      subjects: "Memoir, Food, Grief",
-      body: "A musician remembers her mother through the Korean food they shared, and learns to cook it after she's gone.",
+      title: "Ubik",
+      author: "Philip K. Dick",
+      isbn: "9780547572291",
+      datePublished: "1969",
+      pageCount: 216,
+      publisher: "Mariner Books",
+      subjects: "Science fiction, Reality, Time",
+      body: "After a bomb goes off on the Moon, a team of psychics finds the world around them decaying, and messages from their boss appearing in the strangest places.",
     },
     {
       title: "Lincoln in the Bardo",
@@ -573,14 +613,14 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       body: "On the night of his son's funeral, the president visits the cemetery, where a chorus of restless spirits watches.",
     },
     {
-      title: "The House in the Cerulean Sea",
-      author: "TJ Klune",
-      isbn: "9781250217288",
-      datePublished: "2020",
-      pageCount: 398,
-      publisher: "Tor",
-      subjects: "Fantasy, Found family, Humor",
-      body: "A by-the-book caseworker is sent to inspect an island orphanage for magical children and finds more than he expected.",
+      title: "This Is How You Lose the Time War",
+      author: "Amal El-Mohtar and Max Gladstone",
+      isbn: "9781534430990",
+      datePublished: "2019",
+      pageCount: 209,
+      publisher: "Saga Press",
+      subjects: "Science fiction, Romance, Letters",
+      body: "Two agents on opposite sides of a war across time start leaving each other letters, and fall for the enemy.",
     },
     {
       title: "Quiet",
@@ -768,7 +808,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     // Noah's books get around too
     {
-      title: "Crying in H Mart",
+      title: "Ubik",
       borrower: "maya",
       borrowedAt: ago(45 * day),
       returnedAt: ago(30 * day),
@@ -907,7 +947,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
   const read: [string, number][] = [
     ["Project Hail Mary", 60],
     ["Circe", 30],
-    ["The Remains of the Day", 90],
+    ["Do Androids Dream of Electric Sheep?", 90],
     ["Station Eleven", 140],
     ["Braiding Sweetgrass", 120],
     ["A Gentleman in Moscow", 180],
@@ -916,7 +956,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     ["Dune", 130],
     ["The Left Hand of Darkness", 200],
     // From the shared shelf
-    ["Crying in H Mart", 100],
+    ["This Is How You Lose the Time War", 100],
   ];
   // Kept as the visitor's own mark; any heart or note is added to it below
   for (const [title, days] of read) {
@@ -987,9 +1027,10 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     { title: "Station Eleven", by: "maya", loved: true, at: ago(128 * day) },
     { title: "Circe", by: "you", loved: true, at: ago(30 * day) },
     {
-      title: "The Remains of the Day",
+      title: "Do Androids Dream of Electric Sheep?",
       by: "you",
       loved: true,
+      body: "Shorter and stranger than the film. The mood organ alone is worth it.",
       at: ago(90 * day),
     },
     {
@@ -1106,12 +1147,20 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     { title: "Hyperion", by: "you", loved: true, at: ago(150 * day) },
     { title: "Hyperion", by: "sam", loved: true, at: ago(500 * day) },
     {
-      title: "Lessons in Chemistry",
+      title: "Yellowface",
       by: "priya",
       loved: true,
-      body: "Six-Thirty the dog deserves his own book.",
+      body: "Couldn't stop reading and couldn't stop cringing. Very funny, very sharp.",
       at: ago(3 * day),
     },
+    {
+      title: "The Night Circus",
+      by: "maya",
+      loved: true,
+      body: "Read it in the winter with the lights low. Perfect.",
+      at: ago(200 * day),
+    },
+    { title: "Gideon the Ninth", by: "theo", loved: true, at: ago(5 * day) },
     { title: "The Fifth Season", by: "theo", loved: true, at: ago(20 * day) },
     {
       title: "Persuasion",
@@ -1129,13 +1178,13 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       at: ago(200 * day),
     },
     {
-      title: "Crying in H Mart",
+      title: "Ubik",
       by: "maya",
       loved: true,
-      body: "Made me call my mum. Bring tissues and something to eat.",
+      body: "No idea what was real by the end, and I mean that as a compliment.",
       at: ago(30 * day),
     },
-    { title: "Crying in H Mart", by: "noah", loved: true, at: ago(250 * day) },
+    { title: "Ubik", by: "noah", loved: true, at: ago(250 * day) },
     {
       title: "Lincoln in the Bardo",
       by: "priya",
@@ -1151,9 +1200,10 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       at: ago(40 * day),
     },
     {
-      title: "The House in the Cerulean Sea",
+      title: "This Is How You Lose the Time War",
       by: "noah",
       loved: true,
+      body: "Read it twice in a row. The letters get better the second time.",
       at: ago(90 * day),
     },
   ];
