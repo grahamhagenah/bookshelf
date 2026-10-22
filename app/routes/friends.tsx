@@ -256,7 +256,7 @@ export default function Friends() {
         ) : null}
       </section>
 
-      <section id="find" className="scroll-mt-20">
+      <section id="find">
         <h2 className="text-lg font-semibold">Find friends</h2>
 
         <InviteLink url={data.inviteUrl} />

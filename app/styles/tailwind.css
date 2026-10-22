@@ -27,6 +27,10 @@
   .dark {
     accent-color: var(--color-forest-400);
   }
+  /* Jump links (#notes, #lending…) land below the sticky header */
+  html {
+    scroll-padding-top: 4.5rem;
+  }
   :focus-visible {
     outline: 2px solid var(--color-stone-400);
     outline-offset: 2px;

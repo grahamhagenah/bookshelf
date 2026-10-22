@@ -27,7 +27,8 @@ export default function Header() {
   const user = rootData?.user;
 
   return (
-    <header className="w-full border-b border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950">
+    // Stays at the top while the page scrolls under it, slightly see-through
+    <header className="sticky top-0 z-40 w-full border-b border-stone-200 dark:border-stone-800 bg-white/90 dark:bg-stone-950/90 backdrop-blur-md">
       <div className="mx-auto max-w-5xl flex items-center justify-between px-4 md:px-8 py-1.5">
         <div className="flex items-center gap-2 min-w-0">
           <a

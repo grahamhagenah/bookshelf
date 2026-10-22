@@ -1719,7 +1719,7 @@ export default function BookDetailsPage() {
           ) : null}
 
           {!isEditing ? (
-            <div id="lending" className="mt-10 scroll-mt-6">
+            <div id="lending" className="mt-10">
               <LendingHistory data={data} />
             </div>
           ) : null}
