@@ -12,6 +12,13 @@ interface RootLoaderData {
   } | null;
 }
 
+const navClass = ({ isActive }: { isActive: boolean }) =>
+  `inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-sm transition-colors ${
+    isActive
+      ? "bg-stone-100 dark:bg-stone-800 font-medium text-stone-900 dark:text-stone-100"
+      : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800"
+  }`;
+
 export default function Header() {
   const matches = useMatches();
   const rootData = matches.find((m) => m.id === "root")?.data as
@@ -37,23 +44,20 @@ export default function Header() {
           <Breadcrumbs />
         </div>
         <div className="flex items-center gap-0.5 md:gap-2 flex-shrink-0">
-          {/* Your shelf is what you come back for, so on wider screens it
-              gets a link of its own rather than living in the menu */}
+          {/* Your shelf, and what your friends are up to, are what you come
+              back for, so on wider screens they get labelled links of their
+              own; phones keep the icons */}
           {user ? (
-            <NavLink
-              to="/books"
-              end
-              className={({ isActive }) =>
-                `hidden md:inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-sm transition-colors ${
-                  isActive
-                    ? "bg-stone-100 dark:bg-stone-800 font-medium text-stone-900 dark:text-stone-100"
-                    : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800"
-                }`
-              }
-            >
-              <BookIcon size={16} />
-              My library
-            </NavLink>
+            <nav aria-label="Main" className="hidden md:flex items-center gap-1">
+              <NavLink to="/books" end className={navClass}>
+                <BookIcon size={16} />
+                My library
+              </NavLink>
+              <NavLink to="/feed" className={navClass}>
+                <PulseIcon size={16} />
+                Friend activity
+              </NavLink>
+            </nav>
           ) : null}
           {user ? <Search /> : null}
           {user ? (
@@ -61,7 +65,7 @@ export default function Header() {
               href="/feed"
               aria-label="Friend activity"
               title="Friend activity"
-              className="inline-flex items-center justify-center w-11 h-11 md:w-9 md:h-9 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+              className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             >
               <PulseIcon size={20} />
             </a>
