@@ -216,15 +216,18 @@ function StepMark({ number, done }: { number: number; done: boolean }) {
 }
 
 // For a new account: three steps to a working shelf, each ticked off as
-// it's done. Shown until you have books and a friend.
+// it's done. Shown until you have books and a friend (or have asked one),
+// or until you skip it.
 function Welcome({
   bookCount,
   friendCount,
+  requestsSent,
   shareUrl,
   divided,
 }: {
   bookCount: number;
   friendCount: number;
+  requestsSent: number;
   shareUrl: string | null;
   // A rule underneath only when something follows
   divided: boolean;
@@ -234,6 +237,7 @@ function Welcome({
   const url = shareFetcher.data?.url ?? shareUrl;
   const creating = shareFetcher.state !== "idle";
   const [copied, setCopied] = useState(false);
+  const welcomeFetcher = useFetcher({ key: "welcome" });
   const copy = async () => {
     if (!url) return;
     try {
@@ -259,8 +263,11 @@ function Welcome({
     {
       title: "Find friends",
       text: "See what's on their shelves and borrow from each other.",
-      done: friendCount > 0,
-      doneText: `${friendCount} ${friendCount === 1 ? "friend" : "friends"}`,
+      // Asking counts: accepting is up to them
+      done: friendCount + requestsSent > 0,
+      doneText: friendCount
+        ? `${friendCount} ${friendCount === 1 ? "friend" : "friends"}`
+        : `${requestsSent === 1 ? "Request" : `${requestsSent} requests`} sent`,
       action: (
         <Link to="/friends" className={actionClass}>
           Find friends
@@ -295,12 +302,24 @@ function Welcome({
         divided ? "mb-8 border-b border-stone-200 dark:border-stone-800 pb-8" : undefined
       }
     >
-      <h2 id="welcome" className="text-xl font-semibold text-stone-900 dark:text-stone-100">
-        Welcome to Stacks
-      </h2>
-      <p className="mt-1 text-stone-500 dark:text-stone-400">
-        Three steps to get your shelf going.
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 id="welcome" className="text-xl font-semibold text-stone-900 dark:text-stone-100">
+            Welcome to Stacks
+          </h2>
+          <p className="mt-1 text-stone-500 dark:text-stone-400">
+            Three steps to get your shelf going.
+          </p>
+        </div>
+        <welcomeFetcher.Form method="post" action="/?index">
+          <button
+            type="submit"
+            className="whitespace-nowrap py-1 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 underline-offset-4 hover:underline transition-colors"
+          >
+            Skip for now
+          </button>
+        </welcomeFetcher.Form>
+      </div>
       <ol className="mt-6 grid gap-8 sm:grid-cols-3 sm:gap-10">
         {steps.map((step, index) => (
           <li key={step.title}>
@@ -337,18 +356,28 @@ export default function Home({
   books,
   activity,
   friendIds,
+  requestsSent,
   shareUrl,
+  welcomeDismissed,
 }: {
   books: HomeBooks;
   activity: SerializeFrom<FriendActivity>[];
   friendIds: string[];
+  requestsSent: number;
   shareUrl: string | null;
+  welcomeDismissed: boolean;
 }) {
   const ownCount = books.lent.length + books.shelf.length;
+  // Skipping hides the steps at once, before the cookie's even back
+  const skipping = useFetcher({ key: "welcome" }).state !== "idle";
 
   // A new account gets the welcome steps; each section below appears once
-  // it has something in it, so there's no stack of empty boxes
-  const setupDone = ownCount > 0 && friendIds.length > 0;
+  // it has something in it, so there's no stack of empty boxes. Skipping
+  // the steps shows the usual home, empty sections and all.
+  const setupDone =
+    welcomeDismissed ||
+    skipping ||
+    (ownCount > 0 && friendIds.length + requestsSent > 0);
   const showLoans = setupDone || books.borrowed.length + books.lent.length > 0;
   const showRecent = setupDone || ownCount > 0;
   const showFeed = setupDone || friendIds.length > 0;
@@ -376,6 +405,7 @@ export default function Home({
         <Welcome
           bookCount={ownCount}
           friendCount={friendIds.length}
+          requestsSent={requestsSent}
           shareUrl={shareUrl}
           divided={showMain || showFeed}
         />
