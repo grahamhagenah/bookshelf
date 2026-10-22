@@ -34,12 +34,13 @@ test("the list shows which friends have a copy", async () => {
   expect(await addWantToRead(me.id, wish("Piranesi"))).toBeNull();
 
   const items = await getWantToRead(me.id);
-  expect(items.map((item) => item.title)).toEqual(["Dune", "piranesi"]);
-  expect(items[1].copies).toEqual([
+  const byTitle = (title: string) => items.find((item) => item.title === title)!;
+  expect(items.map((item) => item.title).sort()).toEqual(["Dune", "piranesi"]);
+  expect(byTitle("piranesi").copies).toEqual([
     expect.objectContaining({ owner: expect.objectContaining({ firstname: "Priya" }), available: true }),
   ]);
   // Strangers' shelves don't count
-  expect(items[0].copies).toEqual([]);
+  expect(byTitle("Dune").copies).toEqual([]);
 });
 
 test("a friend adding a book you want tells you, once", async () => {
