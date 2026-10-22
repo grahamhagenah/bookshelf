@@ -117,7 +117,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // Demo friends approve on the spot
     await respondAsDemoPersona(bookRequest.id);
     const owner = await getUserEmailById(book.userId);
-    if (owner && owner.emailNotifications) {
+    if (owner && owner.emailNotifications && owner.emailVerifiedAt) {
       await sendBookRequestEmail({
         toEmail: owner.email,
         toName: owner.firstname || "there",

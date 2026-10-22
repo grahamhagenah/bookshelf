@@ -56,6 +56,8 @@ test("only real accounts who want email and have something going on get one", as
   await prisma.user.update({ where: { id: optedOut.id }, data: { emailNotifications: false } });
   const demo = await makeUser("Demo", { demoGroup: "digest-test" });
   await createFriendship(demo.id, friend.id);
+  const unconfirmed = await makeUser("Unconfirmed", { emailVerifiedAt: null });
+  await createFriendship(unconfirmed.id, friend.id);
 
   const ids = (await getDigestRecipients()).map((user) => user.id);
   expect(ids).toContain(social.id);
@@ -63,4 +65,5 @@ test("only real accounts who want email and have something going on get one", as
   expect(ids).not.toContain(quiet.id);
   expect(ids).not.toContain(optedOut.id);
   expect(ids).not.toContain(demo.id);
+  expect(ids).not.toContain(unconfirmed.id);
 });

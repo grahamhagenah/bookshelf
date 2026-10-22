@@ -484,7 +484,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
     // Send email notification to book owner (if they have email notifications enabled)
     const bookOwner = await getUserEmailById(book.userId);
-    if (bookOwner && bookOwner.emailNotifications) {
+    if (bookOwner && bookOwner.emailNotifications && bookOwner.emailVerifiedAt) {
       await sendBookRequestEmail({
         toEmail: bookOwner.email,
         toName: bookOwner.firstname || "there",

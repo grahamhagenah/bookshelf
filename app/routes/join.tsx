@@ -29,6 +29,7 @@ import {
   safeRedirect,
   validateEmail,
 } from "~/utils";
+import { sendVerification } from "~/verify-email.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
@@ -164,6 +165,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const user = await createUser(email, password, firstname, surname);
+  await sendVerification(user.id);
 
   // Joined from a shared shelf: ask its owner to be friends straight away.
   // Demo shelves are left out, since demo and real accounts can't mix.
