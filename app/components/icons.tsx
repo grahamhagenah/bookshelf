@@ -220,6 +220,23 @@ export function HeartIcon({
 }
 
 // Arrow heading out, for a book that's lent out
+// A plain check: the owner has read this one
+export function ReadIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+  );
+}
+
+export function BookmarkIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6.5 3.5h11v17l-5.5-4-5.5 4z" />
+    </svg>
+  );
+}
+
 export function LentIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

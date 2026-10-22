@@ -13,6 +13,7 @@ import {
   HeartIcon,
   LentIcon,
   ListViewIcon,
+  ReadIcon,
 } from "./icons";
 
 const OPEN_LIBRARY_SIZE = /-[SML]\.jpg$/;
@@ -46,9 +47,18 @@ interface Book {
   isLending?: boolean;
   loveCount?: number;
   borrowerId?: string | null;
+  readAt?: string | null;
 }
 
-type Status = "all" | "shelf" | "available" | "lent" | "borrowed" | "loved";
+type Status =
+  | "all"
+  | "shelf"
+  | "available"
+  | "lent"
+  | "borrowed"
+  | "loved"
+  | "read"
+  | "unread";
 
 const isLent = (book: Book) =>
   !book.isBorrowed && (book.isLending ?? Boolean(book.borrowerId));
@@ -60,6 +70,9 @@ const STATUS_TESTS: Record<Status, (book: Book) => boolean> = {
   lent: isLent,
   borrowed: (book) => Boolean(book.isBorrowed),
   loved: (book) => (book.loveCount ?? 0) > 0,
+  // Read or not applies to your own copies
+  read: (book) => !book.isBorrowed && Boolean(book.readAt),
+  unread: (book) => !book.isBorrowed && !book.readAt,
 };
 
 // Your own library and someone else's shelf offer different filters
@@ -68,6 +81,8 @@ const OWN_STATUSES: [Status, string][] = [
   ["shelf", "On my shelf"],
   ["lent", "Lent out"],
   ["borrowed", "Borrowed"],
+  ["read", "Read"],
+  ["unread", "Not read"],
   ["loved", "Loved"],
 ];
 const OTHER_STATUSES: [Status, string][] = [
@@ -228,6 +243,15 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                 <span aria-hidden="true">+</span>
                 Add your first books
               </Link>
+              <p className="mt-4 text-stone-500 dark:text-stone-400">
+                Already keep a list on Goodreads or StoryGraph?{" "}
+                <Link
+                  to="/import"
+                  className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                >
+                  Import it
+                </Link>
+              </p>
             </div>
 
             <div className="bg-white dark:bg-stone-900 rounded-lg shadow-soft border border-stone-200/80 dark:border-stone-800 p-8 max-w-3xl w-full">
@@ -445,6 +469,11 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                             <LentIcon size={12} />
                             Lent out
                           </span>
+                        ) : book.readAt && !ownerName ? (
+                          <span className="inline-flex items-center gap-1 text-stone-400 dark:text-stone-500">
+                            <ReadIcon size={11} />
+                            Read
+                          </span>
                         ) : (
                           <span />
                         )}
@@ -529,6 +558,12 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                       <span className="inline-flex items-center gap-1 text-xs text-stone-400 dark:text-stone-500 flex-shrink-0">
                         <HeartIcon size={11} filled className="text-rose-400" />
                         {book.loveCount}
+                      </span>
+                    ) : null}
+                    {book.readAt && !ownerName && !book.isBorrowed ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-stone-400 dark:text-stone-500 flex-shrink-0">
+                        <ReadIcon size={11} />
+                        Read
                       </span>
                     ) : null}
                     {book.isBorrowed ? (

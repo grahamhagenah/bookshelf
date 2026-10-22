@@ -23,6 +23,8 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M13 6.5l5.5 5.5-5.5 5.5" />
     </>
   ),
+  // Bookmark: a book from your want-to-read list turned up
+  WANT_MATCH: <path d="M6.5 3.5h11v17l-5.5-4-5.5 4z" />,
   // Check mark
   BOOK_APPROVED: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   // Arrow curling back

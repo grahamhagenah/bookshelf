@@ -14,7 +14,7 @@ import {
 } from "@remix-run/react";
 import { useState } from "react";
 
-import { CheckCircleIcon } from "~/components/icons";
+import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
 import SearchBox from "~/components/search-box";
 import {
   createBook,
@@ -22,9 +22,15 @@ import {
   bookExistsInLibrary,
   searchFriendsBooks,
 } from "~/models/book.server";
+import {
+  addWantToRead,
+  getWantToReadWorks,
+  notifyWanters,
+} from "~/models/wish.server";
 import { seo } from "~/seo";
 import { requireUserId, getUserId } from "~/session.server";
 import { cleanSubjects, coverSrc } from "~/utils";
+import { sameWork } from "~/works";
 
 export const meta: MetaFunction = () =>
   seo({ title: "Search", noindex: true });
@@ -82,6 +88,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   // Get user's existing library keys to show which books are already added
   const libraryKeys = userId ? await getUserLibraryKeys(userId) : [];
+  const wishes = userId ? await getWantToReadWorks(userId) : [];
 
   // Friends' copies come first, so only look them up for the first page
   const friendBooks =
@@ -101,6 +108,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       page: 1,
       totalPages: 0,
       libraryKeys,
+      wantKeys: [],
     });
   }
 
@@ -159,6 +167,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const totalPages = Math.ceil(data.numFound / RESULTS_PER_PAGE);
 
+  // Results already on the want-to-read list, by work key or (for books
+  // that came in from an import) by title
+  const wantKeys = data.docs
+    .filter(
+      (doc) =>
+        doc.key &&
+        wishes.some((wish) =>
+          sameWork(wish, { title: doc.title, openLibraryKey: doc.key }),
+        ),
+    )
+    .map((doc) => doc.key as string);
+
   return json({
     ...data,
     friendBooks,
@@ -168,6 +188,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     page,
     totalPages,
     libraryKeys,
+    wantKeys,
   });
 }
 
@@ -185,6 +206,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const subjects = formData.get("subjects");
   const publisher = formData.get("publisher");
   const openLibraryKey = formData.get("openLibraryKey");
+
+  // Not on your shelf, but you'd like it to be
+  if (formData.get("intent") === "want") {
+    await addWantToRead(userId, {
+      title: typeof title === "string" ? title : "",
+      author: typeof author === "string" ? author : "",
+      cover: coverId ? cover : "",
+      openLibraryKey: typeof openLibraryKey === "string" ? openLibraryKey : null,
+    });
+    return json({ success: true, wanted: true, addedKey: openLibraryKey });
+  }
 
   // Check if book already exists in user's library
   if (typeof openLibraryKey === "string" && openLibraryKey.length > 0) {
@@ -219,7 +251,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
-  await createBook({
+  const book = await createBook({
     title: typeof title === "string" ? title : "",
     author: typeof author === "string" ? author : "",
     body: description,
@@ -242,6 +274,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         : null,
     userId,
   });
+  // Friends who wanted this one hear about it
+  await notifyWanters(userId, [book]);
 
   return json({ success: true, addedKey: openLibraryKey });
 };
@@ -334,17 +368,23 @@ function FriendBookRow({ book }: { book: FriendBook }) {
 function SearchResultItem({
   book,
   isInLibrary,
+  isWanted,
 }: {
   book: OpenLibraryBook;
   isInLibrary: boolean;
+  isWanted: boolean;
 }) {
   const fetcher = useFetcher<{
     success: boolean;
     alreadyExists?: boolean;
+    wanted?: boolean;
     addedKey: string;
   }>();
-  const isAdding = fetcher.state === "submitting";
-  const isAdded = fetcher.data?.success === true;
+  const intent = fetcher.formData?.get("intent");
+  const isAdding = fetcher.state === "submitting" && intent !== "want";
+  const isWanting = fetcher.state === "submitting" && intent === "want";
+  const isAdded = fetcher.data?.success === true && !fetcher.data.wanted;
+  const wanted = isWanted || fetcher.data?.wanted === true;
   const alreadyInLibrary = isInLibrary || fetcher.data?.alreadyExists === true;
   const author = book.author_name?.join(", ") ?? "Unknown author";
   const details = [
@@ -406,10 +446,11 @@ function SearchResultItem({
           />
           <input type="hidden" name="openLibraryKey" value={book.key ?? ""} />
 
+          <div className="mt-2 flex flex-wrap items-center gap-2">
           <button
             type="submit"
             disabled={isAdding || isAdded || alreadyInLibrary}
-            className={`mt-2 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
               isAdded || alreadyInLibrary
                 ? "bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 cursor-default"
                 : isAdding
@@ -428,6 +469,25 @@ function SearchResultItem({
                   ? "Adding…"
                   : "Add to my library"}
           </button>
+          {/* Don't own it? Keep an eye out for it on friends' shelves */}
+          {isAdded || alreadyInLibrary ? null : wanted ? (
+            <span className="inline-flex items-center gap-1.5 px-1 text-sm text-stone-500 dark:text-stone-400">
+              <BookmarkIcon size={14} />
+              On your want-to-read list
+            </span>
+          ) : (
+            <button
+              type="submit"
+              name="intent"
+              value="want"
+              disabled={isWanting}
+              className="inline-flex items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors disabled:opacity-60"
+            >
+              <BookmarkIcon size={14} />
+              {isWanting ? "Saving…" : "Want to read"}
+            </button>
+          )}
+          </div>
         </div>
       </fetcher.Form>
     </li>
@@ -601,6 +661,7 @@ export default function Search() {
                     isInLibrary={
                       book.key ? data.libraryKeys.includes(book.key) : false
                     }
+                    isWanted={book.key ? data.wantKeys.includes(book.key) : false}
                   />
                 ))}
               </ul>
