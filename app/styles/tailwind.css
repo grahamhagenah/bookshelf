@@ -6,6 +6,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  /* The one colour: forest green, for the thing you do next */
+  --color-forest-400: #3a9a74;
+  --color-forest-500: #2a8a66;
+  --color-forest-600: #1f6b4e;
+  --color-forest-700: #195a41;
+
   /* The one shadow for floating things: menus, cards */
   --shadow-soft: 0 4px 12px -2px rgb(28 25 23 / 0.06);
   --font-family-sans: 'Source Sans 3', system-ui, sans-serif;
@@ -16,10 +22,10 @@
    (orange on some Macs); keep both in the stone palette */
 @layer base {
   :root {
-    accent-color: var(--color-stone-900);
+    accent-color: var(--color-forest-600);
   }
   .dark {
-    accent-color: var(--color-stone-100);
+    accent-color: var(--color-forest-400);
   }
   :focus-visible {
     outline: 2px solid var(--color-stone-400);

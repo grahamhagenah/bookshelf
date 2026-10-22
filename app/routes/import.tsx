@@ -188,7 +188,7 @@ export default function Import() {
             <div className="mt-4 flex flex-wrap gap-3">
               <Link
                 to="/books"
-                className="inline-flex items-center rounded-md bg-stone-700 dark:bg-stone-200 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+                className="inline-flex items-center rounded-md bg-forest-600 dark:bg-forest-500 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
               >
                 See your library
               </Link>
@@ -269,7 +269,7 @@ export default function Import() {
             <button
               type="submit"
               disabled={importing || (preview !== null && preview.summary.total === 0)}
-              className="mt-6 inline-flex items-center rounded-md bg-stone-700 dark:bg-stone-200 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors disabled:opacity-60"
+              className="mt-6 inline-flex items-center rounded-md bg-forest-600 dark:bg-forest-500 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors disabled:opacity-60"
             >
               {importing ? "Importing…" : "Import"}
             </button>
