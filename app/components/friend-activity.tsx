@@ -374,6 +374,18 @@ export function FeedPost({
 
 type PromptBook = SerializeFrom<Awaited<ReturnType<typeof getNotePrompts>>>[number];
 
+// Something to answer, rather than a blank box. Picked by book, so the
+// same book keeps the same question.
+const QUESTIONS = [
+  "Worth the hype? Who should read it next?",
+  "Slow start, great ending, couldn't put it down? Say so.",
+  "What stayed with you?",
+  "Loved it, hated it, or somewhere in between? One line is plenty.",
+  "What would you tell the next person who borrows it?",
+];
+const questionFor = (id: string) =>
+  QUESTIONS[[...id].reduce((sum, char) => sum + char.charCodeAt(0), 0) % QUESTIONS.length];
+
 // A book you borrowed and haven't written about, with a place to do it.
 // Saving or skipping moves on to the next one.
 export function NotePrompt({ books }: { books: PromptBook[] }) {
@@ -410,7 +422,7 @@ export function NotePrompt({ books }: { books: PromptBook[] }) {
           </p>
           <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
             {book.returned ? "You borrowed it" : "You're borrowing it"} from {book.owner.firstname}.
-            A line or two for the next reader.
+            Your note stays with the book for the next reader.
           </p>
         </div>
       </div>
@@ -435,7 +447,7 @@ export function NotePrompt({ books }: { books: PromptBook[] }) {
               rows={2}
               maxLength={500}
               required
-              placeholder="Your note"
+              placeholder={questionFor(book.id)}
               aria-label="Your note"
               className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-950 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
             />
