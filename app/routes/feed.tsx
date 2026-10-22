@@ -6,9 +6,9 @@ import type {
 import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 
-import { FeedPost } from "~/components/friend-activity";
+import { FeedPost, NotePrompt } from "~/components/friend-activity";
 import { sendBookRequestEmail } from "~/email.server";
-import { getFriendActivity } from "~/models/activity.server";
+import { getFriendActivity, getNotePrompts } from "~/models/activity.server";
 import { getBookById } from "~/models/book.server";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import { leaveHold, placeHold } from "~/models/hold.server";
@@ -34,12 +34,13 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [user, activity] = await Promise.all([
+  const [user, activity, prompts] = await Promise.all([
     getUserById(userId),
     getFriendActivity(userId, { days: 90, limit: 50 }),
+    getNotePrompts(userId),
   ]);
   const friendIds = user?.following.map((friend) => friend.id) ?? [];
-  return json({ userId, activity, friendIds });
+  return json({ userId, activity, friendIds, prompts });
 };
 
 // The same things the book page lets you do, from the feed
@@ -51,15 +52,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const book = typeof bookId === "string" ? await getBookById(bookId) : null;
   if (!book) throw new Response("Not Found", { status: 404 });
 
-  if (intent === "toggleLove") {
+  if (intent === "toggleLove" || intent === "note") {
     if (!(await canLeaveNote(userId, book))) {
       throw new Response("Only readers of this copy can leave notes", { status: 403 });
     }
-    const note = await saveReaderNote(userId, book.id, {
-      loved: form.get("loved") === "true",
-    });
-    // Let the owner know when a reader hearts their book
-    if (book.userId !== userId && note.loved) {
+    const body = form.get("body");
+    const note = await saveReaderNote(
+      userId,
+      book.id,
+      intent === "note"
+        ? { body: typeof body === "string" ? body : null }
+        : { loved: form.get("loved") === "true" },
+    );
+    // Let the owner know when a reader hearts or writes about their book
+    if (book.userId !== userId && (note.loved || note.body)) {
       const reader = await getUserById(userId);
       if (reader) {
         await createReaderNoteNotification(
@@ -121,12 +127,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function Feed() {
-  const { userId, activity, friendIds } = useLoaderData<typeof loader>();
+  const { userId, activity, friendIds, prompts } = useLoaderData<typeof loader>();
 
   return (
     // A feed reads best in a narrow column
     <main className="mx-auto w-full max-w-[40rem] px-4 py-6 md:py-8">
       <h1 className="sr-only">Friend activity</h1>
+      {prompts.length > 0 ? (
+        <div className="mb-6">
+          <NotePrompt books={prompts} />
+        </div>
+      ) : null}
       {activity.length > 0 ? (
         <ul className="space-y-3">
           {activity.map((item) => (

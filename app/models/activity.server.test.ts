@@ -1,7 +1,8 @@
 // @vitest-environment node
 import { makeBook, makeUser, prisma } from "../../test/db";
 
-import { getFriendActivity } from "./activity.server";
+import { getFriendActivity, getNotePrompts } from "./activity.server";
+import { lendBook } from "./book.server";
 import { saveReaderNote } from "./note.server";
 import { createFriendship } from "./user.server";
 
@@ -113,4 +114,25 @@ test("feed books carry hearts, notes and where you stand with them", async () =>
     requested: false,
     inLine: false,
   });
+});
+
+test("note prompts are the books you've borrowed and not written about", async () => {
+  const { me, friend } = await setup();
+  const current = await makeBook(friend.id, "Piranesi");
+  const done = await makeBook(friend.id, "Circe");
+  const noted = await makeBook(friend.id, "Dune");
+  await lendBook(current.id, me.id);
+  for (const book of [done, noted]) {
+    await prisma.lendingHistory.create({
+      data: { bookId: book.id, borrowerId: me.id, borrowedAt: daysAgo(30), returnedAt: daysAgo(5) },
+    });
+  }
+  await saveReaderNote(me.id, noted.id, { body: "Said my piece." });
+
+  const prompts = await getNotePrompts(me.id);
+  expect(prompts.map((book) => [book.title, book.returned])).toEqual([
+    ["Piranesi", false],
+    ["Circe", true],
+  ]);
+  expect(prompts[0].owner.firstname).toBe("Maya");
 });

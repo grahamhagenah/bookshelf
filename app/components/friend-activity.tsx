@@ -1,7 +1,8 @@
 import type { SerializeFrom } from "@remix-run/node";
 import { Link, useFetcher } from "@remix-run/react";
+import { useState } from "react";
 
-import type { FriendActivity } from "~/models/activity.server";
+import type { FriendActivity, getNotePrompts } from "~/models/activity.server";
 import { coverSrc } from "~/utils";
 
 import Avatar from "./avatar";
@@ -26,7 +27,13 @@ function ago(date: string) {
   return formatDate(date);
 }
 
-function FeedCover({ book, className }: { book: FeedBook; className: string }) {
+function FeedCover({
+  book,
+  className,
+}: {
+  book: Pick<FeedBook, "title" | "author" | "cover">;
+  className: string;
+}) {
   return (
     <span
       className={`relative block flex-shrink-0 overflow-hidden rounded-xs bg-stone-100 dark:bg-stone-800 ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}
@@ -360,5 +367,96 @@ export function FeedPost({
         </>
       )}
     </article>
+  );
+}
+
+// ---- "What did you think?" at the top of the feed ----
+
+type PromptBook = SerializeFrom<Awaited<ReturnType<typeof getNotePrompts>>>[number];
+
+// A book you borrowed and haven't written about, with a place to do it.
+// Saving or skipping moves on to the next one.
+export function NotePrompt({ books }: { books: PromptBook[] }) {
+  const [skipped, setSkipped] = useState<string[]>([]);
+  const fetcher = useFetcher({ key: "note-prompt" });
+  const [body, setBody] = useState("");
+  const saving = fetcher.state !== "idle";
+
+  const left = books.filter((book) => !skipped.includes(book.id));
+  const book = left[0];
+  if (!book) return null;
+  const others = left.slice(1);
+
+  return (
+    <section
+      aria-label="Leave a note"
+      className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-4 py-3.5"
+    >
+      <div className="flex items-start gap-3">
+        <Link to={`/books/${book.id}`} className="flex-shrink-0">
+          <FeedCover book={book} className="h-[72px] w-12" />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <p className="leading-snug text-stone-800 dark:text-stone-200">
+            {book.returned ? "You borrowed" : "You're borrowing"}{" "}
+            <Link
+              to={`/books/${book.id}`}
+              className="font-semibold text-stone-900 dark:text-stone-100 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+            >
+              {book.title}
+            </Link>{" "}
+            from {book.owner.firstname}. What did you think?
+          </p>
+          <fetcher.Form
+            method="post"
+            className="mt-2"
+            onSubmit={() => {
+              // Clear and move on; the saved note shows on the book page
+              setTimeout(() => {
+                setBody("");
+                setSkipped((list) => [...list, book.id]);
+              }, 0);
+            }}
+          >
+            <input type="hidden" name="intent" value="note" />
+            <input type="hidden" name="bookId" value={book.id} />
+            <textarea
+              name="body"
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              rows={2}
+              maxLength={500}
+              required
+              placeholder="A line or two for the next reader"
+              className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-950 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+            />
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <button
+                type="submit"
+                disabled={saving || !body.trim()}
+                className="rounded-md bg-stone-700 dark:bg-stone-200 px-3 py-1.5 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors disabled:opacity-50"
+              >
+                {saving ? "Saving…" : "Leave a note"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setBody("");
+                  setSkipped((list) => [...list, book.id]);
+                }}
+                className="px-1 py-1.5 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
+              >
+                Not now
+              </button>
+              {others.length > 0 ? (
+                <span className="ml-auto text-sm text-stone-400 dark:text-stone-500">
+                  +{others.length} more
+                </span>
+              ) : null}
+            </div>
+          </fetcher.Form>
+        </div>
+      </div>
+    </section>
   );
 }

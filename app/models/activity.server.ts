@@ -206,3 +206,51 @@ export async function getFriendActivity(
   await enrich(feed, userId, friendIds);
   return feed;
 }
+
+// Books you've borrowed, now or lately, that you haven't written about:
+// something to say to the next reader
+export async function getNotePrompts(userId: User["id"], { days = 90, limit = 3 } = {}) {
+  const since = new Date(Date.now() - days * DAY);
+  const fields = {
+    id: true,
+    title: true,
+    author: true,
+    cover: true,
+    user: { select: { id: true, firstname: true } },
+  } as const;
+  const [current, past, written] = await Promise.all([
+    prisma.book.findMany({
+      where: { borrowerId: userId },
+      select: { ...fields, borrowedAt: true },
+      orderBy: { borrowedAt: "desc" },
+    }),
+    prisma.lendingHistory.findMany({
+      where: { borrowerId: userId, returnedAt: { gte: since } },
+      select: { returnedAt: true, book: { select: fields } },
+      orderBy: { returnedAt: "desc" },
+    }),
+    prisma.readerNote.findMany({
+      where: { userId, body: { not: null } },
+      select: { bookId: true },
+    }),
+  ]);
+  const noted = new Set(written.map((note) => note.bookId));
+  const seen = new Set<string>();
+  const prompts = [
+    ...current.map(({ borrowedAt, user, ...book }) => ({
+      ...book,
+      owner: user,
+      returned: false,
+      at: borrowedAt ?? new Date(0),
+    })),
+    ...past.map(({ returnedAt, book: { user, ...book } }) => ({
+      ...book,
+      owner: user,
+      returned: true,
+      at: returnedAt ?? new Date(0),
+    })),
+  ]
+    .filter((book) => !noted.has(book.id) && !seen.has(book.id) && seen.add(book.id))
+    .sort((a, b) => b.at.getTime() - a.at.getTime());
+  return prompts.slice(0, limit);
+}
