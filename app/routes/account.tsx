@@ -50,6 +50,8 @@ import {
 import { publicOrigin } from "~/origin.server";
 import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
 import { getPlanUsage } from "~/plan.server";
+import { BIO_MAX, HANDLE_MAX } from "~/profile";
+import { saveProfile } from "~/profile.server";
 import { seo } from "~/seo";
 import { getSession, requireUserId, sessionStorage } from "~/session.server";
 import {
@@ -148,6 +150,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       passwordSuccess: false,
       emojiSuccess: false,
     });
+  }
+
+  // The public page's handle and bio
+  if (intent === "saveProfile") {
+    const result = await saveProfile(userId, {
+      handle: String(formData.get("handle") ?? ""),
+      bio: String(formData.get("bio") ?? ""),
+    });
+    return json(
+      {
+        errors: null,
+        passwordErrors: null,
+        success: false,
+        passwordSuccess: false,
+        emojiSuccess: false,
+        profileSaved: result.ok,
+        profileError: result.ok ? undefined : result.error,
+      },
+      { status: result.ok ? 200 : 400 },
+    );
   }
 
   // Handle share token actions
@@ -625,6 +647,7 @@ export default function Account() {
       </Section>
 
       <Section
+        id="sharing"
         title="Sharing"
         description="Show your shelf to anyone with a link, or share one shelf with someone you live with."
       >
@@ -637,7 +660,11 @@ export default function Account() {
             <div className="mt-3">
               {shareUrl ? (
                 <>
-                  <CopyField value={shareUrl} label="Public link to your shelf" />
+                  {/* With a handle, the shelf's own address is the one to share */}
+                  <CopyField
+                    value={user?.handle ? `${data.origin}/@${user.handle}` : shareUrl}
+                    label="Public link to your shelf"
+                  />
                   <Form method="post" className="mt-2">
                     <input type="hidden" name="intent" value="revokeShareToken" />
                     <button type="submit" className={textButton}>
@@ -655,6 +682,13 @@ export default function Account() {
               )}
             </div>
           </div>
+
+          <ProfilePanel
+            handle={user?.handle ?? null}
+            bio={user?.bio ?? null}
+            origin={data.origin}
+            sharing={Boolean(shareUrl)}
+          />
 
           <div>
             <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">
@@ -1243,6 +1277,87 @@ function DeleteAccount({ plus, shared }: { plus: boolean; shared: boolean }) {
           {deleting ? "Deleting…" : armed ? "Click again to delete" : "Delete my account"}
         </button>
       </Form>
+    </div>
+  );
+}
+
+// Your public page's address and the line at its top
+function ProfilePanel({
+  handle,
+  bio,
+  origin,
+  sharing,
+}: {
+  handle: string | null;
+  bio: string | null;
+  origin: string;
+  sharing: boolean;
+}) {
+  const fetcher = useFetcher<{ profileSaved?: boolean; profileError?: string }>();
+  const [bioText, setBioText] = useState(bio ?? "");
+  const saving = fetcher.state !== "idle";
+  const error = fetcher.data?.profileError;
+  const saved = fetcher.state === "idle" && fetcher.data?.profileSaved;
+  const host = origin.replace(/^https?:\/\//, "");
+
+  return (
+    <div>
+      <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">Your page</h3>
+      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+        Pick a handle for a link that&apos;s easy to share, like in your Instagram bio, and add a
+        line about yourself. Your favourites are the books you&apos;ve hearted.
+      </p>
+      <fetcher.Form method="post" className="mt-3 grid gap-3">
+        <input type="hidden" name="intent" value="saveProfile" />
+        <label className="block text-sm text-stone-700 dark:text-stone-300">
+          Handle
+          <div className="mt-1 flex items-center rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 focus-within:border-stone-400 dark:focus-within:border-stone-500">
+            <span className="select-none pl-3 text-stone-400 dark:text-stone-500">{host}/@</span>
+            <input
+              name="handle"
+              defaultValue={handle ?? ""}
+              placeholder="yourname"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              maxLength={HANDLE_MAX + 1}
+              aria-invalid={error ? true : undefined}
+              className="min-w-0 flex-1 bg-transparent py-2 pr-3 text-stone-900 dark:text-stone-100 focus:outline-none"
+            />
+          </div>
+        </label>
+        <label className="block text-sm text-stone-700 dark:text-stone-300">
+          <span className="flex justify-between">
+            Bio
+            <span className="tabular-nums text-stone-400 dark:text-stone-500">
+              {bioText.length}/{BIO_MAX}
+            </span>
+          </span>
+          <textarea
+            name="bio"
+            rows={2}
+            maxLength={BIO_MAX}
+            value={bioText}
+            onChange={(event) => setBioText(event.target.value)}
+            placeholder="Sci-fi, slow mornings, always happy to lend"
+            className={`mt-1 resize-none ${inputClass}`}
+          />
+        </label>
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="submit" disabled={saving} className={`${quietButton} disabled:opacity-60`}>
+            {saving ? "Saving…" : "Save"}
+          </button>
+          <span role="status" className="text-sm">
+            {error ? (
+              <span className="text-red-700 dark:text-red-400">{error}</span>
+            ) : saved ? (
+              <span className="text-forest-700 dark:text-forest-400">
+                Saved{sharing ? "" : ". Turn on your public link above to show it."}
+              </span>
+            ) : null}
+          </span>
+        </div>
+      </fetcher.Form>
     </div>
   );
 }

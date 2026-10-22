@@ -17,6 +17,8 @@ export async function getUserById(id: User["id"]) {
       firstname: true,
       surname: true,
       shareToken: true,
+      handle: true,
+      bio: true,
       isAdmin: true,
       darkMode: true,
       theme: true,
@@ -496,6 +498,7 @@ export async function getUserByShareToken(token: string) {
       firstname: true,
       surname: true,
       demoGroup: true,
+      handle: true,
     },
   });
 }

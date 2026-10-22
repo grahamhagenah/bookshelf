@@ -13,6 +13,10 @@ model User {
   firstname          String
   surname            String
   shareToken         String? @unique
+  // The public shelf's own address (bookstacks.app/@handle) and a line
+  // about yourself at its top; both show only while sharing is on
+  handle             String?   @unique
+  bio                String?
   // A personal link that makes whoever opens it your friend straight away
   friendInvite       String? @unique
   isAdmin            Boolean @default(false)
