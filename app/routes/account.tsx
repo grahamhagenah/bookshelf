@@ -497,7 +497,7 @@ export default function Account() {
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="rounded-md bg-stone-700 dark:bg-stone-200 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+                  className="rounded-md bg-forest-600 dark:bg-forest-500 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
                 >
                   {copied ? "Copied!" : "Copy Link"}
                 </button>
@@ -517,7 +517,7 @@ export default function Account() {
               <input type="hidden" name="intent" value="generateShareToken" />
               <button
                 type="submit"
-                className="rounded-md bg-stone-700 dark:bg-stone-200 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+                className="rounded-md bg-forest-600 dark:bg-forest-500 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
               >
                 Generate Share Link
               </button>
@@ -631,7 +631,7 @@ export default function Account() {
 
             <button
               type="submit"
-              className="rounded-md bg-stone-700 dark:bg-stone-200 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+              className="rounded-md bg-forest-600 dark:bg-forest-500 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
             >
               Save changes
             </button>
@@ -749,7 +749,7 @@ export default function Account() {
 
               <button
                 type="submit"
-                className="rounded-md bg-stone-700 dark:bg-stone-200 px-4 py-2 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+                className="rounded-md bg-forest-600 dark:bg-forest-500 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
               >
                 Change Password
               </button>

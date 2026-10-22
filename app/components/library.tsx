@@ -238,7 +238,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
               </p>
               <Link
                 to="/search"
-                className="mt-8 inline-flex items-center gap-2 rounded-md bg-stone-700 dark:bg-stone-200 px-6 py-3 text-lg font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+                className="mt-8 inline-flex items-center gap-2 rounded-md bg-forest-600 dark:bg-forest-500 px-6 py-3 text-lg font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
               >
                 <span aria-hidden="true">+</span>
                 Add your first books
@@ -567,7 +567,7 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                       </span>
                     ) : null}
                     {book.isBorrowed ? (
-                      <span className="bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs px-2 py-1 rounded-full flex-shrink-0 inline-flex items-center gap-1">
+                      <span className="bg-stone-900 dark:bg-stone-100 text-white text-xs px-2 py-1 rounded-full flex-shrink-0 inline-flex items-center gap-1">
                         <BorrowedIcon size={12} />
                         Borrowed
                       </span>

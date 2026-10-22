@@ -106,7 +106,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 };
 
 const primaryButton =
-  "inline-flex items-center justify-center rounded-md bg-stone-700 dark:bg-stone-200 px-3 py-1.5 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors";
+  "inline-flex items-center justify-center rounded-md bg-forest-600 dark:bg-forest-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors";
 const secondaryButton =
   "inline-flex items-center justify-center rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
 

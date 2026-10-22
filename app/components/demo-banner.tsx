@@ -25,7 +25,7 @@ export default function DemoBanner() {
             type="submit"
             name="intent"
             value="exit"
-            className="rounded-md border border-transparent bg-stone-700 dark:bg-stone-200 px-2.5 sm:px-3 py-1 text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
+            className="rounded-md border border-transparent bg-forest-600 dark:bg-forest-500 px-2.5 sm:px-3 py-1 text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
           >
             Sign up
           </button>
