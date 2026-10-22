@@ -199,6 +199,7 @@ export default function Library({ bookListItems, ownerName, header }: LibraryPro
         (book.author ?? "").toLowerCase().includes(term),
     );
   const isFiltered = Boolean(term) || status !== "all";
+  const showMarks = visibleBooks.some((book) => (book.readAt && !ownerName) || book.addedBy);
 
   return (
     <>
@@ -409,51 +410,52 @@ export default function Library({ bookListItems, ownerName, header }: LibraryPro
               {visibleBooks.map((book, index) => (
                 <li key={book.id} className="cover-wrapper">
                   <NavLink to={`/books/${book.id}`} className="group block">
-                    <BookCover
-                      cover={book.cover}
-                      eager={index < 7}
-                      sizes={grid.sizes}
-                      title={book.title}
-                      author={book.author}
-                      className="w-full aspect-[2/3] transition-opacity duration-200 group-hover:opacity-90"
-                    />
-                    <span className="mt-1.5 block truncate text-sm text-stone-700 dark:text-stone-300">
-                      {book.title}
+                    <div className="relative">
+                      <BookCover
+                        cover={book.cover}
+                        eager={index < 7}
+                        sizes={grid.sizes}
+                        title={book.title}
+                        author={book.author}
+                        className="w-full aspect-[2/3] transition-opacity duration-200 group-hover:opacity-90"
+                      />
+                      {/* Where the copy is, as a small tag on the cover itself */}
+                      {book.isBorrowed || book.isLending ? (
+                        <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[11px] leading-4 text-stone-700 dark:text-stone-200 shadow-sm">
+                          {book.isBorrowed ? <BorrowedIcon size={11} /> : <LentIcon size={11} />}
+                          {book.isBorrowed ? "Borrowed" : "Lent out"}
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className="mt-1.5 flex items-center gap-2 text-sm">
+                      <span className="min-w-0 flex-1 truncate text-stone-700 dark:text-stone-300">
+                        {book.title}
+                      </span>
+                      {book.loveCount ? (
+                        <span
+                          className="inline-flex flex-shrink-0 items-center gap-1 text-xs text-stone-400 dark:text-stone-500"
+                          title={`${book.loveCount} ${book.loveCount === 1 ? "reader loved" : "readers loved"} this`}
+                        >
+                          <HeartIcon size={11} filled className="text-rose-400" />
+                          {book.loveCount}
+                        </span>
+                      ) : null}
                     </span>
-                    {/* Always there, even when empty, so every row lines up */}
-                    <span className="mt-0.5 flex h-4 items-center justify-between gap-2 text-xs">
-                        {book.isBorrowed ? (
-                          <span className="inline-flex items-center gap-1 font-medium text-stone-900 dark:text-stone-100">
-                            <BorrowedIcon size={12} />
-                            Borrowed
-                          </span>
-                        ) : book.isLending ? (
-                          <span className="inline-flex items-center gap-1 text-stone-500 dark:text-stone-400">
-                            <LentIcon size={12} />
-                            Lent out
-                          </span>
-                        ) : book.readAt && !ownerName ? (
-                          <span className="inline-flex items-center gap-1 text-stone-400 dark:text-stone-500">
+                    {/* Read, or whose it is on a shared shelf. The line is kept
+                        (empty if need be) whenever any book has one, so the
+                        rows line up */}
+                    {showMarks ? (
+                      <span className="mt-0.5 flex h-4 items-center text-xs text-stone-400 dark:text-stone-500">
+                        {book.readAt && !ownerName ? (
+                          <span className="inline-flex items-center gap-1">
                             <ReadIcon size={11} />
                             Read
                           </span>
                         ) : book.addedBy ? (
-                          <span className="truncate text-stone-400 dark:text-stone-500">
-                            {book.addedBy}&apos;s
-                          </span>
-                        ) : (
-                          <span />
-                        )}
-                        {book.loveCount ? (
-                          <span
-                            className="inline-flex items-center gap-1 text-stone-400 dark:text-stone-500"
-                            title={`${book.loveCount} ${book.loveCount === 1 ? "reader loved" : "readers loved"} this`}
-                          >
-                            <HeartIcon size={11} filled className="text-rose-400" />
-                            {book.loveCount}
-                          </span>
+                          <span className="truncate">{book.addedBy}&apos;s</span>
                         ) : null}
                       </span>
+                    ) : null}
                   </NavLink>
                 </li>
               ))}
