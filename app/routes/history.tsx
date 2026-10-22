@@ -52,7 +52,7 @@ const monthDay = (date: string) => {
 function Cover({ cover, title, author }: { cover: string; title: string; author: string }) {
   const [failed, setFailed] = useState(!cover);
   return (
-    <div className="relative h-[72px] w-12 flex-shrink-0 overflow-hidden rounded-xs ring-1 ring-stone-900/5 dark:ring-white/10">
+    <div className="relative h-full w-full overflow-hidden rounded-xs ring-1 ring-stone-900/5 dark:ring-white/10">
       <CoverPlaceholder title={title} author={author} className="absolute inset-0" />
       {!failed ? (
         <img
@@ -84,8 +84,14 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
   const body = entry.note?.body?.trim();
 
   return (
-    <li className="flex items-start gap-4 py-4">
-      <Link to={`/books/${entry.book.id}`} tabIndex={-1} aria-hidden="true">
+    // The cover stretches to the height of the row beside it
+    <li className="flex gap-4 py-4">
+      <Link
+        to={`/books/${entry.book.id}`}
+        tabIndex={-1}
+        aria-hidden="true"
+        className="block w-16 flex-shrink-0 self-stretch"
+      >
         <Cover cover={entry.book.cover} title={entry.book.title} author={entry.book.author} />
       </Link>
       <div className="min-w-0 flex-1">
