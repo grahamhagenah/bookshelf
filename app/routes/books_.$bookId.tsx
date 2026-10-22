@@ -977,6 +977,24 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
   );
 }
 
+// When the copy that's out is due back. The owner and the borrower are
+// told if it's late; anyone else just sees that someone has it.
+function CurrentLoan({ data }: { data: BookData }) {
+  const due = data.book.dueDate;
+  if (!due) return <>has it now</>;
+  const late = new Date(due) < new Date();
+  if (data.isOwner || data.isBorrower) {
+    return late ? (
+      <span className="font-semibold text-stone-900 dark:text-stone-100">
+        overdue since {monthDay(due)}
+      </span>
+    ) : (
+      <>due {monthDay(due)}</>
+    );
+  }
+  return late ? <>has it now</> : <>due back {monthDay(due)}</>;
+}
+
 // Everyone who has had this copy, newest first, down to the day it
 // joined the owner's shelf
 function LendingHistory({ data }: { data: BookData }) {
@@ -1048,9 +1066,13 @@ function LendingHistory({ data }: { data: BookData }) {
                   )}
                 </p>
                 <p className="text-sm text-stone-500 dark:text-stone-400">
-                  {entry.returnedAt
-                    ? `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
-                    : `Since ${monthDay(entry.borrowedAt)} · has it now`}
+                  {entry.returnedAt ? (
+                    `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
+                  ) : (
+                    <>
+                      Since {monthDay(entry.borrowedAt)} · <CurrentLoan data={data} />
+                    </>
+                  )}
                 </p>
               </div>
             </li>
@@ -1254,48 +1276,14 @@ export default function BookDetailsPage() {
               </Form>
             </div>
           ) : null}
+          {/* Whose it is and when it's due are in the lending history */}
           {data.isBorrower ? (
-            // The button first, under the cover like everyone else's, then
-            // whose it is and when it's due
-            <div className={panel}>
-              <Form method="post">
-                <input type="hidden" name="intent" value="return" />
-                <button type="submit" className={`w-full ${secondaryButton}`}>
-                  Return book
-                </button>
-              </Form>
-              {data.book.user ? (
-                <div className="mt-3 space-y-0.5">
-                  <p className="text-stone-800 dark:text-stone-200 [overflow-wrap:anywhere]">
-                    Borrowed from{" "}
-                    <span className="font-semibold">
-                      <PersonLink
-                        id={data.book.user.id}
-                        name={`${data.book.user.firstname} ${data.book.user.surname}`}
-                        friendIds={data.friendIds}
-                      />
-                    </span>
-                  </p>
-                  {data.book.borrowedAt || data.book.dueDate ? (
-                    <p className="text-stone-500 dark:text-stone-400">
-                      {data.book.borrowedAt
-                        ? `Since ${monthDay(data.book.borrowedAt)}`
-                        : null}
-                      {data.book.borrowedAt && data.book.dueDate ? " · " : null}
-                      {data.book.dueDate ? (
-                        new Date(data.book.dueDate) < new Date() ? (
-                          <span className="font-semibold text-stone-900 dark:text-stone-100">
-                            Overdue since {monthDay(data.book.dueDate)}
-                          </span>
-                        ) : (
-                          <>Due {monthDay(data.book.dueDate)}</>
-                        )
-                      ) : null}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
+            <Form method="post">
+              <input type="hidden" name="intent" value="return" />
+              <button type="submit" className={`w-full ${secondaryButton}`}>
+                {data.book.user ? `Return book to ${data.book.user.firstname}` : "Return book"}
+              </button>
+            </Form>
           ) : null}
           {/* The heart comes after whatever you can do with the book */}
           {!isEditing ? (
