@@ -15,11 +15,13 @@ import {
   useLoaderData,
   useLocation,
 } from "@remix-run/react";
+import { useEffect } from "react";
 
 import { seo } from "~/seo";
 import { getUser } from "~/session.server";
 import { sharePromptDismissed } from "~/share-prompt.server";
 import stylesheet from "~/styles/tailwind.css";
+import { themeOf } from "~/utils";
 
 import DemoBanner from "./components/demo-banner";
 import Footer from "./components/footer";
@@ -55,21 +57,44 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
 };
 
+// For "match my device": goes dark before the first paint, so a dark
+// device never sees a flash of white. The effect below keeps it in step
+// after that.
+const FOLLOW_DEVICE = `if (matchMedia("(prefers-color-scheme: dark)").matches) document.documentElement.classList.add("dark")`;
+
 export default function App() {
   const { user, sharePrompt } = useLoaderData<typeof loader>();
   const { pathname } = useLocation();
-  const isDarkMode = user?.darkMode ?? false;
+  const theme = themeOf(user);
+
+  useEffect(() => {
+    if (theme !== "system") return;
+    const media = matchMedia("(prefers-color-scheme: dark)");
+    const follow = () => document.documentElement.classList.toggle("dark", media.matches);
+    follow();
+    media.addEventListener("change", follow);
+    return () => media.removeEventListener("change", follow);
+  }, [theme]);
   // Not on the account page, which has its own sharing section, or on
   // home, where a new account's welcome steps include sharing
   const showSharePrompt =
     sharePrompt && pathname !== "/account" && pathname !== "/";
 
   return (
-    <html lang="en" className={`h-full ${isDarkMode ? "dark" : ""}`}>
+    // The class can differ from the server's when following the device
+    <html lang="en" className={`h-full ${theme === "dark" ? "dark" : ""}`} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
+        {theme === "system" ? <script dangerouslySetInnerHTML={{ __html: FOLLOW_DEVICE }} /> : null}
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <meta name="theme-color" content={isDarkMode ? "#0c0a09" : "#ffffff"} />
+        {theme === "system" ? (
+          <>
+            <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c0a09" />
+            <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+          </>
+        ) : (
+          <meta name="theme-color" content={theme === "dark" ? "#0c0a09" : "#ffffff"} />
+        )}
         <Meta />
         <Links />
       </head>

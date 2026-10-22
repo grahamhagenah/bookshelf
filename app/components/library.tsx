@@ -1,18 +1,16 @@
 import { NavLink, Link } from "@remix-run/react";
-import { useState, useLayoutEffect, useEffect } from "react";
+import { useState } from "react";
 
-import { coverSrc } from "~/utils";
+import { coverSizeOf, coverSrc, libraryViewOf, useOptionalUser } from "~/utils";
 
 import CoverPlaceholder from "./cover-placeholder";
 import {
   GroupIcon,
   SearchIcon,
   BookIcon,
-  GridViewIcon,
   BorrowedIcon,
   HeartIcon,
   LentIcon,
-  ListViewIcon,
   ReadIcon,
 } from "./icons";
 
@@ -30,10 +28,18 @@ function getCoverSources(original: string) {
   };
 }
 
-// Matches the grid: 3 columns on phones, then up to 5 in the 56rem column
-const COVER_SIZES = "(min-width: 768px) 160px, (min-width: 640px) 22vw, 31vw";
-
-type ViewMode = "cover" | "list";
+// The grid for each cover size in the account settings, and how wide a
+// cover is in it, so the browser picks the right image
+const GRIDS = {
+  large: {
+    columns: "grid-cols-3 sm:grid-cols-4 md:grid-cols-5",
+    sizes: "(min-width: 768px) 160px, (min-width: 640px) 22vw, 31vw",
+  },
+  small: {
+    columns: "grid-cols-4 sm:grid-cols-5 md:grid-cols-7",
+    sizes: "(min-width: 768px) 120px, (min-width: 640px) 18vw, 23vw",
+  },
+};
 
 interface Book {
   id: string;
@@ -105,12 +111,14 @@ function BookCover({
   title,
   author,
   className,
+  sizes,
   eager = false,
 }: {
   cover: string;
   title: string;
   author?: string;
   className?: string;
+  sizes: string;
   eager?: boolean;
 }) {
   const { src, srcSet } = getCoverSources(cover);
@@ -138,7 +146,7 @@ function BookCover({
         <img
           src={src}
           srcSet={srcSet}
-          sizes={srcSet ? COVER_SIZES : undefined}
+          sizes={srcSet ? sizes : undefined}
           alt={title}
           // The first row is usually on screen right away
           loading={eager ? "eager" : "lazy"}
@@ -158,28 +166,10 @@ function BookCover({
 }
 
 export default function Library({ bookListItems, ownerName }: LibraryProps) {
-  const [viewMode, setViewMode] = useState<ViewMode | null>(null);
-  const isHydrated = viewMode !== null;
-
-  // Load saved preference from localStorage using useLayoutEffect to prevent flash
-  // useLayoutEffect runs synchronously before browser paint
-  const useIsomorphicLayoutEffect =
-    typeof window !== "undefined" ? useLayoutEffect : useEffect;
-
-  useIsomorphicLayoutEffect(() => {
-    const saved = localStorage.getItem("libraryViewMode");
-    if (saved === "cover" || saved === "list") {
-      setViewMode(saved);
-    } else {
-      setViewMode("cover");
-    }
-  }, []);
-
-  // Save preference when it changes
-  const handleViewChange = (mode: ViewMode) => {
-    setViewMode(mode);
-    localStorage.setItem("libraryViewMode", mode);
-  };
+  // Set on the account page, and the same on every shelf you look at
+  const viewer = useOptionalUser();
+  const viewMode = libraryViewOf(viewer);
+  const grid = GRIDS[coverSizeOf(viewer)];
 
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<Status>("all");
@@ -334,9 +324,6 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
             </div>
           </section>
         </main>
-      ) : !isHydrated ? (
-        // Render minimal placeholder while loading preference to prevent flash
-        <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8" />
       ) : (
         <main className="mt-8 md:mt-8 px-4 md:px-8 pb-8">
           {/* Filter bar: find, narrow and switch views, in one line on
@@ -391,38 +378,6 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
                   Add books
                 </Link>
               )}
-              <div
-                className={`${ownerName ? "ml-auto" : ""} flex flex-shrink-0 gap-1`}
-                role="group"
-                aria-label="View"
-              >
-                <button
-                  onClick={() => handleViewChange("cover")}
-                  aria-pressed={viewMode === "cover"}
-                  className={`w-7 h-7 rounded-md transition-colors flex items-center justify-center ${
-                    viewMode === "cover"
-                      ? "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200"
-                      : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
-                  }`}
-                  title="Cover view"
-                  aria-label="Cover view"
-                >
-                  <GridViewIcon size={16} />
-                </button>
-                <button
-                  onClick={() => handleViewChange("list")}
-                  aria-pressed={viewMode === "list"}
-                  className={`w-7 h-7 rounded-md transition-colors flex items-center justify-center ${
-                    viewMode === "list"
-                      ? "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200"
-                      : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
-                  }`}
-                  title="List view"
-                  aria-label="List view"
-                >
-                  <ListViewIcon size={16} />
-                </button>
-              </div>
           </div>
 
           {visibleBooks.length === 0 ? (
@@ -445,13 +400,14 @@ export default function Library({ bookListItems, ownerName }: LibraryProps) {
 
           {/* Cover View */}
           {viewMode === "cover" ? (
-            <ol className="grid grid-cols-3 gap-3 sm:gap-4 sm:grid-cols-4 md:grid-cols-5">
+            <ol className={`grid gap-3 sm:gap-4 ${grid.columns}`}>
               {visibleBooks.map((book, index) => (
                 <li key={book.id} className="cover-wrapper">
                   <NavLink to={`/books/${book.id}`} className="group block">
                     <BookCover
                       cover={book.cover}
-                      eager={index < 5}
+                      eager={index < 7}
+                      sizes={grid.sizes}
                       title={book.title}
                       author={book.author}
                       className="w-full aspect-[2/3] transition-opacity duration-200 group-hover:opacity-90"
