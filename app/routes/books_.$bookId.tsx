@@ -1005,16 +1005,17 @@ function LoanCard({ data }: { data: BookData }) {
   const sendingReminder = reminder.state !== "idle";
   const extendingBy = extend.formData?.get("weeks");
   const name = borrower.firstname;
-  const label = "text-sm font-medium text-stone-700 dark:text-stone-300";
-  const chip = `flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
-    overdue
-      ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900"
-      : "bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 ring-1 ring-inset ring-stone-200 dark:ring-stone-700"
+  const label = "text-sm text-stone-500 dark:text-stone-400";
+  const chip = `flex-shrink-0 rounded-full bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 text-xs ${
+    overdue ? "font-semibold text-stone-900 dark:text-stone-100" : "text-stone-500 dark:text-stone-400"
   }`;
+  const button =
+    "rounded-md border border-stone-200 dark:border-stone-700 px-2 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
+  const divider = "border-t border-stone-100 dark:border-stone-800";
 
   return (
     <div
-      className={`mt-8 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 text-sm transition-opacity ${
+      className={`mt-8 rounded-xl border border-stone-200 dark:border-stone-800 text-sm transition-opacity ${
         returned.state !== "idle" ? "opacity-50" : ""
       }`}
     >
@@ -1023,7 +1024,6 @@ function LoanCard({ data }: { data: BookData }) {
           firstname={borrower.firstname}
           surname={borrower.surname}
           icon={borrower.profileEmoji}
-          className="bg-white dark:bg-stone-800"
         />
         <div className="min-w-0 flex-1">
           <p className="text-base text-stone-900 dark:text-stone-100">
@@ -1050,7 +1050,7 @@ function LoanCard({ data }: { data: BookData }) {
         {status ? <span className={`hidden sm:inline-flex ${chip}`}>{status}</span> : null}
       </div>
 
-      <div className="grid gap-5 border-t border-stone-200 dark:border-stone-800 p-4 sm:grid-cols-2">
+      <div className={`grid gap-4 p-4 sm:grid-cols-2 ${divider}`}>
         <div>
           <p className={label}>Give {name} more time</p>
           <extend.Form method="post" className="mt-2 flex gap-1.5">
@@ -1062,7 +1062,7 @@ function LoanCard({ data }: { data: BookData }) {
                 name="weeks"
                 value={weeks}
                 disabled={extend.state !== "idle"}
-                className={`flex-1 whitespace-nowrap bg-white dark:bg-stone-950 ${secondaryButton} px-2 disabled:opacity-60`}
+                className={`flex-1 whitespace-nowrap ${button} disabled:opacity-60`}
               >
                 {extendingBy === String(weeks) ? "Extending…" : `+${weeks} ${weeks === 1 ? "week" : "weeks"}`}
               </button>
@@ -1078,10 +1078,10 @@ function LoanCard({ data }: { data: BookData }) {
               disabled={sendingReminder || reminderSent}
               className={`w-full ${
                 reminderSent
-                  ? quietLabel
+                  ? `${quietLabel} py-1.5`
                   : overdue
-                    ? primaryButton
-                    : `bg-white dark:bg-stone-950 ${secondaryButton}`
+                    ? `${primaryButton} py-1.5`
+                    : button
               } disabled:cursor-default`}
             >
               {reminderSent ? "Reminder sent" : sendingReminder ? "Sending…" : "Send a reminder"}
@@ -1090,7 +1090,7 @@ function LoanCard({ data }: { data: BookData }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-stone-200 dark:border-stone-800 px-4 py-3">
+      <div className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 ${divider}`}>
         <p className="text-stone-500 dark:text-stone-400">Got it back in person?</p>
         <returned.Form
           method="post"
@@ -1101,7 +1101,7 @@ function LoanCard({ data }: { data: BookData }) {
           <input type="hidden" name="intent" value="markReturned" />
           <button
             type="submit"
-            className="font-medium text-stone-800 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:decoration-stone-500"
+            className="text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:decoration-stone-500"
           >
             Mark as returned
           </button>
