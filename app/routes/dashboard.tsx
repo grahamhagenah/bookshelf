@@ -12,6 +12,7 @@ import Layout from "~/components / Layout/Layout";
 import {
   getAdminUsers,
   getDataQuality,
+  getFunnel,
   getHealth,
   getLending,
   setAdmin,
@@ -37,13 +38,14 @@ async function requireAdmin(request: Request) {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireAdmin(request);
-  const [health, lending, users, quality] = await Promise.all([
+  const [health, funnel, lending, users, quality] = await Promise.all([
     getHealth(),
+    getFunnel(),
     getLending(),
     getAdminUsers(),
     getDataQuality(),
   ]);
-  return json({ userId, health, lending, users, quality });
+  return json({ userId, health, funnel, lending, users, quality });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -201,6 +203,73 @@ function Health({ health }: { health: Data["health"] }) {
           noun={["loan", "loans"]}
         />
       </div>
+    </section>
+  );
+}
+
+// How far people get after signing up. Each bar is out of everyone who
+// signed up; the small figure is how many made it from the step before.
+function Funnel({ funnel }: { funnel: Data["funnel"] }) {
+  const [range, setRange] = useState<"last30" | "allTime">("allTime");
+  const steps = funnel[range];
+  const total = steps[0].count;
+  const percent = (part: number, whole: number) => (whole ? Math.round((part / whole) * 100) : 0);
+  return (
+    <section aria-labelledby="funnel">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h2 id="funnel" className={headingClass}>
+          Funnel
+        </h2>
+        <div className="flex gap-1.5" role="group" aria-label="Who to count">
+          {(
+            [
+              ["allTime", "Everyone"],
+              ["last30", "Joined in the last 30 days"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={range === value}
+              onClick={() => setRange(value)}
+              className={`rounded-full px-2.5 py-1 text-sm transition-colors ${
+                range === value
+                  ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
+                  : "text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {total === 0 ? (
+        <p className={`mt-4 ${mutedClass}`}>Nobody signed up in this window.</p>
+      ) : (
+        <ol className="mt-4 space-y-3">
+          {steps.map((step, index) => (
+            <li key={step.label} className="grid grid-cols-[9rem_minmax(0,1fr)_6rem] items-center gap-3 text-sm">
+              <span className="text-stone-700 dark:text-stone-300">{step.label}</span>
+              <span className="h-5 rounded-sm bg-stone-100 dark:bg-stone-900">
+                <span
+                  className="block h-full rounded-sm bg-stone-400 dark:bg-stone-500"
+                  style={{ width: `${percent(step.count, total)}%` }}
+                />
+              </span>
+              <span className="text-right tabular-nums text-stone-900 dark:text-stone-100">
+                {step.count.toLocaleString()}
+                <span className={`ml-1.5 ${mutedClass}`}>
+                  {index === 0 ? "" : `${percent(step.count, steps[index - 1].count)}%`}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+      <p className={`mt-3 text-xs ${mutedClass}`}>
+        Real accounts only. The percentage beside each number is how many made it from the
+        step above.
+      </p>
     </section>
   );
 }
@@ -565,10 +634,11 @@ function DataQuality({ quality }: { quality: Data["quality"] }) {
 }
 
 export default function Dashboard() {
-  const { userId, health, lending, users, quality } = useLoaderData<typeof loader>();
+  const { userId, health, funnel, lending, users, quality } = useLoaderData<typeof loader>();
   return (
     <Layout title="Admin Dashboard">
       <Health health={health} />
+      <Funnel funnel={funnel} />
       <Lending lending={lending} />
       <People users={users} userId={userId} />
       <DataQuality quality={quality} />

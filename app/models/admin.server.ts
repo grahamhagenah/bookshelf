@@ -251,3 +251,34 @@ export async function getDataQuality() {
 export function setAdmin(userId: User["id"], isAdmin: boolean) {
   return prisma.user.update({ where: { id: userId }, data: { isAdmin } });
 }
+
+// How far people get after signing up: a book on their shelf, a real
+// shelf's worth, a friend, then a book changing hands. Each step counts
+// everyone who's done it, out of the people who signed up in the window.
+export async function getFunnel() {
+  const people = await prisma.user.findMany({
+    where: real,
+    select: {
+      createdAt: true,
+      _count: { select: { books: true, following: true, lendingHistory: true } },
+      // Any of their books ever lent out
+      books: { where: { lendCount: { gt: 0 } }, select: { id: true }, take: 1 },
+    },
+  });
+  const steps = (since: Date | null) => {
+    const cohort = since ? people.filter((person) => person.createdAt >= since) : people;
+    const count = (test: (person: (typeof people)[number]) => boolean) =>
+      cohort.filter(test).length;
+    return [
+      { label: "Signed up", count: cohort.length },
+      { label: "Added a book", count: count((p) => p._count.books > 0) },
+      { label: "Added 10 or more", count: count((p) => p._count.books >= 10) },
+      { label: "Made a friend", count: count((p) => p._count.following > 0) },
+      {
+        label: "Lent or borrowed",
+        count: count((p) => p._count.lendingHistory > 0 || p.books.length > 0),
+      },
+    ];
+  };
+  return { allTime: steps(null), last30: steps(daysAgo(30)) };
+}

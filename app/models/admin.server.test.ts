@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { makeBook, makeUser, prisma } from "../../test/db";
 
-import { getAdminUsers, getDataQuality, getHealth, getLending } from "./admin.server";
+import { getAdminUsers, getDataQuality, getFunnel, getHealth, getLending } from "./admin.server";
 import { lendBook } from "./book.server";
 import { createFriendship, deleteUsers } from "./user.server";
 
@@ -95,4 +95,21 @@ test("deleting an account returns their borrowed books and keeps everyone else's
     dueDate: null,
   });
   expect(await prisma.notification.count({ where: { senderId: borrower.id } })).toBe(0);
+});
+
+test("the funnel follows real people from sign-up to their first loan", async () => {
+  const before = await getFunnel();
+  const reader = await makeUser("Funnel");
+  const friend = await makeUser("FunnelFriend");
+  await makeUser("Demo", { demoGroup: "funnel-test" });
+  await createFriendship(reader.id, friend.id);
+  for (let i = 0; i < 10; i++) await makeBook(reader.id, `Book ${i}`);
+  const lent = await makeBook(friend.id, "Lent");
+  await lendBook(lent.id, reader.id);
+
+  const after = await getFunnel();
+  const grew = after.last30.map((step, index) => step.count - before.last30[index].count);
+  // Two people signed up (the demo doesn't count); the reader got all the
+  // way, and the friend has a book and a friend and lent something
+  expect(grew).toEqual([2, 2, 1, 2, 2]);
 });
