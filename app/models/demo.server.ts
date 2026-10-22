@@ -118,7 +118,7 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       pageCount: 333,
       publisher: "Vintage",
       subjects: "Post-apocalyptic fiction, Theater, Survival",
-      body: "Years after a pandemic collapses civilization, a travelling troupe of actors and musicians performs Shakespeare for the scattered settlements of the Great Lakes.",
+      body: "Years after a pandemic collapses civilization, a traveling troupe of actors and musicians performs Shakespeare for the scattered settlements of the Great Lakes.",
     },
     {
       title: "Braiding Sweetgrass",
@@ -260,7 +260,7 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       pageCount: 662,
       publisher: "DAW Books",
       subjects: "Fantasy, Magic, Music",
-      body: "A legendary figure, now hiding as an innkeeper, tells the true story of his life, from a childhood with travelling players to the arcane university.",
+      body: "A legendary figure, now hiding as an innkeeper, tells the true story of his life, from a childhood with traveling players to the arcane university.",
     },
     {
       title: "Beloved",

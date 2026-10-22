@@ -147,7 +147,7 @@ export async function applySubscription(subscription: Stripe.Subscription) {
       stripeSubscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
       planRenewsAt: plus ? renewsAt : null,
-      // Cancelled, still paid up until the end of the period
+      // Canceled, still paid up until the end of the period
       planEndsAt: plus
         ? (toDate(subscription.cancel_at) ?? (subscription.cancel_at_period_end ? renewsAt : null))
         : null,

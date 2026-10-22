@@ -160,7 +160,7 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     let stop: Stop | null = null;
     let stream: MediaStream | null = null;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const video = videoRef.current;
       if (!video || !navigator.mediaDevices?.getUserMedia) {
@@ -170,14 +170,14 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
       }
       try {
         stream = await openCamera();
-        if (cancelled) return;
+        if (canceled) return;
         const [track] = stream.getVideoTracks();
         const caps = track.getCapabilities?.() as { torch?: boolean } | undefined;
         if (caps?.torch) setTorch({ on: false, track });
 
         const onCode = (code: string) => addRef.current(code);
         stop = (await startNative(video, stream, onCode)) ?? (await startZxing(video, stream, onCode));
-        if (cancelled) stop();
+        if (canceled) stop();
         else setPhase("looking");
       } catch (error) {
         setPhase("nocamera");
@@ -189,7 +189,7 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
       }
     })();
     return () => {
-      cancelled = true;
+      canceled = true;
       stop?.();
       stream?.getTracks().forEach((track) => track.stop());
     };

@@ -195,7 +195,7 @@ function Stat({
   tone?: Tone;
 }) {
   return (
-    // The tile is centred on the label and figure, close to their height
+    // The tile is centerd on the label and figure, close to their height
     <div className="flex items-center gap-3">
       {Icon ? (
         <span
@@ -307,8 +307,8 @@ function Plus({ revenue }: { revenue: Data["revenue"] }) {
         <Stat label="Monthly revenue" value={money(revenue.mrr)} note="before fees and tax" icon={DollarIcon} tone="forest" />
         <Stat label="Gifted" value={revenue.gifted} icon={HeartIcon} tone="amber" />
         <Stat
-          label="Cancelling"
-          value={revenue.cancelling}
+          label="Canceling"
+          value={revenue.canceling}
           note={
             revenue.pastDue
               ? `${revenue.pastDue} ${revenue.pastDue === 1 ? "payment" : "payments"} failing`
@@ -412,7 +412,7 @@ function Health({ health }: { health: Data["health"] }) {
 }
 
 // How far people get after signing up. Each bar is out of everyone who
-// signed up, labelled with that share; the chip on the right is how many
+// signed up, labeled with that share; the chip on the right is how many
 // made it from the step before.
 function Funnel({ funnel }: { funnel: Data["funnel"] }) {
   const [range, setRange] = useState<"last30" | "allTime">("allTime");

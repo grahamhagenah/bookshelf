@@ -31,7 +31,7 @@ export default function LendBooksToFriends() {
       title="How to lend books to friends, and get them back"
       intro={
         <>
-          Almost everyone has a favourite book they lent out and never saw again. Usually
+          Almost everyone has a favorite book they lent out and never saw again. Usually
           nobody did anything wrong. It just wasn&apos;t written down, there was no date, and
           asking for it back felt awkward.
         </>

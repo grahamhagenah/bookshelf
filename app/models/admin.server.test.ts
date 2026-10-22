@@ -133,7 +133,7 @@ test("revenue counts paying subscribers, a yearly plan as a twelfth a month", as
   await plus("Yearly", { ...paid, stripeSubscriptionId: "sub_y", planInterval: "year", planAmount: 2400, planEndsAt: new Date(Date.now() + 30 * DAY) });
   await plus("Failing", { ...paid, stripeSubscriptionId: "sub_f", planInterval: "month", planAmount: 300, subscriptionStatus: "past_due" });
   await plus("Gift", {});
-  // Paid once, then cancelled
+  // Paid once, then canceled
   const ended = await makeUser("Ended");
   await prisma.user.update({ where: { id: ended.id }, data: { stripeSubscriptionId: "sub_e", subscriptionStatus: "canceled" } });
   // The demo never counts
@@ -147,7 +147,7 @@ test("revenue counts paying subscribers, a yearly plan as a twelfth a month", as
   expect(after.gifted - before.gifted).toBe(1);
   // $3 + $3 + $24 / 12
   expect(after.mrr - before.mrr).toBe(800);
-  expect(after.cancelling - before.cancelling).toBe(1);
+  expect(after.canceling - before.canceling).toBe(1);
   expect(after.pastDue - before.pastDue).toBe(1);
   expect(after.ended - before.ended).toBe(1);
   expect(after.subscribers.find((user) => user.name.startsWith("Gift"))).toMatchObject({ gift: true });

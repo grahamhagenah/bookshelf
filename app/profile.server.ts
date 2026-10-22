@@ -37,7 +37,7 @@ export async function saveProfile(
   return { ok: true };
 }
 
-const FAVOURITES = 5;
+const FAVORITES = 5;
 
 // The header for a shared shelf
 export async function getShelfProfile(userId: User["id"]) {
@@ -49,7 +49,7 @@ export async function getShelfProfile(userId: User["id"]) {
     prisma.readerNote.findMany({
       where: { userId, loved: true, book: { userId: { in: ids } } },
       orderBy: { updatedAt: "desc" },
-      take: FAVOURITES,
+      take: FAVORITES,
       select: { book: { select: { id: true, title: true, author: true, cover: true } } },
     }),
     prisma.readerNote.findMany({
@@ -71,7 +71,7 @@ export async function getShelfProfile(userId: User["id"]) {
   return {
     handle: user.handle,
     bio: user.bio,
-    favourites: loved.map((note) => note.book),
+    favorites: loved.map((note) => note.book),
     stats: {
       books,
       readThisYear: read.size,

@@ -247,7 +247,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Handle password change
   // Deleting your own account: everything goes, any subscription is
-  // cancelled, and you're signed out. The demo resets on its own instead.
+  // canceled, and you're signed out. The demo resets on its own instead.
   if (intent === "deleteAccount" && !isDemo) {
     await deleteUsers([userId]);
     const session = await getSession(request);
@@ -1098,7 +1098,7 @@ function PlanPanel({
         : own?.pastDue
           ? "Your last payment didn't go through. Stripe will try again; you can update your card below."
           : own?.endsAt
-            ? `Cancelled. Plus stays on until ${longDate(own.endsAt)}.`
+            ? `Canceled. Plus stays on until ${longDate(own.endsAt)}.`
             : own?.renewsAt
               ? `Renews ${longDate(own.renewsAt)}. ${usage}`
               : own && !own.paid
@@ -1246,7 +1246,7 @@ function DeleteAccount({ plus, shared }: { plus: boolean; shared: boolean }) {
       <p>
         This deletes your account with your books, notes, hearts, friendships and lending history.
         {shared ? " The books you added leave the shared shelf; everyone else keeps theirs." : ""}
-        {plus ? " Your Stacks Plus subscription is cancelled, so you won't be billed again." : ""}{" "}
+        {plus ? " Your Stacks Plus subscription is canceled, so you won't be billed again." : ""}{" "}
         It can&apos;t be undone, so you might{" "}
         <a href="/export" download className="underline underline-offset-2">
           download your shelf
@@ -1305,7 +1305,7 @@ function ProfilePanel({
       <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">Your page</h3>
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
         Pick a handle for a link that&apos;s easy to share, like in your Instagram bio, and add a
-        line about yourself. Your favourites are the books you&apos;ve hearted.
+        line about yourself. Your favorites are the books you&apos;ve hearted.
       </p>
       <fetcher.Form method="post" className="mt-3 grid gap-3">
         <input type="hidden" name="intent" value="saveProfile" />

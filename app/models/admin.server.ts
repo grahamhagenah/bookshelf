@@ -263,7 +263,7 @@ export async function getFunnel() {
       _count: { select: { books: true, following: true, lendingHistory: true } },
       // Any of their books ever lent out
       books: { where: { lendCount: { gt: 0 } }, select: { id: true }, take: 1 },
-      // Kept after cancelling, so this is anyone who ever paid
+      // Kept after canceling, so this is anyone who ever paid
       stripeSubscriptionId: true,
     },
   });
@@ -326,7 +326,7 @@ export async function getRevenue() {
     gifted: subscribers.length - paying.length,
     // Monthly recurring revenue, in cents
     mrr: Math.round(paying.reduce((sum, user) => sum + perMonth(user), 0)),
-    cancelling: paying.filter((user) => user.planEndsAt).length,
+    canceling: paying.filter((user) => user.planEndsAt).length,
     pastDue: paying.filter((user) => user.subscriptionStatus === "past_due").length,
     ended,
     subscribers: subscribers.map((user) => ({

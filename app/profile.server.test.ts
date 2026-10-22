@@ -39,7 +39,7 @@ test("handles are tidied, and refused when they're odd, reserved or taken", asyn
   });
 });
 
-test("favourites are the shelf's books you've hearted; stats count books, reads and lends", async () => {
+test("favorites are the shelf's books you've hearted; stats count books, reads and lends", async () => {
   const me = await makeUser("Me");
   const dune = await makeBook(me.id, "Dune");
   const circe = await makeBook(me.id, "Circe");
@@ -49,7 +49,7 @@ test("favourites are the shelf's books you've hearted; stats count books, reads 
   await prisma.book.update({ where: { id: dune.id }, data: { lendCount: 3, readAt: new Date() } });
 
   const profile = await getShelfProfile(me.id);
-  expect(profile.favourites.map((book) => book.title)).toEqual(["Dune"]);
+  expect(profile.favorites.map((book) => book.title)).toEqual(["Dune"]);
   expect(profile.stats).toEqual({ books: 3, readThisYear: 2, mostLent: { title: "Dune", times: 3 } });
 });
 

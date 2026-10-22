@@ -45,7 +45,7 @@ export default function Header() {
         </div>
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
           {/* Your shelf, and what your friends are up to, are what you come
-              back for, so on wider screens they get labelled links of their
+              back for, so on wider screens they get labeled links of their
               own; phones keep the icons */}
           {user ? (
             <nav aria-label="Main" className="hidden md:flex items-center gap-1">

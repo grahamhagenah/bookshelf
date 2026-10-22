@@ -53,7 +53,7 @@ export async function getPlanUsage(userId: User["id"]) {
     own: me?.plan === "plus" ? { paid: Boolean(me.stripeSubscriptionId), pastDue: me.subscriptionStatus === "past_due", renewsAt: me.planRenewsAt, endsAt: me.planEndsAt } : null,
     // Someone on the shared shelf whose Plus covers them
     coveredBy: me?.plan !== "plus" && payer ? payer.firstname : null,
-    // A Stripe customer can always reach the portal, even after cancelling
+    // A Stripe customer can always reach the portal, even after canceling
     canManage: Boolean(me?.stripeSubscriptionId),
   };
 }

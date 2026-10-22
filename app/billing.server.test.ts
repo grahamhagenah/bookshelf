@@ -52,7 +52,7 @@ test("a new subscription turns Plus on, found by the account it names", async ()
   expect(plan.planRenewsAt?.getTime()).toBe(inAMonth * 1000);
 });
 
-test("cancelling keeps Plus to the end of the period, then ends it", async () => {
+test("canceling keeps Plus to the end of the period, then ends it", async () => {
   const me = await makeUser("Me");
   await applySubscription(subscription({ userId: me.id, customer: "cus_2", id: "sub_2" }));
   await applySubscription(subscription({ customer: "cus_2", id: "sub_2", cancel_at_period_end: true }));

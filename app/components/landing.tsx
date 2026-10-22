@@ -89,7 +89,7 @@ const QUESTIONS: { q: string; a: React.ReactNode }[] = [
     a: (
       <>
         No. Every request comes to you and you can say no. Plenty of people use Stacks as a
-        catalogue of what they own and mostly borrow.
+        catalog of what they own and mostly borrow.
       </>
     ),
   },

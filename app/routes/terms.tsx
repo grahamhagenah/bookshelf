@@ -73,7 +73,7 @@ export default function Terms() {
             each month or year until you cancel.
           </li>
           <li>
-            <strong className={strong}>Cancelling.</strong> Cancel any time from Settings. Plus
+            <strong className={strong}>Canceling.</strong> Cancel any time from Settings. Plus
             stays on until the end of the period you&apos;ve paid for, then your account goes back
             to the free plan.
           </li>

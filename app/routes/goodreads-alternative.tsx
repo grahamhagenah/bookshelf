@@ -29,7 +29,7 @@ const APPS: { name: string; builtFor: string; bestIf: string; highlight?: boolea
   },
   {
     name: "LibraryThing",
-    builtFor: "Detailed cataloguing of a personal collection.",
+    builtFor: "Detailed cataloging of a personal collection.",
     bestIf: "You want precise records of every edition you own.",
   },
   {
@@ -48,7 +48,7 @@ export default function GoodreadsAlternative() {
       intro={
         <>
           Goodreads, StoryGraph and LibraryThing are built around tracking what you read or
-          cataloguing what you own. Stacks is built around something they don&apos;t focus on:
+          cataloging what you own. Stacks is built around something they don&apos;t focus on:
           the physical copies on your shelves, and passing them between friends.
         </>
       }

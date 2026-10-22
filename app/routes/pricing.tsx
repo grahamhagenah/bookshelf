@@ -157,7 +157,7 @@ export default function Pricing() {
         </p>
       </GuideSection>
 
-      <GuideSection title="Paying and cancelling">
+      <GuideSection title="Paying and canceling">
         <p>
           Payments go through Stripe, so Stacks never sees your card. Prices are in US dollars,
           and sales tax or VAT is added at checkout where it applies. Plus renews automatically;

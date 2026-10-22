@@ -94,7 +94,7 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         a: (
           <>
             No. Every request comes to you and you can decline it. Plenty of people use
-            Stacks as a catalogue of what they own and borrow from friends without
+            Stacks as a catalog of what they own and borrow from friends without
             lending much themselves.
           </>
         ),
@@ -122,7 +122,7 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
             <a href="https://openlibrary.org" target="_blank" rel="noreferrer" className={link}>
               Open Library
             </a>
-            , the Internet Archive&apos;s catalogue.
+            , the Internet Archive&apos;s catalog.
           </>
         ),
       },
