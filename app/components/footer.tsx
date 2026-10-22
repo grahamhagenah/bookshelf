@@ -1,4 +1,4 @@
-import { Link, useMatches } from "@remix-run/react";
+import { Link, useLocation, useMatches } from "@remix-run/react";
 
 import DemoButton from "./demo-button";
 import { StacksLogo } from "./icons";
@@ -13,6 +13,7 @@ export default function Footer() {
   const matches = useMatches();
   const rootData = matches.find((m) => m.id === "root")?.data as RootLoaderData | undefined;
   const user = rootData?.user;
+  const { pathname } = useLocation();
 
   return (
     <footer className="mt-16 border-t border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 text-sm text-stone-500 dark:text-stone-400">
@@ -48,6 +49,11 @@ export default function Footer() {
           </ul>
           <ul className="space-y-2">
             <li><Link to="/faq" className={linkClass}>FAQ</Link></li>
+            <li>
+              <Link to={`/feedback?from=${encodeURIComponent(pathname)}`} className={linkClass}>
+                Send feedback
+              </Link>
+            </li>
             <li>
               <a href="https://openlibrary.org" target="_blank" rel="noreferrer" className={linkClass}>Open Library</a>
             </li>

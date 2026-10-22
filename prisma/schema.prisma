@@ -43,6 +43,7 @@ model User {
   holds          Hold[]
   wantToRead     WantToRead[]
 
+  feedback              Feedback[]
   notificationsSent     Notification[] @relation("sender")
   notificationsReceived Notification[] @relation("receiver")
 
@@ -215,4 +216,24 @@ model Household {
   createdAt   DateTime @default(now())
 
   members User[]
+}
+
+// Something a person told us from the feedback page. Kept if their
+// account goes; visitors who aren't signed in can leave an email to hear back.
+model Feedback {
+  id     String  @id @default(cuid())
+  body   String
+  // The page they were on when they opened the form
+  page   String?
+  // How to reach them, when they're not signed in
+  email  String?
+
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId String?
+
+  // Ticked off on the admin dashboard
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }

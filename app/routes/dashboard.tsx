@@ -18,6 +18,7 @@ import {
   setAdmin,
 } from "~/models/admin.server";
 import { deleteExpiredDemoGroups } from "~/models/demo.server";
+import { getFeedback, setFeedbackDone } from "~/models/feedback.server";
 import { deleteUsers, isUserAdmin } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
@@ -38,14 +39,15 @@ async function requireAdmin(request: Request) {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireAdmin(request);
-  const [health, funnel, lending, users, quality] = await Promise.all([
+  const [health, funnel, feedback, lending, users, quality] = await Promise.all([
     getHealth(),
     getFunnel(),
+    getFeedback(),
     getLending(),
     getAdminUsers(),
     getDataQuality(),
   ]);
-  return json({ userId, health, funnel, lending, users, quality });
+  return json({ userId, health, funnel, feedback, lending, users, quality });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -55,6 +57,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "clearDemos") {
     await deleteExpiredDemoGroups();
+    return json({ ok: true });
+  }
+
+  if (intent === "feedbackDone") {
+    const id = form.get("feedbackId");
+    if (typeof id !== "string") return json({ error: "No feedback given" }, { status: 400 });
+    await setFeedbackDone(id, form.get("done") === "true");
     return json({ ok: true });
   }
 
@@ -271,6 +280,66 @@ function Funnel({ funnel }: { funnel: Data["funnel"] }) {
         step above.
       </p>
     </section>
+  );
+}
+
+// What people have sent from the feedback page, open ones first
+function Feedback({ feedback }: { feedback: Data["feedback"] }) {
+  const open = feedback.filter((item) => !item.done).length;
+  return (
+    <section aria-labelledby="feedback-heading" id="feedback">
+      <h2 id="feedback-heading" className={headingClass}>
+        Feedback
+        {open ? <span className={`ml-2 text-sm font-normal ${mutedClass}`}>{open} open</span> : null}
+      </h2>
+      {feedback.length === 0 ? (
+        <p className={`mt-4 ${mutedClass}`}>
+          Nothing yet. It&apos;s linked from the footer and the account menu.
+        </p>
+      ) : (
+        <ul className="mt-4 divide-y divide-stone-100 dark:divide-stone-800 rounded-xl border border-stone-200 dark:border-stone-800">
+          {feedback.map((item) => (
+            <FeedbackItem key={item.id} item={item} />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function FeedbackItem({ item }: { item: Data["feedback"][number] }) {
+  const fetcher = useFetcher();
+  const done = fetcher.formData ? fetcher.formData.get("done") === "true" : item.done;
+  const who = item.user
+    ? `${item.user.firstname} ${item.user.surname}${item.user.demoGroup ? " (demo)" : ""}`
+    : "A visitor";
+  const replyTo = item.user && !item.user.demoGroup ? item.user.email : item.email;
+  return (
+    <li className={`flex gap-4 px-4 py-3 ${done ? "opacity-50" : ""}`}>
+      <div className="min-w-0 flex-1">
+        <p className="whitespace-pre-wrap text-pretty text-stone-800 dark:text-stone-200">{item.body}</p>
+        <p className={`mt-1 text-xs ${mutedClass}`}>
+          {who}
+          {replyTo ? (
+            <>
+              {" · "}
+              <a href={`mailto:${replyTo}`} className={bookLink}>
+                {replyTo}
+              </a>
+            </>
+          ) : null}
+          {item.page ? <> · from {item.page}</> : null} · {ago(item.createdAt)}
+        </p>
+      </div>
+      <fetcher.Form method="post" className="flex-shrink-0">
+        <input type="hidden" name="intent" value="feedbackDone" />
+        <input type="hidden" name="feedbackId" value={item.id} />
+        <input type="hidden" name="done" value={done ? "false" : "true"} />
+        <button type="submit" className={outlineButton}>
+          {done ? "Reopen" : "Done"}
+        </button>
+      </fetcher.Form>
+    </li>
   );
 }
 
@@ -634,11 +703,12 @@ function DataQuality({ quality }: { quality: Data["quality"] }) {
 }
 
 export default function Dashboard() {
-  const { userId, health, funnel, lending, users, quality } = useLoaderData<typeof loader>();
+  const { userId, health, funnel, feedback, lending, users, quality } = useLoaderData<typeof loader>();
   return (
     <Layout title="Admin Dashboard">
       <Health health={health} />
       <Funnel funnel={funnel} />
+      <Feedback feedback={feedback} />
       <Lending lending={lending} />
       <People users={users} userId={userId} />
       <DataQuality quality={quality} />

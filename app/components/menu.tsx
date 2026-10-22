@@ -1,4 +1,4 @@
-import { Form, useMatches } from "@remix-run/react";
+import { Form, useLocation, useMatches } from "@remix-run/react";
 import { useState, useRef, useEffect } from "react";
 
 import Avatar from "./avatar";
@@ -24,6 +24,15 @@ interface RootLoaderData {
   } | null;
 }
 
+function PencilIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 20h4L19 9l-4-4L4 16z" />
+      <path d="M13.5 6.5l4 4" />
+    </svg>
+  );
+}
+
 const item =
   "flex items-center gap-3 px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors";
 
@@ -35,6 +44,7 @@ export default function PositionedMenu() {
   const user = rootData?.user;
 
   const [open, setOpen] = useState(false);
+  const { pathname } = useLocation();
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -107,6 +117,14 @@ export default function PositionedMenu() {
               <span>Admin</span>
             </a>
           ) : null}
+          <a
+            href={`/feedback?from=${encodeURIComponent(pathname)}`}
+            onClick={() => setOpen(false)}
+            className={item}
+          >
+            <PencilIcon />
+            <span>Send feedback</span>
+          </a>
           <div className="border-t dark:border-stone-800 my-1" />
           <Form action="/logout" method="post">
             <button

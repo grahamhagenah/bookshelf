@@ -281,7 +281,11 @@ export default function Faq() {
       ))}
 
       <p className="mt-12 border-t border-stone-200 dark:border-stone-800 pt-8 text-sm text-stone-500 dark:text-stone-400">
-        Something missing? The code and an issue tracker are on{" "}
+        Something missing?{" "}
+        <Link to="/feedback?from=/faq" className={link}>
+          Send feedback
+        </Link>
+        , or find the code and an issue tracker on{" "}
         <a
           href="https://github.com/grahamhagenah/bookshelf"
           target="_blank"

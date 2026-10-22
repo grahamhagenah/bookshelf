@@ -315,3 +315,41 @@ export async function sendDigestEmail({
     return { success: false, error: String(error) };
   }
 }
+
+function escapeHtml(text: string) {
+  return text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
+}
+
+// A note to the admins when someone sends feedback
+export async function sendFeedbackEmail({
+  toEmail,
+  from,
+  body,
+  page,
+}: {
+  toEmail: string;
+  from: string;
+  body: string;
+  page: string | null;
+}) {
+  const subject = `Feedback from ${from.replace(/ <.*>$/, "")}`;
+  if (!resend) {
+    console.log("Email not sent (RESEND_API_KEY not configured):", { to: toEmail, subject });
+    return { success: false, error: "Email service not configured" };
+  }
+  const where = page ? `<p style="color:#78716c;font-size:13px">Sent from ${escapeHtml(page)}</p>` : "";
+  const { data, error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: toEmail,
+    subject,
+    html: `<div style="font-family:system-ui,sans-serif;max-width:560px">
+      <p style="color:#78716c;font-size:13px">${escapeHtml(from)} wrote:</p>
+      <p style="white-space:pre-wrap;font-size:16px;line-height:1.5;color:#1c1917">${escapeHtml(body)}</p>
+      ${where}
+      <p><a href="${APP_URL}/dashboard#feedback">See all feedback</a></p>
+    </div>`,
+    text: `${from} wrote:\n\n${body}\n\n${page ? `Sent from ${page}\n` : ""}${APP_URL}/dashboard#feedback`,
+  });
+  if (error) return { success: false, error: error.message };
+  return { success: true, id: data?.id };
+}
