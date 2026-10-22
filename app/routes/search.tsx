@@ -32,7 +32,13 @@ import {
 } from "~/models/wish.server";
 import { seo } from "~/seo";
 import { requireUserId, getUserId } from "~/session.server";
-import { cleanSubjects, coverSrc } from "~/utils";
+import {
+  cleanSubjects,
+  coverSrc,
+  editionPublisher,
+  ENGLISH_EDITION_FIELDS,
+  ENGLISH_EDITION_PARAMS,
+} from "~/utils";
 import { sameWork } from "~/works";
 
 export const meta: MetaFunction = () =>
@@ -49,7 +55,7 @@ interface OpenLibraryBook {
   first_publish_year?: number;
   number_of_pages_median?: number;
   subject?: string[];
-  publisher?: string[];
+  editions?: { docs?: { publisher?: string[] }[] };
   key?: string;
   language?: string[];
 }
@@ -123,9 +129,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     "first_publish_year",
     "number_of_pages_median",
     "subject",
-    "publisher",
     "key",
     "language",
+    ENGLISH_EDITION_FIELDS,
   ].join(",");
 
   // Build the query with language filter if specified
@@ -159,7 +165,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   let data: OpenLibraryResponse = { docs: [], numFound: 0 };
   try {
     const res = await fetch(
-      `https://openlibrary.org/search.json?${searchQuery}&limit=${RESULTS_PER_PAGE}&offset=${offset}&fields=${fields}`,
+      `https://openlibrary.org/search.json?${searchQuery}&limit=${RESULTS_PER_PAGE}&offset=${offset}&${ENGLISH_EDITION_PARAMS}&fields=${fields}`,
       { signal: AbortSignal.timeout(8000) },
     );
     const body = await res.json();
@@ -377,7 +383,7 @@ function SearchResultItem({
   const details = [
     book.first_publish_year,
     book.number_of_pages_median ? `${book.number_of_pages_median} pages` : null,
-    book.publisher?.[0],
+    editionPublisher(book),
   ].filter(Boolean);
 
   return (
@@ -429,7 +435,7 @@ function SearchResultItem({
           <input
             type="hidden"
             name="publisher"
-            value={book.publisher?.[0] ?? ""}
+            value={editionPublisher(book) ?? ""}
           />
           <input type="hidden" name="openLibraryKey" value={book.key ?? ""} />
 

@@ -38,6 +38,7 @@ import {
   returnBook,
   updateBookMetadata,
   getLendingHistory,
+  tidySubjects,
 } from "~/models/book.server";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import {
@@ -68,7 +69,14 @@ import {
 import type { CoversResponse } from "~/routes/api.covers";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
-import { cleanSubjects, coverSrc, stripMarkdown } from "~/utils";
+import {
+  cleanSubjects,
+  coverSrc,
+  editionPublisher,
+  ENGLISH_EDITION_FIELDS,
+  ENGLISH_EDITION_PARAMS,
+  stripMarkdown,
+} from "~/utils";
 
 // "Oct 21", adding the year only when it isn't this year
 const monthDay = (date: string | Date) => {
@@ -307,6 +315,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     await ensureBookDetails(book);
     book = (await getBookById(params.bookId)) ?? book;
   }
+  const tidied = await tidySubjects(book);
+  if (tidied !== undefined) book = { ...book, subjects: tidied };
 
   // Owner means anyone sharing the shelf the book is on
   const isOwner = (await shelfIds(userId)).includes(book.userId);
@@ -675,12 +685,12 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       "first_publish_year",
       "number_of_pages_median",
       "subject",
-      "publisher",
       "key",
+      ENGLISH_EDITION_FIELDS,
     ].join(",");
 
     const res = await fetch(
-      `https://openlibrary.org/search.json?q=${searchQuery}&limit=1&fields=${fields}`,
+      `https://openlibrary.org/search.json?q=${searchQuery}&limit=1&${ENGLISH_EDITION_PARAMS}&fields=${fields}`,
     );
     const data = await res.json();
 
@@ -711,7 +721,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         datePublished: bookData.first_publish_year?.toString() || null,
         pageCount: bookData.number_of_pages_median || null,
         subjects: cleanSubjects(bookData.subject).join(", ") || null,
-        publisher: bookData.publisher?.[0] || null,
+        publisher: editionPublisher(bookData),
         openLibraryKey: bookData.key || null,
         body: description,
       });

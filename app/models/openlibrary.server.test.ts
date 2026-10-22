@@ -21,7 +21,9 @@ function stubOpenLibrary() {
             first_publish_year: 2020,
             number_of_pages_median: 245,
             subject: ["Fantasy", "Labyrinths"],
-            publisher: ["Bloomsbury"],
+            // The work's list mixes in translations; the English edition's is the one kept
+            publisher: ["Alberdania", "Bloomsbury"],
+            editions: { docs: [{ key: "/books/OL1M", publisher: ["Bloomsbury"] }] },
             first_sentence: ["When the Moon rose in the Third Northern Hall I went to the Ninth Vestibule."],
             author_key: ["OL1A"],
             isbn: ["1635575635", "9781635575637"],

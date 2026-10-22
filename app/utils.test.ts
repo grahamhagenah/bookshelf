@@ -1,6 +1,7 @@
 import {
   cleanSubjects,
   coverSrc,
+  editionPublisher,
   isDemoEmail,
   looksLikeBot,
   MIN_SIGNUP_MS,
@@ -67,6 +68,34 @@ describe("cleanSubjects", () => {
     ).toEqual(["Fantasy", "Labyrinths"]);
   });
 
+  test("drops what belongs to translations, not the book", () => {
+    // Open Library's real list for What We Talk About When We Talk About Love
+    const carver = [
+      "Translations from American",
+      "Korean Short stories",
+      "American Short stories",
+      "Translations into Korean",
+      "Fiction",
+      "Manners and customs",
+      "Short stories",
+      "American fiction (fictional works by one author)",
+      "Chinese language materials",
+    ];
+    expect(cleanSubjects(carver)).toEqual(["American Short stories", "Manners and customs", "Short stories"]);
+    // The same, from the five stored on a book before this fix
+    expect(
+      cleanSubjects(
+        "Translations from American, Korean Short stories, American Short stories, Translations into Korean, Manners and customs",
+      ),
+    ).toEqual(["American Short stories", "Manners and customs"]);
+  });
+
+  test("keeps the book's own language, and translation as a topic", () => {
+    expect(
+      cleanSubjects(["Translations into English", "Russian fiction", "Translation", "English fiction"]),
+    ).toEqual(["Russian fiction", "Translation", "English fiction"]);
+  });
+
   test("keeps genre tags as plain topics", () => {
     expect(cleanSubjects(["genre:science_fiction"])).toEqual(["Science fiction"]);
   });
@@ -111,6 +140,14 @@ describe("stripMarkdown", () => {
   test("collapses runs of blank lines", () => {
     expect(stripMarkdown("One.\r\n\n\n\nTwo.")).toBe("One.\n\nTwo.");
   });
+});
+
+test("editionPublisher takes the English edition's, minus catalog codes", () => {
+  const edition = (publisher: string) => ({ editions: { docs: [{ publisher: [publisher] }] } });
+  expect(editionPublisher(edition("Collins"))).toBe("Collins");
+  expect(editionPublisher(edition("#bVintage, #c2009."))).toBe("Vintage");
+  expect(editionPublisher(edition("Picador, Pan Bks"))).toBe("Picador, Pan Bks");
+  expect(editionPublisher({})).toBeNull();
 });
 
 test("coverSrc can ask Open Library for a smaller size", () => {

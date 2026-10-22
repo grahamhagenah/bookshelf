@@ -1,7 +1,12 @@
 import type { Book } from "@prisma/client";
 
 import { prisma } from "~/db.server";
-import { cleanSubjects } from "~/utils";
+import {
+  cleanSubjects,
+  editionPublisher,
+  ENGLISH_EDITION_FIELDS,
+  ENGLISH_EDITION_PARAMS,
+} from "~/utils";
 
 // Open Library can be slow; never hold a page up for long
 const TIMEOUT_MS = 4000;
@@ -124,7 +129,7 @@ async function refreshAuthor(key: string) {
 }
 
 const SEARCH_FIELDS =
-  "key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,publisher,first_sentence,author_key,isbn";
+  `key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,first_sentence,author_key,isbn,${ENGLISH_EDITION_FIELDS}`;
 
 interface Found {
   title: string | null;
@@ -154,7 +159,7 @@ export async function lookupWork(book: {
       ? `q=${encodeURIComponent(`isbn:${book.isbn}`)}`
       : `title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}`;
   const data = await getJson(
-    `https://openlibrary.org/search.json?${query}&limit=1&fields=${SEARCH_FIELDS}`,
+    `https://openlibrary.org/search.json?${query}&limit=1&${ENGLISH_EDITION_PARAMS}&fields=${SEARCH_FIELDS}`,
   );
   const doc = data.docs?.[0];
   if (!doc) return null;
@@ -166,7 +171,7 @@ export async function lookupWork(book: {
     datePublished: doc.first_publish_year ? String(doc.first_publish_year) : null,
     pageCount: doc.number_of_pages_median ?? null,
     subjects: cleanSubjects(doc.subject).join(", ") || null,
-    publisher: doc.publisher?.[0] ?? null,
+    publisher: editionPublisher(doc),
     firstSentence: pickFirstSentence(doc.first_sentence),
     authorKey: doc.author_key?.[0] ?? null,
     isbn: Array.isArray(doc.isbn) ? (doc.isbn.find((n: string) => n.length === 13) ?? doc.isbn[0] ?? null) : null,

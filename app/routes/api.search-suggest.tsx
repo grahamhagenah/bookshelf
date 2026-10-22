@@ -4,7 +4,12 @@ import { json } from "@remix-run/node";
 import { getUserLibraryKeys, searchFriendsBooks } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
 import { requireUserId } from "~/session.server";
-import { cleanSubjects } from "~/utils";
+import {
+  cleanSubjects,
+  editionPublisher,
+  ENGLISH_EDITION_FIELDS,
+  ENGLISH_EDITION_PARAMS,
+} from "~/utils";
 
 const FRIEND_LIMIT = 4;
 const OPEN_LIBRARY_LIMIT = 5;
@@ -87,7 +92,7 @@ function matchesTyped(typed: string, title: string, author: string | null) {
 async function searchOpenLibrary(q: string) {
   try {
     const res = await fetch(
-      `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=40&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,publisher`,
+      `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=40&${ENGLISH_EDITION_PARAMS}&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,${ENGLISH_EDITION_FIELDS}`,
       { signal: AbortSignal.timeout(4000) },
     );
     if (!res.ok) return [];
@@ -133,7 +138,7 @@ async function suggestFromOpenLibrary(
           ? doc.number_of_pages_median
           : null,
       subjects: cleanSubjects(doc.subject).join(", ") || null,
-      publisher: Array.isArray(doc.publisher) ? (doc.publisher[0] ?? null) : null,
+      publisher: editionPublisher(doc),
       inLibrary: key ? libraryKeys.has(key) : false,
     });
   }
