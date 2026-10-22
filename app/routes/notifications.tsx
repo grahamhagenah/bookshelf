@@ -15,8 +15,8 @@ import {
   lendBook,
   loanWeeks,
 } from "~/models/book.server";
+import { answerFriendRequest } from "~/models/friend.server";
 import {
-  createFriendship,
   getUserById,
   markNotificationAsRead,
   createBookApprovedNotification,
@@ -62,11 +62,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Handle friend request
-  if (formData.get("friend_request") === "accept") {
-    await createFriendship(userId, senderId);
-    await markNotificationAsRead(notificationId, "accepted");
-  } else if (formData.get("friend_request") === "decline") {
-    await markNotificationAsRead(notificationId, "declined");
+  // (only a request that was sent to you; the friend is whoever sent it)
+  const answer = formData.get("friend_request");
+  if (answer === "accept" || answer === "decline") {
+    await answerFriendRequest(userId, notificationId, answer === "accept");
   }
 
   // Handle book request
