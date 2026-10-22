@@ -15,11 +15,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const form = await request.formData();
   const intent = form.get("intent");
-  if (intent === "checkout") {
-    const interval = form.get("interval");
-    if (!isInterval(interval)) return json({ error: "Pick monthly or yearly" }, { status: 400 });
-    return redirect(await checkoutUrl(userId, interval));
+  try {
+    if (intent === "checkout") {
+      const interval = form.get("interval");
+      if (!isInterval(interval)) return json({ error: "Pick monthly or yearly" }, { status: 400 });
+      return redirect(await checkoutUrl(userId, interval));
+    }
+    if (intent === "portal") return redirect(await portalUrl(userId));
+  } catch (error) {
+    // Back to Settings with a note, never Stripe's raw error
+    console.error("Stripe refused", error);
+    return redirect("/account?billing=failed#plan");
   }
-  if (intent === "portal") return redirect(await portalUrl(userId));
   return json({ error: "Unknown action" }, { status: 400 });
 };

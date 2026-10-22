@@ -31,16 +31,40 @@ const LOOKUP_KEYS: Record<Interval, string> = {
   yearly: "stacks_plus_yearly",
 };
 
+// Stripe's tax category for a web app people pay for themselves; needed
+// when Stripe handles sales tax (Managed Payments)
+const TAX_CODE = "txcd_10103000";
+
 async function priceFor(interval: Interval) {
-  const lookupKey = LOOKUP_KEYS[interval];
-  const { data } = await stripe().prices.list({ lookup_keys: [lookupKey], active: true, limit: 1 });
-  if (data[0]) return data[0].id;
+  // Both prices at once: the other one says which product to add to
+  const { data } = await stripe().prices.list({
+    lookup_keys: Object.values(LOOKUP_KEYS),
+    active: true,
+    expand: ["data.product"],
+  });
+  const found = data.find((price) => price.lookup_key === LOOKUP_KEYS[interval]);
+  const product = data.map((price) => price.product).find((each) => typeof each !== "string");
+  // A product made before it had a tax category gets one
+  if (product && typeof product !== "string" && !product.deleted && !product.tax_code) {
+    await stripe().products.update(product.id, { tax_code: TAX_CODE });
+  }
+  if (found) return found.id;
+
   const price = await stripe().prices.create({
     currency: "usd",
     unit_amount: PLUS_PRICES[interval] * 100,
     recurring: { interval: interval === "monthly" ? "month" : "year" },
-    lookup_key: lookupKey,
-    product_data: { name: "Stacks Plus" },
+    lookup_key: LOOKUP_KEYS[interval],
+    product:
+      product && typeof product !== "string"
+        ? product.id
+        : (
+            await stripe().products.create({
+              name: "Stacks Plus",
+              description: "Unlimited books and friends on Stacks",
+              tax_code: TAX_CODE,
+            })
+          ).id,
   });
   return price.id;
 }

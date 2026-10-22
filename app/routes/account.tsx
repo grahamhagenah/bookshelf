@@ -91,6 +91,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     plan,
     billing: billingEnabled(),
     upgraded: new URL(request.url).searchParams.has("upgraded"),
+    billingFailed: new URL(request.url).searchParams.get("billing") === "failed",
     origin: publicOrigin(request),
     bookStats,
     household: household
@@ -533,6 +534,11 @@ export default function Account() {
         title="Plan"
         description={`Free holds ${FREE_LIMITS.books} books and ${FREE_LIMITS.friends} friends. Stacks Plus has no limits.`}
       >
+        {data.billingFailed ? (
+          <p role="alert" className="mb-3 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200">
+            Stripe couldn&apos;t open just now. Nothing was charged; try again in a minute.
+          </p>
+        ) : null}
         <PlanPanel
           plan={data.plan}
           demo={Boolean(user?.demoGroup)}
