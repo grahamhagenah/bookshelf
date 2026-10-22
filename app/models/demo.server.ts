@@ -141,14 +141,14 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       body: "Sentenced to house arrest in a grand hotel across from the Kremlin, a count builds a rich life within its walls as decades of history pass outside.",
     },
     {
-      title: "The Left Hand of Darkness",
-      author: "Ursula K. Le Guin",
-      isbn: "9780441478125",
-      datePublished: "1969",
-      pageCount: 304,
-      publisher: "Ace",
-      subjects: "Science fiction, Gender, Diplomacy",
-      body: "An envoy is sent to the icebound world of Gethen, whose people have no fixed sex, to persuade them to join an interplanetary alliance.",
+      title: "Annihilation",
+      author: "Jeff VanderMeer",
+      isbn: "9780374104092",
+      datePublished: "2014",
+      pageCount: 195,
+      publisher: "FSG Originals",
+      subjects: "Science fiction, Horror, Nature",
+      body: "Four women enter Area X, a coastline cut off from the world for decades, as the twelfth expedition to try to understand it.",
     },
     {
       title: "Pachinko",
@@ -397,24 +397,24 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
   ],
   priya: [
     {
-      title: "Yellowface",
+      title: "The Poppy War",
       author: "R. F. Kuang",
-      isbn: "9780063250833",
-      datePublished: "2023",
-      pageCount: 336,
-      publisher: "William Morrow",
-      subjects: "Literary fiction, Publishing, Satire",
-      body: "When her rival dies, a struggling writer takes her unfinished manuscript and publishes it as her own, then has to live with the lie.",
+      isbn: "9780062662569",
+      datePublished: "2018",
+      pageCount: 544,
+      publisher: "Harper Voyager",
+      subjects: "Fantasy, War, Military academy",
+      body: "A war orphan tests into the empire's most elite military school and discovers a power that could save her country or burn it down.",
     },
     {
-      title: "Jonathan Strange & Mr Norrell",
-      author: "Susanna Clarke",
-      isbn: "9780765356154",
-      datePublished: "2004",
-      pageCount: 1006,
-      publisher: "Tor Books",
-      subjects: "Fantasy, Magic, Historical fiction",
-      body: "In Napoleonic England, two very different magicians revive English magic, become master and pupil, then rivals, as the old magic stirs back to life.",
+      title: "The Ten Thousand Doors of January",
+      author: "Alix E. Harrow",
+      isbn: "9780316421997",
+      datePublished: "2019",
+      pageCount: 374,
+      publisher: "Redhook",
+      subjects: "Fantasy, Portals, Adventure",
+      body: "In the early 1900s a girl finds a book about doors to other worlds, and starts to suspect it's about her own family.",
     },
     {
       title: "The Midnight Library",
@@ -583,14 +583,14 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
   ],
   noah: [
     {
-      title: "Salt, Fat, Acid, Heat",
-      author: "Samin Nosrat",
-      isbn: "9781476753836",
-      datePublished: "2017",
-      pageCount: 480,
-      publisher: "Simon & Schuster",
-      subjects: "Cooking, Food science, Illustrated",
-      body: "Four elements of good cooking, explained so you can cook well without a recipe.",
+      title: "Sea of Tranquility",
+      author: "Emily St. John Mandel",
+      isbn: "9780593321447",
+      datePublished: "2022",
+      pageCount: 255,
+      publisher: "Knopf",
+      subjects: "Science fiction, Time travel, Pandemics",
+      body: "A strange moment in a forest in 1912 echoes through a writer's book tour on the moon and an investigator sent from five hundred years later.",
     },
     {
       title: "Ubik",
@@ -841,7 +841,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     // Current loans
     {
-      title: "Salt, Fat, Acid, Heat",
+      title: "Sea of Tranquility",
       borrower: "priya",
       borrowedAt: ago(10 * day),
       dueDate: fromNow(18 * day),
@@ -865,7 +865,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       dueDate: fromNow(22 * day),
     },
     {
-      title: "Jonathan Strange & Mr Norrell",
+      title: "The Ten Thousand Doors of January",
       borrower: "you",
       borrowedAt: ago(26 * day),
       dueDate: fromNow(2 * day),
@@ -883,7 +883,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       dueDate: fromNow(20 * day),
     },
     {
-      title: "The Left Hand of Darkness",
+      title: "Annihilation",
       borrower: "sam",
       borrowedAt: ago(11 * day),
       dueDate: fromNow(17 * day),
@@ -954,7 +954,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     ["Pachinko", 220],
     ["The Hobbit", 300],
     ["Dune", 130],
-    ["The Left Hand of Darkness", 200],
+    ["Annihilation", 200],
     // From the shared shelf
     ["This Is How You Lose the Time War", 100],
   ];
@@ -1009,10 +1009,10 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       at: ago(1 * day),
     },
     {
-      title: "Jonathan Strange & Mr Norrell",
+      title: "The Ten Thousand Doors of January",
       by: "priya",
       loved: true,
-      body: "Long, strange and completely enchanting. Read the footnotes.",
+      body: "A book about books and doors. I wanted to walk into every one of them.",
       at: ago(60 * day),
     },
     // Your own shelf
@@ -1047,7 +1047,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       at: ago(120 * day),
     },
     {
-      title: "The Left Hand of Darkness",
+      title: "Annihilation",
       by: "you",
       loved: true,
       at: ago(200 * day),
@@ -1147,10 +1147,10 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     { title: "Hyperion", by: "you", loved: true, at: ago(150 * day) },
     { title: "Hyperion", by: "sam", loved: true, at: ago(500 * day) },
     {
-      title: "Yellowface",
+      title: "The Poppy War",
       by: "priya",
       loved: true,
-      body: "Couldn't stop reading and couldn't stop cringing. Very funny, very sharp.",
+      body: "Starts at a school and ends somewhere much darker. Brace yourself for part three.",
       at: ago(3 * day),
     },
     {
@@ -1171,10 +1171,10 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     // The household: Noah's own notes, on his books and on the visitor's
     {
-      title: "Salt, Fat, Acid, Heat",
+      title: "Sea of Tranquility",
       by: "noah",
       loved: true,
-      body: "Changed how I cook more than any recipe ever has. Read the salt chapter twice.",
+      body: "Short, strange and lovely. It ties the whole of Station Eleven together in a way I didn't see coming.",
       at: ago(200 * day),
     },
     {
@@ -1288,7 +1288,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       type: "DUE_SOON_REMINDER",
       from: "priya",
       to: "you",
-      title: "Jonathan Strange & Mr Norrell",
+      title: "The Ten Thousand Doors of January",
       at: ago(3 * hour),
     },
     {
@@ -1327,7 +1327,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       type: "BOOK_APPROVED",
       from: "priya",
       to: "you",
-      title: "Jonathan Strange & Mr Norrell",
+      title: "The Ten Thousand Doors of January",
       at: ago(26 * day),
       actionTaken: "dismissed",
     },
