@@ -199,7 +199,7 @@ export default function ShowcaseLending() {
                   <path d="M6 9l6 6 6-6" />
                 </svg>
               </span>
-              <span className="rounded-md bg-forest-600 dark:bg-forest-500 px-2 py-0.5 text-xs font-medium text-white">
+              <span className="rounded-md bg-forest-600 px-2 py-0.5 text-xs font-medium text-white">
                 Lend it
               </span>
             </div>
@@ -235,7 +235,7 @@ export function ShowcaseFriends() {
             <span className="font-medium">Never Let Me Go</span>
             <span className="block text-xs text-stone-500 dark:text-stone-400">Priya Patel</span>
           </p>
-          <span className="rounded-md bg-forest-600 dark:bg-forest-500 px-2 py-0.5 text-xs font-medium text-white">
+          <span className="rounded-md bg-forest-600 px-2 py-0.5 text-xs font-medium text-white">
             Ask to borrow
           </span>
         </div>

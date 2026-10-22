@@ -128,7 +128,7 @@ interface SearchUser {
 const quietButton =
   "rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors disabled:opacity-50";
 const primaryButton =
-  "rounded-md bg-forest-600 dark:bg-forest-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors disabled:opacity-50";
+  "rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-50";
 
 function ago(date: string) {
   const days = Math.floor((Date.now() - new Date(date).getTime()) / 86_400_000);

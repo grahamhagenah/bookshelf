@@ -112,7 +112,7 @@ export default function Invite() {
       <div className="mt-10 flex flex-col items-center gap-3">
         <Link
           to={`/join?friend=${token}&redirectTo=${encodeURIComponent(here)}`}
-          className="inline-flex w-full max-w-xs items-center justify-center rounded-md bg-forest-600 dark:bg-forest-500 px-6 py-3 text-lg font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
+          className="inline-flex w-full max-w-xs items-center justify-center rounded-md bg-forest-600 px-6 py-3 text-lg font-medium text-white hover:bg-forest-700 transition-colors"
         >
           Join {inviter.firstname} on Stacks
         </Link>

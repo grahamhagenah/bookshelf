@@ -461,7 +461,7 @@ export function NotePrompt({ books }: { books: PromptBook[] }) {
                 // Always full strength; an empty note is stopped by the box
                 // being required, not by a faded button
                 disabled={saving}
-                className="rounded-md bg-forest-600 dark:bg-forest-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors disabled:cursor-wait"
+                className="rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:cursor-wait"
               >
                 {saving ? "Saving…" : "Leave a note"}
               </button>

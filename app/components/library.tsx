@@ -235,7 +235,7 @@ export default function Library({ bookListItems, ownerName, header }: LibraryPro
               </p>
               <Link
                 to="/search"
-                className="mt-8 inline-flex items-center gap-2 rounded-md bg-forest-600 dark:bg-forest-500 px-6 py-3 text-lg font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
+                className="mt-8 inline-flex items-center gap-2 rounded-md bg-forest-600 px-6 py-3 text-lg font-medium text-white hover:bg-forest-700 transition-colors"
               >
                 <span aria-hidden="true">+</span>
                 Add your first books

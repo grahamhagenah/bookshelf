@@ -444,8 +444,8 @@ function SearchResultItem({
               isAdded || alreadyInLibrary
                 ? "bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 cursor-default"
                 : isAdding
-                  ? "bg-forest-600 dark:bg-forest-500 text-white opacity-60 cursor-wait"
-                  : "bg-forest-600 dark:bg-forest-500 font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400"
+                  ? "bg-forest-600 text-white opacity-60 cursor-wait"
+                  : "bg-forest-600 font-medium text-white hover:bg-forest-700"
             }`}
           >
             {isAdded || alreadyInLibrary ? (
@@ -557,7 +557,7 @@ export default function Search() {
           <button
             type="submit"
             disabled={isSearching}
-            className="px-5 rounded-md bg-forest-600 dark:bg-forest-500 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors disabled:opacity-60"
+            className="px-5 rounded-md bg-forest-600 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-60"
           >
             {isSearching ? "Searching…" : "Search"}
           </button>
@@ -731,7 +731,7 @@ export default function Search() {
                         to={getPageUrl(page)}
                         className={
                           page === currentPage
-                            ? "px-3 py-1.5 text-sm rounded-md border bg-forest-600 dark:bg-forest-500 text-white border-forest-600 dark:border-forest-500"
+                            ? "px-3 py-1.5 text-sm rounded-md border bg-forest-600 text-white border-forest-600"
                             : pageLink
                         }
                         aria-current={page === currentPage ? "page" : undefined}

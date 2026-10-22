@@ -334,7 +334,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 const inputClass =
   "w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors";
 const primaryButton =
-  "rounded-md bg-forest-600 dark:bg-forest-500 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors";
+  "rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors";
 const quietButton =
   "rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
 const textButton =
@@ -762,7 +762,7 @@ function Toggle({
         <span
           aria-hidden="true"
           className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-            checked ? "bg-forest-600 dark:bg-forest-500" : "bg-stone-300 dark:bg-stone-700"
+            checked ? "bg-forest-600" : "bg-stone-300 dark:bg-stone-700"
           }`}
         >
           <span

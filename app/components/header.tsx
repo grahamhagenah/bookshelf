@@ -93,7 +93,7 @@ export default function Header() {
               </a>
               <a
                 href="/join"
-                className="rounded-md bg-forest-600 dark:bg-forest-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
+                className="rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
               >
                 Create account
               </a>
