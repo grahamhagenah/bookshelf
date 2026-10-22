@@ -73,8 +73,8 @@ interface DueItem {
   direction: "borrowed" | "lent";
 }
 
-// Inside Loans, in the same style as the lists beside it: the date leads
-// in its own column, so the eye can run down it, and the rest can wrap
+// Inside Loans, in the same style as the lists beside it: a cover, the
+// title, then the date first on the second line so it's easy to scan
 function ComingUp({ items }: { items: DueItem[] }) {
   if (items.length === 0) return null;
   return (
@@ -96,23 +96,25 @@ function ComingUp({ items }: { items: DueItem[] }) {
             <li key={book.id}>
               <Link
                 to={`/books/${book.id}`}
-                className="-mx-2 flex items-baseline gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+                className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
               >
-                <span
-                  className={`w-20 flex-shrink-0 ${
-                    overdue
-                      ? "font-semibold text-stone-900 dark:text-stone-100"
-                      : "text-stone-500 dark:text-stone-400"
-                  }`}
-                >
-                  {when}
-                </span>
-                <span className="min-w-0 text-stone-500 dark:text-stone-400">
-                  <span className="font-medium text-stone-900 dark:text-stone-100">
+                <Cover book={book} className="w-14 h-21" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium text-stone-900 dark:text-stone-100">
                     {book.title}
-                  </span>{" "}
-                  {direction === "borrowed" ? "back to" : "with"} {person.firstname}{" "}
-                  {person.surname}
+                  </span>
+                  <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
+                    <span
+                      className={
+                        overdue ? "font-semibold text-stone-900 dark:text-stone-100" : ""
+                      }
+                    >
+                      {when}
+                    </span>
+                    {" · "}
+                    {direction === "borrowed" ? "back to" : "with"} {person.firstname}{" "}
+                    {person.surname}
+                  </span>
                 </span>
               </Link>
             </li>
