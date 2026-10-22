@@ -392,24 +392,32 @@ export function NotePrompt({ books }: { books: PromptBook[] }) {
       aria-label="Leave a note"
       className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-4 py-3.5"
     >
-      <div className="flex items-start gap-3">
+      {/* Like a post: a header with the book, then the body */}
+      <div className="flex items-center gap-3">
         <Link to={`/books/${book.id}`} className="flex-shrink-0">
-          <FeedCover book={book} className="h-[72px] w-12" />
+          <FeedCover book={book} className="h-[60px] w-10" />
         </Link>
         <div className="min-w-0 flex-1">
-          <p className="leading-snug text-stone-800 dark:text-stone-200">
-            {book.returned ? "You borrowed" : "You're borrowing"}{" "}
+          <p className="font-semibold leading-snug text-stone-900 dark:text-stone-100">
+            What did you think of{" "}
             <Link
               to={`/books/${book.id}`}
-              className="font-semibold text-stone-900 dark:text-stone-100 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+              className="underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
             >
               {book.title}
-            </Link>{" "}
-            from {book.owner.firstname}. What did you think?
+            </Link>
+            ?
           </p>
+          <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
+            {book.returned ? "You borrowed it" : "You're borrowing it"} from {book.owner.firstname}.
+            A line or two for the next reader.
+          </p>
+        </div>
+      </div>
+      <div>
           <fetcher.Form
             method="post"
-            className="mt-2"
+            className="mt-3"
             onSubmit={() => {
               // Clear and move on; the saved note shows on the book page
               setTimeout(() => {
@@ -427,7 +435,8 @@ export function NotePrompt({ books }: { books: PromptBook[] }) {
               rows={2}
               maxLength={500}
               required
-              placeholder="A line or two for the next reader"
+              placeholder="Your note"
+              aria-label="Your note"
               className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-950 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
             />
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -455,7 +464,6 @@ export function NotePrompt({ books }: { books: PromptBook[] }) {
               ) : null}
             </div>
           </fetcher.Form>
-        </div>
       </div>
     </section>
   );
