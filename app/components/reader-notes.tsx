@@ -136,7 +136,7 @@ export default function ReaderNotes({
         Reader notes
       </h2>
       {status ? (
-        <p className="mb-3 text-sm text-stone-600 dark:text-stone-300">{status}</p>
+        <p className="mb-3 text-stone-600 dark:text-stone-300">{status}</p>
       ) : null}
 
       {isWriting ? (
@@ -152,7 +152,7 @@ export default function ReaderNotes({
             maxLength={maxLength}
             defaultValue={myNote?.body ?? ""}
             placeholder="What did you think? A line or two for the next reader."
-            className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+            className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
             // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             required
@@ -175,7 +175,7 @@ export default function ReaderNotes({
           </div>
         </noteFetcher.Form>
       ) : canNote && !myNote?.body ? (
-        <p className="py-2 text-sm text-stone-400 dark:text-stone-500">
+        <p className="py-2 text-stone-400 dark:text-stone-500">
           {hasNotes ? null : "No notes yet. "}
           <button
             type="button"
@@ -203,7 +203,7 @@ export default function ReaderNotes({
                     size="sm"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-1.5 text-sm">
+                    <p className="flex items-center gap-1.5">
                       <span className="font-medium text-stone-900 dark:text-stone-100">
                         {isMine ? (
                           "You"
@@ -222,15 +222,15 @@ export default function ReaderNotes({
                           className="text-rose-400"
                         />
                       ) : null}
-                      <span className="text-xs text-stone-400 dark:text-stone-500">
+                      <span className="text-sm text-stone-400 dark:text-stone-500">
                         {formatDate(note.updatedAt)}
                       </span>
                     </p>
-                    <p className="mt-0.5 text-sm leading-relaxed text-stone-700 dark:text-stone-300 whitespace-pre-wrap break-words">
+                    <p className="mt-0.5 leading-relaxed text-stone-700 dark:text-stone-300 whitespace-pre-wrap break-words">
                       {note.body}
                     </p>
                     {isMine ? (
-                      <div className="mt-1 flex gap-3 text-xs">
+                      <div className="mt-1 flex gap-3 text-sm">
                         <button
                           type="button"
                           onClick={() => setIsWriting(true)}
@@ -261,7 +261,7 @@ export default function ReaderNotes({
       ) : null}
 
       {heartsOnly.length > 0 ? (
-        <p className="py-2 text-xs text-stone-400 dark:text-stone-500">
+        <p className="py-2 text-sm text-stone-400 dark:text-stone-500">
           {hasNotes ? "Also loved by " : "Loved by "}
           {heartsOnly.map((note, index) => (
             <span key={note.id}>
