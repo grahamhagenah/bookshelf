@@ -1105,13 +1105,8 @@ function LoanCard({ data }: { data: BookData }) {
             <button
               type="submit"
               disabled={sendingReminder || reminderSent}
-              className={`w-full ${
-                reminderSent
-                  ? `${quietLabel} py-1.5`
-                  : overdue
-                    ? `${primaryButton} py-1.5`
-                    : button
-              } disabled:cursor-default`}
+              // The one thing to do on a loan, so it's the green button
+              className={`w-full ${reminderSent ? quietLabel : primaryButton} py-1.5 disabled:cursor-default`}
             >
               {reminderSent ? "Reminder sent" : sendingReminder ? "Sending…" : "Send a reminder"}
             </button>
