@@ -1,6 +1,5 @@
 import { NavLink, useMatches } from "@remix-run/react";
 
-import Breadcrumbs from "./breadcrumbs";
 import { BookIcon, PulseIcon, StacksLogo } from "./icons";
 import PositionedMenu from "./menu";
 import Notifications from "./notifications";
@@ -41,7 +40,6 @@ export default function Header() {
             />
             <span className="text-lg sm:text-xl">Stacks</span>
           </a>
-          <Breadcrumbs />
         </div>
         <div className="flex items-center gap-0.5 md:gap-2 flex-shrink-0">
           {/* Your shelf, and what your friends are up to, are what you come

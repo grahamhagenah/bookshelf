@@ -35,25 +35,28 @@ function useBreadcrumbs() {
   return crumbs;
 }
 
-// Renders "/ Friends / Maya Chen" next to the logo. On phones only the
-// current page is shown so the header stays on one line.
+// "Friends / Priya Patel / Jonathan Strange & Mr Norrell", in a quiet row
+// of its own under the header, where a long book title has room. The
+// current page is the darkest; on phones, earlier steps give way to it.
 export default function Breadcrumbs() {
   const crumbs = useBreadcrumbs();
   if (crumbs.length === 0) return null;
 
   return (
-    <nav aria-label="Breadcrumb" className="min-w-0">
-      <ol className="flex items-center gap-2 text-sm sm:text-base text-stone-400 dark:text-stone-500 min-w-0">
+    <nav aria-label="Breadcrumb" className="px-4 md:px-8 pt-4 md:pt-5 -mb-2 md:-mb-4">
+      <ol className="flex min-w-0 items-center gap-2 text-sm text-stone-500 dark:text-stone-400">
         {crumbs.map((crumb, index) => {
           const isLast = index === crumbs.length - 1;
           return (
             <li
               key={crumb.id}
-              className={`items-center gap-2 min-w-0 ${isLast ? "flex" : "hidden md:flex"}`}
+              className={`flex min-w-0 items-center gap-2 ${isLast ? "" : "max-w-[40%] flex-shrink-0 sm:max-w-none"}`}
             >
-              <span aria-hidden="true" className="text-stone-300 dark:text-stone-700">/</span>
+              {index > 0 ? (
+                <span aria-hidden="true" className="text-stone-300 dark:text-stone-600">/</span>
+              ) : null}
               {isLast ? (
-                <span aria-current="page" className="truncate text-stone-900 dark:text-stone-100">
+                <span aria-current="page" className="truncate font-medium text-stone-900 dark:text-stone-100">
                   {crumb.label}
                 </span>
               ) : crumb.href ? (
@@ -61,7 +64,7 @@ export default function Breadcrumbs() {
                   {crumb.label}
                 </Link>
               ) : (
-                <span className="truncate hover:text-stone-900 dark:hover:text-stone-100 transition-colors">{crumb.label}</span>
+                <span className="truncate [&_a]:hover:text-stone-900 dark:[&_a]:hover:text-stone-100">{crumb.label}</span>
               )}
             </li>
           );
