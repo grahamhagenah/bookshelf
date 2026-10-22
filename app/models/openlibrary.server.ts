@@ -169,6 +169,46 @@ export async function lookupWork(book: {
   };
 }
 
+// Every cover Open Library has for a book: the work's own, then its
+// editions', newest-listed first. For the owner to pick from.
+export async function findCovers(book: {
+  title: string;
+  author: string;
+  isbn?: string | null;
+  openLibraryKey?: string | null;
+}) {
+  const query = book.openLibraryKey
+    ? `q=${encodeURIComponent(`key:"${book.openLibraryKey}"`)}`
+    : book.isbn
+      ? `q=${encodeURIComponent(`isbn:${book.isbn}`)}`
+      : `title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}`;
+  const data = await getJson(
+    `https://openlibrary.org/search.json?${query}&limit=3&fields=key,cover_i`,
+  );
+  const docs: { key?: string; cover_i?: number }[] = data.docs ?? [];
+  const ids: number[] = docs.flatMap((doc) => (doc.cover_i ? [doc.cover_i] : []));
+
+  const key = book.openLibraryKey ?? docs[0]?.key;
+  if (key) {
+    try {
+      const editions = await getJson(`https://openlibrary.org${key}/editions.json?limit=50`);
+      for (const edition of editions.entries ?? []) {
+        for (const id of edition.covers ?? []) {
+          if (typeof id === "number" && id > 0) ids.push(id);
+        }
+      }
+    } catch {
+      // The work's own cover is still something
+    }
+  }
+
+  return [...new Set(ids)].slice(0, 18).map((id) => ({
+    id,
+    thumb: `https://covers.openlibrary.org/b/id/${id}-M.jpg`,
+    full: `https://covers.openlibrary.org/b/id/${id}-L.jpg`,
+  }));
+}
+
 // A work's description, which the search results don't carry
 export async function fetchDescription(key: string): Promise<string> {
   try {
