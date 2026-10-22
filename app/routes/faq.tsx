@@ -254,7 +254,7 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         q: "A book has the wrong cover or details. Can I fix it?",
         a: (
           <>
-            Yes. On the book page, Edit details lets you change anything, pick another
+            Yes. On the book page, Edit details or cover lets you change anything, pick another
             cover from Open Library, or refresh the details from there.
           </>
         ),

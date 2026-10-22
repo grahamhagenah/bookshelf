@@ -1679,7 +1679,9 @@ export default function BookDetailsPage() {
           ) : (
             /* View Mode */
             <>
-              <div className="hidden md:block">{heading}</div>
+              {/* Room on the right for "Edit details or cover", so a long
+                  title wraps before it reaches the button */}
+              <div className={`hidden md:block ${data.isOwner ? "md:pr-40" : ""}`}>{heading}</div>
 
               {cleanSubjects(data.book.subjects).length > 0 ? (
                 <div className="md:mt-4 flex flex-wrap gap-1.5">
@@ -1702,7 +1704,7 @@ export default function BookDetailsPage() {
                   onClick={() => setIsEditing(true)}
                   className="mt-3 md:absolute md:right-0 md:top-1 md:mt-0 text-sm text-stone-400 dark:text-stone-500 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
                 >
-                  Edit details
+                  Edit details or cover
                 </button>
               ) : null}
             </>
