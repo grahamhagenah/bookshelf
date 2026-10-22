@@ -49,6 +49,8 @@ export default function Footer() {
           </ul>
           <ul className="space-y-2">
             <li><Link to="/faq" className={linkClass}>FAQ</Link></li>
+            <li><Link to="/lend-books-to-friends" className={linkClass}>Lending books</Link></li>
+            <li><Link to="/goodreads-alternative" className={linkClass}>vs Goodreads</Link></li>
             <li>
               <Link to={`/feedback?from=${encodeURIComponent(pathname)}`} className={linkClass}>
                 Send feedback

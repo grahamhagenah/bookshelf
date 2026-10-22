@@ -79,7 +79,11 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
               <Link to="/import" className={link}>
                 import it
               </Link>{" "}
-              and carry on using both.
+              and carry on using both. There&apos;s a{" "}
+              <Link to="/goodreads-alternative" className={link}>
+                fuller comparison
+              </Link>{" "}
+              too.
             </p>
           </>
         ),
