@@ -1266,7 +1266,7 @@ export default function BookDetailsPage() {
           ) : null}
           {!isEditing ? <BookFacts data={data} /> : null}
         </section>
-        <section className="flex-1 min-w-0">
+        <section className="relative flex-1 min-w-0">
           {isEditing ? (
             /* Edit Mode */
             <div>
@@ -1496,12 +1496,13 @@ export default function BookDetailsPage() {
                 </div>
               ) : null}
 
-              {/* Rarely needed, so it sits quietly under the details */}
+              {/* Rarely needed, so it sits quietly in the top corner on
+                  wider screens, and under the details on phones */}
               {data.isOwner ? (
                 <button
                   type="button"
                   onClick={() => setIsEditing(true)}
-                  className="mt-3 text-sm text-stone-400 dark:text-stone-500 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+                  className="mt-3 md:absolute md:right-0 md:top-1 md:mt-0 text-sm text-stone-400 dark:text-stone-500 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
                 >
                   Edit details
                 </button>
