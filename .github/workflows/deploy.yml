@@ -113,6 +113,16 @@ jobs:
       - name: ◭ Generate Prisma client
         run: npx prisma generate
 
+      # Every schema change needs a migration, or the live database won't
+      # get it: fails if the migrations don't add up to schema.prisma
+      - name: 🧭 Check migrations match the schema
+        run: >
+          npx prisma migrate diff
+          --from-migrations prisma/migrations
+          --to-schema-datamodel prisma/schema.prisma
+          --shadow-database-url file:./shadow.db
+          --exit-code
+
       - name: ⚡ Run vitest
         run: npm run test -- --coverage
 
