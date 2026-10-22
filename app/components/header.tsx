@@ -43,7 +43,7 @@ export default function Header() {
             <span className="text-lg sm:text-xl">Stacks</span>
           </a>
         </div>
-        <div className="flex items-center gap-0.5 md:gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
           {/* Your shelf, and what your friends are up to, are what you come
               back for, so on wider screens they get labelled links of their
               own; phones keep the icons */}
@@ -76,7 +76,7 @@ export default function Header() {
               title="Friend activity"
               className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             >
-              <GroupIcon size={20} />
+              <GroupIcon size={24} />
             </a>
           ) : null}
           {user ? <Notifications /> : null}

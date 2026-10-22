@@ -33,8 +33,9 @@ function PencilIcon() {
   );
 }
 
+// Roomier rows on phones, where they're tapped
 const item =
-  "flex items-center gap-3 px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors";
+  "flex items-center gap-3.5 px-4 py-3 md:gap-3 md:px-3 md:py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors";
 
 export default function PositionedMenu() {
   const matches = useMatches();
@@ -74,8 +75,8 @@ export default function PositionedMenu() {
             firstname={user.firstname}
             surname={user.surname}
             icon={user.profileEmoji}
-            size="xs"
-            className="transition-colors duration-200 group-hover:bg-stone-200 dark:group-hover:bg-stone-700"
+            size="sm"
+            className="md:w-6 md:h-6 md:text-[10px] transition-colors duration-200 group-hover:bg-stone-200 dark:group-hover:bg-stone-700"
           />
         ) : (
           <UserIcon size={20} />
@@ -83,13 +84,14 @@ export default function PositionedMenu() {
       </button>
 
       {open ? (
-        <div className="absolute right-0 mt-1 w-52 bg-white dark:bg-stone-950 rounded-lg shadow-soft border border-stone-200/80 dark:border-stone-800 py-1 z-50 text-sm [&_svg]:text-stone-600 dark:[&_svg]:text-stone-300 [&_svg]:[stroke-width:1.75]">
+        // On phones: wider, with larger text and icons
+        <div className="absolute right-0 mt-1 w-72 md:w-52 bg-white dark:bg-stone-950 rounded-xl md:rounded-lg shadow-soft border border-stone-200/80 dark:border-stone-800 py-1.5 md:py-1 z-50 text-base md:text-sm [&_svg]:size-[22px] md:[&_svg]:size-[18px] [&_svg]:text-stone-600 dark:[&_svg]:text-stone-300 [&_svg]:[stroke-width:1.75]">
           {user ? (
-            <div className="px-3 pt-1.5 pb-2 mb-1 border-b dark:border-stone-800">
+            <div className="px-4 pt-2 pb-3 md:px-3 md:pt-1.5 md:pb-2 mb-1 border-b dark:border-stone-800">
               <p className="truncate font-medium text-stone-900 dark:text-stone-100">
                 {user.firstname} {user.surname}
               </p>
-              <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+              <p className="truncate text-sm md:text-xs text-stone-500 dark:text-stone-400">
                 {user.demoGroup ? "Demo account" : user.email}
               </p>
             </div>

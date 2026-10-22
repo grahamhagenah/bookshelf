@@ -552,7 +552,8 @@ export default function Search() {
         />
       ) : null}
       <Form method="get" className="mb-10">
-        <div className="flex gap-2">
+        {/* Phones: the box and Search share a line, Scan gets its own below */}
+        <div className="flex flex-wrap gap-2 sm:flex-nowrap">
           <SearchBox defaultValue={currentQuery} />
           <button
             type="submit"
@@ -567,9 +568,10 @@ export default function Search() {
             onClick={() => setScanning(true)}
             title="Scan a barcode"
             aria-label="Scan a barcode"
-            className="inline-flex items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-stone-200 dark:border-stone-700 px-3 py-2.5 text-base text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors sm:w-auto sm:py-0 sm:text-sm"
           >
-            <CameraIcon size={18} />
+            <CameraIcon size={20} />
+            <span className="sm:hidden">Scan a barcode</span>
             <span className="hidden sm:inline">Scan</span>
           </button>
         </div>
