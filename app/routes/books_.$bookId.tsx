@@ -859,19 +859,12 @@ type BookData = SerializeFrom<typeof loader>;
 // often it's been lent
 function BookFacts({ data }: { data: BookData }) {
   const { book } = data;
-  const owner = book.user;
   const rows: [string, React.ReactNode][] = [];
 
-  if (data.isOwner) {
-    // Where it is shows in the label under the cover
-    rows.push(["Added", monthDay(book.createdAt)]);
-    rows.push(["Read", <ReadToggle key="read" readAt={book.readAt} />]);
-  } else if (!data.isBorrower) {
-    // Available goes without saying beside Ask to borrow
-    if (book.borrower) rows.push(["Status", "Out on loan"]);
-    if (owner) {
-      rows.push(["Added", `${monthDay(book.createdAt)} by ${owner.firstname}`]);
-    }
+  // Where it is shows in the label under the cover for the owner, and
+  // "Available" goes without saying beside Ask to borrow
+  if (!data.isOwner && !data.isBorrower && book.borrower) {
+    rows.push(["Status", "Out on loan"]);
   }
   if (data.waiting.length > 0) {
     rows.push(["Waiting", data.waiting.join(", ")]);
@@ -956,44 +949,62 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
   const pending = fetcher.formData?.get("read");
   const read = pending ? pending === "true" : Boolean(readAt);
   const buttonClass =
-    "text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline";
+    "text-stone-800 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:decoration-stone-500";
   return (
     <fetcher.Form method="post" className="inline">
       <input type="hidden" name="intent" value="toggleRead" />
       <input type="hidden" name="read" value={read ? "false" : "true"} />
       {read ? (
         <>
-          {readAt && !pending ? monthDay(readAt) : "Yes"}
+          You read this{readAt && !pending ? ` · ${monthDay(readAt)}` : ""}
           <span className="text-stone-400 dark:text-stone-500"> · </span>
           <button type="submit" className={buttonClass}>
             Undo
           </button>
         </>
       ) : (
-        <button type="submit" className={buttonClass}>
-          Mark as read
-        </button>
+        <>
+          Haven&apos;t read it yet?{" "}
+          <button type="submit" className={buttonClass}>
+            Mark as read
+          </button>
+        </>
       )}
     </fetcher.Form>
   );
 }
 
-// Everyone who has had this copy, newest first
-function LendingHistory({
-  entries,
-  currentUser,
-  lendCount,
-}: {
-  entries: BookData["lendingHistory"];
-  currentUser: BookData["currentUser"];
-  lendCount: number;
-}) {
+// Everyone who has had this copy, newest first, down to the day it
+// joined the owner's shelf
+function LendingHistory({ data }: { data: BookData }) {
+  const { book, currentUser, lendingHistory: entries, isOwner, isFriend } = data;
+  const owner = book.user;
+  const ownerPerson = isOwner && currentUser ? currentUser : owner;
+  const lendCount = book.lendCount;
+  const ownerLink = (text: string) =>
+    isFriend && owner ? (
+      <Link
+        to={`/friend/${owner.id}`}
+        className="underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+      >
+        {text}
+      </Link>
+    ) : owner?.shareToken ? (
+      <Link
+        to={`/share/${owner.shareToken}`}
+        className="underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+      >
+        {text}
+      </Link>
+    ) : (
+      text
+    );
   return (
     <div>
       <h2 className="mb-2 text-lg font-semibold text-stone-900 dark:text-stone-100">
         Lending history
         <span className="ml-2 text-sm font-normal text-stone-400 dark:text-stone-500">
-          lent {lendCount} {lendCount === 1 ? "time" : "times"}
+          {lendCount === 0 ? "not lent yet" : `lent ${lendCount} ${lendCount === 1 ? "time" : "times"}`}
         </span>
       </h2>
       <ul className="divide-y divide-stone-100 dark:divide-stone-800">
@@ -1039,6 +1050,24 @@ function LendingHistory({
             </li>
           );
         })}
+        {ownerPerson ? (
+          <li className="flex items-center gap-2.5 py-2 text-sm">
+            <Avatar
+              firstname={ownerPerson.firstname}
+              surname={ownerPerson.surname}
+              icon={isOwner ? (currentUser?.profileEmoji ?? null) : null}
+              size="xs"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium text-stone-900 dark:text-stone-100">
+                {isOwner ? "You" : ownerLink(`${ownerPerson.firstname} ${ownerPerson.surname}`)}
+              </p>
+              <p className="text-xs text-stone-400 dark:text-stone-500">
+                Added to {isOwner ? "your" : "their"} shelf · {monthDay(book.createdAt)}
+              </p>
+            </div>
+          </li>
+        ) : null}
       </ul>
     </div>
   );
@@ -1662,17 +1691,13 @@ export default function BookDetailsPage() {
               canNote={data.canNote}
               maxLength={data.noteMaxLength}
               friendIds={data.friendIds}
+              status={data.isOwner ? <ReadToggle readAt={data.book.readAt} /> : null}
             />
           ) : null}
 
-          {/* On phones the history comes last, after the book's details */}
-          {!isEditing && data.lendingHistory.length > 0 ? (
+          {!isEditing ? (
             <div className="mt-10">
-              <LendingHistory
-                entries={data.lendingHistory}
-                currentUser={data.currentUser}
-                lendCount={data.book.lendCount}
-              />
+              <LendingHistory data={data} />
             </div>
           ) : null}
         </section>
