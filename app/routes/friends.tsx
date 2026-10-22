@@ -2,21 +2,30 @@ import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
   MetaFunction,
+  SerializeFrom,
 } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import {
-  useLoaderData,
-  useFetcher,
-  Link,
-  Form,
-  useActionData,
-  useSearchParams,
-} from "@remix-run/react";
+import { json } from "@remix-run/node";
+import { useLoaderData, useFetcher, Link, Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
 import Avatar from "~/components/avatar";
+import CoverPlaceholder from "~/components/cover-placeholder";
+import {
+  BookIcon,
+  BookmarkIcon,
+  BorrowedIcon,
+  ClockIcon,
+  LentIcon,
+  SearchIcon,
+} from "~/components/icons";
 import Layout from "~/components / Layout/Layout";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
+import {
+  answerFriendRequest,
+  getFriendCards,
+  getIncomingFriendRequests,
+  removeFriend,
+} from "~/models/friend.server";
 import {
   getUserById,
   createNotification,
@@ -25,8 +34,8 @@ import {
   getPendingFriendRequests,
 } from "~/models/user.server";
 import { seo } from "~/seo";
-import { requireUserId, getUserId } from "~/session.server";
-import { isDemoEmail } from "~/utils";
+import { requireUserId } from "~/session.server";
+import { coverSrc, isDemoEmail } from "~/utils";
 
 export const meta: MetaFunction = () =>
   seo({ title: "Friends", noindex: true });
@@ -37,78 +46,68 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [user, suggestedFriends, pendingRequests] = await Promise.all([
-    getUserById(userId),
+  const [friends, incoming, suggestedFriends, pendingRequests] = await Promise.all([
+    getFriendCards(userId),
+    getIncomingFriendRequests(userId),
     getSuggestedFriends(userId, 5),
     getPendingFriendRequests(userId),
   ]);
-  return { user, suggestedFriends, pendingRequests };
+  return json({ friends, incoming, suggestedFriends, pendingRequests });
 };
+
+interface ActionData { errors: { email?: string } | null; success: boolean; friendId?: string }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const senderId = await getUserId(request);
-  if (!senderId) {
-    return json(
-      { errors: { email: "You must be logged in" }, success: false },
-      { status: 401 },
-    );
-  }
-
-  const user = await getUserById(senderId);
-  if (!user) {
-    return json(
-      { errors: { email: "User not found" }, success: false },
-      { status: 404 },
-    );
-  }
-
-  const senderName = user.firstname + " " + user.surname;
+  const userId = await requireUserId(request);
   const formData = await request.formData();
+  const intent = formData.get("intent");
   const friendId = formData.get("friendId");
-  const email = formData.get("email");
 
-  // Handle search-based friend request (by friendId)
+  if (intent === "remove" && typeof friendId === "string") {
+    await removeFriend(userId, friendId);
+    return json<ActionData>({ errors: null, success: true });
+  }
+
+  const notificationId = formData.get("notificationId");
+  if ((intent === "accept" || intent === "decline") && typeof notificationId === "string") {
+    await answerFriendRequest(userId, notificationId, intent === "accept");
+    return json<ActionData>({ errors: null, success: true });
+  }
+
+  const user = await getUserById(userId);
+  if (!user) {
+    return json<ActionData>({ errors: { email: "User not found" }, success: false }, { status: 404 });
+  }
+  const senderName = `${user.firstname} ${user.surname}`;
+
+  // A request to someone found in search or suggestions
   if (typeof friendId === "string" && friendId.length > 0) {
-    if (!(await canInteract(senderId, friendId))) {
-      return json(
-        { errors: { email: "User not found" }, success: false },
-        { status: 404 },
-      );
+    if (!(await canInteract(userId, friendId))) {
+      return json<ActionData>({ errors: { email: "User not found" }, success: false }, { status: 404 });
     }
-    const friendRequest = await createNotification(
-      senderId,
-      friendId,
-      senderName,
-    );
+    const friendRequest = await createNotification(userId, friendId, senderName);
     await respondAsDemoPersona(friendRequest.id);
-    return json({ success: true, friendId, errors: null });
+    return json<ActionData>({ success: true, friendId, errors: null });
   }
 
-  // Handle email-based friend request (fallback)
-  if (typeof email !== "string" || email.length === 0) {
-    return json(
-      { errors: { email: "Email is required" }, success: false },
-      { status: 400 },
-    );
+  // A request to an exact email address
+  const email = formData.get("email");
+  if (typeof email !== "string" || email.trim().length === 0) {
+    return json<ActionData>({ errors: { email: "Enter an email address" }, success: false }, { status: 400 });
   }
-
-  const receiver = await getUserByEmail(email);
-  if (!receiver || receiver.demoGroup !== user.demoGroup) {
-    return json(
-      { errors: { email: "No user found with this email" }, success: false },
+  const receiver = await getUserByEmail(email.trim());
+  if (!receiver || receiver.id === userId || receiver.demoGroup !== user.demoGroup) {
+    return json<ActionData>(
+      { errors: { email: "Nobody on Stacks has that email address" }, success: false },
       { status: 404 },
     );
   }
-
-  const friendRequest = await createNotification(
-    senderId,
-    receiver.id,
-    senderName,
-  );
+  const friendRequest = await createNotification(userId, receiver.id, senderName);
   await respondAsDemoPersona(friendRequest.id);
-
-  return redirect(`/books`);
+  return json<ActionData>({ success: true, friendId: receiver.id, errors: null });
 };
+
+type Friend = SerializeFrom<typeof loader>["friends"][number];
 
 interface SearchUser {
   id: string;
@@ -117,334 +116,458 @@ interface SearchUser {
   email: string;
 }
 
+const quietButton =
+  "rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors disabled:opacity-50";
+const primaryButton =
+  "rounded-md bg-forest-600 dark:bg-forest-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors disabled:opacity-50";
+
+function ago(date: string) {
+  const days = Math.floor((Date.now() - new Date(date).getTime()) / 86_400_000);
+  if (days < 1) return "today";
+  if (days < 2) return "yesterday";
+  if (days < 14) return `${days} days ago`;
+  if (days < 60) return `${Math.floor(days / 7)} weeks ago`;
+  if (days < 730) return `${Math.floor(days / 30)} months ago`;
+  return `${Math.floor(days / 365)} years ago`;
+}
+
+function monthYear(date: string) {
+  return new Date(date).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+function plural(n: number, one: string, many = `${one}s`) {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
 export default function Friends() {
   const data = useLoaderData<typeof loader>();
   const searchFetcher = useFetcher<SearchUser[]>();
   const loadUsers = searchFetcher.load;
-  const requestFetcher = useFetcher<{ success: boolean; friendId?: string }>();
-
-  const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/books";
+  const requestFetcher = useFetcher<ActionData>();
   const actionData = useActionData<typeof action>();
   const emailRef = useRef<HTMLInputElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
-  const debounceRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    if (actionData?.errors?.email) {
-      emailRef.current?.focus();
-    }
+    if (actionData?.errors?.email) emailRef.current?.focus();
   }, [actionData]);
 
-  // Handle search input with debounce
+  // Look people up once typing pauses
   useEffect(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    if (searchQuery.length >= 2) {
-      debounceRef.current = setTimeout(() => {
-        loadUsers(`/api/search-users?q=${encodeURIComponent(searchQuery)}`);
-      }, 300);
-    }
-
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
+    if (searchQuery.length < 2) return;
+    const timer = setTimeout(
+      () => loadUsers(`/api/search-users?q=${encodeURIComponent(searchQuery)}`),
+      300,
+    );
+    return () => clearTimeout(timer);
   }, [searchQuery, loadUsers]);
 
-  // Track sent friend requests
   useEffect(() => {
-    if (requestFetcher.data?.success && requestFetcher.data?.friendId) {
-      setSentRequests((prev) =>
-        new Set(prev).add(requestFetcher.data!.friendId!),
-      );
+    const sentTo = requestFetcher.data?.friendId;
+    if (requestFetcher.data?.success && sentTo) {
+      setSentRequests((prev) => new Set(prev).add(sentTo));
     }
   }, [requestFetcher.data]);
 
-  const handleSendRequest = (friendId: string) => {
+  const sendRequest = (friendId: string) =>
     requestFetcher.submit({ friendId }, { method: "post", action: "/friends" });
-  };
 
-  const following = data.user?.following ?? [];
-  const suggestedFriends = data.suggestedFriends ?? [];
-  const pendingRequests = data.pendingRequests ?? [];
-  const pendingUserIds = new Set(pendingRequests.map((r) => r.receiver.id));
-  const searchResults = searchQuery.length >= 2 ? searchFetcher.data || [] : [];
+  const { friends, incoming, pendingRequests } = data;
+  const pendingIds = new Set(pendingRequests.map((r) => r.receiver.id));
+  const askedMe = new Set(incoming.map((request) => request.sender.id));
+  const suggested = data.suggestedFriends.filter(
+    (user) => !pendingIds.has(user.id) && !sentRequests.has(user.id) && !askedMe.has(user.id),
+  );
+  const searchResults = searchQuery.length >= 2 ? searchFetcher.data ?? [] : [];
   const isSearching = searchFetcher.state === "loading";
 
   return (
-    <>
-      <Layout title="Friends">
+    <Layout title="Friends">
+      {incoming.length > 0 ? (
         <section>
-          <h2 className="text-lg font-semibold mb-4">Your Friends</h2>
-          {following.length > 0 || pendingRequests.length > 0 ? (
-            <>
-              {following.length > 0 ? (
-                <p className="text-stone-600 mb-4">
-                  You have {following.length} friend
-                  {following.length !== 1 ? "s" : ""}
-                </p>
-              ) : null}
-              <ul className="space-y-1">
-                {following.map((user, index) => (
-                  <li key={index} className="py-1">
-                    <a
-                      href={`/friend/${user.id}`}
-                      className="flex items-center gap-3 hover:bg-stone-50 dark:hover:bg-stone-800 -mx-2 px-2 py-2 rounded-lg transition-colors"
-                    >
-                      <Avatar
-                        firstname={user.firstname}
-                        surname={user.surname}
-                        icon={user.profileEmoji}
-                      />
-                      <div>
-                        <h3 className="font-medium">
-                          {user.firstname} {user.surname}
-                        </h3>
-                        {!isDemoEmail(user.email) ? (
-                          <p className="text-sm text-stone-500 dark:text-stone-400">
-                            {user.email}
-                          </p>
-                        ) : null}
-                      </div>
-                    </a>
-                  </li>
-                ))}
-                {pendingRequests.map((request) => (
-                  <li key={request.id} className="py-1">
-                    <div className="flex items-center gap-3 -mx-2 px-2 py-2">
-                      <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 font-semibold text-sm flex-shrink-0">
-                        {(request.receiver.firstname?.[0] || "").toUpperCase()}
-                        {(request.receiver.surname?.[0] || "").toUpperCase()}
-                      </div>
-                      <div className="flex-grow">
-                        <h3 className="font-medium">
-                          {request.receiver.firstname}{" "}
-                          {request.receiver.surname}
-                        </h3>
-                        {!isDemoEmail(request.receiver.email) ? (
-                          <p className="text-sm text-stone-500">
-                            {request.receiver.email}
-                          </p>
-                        ) : null}
-                      </div>
-                      <span className="bg-stone-100 text-stone-700 text-xs px-2 py-1 rounded-full flex-shrink-0">
-                        Pending
-                      </span>
-                    </div>
-                  </li>
+          <h2 className="text-lg font-semibold">Friend requests</h2>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {incoming.map((request) => (
+              <IncomingRequest key={request.id} request={request} />
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <section>
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-lg font-semibold">
+            Your friends
+            {friends.length ? (
+              <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">
+                {friends.length}
+              </span>
+            ) : null}
+          </h2>
+          <a href="#find" className="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100">
+            + Add friends
+          </a>
+        </div>
+
+        {friends.length > 0 ? (
+          <ul className="mt-4 grid gap-4 sm:grid-cols-2">
+            {friends.map((friend) => (
+              <FriendCard key={friend.id} friend={friend} />
+            ))}
+          </ul>
+        ) : (
+          <div className="mt-4 rounded-xl border border-dashed border-stone-300 dark:border-stone-700 px-6 py-10 text-center">
+            <p className="font-medium text-stone-900 dark:text-stone-100">No friends yet</p>
+            <p className="mt-1 text-stone-500 dark:text-stone-400">
+              Stacks is better with people to borrow from. Find someone below.
+            </p>
+          </div>
+        )}
+
+        {pendingRequests.length > 0 ? (
+          <div className="mt-8">
+            <h3 className="text-sm font-medium text-stone-500 dark:text-stone-400">
+              Waiting to hear back
+            </h3>
+            <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
+              {pendingRequests.map((request) => (
+                <li key={request.id} className="flex items-center gap-2 text-sm text-stone-700 dark:text-stone-300">
+                  <Avatar
+                    firstname={request.receiver.firstname}
+                    surname={request.receiver.surname}
+                    size="sm"
+                  />
+                  {request.receiver.firstname} {request.receiver.surname}
+                  <span className="text-stone-400 dark:text-stone-500">· sent {ago(request.createdAt)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </section>
+
+      <section id="find" className="scroll-mt-20">
+        <h2 className="text-lg font-semibold">Find friends</h2>
+        <p className="mt-1 text-stone-500 dark:text-stone-400">
+          Search by name or email, then send a request. Once they say yes, you can see
+          each other&apos;s shelves and borrow.
+        </p>
+
+        <div className="relative mt-4 max-w-xl">
+          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">
+            <SearchIcon size={16} />
+          </div>
+          <input
+            type="search"
+            aria-label="Search for people by name or email"
+            placeholder="Name or email"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            autoComplete="off"
+            className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 py-2 pl-9 pr-24 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+          />
+          {isSearching ? (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-stone-400">
+              Searching…
+            </span>
+          ) : null}
+        </div>
+
+        {searchQuery.length >= 2 ? (
+          <div className="mt-3 max-w-xl">
+            {searchResults.length > 0 ? (
+              <ul className="divide-y divide-stone-100 dark:divide-stone-800 rounded-lg border border-stone-200 dark:border-stone-800">
+                {searchResults.map((user) => (
+                  <PersonRow
+                    key={user.id}
+                    firstname={user.firstname}
+                    surname={user.surname}
+                    detail={isDemoEmail(user.email) ? null : user.email}
+                    status={
+                      sentRequests.has(user.id) || pendingIds.has(user.id) ? "sent" : "none"
+                    }
+                    busy={requestFetcher.state !== "idle"}
+                    onAdd={() => sendRequest(user.id)}
+                  />
                 ))}
               </ul>
-            </>
-          ) : (
-            <div className="text-center py-8">
-              <h3 className="text-xl font-medium mb-2">No friends yet</h3>
-              <p className="text-stone-600">
-                Search for users below to send them a friend request.
+            ) : !isSearching ? (
+              <p className="text-sm text-stone-500 dark:text-stone-400">
+                Nobody by that name on Stacks yet.
               </p>
-            </div>
-          )}
-        </section>
-
-        {suggestedFriends.filter((user) => !pendingUserIds.has(user.id))
-          .length > 0 ? (
-          <section>
-            <h2 className="text-lg font-semibold mb-2">Suggested Friends</h2>
-            <p className="text-stone-600 mb-4">
-              People who recently joined Stacks
-            </p>
-            <ul className="space-y-1">
-              {suggestedFriends
-                .filter(
-                  (user) =>
-                    !sentRequests.has(user.id) && !pendingUserIds.has(user.id),
-                )
-                .map((user) => (
-                  <li
-                    key={user.id}
-                    className="py-1 flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-900 dark:text-stone-100 font-semibold text-sm flex-shrink-0">
-                        {(user.firstname?.[0] || "").toUpperCase()}
-                        {(user.surname?.[0] || "").toUpperCase()}
-                      </div>
-                      <div>
-                        <h3 className="font-medium">
-                          {user.firstname} {user.surname}
-                        </h3>
-                        <p className="text-sm text-stone-500">New member</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleSendRequest(user.id)}
-                      disabled={requestFetcher.state !== "idle"}
-                      className="rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 hover:text-stone-900 dark:hover:border-stone-500 dark:hover:text-white transition-colors disabled:opacity-50"
-                    >
-                      Send Request
-                    </button>
-                  </li>
-                ))}
-              {suggestedFriends.filter(
-                (user) =>
-                  !sentRequests.has(user.id) && !pendingUserIds.has(user.id),
-              ).length === 0 ? (
-                <li className="py-3 text-stone-500">
-                  You&apos;ve sent requests to all suggested friends
-                </li>
-              ) : null}
-            </ul>
-          </section>
-        ) : null}
-
-        <section>
-          <h2 className="text-lg font-semibold mb-2">Find Friends</h2>
-          <p className="text-stone-600 mb-4">
-            Search for users by name or email to send them a friend request.
-          </p>
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="search"
-                className="block text-sm font-medium text-stone-700 mb-1"
-              >
-                Search by name or email
-              </label>
-              <div className="relative">
-                <input
-                  ref={searchRef}
-                  id="search"
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
-                  autoComplete="off"
-                />
-                {isSearching ? (
-                  <div className="absolute right-3 top-2.5 text-sm text-stone-400">
-                    Searching...
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            {searchQuery.length >= 2 ? (
-              <div className="border rounded-lg bg-white">
-                {searchResults.length > 0 ? (
-                  <ul className="space-y-1">
-                    {searchResults
-                      .filter((user) => !sentRequests.has(user.id))
-                      .map((user) => {
-                        const isPending = pendingUserIds.has(user.id);
-                        return (
-                          <li
-                            key={user.id}
-                            className="p-3 flex items-center justify-between"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm ${isPending ? "bg-stone-100 text-stone-600" : "bg-stone-100 text-stone-900 dark:text-stone-100"}`}
-                              >
-                                {(user.firstname?.[0] || "").toUpperCase()}
-                                {(user.surname?.[0] || "").toUpperCase()}
-                              </div>
-                              <div>
-                                <p className="font-medium">
-                                  {user.firstname} {user.surname}
-                                </p>
-                                {!isDemoEmail(user.email) ? (
-                                  <p className="text-sm text-stone-500">
-                                    {user.email}
-                                  </p>
-                                ) : null}
-                              </div>
-                            </div>
-                            {isPending ? (
-                              <span className="bg-stone-100 text-stone-700 text-xs px-2 py-1 rounded-full">
-                                Pending
-                              </span>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleSendRequest(user.id)}
-                                disabled={requestFetcher.state !== "idle"}
-                                className="rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 hover:text-stone-900 dark:hover:border-stone-500 dark:hover:text-white transition-colors disabled:opacity-50"
-                              >
-                                Send Request
-                              </button>
-                            )}
-                          </li>
-                        );
-                      })}
-                    {searchResults.filter((user) => !sentRequests.has(user.id))
-                      .length === 0 ? (
-                      <li className="p-3 text-stone-500">
-                        Request sent to all matching users
-                      </li>
-                    ) : null}
-                  </ul>
-                ) : !isSearching ? (
-                  <p className="p-3 text-stone-500">No users found</p>
-                ) : null}
-              </div>
             ) : null}
           </div>
-        </section>
+        ) : null}
 
-        <section>
-          <details>
-            <summary className="cursor-pointer font-medium">
-              Add by email address
-            </summary>
-            <Form method="post" className="space-y-4 mt-4">
-              <p className="text-stone-600">
-                If you know someone&apos;s exact email address, you can add them
-                directly.
-              </p>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-stone-700 mb-1"
-                >
-                  Email address
-                </label>
-                <input
-                  ref={emailRef}
-                  id="email"
-                  name="email"
-                  type="text"
-                  autoComplete="email"
-                  aria-invalid={actionData?.errors?.email ? true : undefined}
-                  aria-describedby="email-error"
-                  className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+        {suggested.length > 0 ? (
+          <div className="mt-8 max-w-xl">
+            <h3 className="text-sm font-medium text-stone-500 dark:text-stone-400">
+              New on Stacks
+            </h3>
+            <ul className="mt-2 divide-y divide-stone-100 dark:divide-stone-800">
+              {suggested.map((user) => (
+                <PersonRow
+                  key={user.id}
+                  firstname={user.firstname}
+                  surname={user.surname}
+                  detail={`Joined ${ago(user.createdAt)}`}
+                  status="none"
+                  busy={requestFetcher.state !== "idle"}
+                  onAdd={() => sendRequest(user.id)}
                 />
-                {actionData?.errors?.email ? (
-                  <div
-                    className="mt-1 text-sm text-stone-900 dark:text-stone-100"
-                    id="email-error"
-                  >
-                    {actionData.errors.email}
-                  </div>
-                ) : null}
-              </div>
-              <input type="hidden" name="redirectTo" value={redirectTo} />
-              <button
-                type="submit"
-                className="rounded-md bg-forest-600 dark:bg-forest-500 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 dark:hover:bg-forest-400 transition-colors"
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        <details className="mt-8 max-w-xl" open={Boolean(actionData?.errors?.email)}>
+          <summary className="cursor-pointer text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100">
+            Know their exact email address?
+          </summary>
+          <Form method="post" className="mt-3 flex gap-2">
+            <input
+              ref={emailRef}
+              name="email"
+              type="email"
+              autoComplete="off"
+              placeholder="friend@example.com"
+              aria-label="Email address"
+              aria-invalid={actionData?.errors?.email ? true : undefined}
+              aria-describedby="email-error"
+              className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+            />
+            <button type="submit" className={`flex-shrink-0 ${primaryButton} px-4 py-2`}>
+              Send request
+            </button>
+          </Form>
+          {actionData?.errors?.email ? (
+            <p id="email-error" className="mt-1 text-sm text-rose-700 dark:text-rose-400">
+              {actionData.errors.email}
+            </p>
+          ) : actionData?.success && actionData.friendId ? (
+            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">Request sent.</p>
+          ) : null}
+        </details>
+      </section>
+    </Layout>
+  );
+}
+
+// One friend: who they are, a peek at their shelf, what's between you
+function FriendCard({ friend }: { friend: Friend }) {
+  const fetcher = useFetcher();
+  const removing = fetcher.state !== "idle";
+  const shelf = `/friend/${friend.id}`;
+  const name = `${friend.firstname} ${friend.surname}`;
+  const loans = friend.hasOfMine + friend.iHaveOfTheirs;
+  // Five slots: the newest covers, the last one saying how many more
+  const covers = friend.bookCount > 5 ? friend.recent.slice(0, 4) : friend.recent;
+  const more = friend.bookCount - covers.length;
+
+  return (
+    <li
+      className={`flex flex-col rounded-xl border border-stone-200 dark:border-stone-800 p-4 transition-opacity ${
+        removing ? "opacity-40" : ""
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <Link to={shelf} tabIndex={-1} aria-hidden="true">
+          <Avatar firstname={friend.firstname} surname={friend.surname} icon={friend.profileEmoji} />
+        </Link>
+        <div className="min-w-0">
+          <Link
+            to={shelf}
+            className="block truncate font-semibold text-stone-900 dark:text-stone-100 hover:underline underline-offset-2"
+          >
+            {name}
+          </Link>
+          <p className="truncate text-sm text-stone-500 dark:text-stone-400">
+            {[friend.email, friend.since ? `Friends since ${monthYear(friend.since)}` : null]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        </div>
+      </div>
+
+      {covers.length > 0 ? (
+        <ul
+          className="mt-4 grid grid-cols-5 gap-2"
+          aria-label={`Recently added to ${friend.firstname}'s shelf`}
+        >
+          {covers.map((book) => (
+            <li key={book.id}>
+              <Link to={`/books/${book.id}`} title={book.title} className="block hover:opacity-90 transition-opacity">
+                <MiniCover cover={book.cover} title={book.title} author={book.author} />
+              </Link>
+            </li>
+          ))}
+          {more > 0 ? (
+            <li>
+              <Link
+                to={shelf}
+                aria-label={`${more} more on ${friend.firstname}'s shelf`}
+                className="flex aspect-[2/3] items-center justify-center rounded-xs bg-stone-50 dark:bg-stone-900 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
               >
-                Send friend request
-              </button>
-            </Form>
-          </details>
-        </section>
-      </Layout>
-    </>
+                +{more}
+              </Link>
+            </li>
+          ) : null}
+        </ul>
+      ) : null}
+
+      <ul className="mt-4 mb-4 space-y-1.5 text-sm text-stone-600 dark:text-stone-300 [&_svg]:flex-shrink-0 [&_svg]:text-stone-400 dark:[&_svg]:text-stone-500">
+        <li className="flex items-center gap-2">
+          <BookIcon size={14} />
+          {friend.bookCount
+            ? `${plural(friend.bookCount, "book")}, ${friend.availableCount} on the shelf now`
+            : "No books on their shelf yet"}
+        </li>
+        {friend.hasOfMine ? (
+          <li className="flex items-center gap-2">
+            <LentIcon size={14} />
+            Has {friend.hasOfMine} of your books
+          </li>
+        ) : null}
+        {friend.iHaveOfTheirs ? (
+          <li className="flex items-center gap-2">
+            <BorrowedIcon size={14} />
+            You have {friend.iHaveOfTheirs} of theirs
+          </li>
+        ) : null}
+        {friend.wanted ? (
+          <li className="flex items-center gap-2">
+            <BookmarkIcon size={14} />
+            <Link to="/want-to-read" className="hover:underline underline-offset-2">
+              Has {friend.wanted} from your want-to-read list
+            </Link>
+          </li>
+        ) : null}
+        {friend.lastAddedAt ? (
+          <li className="flex items-center gap-2">
+            <ClockIcon size={14} />
+            Last added a book {ago(friend.lastAddedAt)}
+          </li>
+        ) : null}
+      </ul>
+
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-stone-100 dark:border-stone-800 pt-3">
+        <Link
+          to={shelf}
+          className="text-sm font-medium text-stone-800 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white"
+        >
+          See their shelf →
+        </Link>
+        <fetcher.Form
+          method="post"
+          onSubmit={(event) => {
+            const message =
+              `Remove ${friend.firstname} as a friend? You won't see each other's shelves any more.` +
+              (loans ? " Books already lent between you stay lent until they're returned." : "");
+            if (!confirm(message)) event.preventDefault();
+          }}
+        >
+          <input type="hidden" name="intent" value="remove" />
+          <input type="hidden" name="friendId" value={friend.id} />
+          <button
+            type="submit"
+            disabled={removing}
+            className="text-sm text-stone-400 dark:text-stone-500 hover:text-rose-700 dark:hover:text-rose-400 transition-colors"
+          >
+            {removing ? "Removing…" : "Remove"}
+          </button>
+        </fetcher.Form>
+      </div>
+    </li>
+  );
+}
+
+function MiniCover({ cover, title, author }: { cover: string; title: string; author: string }) {
+  const [shown, setShown] = useState(false);
+  return (
+    <div className="relative aspect-[2/3] overflow-hidden rounded-xs ring-1 ring-stone-900/5 dark:ring-white/10">
+      <CoverPlaceholder title={title} author={author} className="absolute inset-0" />
+      {cover ? (
+        <img
+          src={coverSrc(cover)}
+          alt={title}
+          loading="lazy"
+          // Open Library answers a missing cover with a 1px image
+          ref={(img) => {
+            if (img?.complete && img.naturalWidth > 1) setShown(true);
+          }}
+          onLoad={(e) => setShown(e.currentTarget.naturalWidth > 1)}
+          className={`relative h-full w-full object-cover transition-opacity ${shown ? "opacity-100" : "opacity-0"}`}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function IncomingRequest({
+  request,
+}: {
+  request: SerializeFrom<typeof loader>["incoming"][number];
+}) {
+  const fetcher = useFetcher();
+  const answering = fetcher.formData?.get("intent");
+  return (
+    <li className="flex items-center gap-3 rounded-xl border border-stone-200 dark:border-stone-800 p-4">
+      <Avatar
+        firstname={request.sender.firstname}
+        surname={request.sender.surname}
+        icon={request.sender.profileEmoji}
+      />
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium text-stone-900 dark:text-stone-100">
+          {request.sender.firstname} {request.sender.surname}
+        </p>
+        <p className="text-sm text-stone-500 dark:text-stone-400">Asked {ago(request.createdAt)}</p>
+      </div>
+      <fetcher.Form method="post" className="flex flex-shrink-0 gap-2">
+        <input type="hidden" name="notificationId" value={request.id} />
+        <button type="submit" name="intent" value="decline" disabled={Boolean(answering)} className={quietButton}>
+          Not now
+        </button>
+        <button type="submit" name="intent" value="accept" disabled={Boolean(answering)} className={primaryButton}>
+          {answering === "accept" ? "Adding…" : "Accept"}
+        </button>
+      </fetcher.Form>
+    </li>
+  );
+}
+
+function PersonRow({
+  firstname,
+  surname,
+  detail,
+  status,
+  busy,
+  onAdd,
+}: {
+  firstname: string | null;
+  surname: string | null;
+  detail: string | null;
+  status: "none" | "sent";
+  busy: boolean;
+  onAdd: () => void;
+}) {
+  return (
+    <li className="flex items-center gap-3 px-3 py-2.5">
+      <Avatar firstname={firstname} surname={surname} size="sm" />
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium text-stone-900 dark:text-stone-100">
+          {firstname} {surname}
+        </p>
+        {detail ? <p className="truncate text-sm text-stone-500 dark:text-stone-400">{detail}</p> : null}
+      </div>
+      {status === "sent" ? (
+        <span className="flex-shrink-0 text-sm text-stone-400 dark:text-stone-500">Request sent</span>
+      ) : (
+        <button type="button" onClick={onAdd} disabled={busy} className={`flex-shrink-0 ${quietButton}`}>
+          Add friend
+        </button>
+      )}
+    </li>
   );
 }
