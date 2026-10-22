@@ -10,6 +10,7 @@ import {
   LogoutIcon,
   SearchIcon,
   DashboardIcon,
+  BookmarkIcon,
 } from "./icons";
 
 interface RootLoaderData {
@@ -76,6 +77,14 @@ export default function PositionedMenu() {
           >
             <BookIcon size={18} />
             <span>My Library</span>
+          </a>
+          <a
+            href="/want-to-read"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-3 py-2 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+          >
+            <BookmarkIcon size={18} />
+            <span>Want to Read</span>
           </a>
           <a
             href="/search"

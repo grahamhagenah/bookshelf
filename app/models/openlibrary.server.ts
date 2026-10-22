@@ -152,6 +152,10 @@ export async function ensureBookDetails(
       data: {
         firstSentence: pickFirstSentence(doc?.first_sentence),
         authorKey,
+        // Imported books arrive with no work key; keep the one we found
+        openLibraryKey:
+          book.openLibraryKey ??
+          (typeof doc?.key === "string" ? doc.key : null),
         detailsFetchedAt: new Date(),
       },
     });

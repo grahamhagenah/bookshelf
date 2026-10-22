@@ -255,9 +255,17 @@ function Welcome({
       done: bookCount > 0,
       doneText: `${bookCount} ${bookCount === 1 ? "book" : "books"} added`,
       action: (
-        <Link to="/search" className={actionClass}>
-          Add books
-        </Link>
+        <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <Link to="/search" className={actionClass}>
+            Add books
+          </Link>
+          <Link
+            to="/import"
+            className="text-sm text-stone-500 dark:text-stone-400 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+          >
+            or import from Goodreads
+          </Link>
+        </span>
       ),
     },
     {

@@ -30,6 +30,7 @@ model User {
   lendingHistory LendingHistory[]
   readerNotes    ReaderNote[]
   holds          Hold[]
+  wantToRead     WantToRead[]
 
   notificationsSent     Notification[] @relation("sender")
   notificationsReceived Notification[] @relation("receiver")
@@ -58,7 +59,10 @@ model Book {
   subjects      String?
   publisher     String?
   openLibraryKey String?
+  isbn          String?
   lendCount     Int     @default(0)
+  // When the owner read it; null means not yet
+  readAt        DateTime?
   // Extra Open Library details, looked up once per book
   firstSentence  String?
   authorKey      String?
@@ -168,4 +172,23 @@ model Hold {
 
   @@unique([bookId, userId])
   @@index([bookId])
+}
+
+// A book someone wants to read but doesn't own. Stacks watches friends'
+// shelves for it.
+model WantToRead {
+  id String @id @default(cuid())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  title          String
+  author         String
+  cover          String
+  openLibraryKey String?
+  isbn           String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

@@ -108,7 +108,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Reader notes and loan extensions only need dismissing
-  if (notificationType === "READER_NOTE" || notificationType === "LOAN_EXTENDED") {
+  if (
+    notificationType === "READER_NOTE" ||
+    notificationType === "LOAN_EXTENDED" ||
+    notificationType === "WANT_MATCH"
+  ) {
     if (formData.get("dismiss") === "true") {
       await markNotificationAsRead(notificationId, "dismissed");
     }
@@ -295,6 +299,24 @@ function ActivityItem({
         </>
       );
       break;
+    case "WANT_MATCH":
+      // A friend added a book from your want-to-read list
+      text = (
+        <>
+          {name} added {book}, which is on your want-to-read list
+        </>
+      );
+      actions = (
+        <>
+          <a href={`/books/${notification.bookId}`} className={secondaryButton}>
+            View book
+          </a>
+          <button className={quietButton} type="submit" name="dismiss" value="true">
+            Dismiss
+          </button>
+        </>
+      );
+      break;
     case "BOOK_APPROVED":
       text = <>{name} is lending you {book}</>;
       break;
@@ -402,6 +424,8 @@ const getHistoryText = (
       return <>{name} lent you {book}</>;
     case "HOLD_READY":
       return <>Your turn came up for {book}</>;
+    case "WANT_MATCH":
+      return <>{name} added {book}, from your want-to-read list</>;
     case "BOOK_RETURNED":
       return <>{name} returned {book}</>;
     case "READER_NOTE":

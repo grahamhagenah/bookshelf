@@ -6,6 +6,7 @@ import type {
 } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import {
+  useFetcher,
   Form,
   isRouteErrorResponse,
   Link,
@@ -25,6 +26,7 @@ import { sendBookRequestEmail } from "~/email.server";
 import {
   deleteBook,
   getBookById,
+  setRead,
   DEFAULT_LOAN_WEEKS,
   EXTEND_WEEKS,
   extendLoan,
@@ -360,6 +362,14 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const book = await getBookById(params.bookId);
   if (!book) {
     throw new Response("Not Found", { status: 404 });
+  }
+
+  if (intent === "toggleRead") {
+    if (book.userId !== userId) {
+      throw new Response("Only the owner can mark a book read", { status: 403 });
+    }
+    await setRead(book.id, userId, formData.get("read") === "true");
+    return json({ ok: true });
   }
 
   if (
@@ -863,6 +873,7 @@ function BookFacts({ data }: { data: BookData }) {
   if (data.isOwner) {
     // Where it is shows in the label under the cover
     rows.push(["Added", monthDay(book.createdAt)]);
+    rows.push(["Read", <ReadToggle key="read" readAt={book.readAt} />]);
   } else if (!data.isBorrower) {
     // Available goes without saying beside Ask to borrow
     if (book.borrower) rows.push(["Status", "Out on loan"]);
@@ -893,6 +904,34 @@ function BookFacts({ data }: { data: BookData }) {
         </div>
       ))}
     </dl>
+  );
+}
+
+// The owner's own note of having read it, changed in place
+function ReadToggle({ readAt }: { readAt: string | null }) {
+  const fetcher = useFetcher({ key: "read" });
+  const pending = fetcher.formData?.get("read");
+  const read = pending ? pending === "true" : Boolean(readAt);
+  const buttonClass =
+    "text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline";
+  return (
+    <fetcher.Form method="post" className="inline">
+      <input type="hidden" name="intent" value="toggleRead" />
+      <input type="hidden" name="read" value={read ? "false" : "true"} />
+      {read ? (
+        <>
+          {readAt && !pending ? monthDay(readAt) : "Yes"}
+          <span className="text-stone-400 dark:text-stone-500"> · </span>
+          <button type="submit" className={buttonClass}>
+            Undo
+          </button>
+        </>
+      ) : (
+        <button type="submit" className={buttonClass}>
+          Mark as read
+        </button>
+      )}
+    </fetcher.Form>
   );
 }
 

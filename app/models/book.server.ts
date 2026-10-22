@@ -37,6 +37,7 @@ export function getBookById(id: Book["id"]) {
       dueDate: true,
       createdAt: true,
       lendCount: true,
+      readAt: true,
       borrower: {
         select: {
           id: true,
@@ -72,6 +73,7 @@ export function getBookListItems(userId: User["id"]) {
       lendCount: true,
       userId: true,
       borrowerId: true,
+      readAt: true,
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -139,12 +141,13 @@ export function getPublicBookListItems(userId: User["id"]) {
 //   }
 // }
 
-type BookInput = Pick<Book, "title" | "author" | "body" | "cover"> & {
+export type BookInput = Pick<Book, "title" | "author" | "body" | "cover"> & {
   datePublished?: string | null;
   pageCount?: number | null;
   subjects?: string | null;
   publisher?: string | null;
   openLibraryKey?: string | null;
+  isbn?: string | null;
 };
 
 export function createBook({
@@ -157,6 +160,7 @@ export function createBook({
   subjects,
   publisher,
   openLibraryKey,
+  isbn,
   userId,
 }: BookInput & {
   userId: User["id"];
@@ -173,12 +177,21 @@ export function createBook({
       subjects: cleanSubjects(subjects).join(", ") || null,
       publisher,
       openLibraryKey,
+      isbn,
       user: {
         connect: {
           id: userId,
         },
       },
     },
+  });
+}
+
+// Whether the owner has read their copy
+export function setRead(bookId: Book["id"], userId: User["id"], read: boolean) {
+  return prisma.book.updateMany({
+    where: { id: bookId, userId },
+    data: { readAt: read ? new Date() : null },
   });
 }
 

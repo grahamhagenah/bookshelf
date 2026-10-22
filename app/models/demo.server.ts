@@ -791,6 +791,36 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     });
   }
 
+  // The visitor has read a good part of their own shelf
+  const read: [string, number][] = [
+    ["Project Hail Mary", 60],
+    ["Circe", 30],
+    ["The Remains of the Day", 90],
+    ["Station Eleven", 140],
+    ["Braiding Sweetgrass", 120],
+    ["A Gentleman in Moscow", 180],
+    ["Pachinko", 220],
+    ["The Hobbit", 300],
+  ];
+  for (const [title, days] of read) {
+    await prisma.book.update({
+      where: { id: books[title] },
+      data: { readAt: ago(days * day) },
+    });
+  }
+
+  // ...and a few books they're after. Two are on friends' shelves.
+  const wanted = [
+    { title: "The Overstory", author: "Richard Powers", isbn: "9780393635522" },
+    { title: "Where the Crawdads Sing", author: "Delia Owens", isbn: "9780735219090" },
+    { title: "Lonesome Dove", author: "Larry McMurtry", isbn: "9780671683900" },
+  ];
+  for (const [i, { isbn, ...book }] of wanted.entries()) {
+    await prisma.wantToRead.create({
+      data: { ...book, isbn, cover: cover(isbn), userId: ids.you, createdAt: ago((i + 2) * 9 * day) },
+    });
+  }
+
   const notifications: {
     type: string;
     from: OwnerKey;
@@ -801,6 +831,14 @@ export async function createDemoSandbox(): Promise<User["id"]> {
   }[] = [
     // Waiting on the visitor
     { type: "FRIEND_REQUEST", from: "theo", to: "you", at: ago(2 * hour) },
+    // Maya added a book from the visitor's want-to-read list
+    {
+      type: "WANT_MATCH",
+      from: "maya",
+      to: "you",
+      title: "The Overstory",
+      at: ago(2 * day),
+    },
     {
       type: "BOOK_REQUEST",
       from: "sam",

@@ -4,7 +4,7 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, Form, useActionData } from "@remix-run/react";
+import { Link, useLoaderData, Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
 import Avatar, {
@@ -464,6 +464,19 @@ export default function Account() {
               </button>
             ) : null}
           </Form>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-2">Import Your Books</h2>
+          <p className="text-stone-600 mb-4">
+            Bring your shelf over from Goodreads or StoryGraph in one go.
+          </p>
+          <Link
+            to="/import"
+            className="inline-block rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
+          >
+            Import from a file
+          </Link>
         </section>
 
         <section>
