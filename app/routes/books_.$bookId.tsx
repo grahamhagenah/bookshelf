@@ -1006,12 +1006,12 @@ function LendingHistory({ data }: { data: BookData }) {
           const person = entry.isCurrentUser && currentUser ? currentUser : entry.borrower;
           const name = `${entry.borrower.firstname} ${entry.borrower.surname}`;
           return (
-            <li key={entry.id} className="flex items-center gap-2.5 py-2 text-sm">
+            <li key={entry.id} className="flex items-center gap-3 py-2.5">
               <Avatar
                 firstname={person.firstname}
                 surname={person.surname}
                 icon={person.profileEmoji}
-                size="xs"
+                size="sm"
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-stone-900 dark:text-stone-100">
@@ -1035,7 +1035,7 @@ function LendingHistory({ data }: { data: BookData }) {
                     name
                   )}
                 </p>
-                <p className="text-xs text-stone-400 dark:text-stone-500">
+                <p className="text-sm text-stone-500 dark:text-stone-400">
                   {entry.returnedAt
                     ? `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
                     : `Since ${monthDay(entry.borrowedAt)} · has it now`}
@@ -1045,18 +1045,18 @@ function LendingHistory({ data }: { data: BookData }) {
           );
         })}
         {ownerPerson ? (
-          <li className="flex items-center gap-2.5 py-2 text-sm">
+          <li className="flex items-center gap-3 py-2.5">
             <Avatar
               firstname={ownerPerson.firstname}
               surname={ownerPerson.surname}
               icon={isOwner ? (currentUser?.profileEmoji ?? null) : null}
-              size="xs"
+              size="sm"
             />
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium text-stone-900 dark:text-stone-100">
                 {isOwner ? "You" : ownerLink(`${ownerPerson.firstname} ${ownerPerson.surname}`)}
               </p>
-              <p className="text-xs text-stone-400 dark:text-stone-500">
+              <p className="text-sm text-stone-500 dark:text-stone-400">
                 Added to {isOwner ? "your" : "their"} shelf · {monthDay(book.createdAt)}
               </p>
             </div>
