@@ -250,8 +250,10 @@ export const handle = {
   breadcrumbs: (data: LoaderData) => {
     const crumbs: { label: string; href?: string }[] = [];
 
-    // If viewing a friend's book, add Friends and friend name
-    if (!data?.isOwner && data?.book?.user) {
+    // Your own book sits in your library; a friend's, on their shelf
+    if (data?.isOwner) {
+      crumbs.push({ label: "My library", href: "/books" });
+    } else if (data?.book?.user) {
       crumbs.push({ label: "Friends", href: "/friends" });
       crumbs.push({
         label: `${data.book.user.firstname} ${data.book.user.surname}`,
