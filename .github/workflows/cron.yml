@@ -1,6 +1,7 @@
 # Timed jobs the app can't run itself: due-date reminders every day and
 # the weekly digest on Sunday mornings (US Eastern). Both endpoints
-# check CRON_SECRET_KEY, which must match the app's secret on Fly.
+# refuse anyone without CRON_SECRET_KEY, which must match the app's secret
+# on Fly. It goes in a header, so it stays out of the server's logs.
 name: Scheduled jobs
 
 on:
@@ -14,11 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Due-date reminders
-        run: curl -fsS "https://bookstacks.app/api/check-overdue?key=${{ secrets.CRON_SECRET_KEY }}"
+        run: curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET_KEY }}" https://bookstacks.app/api/check-overdue
 
   digest:
     runs-on: ubuntu-latest
     if: github.event.schedule == '0 13 * * 0' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Weekly digest
-        run: curl -fsS "https://bookstacks.app/api/weekly-digest?key=${{ secrets.CRON_SECRET_KEY }}"
+        run: curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET_KEY }}" https://bookstacks.app/api/weekly-digest

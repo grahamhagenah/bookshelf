@@ -1,21 +1,16 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 
+import { cronAuthorized } from "~/cron.server";
 import { prisma } from "~/db.server";
 import { getOverdueBooks, getBooksNearDue } from "~/models/book.server";
 import { createOverdueReminderNotification } from "~/models/user.server";
 
-// This endpoint checks for overdue books and sends reminder notifications
-// It can be called by a cron job (e.g., daily)
-// Optionally pass ?key=YOUR_SECRET_KEY for security
+// Checks for overdue and nearly-due books and sends reminders. Run daily by
+// GitHub's scheduled workflow, which holds CRON_SECRET_KEY.
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  // Optional: Add a secret key check for security
-  const url = new URL(request.url);
-  const key = url.searchParams.get("key");
-  const expectedKey = process.env.CRON_SECRET_KEY;
-
-  if (expectedKey && key !== expectedKey) {
+  if (!cronAuthorized(request)) {
     return json({ error: "Unauthorized" }, { status: 401 });
   }
 

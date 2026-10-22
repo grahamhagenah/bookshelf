@@ -1,13 +1,14 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 
+import { cronAuthorized } from "~/cron.server";
 import { renderDigest, sendDigestEmail } from "~/email.server";
 import { buildDigest, digestIsEmpty, getDigestRecipients } from "~/models/digest.server";
 import { getUserById, isUserAdmin } from "~/models/user.server";
 import { getUserId } from "~/session.server";
 
 // Sends the weekly email to everyone with something to hear about. Run
-// once a week by a cron job, with ?key=CRON_SECRET_KEY. An admin can
+// once a week by GitHub's scheduled workflow, which holds CRON_SECRET_KEY. An admin can
 // open ?preview=1 to see their own digest as it would be sent.
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -25,8 +26,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
   }
 
-  const expectedKey = process.env.CRON_SECRET_KEY;
-  if (expectedKey && url.searchParams.get("key") !== expectedKey) {
+  if (!cronAuthorized(request)) {
     return json({ error: "Unauthorized" }, { status: 401 });
   }
 
