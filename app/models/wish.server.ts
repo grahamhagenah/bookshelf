@@ -5,6 +5,7 @@ import type { Work } from "~/works";
 import { sameWork } from "~/works";
 
 import { createBook } from "./book.server";
+import { shelfIdsFor } from "./household.server";
 
 export { normalizeTitle, sameWork } from "~/works";
 
@@ -41,7 +42,7 @@ export async function getWantToRead(userId: User["id"]) {
   const friendBooks =
     wishes.length && friendIds.length
       ? await prisma.book.findMany({
-          where: { userId: { in: friendIds } },
+          where: { userId: { in: await shelfIdsFor(friendIds) } },
           select: {
             id: true,
             title: true,

@@ -8,6 +8,7 @@ import invariant from "tiny-invariant";
 
 import Library from "~/components/library";
 import { getBookListItems } from "~/models/book.server";
+import { shelfIds } from "~/models/household.server";
 import { getLoveCounts } from "~/models/note.server";
 import { getUserById } from "~/models/user.server";
 import { seo } from "~/seo";
@@ -48,7 +49,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw new Response("Not Found", { status: 404 });
   }
 
-  const books = await getBookListItems(user.id);
+  // A friend's shelf includes their household's books
+  const books = await getBookListItems(await shelfIds(user.id));
   const loveCounts = await getLoveCounts(books.map((book) => book.id));
   const bookListItems = books.map((book) => ({
     ...book,

@@ -13,6 +13,7 @@ import {
 } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 
+import { getHouseholdByInvite } from "~/models/household.server";
 import {
   createNotification,
   createUser,
@@ -27,10 +28,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
   if (userId) return redirect("/");
   // Arriving from someone's shared shelf: say whose, so the form has a point
-  const invite = new URL(request.url).searchParams.get("invite");
+  const url = new URL(request.url);
+  const invite = url.searchParams.get("invite");
   const inviter = invite ? await getUserByShareToken(invite) : null;
+  // Or from a shared-shelf invite: name the people on it
+  const household = url.searchParams.get("household");
+  const shelf = household ? await getHouseholdByInvite(household) : null;
   return json({
     inviterName: inviter ? `${inviter.firstname} ${inviter.surname}` : null,
+    shelfNames: shelf ? shelf.members.map((m) => m.firstname) : null,
   });
 };
 
@@ -158,7 +164,7 @@ export default function Join() {
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? undefined;
   const invite = searchParams.get("invite") ?? undefined;
-  const { inviterName } = useLoaderData<typeof loader>();
+  const { inviterName, shelfNames } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -176,6 +182,15 @@ export default function Join() {
   return (
     <div className="flex flex-col justify-center py-12 md:py-20">
       <div className="mx-auto w-full max-w-md px-8">
+        {shelfNames ? (
+          <p className="mb-8 text-stone-600 dark:text-stone-300">
+            Create an account to share a shelf with{" "}
+            <strong className="font-semibold text-stone-900 dark:text-stone-100">
+              {shelfNames.join(" and ")}
+            </strong>
+            . You&apos;ll see and lend each other&apos;s books, with your own notes and hearts.
+          </p>
+        ) : null}
         {inviterName ? (
           <p className="mb-8 text-stone-600 dark:text-stone-300">
             Create an account to borrow from{" "}

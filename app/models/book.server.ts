@@ -3,6 +3,8 @@ import type { User, Book } from "@prisma/client";
 import { prisma } from "~/db.server";
 import { cleanSubjects } from "~/utils";
 
+import { shelfIdsFor } from "./household.server";
+
 export function getBook({
   id,
   userId,
@@ -58,10 +60,11 @@ export function getBookById(id: Book["id"]) {
   });
 }
 
-export function getBookListItems(userId: User["id"]) {
+// Everything on a shelf. ownerIds is one person, or a whole household.
+export function getBookListItems(ownerIds: User["id"][]) {
   return prisma.book.findMany({
     where: {
-      userId: userId,
+      userId: { in: ownerIds },
     },
     select: {
       id: true,
@@ -74,6 +77,9 @@ export function getBookListItems(userId: User["id"]) {
       userId: true,
       borrowerId: true,
       readAt: true,
+      user: { select: { id: true, firstname: true } },
+      // The viewer's own read mark is picked out by the caller
+      readerNotes: { select: { userId: true, readAt: true } },
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -81,7 +87,7 @@ export function getBookListItems(userId: User["id"]) {
 
 // Everything on the home page: books you've borrowed, books you've lent
 // out (soonest due first), the rest of your shelf, and your newest books
-export async function getHomeBooks(userId: User["id"]) {
+export async function getHomeBooks(userId: User["id"], ownerIds: User["id"][] = [userId]) {
   const person = { select: { id: true, firstname: true, surname: true } };
   const fields = {
     id: true,
@@ -94,7 +100,7 @@ export async function getHomeBooks(userId: User["id"]) {
 
   const [own, borrowed] = await Promise.all([
     prisma.book.findMany({
-      where: { userId },
+      where: { userId: { in: ownerIds } },
       select: { ...fields, borrower: person },
       orderBy: { createdAt: "desc" },
     }),
@@ -116,10 +122,10 @@ export async function getHomeBooks(userId: User["id"]) {
   };
 }
 
-export function getPublicBookListItems(userId: User["id"]) {
+export function getPublicBookListItems(ownerIds: User["id"][]) {
   return prisma.book.findMany({
     where: {
-      userId: userId,
+      userId: { in: ownerIds },
     },
     select: { id: true, title: true, cover: true, author: true },
     orderBy: { updatedAt: "desc" },
@@ -187,12 +193,37 @@ export function createBook({
   });
 }
 
-// Whether the owner has read their copy
+// Whether this person has read this copy: kept on their reader note, so
+// two people sharing a shelf each have their own
 export function setRead(bookId: Book["id"], userId: User["id"], read: boolean) {
-  return prisma.book.updateMany({
-    where: { id: bookId, userId },
-    data: { readAt: read ? new Date() : null },
+  const readAt = read ? new Date() : null;
+  return prisma.readerNote.upsert({
+    where: { bookId_userId: { bookId, userId } },
+    create: { bookId, userId, readAt },
+    update: { readAt },
   });
+}
+
+// One person's read mark on one copy
+export async function getReadAt(
+  userId: User["id"],
+  book: { id: string; userId: string; readAt: Date | null },
+) {
+  const note = await prisma.readerNote.findUnique({
+    where: { bookId_userId: { bookId: book.id, userId } },
+    select: { readAt: true },
+  });
+  return readAtFor(userId, { ...book, readerNotes: note ? [{ userId, ...note }] : [] });
+}
+
+// Their own mark, falling back to the copy's old one for whoever added it
+export function readAtFor(
+  userId: User["id"],
+  book: { userId: string; readAt: Date | null; readerNotes: { userId: string; readAt: Date | null }[] },
+) {
+  const mine = book.readerNotes.find((note) => note.userId === userId);
+  if (mine) return mine.readAt;
+  return book.userId === userId ? book.readAt : null;
 }
 
 export function deleteBook({
@@ -361,30 +392,30 @@ export function getBorrowedBooks(userId: User["id"]) {
   });
 }
 
-export async function getBookStats(userId: User["id"]) {
+export async function getBookStats(userId: User["id"], ownerIds: User["id"][] = [userId]) {
   const [totalBooks, borrowedBooks, lentBooks] = await Promise.all([
-    prisma.book.count({ where: { userId } }),
+    prisma.book.count({ where: { userId: { in: ownerIds } } }),
     prisma.book.count({ where: { borrowerId: userId } }),
-    prisma.book.count({ where: { userId, borrowerId: { not: null } } }),
+    prisma.book.count({ where: { userId: { in: ownerIds }, borrowerId: { not: null } } }),
   ]);
 
   return { totalBooks, borrowedBooks, lentBooks };
 }
 
-export async function getUserLibraryKeys(userId: User["id"]) {
+export async function getUserLibraryKeys(ownerIds: User["id"][]) {
   const books = await prisma.book.findMany({
-    where: { userId },
+    where: { userId: { in: ownerIds } },
     select: { openLibraryKey: true },
   });
   return books.map((b) => b.openLibraryKey).filter(Boolean) as string[];
 }
 
 export async function bookExistsInLibrary(
-  userId: User["id"],
+  ownerIds: User["id"][],
   openLibraryKey: string,
 ) {
   const book = await prisma.book.findFirst({
-    where: { userId, openLibraryKey },
+    where: { userId: { in: ownerIds }, openLibraryKey },
     select: { id: true },
   });
   return book !== null;
@@ -488,10 +519,12 @@ export async function searchFriendsBooks(userId: User["id"], query: string) {
   const friendIds = user?.following.map((friend) => friend.id) ?? [];
   const term = query.trim();
   if (friendIds.length === 0 || !term) return [];
+  // A friend's household shares their shelf
+  const shelfOwners = await shelfIdsFor(friendIds);
 
   return prisma.book.findMany({
     where: {
-      userId: { in: friendIds },
+      userId: { in: shelfOwners },
       OR: [{ title: { contains: term } }, { author: { contains: term } }],
     },
     select: {
