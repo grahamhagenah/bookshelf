@@ -45,6 +45,25 @@ function inDays(days: number) {
   return `in ${days} days`;
 }
 
+// How a loan's due date reads in the lists: a plain date when it's a way
+// off, counting down once it's within the week, and bold once it's late
+function dueLabel(dueDate: string) {
+  const days = daysUntil(dueDate);
+  if (days < 0) {
+    return {
+      text: `${-days} ${days === -1 ? "day" : "days"} late`,
+      className: "font-semibold text-stone-900 dark:text-stone-100",
+    };
+  }
+  if (days <= COMING_UP_DAYS) {
+    return {
+      text: `due ${inDays(days)}`,
+      className: "font-medium text-stone-700 dark:text-stone-200",
+    };
+  }
+  return { text: `due ${monthDay(dueDate)}`, className: "" };
+}
+
 const linkClass =
   "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
 const headingClass = "text-lg font-semibold text-stone-900 dark:text-stone-100";
@@ -63,65 +82,6 @@ function Cover({ book, className }: { book: HomeBook; className: string }) {
         className="h-full w-full object-cover"
       />
     </span>
-  );
-}
-
-// A due date to keep an eye on: overdue, or within the week, either way
-interface DueItem {
-  book: HomeBook & { dueDate: string };
-  person: Person;
-  direction: "borrowed" | "lent";
-}
-
-// Inside Loans, in the same style as the lists beside it: a cover, the
-// title, then the date first on the second line so it's easy to scan
-function ComingUp({ items }: { items: DueItem[] }) {
-  if (items.length === 0) return null;
-  return (
-    <section aria-labelledby="coming-up" className="mb-6">
-      <h3 id="coming-up" className={subheadingClass}>
-        Coming up
-        <span className="font-normal text-stone-400 dark:text-stone-500">
-          {items.length}
-        </span>
-      </h3>
-      <ul className="divide-y divide-stone-100 dark:divide-stone-900">
-        {items.map(({ book, person, direction }) => {
-          const days = daysUntil(book.dueDate);
-          const overdue = days < 0;
-          const when = overdue
-            ? `${-days} ${days === -1 ? "day" : "days"} late`
-            : inDays(days).replace(/^in /, "In ");
-          return (
-            <li key={book.id}>
-              <Link
-                to={`/books/${book.id}`}
-                className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
-              >
-                <Cover book={book} className="w-14 h-21" />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium text-stone-900 dark:text-stone-100">
-                    {book.title}
-                  </span>
-                  <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
-                    <span
-                      className={
-                        overdue ? "font-semibold text-stone-900 dark:text-stone-100" : ""
-                      }
-                    >
-                      {when}
-                    </span>
-                    {" · "}
-                    {direction === "borrowed" ? "back to" : "with"} {person.firstname}{" "}
-                    {person.surname}
-                  </span>
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
   );
 }
 
@@ -153,7 +113,7 @@ function LoanList({
       ) : (
         <ul className="divide-y divide-stone-100 dark:divide-stone-900">
           {books.map(({ book, person }) => {
-            const overdue = book.dueDate ? daysUntil(book.dueDate) < 0 : false;
+            const due = book.dueDate ? dueLabel(book.dueDate) : null;
             return (
               <li key={book.id}>
                 <Link
@@ -169,18 +129,8 @@ function LoanList({
                       {person
                         ? `${personLabel} ${person.firstname} ${person.surname}`
                         : null}
-                      {person && book.dueDate ? " · " : null}
-                      {book.dueDate ? (
-                        <span
-                          className={
-                            overdue
-                              ? "font-semibold text-stone-900 dark:text-stone-100"
-                              : ""
-                          }
-                        >
-                          {overdue ? "overdue" : `due ${monthDay(book.dueDate)}`}
-                        </span>
-                      ) : null}
+                      {person && due ? " · " : null}
+                      {due ? <span className={due.className}>{due.text}</span> : null}
                     </span>
                   </span>
                 </Link>
@@ -394,20 +344,6 @@ export default function Home({
   const showFeed = setupDone || friendIds.length > 0;
   const showMain = showLoans || showRecent;
 
-  // Overdue first, then whatever's due soonest, in either direction
-  const due = (
-    book: HomeBook,
-    person: Person | null,
-    direction: DueItem["direction"],
-  ): DueItem[] =>
-    person && book.dueDate && daysUntil(book.dueDate) <= COMING_UP_DAYS
-      ? [{ book: { ...book, dueDate: book.dueDate }, person, direction }]
-      : [];
-  const comingUp = [
-    ...books.borrowed.flatMap((book) => due(book, book.owner, "borrowed")),
-    ...books.lent.flatMap((book) => due(book, book.borrower, "lent")),
-  ].sort((a, b) => daysUntil(a.book.dueDate) - daysUntil(b.book.dueDate));
-
   return (
     <main className="px-4 md:px-8 pt-4 md:pt-8 pb-8 md:pb-10">
       <h1 className="sr-only">Home</h1>
@@ -433,7 +369,6 @@ export default function Home({
             <h2 id="loans" className={`${headingClass} mb-3`}>
               Loans
             </h2>
-            <ComingUp items={comingUp} />
             <div className="grid gap-8 sm:grid-cols-2 sm:gap-10">
               <LoanList
                 id="borrowing"
