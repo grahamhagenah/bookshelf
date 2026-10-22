@@ -2,7 +2,7 @@
 
 A social book-lending app where you can catalog your personal library, connect with friends, and share books.
 
-**Live:** [bookstacks.site](https://bookstacks.site)
+**Live:** [bookstacks.app](https://bookstacks.app)
 
 ## Features
 
@@ -56,7 +56,7 @@ SESSION_SECRET="your-secret-key-change-in-production"
 
 # Email notifications (optional for dev, required for prod)
 RESEND_API_KEY=re_xxxxxxxxxxxx
-APP_URL=https://bookstacks.site
+APP_URL=https://bookstacks.app
 FROM_EMAIL=Stacks <no-reply@yourdomain.com>
 ```
 
@@ -150,7 +150,7 @@ fly volumes create data --size 1 --app bookshelf-c524
 # Set secrets
 fly secrets set SESSION_SECRET=$(openssl rand -hex 32)
 fly secrets set RESEND_API_KEY=re_xxxxxxxxxxxx
-fly secrets set APP_URL=https://bookstacks.site
+fly secrets set APP_URL=https://bookstacks.app
 fly secrets set FROM_EMAIL="Stacks <no-reply@bookstacks.site>"
 ```
 

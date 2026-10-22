@@ -14,11 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Due-date reminders
-        run: curl -fsS "https://bookstacks.site/api/check-overdue?key=${{ secrets.CRON_SECRET_KEY }}"
+        run: curl -fsS "https://bookstacks.app/api/check-overdue?key=${{ secrets.CRON_SECRET_KEY }}"
 
   digest:
     runs-on: ubuntu-latest
     if: github.event.schedule == '0 13 * * 0' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Weekly digest
-        run: curl -fsS "https://bookstacks.site/api/weekly-digest?key=${{ secrets.CRON_SECRET_KEY }}"
+        run: curl -fsS "https://bookstacks.app/api/weekly-digest?key=${{ secrets.CRON_SECRET_KEY }}"

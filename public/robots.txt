@@ -8,4 +8,4 @@ Allow: /join
 Allow: /login
 Disallow: /
 
-Sitemap: https://bookstacks.site/sitemap.xml
+Sitemap: https://bookstacks.app/sitemap.xml

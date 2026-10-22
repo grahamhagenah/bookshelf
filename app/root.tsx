@@ -4,7 +4,7 @@ import type {
   LoaderFunctionArgs,
   MetaFunction,
 } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import {
   Links,
   LiveReload,
@@ -17,7 +17,7 @@ import {
 } from "@remix-run/react";
 import { useEffect } from "react";
 
-import { seo } from "~/seo";
+import { OLD_HOSTS, SITE_URL, seo } from "~/seo";
 import { getUser } from "~/session.server";
 import { sharePromptDismissed } from "~/share-prompt.server";
 import stylesheet from "~/styles/tailwind.css";
@@ -50,6 +50,13 @@ export const links: LinksFunction = () => [
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  // The site moved to bookstacks.app; old addresses (and www) go there for
+  // good, path and all, so shared and invite links keep working
+  const host = request.headers.get("host")?.split(":")[0];
+  if (host && OLD_HOSTS.includes(host)) {
+    const url = new URL(request.url);
+    throw redirect(`${SITE_URL}${url.pathname}${url.search}`, 301);
+  }
   const user = await getUser(request);
   return json({
     user,

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://bookstacks.site/</loc></url>
-  <url><loc>https://bookstacks.site/join</loc></url>
-  <url><loc>https://bookstacks.site/login</loc></url>
-  <url><loc>https://bookstacks.site/faq</loc></url>
-  <url><loc>https://bookstacks.site/lend-books-to-friends</loc></url>
-  <url><loc>https://bookstacks.site/goodreads-alternative</loc></url>
+  <url><loc>https://bookstacks.app/</loc></url>
+  <url><loc>https://bookstacks.app/join</loc></url>
+  <url><loc>https://bookstacks.app/login</loc></url>
+  <url><loc>https://bookstacks.app/faq</loc></url>
+  <url><loc>https://bookstacks.app/lend-books-to-friends</loc></url>
+  <url><loc>https://bookstacks.app/goodreads-alternative</loc></url>
 </urlset>

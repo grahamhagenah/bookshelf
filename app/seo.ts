@@ -1,6 +1,8 @@
 import type { MetaDescriptor } from "@remix-run/node";
 
-export const SITE_URL = "https://bookstacks.site";
+export const SITE_URL = "https://bookstacks.app";
+// Where the site used to live, and its www twins: sent on to SITE_URL
+export const OLD_HOSTS = ["bookstacks.site", "www.bookstacks.site", "www.bookstacks.app"];
 const SITE_NAME = "Stacks";
 // Worded the way people search: lending books to friends, keeping track of
 // a home library, an alternative to Goodreads for the physical books
