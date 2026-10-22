@@ -197,10 +197,16 @@ function Card({
           <ActivityIcon type={type} urgent={type === "OVERDUE_REMINDER"} size="xs" />
         </span>
       </span>
-      <div className="min-w-0 flex-1">
-        <p className="leading-snug text-stone-800 dark:text-stone-200">{children}</p>
-        {date ? <p className="mt-0.5 text-xs text-stone-400 dark:text-stone-500">{date}</p> : null}
-        {actions ? <div className="mt-3 flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {/* What happened on the left, what you can do about it on the right
+          (underneath, on phones) */}
+      <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="min-w-0 flex-1">
+          <p className="leading-snug text-stone-800 dark:text-stone-200">{children}</p>
+          {date ? <p className="mt-0.5 text-xs text-stone-400 dark:text-stone-500">{date}</p> : null}
+        </div>
+        {actions ? (
+          <div className="flex flex-shrink-0 flex-wrap items-center gap-2">{actions}</div>
+        ) : null}
       </div>
       {dismiss ? (
         <button
@@ -209,7 +215,7 @@ function Card({
           value="true"
           aria-label="Dismiss"
           title="Dismiss"
-          className="-mr-2 -mt-2 flex h-7 w-7 flex-shrink-0 items-center justify-center self-start rounded-full text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+          className="-mr-2 -mt-2 flex h-7 w-7 flex-shrink-0 items-center justify-center self-start rounded-full sm:mt-0 sm:self-center text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
             <path d="M6 6l12 12M18 6L6 18" />
