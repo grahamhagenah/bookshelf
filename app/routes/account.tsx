@@ -13,7 +13,11 @@ import { billingEnabled, confirmCheckout } from "~/billing.server";
 import Avatar, {
   AVATAR_ICONS,
   AvatarGlyph,
+  Bookplate,
   isAvatarIcon,
+  PLATE,
+  PLATE_COLORS,
+  plateColorOf,
 } from "~/components/avatar";
 import {
   BookIcon,
@@ -230,11 +234,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
-  // Handle profile emoji update
+  // The picture: an icon, a bookplate in a chosen color, or (empty) a
+  // bookplate in the color that comes from your name
   if (intent === "updateProfileEmoji") {
     const emoji = formData.get("emoji");
     await updateUser(userId, {
-      profileEmoji: isAvatarIcon(emoji) ? emoji : null,
+      profileEmoji: isAvatarIcon(emoji) || plateColorOf(emoji) ? String(emoji) : null,
     });
     return json({
       errors: null,
@@ -526,38 +531,61 @@ export default function Account() {
 
         <div className="mt-8 border-t border-stone-100 dark:border-stone-800 pt-6">
           <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">Picture</h3>
-          <Form method="post" className="mt-3 flex flex-wrap gap-2">
+          <Form method="post" className="mt-3 space-y-3">
             <input type="hidden" name="intent" value="updateProfileEmoji" />
-            {/* Initials first, then the icons */}
-            {[null, ...AVATAR_ICONS].map((icon) => {
-              const chosen = icon
-                ? user?.profileEmoji === icon
-                : !isAvatarIcon(user?.profileEmoji);
-              return (
-                <button
-                  key={icon ?? "initials"}
-                  type="submit"
-                  name="emoji"
-                  value={icon ?? ""}
-                  aria-label={icon ? `Use the ${icon} icon` : "Use my initials"}
-                  aria-pressed={chosen}
-                  className={`flex h-11 w-11 items-center justify-center rounded-full border text-stone-700 dark:text-stone-200 transition-colors ${
-                    chosen
-                      ? "border-forest-600 dark:border-forest-400 ring-1 ring-forest-600 dark:ring-forest-400 bg-stone-50 dark:bg-stone-800"
-                      : "border-stone-200 dark:border-stone-700 hover:border-stone-400 dark:hover:border-stone-500"
-                  }`}
-                >
-                  {icon ? (
+            {/* Your initials as a bookplate, in a color of your choosing */}
+            <div className="flex flex-wrap gap-2">
+              {(Object.keys(PLATE_COLORS) as (keyof typeof PLATE_COLORS)[]).map((color) => {
+                const chosen = plateColorOf(user?.profileEmoji) === color;
+                return (
+                  <button
+                    key={color}
+                    type="submit"
+                    name="emoji"
+                    value={`${PLATE}${color}`}
+                    aria-label={`Use the ${color} bookplate`}
+                    aria-pressed={chosen}
+                    // The same 44px as the icons below, so the two rows line
+                    // up; the ring sits outside, off the plate by a gap
+                    className={`rounded-full ring-offset-2 ring-offset-white dark:ring-offset-stone-950 transition-shadow ${
+                      chosen
+                        ? "ring-2 ring-forest-600 dark:ring-forest-400"
+                        : "ring-1 ring-transparent hover:ring-stone-300 dark:hover:ring-stone-600"
+                    }`}
+                  >
+                    <Bookplate
+                      firstname={user?.firstname}
+                      surname={user?.surname}
+                      color={color}
+                      box="h-11 w-11 text-sm"
+                      framed
+                    />
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {AVATAR_ICONS.map((icon) => {
+                const chosen = user?.profileEmoji === icon;
+                return (
+                  <button
+                    key={icon}
+                    type="submit"
+                    name="emoji"
+                    value={icon}
+                    aria-label={`Use the ${icon} icon`}
+                    aria-pressed={chosen}
+                    className={`flex h-11 w-11 items-center justify-center rounded-full border text-stone-700 dark:text-stone-200 transition-colors ${
+                      chosen
+                        ? "border-forest-600 dark:border-forest-400 ring-1 ring-forest-600 dark:ring-forest-400 bg-stone-50 dark:bg-stone-800"
+                        : "border-stone-200 dark:border-stone-700 hover:border-stone-400 dark:hover:border-stone-500"
+                    }`}
+                  >
                     <AvatarGlyph icon={icon} size={22} />
-                  ) : (
-                    <span className="text-xs font-semibold">
-                      {user?.firstname?.[0]}
-                      {user?.surname?.[0]}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
           </Form>
         </div>
       </Section>

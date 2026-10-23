@@ -13,6 +13,7 @@ import {
   LentIcon,
   ReadIcon,
 } from "./icons";
+import ShareShelfButton from "./share-shelf-button";
 
 const OPEN_LIBRARY_SIZE = /-[SML]\.jpg$/;
 
@@ -383,6 +384,11 @@ export default function Library({ bookListItems, ownerName, header }: LibraryPro
                   </span>
                   Add books
                 </Link>
+              )}
+              {ownerName ? null : (
+                <div className="sm:hidden">
+                  <ShareShelfButton iconOnly />
+                </div>
               )}
           </div>
 

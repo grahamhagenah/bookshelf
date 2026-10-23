@@ -14,6 +14,7 @@ import { shelfIds } from "~/models/household.server";
 import { getPendingFriendRequests, getUserById } from "~/models/user.server";
 import { getWantToRead } from "~/models/wish.server";
 import { publicOrigin } from "~/origin.server";
+import { shelfPath } from "~/profile";
 import { ABOUT_STACKS, seo, structuredData } from "~/seo";
 import { getUserId, requireUserId } from "~/session.server";
 import { WELCOME_COOKIE, dismissCookie, welcomeDismissed } from "~/share-prompt.server";
@@ -74,9 +75,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       requestsSent: sentRequests.length,
       welcomeDismissed: welcomeDismissed(request),
       // For the "Share your shelf" step on a new account's welcome
-      shareUrl: user.shareToken
-        ? `${publicOrigin(request)}/share/${user.shareToken}`
-        : null,
+      shareUrl: shelfPath(user) ? `${publicOrigin(request)}${shelfPath(user)}` : null,
     },
   });
 };

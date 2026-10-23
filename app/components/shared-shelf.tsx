@@ -27,10 +27,11 @@ export function shelfSummary(name: string, count: number, titles: string[]) {
   return `${books}, including ${list}.`;
 }
 
+// Small, so the bar stays out of the shelf's way
 const primaryButton =
-  "inline-flex items-center justify-center rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors";
+  "inline-flex items-center justify-center rounded-md bg-forest-600 px-2.5 py-1 text-sm font-medium text-white hover:bg-forest-700 transition-colors";
 const secondaryButton =
-  "inline-flex items-center justify-center rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
+  "inline-flex items-center justify-center rounded-md border border-stone-200 dark:border-stone-700 px-2.5 py-1 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
 
 const plural = (n: number, word: string) => `${n.toLocaleString()} ${n === 1 ? word : `${word}s`}`;
 
@@ -40,7 +41,8 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
   const { stats } = profile;
   const facts = [
     plural(stats.books, "book"),
-    stats.readThisYear ? `${stats.readThisYear} read this year` : null,
+    // How generous the shelf has been, rather than how much anyone's read
+    stats.timesLent ? `lent ${plural(stats.timesLent, "time")}` : null,
     stats.mostLent && stats.mostLent.times > 1
       ? `most borrowed: ${stats.mostLent.title}`
       : null,
@@ -72,7 +74,7 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
       </div>
 
       {profile.favorites.length > 0 ? (
-        <section aria-labelledby="favorites" className="mt-6">
+        <section aria-labelledby="favorites" className="mt-10">
           <h2
             id="favorites"
             className="flex items-center gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400"
@@ -212,18 +214,12 @@ function Invite({ data }: { data: SharedShelfData }) {
     return null;
   }
 
-  // A slim bar, like a small site's: Stacks on the left, the note and
-  // what to do on the right. A long note wraps to its own line on a phone.
+  // A quiet line above the page: the shelf belongs to its owner, so Stacks
+  // keeps to the buttons here and introduces itself at the bottom instead.
+  // A long note wraps to its own line on a phone.
   return (
     <div className="px-4 md:px-8 pt-3 md:pt-5">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-stone-200 dark:border-stone-800 pb-3 md:pb-4 text-sm text-stone-600 dark:text-stone-300">
-        <Link
-          to="/"
-          className="flex flex-shrink-0 items-center gap-1.5 font-semibold text-stone-900 dark:text-stone-100"
-        >
-          <StacksLogo size={22} />
-          Stacks
-        </Link>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-stone-500 dark:text-stone-400">
         <p
           className={`min-w-0 flex-1 leading-snug ${
             // Signed out, or on your own page, the note is wide-screen only and
@@ -239,6 +235,23 @@ function Invite({ data }: { data: SharedShelfData }) {
   );
 }
 
+// Where Stacks introduces itself, after the shelf: for visitors who've
+// looked through it and might like one of their own
+function MakeYourOwn() {
+  return (
+    <div className="mt-12 px-4 text-center md:px-8">
+      <Link
+        to="/"
+        className="inline-flex items-center gap-2 rounded-full border border-stone-200 dark:border-stone-800 px-4 py-2 text-sm text-stone-600 dark:text-stone-300 hover:border-stone-400 hover:text-stone-900 dark:hover:border-stone-600 dark:hover:text-stone-100 transition-colors"
+      >
+        <StacksLogo size={18} />
+        Make your own shelf on Stacks
+        <span aria-hidden="true">→</span>
+      </Link>
+    </div>
+  );
+}
+
 export default function SharedShelf({ data }: { data: SharedShelfData }) {
   return (
     <>
@@ -248,6 +261,8 @@ export default function SharedShelf({ data }: { data: SharedShelfData }) {
         ownerName={data.ownerName}
         header={<ProfileHeader data={data} />}
       />
+      {/* Signed in, they've already got one */}
+      {data.signedIn ? null : <MakeYourOwn />}
     </>
   );
 }

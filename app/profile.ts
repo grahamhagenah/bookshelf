@@ -48,3 +48,10 @@ export function handleProblem(handle: string): string | null {
   if (RESERVED.has(handle)) return "That one's reserved. Try another.";
   return null;
 }
+
+// Where a shelf can be seen without signing in: its handle once it has
+// one, else the share link. Null while sharing is off.
+export function shelfPath(user: { handle?: string | null; shareToken?: string | null }) {
+  if (!user.shareToken) return null;
+  return user.handle ? `/@${user.handle}` : `/share/${user.shareToken}`;
+}

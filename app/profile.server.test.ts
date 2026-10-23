@@ -39,7 +39,7 @@ test("handles are tidied, and refused when they're odd, reserved or taken", asyn
   });
 });
 
-test("favorites are the shelf's books you've hearted; stats count books, reads and lends", async () => {
+test("favorites are the shelf's books you've hearted; stats count books and lends", async () => {
   const me = await makeUser("Me");
   const dune = await makeBook(me.id, "Dune");
   const circe = await makeBook(me.id, "Circe");
@@ -50,7 +50,8 @@ test("favorites are the shelf's books you've hearted; stats count books, reads a
 
   const profile = await getShelfProfile(me.id);
   expect(profile.favorites.map((book) => book.title)).toEqual(["Dune"]);
-  expect(profile.stats).toEqual({ books: 3, readThisYear: 2, mostLent: { title: "Dune", times: 3 } });
+  // Reads stay private: the numbers are about lending
+  expect(profile.stats).toEqual({ books: 3, timesLent: 3, mostLent: { title: "Dune", times: 3 } });
 });
 
 test("a shelf is at /@handle only while sharing is on, and its old link moves there", async () => {

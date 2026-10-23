@@ -43,6 +43,14 @@ export const links: LinksFunction = () => [
     type: "font/woff2",
     crossOrigin: "anonymous",
   },
+  // And the wordmark's, which is on every page
+  {
+    rel: "preload",
+    href: "/fonts/source-serif-4-latin-600-normal.woff2",
+    as: "font",
+    type: "font/woff2",
+    crossOrigin: "anonymous",
+  },
   { rel: "stylesheet", href: stylesheet },
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
   { rel: "icon", href: "/favicon.ico", sizes: "32x32" },

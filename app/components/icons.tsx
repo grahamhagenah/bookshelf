@@ -112,6 +112,15 @@ export function BookIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
+export function LinkIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13.5a4 4 0 005.7.3l3-3a4 4 0 00-5.7-5.6l-1.6 1.6"/>
+      <path d="M14 10.5a4 4 0 00-5.7-.3l-3 3a4 4 0 005.7 5.6l1.6-1.6"/>
+    </svg>
+  );
+}
+
 export function PersonAddIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="currentColor">

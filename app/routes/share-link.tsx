@@ -3,6 +3,7 @@ import { json } from "@remix-run/node";
 
 import { generateShareToken, getUserById } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
+import { shelfPath } from "~/profile";
 import { requireUserId } from "~/session.server";
 import { SHARE_PROMPT_COOKIE, dismissCookie } from "~/share-prompt.server";
 
@@ -22,6 +23,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Reuse an existing link rather than breaking one already handed out
   const user = await getUserById(userId);
-  const token = user?.shareToken ?? (await generateShareToken(userId));
-  return json({ url: `${publicOrigin(request)}/share/${token}` });
+  const shareToken = user?.shareToken ?? (await generateShareToken(userId));
+  return json({ url: `${publicOrigin(request)}${shelfPath({ handle: user?.handle, shareToken })}` });
 };

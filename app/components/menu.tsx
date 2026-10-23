@@ -65,7 +65,7 @@ export default function PositionedMenu() {
         aria-label={user ? "Account menu" : "Log in"}
         aria-expanded={open}
         title={user ? `${user.firstname} ${user.surname}` : "Log in"}
-        // Signed in, only the avatar darkens; a full circle behind it jumped out
+        // Signed in, the avatar gets a ring in its own color; a full circle behind it jumped out
         className={`group inline-flex items-center justify-center w-11 h-11 md:w-9 md:h-9 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors duration-200 ${
           user ? "" : "hover:bg-stone-100 dark:hover:bg-stone-800"
         }`}
@@ -76,7 +76,7 @@ export default function PositionedMenu() {
             surname={user.surname}
             icon={user.profileEmoji}
             size="sm"
-            className="md:w-6 md:h-6 md:text-[10px] transition-colors duration-200 group-hover:bg-stone-200 dark:group-hover:bg-stone-700"
+            className="ring-2 ring-transparent group-hover:ring-current/25 group-focus-visible:ring-current/40"
           />
         ) : (
           <UserIcon size={20} />

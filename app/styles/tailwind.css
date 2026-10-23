@@ -16,6 +16,8 @@
   --shadow-soft: 0 4px 12px -2px rgb(28 25 23 / 0.06);
   --font-family-sans: 'Source Sans 3', system-ui, sans-serif;
   --font-sans: 'Source Sans 3', system-ui, sans-serif;
+  /* Georgia is close in size, so the swap barely moves anything */
+  --font-serif: 'Source Serif 4', Georgia, serif;
 }
 
 /* Browsers draw focus rings and checkboxes in the system accent color

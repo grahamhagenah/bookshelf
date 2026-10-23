@@ -1,4 +1,5 @@
-// Profile pictures: a small set of line icons, or the person's initials.
+// Profile pictures: a small set of line icons, or the person's initials as
+// a bookplate.
 // The chosen key is stored in User.profileEmoji (named before icons
 // replaced emoji); anything that isn't a known key, such as an emoji
 // picked earlier, falls back to initials.
@@ -184,6 +185,76 @@ export function isAvatarIcon(value: unknown): value is AvatarIcon {
   return typeof value === "string" && value in ICON_PATHS;
 }
 
+// Bookplates: initials in a serif inside a thin frame, like the ex libris
+// label pasted inside a book's cover. Chosen ones are kept as "plate:" and
+// a color; without a choice, a color is picked from the person's name.
+export const PLATE_COLORS = {
+  forest: "bg-forest-600/10 text-forest-700 dark:bg-forest-400/15 dark:text-forest-400",
+  oxblood: "bg-red-900/10 text-red-900 dark:bg-red-400/15 dark:text-red-300",
+  navy: "bg-blue-900/10 text-blue-900 dark:bg-blue-400/15 dark:text-blue-300",
+  ochre: "bg-amber-600/15 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300",
+  plum: "bg-purple-900/10 text-purple-900 dark:bg-purple-400/15 dark:text-purple-300",
+  ink: "bg-stone-900/10 text-stone-800 dark:bg-stone-100/10 dark:text-stone-200",
+};
+export type PlateColor = keyof typeof PLATE_COLORS;
+export const PLATE = "plate:";
+
+export const isPlateColor = (value: unknown): value is PlateColor =>
+  typeof value === "string" && value in PLATE_COLORS;
+
+// The chosen color from a stored picture, if it's a bookplate
+export function plateColorOf(value: unknown): PlateColor | null {
+  if (typeof value !== "string" || !value.startsWith(PLATE)) return null;
+  const color = value.slice(PLATE.length);
+  return isPlateColor(color) ? color : null;
+}
+
+// Someone who hasn't chosen keeps the same color, worked out from their
+// name. Ink reads as grey, so it's there to choose but never handed out.
+const DEFAULT_PLATES: PlateColor[] = ["forest", "oxblood", "navy", "ochre", "plum"];
+
+export function plateColorFor(firstname?: string | null, surname?: string | null): PlateColor {
+  const name = `${firstname ?? ""} ${surname ?? ""}`;
+  let hash = 0;
+  for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return DEFAULT_PLATES[hash % DEFAULT_PLATES.length];
+}
+
+const initialsOf = (firstname?: string | null, surname?: string | null) =>
+  `${(firstname?.[0] || "").toUpperCase()}${(surname?.[0] || "").toUpperCase()}`;
+
+// A bookplate on its own, for the picker in Settings too
+export function Bookplate({
+  firstname,
+  surname,
+  color,
+  box,
+  framed,
+  className = "",
+}: {
+  firstname?: string | null;
+  surname?: string | null;
+  color?: PlateColor | null;
+  box: string;
+  framed: boolean;
+  className?: string;
+}) {
+  const tone = PLATE_COLORS[color ?? plateColorFor(firstname, surname)];
+  // Letter spacing also trails the last letter, so the same space on the
+  // left keeps the pair centered
+  return (
+    <span
+      className={`${box} ${tone} relative flex flex-shrink-0 items-center justify-center rounded-full pl-[0.1em] font-serif font-semibold tracking-[0.1em] ${className}`}
+    >
+      {/* The frame: a thin ring inside the edge, at sizes where it shows */}
+      {framed ? (
+        <span aria-hidden="true" className="absolute inset-[3px] rounded-full border border-current opacity-30" />
+      ) : null}
+      {initialsOf(firstname, surname)}
+    </span>
+  );
+}
+
 export function AvatarGlyph({ icon, size = 20 }: { icon: AvatarIcon; size?: number }) {
   return (
     <svg
@@ -223,18 +294,23 @@ export default function Avatar({
   className?: string;
 }) {
   const { box, icon: iconSize } = SIZES[size];
+  if (!isAvatarIcon(icon)) {
+    return (
+      <Bookplate
+        firstname={firstname}
+        surname={surname}
+        color={plateColorOf(icon)}
+        box={box}
+        framed={size === "md" || size === "lg"}
+        className={className}
+      />
+    );
+  }
   return (
     <span
       className={`${box} rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 font-semibold flex items-center justify-center flex-shrink-0 ${className}`}
     >
-      {isAvatarIcon(icon) ? (
-        <AvatarGlyph icon={icon} size={iconSize} />
-      ) : (
-        <>
-          {(firstname?.[0] || "").toUpperCase()}
-          {(surname?.[0] || "").toUpperCase()}
-        </>
-      )}
+      <AvatarGlyph icon={icon} size={iconSize} />
     </span>
   );
 }
