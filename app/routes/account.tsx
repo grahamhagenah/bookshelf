@@ -1012,62 +1012,55 @@ function HouseholdPanel({
 }) {
   const others = household?.members.length ?? 0;
 
+  const invite = household?.inviteUrl ? (
+    <div className="space-y-2">
+      <p className="text-sm text-stone-600 dark:text-stone-300">
+        Send this to the person you share with. They&apos;ll join your shelf when they open it.
+      </p>
+      <CopyField value={household.inviteUrl} label="Invite link for your shelf" />
+      <Form method="post">
+        <input type="hidden" name="intent" value="householdRevoke" />
+        <button type="submit" className={textButton}>
+          Turn this link off
+        </button>
+      </Form>
+    </div>
+  ) : (
+    <Form method="post">
+      <input type="hidden" name="intent" value="householdInvite" />
+      <button type="submit" className={quietButton}>
+        {others > 1 ? "Invite someone else" : "Make an invite link"}
+      </button>
+    </Form>
+  );
+
+  if (!household || others < 2) return invite;
+
+  // Everyone on the shelf as one unit, laid out like a loan on a book's
+  // page: who, then what you can do, then the way out
   return (
-    <div className="space-y-3">
-      {household && others > 1 ? (
-        // Everyone on the shelf as one unit: pictures overlapping, names
-        // joined, in one capsule
-        <div
-          title={household.members.map((member) => `${member.firstname} ${member.surname}`).join(", ")}
-          className="inline-flex max-w-full items-center gap-3 rounded-full border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 py-1.5 pl-1.5 pr-5"
-        >
-          <ul className="flex flex-shrink-0 -space-x-2.5">
-            {household.members.map((member) => (
-              <li key={member.id} className="rounded-full ring-2 ring-white dark:ring-stone-950">
-                <Avatar
-                  firstname={member.firstname}
-                  surname={member.surname}
-                  icon={member.profileEmoji}
-                  size="md"
-                />
-                <span className="sr-only">
-                  {member.firstname} {member.surname}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <div aria-hidden="true" className="min-w-0 leading-tight">
-            <p className="truncate font-medium text-stone-900 dark:text-stone-100">
-              {joinNames(household.members.map((member) => member.firstname))}
-            </p>
-            <p className="text-sm text-stone-500 dark:text-stone-400">Share one shelf</p>
-          </div>
-        </div>
-      ) : null}
-
-      {household?.inviteUrl ? (
-        <div className="space-y-2">
-          <p className="text-sm text-stone-600 dark:text-stone-300">
-            Send this to the person you share with. They&apos;ll join your shelf when they open it.
+    <div className="rounded-xl border border-stone-200 dark:border-stone-800 text-sm">
+      <div className="flex items-center gap-3 p-4">
+        <ul aria-hidden="true" className="flex flex-shrink-0 -space-x-2.5">
+          {household.members.map((member) => (
+            <li key={member.id} className="rounded-full ring-2 ring-white dark:ring-stone-950">
+              <Avatar firstname={member.firstname} surname={member.surname} icon={member.profileEmoji} />
+            </li>
+          ))}
+        </ul>
+        <div className="min-w-0">
+          <p className="text-base text-stone-900 dark:text-stone-100">
+            <span className="font-semibold">{joinNames(household.members.map((member) => member.firstname))}</span>{" "}
+            share this shelf
           </p>
-          <CopyField value={household.inviteUrl} label="Invite link for your shelf" />
-          <Form method="post">
-            <input type="hidden" name="intent" value="householdRevoke" />
-            <button type="submit" className={textButton}>
-              Turn this link off
-            </button>
-          </Form>
+          <p className="truncate text-stone-500 dark:text-stone-400">
+            {joinNames(household.members.map((member) => `${member.firstname} ${member.surname}`))}
+          </p>
         </div>
-      ) : (
-        <Form method="post">
-          <input type="hidden" name="intent" value="householdInvite" />
-          <button type="submit" className={quietButton}>
-            {others > 1 ? "Invite someone else" : "Make an invite link"}
-          </button>
-        </Form>
-      )}
-
-      {household && others > 1 ? (
+      </div>
+      <div className="border-t border-stone-100 dark:border-stone-800 p-4">{invite}</div>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-stone-100 dark:border-stone-800 px-4 py-3">
+        <p className="text-stone-500 dark:text-stone-400">Moving out?</p>
         <Form
           method="post"
           onSubmit={(event) => {
@@ -1077,11 +1070,14 @@ function HouseholdPanel({
           }}
         >
           <input type="hidden" name="intent" value="householdLeave" />
-          <button type="submit" className={textButton}>
+          <button
+            type="submit"
+            className="rounded-md border border-stone-200 dark:border-stone-700 px-2 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
+          >
             Leave this shelf
           </button>
         </Form>
-      ) : null}
+      </div>
     </div>
   );
 }
