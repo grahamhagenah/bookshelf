@@ -87,13 +87,14 @@ export default function Landing() {
       <section className="grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,31rem)] lg:gap-16">
         <div>
           <h1 className="text-5xl sm:text-6xl lg:text-[3.25rem] font-bold tracking-tight leading-[1.02] text-stone-900 dark:text-stone-50">
-            Your bookshelf,
+            Your bookshelf?
             <br />
-            shared with friends.
+            {/* The turn of the page, in the logo's serif */}
+            <em className="font-serif font-semibold italic">Our</em> bookshelf.
           </h1>
           <p className="mt-5 max-w-lg text-balance text-xl sm:text-2xl leading-snug text-stone-600 dark:text-stone-300">
-            Catalog your home library, lend books to friends with reminders so
-            they come back, and borrow theirs.
+            Catalog your home library, borrow from your friends&apos; shelves, and
+            lend yours with reminders so books come back.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <Link
