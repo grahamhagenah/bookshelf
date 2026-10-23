@@ -997,6 +997,11 @@ function CopyField({ value, label }: { value: string; label: string }) {
 }
 
 // Who's on the shelf, the invite link to add someone, and the way out
+// "Jordan & Noah", "Jordan, Noah & Sam"
+function joinNames(names: string[]) {
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}` : names.join("");
+}
+
 function HouseholdPanel({
   household,
 }: {
@@ -1010,19 +1015,34 @@ function HouseholdPanel({
   return (
     <div className="space-y-3">
       {household && others > 1 ? (
-        <ul className="flex flex-wrap gap-x-4 gap-y-2">
-          {household.members.map((member) => (
-            <li key={member.id} className="flex items-center gap-2 text-sm text-stone-800 dark:text-stone-200">
-              <Avatar
-                firstname={member.firstname}
-                surname={member.surname}
-                icon={member.profileEmoji}
-                size="sm"
-              />
-              {member.firstname} {member.surname}
-            </li>
-          ))}
-        </ul>
+        // Everyone on the shelf as one unit: pictures overlapping, names
+        // joined, in one capsule
+        <div
+          title={household.members.map((member) => `${member.firstname} ${member.surname}`).join(", ")}
+          className="inline-flex max-w-full items-center gap-3 rounded-full border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 py-1.5 pl-1.5 pr-5"
+        >
+          <ul className="flex flex-shrink-0 -space-x-2.5">
+            {household.members.map((member) => (
+              <li key={member.id} className="rounded-full ring-2 ring-white dark:ring-stone-950">
+                <Avatar
+                  firstname={member.firstname}
+                  surname={member.surname}
+                  icon={member.profileEmoji}
+                  size="md"
+                />
+                <span className="sr-only">
+                  {member.firstname} {member.surname}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div aria-hidden="true" className="min-w-0 leading-tight">
+            <p className="truncate font-medium text-stone-900 dark:text-stone-100">
+              {joinNames(household.members.map((member) => member.firstname))}
+            </p>
+            <p className="text-sm text-stone-500 dark:text-stone-400">Share one shelf</p>
+          </div>
+        </div>
       ) : null}
 
       {household?.inviteUrl ? (
