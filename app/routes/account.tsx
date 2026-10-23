@@ -680,42 +680,11 @@ export default function Account() {
         description="Show your shelf to anyone with a link, or share one shelf with someone you live with."
       >
         <div className="space-y-8">
-          <div>
-            <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">Public link</h3>
-            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-              Anyone with it can see your bookshelf without signing in.
-            </p>
-            <div className="mt-3">
-              {shareUrl ? (
-                <>
-                  {/* With a handle, the shelf's own address is the one to share */}
-                  <CopyField
-                    value={user?.handle ? `${data.origin}/@${user.handle}` : shareUrl}
-                    label="Public link to your shelf"
-                  />
-                  <Form method="post" className="mt-2">
-                    <input type="hidden" name="intent" value="revokeShareToken" />
-                    <button type="submit" className={textButton}>
-                      Turn this link off
-                    </button>
-                  </Form>
-                </>
-              ) : (
-                <Form method="post">
-                  <input type="hidden" name="intent" value="generateShareToken" />
-                  <button type="submit" className={quietButton}>
-                    Make a link
-                  </button>
-                </Form>
-              )}
-            </div>
-          </div>
-
-          <ProfilePanel
+          <PublicPage
             handle={user?.handle ?? null}
             bio={user?.bio ?? null}
             origin={data.origin}
-            sharing={Boolean(shareUrl)}
+            shareUrl={shareUrl}
           />
 
           <div>
@@ -1309,51 +1278,109 @@ function DeleteAccount({ plus, shared }: { plus: boolean; shared: boolean }) {
   );
 }
 
-// Your public page's address and the line at its top
-function ProfilePanel({
+// Your public page in one place: whether there is one, its address to
+// pick and copy, and the line at its top. Before you pick a handle, the
+// share link is the address.
+function PublicPage({
   handle,
   bio,
   origin,
-  sharing,
+  shareUrl,
 }: {
   handle: string | null;
   bio: string | null;
   origin: string;
-  sharing: boolean;
+  shareUrl: string | null;
 }) {
   const fetcher = useFetcher<{ profileSaved?: boolean; profileError?: string }>();
   const [bioText, setBioText] = useState(bio ?? "");
+  const [copied, setCopied] = useState(false);
   const saving = fetcher.state !== "idle";
   const error = fetcher.data?.profileError;
   const saved = fetcher.state === "idle" && fetcher.data?.profileSaved;
   const host = origin.replace(/^https?:\/\//, "");
 
+  const heading = <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">Public page</h3>;
+
+  if (!shareUrl) {
+    return (
+      <div>
+        {heading}
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+          A page anyone can open to see your bookshelf, no sign-in needed.
+        </p>
+        <Form method="post" className="mt-3">
+          <input type="hidden" name="intent" value="generateShareToken" />
+          <button type="submit" className={quietButton}>
+            Make my shelf public
+          </button>
+        </Form>
+      </div>
+    );
+  }
+
+  // The saved address, not whatever's being typed
+  const link = handle ? `${origin}/@${handle}` : shareUrl;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard can be blocked; the address is right there to select
+    }
+  };
+
   return (
     <div>
-      <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">Your page</h3>
+      {heading}
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-        Pick a handle for a link that&apos;s easy to share, like in your Instagram bio, and add a
-        line about yourself. Your favorites are the books you&apos;ve hearted.
+        Anyone with the link can see your bookshelf without signing in. Your favorites are the
+        books you&apos;ve hearted.
       </p>
-      <fetcher.Form method="post" className="mt-3 grid gap-3">
+      <fetcher.Form method="post" className="mt-3 grid grid-cols-1 gap-3">
         <input type="hidden" name="intent" value="saveProfile" />
-        <label className="block text-sm text-stone-700 dark:text-stone-300">
-          Handle
-          <div className="mt-1 flex items-center rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 focus-within:border-stone-400 dark:focus-within:border-stone-500">
-            <span className="select-none pl-3 text-stone-400 dark:text-stone-500">{host}/@</span>
-            <input
-              name="handle"
-              defaultValue={handle ?? ""}
-              placeholder="yourname"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              maxLength={HANDLE_MAX + 1}
-              aria-invalid={error ? true : undefined}
-              className="min-w-0 flex-1 bg-transparent py-2 pr-3 text-stone-900 dark:text-stone-100 focus:outline-none"
-            />
+        <div>
+          <label htmlFor="handle" className="block text-sm text-stone-700 dark:text-stone-300">
+            Address
+          </label>
+          <div className="mt-1 flex gap-2">
+            <div className="flex min-w-0 flex-1 items-center rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 focus-within:border-stone-400 dark:focus-within:border-stone-500">
+              <span className="select-none pl-3 text-stone-400 dark:text-stone-500">{host}/@</span>
+              <input
+                id="handle"
+                name="handle"
+                defaultValue={handle ?? ""}
+                placeholder="yourname"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                maxLength={HANDLE_MAX + 1}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={handle ? undefined : "handle-hint"}
+                className="min-w-0 flex-1 bg-transparent py-2 pr-3 text-stone-900 dark:text-stone-100 focus:outline-none"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={copy}
+              aria-label={`Copy ${link}`}
+              className={`flex-shrink-0 ${quietButton}`}
+            >
+              {/* Both labels share one cell, so the button keeps its width */}
+              <span className="grid">
+                <span className={`col-start-1 row-start-1 ${copied ? "invisible" : ""}`}>Copy</span>
+                <span className={`col-start-1 row-start-1 ${copied ? "" : "invisible"}`}>Copied</span>
+              </span>
+            </button>
           </div>
-        </label>
+          {handle ? null : (
+            <p id="handle-hint" className="mt-1.5 text-sm text-stone-500 dark:text-stone-400">
+              Pick a handle for a link that&apos;s easy to share. Until then, Copy gives you a
+              longer link that works just the same.
+            </p>
+          )}
+        </div>
         <label className="block text-sm text-stone-700 dark:text-stone-300">
           <span className="flex justify-between">
             Bio
@@ -1379,13 +1406,18 @@ function ProfilePanel({
             {error ? (
               <span className="text-red-700 dark:text-red-400">{error}</span>
             ) : saved ? (
-              <span className="text-forest-700 dark:text-forest-400">
-                Saved{sharing ? "" : ". Turn on your public link above to show it."}
-              </span>
+              <span className="text-forest-700 dark:text-forest-400">Saved</span>
             ) : null}
           </span>
         </div>
       </fetcher.Form>
+      {/* Its own form, since forms can't nest */}
+      <Form method="post" className="mt-4">
+        <input type="hidden" name="intent" value="revokeShareToken" />
+        <button type="submit" className={textButton}>
+          Turn off public page
+        </button>
+      </Form>
     </div>
   );
 }
