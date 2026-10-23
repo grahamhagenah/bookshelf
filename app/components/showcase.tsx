@@ -25,8 +25,6 @@ const COVERS = {
   circe: cover("9780316556347"),
   dune: cover("9780441172719"),
   overstory: cover("9780393635522"),
-  crawdads: cover("9780735219090"),
-  lonesomeDove: cover("9780671683900"),
 };
 
 const panel =
@@ -349,55 +347,6 @@ export function ShowcaseNotes() {
             </span>
           ))}
         </div>
-      </div>
-    </Stage>
-  );
-}
-
-// A friend adds a book from your want-to-read list, and you hear about it
-export function ShowcaseWant() {
-  return (
-    <Stage height="h-[340px] sm:h-[360px]">
-      <div className={`${panel} left-[5%] right-0 top-0 z-30 rotate-1 p-3.5`}>
-        <div className="flex items-start gap-2.5">
-          <Initials text="MC" />
-          <p className="min-w-0 text-sm leading-snug text-stone-700 dark:text-stone-300">
-            <span className="font-semibold text-stone-900 dark:text-stone-100">Maya Chen</span>{" "}
-            added{" "}
-            <span className="font-semibold text-stone-900 dark:text-stone-100">The Overstory</span>,
-            which is on your want-to-read list
-            <span className="mt-0.5 block text-xs text-stone-400">Just now</span>
-          </p>
-        </div>
-      </div>
-
-      <div className={`${panel} left-0 right-[6%] top-[27%] z-20 -rotate-2 p-3.5`}>
-        <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">
-          Want to read <span className="font-normal text-stone-400">3</span>
-        </p>
-        {[
-          { src: COVERS.overstory, title: "The Overstory", note: "Maya has it", ask: true },
-          { src: COVERS.crawdads, title: "Where the Crawdads Sing", note: "Priya has it", ask: true },
-          { src: COVERS.lonesomeDove, title: "Lonesome Dove", note: "None of your friends yet" },
-        ].map((book) => (
-          <div key={book.title} className="mt-2.5 flex items-center gap-2.5">
-            <Cover src={book.src} className="w-7" />
-            <p className="min-w-0 flex-1 text-sm leading-tight text-stone-800 dark:text-stone-200">
-              <span className="block truncate font-medium">{book.title}</span>
-              <span className="block text-xs text-stone-500 dark:text-stone-400">{book.note}</span>
-            </p>
-            {book.ask ? (
-              <span className="rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-xs text-stone-700 dark:text-stone-200">
-                Ask to borrow
-              </span>
-            ) : null}
-          </div>
-        ))}
-      </div>
-
-      <div className="absolute bottom-0 right-[4%] z-30 flex rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white shadow-soft">
-        <Check />
-        Asked Maya for The Overstory
       </div>
     </Stage>
   );

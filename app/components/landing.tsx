@@ -3,8 +3,7 @@ import { Link } from "@remix-run/react";
 import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
 
 import DemoButton from "./demo-button";
-import { CameraIcon, HomeIcon } from "./icons";
-import Showcase, { ShowcaseFriends, ShowcaseNotes, ShowcasePage, ShowcaseWant } from "./showcase";
+import Showcase, { ShowcaseFriends, ShowcaseNotes, ShowcasePage } from "./showcase";
 
 // The signed-out home page: what Stacks is, beside a small, staged glimpse
 // of the app itself, so people see what they're signing up for
@@ -37,29 +36,6 @@ function Feature({
       </div>
       {visual}
     </section>
-  );
-}
-
-// Smaller things worth knowing, side by side under the big features
-function Extra({
-  icon,
-  title,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200">
-        {icon}
-      </span>
-      <h3 className="mt-4 text-lg font-semibold text-stone-900 dark:text-stone-50">{title}</h3>
-      <p className="mt-1.5 text-pretty leading-relaxed text-stone-600 dark:text-stone-300">
-        {children}
-      </p>
-    </div>
   );
 }
 
@@ -165,46 +141,19 @@ export default function Landing() {
           flip
         >
           Search once and see which friends have a book, then ask to borrow it
-          with a tap. They pick how long you can keep it, and Stacks reminds you
-          both when it&apos;s due, so lent books find their way home.
-        </Feature>
-
-        <Feature
-          eyebrow="Want to read"
-          title="Hear the moment a friend has it"
-          visual={<ShowcaseWant />}
-        >
-          Keep a list of books you&apos;d like to read. When a friend adds one to
-          their shelf, you&apos;ll know, and you can ask for it straight away.
+          with a tap. Not on anyone&apos;s shelf yet? Add it to your want-to-read
+          list and you&apos;ll hear the moment a friend does.
         </Feature>
 
         <Feature
           eyebrow="Notes"
           title="Every copy carries its story"
           visual={<ShowcaseNotes />}
-          flip
         >
           Leave a heart or a line for the next reader. Notes stay with the book
           as it moves between friends, so you can see where it&apos;s been and
           what everyone thought.
         </Feature>
-
-        {/* The rest, briefly */}
-        <section className="border-t border-stone-200 dark:border-stone-800 pt-16 md:pt-20">
-          <h2 className="text-balance text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-4xl">
-            And a few more things
-          </h2>
-          <div className="mt-10 grid gap-10 sm:grid-cols-2 sm:gap-8">
-            <Extra icon={<CameraIcon size={18} />} title="Fill your shelf fast">
-              Scan the barcodes on a shelf of books with your phone, or bring your
-              list over from Goodreads or StoryGraph in one go.
-            </Extra>
-            <Extra icon={<HomeIcon size={18} />} title="One shelf for the household">
-              Live with someone whose books are your books? Share one shelf, with
-              your own logins, notes and friends.
-            </Extra>
-          </div>
-        </section>
 
         {/* The questions people ask first, and the way to the rest */}
         <section className="border-t border-stone-200 dark:border-stone-800 pt-16 md:pt-20">
@@ -253,8 +202,9 @@ export default function Landing() {
           <h2 className="text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-4xl">
             Start your shelf
           </h2>
-          <p className="mt-3 text-lg text-stone-600 dark:text-stone-300">
-            It&apos;s free to start, and takes a minute.
+          <p className="mx-auto mt-3 max-w-md text-balance text-lg text-stone-600 dark:text-stone-300">
+            Scan your shelf with your phone&apos;s camera or bring your Goodreads list over.
+            Free for your first {FREE_LIMITS.books} books.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
