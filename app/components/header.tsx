@@ -12,10 +12,10 @@ interface RootLoaderData {
 }
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
-  `inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-sm transition-colors ${
+  `inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-[15px] transition-colors ${
     isActive
       ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
-      : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800"
+      : "text-stone-700 dark:text-stone-200 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800"
   }`;
 
 export default function Header() {
@@ -40,7 +40,7 @@ export default function Header() {
               size={32}
               className="h-8 w-8 sm:h-9 sm:w-9 text-stone-900 dark:text-stone-100"
             />
-            <span className="font-serif text-xl sm:text-2xl">Stacks</span>
+            <span className="font-serif text-xl sm:text-[1.375rem]">Stacks</span>
           </a>
         </div>
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
@@ -87,7 +87,7 @@ export default function Header() {
             <>
               <a
                 href="/login"
-                className="rounded-md px-3 py-1.5 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors"
+                className="rounded-md px-3 py-1.5 text-[15px] text-stone-700 dark:text-stone-200 hover:text-stone-900 dark:hover:text-white transition-colors"
               >
                 Sign in
               </a>
