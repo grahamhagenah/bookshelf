@@ -158,6 +158,8 @@ model Notification {
   book       Book?   @relation(fields: [bookId], references: [id])
   bookId     String?
   bookTitle  String?
+  // What an announcement from Stacks says
+  message    String?
 
   read        Boolean  @default(false)
   actionTaken String?

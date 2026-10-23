@@ -59,6 +59,13 @@ const PATHS: Record<string, React.ReactNode> = {
   READER_NOTE: (
     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0016.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 002 8.5c0 2.3 1.5 4.05 3 5.5l7 7z" />
   ),
+  // Megaphone: a word from Stacks
+  ANNOUNCEMENT: (
+    <>
+      <path d="M3 10v4a1 1 0 001 1h3l6 4V5L7 9H4a1 1 0 00-1 1z" />
+      <path d="M16.5 8.5a4 4 0 010 7M19 6a7.5 7.5 0 010 12" />
+    </>
+  ),
   // Hourglass
   PENDING: (
     <>

@@ -30,7 +30,13 @@ import {
 } from "~/models/admin.server";
 import { deleteExpiredDemoGroups } from "~/models/demo.server";
 import { getFeedback, setFeedbackDone } from "~/models/feedback.server";
-import { deleteUsers, getUserByEmail, isUserAdmin, updateUser } from "~/models/user.server";
+import {
+  deleteUsers,
+  getUserByEmail,
+  isUserAdmin,
+  updateUser,
+  createAnnouncement,
+} from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 import { validateEmail } from "~/utils";
@@ -51,16 +57,26 @@ async function requireAdmin(request: Request) {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireAdmin(request);
-  const [health, revenue, funnel, feedback, lending, users, quality] = await Promise.all([
-    getHealth(),
-    getRevenue(),
-    getFunnel(),
-    getFeedback(),
-    getLending(),
-    getAdminUsers(),
-    getDataQuality(),
-  ]);
-  return json({ userId, health, revenue, funnel, feedback, lending, users, quality });
+  const [health, revenue, funnel, feedback, lending, users, quality] =
+    await Promise.all([
+      getHealth(),
+      getRevenue(),
+      getFunnel(),
+      getFeedback(),
+      getLending(),
+      getAdminUsers(),
+      getDataQuality(),
+    ]);
+  return json({
+    userId,
+    health,
+    revenue,
+    funnel,
+    feedback,
+    lending,
+    users,
+    quality,
+  });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -73,9 +89,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({ ok: true });
   }
 
+  if (intent === "announce") {
+    const message = String(form.get("message") ?? "").trim();
+    if (!message)
+      return json(
+        { announceError: "Write the announcement first." },
+        { status: 400 },
+      );
+    if (message.length > ANNOUNCEMENT_MAX) {
+      return json(
+        { announceError: `Keep it under ${ANNOUNCEMENT_MAX} characters.` },
+        { status: 400 },
+      );
+    }
+    const sentTo = await createAnnouncement(userId, message);
+    return json({ announced: sentTo });
+  }
+
   if (intent === "feedbackDone") {
     const id = form.get("feedbackId");
-    if (typeof id !== "string") return json({ error: "No feedback given" }, { status: 400 });
+    if (typeof id !== "string")
+      return json({ error: "No feedback given" }, { status: 400 });
     await setFeedbackDone(id, form.get("done") === "true");
     return json({ ok: true });
   }
@@ -97,7 +131,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
     const existing = await getUserByEmail(email);
     if (existing && existing.id !== targetId) {
-      return json({ error: `${email} belongs to another account` }, { status: 400 });
+      return json(
+        { error: `${email} belongs to another account` },
+        { status: 400 },
+      );
     }
     await updateUser(targetId, { firstname, surname, email });
     return json({ ok: true, saved: true });
@@ -110,7 +147,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Admins can't delete their own account from here
   if (targetId === userId) {
-    return json({ error: "You can't delete your own account here" }, { status: 400 });
+    return json(
+      { error: "You can't delete your own account here" },
+      { status: 400 },
+    );
   }
   if (intent === "deleteUser") {
     await deleteUsers([targetId]);
@@ -122,7 +162,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 type Data = SerializeFrom<typeof loader>;
 
 const headingClass = "text-lg font-semibold text-stone-900 dark:text-stone-100";
-const subheadingClass = "text-sm font-semibold text-stone-500 dark:text-stone-400";
+const subheadingClass =
+  "text-sm font-semibold text-stone-500 dark:text-stone-400";
 const mutedClass = "text-stone-500 dark:text-stone-400";
 const outlineButton =
   "rounded-md px-2.5 py-1 text-sm font-medium ring-1 ring-inset ring-stone-300 dark:ring-stone-700 text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-900 disabled:opacity-50 transition-colors";
@@ -136,7 +177,8 @@ const shortDate = (date: string | Date) => {
   return when.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    year: when.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
+    year:
+      when.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
   });
 };
 
@@ -146,7 +188,10 @@ function ago(date: string) {
   if (days < 1) return "today";
   if (days < 14) return `${days}d ago`;
   if (days < 90) return `${Math.floor(days / 7)}w ago`;
-  return new Date(date).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
 }
 
 // One hue per kind of thing, so the eye can find people, books and loans
@@ -235,18 +280,24 @@ function DailyBars({
 }) {
   const peak = Math.max(...days.map((d) => d.count));
   const max = Math.max(1, peak);
-  const label = (count: number) => `${count} ${count === 1 ? noun[0] : noun[1]}`;
+  const label = (count: number) =>
+    `${count} ${count === 1 ? noun[0] : noun[1]}`;
   // Noon UTC, so the date reads the same in every timezone
   const dayDate = (day: string) => shortDate(`${day}T12:00:00Z`);
   return (
     <figure>
       <figcaption className="flex items-baseline justify-between gap-3">
         <span className={subheadingClass}>{title}</span>
-        <span className={`text-sm tabular-nums ${mutedClass}`}>{total} in 30 days</span>
+        <span className={`text-sm tabular-nums ${mutedClass}`}>
+          {total} in 30 days
+        </span>
       </figcaption>
       <div className="relative mt-3 flex h-24 items-end gap-0.5 border-b border-stone-200 dark:border-stone-800">
         {days.map((d) => (
-          <div key={d.day} className="group relative flex h-full flex-1 items-end">
+          <div
+            key={d.day}
+            className="group relative flex h-full flex-1 items-end"
+          >
             <div
               className={`w-full rounded-t-sm ${tones[tone].bar}`}
               style={{ height: d.count ? `${(d.count / max) * 100}%` : 0 }}
@@ -282,7 +333,17 @@ const money = (cents: number) =>
 
 function DollarIcon({ size = 24 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M12 3v18" />
       <path d="M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.6 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3" />
     </svg>
@@ -303,9 +364,26 @@ function Plus({ revenue }: { revenue: Data["revenue"] }) {
         Stacks Plus
       </h2>
       <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5 rounded-xl border border-stone-200 bg-stone-50/60 p-4 dark:border-stone-800 dark:bg-stone-900/40 sm:p-5 lg:grid-cols-4">
-        <Stat label="Paying" value={revenue.paying} note={split || undefined} icon={CheckCircleIcon} tone="violet" />
-        <Stat label="Monthly revenue" value={money(revenue.mrr)} note="before fees and tax" icon={DollarIcon} tone="forest" />
-        <Stat label="Gifted" value={revenue.gifted} icon={HeartIcon} tone="amber" />
+        <Stat
+          label="Paying"
+          value={revenue.paying}
+          note={split || undefined}
+          icon={CheckCircleIcon}
+          tone="violet"
+        />
+        <Stat
+          label="Monthly revenue"
+          value={money(revenue.mrr)}
+          note="before fees and tax"
+          icon={DollarIcon}
+          tone="forest"
+        />
+        <Stat
+          label="Gifted"
+          value={revenue.gifted}
+          icon={HeartIcon}
+          tone="amber"
+        />
         <Stat
           label="Canceling"
           value={revenue.canceling}
@@ -323,10 +401,17 @@ function Plus({ revenue }: { revenue: Data["revenue"] }) {
       {revenue.subscribers.length ? (
         <ul className="mt-4 divide-y divide-stone-100 text-sm dark:divide-stone-800">
           {revenue.subscribers.map((user) => (
-            <li key={user.id} className="flex items-baseline justify-between gap-4 py-2.5">
+            <li
+              key={user.id}
+              className="flex items-baseline justify-between gap-4 py-2.5"
+            >
               <span className="min-w-0">
-                <span className="font-medium text-stone-900 dark:text-stone-100">{user.name}</span>
-                <span className={`block truncate ${mutedClass}`}>{user.email}</span>
+                <span className="font-medium text-stone-900 dark:text-stone-100">
+                  {user.name}
+                </span>
+                <span className={`block truncate ${mutedClass}`}>
+                  {user.email}
+                </span>
               </span>
               <span className="flex-shrink-0 text-right">
                 <span className="block tabular-nums text-stone-800 dark:text-stone-200">
@@ -336,7 +421,9 @@ function Plus({ revenue }: { revenue: Data["revenue"] }) {
                       ? `${money(user.amount)} a ${user.interval ?? "month"}`
                       : "Plus"}
                 </span>
-                <span className={`block text-xs ${user.pastDue ? warnText : user.endsAt ? "text-amber-700 dark:text-amber-400" : mutedClass}`}>
+                <span
+                  className={`block text-xs ${user.pastDue ? warnText : user.endsAt ? "text-amber-700 dark:text-amber-400" : mutedClass}`}
+                >
                   {user.pastDue
                     ? "Payment failing"
                     : user.endsAt
@@ -352,7 +439,9 @@ function Plus({ revenue }: { revenue: Data["revenue"] }) {
           ))}
         </ul>
       ) : (
-        <p className={`mt-4 text-sm ${mutedClass}`}>Nobody&apos;s on Plus yet.</p>
+        <p className={`mt-4 text-sm ${mutedClass}`}>
+          Nobody&apos;s on Plus yet.
+        </p>
       )}
     </section>
   );
@@ -388,8 +477,17 @@ function Health({ health }: { health: Data["health"] }) {
           icon={LentIcon}
           tone="forest"
         />
-        <Stat label="Friendships" value={health.friendships} icon={GroupIcon} tone="violet" />
-        <Stat label="Demo visits today" value={health.demosToday} icon={DashboardIcon} />
+        <Stat
+          label="Friendships"
+          value={health.friendships}
+          icon={GroupIcon}
+          tone="violet"
+        />
+        <Stat
+          label="Demo visits today"
+          value={health.demosToday}
+          icon={DashboardIcon}
+        />
       </dl>
       <div className="mt-8 grid gap-8 sm:grid-cols-2 sm:gap-10">
         <DailyBars
@@ -418,7 +516,8 @@ function Funnel({ funnel }: { funnel: Data["funnel"] }) {
   const [range, setRange] = useState<"last30" | "allTime">("allTime");
   const steps = funnel[range];
   const total = steps[0].count;
-  const percent = (part: number, whole: number) => (whole ? Math.round((part / whole) * 100) : 0);
+  const percent = (part: number, whole: number) =>
+    whole ? Math.round((part / whole) * 100) : 0;
   return (
     <section aria-labelledby="funnel">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -471,7 +570,12 @@ function Funnel({ funnel }: { funnel: Data["funnel"] }) {
                     {share >= 40 ? (
                       <span className="px-2 text-xs font-semibold tabular-nums text-white dark:text-stone-950">
                         {step.count.toLocaleString()}
-                        {index === 0 ? null : <span className="font-normal opacity-80"> · {share}%</span>}
+                        {index === 0 ? null : (
+                          <span className="font-normal opacity-80">
+                            {" "}
+                            · {share}%
+                          </span>
+                        )}
                       </span>
                     ) : null}
                   </span>
@@ -480,7 +584,9 @@ function Funnel({ funnel }: { funnel: Data["funnel"] }) {
                       <span className="font-semibold text-stone-900 dark:text-stone-50">
                         {step.count.toLocaleString()}
                       </span>
-                      {index === 0 ? null : <span className={mutedClass}> · {share}%</span>}
+                      {index === 0 ? null : (
+                        <span className={mutedClass}> · {share}%</span>
+                      )}
                     </span>
                   ) : null}
                 </span>
@@ -492,7 +598,9 @@ function Funnel({ funnel }: { funnel: Data["funnel"] }) {
                     >
                       ↓{" "}
                       {/* Nobody at the step above: a share of nothing isn't 0% */}
-                      {steps[index - 1].count ? `${percent(step.count, steps[index - 1].count)}%` : "–"}
+                      {steps[index - 1].count
+                        ? `${percent(step.count, steps[index - 1].count)}%`
+                        : "–"}
                     </span>
                   )}
                 </span>
@@ -502,14 +610,87 @@ function Funnel({ funnel }: { funnel: Data["funnel"] }) {
         </ol>
       )}
       <p className={`mt-3 text-xs ${mutedClass}`}>
-        Real accounts only. Each bar is a share of everyone who signed up; the ↓ figure is
-        how many made it from the step above.
+        Real accounts only. Each bar is a share of everyone who signed up; the ↓
+        figure is how many made it from the step above.
       </p>
     </section>
   );
 }
 
 // What people have sent from the feedback page, open ones first
+// A word to everyone: lands in each person's Activity as a notification
+const ANNOUNCEMENT_MAX = 500;
+
+function Announce({ people }: { people: number }) {
+  const fetcher = useFetcher<{ announced?: number; announceError?: string }>();
+  const [text, setText] = useState("");
+  const sending = fetcher.state !== "idle";
+  const sent = fetcher.state === "idle" ? fetcher.data?.announced : undefined;
+  const error =
+    fetcher.state === "idle" ? fetcher.data?.announceError : undefined;
+  return (
+    <section aria-labelledby="announce-heading" id="announce">
+      <h2 id="announce-heading" className={headingClass}>
+        Announcement
+      </h2>
+      <p className={`mt-1 text-sm ${mutedClass}`}>
+        Goes to everyone with an account ({people}{" "}
+        {people === 1 ? "person" : "people"}) as a notification in their
+        Activity, from Stacks. Not emailed. Demo visitors don&apos;t get it.
+      </p>
+      <fetcher.Form
+        method="post"
+        className="mt-4 max-w-xl"
+        onSubmit={(event) => {
+          if (
+            !confirm(
+              `Send this to ${people} ${people === 1 ? "person" : "people"}? It can't be taken back.`,
+            )
+          ) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <input type="hidden" name="intent" value="announce" />
+        <label htmlFor="announcement" className="sr-only">
+          Announcement
+        </label>
+        <textarea
+          id="announcement"
+          name="message"
+          rows={3}
+          maxLength={ANNOUNCEMENT_MAX}
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          placeholder="Something new, something fixed, or a heads-up about downtime"
+          className="w-full resize-none rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+        />
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <button
+            type="submit"
+            disabled={sending || !text.trim()}
+            className="rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-60"
+          >
+            {sending ? "Sending…" : "Send to everyone"}
+          </button>
+          <span className={`text-xs tabular-nums ${mutedClass}`}>
+            {text.length}/{ANNOUNCEMENT_MAX}
+          </span>
+          <span role="status" className="text-sm">
+            {error ? (
+              <span className="text-red-700 dark:text-red-400">{error}</span>
+            ) : sent !== undefined ? (
+              <span className="text-forest-700 dark:text-forest-400">
+                Sent to {sent} {sent === 1 ? "person" : "people"}.
+              </span>
+            ) : null}
+          </span>
+        </div>
+      </fetcher.Form>
+    </section>
+  );
+}
+
 function Feedback({ feedback }: { feedback: Data["feedback"] }) {
   const open = feedback.filter((item) => !item.done).length;
   return (
@@ -539,15 +720,20 @@ function Feedback({ feedback }: { feedback: Data["feedback"] }) {
 
 function FeedbackItem({ item }: { item: Data["feedback"][number] }) {
   const fetcher = useFetcher();
-  const done = fetcher.formData ? fetcher.formData.get("done") === "true" : item.done;
+  const done = fetcher.formData
+    ? fetcher.formData.get("done") === "true"
+    : item.done;
   const who = item.user
     ? `${item.user.firstname} ${item.user.surname}${item.user.demoGroup ? " (demo)" : ""}`
     : "A visitor";
-  const replyTo = item.user && !item.user.demoGroup ? item.user.email : item.email;
+  const replyTo =
+    item.user && !item.user.demoGroup ? item.user.email : item.email;
   return (
     <li className={`flex gap-4 px-4 py-3 ${done ? "opacity-50" : ""}`}>
       <div className="min-w-0 flex-1">
-        <p className="whitespace-pre-wrap text-pretty text-stone-800 dark:text-stone-200">{item.body}</p>
+        <p className="whitespace-pre-wrap text-pretty text-stone-800 dark:text-stone-200">
+          {item.body}
+        </p>
         <p className={`mt-1 text-xs ${mutedClass}`}>
           {who}
           {replyTo ? (
@@ -588,10 +774,15 @@ function RankedList({
       {rows.length ? (
         <ol className="mt-2 space-y-1.5 text-sm">
           {rows.map((row) => (
-            <li key={row.key} className="flex items-baseline justify-between gap-3">
+            <li
+              key={row.key}
+              className="flex items-baseline justify-between gap-3"
+            >
               <span className="min-w-0 truncate text-stone-800 dark:text-stone-200">
                 {row.label}
-                {row.sub ? <span className={mutedClass}> · {row.sub}</span> : null}
+                {row.sub ? (
+                  <span className={mutedClass}> · {row.sub}</span>
+                ) : null}
               </span>
               <span className={`tabular-nums ${mutedClass}`}>{row.value}</span>
             </li>
@@ -617,10 +808,15 @@ function Lending({ lending }: { lending: Data["lending"] }) {
             {lending.overdue.map((book) => {
               const late = Math.max(
                 1,
-                Math.floor((Date.now() - new Date(book.dueDate ?? 0).getTime()) / DAY),
+                Math.floor(
+                  (Date.now() - new Date(book.dueDate ?? 0).getTime()) / DAY,
+                ),
               );
               return (
-                <li key={book.id} className="flex items-baseline justify-between gap-3 py-2">
+                <li
+                  key={book.id}
+                  className="flex items-baseline justify-between gap-3 py-2"
+                >
                   <span className="min-w-0">
                     <Link
                       to={`/books/${book.id}`}
@@ -634,7 +830,9 @@ function Lending({ lending }: { lending: Data["lending"] }) {
                       {book.borrower?.surname}
                     </span>
                   </span>
-                  <span className={`whitespace-nowrap font-medium tabular-nums ${warnText}`}>
+                  <span
+                    className={`whitespace-nowrap font-medium tabular-nums ${warnText}`}
+                  >
                     {late}d late
                   </span>
                 </li>
@@ -679,11 +877,13 @@ type AdminUser = Data["users"][number];
 const sorts = {
   newest: {
     label: "Newest",
-    compare: (a: AdminUser, b: AdminUser) => b.createdAt.localeCompare(a.createdAt),
+    compare: (a: AdminUser, b: AdminUser) =>
+      b.createdAt.localeCompare(a.createdAt),
   },
   active: {
     label: "Last active",
-    compare: (a: AdminUser, b: AdminUser) => b.lastActive.localeCompare(a.lastActive),
+    compare: (a: AdminUser, b: AdminUser) =>
+      b.lastActive.localeCompare(a.lastActive),
   },
   books: {
     label: "Most books",
@@ -708,8 +908,10 @@ function EditUser({ user, isYou }: { user: AdminUser; isYou: boolean }) {
   const fetcher = useFetcher<typeof action>({ key: `admin-${user.id}` });
   const busy = fetcher.state !== "idle";
   const deleting = busy && fetcher.formData?.get("intent") === "deleteUser";
-  const error = fetcher.data && "error" in fetcher.data ? fetcher.data.error : null;
-  const saved = fetcher.state === "idle" && fetcher.data && "saved" in fetcher.data;
+  const error =
+    fetcher.data && "error" in fetcher.data ? fetcher.data.error : null;
+  const saved =
+    fetcher.state === "idle" && fetcher.data && "saved" in fetcher.data;
   const [armed, setArmed] = useState(false);
 
   // Disarm on its own after a few seconds
@@ -729,15 +931,31 @@ function EditUser({ user, isYou }: { user: AdminUser; isYou: boolean }) {
           <input type="hidden" name="userId" value={user.id} />
           <label className={fieldLabel}>
             First name
-            <input name="firstname" defaultValue={user.firstname} required className={field} />
+            <input
+              name="firstname"
+              defaultValue={user.firstname}
+              required
+              className={field}
+            />
           </label>
           <label className={fieldLabel}>
             Surname
-            <input name="surname" defaultValue={user.surname} required className={field} />
+            <input
+              name="surname"
+              defaultValue={user.surname}
+              required
+              className={field}
+            />
           </label>
           <label className={fieldLabel}>
             Email
-            <input name="email" type="email" defaultValue={user.email} required className={field} />
+            <input
+              name="email"
+              type="email"
+              defaultValue={user.email}
+              required
+              className={field}
+            />
           </label>
           <button type="submit" disabled={busy} className={saveButton}>
             {busy && !deleting ? "Saving…" : "Save"}
@@ -766,28 +984,34 @@ function EditUser({ user, isYou }: { user: AdminUser; isYou: boolean }) {
                   : "text-red-700 ring-red-200 hover:bg-red-50 dark:text-red-400 dark:ring-red-900 dark:hover:bg-red-950/40"
               }`}
             >
-              {deleting ? "Deleting…" : armed ? "Click to confirm" : "Delete account"}
+              {deleting
+                ? "Deleting…"
+                : armed
+                  ? "Click to confirm"
+                  : "Delete account"}
             </button>
           </fetcher.Form>
         )}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-      <p className="text-sm" role="status">
-        {error ? (
-          <span className={warnText}>{error}</span>
-        ) : armed ? (
-          <span className={warnText}>
-            Click again to delete {user.name} with their {user.bookCount}{" "}
-            {user.bookCount === 1 ? "book" : "books"}, notes and friendships. This can&apos;t be
-            undone.
-          </span>
-        ) : saved ? (
-          <span className="text-forest-700 dark:text-forest-400">Saved</span>
-        ) : isYou ? (
-          <span className={mutedClass}>This is you, so it can&apos;t be deleted here.</span>
-        ) : null}
-      </p>
-      <PlanSwitch user={user} />
+        <p className="text-sm" role="status">
+          {error ? (
+            <span className={warnText}>{error}</span>
+          ) : armed ? (
+            <span className={warnText}>
+              Click again to delete {user.name} with their {user.bookCount}{" "}
+              {user.bookCount === 1 ? "book" : "books"}, notes and friendships.
+              This can&apos;t be undone.
+            </span>
+          ) : saved ? (
+            <span className="text-forest-700 dark:text-forest-400">Saved</span>
+          ) : isYou ? (
+            <span className={mutedClass}>
+              This is you, so it can&apos;t be deleted here.
+            </span>
+          ) : null}
+        </p>
+        <PlanSwitch user={user} />
       </div>
     </div>
   );
@@ -796,13 +1020,17 @@ function EditUser({ user, isYou }: { user: AdminUser; isYou: boolean }) {
 // Give someone Plus for free, or take back a gift
 function PlanSwitch({ user }: { user: AdminUser }) {
   const fetcher = useFetcher<typeof action>({ key: `plan-${user.id}` });
-  const plus = fetcher.formData ? fetcher.formData.get("plus") === "true" : user.plus;
+  const plus = fetcher.formData
+    ? fetcher.formData.get("plus") === "true"
+    : user.plus;
   return (
     <fetcher.Form method="post" className="flex items-center gap-2 text-sm">
       <input type="hidden" name="intent" value="setPlan" />
       <input type="hidden" name="userId" value={user.id} />
       <input type="hidden" name="plus" value={plus ? "false" : "true"} />
-      <span className={mutedClass}>{plus ? "On Stacks Plus" : "Free plan"}</span>
+      <span className={mutedClass}>
+        {plus ? "On Stacks Plus" : "Free plan"}
+      </span>
       <button type="submit" className={outlineButton}>
         {plus ? "End Plus" : "Give Plus"}
       </button>
@@ -820,7 +1048,9 @@ function UserRow({ user, isYou }: { user: AdminUser; isYou: boolean }) {
         className={`grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-4 py-3 text-sm ${userColumns}`}
       >
         <span className="min-w-0">
-          <span className="font-medium text-stone-900 dark:text-stone-100">{user.name}</span>
+          <span className="font-medium text-stone-900 dark:text-stone-100">
+            {user.name}
+          </span>
           {user.isAdmin ? (
             <span className="ml-2 rounded px-1.5 py-0.5 text-xs font-medium bg-forest-600/10 text-forest-700 dark:bg-forest-400/15 dark:text-forest-400">
               Admin
@@ -833,10 +1063,18 @@ function UserRow({ user, isYou }: { user: AdminUser; isYou: boolean }) {
           ) : null}
           <span className={`block truncate ${mutedClass}`}>{user.email}</span>
         </span>
-        <span className="hidden text-right tabular-nums sm:block">{user.bookCount}</span>
-        <span className="hidden text-right tabular-nums sm:block">{user.friendCount}</span>
-        <span className="hidden text-right tabular-nums sm:block">{user.borrowedCount}</span>
-        <span className={`text-right ${mutedClass}`}>{ago(user.lastActive)}</span>
+        <span className="hidden text-right tabular-nums sm:block">
+          {user.bookCount}
+        </span>
+        <span className="hidden text-right tabular-nums sm:block">
+          {user.friendCount}
+        </span>
+        <span className="hidden text-right tabular-nums sm:block">
+          {user.borrowedCount}
+        </span>
+        <span className={`text-right ${mutedClass}`}>
+          {ago(user.lastActive)}
+        </span>
         {/* Fixed width, so Edit and Close don't nudge the row */}
         <button
           type="button"
@@ -854,7 +1092,9 @@ function UserRow({ user, isYou }: { user: AdminUser; isYou: boolean }) {
         <div className="space-y-3 pb-4 text-sm text-stone-800 dark:text-stone-200">
           <p className={mutedClass}>
             Joined{" "}
-            {new Date(user.createdAt).toLocaleDateString("en-US", { dateStyle: "medium" })}
+            {new Date(user.createdAt).toLocaleDateString("en-US", {
+              dateStyle: "medium",
+            })}
             <span className="sm:hidden">
               {" "}
               · {user.bookCount} books · {user.friendCount} friends · borrowed{" "}
@@ -889,7 +1129,9 @@ function People({ users, userId }: { users: Data["users"]; userId: string }) {
     return users
       .filter(
         (user) =>
-          !q || user.name.toLowerCase().includes(q) || user.email.toLowerCase().includes(q),
+          !q ||
+          user.name.toLowerCase().includes(q) ||
+          user.email.toLowerCase().includes(q),
       )
       .sort(sorts[sort].compare);
   }, [users, query, sort]);
@@ -900,7 +1142,8 @@ function People({ users, userId }: { users: Data["users"]; userId: string }) {
     <section aria-labelledby="people">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="people" className={headingClass}>
-          People <span className={`font-normal ${mutedClass}`}>{users.length}</span>
+          People{" "}
+          <span className={`font-normal ${mutedClass}`}>{users.length}</span>
         </h2>
         <div className="flex w-full gap-2 sm:w-auto">
           <input
@@ -913,7 +1156,9 @@ function People({ users, userId }: { users: Data["users"]; userId: string }) {
           />
           <select
             value={sort}
-            onChange={(event) => setSort(event.target.value as keyof typeof sorts)}
+            onChange={(event) =>
+              setSort(event.target.value as keyof typeof sorts)
+            }
             aria-label="Sort people"
             className={`${control} dark:bg-stone-950`}
           >
@@ -942,7 +1187,9 @@ function People({ users, userId }: { users: Data["users"]; userId: string }) {
           ))}
         </ul>
       ) : (
-        <p className={`mt-4 text-sm ${mutedClass}`}>Nobody matches “{query}”.</p>
+        <p className={`mt-4 text-sm ${mutedClass}`}>
+          Nobody matches “{query}”.
+        </p>
       )}
     </section>
   );
@@ -964,7 +1211,10 @@ function DataQuality({ quality }: { quality: Data["quality"] }) {
       {quality.books.length ? (
         <ul className="mt-4 divide-y divide-stone-100 text-sm dark:divide-stone-800">
           {quality.books.map((book) => (
-            <li key={book.id} className="flex items-baseline justify-between gap-3 py-2">
+            <li
+              key={book.id}
+              className="flex items-baseline justify-between gap-3 py-2"
+            >
               <span className="min-w-0 truncate">
                 <Link
                   to={`/books/${book.id}`}
@@ -990,7 +1240,8 @@ function DataQuality({ quality }: { quality: Data["quality"] }) {
         <div>
           <h3 className={subheadingClass}>Demo sandboxes</h3>
           <p className="mt-1 text-sm text-stone-700 dark:text-stone-300">
-            {quality.sandboxes} in the database, {quality.expiredSandboxes} older than a day
+            {quality.sandboxes} in the database, {quality.expiredSandboxes}{" "}
+            older than a day
           </p>
         </div>
         <fetcher.Form method="post">
@@ -1017,6 +1268,7 @@ export default function Dashboard() {
       <Plus revenue={revenue} />
       <Funnel funnel={funnel} />
       <Feedback feedback={feedback} />
+      <Announce people={users.length} />
       <Lending lending={lending} />
       <People users={users} userId={userId} />
       <DataQuality quality={quality} />

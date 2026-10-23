@@ -8,6 +8,7 @@ import { Link, useActionData, useLoaderData } from "@remix-run/react";
 
 import ActivityIcon from "~/components/activity-icon";
 import Avatar from "~/components/avatar";
+import { StacksLogo } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import SideRail from "~/components/side-rail";
 import Layout from "~/components / Layout/Layout";
@@ -203,6 +204,8 @@ interface ActivityNotification {
   senderName: string;
   bookId?: string | null;
   bookTitle?: string | null;
+  // What an announcement from Stacks says
+  message?: string | null;
   createdAt: string;
   sender?: { profileEmoji: string | null } | null;
 }
@@ -228,11 +231,17 @@ function Card({
   return (
     <div className="flex gap-3 rounded-xl border border-stone-200 dark:border-stone-800 p-4">
       <span className="relative h-10 flex-shrink-0">
-        <Avatar
-          firstname={firstname}
-          surname={rest.join(" ")}
-          icon={person.icon}
-        />
+        {type === "ANNOUNCEMENT" ? (
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900">
+            <StacksLogo size={22} />
+          </span>
+        ) : (
+          <Avatar
+            firstname={firstname}
+            surname={rest.join(" ")}
+            icon={person.icon}
+          />
+        )}
         <span className="absolute -bottom-1 -right-1 rounded-full ring-2 ring-white dark:ring-stone-950">
           <ActivityIcon
             type={type}
@@ -450,6 +459,13 @@ function ActivityItem({
         </>
       );
       break;
+    case "ANNOUNCEMENT":
+      text = (
+        <>
+          <strong className="font-semibold">From Stacks:</strong> {notification.message}
+        </>
+      );
+      break;
     case "LOAN_EXTENDED":
       text = (
         <>
@@ -511,6 +527,7 @@ const getHistoryText = (
     senderName: string;
     bookTitle?: string | null;
     actionTaken?: string | null;
+    message?: string | null;
   },
   friendIds: string[],
 ) => {
@@ -581,6 +598,8 @@ const getHistoryText = (
       return <>{book} was overdue</>;
     case "DUE_SOON_REMINDER":
       return <>{book} was due soon</>;
+    case "ANNOUNCEMENT":
+      return <>From Stacks: {notification.message}</>;
     default:
       return <>Activity, {action}</>;
   }

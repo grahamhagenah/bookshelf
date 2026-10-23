@@ -39,6 +39,7 @@ export async function getUserById(id: User["id"]) {
           senderName: true,
           bookId: true,
           bookTitle: true,
+          message: true,
           createdAt: true,
           sender: { select: { profileEmoji: true } },
         },
@@ -183,10 +184,34 @@ export async function getNotificationHistory(userId: string, limit = 10) {
       senderName: true,
       bookId: true,
       bookTitle: true,
+      message: true,
       actionTaken: true,
       createdAt: true,
     },
   });
+}
+
+// A word from Stacks to everyone with a real account, as a notification
+// each. Demo sandboxes are left out; they reset anyway.
+export async function createAnnouncement(senderId: User["id"], message: string) {
+  const people = await prisma.user.findMany({
+    where: { demoGroup: null },
+    select: { id: true },
+  });
+  await prisma.$transaction(
+    people.map((person) =>
+      prisma.notification.create({
+        data: {
+          type: "ANNOUNCEMENT",
+          senderId,
+          receiverId: person.id,
+          senderName: "Stacks",
+          message,
+        },
+      }),
+    ),
+  );
+  return people.length;
 }
 
 // A notification, only if it was sent to this person
