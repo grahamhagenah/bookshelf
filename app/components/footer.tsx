@@ -23,7 +23,7 @@ export default function Footer() {
             <StacksLogo size={20} className="text-stone-900 dark:text-stone-100" />
             Stacks
           </Link>
-          <p>A lending library for the books you own.</p>
+          <p>Lend and borrow books with friends.</p>
         </div>
 
         <nav aria-label="Footer" className="flex gap-12">
