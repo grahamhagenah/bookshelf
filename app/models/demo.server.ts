@@ -47,7 +47,7 @@ const VISITOR = {
 const PERSONAS = {
   maya: { firstname: "Maya", surname: "Chen", profileEmoji: "leaf" },
   sam: { firstname: "Sam", surname: "Okafor", profileEmoji: "rocket" },
-  priya: { firstname: "Priya", surname: "Patel", profileEmoji: "coffee" },
+  anika: { firstname: "Anika", surname: "Rao", profileEmoji: "coffee" },
   // Theo has sent the visitor a friend request; Lena shows up as a suggestion
   theo: { firstname: "Theo", surname: "Martin", profileEmoji: "compass" },
   lena: { firstname: "Lena", surname: "Fischer", profileEmoji: null },
@@ -395,7 +395,7 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       body: "A new ambassador arrives at the heart of a vast empire to find her predecessor dead and nobody willing to say how.",
     },
   ],
-  priya: [
+  anika: [
     {
       title: "The Poppy War",
       author: "R. F. Kuang",
@@ -711,15 +711,15 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     }
   }
 
-  for (const friend of ["maya", "sam", "priya"] as const) {
+  for (const friend of ["maya", "sam", "anika"] as const) {
     await createFriendship(ids.you, ids[friend]);
   }
   await createFriendship(ids.maya, ids.sam);
-  await createFriendship(ids.sam, ids.priya);
-  await createFriendship(ids.priya, ids.lena);
-  // Noah keeps his own friends: Maya and Priya
+  await createFriendship(ids.sam, ids.anika);
+  await createFriendship(ids.anika, ids.lena);
+  // Noah keeps his own friends: Maya and Anika
   await createFriendship(ids.noah, ids.maya);
-  await createFriendship(ids.noah, ids.priya);
+  await createFriendship(ids.noah, ids.anika);
 
   // The visitor and Noah share one shelf: his books show on theirs as
   // "Noah's", and either can lend them
@@ -749,7 +749,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     {
       title: "Dune",
-      borrower: "priya",
+      borrower: "anika",
       borrowedAt: ago(70 * day),
       returnedAt: ago(48 * day),
     },
@@ -779,7 +779,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     {
       title: "Educated",
-      borrower: "priya",
+      borrower: "anika",
       borrowedAt: ago(90 * day),
       returnedAt: ago(62 * day),
     },
@@ -817,7 +817,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     // Between friends: their copies have a history of their own
     {
       title: "The Song of Achilles",
-      borrower: "priya",
+      borrower: "anika",
       borrowedAt: ago(95 * day),
       returnedAt: ago(80 * day),
     },
@@ -829,7 +829,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     {
       title: "Lincoln in the Bardo",
-      borrower: "priya",
+      borrower: "anika",
       borrowedAt: ago(130 * day),
       returnedAt: ago(110 * day),
     },
@@ -843,7 +843,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     // Current loans
     {
       title: "Sea of Tranquility",
-      borrower: "priya",
+      borrower: "anika",
       borrowedAt: ago(10 * day),
       dueDate: fromNow(18 * day),
     },
@@ -873,7 +873,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     {
       title: "Station Eleven",
-      borrower: "priya",
+      borrower: "anika",
       borrowedAt: ago(19 * day),
       dueDate: fromNow(9 * day),
     },
@@ -935,8 +935,8 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     });
   }
 
-  // Priya and then Lena are waiting for Piranesi, which Sam still has
-  for (const [person, waited] of [["priya", 9], ["lena", 2]] as const) {
+  // Anika and then Lena are waiting for Piranesi, which Sam still has
+  for (const [person, waited] of [["anika", 9], ["lena", 2]] as const) {
     await prisma.hold.create({
       data: { bookId: books["Piranesi"], userId: ids[person], createdAt: ago(waited * day) },
     });
@@ -992,7 +992,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       body: "Slow first hundred pages, then I couldn't put it down. Read the appendices!",
       at: ago(95 * day),
     },
-    { title: "Dune", by: "priya", loved: true, at: ago(48 * day) },
+    { title: "Dune", by: "anika", loved: true, at: ago(48 * day) },
     {
       title: "Project Hail Mary",
       by: "sam",
@@ -1009,7 +1009,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     {
       title: "The Ten Thousand Doors of January",
-      by: "priya",
+      by: "anika",
       loved: true,
       body: "A book about books and doors. I wanted to walk into every one of them.",
       at: ago(60 * day),
@@ -1053,7 +1053,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     {
       title: "Educated",
-      by: "priya",
+      by: "anika",
       loved: true,
       body: "Hard to read in places, impossible to stop.",
       at: ago(62 * day),
@@ -1086,7 +1086,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     { title: "Normal People", by: "maya", loved: true, at: ago(300 * day) },
     { title: "Anxious People", by: "you", loved: true, at: ago(45 * day) },
-    { title: "Anxious People", by: "priya", loved: true, at: ago(250 * day) },
+    { title: "Anxious People", by: "anika", loved: true, at: ago(250 * day) },
     {
       title: "Tomorrow, and Tomorrow, and Tomorrow",
       by: "maya",
@@ -1102,7 +1102,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     {
       title: "The Midnight Library",
-      by: "priya",
+      by: "anika",
       loved: true,
       body: "Lighter than it sounds. A good one to pass around.",
       at: ago(5 * day),
@@ -1124,7 +1124,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     {
       title: "The Song of Achilles",
-      by: "priya",
+      by: "anika",
       loved: true,
       body: "I knew how it ended and still wasn't ready.",
       at: ago(80 * day),
@@ -1147,7 +1147,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     { title: "Hyperion", by: "sam", loved: true, at: ago(500 * day) },
     {
       title: "The Poppy War",
-      by: "priya",
+      by: "anika",
       loved: true,
       body: "Starts at a school and ends somewhere much darker. Brace yourself for part three.",
       at: ago(3 * day),
@@ -1186,7 +1186,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     { title: "Ubik", by: "noah", loved: true, at: ago(250 * day) },
     {
       title: "Lincoln in the Bardo",
-      by: "priya",
+      by: "anika",
       loved: false,
       body: "Took me fifty pages to get the hang of it. Worth it.",
       at: ago(110 * day),
@@ -1285,7 +1285,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     {
       type: "DUE_SOON_REMINDER",
-      from: "priya",
+      from: "anika",
       to: "you",
       title: "The Ten Thousand Doors of January",
       at: ago(3 * hour),
@@ -1324,7 +1324,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     {
       type: "BOOK_APPROVED",
-      from: "priya",
+      from: "anika",
       to: "you",
       title: "The Ten Thousand Doors of January",
       at: ago(26 * day),
@@ -1348,7 +1348,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     {
       type: "FRIEND_REQUEST",
-      from: "priya",
+      from: "anika",
       to: "you",
       at: ago(75 * day),
       actionTaken: "accepted",
@@ -1371,7 +1371,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     },
     {
       type: "READER_NOTE",
-      from: "priya",
+      from: "anika",
       to: "you",
       title: "Dune",
       at: ago(48 * day),

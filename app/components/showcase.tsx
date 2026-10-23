@@ -170,7 +170,7 @@ export default function ShowcaseLending({ set = LENDING_SET }: { set?: LendingSe
         <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">Due soon</p>
         <p className="mt-1.5 text-sm text-stone-600 dark:text-stone-300">
           <span className="font-semibold text-stone-900 dark:text-stone-100">{set.lent.title}</span>{" "}
-          is with Priya Patel ·{" "}
+          is with Anika Rao ·{" "}
           <span className="font-semibold text-stone-900 dark:text-stone-100">3 days late</span>
         </p>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
@@ -228,7 +228,7 @@ export default function ShowcaseLending({ set = LENDING_SET }: { set?: LendingSe
         </div>
         <div className="flex -rotate-2 items-center gap-2 whitespace-nowrap rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
           <Check />
-          Reminder sent to Priya
+          Reminder sent to Anika
         </div>
       </div>
     </Stage>
@@ -252,7 +252,7 @@ export function ShowcaseFriends() {
           <Cover src={COVERS.neverLetMeGo} className="w-7" />
           <p className="min-w-0 flex-1 text-sm leading-tight text-stone-800 dark:text-stone-200">
             <span className="font-medium">Never Let Me Go</span>
-            <span className="block text-xs text-stone-500 dark:text-stone-400">Priya Patel</span>
+            <span className="block text-xs text-stone-500 dark:text-stone-400">Anika Rao</span>
           </p>
           <span className="rounded-md bg-forest-600 px-2 py-0.5 text-xs font-medium text-white">
             Ask to borrow
@@ -275,9 +275,9 @@ export function ShowcaseFriends() {
 
       <div className={`${panel} left-0 right-[7%] top-[46%] z-20 -rotate-2 p-3.5`}>
         <div className="flex items-center gap-2.5">
-          <Initials text="PP" />
+          <Initials text="AR" />
           <p className="text-sm text-stone-800 dark:text-stone-200">
-            <span className="font-semibold">Priya Patel&apos;s shelf</span>
+            <span className="font-semibold">Anika Rao&apos;s shelf</span>
             <span className="text-stone-500 dark:text-stone-400"> · 5 books</span>
           </p>
         </div>
@@ -292,7 +292,7 @@ export function ShowcaseFriends() {
 
       <div className="absolute bottom-0 right-0 z-30 flex rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white shadow-soft">
         <Check />
-        Asked Priya for Never Let Me Go
+        Asked Anika for Never Let Me Go
       </div>
     </Stage>
   );
@@ -335,10 +335,10 @@ export function ShowcaseNotes() {
 
       <div className={`${panel} right-[4%] top-[40%] w-[60%] z-20 -rotate-2 p-3.5`}>
         <div className="flex items-start gap-2.5">
-          <Initials text="PP" />
+          <Initials text="AR" />
           <div className="min-w-0">
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              <span className="font-semibold text-stone-900 dark:text-stone-100">Priya Patel</span>{" "}
+              <span className="font-semibold text-stone-900 dark:text-stone-100">Anika Rao</span>{" "}
               <Heart size={10} />
             </p>
             <p className="mt-0.5 text-pretty text-sm text-stone-700 dark:text-stone-300">
@@ -356,7 +356,7 @@ export function ShowcaseNotes() {
           {[
             ["SO", "Sam"],
             ["MC", "Maya"],
-            ["PP", "Priya"],
+            ["AR", "Anika"],
           ].map(([initials, name], index) => (
             <span key={initials} className="flex items-center gap-2">
               {index > 0 ? <span className="text-stone-300 dark:text-stone-600">→</span> : null}
