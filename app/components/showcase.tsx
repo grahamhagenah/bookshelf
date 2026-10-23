@@ -8,13 +8,15 @@ import { BorrowedIcon, HeartIcon, LentIcon, SearchIcon } from "./icons";
 // sits beside the headline; the others illustrate the sections below.
 // Decorative, so hidden from screen readers.
 
-const cover = (isbn: string) =>
+export const cover = (isbn: string) =>
   coverSrc(`https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`);
 
 const COVERS = {
   stationEleven: cover("9780804172448"),
+  demonCopperhead: cover("9780063251922"),
+  seaOfTranquility: cover("9780593321447"),
+  gentlemanInMoscow: cover("9780670026197"),
   gilead: cover("9780312424404"),
-  hobbit: cover("9780547928227"),
   klara: cover("9780593318171"),
   neverLetMeGo: cover("9781400078776"),
   jonathanStrange: cover("9780765356154"),
@@ -33,14 +35,16 @@ const panel =
 function Stage({
   children,
   height = "h-[480px] sm:h-[505px]",
+  width = "max-w-[420px]",
 }: {
   children: React.ReactNode;
   height?: string;
+  width?: string;
 }) {
   return (
     <div
       aria-hidden="true"
-      className={`relative mx-auto w-full max-w-[420px] select-none ${height}`}
+      className={`relative mx-auto w-full select-none ${width} ${height}`}
     >
       {children}
     </div>
@@ -97,8 +101,8 @@ function BookCard({ book, width = "w-[34%]" }: { book: CardBook; width?: string 
           </span>
         ) : null}
       </div>
-      <p className="mt-1.5 flex items-center gap-1.5 text-xs">
-        <span className="min-w-0 flex-1 truncate text-stone-700 dark:text-stone-300">
+      <p className="mt-1.5 flex items-start gap-1.5 text-xs">
+        <span className="min-w-0 flex-1 text-pretty leading-tight text-stone-700 dark:text-stone-300">
           {book.title}
         </span>
         {book.hearts ? (
@@ -140,56 +144,70 @@ function Check() {
   );
 }
 
-export default function ShowcaseLending() {
+// The four books the lending glimpse is told with: one out on loan, one
+// borrowed, one much loved, and one about to be lent
+export interface LendingSet {
+  lent: { title: string; cover: string; hearts: number };
+  borrowed: { title: string; cover: string };
+  loved: { title: string; cover: string; hearts: number; lentTimes: number };
+  lending: { title: string; cover: string };
+}
+
+export const LENDING_SET: LendingSet = {
+  lent: { title: "Demon Copperhead", cover: COVERS.demonCopperhead, hearts: 3 },
+  borrowed: { title: "Sea of Tranquility", cover: COVERS.seaOfTranquility },
+  loved: { title: "A Gentleman in Moscow", cover: COVERS.gentlemanInMoscow, hearts: 5, lentTimes: 8 },
+  lending: { title: "Dune", cover: COVERS.dune },
+};
+
+export default function ShowcaseLending({ set = LENDING_SET }: { set?: LendingSet }) {
+  // The page's main picture, so it gets more room than the others
   return (
-    <Stage>
+    <Stage width="max-w-[496px]" height="h-[500px] sm:h-[600px]">
       {/* What's due, both ways */}
       <div className={`${panel} left-0 right-[10%] top-0 z-30 -rotate-1 p-3.5`}>
         <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">Due soon</p>
         <p className="mt-1.5 text-sm text-stone-600 dark:text-stone-300">
-          <span className="font-semibold text-stone-900 dark:text-stone-100">Station Eleven</span>{" "}
+          <span className="font-semibold text-stone-900 dark:text-stone-100">{set.lent.title}</span>{" "}
           is with Priya Patel ·{" "}
           <span className="font-semibold text-stone-900 dark:text-stone-100">3 days late</span>
         </p>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
-          <span className="font-semibold text-stone-900 dark:text-stone-100">Gilead</span> goes
-          back to Maya Chen · tomorrow
+          <span className="font-semibold text-stone-900 dark:text-stone-100">{set.borrowed.title}</span>{" "}
+          goes back to Maya Chen · tomorrow
         </p>
       </div>
 
       {[
         {
-          title: "Station Eleven",
-          cover: COVERS.stationEleven,
+          ...set.lent,
           status: "lent" as const,
-          hearts: 2,
           className: "left-[2%] top-[27%] sm:top-[23%] -rotate-3",
         },
         {
-          title: "Gilead",
-          cover: COVERS.gilead,
+          ...set.borrowed,
           status: "borrowed" as const,
           className: "left-[34%] top-[30%] sm:top-[26%] z-10 rotate-2",
         },
         {
-          title: "The Hobbit",
-          cover: COVERS.hobbit,
-          hearts: 4,
+          ...set.loved,
           className: "right-0 top-[25%] sm:top-[21%] rotate-6",
         },
       ].map((book) => (
         <BookCard key={book.title} book={book} width="w-[32%]" />
       ))}
 
-      <Tag className="right-[-2%] top-[24%] rotate-[9deg] sm:top-[20%]">Lent 6 times</Tag>
+      <Tag className="right-[-2%] top-[24%] rotate-[9deg] sm:top-[20%]">
+        Lent {set.loved.lentTimes} times
+      </Tag>
 
       {/* Choosing how long to lend for */}
       <div className={`${panel} bottom-[8%] left-[6%] right-[14%] z-20 rotate-1 p-3.5`}>
         <div className="flex items-center gap-3">
-          <Cover src={COVERS.klara} className="w-8" />
+          <Cover src={set.lending.cover} className="w-8" />
           <div className="min-w-0 flex-1">
             <p className="text-sm text-stone-800 dark:text-stone-200">
-              Lend <span className="font-semibold">Klara and the Sun</span> to Sam
+              Lend <span className="font-semibold">{set.lending.title}</span> to Sam
             </p>
             <div className="mt-1.5 flex items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-xs text-stone-700 dark:text-stone-200">

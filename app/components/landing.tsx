@@ -84,7 +84,7 @@ const QUESTIONS: { q: string; a: React.ReactNode }[] = [
 export default function Landing() {
   return (
     <main className="px-4 md:px-8 pt-10 pb-16 md:pt-20 md:pb-24">
-      <section className="grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-16">
+      <section className="grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,31rem)] lg:gap-16">
         <div>
           <h1 className="text-5xl sm:text-6xl lg:text-[3.25rem] font-bold tracking-tight leading-[1.02] text-stone-900 dark:text-stone-50">
             Your bookshelf,
