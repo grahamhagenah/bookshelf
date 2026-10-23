@@ -300,13 +300,18 @@ export function FeedPost({
   friendIds: string[];
   userId: string;
 }) {
+  // Your own notes show in your feed too, as friends will see them
   const name = (
     <strong className="font-semibold text-stone-900 dark:text-stone-100">
-      <PersonLink
-        id={item.friend.id}
-        name={`${item.friend.firstname} ${item.friend.surname}`}
-        friendIds={friendIds}
-      />
+      {item.friend.id === userId ? (
+        "You"
+      ) : (
+        <PersonLink
+          id={item.friend.id}
+          name={`${item.friend.firstname} ${item.friend.surname}`}
+          friendIds={friendIds}
+        />
+      )}
     </strong>
   );
   const did =
@@ -444,7 +449,7 @@ export function NotePrompt({ books }: { books: PromptBook[] }) {
                 event.preventDefault();
                 return;
               }
-              // Clear and move on; the saved note shows on the book page
+              // Clear and move on; the saved note appears in the feed below
               setTimeout(() => {
                 setBody("");
                 setSkipped((list) => [...list, book.id]);
