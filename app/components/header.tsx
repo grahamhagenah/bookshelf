@@ -1,6 +1,6 @@
 import { NavLink, useLocation, useMatches } from "@remix-run/react";
 
-import { BookIcon, GroupIcon, StacksLogo } from "./icons";
+import { BookIcon, GroupIcon } from "./icons";
 import PositionedMenu from "./menu";
 import Notifications from "./notifications";
 import Search from "./search";
@@ -42,11 +42,20 @@ export default function Header() {
             href="/"
             className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0"
           >
-            <StacksLogo
-              size={32}
-              className="h-8 w-8 sm:h-9 sm:w-9 text-stone-900 dark:text-stone-100"
-            />
-            <span className="font-serif text-xl sm:text-[1.375rem]">Stacks</span>
+            {/* The wordmark: the name, with a green book under the S. The
+                book is sized in ems off the S's glyph, so it follows the
+                font size, and it sits inside the descender space, so it
+                adds no height to the header. */}
+            <span className="font-serif text-xl sm:text-[1.375rem] text-stone-900 dark:text-stone-100">
+              <span className="relative">
+                S
+                <span
+                  aria-hidden="true"
+                  className="absolute left-[0.03em] bottom-[0.133em] h-[0.12em] w-[0.5em] rounded-[1px] bg-forest-600 dark:bg-forest-400"
+                />
+              </span>
+              tacks
+            </span>
           </a>
           {landing ? (
             <p className="hidden md:block ml-1 border-l border-stone-200 dark:border-stone-800 pl-3 text-sm text-stone-400 dark:text-stone-500">
