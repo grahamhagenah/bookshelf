@@ -130,12 +130,12 @@ export default function Landing() {
         </Feature>
 
         <Feature
-          title="Your own little book website"
+          title="Share your shelf with anyone"
           visual={<ShowcasePage />}
           flip
         >
-          A page for your shelf, with your favorites and a line about you.
-          Anyone can browse it without an account, and friends can ask to
+          Your shelf gets its own page, with your favorites and a line about
+          you. Anyone can browse it without an account, and friends can ask to
           borrow.
         </Feature>
 
