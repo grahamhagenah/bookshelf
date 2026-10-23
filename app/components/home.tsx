@@ -13,14 +13,14 @@ import FriendActivityItem from "./friend-activity";
 // friends have been up to alongside (below, on phones)
 
 type HomeBooks = SerializeFrom<Awaited<ReturnType<typeof getHomeBooks>>>;
-interface HomeBook {
+export interface HomeBook {
   id: string;
   title: string;
   author: string;
   cover: string;
   dueDate: string | null;
 }
-interface Person {
+export interface Person {
   firstname: string;
   surname: string;
 }
@@ -95,8 +95,8 @@ function Cover({
   );
 }
 
-// A compact list for one direction of lending
-function LoanList({
+// A compact list for one direction of lending (the feed's rail shows it too)
+export function LoanList({
   id,
   title,
   books,
