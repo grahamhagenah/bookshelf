@@ -116,6 +116,8 @@ export default function App() {
         <meta charSet="utf-8" />
         {theme === "system" ? <script dangerouslySetInnerHTML={{ __html: FOLLOW_DEVICE }} /> : null}
         <meta name="viewport" content="width=device-width,initial-scale=1" />
+        {/* Other sites' images and links don't learn which page was open */}
+        <meta name="referrer" content="same-origin" />
         {theme === "system" ? (
           <>
             <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c0a09" />

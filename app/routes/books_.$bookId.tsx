@@ -23,6 +23,7 @@ import CoverPlaceholder from "~/components/cover-placeholder";
 import { LentIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
+import { importCover, isOpenLibraryCover } from "~/covers.server";
 import { sendBookRequestEmail } from "~/email.server";
 import {
   deleteBook,
@@ -761,10 +762,25 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     const publisher = formData.get("publisher");
     const subjects = formData.get("subjects");
 
+    // A cover pasted from another site is fetched once and kept here, so
+    // it's served like any other and doesn't depend on that site
+    let coverToSave = typeof cover === "string" && cover ? cover : undefined;
+    if (coverToSave && /^https?:/.test(coverToSave) && !isOpenLibraryCover(coverToSave)) {
+      const local = await importCover(coverToSave);
+      if (!local) {
+        return json({
+          edited: false,
+          coverError:
+            "That cover couldn't be fetched. Use an image link from Amazon, Goodreads, Google Books or Open Library, under 5 MB.",
+        });
+      }
+      coverToSave = local;
+    }
+
     await updateBookMetadata(book.id, {
       title: typeof title === "string" ? title : undefined,
       author: typeof author === "string" ? author : undefined,
-      cover: typeof cover === "string" && cover ? cover : undefined,
+      cover: coverToSave,
       body: typeof body === "string" ? body : undefined,
       datePublished:
         typeof datePublished === "string" && datePublished
@@ -1326,6 +1342,8 @@ export default function BookDetailsPage() {
     friendRequestSent?: boolean;
     friendLimit?: string;
     reminderSent?: boolean;
+  // The pasted cover link couldn't be fetched
+  coverError?: string;
     edited?: boolean;
     message?: string;
   } | null;
@@ -1626,8 +1644,14 @@ export default function BookDetailsPage() {
                   className={inputClass}
                 />
                 <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
-                  The preview on the left updates after you save.
+                  The preview on the left updates after you save. A link from another site is
+                  copied here when you save.
                 </p>
+                {actionData?.coverError ? (
+                  <p role="alert" className="mt-1.5 text-sm text-red-700 dark:text-red-400">
+                    {actionData.coverError}
+                  </p>
+                ) : null}
                 <CoverPicker bookId={data.book.id} selected={cover} onPick={setCover} />
               </div>
 
