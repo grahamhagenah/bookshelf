@@ -74,7 +74,7 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
       </div>
 
       {profile.favorites.length > 0 ? (
-        <section aria-labelledby="favorites" className="mt-6">
+        <section aria-labelledby="favorites" className="mt-10">
           <h2
             id="favorites"
             className="flex items-center gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400"

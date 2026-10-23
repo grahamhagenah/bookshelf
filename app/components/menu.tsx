@@ -76,7 +76,7 @@ export default function PositionedMenu() {
             surname={user.surname}
             icon={user.profileEmoji}
             size="sm"
-            className="transition-colors duration-200 group-hover:bg-stone-200 dark:group-hover:bg-stone-700"
+            className="ring-2 ring-transparent transition-shadow duration-200 group-hover:ring-current/25 group-focus-visible:ring-current/40"
           />
         ) : (
           <UserIcon size={20} />
