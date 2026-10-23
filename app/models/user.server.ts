@@ -27,6 +27,7 @@ export async function getUserById(id: User["id"]) {
       profileEmoji: true,
       emailNotifications: true,
       weeklyDigest: true,
+      discoverable: true,
       emailVerifiedAt: true,
       demoGroup: true,
       notificationsReceived: {
@@ -478,11 +479,12 @@ async function getVisibleGroup(userId: string) {
 }
 
 export async function searchUsers(query: string, currentUserId: string) {
-  // Fetch all users except current user
+  // Everyone who can be found, except the person searching
   const users = await prisma.user.findMany({
     where: {
       id: { not: currentUserId },
       demoGroup: await getVisibleGroup(currentUserId),
+      discoverable: true,
     },
     select: {
       id: true,
@@ -553,6 +555,11 @@ export async function setEmailSetting(userId: string, kind: EmailKind, on: boole
     where: { id: userId },
     data: kind === "requests" ? { emailNotifications: on } : { weeklyDigest: on },
   });
+}
+
+// Whether other people can find them in search and among new people
+export async function setDiscoverable(userId: User["id"], on: boolean) {
+  await prisma.user.update({ where: { id: userId }, data: { discoverable: on } });
 }
 
 export async function changePassword(
@@ -663,13 +670,15 @@ export async function getSuggestedFriends(userId: string, limit = 5) {
   // Nor anyone you already share a shelf with
   const housemates = await shelfIds(userId);
 
-  // Get recently joined users, excluding current user and existing friends
+  // Recently joined people who've chosen to be findable, leaving out the
+  // current user and existing friends
   const suggestedUsers = await prisma.user.findMany({
     where: {
       id: {
         notIn: [userId, ...friendIds, ...housemates],
       },
       demoGroup: await getVisibleGroup(userId),
+      discoverable: true,
     },
     select: {
       id: true,

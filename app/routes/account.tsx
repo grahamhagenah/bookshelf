@@ -52,6 +52,7 @@ import {
   setAppearance,
   setEmailSetting,
   deleteUsers,
+  setDiscoverable,
 } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
 import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
@@ -227,6 +228,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const requests = intent === "toggleEmailNotifications";
     const on = formData.get(requests ? "emailNotifications" : "weeklyDigest") === "true";
     await setEmailSetting(userId, requests ? "requests" : "weekly", on);
+    return json({
+      errors: null,
+      passwordErrors: null,
+      success: false,
+      passwordSuccess: false,
+      emojiSuccess: false,
+    });
+  }
+
+  // Whether other people can find you
+  if (intent === "toggleDiscoverable") {
+    await setDiscoverable(userId, formData.get("discoverable") === "true");
     return json({
       errors: null,
       passwordErrors: null,
@@ -674,6 +687,22 @@ export default function Account() {
             Nothing is sent until you confirm your email address.
           </p>
         ) : null}
+      </Section>
+
+      <Section
+        id="privacy"
+        title="Privacy"
+        description="Who can find you. Your shelf itself is seen by your friends, and by anyone you give your public link to."
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Toggle
+            intent="toggleDiscoverable"
+            name="discoverable"
+            on={user?.discoverable ?? true}
+            label="Let people find me"
+            hint="In search by name or email, and among new people on Stacks. Off, friends reach you by your invite link only."
+          />
+        </div>
       </Section>
 
       <Section

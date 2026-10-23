@@ -6,6 +6,8 @@ import {
   createNotification,
   createReminderNotification,
   generateShareToken,
+  getSuggestedFriends,
+  searchUsers,
   getFriendStatus,
   getUserByShareToken,
   markNotificationAsRead,
@@ -132,5 +134,25 @@ describe("createReminderNotification", () => {
       "OVERDUE_REMINDER",
     ]);
     expect(types.every((n) => n.receiverId === borrower.id)).toBe(true);
+  });
+});
+
+describe("discoverable", () => {
+  test("someone who turned it off is found neither by search nor among new people", async () => {
+    const me = await makeUser("Ada");
+    const open = await makeUser("Ben");
+    const hidden = await makeUser("Cal");
+    await prisma.user.update({
+      where: { id: hidden.id },
+      data: { discoverable: false },
+    });
+
+    const found = await searchUsers(hidden.email.split("@")[0], me.id);
+    expect(found.map((u) => u.id)).not.toContain(hidden.id);
+
+    const suggested = await getSuggestedFriends(me.id, 50);
+    const ids = suggested.map((u) => u.id);
+    expect(ids).toContain(open.id);
+    expect(ids).not.toContain(hidden.id);
   });
 });
