@@ -74,6 +74,12 @@ export function useUser(): User {
 export function validateEmail(email: unknown): email is string {
   return typeof email === "string" && email.length > 3 && email.includes("@");
 }
+
+// How every address is stored and looked up: "Jane@Gmail.com " and
+// "jane@gmail.com" are the same person, and the database compares exactly
+export function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
 // Signup bot checks: a hidden field people never see but form-filling bots
 // do, and a minimum time between the form loading and being sent
 export const HONEYPOT_FIELD = "website";

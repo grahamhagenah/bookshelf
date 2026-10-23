@@ -1,9 +1,15 @@
 // @vitest-environment node
+import crypto from "node:crypto";
+
 import { makeBook, makeUser, prisma } from "../../test/db";
 
 import {
   createFriendship,
   createNotification,
+  createUser,
+  getUserByEmail,
+  updateUser,
+  verifyLogin,
   createReminderNotification,
   generateShareToken,
   getSuggestedFriends,
@@ -155,4 +161,23 @@ describe("discoverable", () => {
     expect(ids).toContain(open.id);
     expect(ids).not.toContain(hidden.id);
   });
+});
+
+test("an address typed with capitals or spaces still logs in", async () => {
+  const typed = `  Jane.${crypto.randomUUID()}@Example.TEST `;
+  const user = await createUser(typed, "password123", "Jane", "Reader");
+  const stored = typed.trim().toLowerCase();
+  expect(user.email).toBe(stored);
+  expect((await verifyLogin(stored, "password123"))?.id).toBe(user.id);
+  expect((await verifyLogin(typed, "password123"))?.id).toBe(user.id);
+  expect((await getUserByEmail(stored.toUpperCase()))?.id).toBe(user.id);
+});
+
+test("a changed address is stored the same way", async () => {
+  const user = await makeUser("Mover");
+  const updated = await updateUser(user.id, { email: ` NEW.${user.email.toUpperCase()}` });
+  expect(updated.email).toBe(`new.${user.email}`);
+  // The same address in other capitals isn't a change
+  const again = await updateUser(user.id, { email: updated.email.toUpperCase() });
+  expect(again.emailChanged).toBe(false);
 });
