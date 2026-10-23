@@ -87,9 +87,9 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
             "border-forest-600/25 bg-forest-600/10 text-forest-700 dark:border-forest-400/30 dark:bg-forest-400/15 dark:text-forest-400",
         )}
       >
-        {/* Both labels share one cell, centered, so the button keeps its
-            width and the row doesn't shift. No date: when you marked it
-            isn't always when you read it */}
+        {/* Like the heart's "You loved it". Both labels share one cell, so
+            the button keeps its width and the row doesn't shift. No date:
+            when you marked it isn't always when you read it */}
         <span className="grid justify-items-center">
           <span className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${read ? "invisible" : ""}`}>
             <CheckIcon size={14} />
@@ -97,7 +97,7 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
           </span>
           <span className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${read ? "" : "invisible"}`}>
             <CheckIcon size={14} />
-            Read
+            You read it
           </span>
         </span>
       </button>
