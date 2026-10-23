@@ -25,6 +25,8 @@ export default function Header() {
     | RootLoaderData
     | undefined;
   const user = rootData?.user;
+  // The signed-out front page, where a word on what Stacks is helps
+  const landing = !user && pathname === "/";
 
   return (
     // Stays at the top while the page scrolls under it. Solid, not
@@ -45,6 +47,11 @@ export default function Header() {
             />
             <span className="font-serif text-xl sm:text-[1.375rem]">Stacks</span>
           </a>
+          {landing ? (
+            <p className="hidden md:block ml-1 border-l border-stone-200 dark:border-stone-800 pl-3 text-sm text-stone-400 dark:text-stone-500">
+              A lending library for the books you own
+            </p>
+          ) : null}
         </div>
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
           {/* Your shelf, and what your friends are up to, are what you come
