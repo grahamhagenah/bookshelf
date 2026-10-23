@@ -1097,8 +1097,9 @@ function LoanCard({ data }: { data: BookData }) {
   const reminderSent = reminder.data?.reminderSent === true;
   const sendingReminder = reminder.state !== "idle";
   // The answer comes back too fast to show "Extending…" without a flicker;
-  // the new due date, said once it's in, is the better sign
-  const extended = extend.state === "idle" && extend.data?.loanExtended === true;
+  // the new due date, said once it's in, is the better sign. It stays put
+  // through later clicks, in a line that holds its room from the start.
+  const extended = extend.data?.loanExtended === true;
   const name = borrower.firstname;
   const label = "text-sm text-stone-500 dark:text-stone-400";
   const chip = `flex-shrink-0 rounded-full bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 text-xs ${
@@ -1166,11 +1167,9 @@ function LoanCard({ data }: { data: BookData }) {
               </button>
             ))}
           </extend.Form>
-          {extended && due ? (
-            <p role="status" className="mt-2 text-xs text-stone-500 dark:text-stone-400">
-              Now due {monthDay(due)}. {name} has been told.
-            </p>
-          ) : null}
+          <p role="status" className="mt-2 min-h-4 text-xs text-stone-500 dark:text-stone-400">
+            {extended && due ? `Now due ${monthDay(due)}. ${name} has been told.` : ""}
+          </p>
         </div>
         <div className="sm:pl-5">
           <p className={label}>{overdue ? `Ask ${name} to bring it back` : `Remind ${name} it's due`}</p>
