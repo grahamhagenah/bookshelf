@@ -5,6 +5,7 @@ import { loadCover } from "~/covers.server";
 import { getPublicBookListItems } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
 import { getUserByShareToken } from "~/models/user.server";
+import { getShelfProfile } from "~/profile.server";
 
 // sharp's ES module build uses import syntax the Remix compiler can't
 // parse, so load its CommonJS build instead
@@ -12,8 +13,9 @@ import { getUserByShareToken } from "~/models/user.server";
 const sharp: typeof import("sharp").default = require("sharp");
 
 // The picture shown when a share link is pasted into iMessage, Slack and
-// the like: a row of the owner's covers. No text, since the card already
-// shows the page's title and description underneath.
+// the like: a row of the owner's covers, favorites first, as the page
+// itself opens with them. No text, since the card already shows the page's
+// title and description underneath.
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -72,12 +74,19 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const user = params.token ? await getUserByShareToken(params.token) : null;
   if (!user) throw new Response("Not Found", { status: 404 });
 
-  const books = await getPublicBookListItems(await shelfIds(user.id));
-  // A few spares, in case some covers are missing
-  const paths = books
-    .map((book) => coverPath(book.cover))
-    .filter((path): path is string => path !== null)
-    .slice(0, MAX_COVERS + 3);
+  const [books, profile] = await Promise.all([
+    getPublicBookListItems(await shelfIds(user.id)),
+    getShelfProfile(user.id),
+  ]);
+  // Favorites, then the rest of the shelf, plus a few spares in case some
+  // covers are missing
+  const paths = [
+    ...new Set(
+      [...profile.favorites, ...books]
+        .map((book) => coverPath(book.cover))
+        .filter((path): path is string => path !== null),
+    ),
+  ].slice(0, MAX_COVERS + 3);
 
   const key = `${params.token}:${paths.join(",")}`;
   let image = made.get(key);

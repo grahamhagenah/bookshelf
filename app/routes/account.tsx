@@ -1025,11 +1025,21 @@ function HouseholdPanel({
         </button>
       </Form>
     </div>
+  ) : others > 1 ? (
+    // In the shared shelf's card, under a line saying what it's for, like
+    // the choices on a loan
+    <Form method="post">
+      <p className="text-sm text-stone-500 dark:text-stone-400">Anyone else live with you?</p>
+      <input type="hidden" name="intent" value="householdInvite" />
+      <button type="submit" className={`mt-2 ${quietButton}`}>
+        Invite them to this shelf
+      </button>
+    </Form>
   ) : (
     <Form method="post">
       <input type="hidden" name="intent" value="householdInvite" />
       <button type="submit" className={quietButton}>
-        {others > 1 ? "Invite someone else" : "Make an invite link"}
+        Make an invite link
       </button>
     </Form>
   );

@@ -5,7 +5,6 @@ import { coverSizeOf, coverSrc, libraryViewOf, useOptionalUser } from "~/utils";
 
 import CoverPlaceholder from "./cover-placeholder";
 import {
-  GroupIcon,
   SearchIcon,
   BookIcon,
   BorrowedIcon,
@@ -220,113 +219,35 @@ export default function Library({ bookListItems, ownerName, header }: LibraryPro
           </section>
         </main>
       ) : bookListItems.length === 0 ? (
-        // Empty state for own library - show onboarding
-        <main className="min-h-[calc(100vh-60px)]">
-          {header ? <div className="px-4 md:px-8 pt-8 md:pt-10">{header}</div> : null}
-          <section className="flex flex-col items-center justify-center min-h-[calc(100vh-60px)] px-4 py-12">
-            <div className="text-center mb-12">
-              <h1 className="text-4xl md:text-6xl font-bold text-stone-800 mb-4">
-                Welcome to your{" "}
-                <span className="text-stone-900 dark:text-stone-100">
-                  lending library
-                </span>
-              </h1>
-              <p className="text-xl text-stone-600 dark:text-stone-300 max-w-2xl mx-auto">
-                Add the books you own, then see what your friends have.
-              </p>
+        // Your own library, still empty: where books come from, in the
+        // page's usual place under the tabs. Finding friends and sharing
+        // are the home page's welcome steps.
+        <main className="mt-8 md:mt-10 px-4 md:px-8 pb-8">
+          {header}
+          <section className="rounded-xl border border-stone-200 dark:border-stone-800 px-6 py-12 text-center">
+            <BookIcon size={28} className="mx-auto text-stone-400 dark:text-stone-500" />
+            <h1 className="mt-3 text-lg font-semibold text-stone-900 dark:text-stone-100">
+              Your library is empty
+            </h1>
+            <p className="mx-auto mt-1 max-w-sm text-stone-500 dark:text-stone-400">
+              Add the books you own, and friends can see what they could borrow.
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
               <Link
                 to="/search"
-                className="mt-8 inline-flex items-center gap-2 rounded-md bg-forest-600 px-6 py-3 text-lg font-medium text-white hover:bg-forest-700 transition-colors"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md bg-forest-600 px-4 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
               >
-                <span aria-hidden="true">+</span>
-                Add your first books
+                <span aria-hidden="true" className="text-base leading-none">
+                  +
+                </span>
+                Add books
               </Link>
-              <p className="mt-4 text-stone-500 dark:text-stone-400">
-                Already keep a list on Goodreads or StoryGraph?{" "}
-                <Link
-                  to="/import"
-                  className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-                >
-                  Import it
-                </Link>
-              </p>
-            </div>
-
-            <div className="bg-white dark:bg-stone-900 rounded-lg shadow-soft border border-stone-200/80 dark:border-stone-800 p-8 max-w-3xl w-full">
-              <h2 className="text-2xl font-semibold text-stone-800 mb-6 text-center">
-                Here&apos;s how it works
-              </h2>
-              <ol className="space-y-4">
-                <li>
-                  <Link
-                    to="/search"
-                    className="flex items-center gap-4 p-4 rounded-lg border border-stone-200 dark:border-stone-800 hover:border-stone-400 dark:hover:border-stone-600 transition-colors group"
-                  >
-                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-stone-100 text-stone-900 dark:text-stone-100 font-bold text-xl group-hover:bg-stone-200 transition-colors">
-                      1
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-stone-800">
-                        Add books to your library
-                      </h3>
-                      <p className="text-stone-600">
-                        Search for books by title or author and add them to your
-                        collection
-                      </p>
-                    </div>
-                    <SearchIcon
-                      size={32}
-                      className="text-stone-400 group-hover:text-stone-900 transition-colors"
-                    />
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/friends"
-                    className="flex items-center gap-4 p-4 rounded-lg border border-stone-200 dark:border-stone-800 hover:border-stone-400 dark:hover:border-stone-600 transition-colors group"
-                  >
-                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-stone-100 text-stone-900 dark:text-stone-100 font-bold text-xl group-hover:bg-stone-200 transition-colors">
-                      2
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-stone-800">
-                        Connect with friends
-                      </h3>
-                      <p className="text-stone-600">
-                        Find friends by email and see what books they have
-                        available
-                      </p>
-                    </div>
-                    <GroupIcon
-                      size={32}
-                      className="text-stone-400 group-hover:text-stone-900 transition-colors"
-                    />
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/account"
-                    className="flex items-center gap-4 p-4 rounded-lg border border-stone-200 dark:border-stone-800 hover:border-stone-400 dark:hover:border-stone-600 transition-colors group"
-                  >
-                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-stone-100 text-stone-900 dark:text-stone-100 font-bold text-xl group-hover:bg-stone-200 transition-colors">
-                      3
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-stone-800">
-                        Share your bookshelf
-                      </h3>
-                      <p className="text-stone-600">
-                        Generate a public link so anyone can browse your
-                        collection
-                      </p>
-                    </div>
-                    <BookIcon
-                      size={32}
-                      className="text-stone-400 group-hover:text-stone-900 transition-colors"
-                    />
-                  </Link>
-                </li>
-              </ol>
+              <Link
+                to="/import"
+                className="inline-flex h-9 items-center rounded-md border border-stone-200 dark:border-stone-700 px-4 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
+              >
+                Import from Goodreads
+              </Link>
             </div>
           </section>
         </main>
