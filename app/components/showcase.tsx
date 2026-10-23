@@ -163,7 +163,7 @@ export const LENDING_SET: LendingSet = {
 export default function ShowcaseLending({ set = LENDING_SET }: { set?: LendingSet }) {
   // The page's main picture, so it gets more room than the others
   return (
-    <Stage width="max-w-[496px]" height="h-[500px] sm:h-[600px]">
+    <Stage width="max-w-[496px]" height="h-[480px] sm:h-[560px]">
       {/* What's due, both ways */}
       <div className={`${panel} left-0 right-[10%] top-0 z-30 -rotate-1 p-3.5`}>
         <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">Due soon</p>
@@ -182,27 +182,27 @@ export default function ShowcaseLending({ set = LENDING_SET }: { set?: LendingSe
         {
           ...set.lent,
           status: "lent" as const,
-          className: "left-[2%] top-[27%] sm:top-[23%] -rotate-3",
+          className: "left-[2%] top-[31%] sm:top-[23%] -rotate-3",
         },
         {
           ...set.borrowed,
           status: "borrowed" as const,
-          className: "left-[34%] top-[30%] sm:top-[26%] z-10 rotate-2",
+          className: "left-[34%] top-[34%] sm:top-[26%] z-10 rotate-2",
         },
         {
           ...set.loved,
-          className: "right-0 top-[25%] sm:top-[21%] rotate-6",
+          className: "right-0 top-[29%] sm:top-[21%] rotate-6",
         },
       ].map((book) => (
         <BookCard key={book.title} book={book} width="w-[32%]" />
       ))}
 
-      <Tag className="right-[-2%] top-[24%] rotate-[9deg] sm:top-[20%]">
+      <Tag className="right-[-2%] top-[28%] rotate-[9deg] sm:top-[20%]">
         Lent {set.loved.lentTimes} times
       </Tag>
 
       {/* Choosing how long to lend for */}
-      <div className={`${panel} bottom-[8%] left-[6%] right-[14%] z-20 rotate-1 p-3.5`}>
+      <div className={`${panel} bottom-[6%] left-[6%] z-20 rotate-1 p-3.5 pr-5`}>
         <div className="flex items-center gap-3">
           <Cover src={set.lending.cover} className="w-8" />
           <div className="min-w-0 flex-1">
