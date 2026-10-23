@@ -654,41 +654,40 @@ export default function Search() {
                 Find a book you&apos;d like to read.
               </p>
               <p className="mt-2 text-sm text-stone-400 dark:text-stone-500">
-                If a friend has it, ask to borrow it. If not, it goes on your want-to-read
-                list and you&apos;ll hear the moment a friend adds it.
+                Borrow it if a friend has it. Otherwise it goes on your list, and
+                you&apos;ll hear when a friend gets it.
               </p>
             </>
           ) : (
+            <p className="text-stone-700 dark:text-stone-300">
+              Find a book on a friend&apos;s shelf, or add one to your library.
+            </p>
+          )}
+          {/* Ways to fill a library; beside the point when filling the list */}
+          {data.forWant ? null : (
             <>
-              <p className="text-stone-700 dark:text-stone-300">
-                Find a book on your friends&apos; shelves, or add a new one to your
-                library.
+              <p className="mt-6 text-sm text-stone-500 dark:text-stone-400">
+                A stack of real books?{" "}
+                <button
+                  type="button"
+                  onClick={() => setScanning(true)}
+                  className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                >
+                  Scan
+                </button>{" "}
+                their barcodes.
               </p>
-              <p className="mt-2 text-sm text-stone-400 dark:text-stone-500">
-                Search once and you&apos;ll see both.
+              <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
+                On Goodreads or StoryGraph?{" "}
+                <Link
+                  to="/import"
+                  className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                >
+                  Import them
+                </Link>
               </p>
             </>
           )}
-          <p className="mt-6 text-sm text-stone-500 dark:text-stone-400">
-            Adding a stack of real books? Hit{" "}
-            <button
-              type="button"
-              onClick={() => setScanning(true)}
-              className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-            >
-              Scan
-            </button>{" "}
-            and point your phone at each barcode.
-          </p>
-          <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
-            Already keep your books on Goodreads or StoryGraph?{" "}
-            <Link
-              to="/import"
-              className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-            >
-              Import them
-            </Link>
-          </p>
         </div>
       ) : (
         <div className={isSearching ? "opacity-60 transition-opacity" : ""}>
