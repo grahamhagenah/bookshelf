@@ -8,6 +8,9 @@ import path from "node:path";
 
 const UPSTREAM = "https://covers.openlibrary.org";
 
+// Smaller than this and it isn't a picture of anything
+export const NO_COVER_BYTES = 200;
+
 // Only Open Library's own cover paths, e.g. b/isbn/9780547928227-M.jpg
 export const COVER_PATH = /^b\/(id|isbn|olid)\/[A-Za-z0-9-]+-(S|M|L)\.jpg$/;
 
@@ -28,6 +31,9 @@ async function fetchAndStore(coverPath: string, file: string) {
     });
     if (!res.ok) return null;
     const bytes = Buffer.from(await res.arrayBuffer());
+    // An unknown cover comes back as a 1x1 pixel (a few dozen bytes). Not
+    // a cover: say so now, and ask again another day
+    if (bytes.length < NO_COVER_BYTES) return null;
     // Write then rename, so a half-written file is never served
     await mkdir(CACHE_DIR, { recursive: true });
     const temp = `${file}.${process.pid}.tmp`;

@@ -158,7 +158,9 @@ function BookCover({
           // The first row is usually on screen right away
           loading={eager ? "eager" : "lazy"}
           decoding="async"
-          className={`relative w-full h-full object-cover ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
+          // Visible from the first paint, before any JavaScript runs: a
+          // loading image draws nothing, so the placeholder shows through
+          className="relative w-full h-full object-cover"
           // A cached cover can finish loading before React hydrates and
           // attaches onLoad, so also check it once it's in the page
           ref={(img) => {

@@ -244,11 +244,13 @@ function BookCover({
           alt={title}
           loading="lazy"
           decoding="async"
-          className={`w-full object-cover transition-opacity duration-300 ${
+          // Visible from the first paint; it fills the 2:3 box until its
+          // own size is known, then keeps its proportions
+          className={`w-full object-cover ${
             loaded
               ? // No taller than twice the width, however odd the image
-                "relative block h-auto max-h-[240px] md:max-h-[400px] lg:max-h-[480px] opacity-100"
-              : "absolute inset-0 h-full opacity-0"
+                "relative block h-auto max-h-[240px] md:max-h-[400px] lg:max-h-[480px]"
+              : "absolute inset-0 h-full"
           }`}
           // A cached cover can finish loading before React hydrates and
           // attaches onLoad, so also check it once it's in the page

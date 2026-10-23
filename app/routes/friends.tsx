@@ -562,21 +562,20 @@ function FriendCard({ friend }: { friend: Friend }) {
 }
 
 function MiniCover({ cover, title, author }: { cover: string; title: string; author: string }) {
-  const [shown, setShown] = useState(false);
+  const [failed, setFailed] = useState(false);
   return (
     <div className="relative aspect-[2/3] overflow-hidden rounded-xs ring-1 ring-stone-900/5 dark:ring-white/10">
       <CoverPlaceholder title={title} author={author} className="absolute inset-0" />
-      {cover ? (
+      {cover && !failed ? (
         <img
           src={coverSrc(cover, "M")}
           alt={title}
           loading="lazy"
-          // Open Library answers a missing cover with a 1px image
-          ref={(img) => {
-            if (img?.complete && img.naturalWidth > 1) setShown(true);
-          }}
-          onLoad={(e) => setShown(e.currentTarget.naturalWidth > 1)}
-          className={`relative h-full w-full object-cover transition-opacity ${shown ? "opacity-100" : "opacity-0"}`}
+          // Visible from the first paint, over the placeholder; gone if
+          // there's no picture (Open Library answers some with a 1px image)
+          onLoad={(e) => setFailed(e.currentTarget.naturalWidth <= 1)}
+          onError={() => setFailed(true)}
+          className="relative h-full w-full object-cover"
         />
       ) : null}
     </div>

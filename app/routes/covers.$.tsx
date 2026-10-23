@@ -19,9 +19,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
   const bytes = await loadCover(coverPath);
   if (!bytes) {
-    // Let the page fall back to its placeholder, and try again next time
-    return new Response("Cover unavailable", {
-      status: 502,
+    // No picture: the browser fires the image's error, the page shows its
+    // placeholder, and nothing is remembered, so next time asks again
+    return new Response("No cover", {
+      status: 404,
       headers: { "Cache-Control": "no-store" },
     });
   }
