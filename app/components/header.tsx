@@ -27,8 +27,11 @@ export default function Header() {
   const user = rootData?.user;
 
   return (
-    // Stays at the top while the page scrolls under it, slightly see-through
-    <header className="sticky top-0 z-40 w-full border-b border-stone-200 dark:border-stone-800 bg-white/90 dark:bg-stone-950/90 backdrop-blur-md">
+    // Stays at the top while the page scrolls under it. Solid, not
+    // see-through: Safari 26 tints the strip behind the status bar from a
+    // sticky element at the top edge, and falls back to white for a
+    // translucent, blurred one
+    <header className="sticky top-0 z-40 w-full border-b border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950">
       <div className="mx-auto max-w-5xl flex items-center justify-between px-4 md:px-8 py-1.5">
         <div className="flex items-center gap-2 min-w-0">
           <a
