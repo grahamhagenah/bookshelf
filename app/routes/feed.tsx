@@ -170,8 +170,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   throw new Response("Unknown action", { status: 400 });
 };
 
-// Beside the feed on wide screens: your loans both ways, and who you're
-// following. The same shape as the home page, mirrored.
+// Beside the feed on wide screens: who you're following (the feed is
+// theirs), then your loans both ways. The same shape as the home page,
+// mirrored.
 function Rail({
   loans,
   friends,
@@ -190,45 +191,6 @@ function Rail({
     Math.max(0, loans.lent.length - FEW);
   return (
     <aside className="hidden space-y-10 self-start lg:block">
-      {anyLoans ? (
-        <section aria-labelledby="rail-loans">
-          <h2 id="rail-loans" className={`${heading} mb-3`}>
-            Loans
-          </h2>
-          <div className="space-y-6">
-            {loans.borrowed.length > 0 ? (
-              <LoanList
-                id="rail-borrowing"
-                title="Borrowing"
-                books={loans.borrowed.slice(0, FEW).map((book) => ({
-                  book,
-                  person: book.owner,
-                }))}
-                personLabel="From"
-                empty=""
-              />
-            ) : null}
-            {loans.lent.length > 0 ? (
-              <LoanList
-                id="rail-lent"
-                title="Lent out"
-                books={loans.lent.slice(0, FEW).map((book) => ({
-                  book,
-                  person: book.borrower,
-                }))}
-                personLabel="To"
-                empty=""
-              />
-            ) : null}
-          </div>
-          {more > 0 ? (
-            <Link to="/#loans" className={`mt-3 inline-block ${link}`}>
-              {more} more on your home page
-            </Link>
-          ) : null}
-        </section>
-      ) : null}
-
       <section aria-labelledby="rail-friends">
         <div className="mb-3 flex items-baseline justify-between gap-3">
           <h2 id="rail-friends" className={heading}>
@@ -269,6 +231,45 @@ function Rail({
           </p>
         )}
       </section>
+
+      {anyLoans ? (
+        <section aria-labelledby="rail-loans">
+          <h2 id="rail-loans" className={`${heading} mb-3`}>
+            Loans
+          </h2>
+          <div className="space-y-6">
+            {loans.borrowed.length > 0 ? (
+              <LoanList
+                id="rail-borrowing"
+                title="Borrowing"
+                books={loans.borrowed.slice(0, FEW).map((book) => ({
+                  book,
+                  person: book.owner,
+                }))}
+                personLabel="From"
+                empty=""
+              />
+            ) : null}
+            {loans.lent.length > 0 ? (
+              <LoanList
+                id="rail-lent"
+                title="Lent out"
+                books={loans.lent.slice(0, FEW).map((book) => ({
+                  book,
+                  person: book.borrower,
+                }))}
+                personLabel="To"
+                empty=""
+              />
+            ) : null}
+          </div>
+          {more > 0 ? (
+            <Link to="/#loans" className={`mt-3 inline-block ${link}`}>
+              {more} more on your home page
+            </Link>
+          ) : null}
+        </section>
+      ) : null}
     </aside>
   );
 }
