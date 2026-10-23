@@ -28,12 +28,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const ownedBooks = await getBookListItems(await shelfIds(userId));
   const borrowedBooks = await getBorrowedBooks(userId);
 
-  // Mark borrowed books and lending books, then combine. Books someone
-  // else in the household added say so.
-  const ownedWithFlag = ownedBooks.map(({ readerNotes, user: addedBy, ...book }) => ({
+  // Mark borrowed books and lending books, then combine
+  const ownedWithFlag = ownedBooks.map(({ readerNotes, ...book }) => ({
     ...book,
     readAt: readAtFor(userId, { ...book, readerNotes }),
-    addedBy: addedBy.id === userId ? null : addedBy.firstname,
     isBorrowed: false,
     isLending: book.borrowerId !== null,
   }));

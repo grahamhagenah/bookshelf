@@ -55,7 +55,6 @@ interface Book {
   borrowerId?: string | null;
   readAt?: string | null;
   // First name of the housemate who added it, when it wasn't you
-  addedBy?: string | null;
 }
 
 type Status =
@@ -199,7 +198,7 @@ export default function Library({ bookListItems, ownerName, header }: LibraryPro
         (book.author ?? "").toLowerCase().includes(term),
     );
   const isFiltered = Boolean(term) || status !== "all";
-  const showMarks = visibleBooks.some((book) => (book.readAt && !ownerName) || book.addedBy);
+  const showMarks = !ownerName && visibleBooks.some((book) => book.readAt);
 
   return (
     <>
@@ -368,18 +367,16 @@ export default function Library({ bookListItems, ownerName, header }: LibraryPro
                         </span>
                       ) : null}
                     </span>
-                    {/* Read, or whose it is on a shared shelf. The line is kept
-                        (empty if need be) whenever any book has one, so the
-                        rows line up */}
+                    {/* Read. The line is kept (empty if need be) whenever any
+                        book has one, so the rows line up. On a shared shelf
+                        every copy is everyone's, so no owner's name */}
                     {showMarks ? (
                       <span className="mt-0.5 flex h-4 items-center text-xs text-stone-400 dark:text-stone-500">
-                        {book.readAt && !ownerName ? (
+                        {book.readAt ? (
                           <span className="inline-flex items-center gap-1">
                             <ReadIcon size={11} />
                             Read
                           </span>
-                        ) : book.addedBy ? (
-                          <span className="truncate">{book.addedBy}&apos;s</span>
                         ) : null}
                       </span>
                     ) : null}
@@ -447,12 +444,6 @@ export default function Library({ bookListItems, ownerName, header }: LibraryPro
                       {book.lendCount !== undefined && book.lendCount > 0 ? (
                         <span className="text-stone-400 dark:text-stone-500">
                           lent {book.lendCount}×
-                        </span>
-                      ) : null}
-                      {book.addedBy ? (
-                        <span className="text-stone-400 dark:text-stone-500">
-                          {" "}
-                          · {book.addedBy}&apos;s
                         </span>
                       ) : null}
                     </div>

@@ -78,7 +78,6 @@ export function getBookListItems(ownerIds: User["id"][]) {
       userId: true,
       borrowerId: true,
       readAt: true,
-      user: { select: { id: true, firstname: true } },
       // The viewer's own read mark is picked out by the caller
       readerNotes: { select: { userId: true, readAt: true } },
     },
