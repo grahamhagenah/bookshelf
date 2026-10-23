@@ -543,9 +543,11 @@ export default function Account() {
                     type="submit"
                     name="emoji"
                     value={`${PLATE}${color}`}
-                    aria-label={`Use a ${color} bookplate`}
+                    aria-label={`Use the ${color} bookplate`}
                     aria-pressed={chosen}
-                    className={`rounded-full p-0.5 transition-colors ${
+                    // The same 44px as the icons below, so the two rows line
+                    // up; the ring sits outside, off the plate by a gap
+                    className={`rounded-full ring-offset-2 ring-offset-white dark:ring-offset-stone-950 transition-shadow ${
                       chosen
                         ? "ring-2 ring-forest-600 dark:ring-forest-400"
                         : "ring-1 ring-transparent hover:ring-stone-300 dark:hover:ring-stone-600"
