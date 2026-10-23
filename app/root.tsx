@@ -97,7 +97,13 @@ export default function App() {
 
   return (
     // The class can differ from the server's when following the device
-    <html lang="en" className={`h-full ${theme === "dark" ? "dark" : ""}`} suppressHydrationWarning>
+    // The background goes on <html> too: Safari paints the strip behind its
+    // status bar and the overscroll above the page from it, not from <body>
+    <html
+      lang="en"
+      className={`h-full bg-white dark:bg-stone-950 ${theme === "dark" ? "dark" : ""}`}
+      suppressHydrationWarning
+    >
       <head>
         <meta charSet="utf-8" />
         {theme === "system" ? <script dangerouslySetInnerHTML={{ __html: FOLLOW_DEVICE }} /> : null}
