@@ -11,13 +11,11 @@ import Showcase, { ShowcaseFriends, ShowcaseNotes, ShowcasePage } from "./showca
 // One function of the app in more detail: words on one side, a staged
 // glimpse on the other (alternating sides on wider screens)
 function Feature({
-  eyebrow,
   title,
   children,
   visual,
   flip = false,
 }: {
-  eyebrow: string;
   title: string;
   children: React.ReactNode;
   visual: React.ReactNode;
@@ -26,8 +24,7 @@ function Feature({
   return (
     <section className="grid items-center gap-10 border-t border-stone-200 dark:border-stone-800 pt-16 md:grid-cols-2 md:gap-16 md:pt-20">
       <div className={flip ? "md:order-last" : undefined}>
-        <p className="text-sm font-semibold text-stone-500 dark:text-stone-400">{eyebrow}</p>
-        <h2 className="mt-2 text-balance text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-4xl">
+        <h2 className="text-balance text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-4xl">
           {title}
         </h2>
         <p className="mt-4 max-w-md text-pretty text-lg leading-relaxed text-stone-600 dark:text-stone-300">
@@ -124,7 +121,6 @@ export default function Landing() {
 
       <div className="mt-20 space-y-20 md:mt-28 md:space-y-28">
         <Feature
-          eyebrow="Borrow"
           title="Everything your friends own, in one search"
           visual={<ShowcaseFriends />}
         >
@@ -134,7 +130,6 @@ export default function Landing() {
         </Feature>
 
         <Feature
-          eyebrow="Your page"
           title="Your own little book website"
           visual={<ShowcasePage />}
           flip
@@ -145,7 +140,6 @@ export default function Landing() {
         </Feature>
 
         <Feature
-          eyebrow="Notes"
           title="Every copy carries its story"
           visual={<ShowcaseNotes />}
         >
