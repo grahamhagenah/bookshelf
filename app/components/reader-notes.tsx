@@ -2,7 +2,7 @@ import { useFetcher } from "@remix-run/react";
 import { useEffect, useState } from "react";
 
 import Avatar from "./avatar";
-import { CheckIcon, HeartIcon, PencilIcon } from "./icons";
+import { HeartIcon, PencilIcon, ReadIcon } from "./icons";
 import PersonLink from "./person-link";
 
 interface ReaderNote {
@@ -92,11 +92,11 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
             when you marked it isn't always when you read it */}
         <span className="grid justify-items-center">
           <span className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${read ? "invisible" : ""}`}>
-            <CheckIcon size={14} />
+            <ReadIcon size={14} />
             Mark as read
           </span>
           <span className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${read ? "" : "invisible"}`}>
-            <CheckIcon size={14} />
+            <ReadIcon size={14} />
             You read it
           </span>
         </span>

@@ -1,7 +1,9 @@
 node_modules
 
 /build
+/build-check
 /public/build
+/public/build-check
 .env
 
 /cypress/screenshots

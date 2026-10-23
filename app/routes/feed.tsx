@@ -2,14 +2,12 @@ import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
   MetaFunction,
-  SerializeFrom,
 } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData, useNavigation } from "@remix-run/react";
 
-import Avatar from "~/components/avatar";
 import { FeedPost, NotePrompt } from "~/components/friend-activity";
-import { LoanList } from "~/components/home";
+import SideRail from "~/components/side-rail";
 import { sendBookRequestEmail } from "~/email.server";
 import { getFriendActivity, getNotePrompts } from "~/models/activity.server";
 import { getBookById, getHomeBooks } from "~/models/book.server";
@@ -170,110 +168,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   throw new Response("Unknown action", { status: 400 });
 };
 
-// Beside the feed on wide screens: who you're following (the feed is
-// theirs), then your loans both ways. The same shape as the home page,
-// mirrored.
-function Rail({
-  loans,
-  friends,
-}: {
-  loans: SerializeFrom<typeof loader>["loans"];
-  friends: SerializeFrom<typeof loader>["friends"];
-}) {
-  const heading = "text-lg font-semibold text-stone-900 dark:text-stone-100";
-  const link =
-    "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
-  const anyLoans = loans.borrowed.length + loans.lent.length > 0;
-  // A glance, not the whole ledger: the home page has every loan
-  const FEW = 4;
-  const more =
-    Math.max(0, loans.borrowed.length - FEW) +
-    Math.max(0, loans.lent.length - FEW);
-  return (
-    <aside className="hidden space-y-10 self-start lg:block">
-      <section aria-labelledby="rail-friends">
-        <div className="mb-3 flex items-baseline justify-between gap-3">
-          <h2 id="rail-friends" className={heading}>
-            Friends
-            <span className="ml-1.5 text-sm font-normal text-stone-400 dark:text-stone-500">
-              {friends.length}
-            </span>
-          </h2>
-          <Link to="/friends" className={link}>
-            {friends.length > 0 ? "See all" : "Find friends"}
-          </Link>
-        </div>
-        {friends.length > 0 ? (
-          <ul className="flex flex-wrap gap-2">
-            {friends.slice(0, 12).map((friend) => (
-              <li key={friend.id}>
-                <Link
-                  to={`/friend/${friend.id}`}
-                  title={`${friend.firstname} ${friend.surname}`}
-                  className="block rounded-full ring-2 ring-transparent hover:ring-stone-300 dark:hover:ring-stone-600 transition-shadow"
-                >
-                  <Avatar
-                    firstname={friend.firstname}
-                    surname={friend.surname}
-                    icon={friend.profileEmoji}
-                    size="md"
-                  />
-                  <span className="sr-only">
-                    {friend.firstname} {friend.surname}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-stone-400 dark:text-stone-500">
-            Friends&apos; books show up here once you have some.
-          </p>
-        )}
-      </section>
-
-      {anyLoans ? (
-        <section aria-labelledby="rail-loans">
-          <h2 id="rail-loans" className={`${heading} mb-3`}>
-            Loans
-          </h2>
-          <div className="space-y-6">
-            {loans.borrowed.length > 0 ? (
-              <LoanList
-                id="rail-borrowing"
-                title="Borrowing"
-                books={loans.borrowed.slice(0, FEW).map((book) => ({
-                  book,
-                  person: book.owner,
-                }))}
-                personLabel="From"
-                empty=""
-              />
-            ) : null}
-            {loans.lent.length > 0 ? (
-              <LoanList
-                id="rail-lent"
-                title="Lent out"
-                books={loans.lent.slice(0, FEW).map((book) => ({
-                  book,
-                  person: book.borrower,
-                }))}
-                personLabel="To"
-                empty=""
-              />
-            ) : null}
-          </div>
-          {more > 0 ? (
-            <Link to="/#loans" className={`mt-3 inline-block ${link}`}>
-              {more} more on your home page
-            </Link>
-          ) : null}
-        </section>
-      ) : null}
-    </aside>
-  );
-}
-
 export default function Feed() {
   const {
     userId,
@@ -346,7 +240,7 @@ export default function Feed() {
           </div>
         )}
       </div>
-      <Rail loans={loans} friends={friends} />
+      <SideRail loans={loans} friends={friends} />
     </main>
   );
 }

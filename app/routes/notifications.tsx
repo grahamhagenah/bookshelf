@@ -9,6 +9,7 @@ import { Link, useActionData, useLoaderData } from "@remix-run/react";
 import ActivityIcon from "~/components/activity-icon";
 import Avatar from "~/components/avatar";
 import PersonLink from "~/components/person-link";
+import SideRail from "~/components/side-rail";
 import Layout from "~/components / Layout/Layout";
 import { prisma } from "~/db.server";
 import {
@@ -16,6 +17,7 @@ import {
   LOAN_WEEKS,
   lendBook,
   loanWeeks,
+  getHomeBooks,
 } from "~/models/book.server";
 import { answerFriendRequest } from "~/models/friend.server";
 import { shelfIds } from "~/models/household.server";
@@ -41,17 +43,27 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [user, history, pendingBookRequests] = await Promise.all([
+  const [user, history, pendingBookRequests, books] = await Promise.all([
     getUserById(userId),
     getNotificationHistory(userId, 30),
     getPendingBookRequests(userId),
+    // For the rail beside the page
+    getHomeBooks(userId, await shelfIds(userId)),
   ]);
-  const friendIds = user?.following.map((friend) => friend.id) ?? [];
+  const friends =
+    user?.following.map(({ id, firstname, surname, profileEmoji }) => ({
+      id,
+      firstname,
+      surname,
+      profileEmoji,
+    })) ?? [];
   return json({
     user,
     history,
     pendingBookRequests,
-    friendIds,
+    friendIds: friends.map((friend) => friend.id),
+    friends,
+    loans: { borrowed: books.borrowed, lent: books.lent },
     loanChoices: { weeks: LOAN_WEEKS, defaultWeeks: DEFAULT_LOAN_WEEKS },
   });
 };
@@ -78,7 +90,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (type === "FRIEND_REQUEST") {
     const answer = formData.get("friend_request");
     if (answer === "accept" || answer === "decline") {
-      const result = await answerFriendRequest(userId, notification.id, answer === "accept");
+      const result = await answerFriendRequest(
+        userId,
+        notification.id,
+        answer === "accept",
+      );
       if (result === "full" || result === "they-are-full") {
         return json({ limit: friendLimitMessage(result) }, { status: 403 });
       }
@@ -97,7 +113,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (answer === "approve" && book && !book.borrowerId) {
       // Only a book on your own shelf (yours or your household's)
       if (!(await shelfIds(userId)).includes(book.userId)) return null;
-      await lendBook(notification.bookId!, notification.senderId, loanWeeks(formData.get("weeks")));
+      await lendBook(
+        notification.bookId!,
+        notification.senderId,
+        loanWeeks(formData.get("weeks")),
+      );
       const currentUser = await getUserById(userId);
       if (currentUser) {
         await createBookApprovedNotification(
@@ -137,26 +157,38 @@ const secondaryButton =
 const DAY = 24 * 60 * 60 * 1000;
 
 function startOfDay(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  ).getTime();
 }
 
 // "Today", "Yesterday", then the date
 function when(dateString: string, withTime = false) {
   const date = new Date(dateString);
   const days = Math.round((startOfDay(new Date()) - startOfDay(date)) / DAY);
-  const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const time = date.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
   const day =
     days === 0
       ? "Today"
       : days === 1
         ? "Yesterday"
-        : date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+        : date.toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+          });
   return withTime || days <= 1 ? `${day}, ${time}` : day;
 }
 
 // Which bunch an older notification goes in
 function bucket(dateString: string) {
-  const days = Math.round((startOfDay(new Date()) - startOfDay(new Date(dateString))) / DAY);
+  const days = Math.round(
+    (startOfDay(new Date()) - startOfDay(new Date(dateString))) / DAY,
+  );
   if (days === 0) return "Today";
   if (days === 1) return "Yesterday";
   if (days < 7) return "This week";
@@ -196,20 +228,36 @@ function Card({
   return (
     <div className="flex gap-3 rounded-xl border border-stone-200 dark:border-stone-800 p-4">
       <span className="relative h-10 flex-shrink-0">
-        <Avatar firstname={firstname} surname={rest.join(" ")} icon={person.icon} />
+        <Avatar
+          firstname={firstname}
+          surname={rest.join(" ")}
+          icon={person.icon}
+        />
         <span className="absolute -bottom-1 -right-1 rounded-full ring-2 ring-white dark:ring-stone-950">
-          <ActivityIcon type={type} urgent={type === "OVERDUE_REMINDER"} size="xs" />
+          <ActivityIcon
+            type={type}
+            urgent={type === "OVERDUE_REMINDER"}
+            size="xs"
+          />
         </span>
       </span>
       {/* What happened on the left, what you can do about it on the right
           (underneath, on phones) */}
       <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center">
         <div className="min-w-0 flex-1">
-          <p className="leading-snug text-stone-800 dark:text-stone-200">{children}</p>
-          {date ? <p className="mt-0.5 text-xs text-stone-400 dark:text-stone-500">{date}</p> : null}
+          <p className="leading-snug text-stone-800 dark:text-stone-200">
+            {children}
+          </p>
+          {date ? (
+            <p className="mt-0.5 text-xs text-stone-400 dark:text-stone-500">
+              {date}
+            </p>
+          ) : null}
         </div>
         {actions ? (
-          <div className="flex flex-shrink-0 flex-wrap items-center gap-2">{actions}</div>
+          <div className="flex flex-shrink-0 flex-wrap items-center gap-2">
+            {actions}
+          </div>
         ) : null}
       </div>
       {dismiss ? (
@@ -221,7 +269,16 @@ function Card({
           title="Dismiss"
           className="-mr-2 -mt-2 flex h-7 w-7 flex-shrink-0 items-center justify-center self-start rounded-full sm:mt-0 sm:self-center text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <path d="M6 6l12 12M18 6L6 18" />
           </svg>
         </button>
@@ -254,7 +311,9 @@ function ActivityItem({
       />
     </strong>
   );
-  const book = <strong className="font-semibold">{notification.bookTitle}</strong>;
+  const book = (
+    <strong className="font-semibold">{notification.bookTitle}</strong>
+  );
 
   let text: React.ReactNode;
   let actions: React.ReactNode;
@@ -264,17 +323,31 @@ function ActivityItem({
       text = <>{name} wants to be friends</>;
       actions = (
         <>
-          <button className={primaryButton} type="submit" name="friend_request" value="accept">
+          <button
+            className={primaryButton}
+            type="submit"
+            name="friend_request"
+            value="accept"
+          >
             Accept
           </button>
-          <button className={secondaryButton} type="submit" name="friend_request" value="decline">
+          <button
+            className={secondaryButton}
+            type="submit"
+            name="friend_request"
+            value="decline"
+          >
             Decline
           </button>
         </>
       );
       break;
     case "BOOK_REQUEST":
-      text = <>{name} would like to borrow {book}</>;
+      text = (
+        <>
+          {name} would like to borrow {book}
+        </>
+      );
       actions = (
         <>
           <label className="sr-only" htmlFor={`weeks-${notification.id}`}>
@@ -292,10 +365,20 @@ function ActivityItem({
               </option>
             ))}
           </select>
-          <button className={primaryButton} type="submit" name="book_request" value="approve">
+          <button
+            className={primaryButton}
+            type="submit"
+            name="book_request"
+            value="approve"
+          >
             Lend it
           </button>
-          <button className={secondaryButton} type="submit" name="book_request" value="decline">
+          <button
+            className={secondaryButton}
+            type="submit"
+            name="book_request"
+            value="decline"
+          >
             Decline
           </button>
         </>
@@ -336,13 +419,20 @@ function ActivityItem({
       // Someone signed up (or came over) from your invite link
       text = <>{name} joined from your invite. You&apos;re friends now.</>;
       actions = (
-        <a href={`/friend/${notification.senderId}`} className={secondaryButton}>
+        <a
+          href={`/friend/${notification.senderId}`}
+          className={secondaryButton}
+        >
           See their shelf
         </a>
       );
       break;
     case "BOOK_APPROVED":
-      text = <>{name} is lending you {book}</>;
+      text = (
+        <>
+          {name} is lending you {book}
+        </>
+      );
       break;
     case "HOLD_READY":
       // You were first in line when the book came back
@@ -354,10 +444,18 @@ function ActivityItem({
       );
       break;
     case "BOOK_RETURNED":
-      text = <>{name} returned {book}</>;
+      text = (
+        <>
+          {name} returned {book}
+        </>
+      );
       break;
     case "LOAN_EXTENDED":
-      text = <>{name} gave you more time with {book}</>;
+      text = (
+        <>
+          {name} gave you more time with {book}
+        </>
+      );
       actions = (
         <a href={`/books/${notification.bookId}`} className={secondaryButton}>
           View book
@@ -365,9 +463,16 @@ function ActivityItem({
       );
       break;
     case "READER_NOTE":
-      text = <>{name} shared their thoughts on {book}</>;
+      text = (
+        <>
+          {name} shared their thoughts on {book}
+        </>
+      );
       actions = (
-        <a href={`/books/${notification.bookId}#notes`} className={secondaryButton}>
+        <a
+          href={`/books/${notification.bookId}#notes`}
+          className={secondaryButton}
+        >
           Read it
         </a>
       );
@@ -385,7 +490,10 @@ function ActivityItem({
       <input type="hidden" name="notificationId" value={notification.id} />
       <Card
         type={type}
-        person={{ name: notification.senderName, icon: notification.sender?.profileEmoji }}
+        person={{
+          name: notification.senderName,
+          icon: notification.sender?.profileEmoji,
+        }}
         date={when(notification.createdAt)}
         actions={actions}
         dismiss={dismissable}
@@ -398,12 +506,12 @@ function ActivityItem({
 
 const getHistoryText = (
   notification: {
-  type: string;
-  senderId: string;
-  senderName: string;
-  bookTitle?: string | null;
-  actionTaken?: string | null;
-},
+    type: string;
+    senderId: string;
+    senderName: string;
+    bookTitle?: string | null;
+    actionTaken?: string | null;
+  },
   friendIds: string[],
 ) => {
   const action = notification.actionTaken || "done";
@@ -416,27 +524,59 @@ const getHistoryText = (
       />
     </span>
   );
-  const book = <span className="text-stone-700 dark:text-stone-300">{notification.bookTitle}</span>;
+  const book = (
+    <span className="text-stone-700 dark:text-stone-300">
+      {notification.bookTitle}
+    </span>
+  );
 
   switch (notification.type) {
     case "FRIEND_REQUEST":
-      return <>Friend request from {name}, {action}</>;
+      return (
+        <>
+          Friend request from {name}, {action}
+        </>
+      );
     case "BOOK_REQUEST":
-      return <>{name} asked to borrow {book}, {action}</>;
+      return (
+        <>
+          {name} asked to borrow {book}, {action}
+        </>
+      );
     case "FRIEND_JOINED":
       return <>{name} joined from your invite</>;
     case "BOOK_APPROVED":
-      return <>{name} lent you {book}</>;
+      return (
+        <>
+          {name} lent you {book}
+        </>
+      );
     case "HOLD_READY":
       return <>Your turn came up for {book}</>;
     case "WANT_MATCH":
-      return <>{name} added {book}, from your want-to-read list</>;
+      return (
+        <>
+          {name} added {book}, from your want-to-read list
+        </>
+      );
     case "BOOK_RETURNED":
-      return <>{name} returned {book}</>;
+      return (
+        <>
+          {name} returned {book}
+        </>
+      );
     case "READER_NOTE":
-      return <>{name} shared their thoughts on {book}</>;
+      return (
+        <>
+          {name} shared their thoughts on {book}
+        </>
+      );
     case "LOAN_EXTENDED":
-      return <>{name} extended your loan of {book}</>;
+      return (
+        <>
+          {name} extended your loan of {book}
+        </>
+      );
     case "OVERDUE_REMINDER":
       return <>{book} was overdue</>;
     case "DUE_SOON_REMINDER":
@@ -460,7 +600,9 @@ function SectionHeading({
       <h2 className="flex items-baseline gap-2 text-lg font-semibold">
         {title}
         {count ? (
-          <span className="text-sm font-normal text-stone-400 dark:text-stone-500">{count}</span>
+          <span className="text-sm font-normal text-stone-400 dark:text-stone-500">
+            {count}
+          </span>
         ) : null}
       </h2>
       {children}
@@ -476,8 +618,12 @@ export default function Activity() {
   const actionData = useActionData<typeof action>();
   const limit = actionData && "limit" in actionData ? actionData.limit : null;
   const unread = data.user?.notificationsReceived ?? [];
-  const needsAction = unread.filter((n) => NEEDS_ACTION.has(n.type || "FRIEND_REQUEST"));
-  const updates = unread.filter((n) => !NEEDS_ACTION.has(n.type || "FRIEND_REQUEST"));
+  const needsAction = unread.filter((n) =>
+    NEEDS_ACTION.has(n.type || "FRIEND_REQUEST"),
+  );
+  const updates = unread.filter(
+    (n) => !NEEDS_ACTION.has(n.type || "FRIEND_REQUEST"),
+  );
   const pending = data.pendingBookRequests ?? [];
   const history = [...(data.history ?? [])].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -490,12 +636,21 @@ export default function Activity() {
   const list = "space-y-3";
 
   return (
-    <Layout title="Activity">
+    <Layout
+      title="Activity"
+      aside={<SideRail loans={data.loans} friends={data.friends} />}
+    >
       <section className={section}>
         {limit ? (
-          <p role="alert" className="mb-4 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200">
+          <p
+            role="alert"
+            className="mb-4 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200"
+          >
             {limit}{" "}
-            <Link to={UPGRADE_PATH} className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2">
+            <Link
+              to={UPGRADE_PATH}
+              className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2"
+            >
               See Stacks Plus
             </Link>
           </p>
@@ -555,10 +710,15 @@ export default function Activity() {
               <li key={request.id}>
                 <Card
                   type="PENDING"
-                  person={{ name: `${request.receiver.firstname} ${request.receiver.surname}` }}
+                  person={{
+                    name: `${request.receiver.firstname} ${request.receiver.surname}`,
+                  }}
                   date={`Asked ${when(request.createdAt).toLowerCase()}`}
                   actions={
-                    <a href={`/books/${request.bookId}`} className={secondaryButton}>
+                    <a
+                      href={`/books/${request.bookId}`}
+                      className={secondaryButton}
+                    >
                       View book
                     </a>
                   }

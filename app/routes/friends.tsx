@@ -9,6 +9,7 @@ import { useLoaderData, useFetcher, Link, Form, useActionData } from "@remix-run
 import { useEffect, useRef, useState } from "react";
 
 import Avatar from "~/components/avatar";
+import CopyButton from "~/components/copy-button";
 import CoverPlaceholder from "~/components/cover-placeholder";
 import {
   BookIcon,
@@ -399,18 +400,8 @@ export default function Friends() {
 // Your personal invite: whoever opens it becomes your friend, signing up
 // first if they need to
 function InviteLink({ url }: { url: string }) {
-  const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
   useEffect(() => setCanShare(typeof navigator.share === "function"), []);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard can be blocked; the link is right there to select
-    }
-  };
   const share = () =>
     navigator.share({ title: "Join me on Stacks", text: "Borrow books from my shelf on Stacks", url }).catch(() => {
       // Closing the share sheet isn't an error worth showing
@@ -431,9 +422,7 @@ function InviteLink({ url }: { url: string }) {
           onFocus={(event) => event.currentTarget.select()}
           className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-300"
         />
-        <button type="button" onClick={copy} className={`flex-shrink-0 ${quietButton}`}>
-          {copied ? "Copied" : "Copy"}
-        </button>
+        <CopyButton value={url} className={`flex-shrink-0 ${quietButton}`} />
         {canShare ? (
           <button type="button" onClick={share} className={`flex-shrink-0 ${primaryButton}`}>
             Share

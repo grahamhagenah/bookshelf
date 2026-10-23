@@ -4,6 +4,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "remix build",
+    "build:check": "BUILD_DIR=build-check remix build",
     "dev": "remix dev -c \"npm run dev:serve\"",
     "dev:serve": "binode --require ./mocks -- @remix-run/serve:remix-serve ./build/index.js",
     "format": "prettier --write .",

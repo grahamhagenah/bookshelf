@@ -19,6 +19,7 @@ import Avatar, {
   PLATE_COLORS,
   plateColorOf,
 } from "~/components/avatar";
+import CopyButton from "~/components/copy-button";
 import {
   BookIcon,
   BorrowedIcon,
@@ -970,16 +971,6 @@ function Choice({
 
 // A link to hand on, with a button to copy it
 function CopyField({ value, label }: { value: string; label: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard can be blocked; the link is right there to select
-    }
-  };
   return (
     <div className="flex gap-2">
       <input
@@ -990,9 +981,7 @@ function CopyField({ value, label }: { value: string; label: string }) {
         onFocus={(event) => event.currentTarget.select()}
         className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-3 py-2 text-sm text-stone-700 dark:text-stone-300"
       />
-      <button type="button" onClick={copy} className={`flex-shrink-0 ${quietButton}`}>
-        {copied ? "Copied" : "Copy"}
-      </button>
+      <CopyButton value={value} className={`flex-shrink-0 ${quietButton}`} />
     </div>
   );
 }

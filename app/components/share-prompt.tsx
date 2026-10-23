@@ -1,5 +1,6 @@
 import { useFetcher } from "@remix-run/react";
-import { useState } from "react";
+
+import CopyButton from "./copy-button";
 
 // A quiet strip under the header inviting people to make their shelf's
 // public link. Once made, it shows the link to copy; dismissing it puts it
@@ -14,22 +15,11 @@ export default function SharePrompt({ show }: { show: boolean }) {
   const fetcher = useFetcher<{ url?: string; dismissed?: boolean }>({
     key: "share-link",
   });
-  const [copied, setCopied] = useState(false);
 
   const url = fetcher.data?.url;
   const dismissing = fetcher.formData?.get("intent") === "dismiss";
   const creating = fetcher.formData?.get("intent") === "create";
   if (dismissing || fetcher.data?.dismissed || (!show && !url)) return null;
-
-  const copy = async () => {
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-    } catch {
-      // Clipboard can be blocked; the link is still there to select
-    }
-  };
 
   return (
     <div className="w-full bg-stone-50 dark:bg-stone-950/40 border-b border-stone-200 dark:border-stone-900 py-2 text-sm">
@@ -50,9 +40,7 @@ export default function SharePrompt({ show }: { show: boolean }) {
               onFocus={(event) => event.currentTarget.select()}
               className="h-7 min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-stone-600 dark:text-stone-300 focus:outline-none focus:border-stone-400"
             />
-            <button type="button" onClick={copy} className={`${buttonClass} flex-shrink-0`}>
-              {copied ? "Copied" : "Copy"}
-            </button>
+            <CopyButton value={url} className={`${buttonClass} flex-shrink-0`} />
           </>
         ) : (
           <>
