@@ -29,8 +29,9 @@ const COVERS = {
   overstory: cover("9780393635522"),
 };
 
-const panel =
-  "absolute rounded-lg bg-white dark:bg-stone-900 shadow-soft ring-1 ring-stone-900/5 dark:ring-white/10";
+const skin =
+  "rounded-lg bg-white dark:bg-stone-900 shadow-soft ring-1 ring-stone-900/5 dark:ring-white/10";
+const panel = `absolute ${skin}`;
 
 function Stage({
   children,
@@ -163,7 +164,7 @@ export const LENDING_SET: LendingSet = {
 export default function ShowcaseLending({ set = LENDING_SET }: { set?: LendingSet }) {
   // The page's main picture, so it gets more room than the others
   return (
-    <Stage width="max-w-[496px]" height="h-[480px] sm:h-[540px]">
+    <Stage width="max-w-[496px]" height="h-[530px] sm:h-[540px]">
       {/* What's due, both ways */}
       <div className={`${panel} left-0 right-[10%] top-0 z-30 -rotate-1 p-3.5`}>
         <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">Due soon</p>
@@ -201,30 +202,31 @@ export default function ShowcaseLending({ set = LENDING_SET }: { set?: LendingSe
         Lent {set.loved.lentTimes} times
       </Tag>
 
-      {/* Choosing how long to lend for, with a nudge already on its way
-          tucked under the panel's corner, so the two stay together however
-          wide the stage is */}
-      <div className={`${panel} bottom-[7%] left-[6%] z-20 rotate-1 p-3.5 pr-5`}>
-        <div className="flex items-center gap-3">
-          <Cover src={set.lending.cover} className="w-8" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-stone-800 dark:text-stone-200">
-              Lend <span className="font-semibold">{set.lending.title}</span> to Sam
-            </p>
-            <div className="mt-1.5 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-xs text-stone-700 dark:text-stone-200">
-                4 weeks
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </span>
-              <span className="rounded-md bg-forest-600 px-2 py-0.5 text-xs font-medium text-white">
-                Lend it
-              </span>
+      {/* The last row: choosing how long to lend for, and a nudge already on
+          its way beside it. On a phone the nudge drops under the panel. */}
+      <div className="absolute bottom-[7%] left-[2%] right-0 z-20 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className={`${skin} rotate-1 p-3.5 pr-4`}>
+          <div className="flex items-center gap-3">
+            <Cover src={set.lending.cover} className="w-8" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-stone-800 dark:text-stone-200">
+                Lend <span className="font-semibold">{set.lending.title}</span> to Sam
+              </p>
+              <div className="mt-1.5 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-xs text-stone-700 dark:text-stone-200">
+                  4 weeks
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </span>
+                <span className="rounded-md bg-forest-600 px-2 py-0.5 text-xs font-medium text-white">
+                  Lend it
+                </span>
+              </div>
             </div>
           </div>
         </div>
-        <div className="absolute -bottom-5 -right-12 z-30 flex -rotate-3 items-center gap-2 whitespace-nowrap rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
+        <div className="flex -rotate-2 items-center gap-2 whitespace-nowrap rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
           <Check />
           Reminder sent to Priya
         </div>
