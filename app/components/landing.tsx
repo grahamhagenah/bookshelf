@@ -124,25 +124,25 @@ export default function Landing() {
 
       <div className="mt-20 space-y-20 md:mt-28 md:space-y-28">
         <Feature
+          eyebrow="Borrow"
+          title="Everything your friends own, in one search"
+          visual={<ShowcaseFriends />}
+        >
+          Search once and see which friends have a book, then ask to borrow it
+          with a tap. Not on anyone&apos;s shelf yet? Add it to your want-to-read
+          list and you&apos;ll hear the moment a friend does.
+        </Feature>
+
+        <Feature
           eyebrow="Your page"
           title="Your own little book website"
           visual={<ShowcasePage />}
+          flip
         >
           Pick an address like bookstacks.app/@you, add a line about yourself,
           and heart the books you love most. Anyone can browse your shelf, no
           account needed, and friends can ask to borrow straight from it. Put
           it in your bio.
-        </Feature>
-
-        <Feature
-          eyebrow="Borrow"
-          title="Everything your friends own, in one search"
-          visual={<ShowcaseFriends />}
-          flip
-        >
-          Search once and see which friends have a book, then ask to borrow it
-          with a tap. Not on anyone&apos;s shelf yet? Add it to your want-to-read
-          list and you&apos;ll hear the moment a friend does.
         </Feature>
 
         <Feature
