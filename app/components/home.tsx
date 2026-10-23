@@ -516,7 +516,7 @@ export default function Home({
                         All {wanted.length}
                       </Link>
                     ) : null}
-                    <Link to="/search" className={linkClass}>
+                    <Link to="/search?for=want" className={linkClass}>
                       Find a book
                     </Link>
                   </div>
@@ -536,7 +536,7 @@ export default function Home({
                     Books you&apos;d like to read go here, and you&apos;ll hear
                     when a friend has one.{" "}
                     <Link
-                      to="/search"
+                      to="/search?for=want"
                       className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
                     >
                       Find one

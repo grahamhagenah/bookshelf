@@ -1,4 +1,4 @@
-import { useFetcher, useNavigate } from "@remix-run/react";
+import { useFetcher, useNavigate, useSearchParams } from "@remix-run/react";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { UPGRADE_PATH } from "~/plan";
@@ -23,11 +23,14 @@ type Option =
 const DEBOUNCE_MS = 200;
 
 // "+ Add" on an Open Library suggestion: adds the book without leaving the
-// page, using the search page's add action
+// page, using the search page's add action. From the want-to-read list it's
+// "+ Want to read" instead, and the book goes on that list.
 function AddFromSuggestion({
   book,
+  want = false,
 }: {
   book: SuggestResponse["openLibrary"][number];
+  want?: boolean;
 }) {
   const fetcher = useFetcher<{ success?: boolean; alreadyExists?: boolean; limit?: string }>();
   const added = fetcher.data?.success === true;
@@ -51,7 +54,7 @@ function AddFromSuggestion({
   if (owned || added) {
     return (
       <span className="flex-shrink-0 text-xs text-stone-400 dark:text-stone-500">
-        {added ? "Added ✓" : "In your library"}
+        {added ? (want ? "On your list ✓" : "Added ✓") : "In your library"}
       </span>
     );
   }
@@ -73,13 +76,14 @@ function AddFromSuggestion({
             subjects: book.subjects ?? "",
             publisher: book.publisher ?? "",
             openLibraryKey: book.key ?? "",
+            ...(want ? { intent: "want" } : {}),
           },
           { method: "post", action: "/search" },
         );
       }}
-      className="flex-shrink-0 rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-xs font-medium text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 disabled:opacity-60 transition-colors"
+      className="flex-shrink-0 whitespace-nowrap rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-xs font-medium text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 disabled:opacity-60 transition-colors"
     >
-      {adding ? "Adding…" : "+ Add"}
+      {adding ? (want ? "Saving…" : "Adding…") : want ? "+ Want to read" : "+ Add"}
     </button>
   );
 }
@@ -95,6 +99,9 @@ export default function SearchBox({
   variant?: "page" | "header";
 }) {
   const inHeader = variant === "header";
+  // On the search page, arriving from the want-to-read list
+  const [searchParams] = useSearchParams();
+  const forWant = !inHeader && searchParams.get("for") === "want";
   const friendsFetcher = useFetcher<SuggestResponse>();
   const openLibraryFetcher = useFetcher<SuggestResponse>();
   const navigate = useNavigate();
@@ -289,7 +296,7 @@ export default function SearchBox({
                         ) : null}
                       </span>
                       {option.kind === "openLibrary" ? (
-                        <AddFromSuggestion book={option} />
+                        <AddFromSuggestion book={option} want={forWant} />
                       ) : null}
                       {option.kind === "friend" ? (
                         <span className="flex-shrink-0 text-xs text-stone-400 dark:text-stone-500">

@@ -192,7 +192,7 @@ export default function WantToRead() {
             {matched ? ` ${matched} of these ${matched === 1 ? "is" : "are"} on a friend's shelf.` : ""}
           </p>
           <Link
-            to="/search"
+            to="/search?for=want"
             className="inline-flex h-8 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
           >
             <span aria-hidden="true" className="text-base leading-none text-stone-400 dark:text-stone-500">

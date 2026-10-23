@@ -102,6 +102,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const searchType = url.searchParams.get("type") || "all";
   const language = url.searchParams.get("lang") || "";
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+  // From the want-to-read list: finding a book to read, not one you own
+  const forWant = url.searchParams.get("for") === "want";
 
   // Get user's existing library keys to show which books are already added
   const libraryKeys = userId
@@ -128,6 +130,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       totalPages: 0,
       libraryKeys,
       wantKeys: [],
+      forWant,
     });
   }
 
@@ -214,6 +217,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     totalPages,
     libraryKeys,
     wantKeys,
+    forWant,
   });
 }
 
@@ -390,10 +394,13 @@ function SearchResultItem({
   book,
   isInLibrary,
   isWanted,
+  forWant = false,
 }: {
   book: OpenLibraryBook;
   isInLibrary: boolean;
   isWanted: boolean;
+  // From the want-to-read list: that's the button to lead with
+  forWant?: boolean;
 }) {
   const fetcher = useFetcher<{
     success: boolean;
@@ -479,7 +486,9 @@ function SearchResultItem({
                   ? "bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 cursor-default"
                   : isAdding
                     ? "bg-forest-600 text-white opacity-60 cursor-wait"
-                    : "bg-forest-600 font-medium text-white hover:bg-forest-700"
+                    : forWant
+                      ? "border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500"
+                      : "bg-forest-600 font-medium text-white hover:bg-forest-700"
               }`}
             >
               {isAdded || alreadyInLibrary ? (
@@ -495,7 +504,9 @@ function SearchResultItem({
             </button>
             {/* Don't own it? Keep an eye out for it on friends' shelves */}
             {isAdded || alreadyInLibrary ? null : wanted ? (
-              <span className="inline-flex items-center gap-1.5 border border-transparent px-1 py-1.5 text-sm text-stone-500 dark:text-stone-400">
+              <span
+                className={`inline-flex items-center gap-1.5 border border-transparent px-1 py-1.5 text-sm text-stone-500 dark:text-stone-400 ${forWant ? "order-first" : ""}`}
+              >
                 <BookmarkIcon size={14} />
                 On your want-to-read list
               </span>
@@ -505,7 +516,12 @@ function SearchResultItem({
                 name="intent"
                 value="want"
                 disabled={isWanting}
-                className="inline-flex items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors disabled:opacity-60"
+                // Leads, in green, when the list is what they came to fill
+                className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors disabled:opacity-60 ${
+                  forWant
+                    ? "order-first border-transparent bg-forest-600 font-medium text-white hover:bg-forest-700"
+                    : "border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500"
+                }`}
               >
                 <BookmarkIcon size={14} />
                 {isWanting ? "Saving…" : "Want to read"}
@@ -626,18 +642,33 @@ export default function Search() {
         </div>
         {/* Keep the Open Library filters through new searches */}
         <input type="hidden" name="type" value={currentType} />
+        {searchParams.get("for") === "want" ? <input type="hidden" name="for" value="want" /> : null}
         <input type="hidden" name="lang" value={currentLang} />
       </Form>
 
       {!data.query ? (
         <div className="py-12 text-center max-w-md mx-auto">
-          <p className="text-stone-700 dark:text-stone-300">
-            Find a book on your friends&apos; shelves, or add a new one to your
-            library.
-          </p>
-          <p className="mt-2 text-sm text-stone-400 dark:text-stone-500">
-            Search once and you&apos;ll see both.
-          </p>
+          {data.forWant ? (
+            <>
+              <p className="text-stone-700 dark:text-stone-300">
+                Find a book you&apos;d like to read.
+              </p>
+              <p className="mt-2 text-sm text-stone-400 dark:text-stone-500">
+                If a friend has it, ask to borrow it. If not, it goes on your want-to-read
+                list and you&apos;ll hear the moment a friend adds it.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-stone-700 dark:text-stone-300">
+                Find a book on your friends&apos; shelves, or add a new one to your
+                library.
+              </p>
+              <p className="mt-2 text-sm text-stone-400 dark:text-stone-500">
+                Search once and you&apos;ll see both.
+              </p>
+            </>
+          )}
           <p className="mt-6 text-sm text-stone-500 dark:text-stone-400">
             Adding a stack of real books? Hit{" "}
             <button
@@ -739,6 +770,7 @@ export default function Search() {
               <ul className="divide-y divide-stone-100 dark:divide-stone-800">
                 {data.docs.map((book, index) => (
                   <SearchResultItem
+                    forWant={data.forWant}
                     key={book.key || index}
                     book={book}
                     isInLibrary={
