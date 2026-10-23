@@ -93,6 +93,9 @@ const monthDay = (date: string | Date) => {
 
 const primaryButton =
   "rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors";
+// A fix offered right where something's missing
+const gapLink =
+  "text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-50";
 const secondaryButton =
   "rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
 const quietLabel =
@@ -209,13 +212,16 @@ function BookCover({
   src,
   title,
   author,
+  onAddCover,
 }: {
   src: string;
   title: string;
   author: string;
+  // For the owner: the placeholder offers to fix the missing cover
+  onAddCover?: () => void;
 }) {
   const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(!src);
   const showCover = (img: HTMLImageElement) => {
     // Open Library answers unknown covers with a 1x1 pixel, and a broken
     // image has no width at all
@@ -239,7 +245,16 @@ function BookCover({
           className="absolute inset-0"
         />
       ) : null}
-      {!error ? (
+      {error && onAddCover ? (
+        <button
+          type="button"
+          onClick={onAddCover}
+          className="absolute inset-x-2 bottom-2 rounded-md bg-white/90 dark:bg-stone-900/90 px-2 py-1.5 text-xs font-medium text-stone-800 dark:text-stone-100 shadow-sm ring-1 ring-stone-900/10 dark:ring-white/10 hover:bg-white dark:hover:bg-stone-900 transition-colors"
+        >
+          Add a cover
+        </button>
+      ) : null}
+      {!error && src ? (
         <img
           src={coverSrc(src)}
           alt={title}
@@ -1435,6 +1450,7 @@ export default function BookDetailsPage() {
               src={data.book.cover}
               title={data.book.title}
               author={data.book.author}
+              onAddCover={data.isOwner && !isEditing ? () => setIsEditing(true) : undefined}
             />
             {!isEditing ? (
               <div className="md:hidden min-w-0 flex-1 [overflow-wrap:anywhere]">
@@ -1706,6 +1722,22 @@ export default function BookDetailsPage() {
                         </>
                       ) : null}
                     </p>
+                    {data.book.openLibraryKey ? (
+                      // Open Library is a wiki: a fix made there is a fix for
+                      // everyone who adds the book after
+                      <p className="mt-1 text-stone-500 dark:text-stone-400">
+                        Something wrong at the source?{" "}
+                        <a
+                          href={`https://openlibrary.org${data.book.openLibraryKey}/edit`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline underline-offset-2 hover:text-stone-800 dark:hover:text-stone-200"
+                        >
+                          Fix it on Open Library
+                        </a>
+                        , then refresh. That fixes it for everyone who adds this book after you.
+                      </p>
+                    ) : null}
                     {refreshResult ? (
                       <p className="mt-1 text-stone-800 dark:text-stone-200">
                         {refreshResult.message}
@@ -1761,7 +1793,7 @@ export default function BookDetailsPage() {
               <div className={`hidden md:block ${data.isOwner ? "md:pr-40" : ""}`}>{heading}</div>
 
               {cleanSubjects(data.book.subjects).length > 0 ? (
-                <div className="md:mt-4 flex flex-wrap gap-1.5">
+                <div className="md:mt-4 flex flex-wrap items-center gap-1.5">
                   {cleanSubjects(data.book.subjects).map((subject, index) => (
                     <span
                       key={index}
@@ -1770,6 +1802,15 @@ export default function BookDetailsPage() {
                       {subject}
                     </span>
                   ))}
+                  {data.isOwner ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(true)}
+                      className="px-1 text-xs text-stone-400 dark:text-stone-500 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-700 dark:hover:text-stone-200"
+                    >
+                      Edit
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -1804,7 +1845,19 @@ export default function BookDetailsPage() {
                 About this book
               </h2>
               <p className="summary text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
-                {data.book.body ? stripMarkdown(data.book.body) : "No description yet."}
+                {data.book.body ? (
+                  stripMarkdown(data.book.body)
+                ) : data.isOwner ? (
+                  <>
+                    No description yet.{" "}
+                    <button type="button" onClick={() => setIsEditing(true)} className={gapLink}>
+                      Add one
+                    </button>
+                    , or refresh from Open Library.
+                  </>
+                ) : (
+                  "No description yet."
+                )}
               </p>
             </div>
           ) : null}
