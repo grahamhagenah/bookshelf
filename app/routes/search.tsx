@@ -667,7 +667,7 @@ export default function Search() {
           {data.forWant ? null : (
             <>
               <p className="mt-6 text-sm text-stone-500 dark:text-stone-400">
-                A stack of real books?{" "}
+                Adding a lot at once?{" "}
                 <button
                   type="button"
                   onClick={() => setScanning(true)}
@@ -675,7 +675,7 @@ export default function Search() {
                 >
                   Scan
                 </button>{" "}
-                their barcodes.
+                the barcodes instead of typing.
               </p>
               <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
                 On Goodreads or StoryGraph?{" "}
