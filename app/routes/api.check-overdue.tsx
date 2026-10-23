@@ -4,7 +4,7 @@ import { json } from "@remix-run/node";
 import { cronAuthorized } from "~/cron.server";
 import { prisma } from "~/db.server";
 import { getOverdueBooks, getBooksNearDue } from "~/models/book.server";
-import { createOverdueReminderNotification } from "~/models/user.server";
+import { createReminderNotification } from "~/models/user.server";
 
 // Checks for overdue and nearly-due books and sends reminders. Run daily by
 // GitHub's scheduled workflow, which holds CRON_SECRET_KEY.
@@ -35,12 +35,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     if (!existingReminder) {
       const ownerName = `${book.user.firstname} ${book.user.surname}`;
-      await createOverdueReminderNotification(
+      await createReminderNotification(
         book.userId,
         book.borrowerId!,
         ownerName,
         book.id,
         book.title,
+        true,
       );
       remindersCreated++;
     }

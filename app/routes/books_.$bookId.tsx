@@ -62,7 +62,7 @@ import {
   createBookRequestNotification,
   createBookReturnedNotification,
   createNotification,
-  createOverdueReminderNotification,
+  createReminderNotification,
   createLoanExtendedNotification,
   createReaderNoteNotification,
 } from "~/models/user.server";
@@ -670,13 +670,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
 
     const ownerName = `${currentUser.firstname} ${currentUser.surname}`;
-    await createOverdueReminderNotification(
-      userId,
-      book.borrowerId,
-      ownerName,
-      book.id,
-      book.title,
-    );
+    // "Overdue" only once the due date has passed; before that it's a nudge
+    const overdue = book.dueDate !== null && book.dueDate.getTime() < Date.now();
+    await createReminderNotification(userId, book.borrowerId, ownerName, book.id, book.title, overdue);
 
     return json({ reminderSent: true, message: "Reminder sent!" });
   }

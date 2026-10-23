@@ -326,16 +326,19 @@ export async function createBookReturnedNotification(
   });
 }
 
-export async function createOverdueReminderNotification(
+// A nudge to the borrower: that the book is late, or only that it's due
+// (an owner can send one any time; it mustn't say "overdue" before it is)
+export async function createReminderNotification(
   ownerId: User["id"],
   borrowerId: User["id"],
   ownerName: string,
   bookId: string,
   bookTitle: string,
+  overdue: boolean,
 ) {
   return prisma.notification.create({
     data: {
-      type: "OVERDUE_REMINDER",
+      type: overdue ? "OVERDUE_REMINDER" : "DUE_SOON_REMINDER",
       receiver: {
         connect: { id: borrowerId },
       },
