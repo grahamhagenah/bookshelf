@@ -50,7 +50,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [user, activity, prompts, books] = await Promise.all([
     getUserById(userId),
     // One more than shown, to know whether there's anything older
-    getFriendActivity(userId, { days: 365, limit: shown + 1 }),
+    getFriendActivity(userId, { days: 365, limit: shown + 1, withOwnNotes: true }),
     getNotePrompts(userId),
     // For the rail beside the feed: what's out on loan, both ways
     getHomeBooks(userId, await shelfIds(userId)),

@@ -159,3 +159,20 @@ test("a longer page of the feed starts with the shorter one, so showing older ad
   expect(long.slice(0, 5).map((item) => item.id)).toEqual(short.map((item) => item.id));
   expect(new Set(long.map((item) => item.id)).size).toBe(10);
 });
+
+test("the feed can include your own written notes, but not your bare hearts", async () => {
+  const { me, friend } = await setup();
+  const borrowed = await makeBook(friend.id, "Piranesi");
+  const hearted = await makeBook(friend.id, "Gilead");
+  await saveReaderNote(me.id, borrowed.id, { body: "Strange and lovely." });
+  await saveReaderNote(me.id, hearted.id, { loved: true });
+
+  const mine = (items: Awaited<ReturnType<typeof getFriendActivity>>) =>
+    items.filter((item) => item.kind !== "added" && item.friend.id === me.id);
+
+  // Off by default, so the home page and weekly digest stay about friends
+  expect(mine(await getFriendActivity(me.id))).toEqual([]);
+  const own = mine(await getFriendActivity(me.id, { withOwnNotes: true }));
+  expect(own).toHaveLength(1);
+  expect(own[0]).toMatchObject({ kind: "note", body: "Strange and lovely." });
+});

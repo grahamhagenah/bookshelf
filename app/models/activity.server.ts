@@ -130,9 +130,15 @@ async function enrich(items: FriendActivity[], userId: User["id"], friendIds: st
   }
 }
 
+// withOwnNotes adds the viewer's own written notes (not bare hearts), so
+// a note posted from the feed shows up there as friends will see it
 export async function getFriendActivity(
   userId: User["id"],
-  { days = 60, limit = 20 }: { days?: number; limit?: number } = {},
+  {
+    days = 60,
+    limit = 20,
+    withOwnNotes = false,
+  }: { days?: number; limit?: number; withOwnNotes?: boolean } = {},
 ): Promise<FriendActivity[]> {
   const me = await prisma.user.findUnique({
     where: { id: userId },
@@ -152,9 +158,11 @@ export async function getFriendActivity(
     }),
     prisma.readerNote.findMany({
       where: {
-        userId: { in: friendIds },
         updatedAt: { gte: since },
-        OR: [{ loved: true }, { body: { not: null } }],
+        OR: [
+          { userId: { in: friendIds }, OR: [{ loved: true }, { body: { not: null } }] },
+          ...(withOwnNotes ? [{ userId, body: { not: null } }] : []),
+        ],
       },
       select: {
         id: true,
