@@ -74,8 +74,8 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
             </p>
             <p className="mt-3">
               So there are no star ratings, no reviews of books in general, no
-              recommendation engine and no public profiles. Notes stay with the copy as
-              it passes between friends, like a pencilled line inside the cover. If you
+              recommendation engine and no feed of strangers. Notes stay with the copy as
+              it passes between friends, like a penciled line inside the cover. If you
               already keep a list on Goodreads or StoryGraph, you can{" "}
               <Link to="/import" className={link}>
                 import it

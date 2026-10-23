@@ -4,7 +4,7 @@ import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
 
 import DemoButton from "./demo-button";
 import { CameraIcon, HomeIcon } from "./icons";
-import Showcase, { ShowcaseFriends, ShowcaseNotes, ShowcaseWant } from "./showcase";
+import Showcase, { ShowcaseFriends, ShowcaseNotes, ShowcasePage, ShowcaseWant } from "./showcase";
 
 // The signed-out home page: what Stacks is, beside a small, staged glimpse
 // of the app itself, so people see what they're signing up for
@@ -40,7 +40,7 @@ function Feature({
   );
 }
 
-// Smaller things worth knowing, three across under the big features
+// Smaller things worth knowing, side by side under the big features
 function Extra({
   icon,
   title,
@@ -63,15 +63,6 @@ function Extra({
   );
 }
 
-function LinkIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M10 14a4.5 4.5 0 006.4 0l3-3a4.5 4.5 0 00-6.4-6.4l-1 1" />
-      <path d="M14 10a4.5 4.5 0 00-6.4 0l-3 3a4.5 4.5 0 006.4 6.4l1-1" />
-    </svg>
-  );
-}
-
 // A few of the questions from the FAQ page, the ones people ask first
 const QUESTIONS: { q: string; a: React.ReactNode }[] = [
   {
@@ -80,7 +71,7 @@ const QUESTIONS: { q: string; a: React.ReactNode }[] = [
       <>
         Those track your reading. Stacks is about the physical copies on your shelves and
         the people around you: who has which book, and getting it into a friend&apos;s
-        hands. No ratings, no recommendation engine, no public profiles.
+        hands. No ratings, no recommendation engine, no feed of strangers.
       </>
     ),
   },
@@ -157,9 +148,21 @@ export default function Landing() {
 
       <div className="mt-20 space-y-20 md:mt-28 md:space-y-28">
         <Feature
+          eyebrow="Your page"
+          title="Your own little book website"
+          visual={<ShowcasePage />}
+        >
+          Pick an address like bookstacks.app/@you, add a line about yourself,
+          and heart the books you love most. Anyone can browse your shelf, no
+          account needed, and friends can ask to borrow straight from it. Put
+          it in your bio.
+        </Feature>
+
+        <Feature
           eyebrow="Borrow"
           title="Everything your friends own, in one search"
           visual={<ShowcaseFriends />}
+          flip
         >
           Search once and see which friends have a book, then ask to borrow it
           with a tap. They pick how long you can keep it, and Stacks reminds you
@@ -170,7 +173,6 @@ export default function Landing() {
           eyebrow="Want to read"
           title="Hear the moment a friend has it"
           visual={<ShowcaseWant />}
-          flip
         >
           Keep a list of books you&apos;d like to read. When a friend adds one to
           their shelf, you&apos;ll know, and you can ask for it straight away.
@@ -180,6 +182,7 @@ export default function Landing() {
           eyebrow="Notes"
           title="Every copy carries its story"
           visual={<ShowcaseNotes />}
+          flip
         >
           Leave a heart or a line for the next reader. Notes stay with the book
           as it moves between friends, so you can see where it&apos;s been and
@@ -191,7 +194,7 @@ export default function Landing() {
           <h2 className="text-balance text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-4xl">
             And a few more things
           </h2>
-          <div className="mt-10 grid gap-10 sm:grid-cols-3 sm:gap-8">
+          <div className="mt-10 grid gap-10 sm:grid-cols-2 sm:gap-8">
             <Extra icon={<CameraIcon size={18} />} title="Fill your shelf fast">
               Scan the barcodes on a shelf of books with your phone, or bring your
               list over from Goodreads or StoryGraph in one go.
@@ -199,10 +202,6 @@ export default function Landing() {
             <Extra icon={<HomeIcon size={18} />} title="One shelf for the household">
               Live with someone whose books are your books? Share one shelf, with
               your own logins, notes and friends.
-            </Extra>
-            <Extra icon={<LinkIcon />} title="A link to your library">
-              Send anyone a link to browse your books, no account needed. Friends
-              can join to borrow from you.
             </Extra>
           </div>
         </section>

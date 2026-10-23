@@ -1,5 +1,6 @@
 import { coverSrc } from "~/utils";
 
+import { Bookplate } from "./avatar";
 import { BorrowedIcon, HeartIcon, LentIcon, SearchIcon } from "./icons";
 
 // Staged glimpses of the app for the landing page: cards styled like the
@@ -397,6 +398,67 @@ export function ShowcaseWant() {
       <div className="absolute bottom-0 right-[4%] z-30 flex rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white shadow-soft">
         <Check />
         Asked Maya for The Overstory
+      </div>
+    </Stage>
+  );
+}
+
+// Your shelf's own page, as anyone with the link sees it: a browser window
+// at your address, with your bookplate, a line about you, your favorites
+// and the shelf beneath
+export function ShowcasePage() {
+  return (
+    <Stage height="h-[350px] sm:h-[390px]">
+      <div className={`${panel} inset-x-0 top-[3%] z-20 -rotate-1 overflow-hidden`}>
+        {/* The window's top: three dots and the address */}
+        <div className="flex items-center gap-3 border-b border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 px-3 py-2">
+          <span className="flex gap-1">
+            <span className="h-2 w-2 rounded-full bg-stone-300 dark:bg-stone-700" />
+            <span className="h-2 w-2 rounded-full bg-stone-300 dark:bg-stone-700" />
+            <span className="h-2 w-2 rounded-full bg-stone-300 dark:bg-stone-700" />
+          </span>
+          <span className="flex-1 truncate rounded-md bg-white dark:bg-stone-900 px-2.5 py-1 text-center text-xs text-stone-500 dark:text-stone-400 ring-1 ring-stone-900/5 dark:ring-white/10">
+            bookstacks.app/<span className="font-medium text-stone-800 dark:text-stone-200">@maya</span>
+          </span>
+        </div>
+
+        <div className="p-4">
+          <div className="flex items-start gap-3">
+            <Bookplate firstname="Maya" surname="Chen" color="plum" box="h-12 w-12 text-base" framed />
+            <div className="min-w-0">
+              <p className="text-lg font-bold leading-tight tracking-tight text-stone-900 dark:text-stone-50">Maya Chen</p>
+              <p className="mt-0.5 text-sm leading-snug text-stone-700 dark:text-stone-300">
+                Sci-fi, slow mornings, always happy to lend
+              </p>
+              <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">142 books · lent 31 times</p>
+            </div>
+          </div>
+
+          <p className="mt-4 flex items-center gap-1 text-xs font-semibold text-stone-500 dark:text-stone-400">
+            <Heart size={11} />
+            Favorites
+          </p>
+          <div className="mt-2 grid grid-cols-4 gap-2">
+            {[COVERS.circe, COVERS.piranesi, COVERS.hailMary, COVERS.klara].map((src) => (
+              <Cover key={src} src={src} className="w-full" />
+            ))}
+          </div>
+
+          <p className="mt-4 text-xs font-semibold text-stone-500 dark:text-stone-400">
+            On the shelf <span className="font-normal">142</span>
+          </p>
+          {/* Cut off at the window's edge, as a long shelf would be */}
+          <div className="mt-2 grid h-16 grid-cols-5 gap-2 overflow-hidden">
+            {[COVERS.dune, COVERS.stationEleven, COVERS.overstory, COVERS.gilead, COVERS.neverLetMeGo].map((src) => (
+              <Cover key={src} src={src} className="w-full" />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="absolute bottom-[2%] right-[4%] z-30 flex rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
+        <Check />
+        Link copied, off to my bio
       </div>
     </Stage>
   );

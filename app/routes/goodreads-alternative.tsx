@@ -106,7 +106,7 @@ export default function GoodreadsAlternative() {
           </li>
           <li>
             <strong className="font-semibold text-stone-900 dark:text-stone-100">Notes that travel with the book.</strong>{" "}
-            A heart or a line left for the next reader, like a pencilled note inside the cover.
+            A heart or a line left for the next reader, like a penciled note inside the cover.
           </li>
           <li>
             <strong className="font-semibold text-stone-900 dark:text-stone-100">A want-to-read list that watches for you.</strong>{" "}
@@ -137,8 +137,8 @@ export default function GoodreadsAlternative() {
       <GuideSection title="What Stacks doesn't do">
         <p>
           There are no star ratings, public reviews, reading challenges or recommendation
-          engine, and no public profile: your shelf is seen by your friends, plus anyone you
-          send a link to. Stacks is a website that works in your phone&apos;s browser rather than
+          engine, and nothing strangers can find: your shelf&apos;s page is kept out of search
+          engines, so it&apos;s seen by your friends and anyone you send the link to. Stacks is a website that works in your phone&apos;s browser rather than
           an app from a store. If what you want is a detailed record of everything you&apos;ve
           ever read, one of the others will suit you better.
         </p>

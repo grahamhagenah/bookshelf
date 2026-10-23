@@ -6,7 +6,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* The one colour: forest green, for the thing you do next */
+  /* The one color: forest green, for the thing you do next */
   --color-forest-400: #3a9a74;
   --color-forest-500: #2a8a66;
   --color-forest-600: #1f6b4e;
