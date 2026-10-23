@@ -1,7 +1,7 @@
 # Working on Stacks
 
 ## Shipping changes
-- When a change is ready, open a PR into `main` and merge it once TypeScript and Vitest pass. Don't ask first. Merging to `main` deploys to production (bookstacks.app) through `.github/workflows/deploy.yml`. The deploy job waits only for Vitest (and its migrations-match-schema check), not ESLint or TypeScript, so check those on the PR before merging. Stop doing this if the owner says otherwise.
+- When a change is ready, open a PR into `main` and merge it once ESLint, TypeScript and Vitest pass on it. Don't ask first. Merging to `main` deploys to production (bookstacks.app) through `.github/workflows/deploy.yml`, which deploys only once ESLint, TypeScript and Vitest (including its migrations-match-schema check) all pass on `main`. Stop doing this if the owner says otherwise.
 - ESLint passes across the codebase; keep it that way.
 - Old addresses (bookstacks.site, www) redirect to bookstacks.app; `SITE_URL` in `app/seo.ts` is the source of truth.
 
