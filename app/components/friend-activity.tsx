@@ -210,7 +210,17 @@ function BookCard({
 
 // Hearts, notes and borrowing, done from the feed. Each form posts to
 // the feed route; the counts update when the loader comes back.
-function Actions({ book, userId }: { book: FeedBook; userId: string }) {
+// The heart is on the book, never the post: under someone's note it says
+// so, or it would read as liking what they wrote.
+function Actions({
+  book,
+  userId,
+  underNote = false,
+}: {
+  book: FeedBook;
+  userId: string;
+  underNote?: boolean;
+}) {
   const love = useFetcher({ key: `love-${book.id}` });
   const borrow = useFetcher({ key: `borrow-${book.id}` });
   const { viewer } = book;
@@ -241,7 +251,7 @@ function Actions({ book, userId }: { book: FeedBook; userId: string }) {
             className={`${actionClass} ${loved ? "text-rose-600 dark:text-rose-400" : ""}`}
           >
             <HeartIcon size={15} filled={loved} className={loved ? "text-rose-500" : ""} />
-            {loved ? "Loved" : "Love"}
+            {`${loved ? "Loved" : "Love"}${underNote ? " the book" : ""}`}
             {lovesText ? <span className="tabular-nums">{lovesText}</span> : null}
           </button>
         </love.Form>
@@ -377,7 +387,7 @@ export function FeedPost({
           <div className="mt-3">
             <BookCard book={books[0]} friendId={item.friend.id} userId={userId} />
           </div>
-          <Actions book={books[0]} userId={userId} />
+          <Actions book={books[0]} userId={userId} underNote={item.kind === "note"} />
         </>
       )}
     </article>
