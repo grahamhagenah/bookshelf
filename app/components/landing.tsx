@@ -139,10 +139,9 @@ export default function Landing() {
           visual={<ShowcasePage />}
           flip
         >
-          Pick an address like bookstacks.app/@you, add a line about yourself,
-          and heart the books you love most. Anyone can browse your shelf, no
-          account needed, and friends can ask to borrow straight from it. Put
-          it in your bio.
+          A page for your shelf, with your favorites and a line about you.
+          Anyone can browse it without an account, and friends can ask to
+          borrow.
         </Feature>
 
         <Feature
