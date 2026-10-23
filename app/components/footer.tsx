@@ -1,7 +1,7 @@
 import { Link, useLocation, useMatches } from "@remix-run/react";
 
 import DemoButton from "./demo-button";
-import { StacksLogo } from "./icons";
+import Wordmark from "./wordmark";
 
 interface RootLoaderData {
   user: { id: string } | null;
@@ -19,9 +19,8 @@ export default function Footer() {
     <footer className="mt-16 border-t border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 text-sm text-stone-500 dark:text-stone-400">
       <div className="mx-auto max-w-5xl px-4 md:px-8 py-8 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2 max-w-xs">
-          <Link to={user ? "/books" : "/"} className="inline-flex items-center gap-2 font-semibold text-stone-900 dark:text-stone-100">
-            <StacksLogo size={20} className="text-stone-900 dark:text-stone-100" />
-            Stacks
+          <Link to={user ? "/books" : "/"} className="inline-block font-semibold text-stone-900 dark:text-stone-100">
+            <Wordmark className="text-[1.125rem]" />
           </Link>
           <p>Lend and borrow books with friends.</p>
         </div>

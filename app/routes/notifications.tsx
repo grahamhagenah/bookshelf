@@ -233,7 +233,7 @@ function Card({
       <span className="relative h-10 flex-shrink-0">
         {type === "ANNOUNCEMENT" ? (
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900">
-            <StacksLogo size={22} />
+            <StacksLogo size={24} book="fill-forest-400" />
           </span>
         ) : (
           <Avatar

@@ -6,27 +6,21 @@ interface IconProps {
   size?: number;
 }
 
-// Line-art stack of three books
-export function StacksLogo({ className = "", size = 24 }: IconProps) {
+// The capital S of the wordmark, from Source Serif 4, as an outline
+const S_PATH =
+  "M256 16Q191 16 133.50 1Q76-14 41-34L44-186L118-186L148-33L80-46L80-101Q107-83 133.50-70.50Q160-58 189-51Q218-44 253-44Q301-44 332-57.50Q363-71 378-95.50Q393-120 393-150Q393-179 381.50-199Q370-219 345.50-234.50Q321-250 281-265L246-280Q189-303 145-330.50Q101-358 76-396.50Q51-435 51-492Q51-552 83-594Q115-636 170-658Q225-680 295-680Q356-680 404-666Q452-652 481-633L477-490L405-490L375-638L444-622L444-567Q409-593 375-607Q341-621 297-621Q259-621 232-608.50Q205-596 190-574Q175-552 175-523Q175-495 187-475Q199-455 223.50-439.50Q248-424 285-409L322-394Q384-369 428-341Q472-313 495-275Q518-237 518-182Q518-121 485.50-76.50Q453-32 394.50-8Q336 16 256 16";
+
+// The small mark, for where the name itself doesn't fit: the wordmark's S
+// standing on its green book. `book` styles the book, for dark plates.
+export function StacksLogo({
+  className = "",
+  size = 24,
+  book = "fill-forest-600 dark:fill-forest-400",
+}: IconProps & { book?: string }) {
   return (
-    <svg
-      className={className}
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="3" y="15" width="18" height="4.5" rx="1" />
-      <path d="M6.5 15v4.5" />
-      <rect x="5" y="9.5" width="15" height="5.5" rx="1" />
-      <path d="M16.5 9.5v5.5" />
-      <rect x="4.5" y="5" width="14" height="4.5" rx="1" />
-      <path d="M8 5v4.5" />
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <path d={S_PATH} fill="currentColor" transform="translate(6.4 17) scale(0.02)" />
+      <rect className={book} x="7" y="18.8" width="10" height="2.4" rx="0.3" />
     </svg>
   );
 }
