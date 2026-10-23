@@ -129,8 +129,8 @@ jobs:
   deploy:
     name: 🚀 Deploy
     runs-on: ubuntu-latest
-    # needs: [lint, typecheck, vitest]
-    needs: [vitest]
+    # Only ships what passes all three
+    needs: [lint, typecheck, vitest]
     # only deploy main/dev branch on pushes
     if: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev') && github.event_name == 'push' }}
 
