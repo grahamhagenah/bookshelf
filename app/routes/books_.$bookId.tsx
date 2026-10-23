@@ -1055,37 +1055,6 @@ function CoverPicker({
   );
 }
 
-// The owner's own note of having read it, changed in place
-function ReadToggle({ readAt }: { readAt: string | null }) {
-  const fetcher = useFetcher({ key: "read" });
-  const pending = fetcher.formData?.get("read");
-  const read = pending ? pending === "true" : Boolean(readAt);
-  const buttonClass =
-    "text-stone-800 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:decoration-stone-500";
-  return (
-    <fetcher.Form method="post" className="inline">
-      <input type="hidden" name="intent" value="toggleRead" />
-      <input type="hidden" name="read" value={read ? "false" : "true"} />
-      {read ? (
-        <>
-          You read this{readAt && !pending ? ` · ${monthDay(readAt)}` : ""}
-          <span className="text-stone-400 dark:text-stone-500"> · </span>
-          <button type="submit" className={buttonClass}>
-            Undo
-          </button>
-        </>
-      ) : (
-        <>
-          Finished it?{" "}
-          <button type="submit" className={buttonClass}>
-            Mark as read
-          </button>
-        </>
-      )}
-    </fetcher.Form>
-  );
-}
-
 // The loan that's out right now, as the top entry of your copy's lending
 // history: who, until when, and what you can do about it, each choice
 // under a line saying what it's for
@@ -1818,7 +1787,7 @@ export default function BookDetailsPage() {
               canNote={data.canNote}
               maxLength={data.noteMaxLength}
               friendIds={data.friendIds}
-              status={data.canNote ? <ReadToggle readAt={data.readAt} /> : null}
+              readAt={data.readAt}
             />
           ) : null}
 

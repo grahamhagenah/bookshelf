@@ -2,7 +2,7 @@ import { useFetcher } from "@remix-run/react";
 import { useEffect, useState } from "react";
 
 import Avatar from "./avatar";
-import { HeartIcon } from "./icons";
+import { CheckIcon, HeartIcon, PencilIcon } from "./icons";
 import PersonLink from "./person-link";
 
 interface ReaderNote {
@@ -24,6 +24,22 @@ const formatDate = (date: string) =>
     day: "numeric",
     year: "numeric",
   });
+
+const shortDate = (date: string) => {
+  const d = new Date(date);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(d.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}),
+  });
+};
+
+// Your own marks on a book (a heart, having read it, a note) share one
+// look: a small rounded toggle, tinted once it's on
+const chip = (on: string | false) =>
+  `inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
+    on || "border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500"
+  }`;
 
 const LOVE_FETCHER = "reader-love";
 
@@ -49,14 +65,39 @@ function HeartToggle({ myNote }: { myNote: ReaderNote | null }) {
         type="submit"
         aria-pressed={loved}
         title={loved ? "Take back your heart" : "Love it"}
-        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
-          loved
-            ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
-            : "border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500"
-        }`}
+        className={chip(
+          loved &&
+            "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300",
+        )}
       >
         <HeartIcon size={14} filled={loved} className={loved ? "text-rose-500" : ""} />
         {loved ? "You loved it" : "Love it"}
+      </button>
+    </fetcher.Form>
+  );
+}
+
+// Having read it: yours alone, for your library's Read filter and your
+// exports, so friends never see it
+function ReadToggle({ readAt }: { readAt: string | null }) {
+  const fetcher = useFetcher({ key: "read" });
+  const pending = fetcher.formData?.get("read");
+  const read = pending ? pending === "true" : Boolean(readAt);
+  return (
+    <fetcher.Form method="post">
+      <input type="hidden" name="intent" value="toggleRead" />
+      <input type="hidden" name="read" value={read ? "false" : "true"} />
+      <button
+        type="submit"
+        aria-pressed={read}
+        title={read ? "Mark as not read. Only you see this." : "Only you see this"}
+        className={chip(
+          read &&
+            "border-forest-600/25 bg-forest-600/10 text-forest-700 dark:border-forest-400/30 dark:bg-forest-400/15 dark:text-forest-400",
+        )}
+      >
+        <CheckIcon size={14} />
+        {read ? `Read${readAt && !pending ? ` ${shortDate(readAt)}` : ""}` : "Mark as read"}
       </button>
     </fetcher.Form>
   );
@@ -69,15 +110,15 @@ export default function ReaderNotes({
   canNote,
   maxLength,
   friendIds,
-  status,
+  readAt,
 }: {
   notes: ReaderNote[];
   myNote: ReaderNote | null;
   canNote: boolean;
   maxLength: number;
   friendIds: string[];
-  // A line about your own reading of it, for the owner
-  status?: React.ReactNode;
+  // When you read it, for readers of this copy
+  readAt?: string | null;
 }) {
   const { loved } = useLoved(myNote);
   const noteFetcher = useFetcher<{ noteSaved?: boolean }>();
@@ -104,8 +145,15 @@ export default function ReaderNotes({
       {/* Hearts first: yours to give, and who else gave one without a note
           (people who wrote one show it on their note below) */}
       {canNote || heartsOnly.length > 0 ? (
-        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           {canNote ? <HeartToggle myNote={myNote} /> : null}
+          {canNote && readAt !== undefined ? <ReadToggle readAt={readAt} /> : null}
+          {canNote && !myNote?.body && !isWriting ? (
+            <button type="button" onClick={() => setIsWriting(true)} className={chip(false)}>
+              <PencilIcon size={14} />
+              {hasNotes ? "Add a note" : "Leave a note"}
+            </button>
+          ) : null}
           {heartsOnly.length > 0 ? (
             <p className="inline-flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
               {canNote ? null : <HeartIcon size={13} filled className="text-rose-400" />}
@@ -123,9 +171,6 @@ export default function ReaderNotes({
             </p>
           ) : null}
         </div>
-      ) : null}
-      {status ? (
-        <p className="mb-3 text-stone-600 dark:text-stone-300">{status}</p>
       ) : null}
 
       {isWriting ? (
@@ -163,17 +208,6 @@ export default function ReaderNotes({
             </button>
           </div>
         </noteFetcher.Form>
-      ) : canNote && !myNote?.body ? (
-        <p className="py-2 text-stone-400 dark:text-stone-500">
-          {hasNotes ? null : "No notes yet. "}
-          <button
-            type="button"
-            onClick={() => setIsWriting(true)}
-            className="text-stone-600 dark:text-stone-300 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
-          >
-            {hasNotes ? "Add your note" : "Leave a line for the next reader"}
-          </button>
-        </p>
       ) : null}
 
       {hasNotes ? (

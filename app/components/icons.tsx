@@ -121,6 +121,22 @@ export function LinkIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
+export function PencilIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16.5 3.5l4 4L8 20H4v-4zM14 6l4 4"/>
+    </svg>
+  );
+}
+
+export function CheckIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m5 12.5 4.5 4.5L19 7.5"/>
+    </svg>
+  );
+}
+
 export function PersonAddIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
