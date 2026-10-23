@@ -163,7 +163,7 @@ export const LENDING_SET: LendingSet = {
 export default function ShowcaseLending({ set = LENDING_SET }: { set?: LendingSet }) {
   // The page's main picture, so it gets more room than the others
   return (
-    <Stage width="max-w-[496px]" height="h-[480px] sm:h-[560px]">
+    <Stage width="max-w-[496px]" height="h-[480px] sm:h-[540px]">
       {/* What's due, both ways */}
       <div className={`${panel} left-0 right-[10%] top-0 z-30 -rotate-1 p-3.5`}>
         <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">Due soon</p>
@@ -201,8 +201,10 @@ export default function ShowcaseLending({ set = LENDING_SET }: { set?: LendingSe
         Lent {set.loved.lentTimes} times
       </Tag>
 
-      {/* Choosing how long to lend for */}
-      <div className={`${panel} bottom-[6%] left-[6%] z-20 rotate-1 p-3.5 pr-5`}>
+      {/* Choosing how long to lend for, with a nudge already on its way
+          tucked under the panel's corner, so the two stay together however
+          wide the stage is */}
+      <div className={`${panel} bottom-[7%] left-[6%] z-20 rotate-1 p-3.5 pr-5`}>
         <div className="flex items-center gap-3">
           <Cover src={set.lending.cover} className="w-8" />
           <div className="min-w-0 flex-1">
@@ -222,12 +224,10 @@ export default function ShowcaseLending({ set = LENDING_SET }: { set?: LendingSe
             </div>
           </div>
         </div>
-      </div>
-
-      {/* A nudge already on its way */}
-      <div className="absolute bottom-0 right-[2%] z-30 flex -rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white shadow-soft">
-        <Check />
-        Reminder sent to Priya
+        <div className="absolute -bottom-5 -right-12 z-30 flex -rotate-3 items-center gap-2 whitespace-nowrap rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
+          <Check />
+          Reminder sent to Priya
+        </div>
       </div>
     </Stage>
   );
