@@ -240,9 +240,11 @@ export function Bookplate({
   className?: string;
 }) {
   const tone = PLATE_COLORS[color ?? plateColorFor(firstname, surname)];
+  // Letter spacing also trails the last letter, so the same space on the
+  // left keeps the pair centered
   return (
     <span
-      className={`${box} ${tone} relative flex flex-shrink-0 items-center justify-center rounded-full font-serif font-semibold tracking-wide ${className}`}
+      className={`${box} ${tone} relative flex flex-shrink-0 items-center justify-center rounded-full pl-[0.1em] font-serif font-semibold tracking-[0.1em] ${className}`}
     >
       {/* The frame: a thin ring inside the edge, at sizes where it shows */}
       {framed ? (
