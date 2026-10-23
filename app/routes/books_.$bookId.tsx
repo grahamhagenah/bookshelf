@@ -1074,7 +1074,7 @@ function CoverPicker({
 // under a line saying what it's for
 function LoanCard({ data }: { data: BookData }) {
   const reminder = useFetcher<{ reminderSent?: boolean }>();
-  const extend = useFetcher();
+  const extend = useFetcher<{ loanExtended?: boolean }>();
   const returned = useFetcher();
   const borrower = data.book.borrower;
   if (!borrower) return null;
@@ -1096,7 +1096,9 @@ function LoanCard({ data }: { data: BookData }) {
               : `Due in ${Math.round(daysLeft / 7)} weeks`;
   const reminderSent = reminder.data?.reminderSent === true;
   const sendingReminder = reminder.state !== "idle";
-  const extendingBy = extend.formData?.get("weeks");
+  // The answer comes back too fast to show "Extending…" without a flicker;
+  // the new due date, said once it's in, is the better sign
+  const extended = extend.state === "idle" && extend.data?.loanExtended === true;
   const name = borrower.firstname;
   const label = "text-sm text-stone-500 dark:text-stone-400";
   const chip = `flex-shrink-0 rounded-full bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 text-xs ${
@@ -1143,8 +1145,11 @@ function LoanCard({ data }: { data: BookData }) {
         {status ? <span className={`hidden sm:inline-flex ${chip}`}>{status}</span> : null}
       </div>
 
-      <div className={`grid gap-4 p-4 sm:grid-cols-2 ${divider}`}>
-        <div>
+      {/* Two unrelated choices side by side, so a line between them */}
+      <div
+        className={`grid gap-5 p-4 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-stone-100 sm:dark:divide-stone-800 ${divider}`}
+      >
+        <div className="sm:pr-5">
           <p className={label}>Give {name} more time</p>
           <extend.Form method="post" className="mt-2 flex gap-1.5">
             <input type="hidden" name="intent" value="extendLoan" />
@@ -1157,12 +1162,17 @@ function LoanCard({ data }: { data: BookData }) {
                 disabled={extend.state !== "idle"}
                 className={`flex-1 whitespace-nowrap ${button} disabled:opacity-60`}
               >
-                {extendingBy === String(weeks) ? "Extending…" : `+${weeks} ${weeks === 1 ? "week" : "weeks"}`}
+                +{weeks} {weeks === 1 ? "week" : "weeks"}
               </button>
             ))}
           </extend.Form>
+          {extended && due ? (
+            <p role="status" className="mt-2 text-xs text-stone-500 dark:text-stone-400">
+              Now due {monthDay(due)}. {name} has been told.
+            </p>
+          ) : null}
         </div>
-        <div>
+        <div className="sm:pl-5">
           <p className={label}>{overdue ? `Ask ${name} to bring it back` : `Remind ${name} it's due`}</p>
           <reminder.Form method="post" className="mt-2">
             <input type="hidden" name="intent" value="sendReminder" />
