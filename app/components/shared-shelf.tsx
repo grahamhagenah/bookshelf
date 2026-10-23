@@ -41,7 +41,8 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
   const { stats } = profile;
   const facts = [
     plural(stats.books, "book"),
-    stats.readThisYear ? `${stats.readThisYear} read this year` : null,
+    // How generous the shelf has been, rather than how much anyone's read
+    stats.timesLent ? `lent ${plural(stats.timesLent, "time")}` : null,
     stats.mostLent && stats.mostLent.times > 1
       ? `most borrowed: ${stats.mostLent.title}`
       : null,

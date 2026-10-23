@@ -42,8 +42,7 @@ const FAVORITES = 5;
 // The header for a shared shelf
 export async function getShelfProfile(userId: User["id"]) {
   const ids = await shelfIds(userId);
-  const yearStart = new Date(new Date().getFullYear(), 0, 1);
-  const [user, loved, readByNote, readOnShelf, mostLent, books] = await Promise.all([
+  const [user, loved, lends, mostLent, books] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { handle: true, bio: true } }),
     // Hearts on books from this shelf, newest first
     prisma.readerNote.findMany({
@@ -52,14 +51,8 @@ export async function getShelfProfile(userId: User["id"]) {
       take: FAVORITES,
       select: { book: { select: { id: true, title: true, author: true, cover: true } } },
     }),
-    prisma.readerNote.findMany({
-      where: { userId, readAt: { gte: yearStart } },
-      select: { bookId: true },
-    }),
-    prisma.book.findMany({
-      where: { userId, readAt: { gte: yearStart } },
-      select: { id: true },
-    }),
+    // Every time a book from this shelf has gone out on loan
+    prisma.book.aggregate({ where: { userId: { in: ids } }, _sum: { lendCount: true } }),
     prisma.book.findFirst({
       where: { userId: { in: ids }, lendCount: { gt: 0 } },
       orderBy: [{ lendCount: "desc" }, { createdAt: "asc" }],
@@ -67,14 +60,13 @@ export async function getShelfProfile(userId: User["id"]) {
     }),
     prisma.book.count({ where: { userId: { in: ids } } }),
   ]);
-  const read = new Set([...readByNote.map((note) => note.bookId), ...readOnShelf.map((book) => book.id)]);
   return {
     handle: user.handle,
     bio: user.bio,
     favorites: loved.map((note) => note.book),
     stats: {
       books,
-      readThisYear: read.size,
+      timesLent: lends._sum.lendCount ?? 0,
       mostLent: mostLent ? { title: mostLent.title, times: mostLent.lendCount } : null,
     },
   };
