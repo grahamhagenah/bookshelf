@@ -40,7 +40,7 @@ export default function Header() {
               size={32}
               className="h-8 w-8 sm:h-9 sm:w-9 text-stone-900 dark:text-stone-100"
             />
-            <span className="text-lg sm:text-xl">Stacks</span>
+            <span className="font-serif text-lg sm:text-xl">Stacks</span>
           </a>
         </div>
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
