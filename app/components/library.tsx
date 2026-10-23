@@ -13,6 +13,8 @@ import {
   ReadIcon,
 } from "./icons";
 import ShareShelfButton from "./share-shelf-button";
+import SharedWith from "./shared-with";
+import type { Member } from "./shared-with";
 
 const OPEN_LIBRARY_SIZE = /-[SML]\.jpg$/;
 
@@ -105,6 +107,9 @@ interface LibraryProps {
   // Shown above everything else, such as the tabs between your library
   // and your want-to-read list
   header?: React.ReactNode;
+  // Your library, when it's a shelf you share: shown here on phones, where
+  // the tabs leave no room
+  sharedWith?: { members: Member[]; viewerId: string } | null;
 }
 
 // One rounded box that clips both the image and its placeholder
@@ -167,7 +172,7 @@ function BookCover({
   );
 }
 
-export default function Library({ bookListItems, ownerName, header }: LibraryProps) {
+export default function Library({ bookListItems, ownerName, header, sharedWith }: LibraryProps) {
   // Set on the account page, and the same on every shelf you look at
   const viewer = useOptionalUser();
   const viewMode = libraryViewOf(viewer);
@@ -306,7 +311,8 @@ export default function Library({ bookListItems, ownerName, header }: LibraryPro
                 </Link>
               )}
               {ownerName ? null : (
-                <div className="sm:hidden">
+                <div className="flex items-center gap-2 sm:hidden">
+                  {sharedWith ? <SharedWith {...sharedWith} compact /> : null}
                   <ShareShelfButton iconOnly />
                 </div>
               )}

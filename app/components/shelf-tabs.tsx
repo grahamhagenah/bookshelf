@@ -2,14 +2,19 @@ import { NavLink } from "@remix-run/react";
 
 import { BookIcon, BookmarkIcon, HistoryIcon } from "./icons";
 import ShareShelfButton from "./share-shelf-button";
+import SharedWith from "./shared-with";
+import type { Member } from "./shared-with";
 
 // Your lists of books, side by side at the top of each: the books you
 // have, the ones you'd like to, and the ones that have passed between you
 // and your friends. Across from them, the link to show your shelf off.
 export default function ShelfTabs({
   counts,
+  sharedWith,
 }: {
   counts: { library: number; want: number; history: number };
+  // On your library, when it's a shelf you share
+  sharedWith?: { members: Member[]; viewerId: string } | null;
 }) {
   // The same weight either way, so switching tabs never nudges the other
   const tab = ({ isActive }: { isActive: boolean }) =>
@@ -45,7 +50,8 @@ export default function ShelfTabs({
       </nav>
       {/* Phones have no room beside the tabs; the library's filter row
           carries it there */}
-      <div className="-mt-1.5 hidden sm:block">
+      <div className="-mt-1.5 hidden items-center gap-2 sm:flex">
+        {sharedWith ? <SharedWith {...sharedWith} /> : null}
         <ShareShelfButton />
       </div>
     </div>

@@ -9,7 +9,7 @@ import Library from "~/components/library";
 import ShelfTabs from "~/components/shelf-tabs";
 import { getBookListItems, getBorrowedBooks, readAtFor } from "~/models/book.server";
 import { getShelfCounts } from "~/models/history.server";
-import { shelfIds } from "~/models/household.server";
+import { getHousehold, shelfIds } from "~/models/household.server";
 import { getLoveCounts } from "~/models/note.server";
 import { getUserById } from "~/models/user.server";
 import { seo } from "~/seo";
@@ -47,7 +47,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     loveCount: loveCounts.get(book.id) ?? 0,
   }));
 
-  return json({ user, bookListItems, counts: await getShelfCounts(userId) });
+  // Everyone on a shared shelf, said once at the top
+  const household = await getHousehold(userId);
+  const sharedWith =
+    household && household.members.length > 1
+      ? {
+          viewerId: userId,
+          members: household.members.map(({ id, firstname, surname, profileEmoji }) => ({
+            id,
+            firstname,
+            surname,
+            profileEmoji,
+          })),
+        }
+      : null;
+
+  return json({ user, bookListItems, counts: await getShelfCounts(userId), sharedWith });
 };
 
 export default function BooksPage() {
@@ -57,8 +72,9 @@ export default function BooksPage() {
     <>
       <Library
         bookListItems={data.bookListItems}
+        sharedWith={data.sharedWith}
         header={
-          <ShelfTabs counts={data.counts} />
+          <ShelfTabs counts={data.counts} sharedWith={data.sharedWith} />
         }
       />
     </>

@@ -30,6 +30,7 @@ import {
   LentIcon,
   ListViewIcon,
 } from "~/components/icons";
+import { joinNames } from "~/components/shared-with";
 import Layout from "~/components / Layout/Layout";
 import { getBookStats } from "~/models/book.server";
 import { getDemoGroup } from "~/models/demo.server";
@@ -997,11 +998,6 @@ function CopyField({ value, label }: { value: string; label: string }) {
 }
 
 // Who's on the shelf, the invite link to add someone, and the way out
-// "Jordan & Noah", "Jordan, Noah & Sam"
-function joinNames(names: string[]) {
-  return names.length > 1 ? `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}` : names.join("");
-}
-
 function HouseholdPanel({
   household,
 }: {
