@@ -25,15 +25,6 @@ const formatDate = (date: string) =>
     year: "numeric",
   });
 
-const shortDate = (date: string) => {
-  const d = new Date(date);
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    ...(d.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}),
-  });
-};
-
 // Your own marks on a book (a heart, having read it, a note) share one
 // look: a small rounded toggle, tinted once it's on
 const chip = (on: string | false) =>
@@ -96,8 +87,19 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
             "border-forest-600/25 bg-forest-600/10 text-forest-700 dark:border-forest-400/30 dark:bg-forest-400/15 dark:text-forest-400",
         )}
       >
-        <CheckIcon size={14} />
-        {read ? `Read${readAt && !pending ? ` ${shortDate(readAt)}` : ""}` : "Mark as read"}
+        {/* Both labels share one cell, centered, so the button keeps its
+            width and the row doesn't shift. No date: when you marked it
+            isn't always when you read it */}
+        <span className="grid justify-items-center">
+          <span className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${read ? "invisible" : ""}`}>
+            <CheckIcon size={14} />
+            Mark as read
+          </span>
+          <span className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${read ? "" : "invisible"}`}>
+            <CheckIcon size={14} />
+            Read
+          </span>
+        </span>
       </button>
     </fetcher.Form>
   );
