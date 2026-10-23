@@ -49,7 +49,7 @@ export default function Header() {
           </a>
           {landing ? (
             <p className="hidden md:block ml-1 border-l border-stone-200 dark:border-stone-800 pl-3 text-sm text-stone-400 dark:text-stone-500">
-              A lending library for the books you own
+              Lend and borrow books with friends
             </p>
           ) : null}
         </div>
