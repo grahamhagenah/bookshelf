@@ -122,7 +122,7 @@ export default function Landing() {
 
       <div className="mt-20 space-y-20 md:mt-28 md:space-y-28">
         <Feature
-          title="Everything your friends own, in one search"
+          title="Every shelf you know, one search."
           visual={<ShowcaseFriends />}
         >
           Search once and see which friends have a book, then ask to borrow it
@@ -131,7 +131,7 @@ export default function Landing() {
         </Feature>
 
         <Feature
-          title="Share your shelf with anyone"
+          title="Your shelf, out in the world."
           visual={<ShowcasePage />}
           flip
         >
@@ -141,7 +141,7 @@ export default function Landing() {
         </Feature>
 
         <Feature
-          title="Every copy carries its story"
+          title="Books with a history."
           visual={<ShowcaseNotes />}
         >
           Leave a heart or a line for the next reader. Notes stay with the book
