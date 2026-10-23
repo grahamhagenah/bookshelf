@@ -1802,15 +1802,6 @@ export default function BookDetailsPage() {
                       {subject}
                     </span>
                   ))}
-                  {data.isOwner ? (
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(true)}
-                      className="px-1 text-xs text-stone-400 dark:text-stone-500 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-700 dark:hover:text-stone-200"
-                    >
-                      Edit
-                    </button>
-                  ) : null}
                 </div>
               ) : null}
 
