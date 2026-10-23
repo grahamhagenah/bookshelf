@@ -11,6 +11,10 @@ import {
 import { shelfIds } from "./household.server";
 import { createNotification } from "./user.server";
 
+// Each of these builds a whole sandbox (a dozen people and their books),
+// which can take several seconds on a busy CI runner with coverage on
+const SANDBOX_TIMEOUT = 30_000;
+
 describe("createDemoSandbox", () => {
   test("builds a lived-in library for the visitor", async () => {
     const visitorId = await createDemoSandbox();
@@ -61,7 +65,7 @@ describe("createDemoSandbox", () => {
       select: { id: true, userId: true, readAt: true },
     });
     expect(await getReadAt(visitorId, circe)).not.toBeNull();
-  });
+  }, SANDBOX_TIMEOUT);
 
   test("deleteDemoGroup removes the whole sandbox", async () => {
     const visitorId = await createDemoSandbox();
@@ -73,7 +77,7 @@ describe("createDemoSandbox", () => {
 
     expect(await prisma.user.count({ where: { demoGroup } })).toBe(0);
     expect(await prisma.book.count({ where: { user: { demoGroup } } })).toBe(0);
-  });
+  }, SANDBOX_TIMEOUT);
 });
 
 test("canInteract keeps demo and real accounts apart", async () => {
