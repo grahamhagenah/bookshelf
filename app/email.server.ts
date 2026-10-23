@@ -179,29 +179,25 @@ export async function sendBookRequestEmail({
   });
 }
 
-// ---- A temporary password ----
+// ---- A link to choose a new password ----
 
-export function renderPasswordReset({ toName, tempPassword }: { toName: string; tempPassword: string }) {
-  const link = `${APP_URL}/login`;
+export function renderPasswordReset({ toName, token }: { toName: string; token: string }) {
+  const link = `${APP_URL}/reset-password?token=${encodeURIComponent(token)}`;
   const html = layout({
-    preheader: "Your temporary password for Stacks.",
+    preheader: "Choose a new password for Stacks.",
     content: `
-        ${paragraph(`Hi ${esc(toName)}, here's a temporary password for your Stacks account:`)}
-        <p style="margin: 0; padding: 16px; background: ${page}; border: 1px solid ${line}; border-radius: 8px; text-align: center; font-family: ui-monospace, Menlo, monospace; font-size: 22px; font-weight: 600; letter-spacing: 1px; color: ${ink};">${esc(tempPassword)}</p>
-        <p style="margin: 16px 0 0; font-size: 16px; line-height: 1.55; color: ${body};">Sign in with it, then pick a new password in your account settings.</p>
-        ${button(link, "Sign in")}`,
-    footer: "If you didn't ask for this, ignore this email. Your password stays the same unless someone signs in with the one above.",
+        ${paragraph(`Hi ${esc(toName)}, someone asked to reset the password for your Stacks account. If it was you, tap the button to choose a new one.`)}
+        ${button(link, "Choose a new password")}`,
+    footer: "The link works for an hour, and only once. If you didn't ask for this, ignore this email: your password hasn't changed.",
   });
   const text = `Hi ${toName},
 
-Here's a temporary password for your Stacks account:
+Someone asked to reset the password for your Stacks account. If it was you, choose a new one here:
 
-${tempPassword}
+${link}
 
-Sign in with it, then pick a new password in your account settings: ${link}
-
-If you didn't ask for this, ignore this email. Your password stays the same unless someone signs in with the one above.`;
-  return { subject: "Your temporary password for Stacks", html, text };
+The link works for an hour, and only once. If you didn't ask for this, ignore this email: your password hasn't changed.`;
+  return { subject: "Reset your Stacks password", html, text };
 }
 
 export async function sendPasswordResetEmail({
@@ -210,7 +206,7 @@ export async function sendPasswordResetEmail({
 }: Parameters<typeof renderPasswordReset>[0] & { toEmail: string }) {
   // Demo sandbox addresses are undeliverable by design
   if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
-  if (!resend) console.log("Temporary password (email not configured):", details.tempPassword);
+  if (!resend) console.log("Password reset link (email not configured):", renderPasswordReset(details).text.split("\n")[4]);
   return send({ to: toEmail, ...renderPasswordReset(details) });
 }
 

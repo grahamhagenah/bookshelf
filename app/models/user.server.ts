@@ -695,39 +695,6 @@ export async function getSuggestedFriends(userId: string, limit = 5) {
   return suggestedUsers;
 }
 
-export async function resetPassword(email: string) {
-  const normalizedEmail = normalizeEmail(email);
-
-  const user = await prisma.user.findUnique({
-    where: { email: normalizedEmail },
-    include: { password: true },
-  });
-
-  if (!user || !user.password) {
-    return { success: false, error: "User not found" };
-  }
-
-  // Generate a random alphanumeric temporary password (no special characters)
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  let tempPassword = "";
-  for (let i = 0; i < 12; i++) {
-    tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-
-  const hashedPassword = await bcrypt.hash(tempPassword, 10);
-
-  await prisma.password.update({
-    where: { userId: user.id },
-    data: { hash: hashedPassword },
-  });
-
-  return {
-    success: true,
-    tempPassword,
-    userName: user.firstname || "User",
-  };
-}
-
 export async function isUserAdmin(userId: string): Promise<boolean> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
