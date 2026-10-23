@@ -16,68 +16,82 @@ import { createNotification } from "./user.server";
 const SANDBOX_TIMEOUT = 30_000;
 
 describe("createDemoSandbox", () => {
-  test("builds a lived-in library for the visitor", async () => {
-    const visitorId = await createDemoSandbox();
-    const visitor = await prisma.user.findUniqueOrThrow({
-      where: { id: visitorId },
-      select: {
-        demoGroup: true,
-        shareToken: true,
-        following: { select: { firstname: true } },
-      },
-    });
+  test(
+    "builds a lived-in library for the visitor",
+    async () => {
+      const visitorId = await createDemoSandbox();
+      const visitor = await prisma.user.findUniqueOrThrow({
+        where: { id: visitorId },
+        select: {
+          demoGroup: true,
+          shareToken: true,
+          following: { select: { firstname: true } },
+        },
+      });
 
-    expect(visitor.demoGroup).not.toBeNull();
-    // No link yet, so the demo shows the "Share your bookshelf" prompt
-    expect(visitor.shareToken).toBeNull();
-    expect(visitor.following.map((f) => f.firstname).sort()).toEqual([
-      "Maya",
-      "Priya",
-      "Sam",
-    ]);
+      expect(visitor.demoGroup).not.toBeNull();
+      // No link yet, so the demo shows the "Share your bookshelf" prompt
+      expect(visitor.shareToken).toBeNull();
+      expect(visitor.following.map((f) => f.firstname).sort()).toEqual([
+        "Anika",
+        "Maya",
+        "Sam",
+      ]);
 
-    const own = await prisma.book.count({ where: { userId: visitorId } });
-    const lentOut = await prisma.book.count({
-      where: { userId: visitorId, borrowerId: { not: null } },
-    });
-    const borrowed = await prisma.book.count({ where: { borrowerId: visitorId } });
-    expect(own).toBe(14);
-    expect(lentOut).toBe(5);
-    expect(borrowed).toBe(4);
+      const own = await prisma.book.count({ where: { userId: visitorId } });
+      const lentOut = await prisma.book.count({
+        where: { userId: visitorId, borrowerId: { not: null } },
+      });
+      const borrowed = await prisma.book.count({
+        where: { borrowerId: visitorId },
+      });
+      expect(own).toBe(14);
+      expect(lentOut).toBe(5);
+      expect(borrowed).toBe(4);
 
-    const loved = await prisma.readerNote.count({
-      where: { userId: visitorId, loved: true },
-    });
-    expect(loved).toBeGreaterThan(10);
+      const loved = await prisma.readerNote.count({
+        where: { userId: visitorId, loved: true },
+      });
+      expect(loved).toBeGreaterThan(10);
 
-    // Noah shares the visitor's shelf, so it holds both their books
-    const shelf = await shelfIds(visitorId);
-    const housemates = await prisma.user.findMany({
-      where: { id: { in: shelf, not: visitorId } },
-      select: { firstname: true },
-    });
-    expect(housemates.map((person) => person.firstname)).toEqual(["Noah"]);
-    expect(await prisma.book.count({ where: { userId: { in: shelf } } })).toBe(19);
+      // Noah shares the visitor's shelf, so it holds both their books
+      const shelf = await shelfIds(visitorId);
+      const housemates = await prisma.user.findMany({
+        where: { id: { in: shelf, not: visitorId } },
+        select: { firstname: true },
+      });
+      expect(housemates.map((person) => person.firstname)).toEqual(["Noah"]);
+      expect(
+        await prisma.book.count({ where: { userId: { in: shelf } } }),
+      ).toBe(19);
 
-    // A book the visitor both hearted and read shows as read
-    const circe = await prisma.book.findFirstOrThrow({
-      where: { userId: visitorId, title: "Circe" },
-      select: { id: true, userId: true, readAt: true },
-    });
-    expect(await getReadAt(visitorId, circe)).not.toBeNull();
-  }, SANDBOX_TIMEOUT);
+      // A book the visitor both hearted and read shows as read
+      const circe = await prisma.book.findFirstOrThrow({
+        where: { userId: visitorId, title: "Circe" },
+        select: { id: true, userId: true, readAt: true },
+      });
+      expect(await getReadAt(visitorId, circe)).not.toBeNull();
+    },
+    SANDBOX_TIMEOUT,
+  );
 
-  test("deleteDemoGroup removes the whole sandbox", async () => {
-    const visitorId = await createDemoSandbox();
-    const { demoGroup } = await prisma.user.findUniqueOrThrow({
-      where: { id: visitorId },
-    });
+  test(
+    "deleteDemoGroup removes the whole sandbox",
+    async () => {
+      const visitorId = await createDemoSandbox();
+      const { demoGroup } = await prisma.user.findUniqueOrThrow({
+        where: { id: visitorId },
+      });
 
-    await deleteDemoGroup(demoGroup!);
+      await deleteDemoGroup(demoGroup!);
 
-    expect(await prisma.user.count({ where: { demoGroup } })).toBe(0);
-    expect(await prisma.book.count({ where: { user: { demoGroup } } })).toBe(0);
-  }, SANDBOX_TIMEOUT);
+      expect(await prisma.user.count({ where: { demoGroup } })).toBe(0);
+      expect(await prisma.book.count({ where: { user: { demoGroup } } })).toBe(
+        0,
+      );
+    },
+    SANDBOX_TIMEOUT,
+  );
 });
 
 test("canInteract keeps demo and real accounts apart", async () => {
@@ -97,7 +111,11 @@ describe("respondAsDemoPersona", () => {
   test("demo friends accept friend requests straight away", async () => {
     const visitor = await makeUser("Visitor", { demoGroup: "group-c" });
     const persona = await makeUser("Persona", { demoGroup: "group-c" });
-    const request = await createNotification(visitor.id, persona.id, "Visitor Reader");
+    const request = await createNotification(
+      visitor.id,
+      persona.id,
+      "Visitor Reader",
+    );
 
     await respondAsDemoPersona(request.id);
 
@@ -124,7 +142,9 @@ describe("respondAsDemoPersona", () => {
 
     await respondAsDemoPersona(request.id);
 
-    const lent = await prisma.book.findUniqueOrThrow({ where: { id: book.id } });
+    const lent = await prisma.book.findUniqueOrThrow({
+      where: { id: book.id },
+    });
     expect(lent.borrowerId).toBe(visitor.id);
     const approved = await prisma.notification.count({
       where: { type: "BOOK_APPROVED", receiverId: visitor.id },
@@ -135,7 +155,11 @@ describe("respondAsDemoPersona", () => {
   test("real people are never answered for", async () => {
     const sender = await makeUser("Sender");
     const real = await makeUser("Real");
-    const request = await createNotification(sender.id, real.id, "Sender Reader");
+    const request = await createNotification(
+      sender.id,
+      real.id,
+      "Sender Reader",
+    );
 
     await respondAsDemoPersona(request.id);
 

@@ -35,7 +35,7 @@ function useBreadcrumbs() {
   return crumbs;
 }
 
-// "Friends / Priya Patel / Jonathan Strange & Mr Norrell", in a quiet row
+// "Friends / Anika Rao / Jonathan Strange & Mr Norrell", in a quiet row
 // of its own under the header, where a long book title has room. The
 // current page is the darkest; on phones, earlier steps give way to it.
 export default function Breadcrumbs() {
