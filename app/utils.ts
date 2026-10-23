@@ -134,9 +134,13 @@ const SUBJECT_NOISE = new Set([
 // works by their original title (海辺のカフカ). These pick the English.
 
 // Written in the Latin alphabet, accents and all
-export const isLatin = (text: string) => /^[\p{Script=Latin}\p{M}\p{N}\p{P}\p{S}\s]*$/u.test(text);
+export const isLatin = (text: string) =>
+  /^[\p{Script=Latin}\p{M}\p{N}\p{P}\p{S}\s]*$/u.test(text);
 
-const shouting = (name: string) => name.split(/\s+/).some((word) => word.length > 1 && word === word.toUpperCase());
+const shouting = (name: string) =>
+  name
+    .split(/\s+/)
+    .some((word) => word.length > 1 && word === word.toUpperCase());
 
 // An author's name in English: their own when it's already in the Latin
 // alphabet; else "Murakami, Haruki" turned round; else the first plainly
@@ -154,7 +158,11 @@ export function readableName(author: {
     return first ? `${first} ${last}` : personal;
   }
   const alternate = author.alternate_names?.find(
-    (other) => isLatin(other) && !other.includes(",") && !shouting(other) && other.trim().includes(" "),
+    (other) =>
+      isLatin(other) &&
+      !other.includes(",") &&
+      !shouting(other) &&
+      other.trim().includes(" "),
   );
   return alternate?.trim() || name;
 }
@@ -179,11 +187,32 @@ export const ENGLISH_EDITION_FIELDS =
   "editions,editions.key,editions.title,editions.language,editions.publisher";
 
 export interface WithEnglishEdition {
-  editions?: { docs?: { title?: string; language?: string[]; publisher?: string[] }[] };
+  editions?: {
+    docs?: { title?: string; language?: string[]; publisher?: string[] }[];
+  };
 }
 
+// Audiobook houses, whose edition isn't the copy on the shelf
+const AUDIO_HOUSE =
+  /audio|audible|blackstone|brilliance|tantor|recorded books/i;
+// A large-print imprint names the usual publisher with a suffix
+const LARGE_PRINT = /\s*large print\s*$/i;
+
 export function editionPublisher(doc: WithEnglishEdition): string | null {
-  const raw = doc.editions?.docs?.[0]?.publisher?.[0];
+  // Only an English edition's publisher: no publisher beats a translation's
+  const named = (doc.editions?.docs ?? []).filter(
+    (edition) =>
+      (!edition.language || edition.language.includes("eng")) &&
+      edition.publisher?.[0],
+  );
+  const house = (edition: { publisher?: string[] }) =>
+    edition.publisher?.[0] ?? "";
+  // The usual print edition; failing that, the large-print one's imprint
+  const usual =
+    named.find(
+      (e) => !AUDIO_HOUSE.test(house(e)) && !LARGE_PRINT.test(house(e)),
+    ) ?? named.find((e) => !AUDIO_HOUSE.test(house(e)));
+  const raw = usual ? house(usual).replace(LARGE_PRINT, "") : "";
   if (!raw) return null;
   // Some arrive with library catalog codes: "#bVintage, #c2009." is Vintage
   const parts = raw
@@ -192,6 +221,76 @@ export function editionPublisher(doc: WithEnglishEdition): string | null {
     .map((part) => part.trim().replace(/[.;:]+$/, ""))
     .filter((part) => part && !/^\[?c?\d{4}\]?$/.test(part));
   return parts.join(", ") || null;
+}
+
+// Open Library's search mixes in what gets sold around a book: summaries,
+// study guides, workbooks, journals, box sets, and copycat listings of the
+// title itself. Those go, or go to the end, so the book people mean comes
+// first.
+export interface SearchDoc {
+  title?: string;
+  author_name?: string[];
+  publisher?: string[];
+  edition_count?: number;
+  cover_i?: number;
+}
+
+// Words that are the whole point of such a listing
+const KNOCKOFF_TITLE =
+  /\b(summary|summaries|summarized|study guide|key takeaways|conversation starters|resumen|instaread|sparknotes|cliffsnotes|readtrepreneur)\b/i;
+// Words that only mean one when the listing is thin: no cover, or self-published
+const THIN_TITLE =
+  /\b(workbook|work book|journal|tracker|analysis|notes on|trivia|quiz|sidekick|companion)\b/i;
+const KNOCKOFF_AUTHOR =
+  /\b(summary|summaries|editorial|key notes|instaread|readtrepreneur|sparknotes|cliffsnotes|book summary)\b/i;
+const SELF_PUBLISHED =
+  /independently published|createspace|lulu\.com|irb media|supersummary|kdp/i;
+const COLLECTION =
+  /\b(box(ed)? set|collection set|\d+[- ]book|omnibus|complete (series|collection|set))\b|\s\/\s/i;
+
+const selfPublished = (doc: SearchDoc) =>
+  (doc.publisher ?? []).some((p) => SELF_PUBLISHED.test(p));
+const thin = (doc: SearchDoc) => !doc.cover_i || selfPublished(doc);
+
+export function isKnockoff(doc: SearchDoc): boolean {
+  const title = doc.title ?? "";
+  const author = doc.author_name?.[0] ?? "";
+  if (KNOCKOFF_TITLE.test(title) || KNOCKOFF_AUTHOR.test(author)) return true;
+  return THIN_TITLE.test(title) && thin(doc);
+}
+
+export const isCollection = (doc: SearchDoc) =>
+  COLLECTION.test(doc.title ?? "");
+
+// The same title twice: a real book and a thin listing of its name. The
+// thin one goes.
+const titleKey = (title: string) =>
+  title
+    .split(":")[0]
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+export function tidySearchResults<T extends SearchDoc>(docs: T[]): T[] {
+  const kept = docs.filter((doc) => !isKnockoff(doc));
+  const strongest = new Map<string, number>();
+  for (const doc of kept) {
+    const key = titleKey(doc.title ?? "");
+    strongest.set(
+      key,
+      Math.max(strongest.get(key) ?? 0, doc.edition_count ?? 0),
+    );
+  }
+  const real = kept.filter((doc) => {
+    const best = strongest.get(titleKey(doc.title ?? "")) ?? 0;
+    const copycat = (doc.edition_count ?? 0) <= 1 && thin(doc) && best >= 5;
+    return !copycat;
+  });
+  // Box sets and omnibus editions after the books themselves
+  return [
+    ...real.filter((doc) => !isCollection(doc)),
+    ...real.filter(isCollection),
+  ];
 }
 
 // Open Library lists every translation's subjects alongside the book's own:
@@ -209,12 +308,16 @@ function translatedInto(list: string[]) {
   const languages = new Set<string>();
   for (const subject of list) {
     const match = subject.trim().match(/^translations? into (.+?)\.?$/i);
-    if (match && match[1].toLowerCase() !== "english") languages.add(match[1].toLowerCase());
+    if (match && match[1].toLowerCase() !== "english")
+      languages.add(match[1].toLowerCase());
   }
   return [...languages];
 }
 
-export function cleanSubjects(subjects: string[] | string | null | undefined, max = 5) {
+export function cleanSubjects(
+  subjects: string[] | string | null | undefined,
+  max = 5,
+) {
   const list = Array.isArray(subjects) ? subjects : (subjects ?? "").split(",");
   const translations = translatedInto(list);
   const seen = new Set<string>();
@@ -252,16 +355,18 @@ export function cleanSubjects(subjects: string[] | string | null | undefined, ma
 
 // Open Library descriptions and bios sometimes carry Markdown; show prose
 export function stripMarkdown(text: string) {
-  return text
-    .replace(/\r/g, "")
-    .replace(/\s*\(\[[^\]]*\]\[\d+\]\)/g, "")
-    .replace(/^\s*\[\d+\]:.*$/gm, "")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    // Italics first, so bold text that contains italics unwraps cleanly
-    .replace(/(^|[\s(])[*_]([^*_\n]+)[*_](?=[\s).,;:!?]|$)/g, "$1$2")
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return (
+    text
+      .replace(/\r/g, "")
+      .replace(/\s*\(\[[^\]]*\]\[\d+\]\)/g, "")
+      .replace(/^\s*\[\d+\]:.*$/gm, "")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      // Italics first, so bold text that contains italics unwraps cleanly
+      .replace(/(^|[\s(])[*_]([^*_\n]+)[*_](?=[\s).,;:!?]|$)/g, "$1$2")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+  );
 }
 
 // Appearance settings, kept on the account so they follow you between devices
@@ -272,21 +377,31 @@ export type LibraryView = (typeof LIBRARY_VIEWS)[number];
 export const COVER_SIZES = ["large", "small"] as const;
 export type CoverSize = (typeof COVER_SIZES)[number];
 
-function oneOf<T extends string>(options: readonly T[], value: unknown, fallback: T): T {
+function oneOf<T extends string>(
+  options: readonly T[],
+  value: unknown,
+  fallback: T,
+): T {
   return options.includes(value as T) ? (value as T) : fallback;
 }
 
 // Accounts from before the theme setting go by their old dark mode switch
-export function themeOf(user: { theme?: string | null; darkMode?: boolean } | null | undefined): Theme {
+export function themeOf(
+  user: { theme?: string | null; darkMode?: boolean } | null | undefined,
+): Theme {
   if (!user) return "light";
   return oneOf(THEMES, user.theme, user.darkMode ? "dark" : "light");
 }
 
-export function libraryViewOf(user: { libraryView?: string } | null | undefined): LibraryView {
+export function libraryViewOf(
+  user: { libraryView?: string } | null | undefined,
+): LibraryView {
   return oneOf(LIBRARY_VIEWS, user?.libraryView, "cover");
 }
 
-export function coverSizeOf(user: { coverSize?: string } | null | undefined): CoverSize {
+export function coverSizeOf(
+  user: { coverSize?: string } | null | undefined,
+): CoverSize {
   return oneOf(COVER_SIZES, user?.coverSize, "large");
 }
 

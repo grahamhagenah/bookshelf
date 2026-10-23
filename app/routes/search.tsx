@@ -11,7 +11,8 @@ import {
   Link,
   useFetcher,
   Form,
- useRevalidator } from "@remix-run/react";
+  useRevalidator,
+} from "@remix-run/react";
 import { useState } from "react";
 
 import BarcodeScanner from "~/components/barcode-scanner";
@@ -40,11 +41,11 @@ import {
   editionPublisher,
   ENGLISH_EDITION_FIELDS,
   ENGLISH_EDITION_PARAMS,
+  tidySearchResults,
 } from "~/utils";
 import { sameWork } from "~/works";
 
-export const meta: MetaFunction = () =>
-  seo({ title: "Search", noindex: true });
+export const meta: MetaFunction = () => seo({ title: "Search", noindex: true });
 
 export const handle = {
   breadcrumb: () => <span>Search</span>,
@@ -58,9 +59,13 @@ interface OpenLibraryBook {
   first_publish_year?: number;
   number_of_pages_median?: number;
   subject?: string[];
-  editions?: { docs?: { title?: string; language?: string[]; publisher?: string[] }[] };
+  editions?: {
+    docs?: { title?: string; language?: string[]; publisher?: string[] }[];
+  };
   key?: string;
   language?: string[];
+  publisher?: string[];
+  edition_count?: number;
 }
 
 interface OpenLibraryResponse {
@@ -99,7 +104,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
 
   // Get user's existing library keys to show which books are already added
-  const libraryKeys = userId ? await getUserLibraryKeys(await shelfIds(userId)) : [];
+  const libraryKeys = userId
+    ? await getUserLibraryKeys(await shelfIds(userId))
+    : [];
   const wishes = userId ? await getWantToReadWorks(userId) : [];
 
   // Friends' copies come first, so only look them up for the first page
@@ -135,6 +142,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     "subject",
     "key",
     "language",
+    // To tell a book from the summaries and box sets sold around it
+    "publisher",
+    "edition_count",
     ENGLISH_EDITION_FIELDS,
   ].join(",");
 
@@ -173,7 +183,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       { signal: AbortSignal.timeout(8000) },
     );
     const body = await res.json();
-    if (res.ok && Array.isArray(body.docs)) data = { ...body, docs: await inEnglish(body.docs) };
+    if (res.ok && Array.isArray(body.docs)) {
+      data = { ...body, docs: tidySearchResults(await inEnglish(body.docs)) };
+    }
   } catch {
     // keep the empty result
   }
@@ -226,14 +238,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       title: typeof title === "string" ? title : "",
       author: typeof author === "string" ? author : "",
       cover: coverId ? cover : "",
-      openLibraryKey: typeof openLibraryKey === "string" ? openLibraryKey : null,
+      openLibraryKey:
+        typeof openLibraryKey === "string" ? openLibraryKey : null,
     });
     return json({ success: true, wanted: true, addedKey: openLibraryKey });
   }
 
   // Check if book already exists in user's library
   if (typeof openLibraryKey === "string" && openLibraryKey.length > 0) {
-    const exists = await bookExistsInLibrary(await shelfIds(userId), openLibraryKey);
+    const exists = await bookExistsInLibrary(
+      await shelfIds(userId),
+      openLibraryKey,
+    );
     if (exists) {
       return json({
         success: false,
@@ -245,7 +261,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // The free plan's shelf is full
   if ((await roomForBooks(userId)) < 1) {
-    return json({ success: false, limit: LIMIT_MESSAGES.books, addedKey: openLibraryKey }, { status: 403 });
+    return json(
+      { success: false, limit: LIMIT_MESSAGES.books, addedKey: openLibraryKey },
+      { status: 403 },
+    );
   }
 
   const description =
@@ -449,54 +468,59 @@ function SearchResultItem({
           <input type="hidden" name="openLibraryKey" value={book.key ?? ""} />
 
           <div className="mt-2 flex flex-wrap items-center gap-2">
-          <button
-            type="submit"
-            disabled={isAdding || isAdded || alreadyInLibrary}
-            // Every state here is the same height (the transparent border
-            // matches the outlined button beside it), so the row, and the
-            // cover stretched to it, never change size
-            className={`inline-flex items-center gap-1.5 rounded-md border border-transparent px-3 py-1.5 text-sm transition-colors ${
-              isAdded || alreadyInLibrary
-                ? "bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 cursor-default"
-                : isAdding
-                  ? "bg-forest-600 text-white opacity-60 cursor-wait"
-                  : "bg-forest-600 font-medium text-white hover:bg-forest-700"
-            }`}
-          >
-            {isAdded || alreadyInLibrary ? (
-              <CheckCircleIcon size={14} />
-            ) : null}
-            {isAdded
-              ? "Added"
-              : alreadyInLibrary
-                ? "In your library"
-                : isAdding
-                  ? "Adding…"
-                  : "Add to my library"}
-          </button>
-          {/* Don't own it? Keep an eye out for it on friends' shelves */}
-          {isAdded || alreadyInLibrary ? null : wanted ? (
-            <span className="inline-flex items-center gap-1.5 border border-transparent px-1 py-1.5 text-sm text-stone-500 dark:text-stone-400">
-              <BookmarkIcon size={14} />
-              On your want-to-read list
-            </span>
-          ) : (
             <button
               type="submit"
-              name="intent"
-              value="want"
-              disabled={isWanting}
-              className="inline-flex items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors disabled:opacity-60"
+              disabled={isAdding || isAdded || alreadyInLibrary}
+              // Every state here is the same height (the transparent border
+              // matches the outlined button beside it), so the row, and the
+              // cover stretched to it, never change size
+              className={`inline-flex items-center gap-1.5 rounded-md border border-transparent px-3 py-1.5 text-sm transition-colors ${
+                isAdded || alreadyInLibrary
+                  ? "bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 cursor-default"
+                  : isAdding
+                    ? "bg-forest-600 text-white opacity-60 cursor-wait"
+                    : "bg-forest-600 font-medium text-white hover:bg-forest-700"
+              }`}
             >
-              <BookmarkIcon size={14} />
-              {isWanting ? "Saving…" : "Want to read"}
+              {isAdded || alreadyInLibrary ? (
+                <CheckCircleIcon size={14} />
+              ) : null}
+              {isAdded
+                ? "Added"
+                : alreadyInLibrary
+                  ? "In your library"
+                  : isAdding
+                    ? "Adding…"
+                    : "Add to my library"}
             </button>
-          )}
+            {/* Don't own it? Keep an eye out for it on friends' shelves */}
+            {isAdded || alreadyInLibrary ? null : wanted ? (
+              <span className="inline-flex items-center gap-1.5 border border-transparent px-1 py-1.5 text-sm text-stone-500 dark:text-stone-400">
+                <BookmarkIcon size={14} />
+                On your want-to-read list
+              </span>
+            ) : (
+              <button
+                type="submit"
+                name="intent"
+                value="want"
+                disabled={isWanting}
+                className="inline-flex items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors disabled:opacity-60"
+              >
+                <BookmarkIcon size={14} />
+                {isWanting ? "Saving…" : "Want to read"}
+              </button>
+            )}
           </div>
-          {fetcher.data && "limit" in fetcher.data && typeof fetcher.data.limit === "string" ? (
+          {fetcher.data &&
+          "limit" in fetcher.data &&
+          typeof fetcher.data.limit === "string" ? (
             <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
               {fetcher.data.limit}{" "}
-              <Link to={UPGRADE_PATH} className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2">
+              <Link
+                to={UPGRADE_PATH}
+                className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2"
+              >
                 See Stacks Plus
               </Link>
             </p>
@@ -720,7 +744,9 @@ export default function Search() {
                     isInLibrary={
                       book.key ? data.libraryKeys.includes(book.key) : false
                     }
-                    isWanted={book.key ? data.wantKeys.includes(book.key) : false}
+                    isWanted={
+                      book.key ? data.wantKeys.includes(book.key) : false
+                    }
                   />
                 ))}
               </ul>

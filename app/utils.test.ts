@@ -11,6 +11,7 @@ import {
   safeRedirect,
   stripMarkdown,
   validateEmail,
+  tidySearchResults,
 } from "./utils";
 
 test("validateEmail returns false for non-emails", () => {
@@ -47,9 +48,9 @@ test("isDemoEmail spots sandbox accounts only", () => {
 });
 
 test("coverSrc routes Open Library covers through the cache", () => {
-  expect(coverSrc("https://covers.openlibrary.org/b/isbn/9780441172719-M.jpg")).toBe(
-    "/covers/b/isbn/9780441172719-M.jpg",
-  );
+  expect(
+    coverSrc("https://covers.openlibrary.org/b/isbn/9780441172719-M.jpg"),
+  ).toBe("/covers/b/isbn/9780441172719-M.jpg");
   expect(coverSrc("https://example.com/cover.jpg")).toBe(
     "https://example.com/cover.jpg",
   );
@@ -84,7 +85,11 @@ describe("cleanSubjects", () => {
       "American fiction (fictional works by one author)",
       "Chinese language materials",
     ];
-    expect(cleanSubjects(carver)).toEqual(["American Short stories", "Manners and customs", "Short stories"]);
+    expect(cleanSubjects(carver)).toEqual([
+      "American Short stories",
+      "Manners and customs",
+      "Short stories",
+    ]);
     // The same, from the five stored on a book before this fix
     expect(
       cleanSubjects(
@@ -95,17 +100,32 @@ describe("cleanSubjects", () => {
 
   test("keeps the book's own language, and translation as a topic", () => {
     expect(
-      cleanSubjects(["Translations into English", "Russian fiction", "Translation", "English fiction"]),
+      cleanSubjects([
+        "Translations into English",
+        "Russian fiction",
+        "Translation",
+        "English fiction",
+      ]),
     ).toEqual(["Russian fiction", "Translation", "English fiction"]);
   });
 
   test("keeps genre tags as plain topics", () => {
-    expect(cleanSubjects(["genre:science_fiction"])).toEqual(["Science fiction"]);
+    expect(cleanSubjects(["genre:science_fiction"])).toEqual([
+      "Science fiction",
+    ]);
   });
 
   test("dedupes, capitalizes and stops at the limit", () => {
     expect(
-      cleanSubjects(["science fiction", "Science-fiction", "ecology", "a", "b", "c", "d"]),
+      cleanSubjects([
+        "science fiction",
+        "Science-fiction",
+        "ecology",
+        "a",
+        "b",
+        "c",
+        "d",
+      ]),
     ).toEqual(["Science fiction", "Ecology", "A", "B", "C"]);
     expect(cleanSubjects(["one", "two", "three"], 2)).toEqual(["One", "Two"]);
   });
@@ -127,7 +147,9 @@ describe("stripMarkdown", () => {
       stripMarkdown(
         "**From the *New York Times* bestselling author of [Jonathan Strange](https://x.y)**, a novel.",
       ),
-    ).toBe("From the New York Times bestselling author of Jonathan Strange, a novel.");
+    ).toBe(
+      "From the New York Times bestselling author of Jonathan Strange, a novel.",
+    );
   });
 
   test("drops reference-style link footnotes", () => {
@@ -146,10 +168,14 @@ describe("stripMarkdown", () => {
 });
 
 test("editionPublisher takes the English edition's, minus catalog codes", () => {
-  const edition = (publisher: string) => ({ editions: { docs: [{ publisher: [publisher] }] } });
+  const edition = (publisher: string) => ({
+    editions: { docs: [{ publisher: [publisher] }] },
+  });
   expect(editionPublisher(edition("Collins"))).toBe("Collins");
   expect(editionPublisher(edition("#bVintage, #c2009."))).toBe("Vintage");
-  expect(editionPublisher(edition("Picador, Pan Bks"))).toBe("Picador, Pan Bks");
+  expect(editionPublisher(edition("Picador, Pan Bks"))).toBe(
+    "Picador, Pan Bks",
+  );
   expect(editionPublisher({})).toBeNull();
 });
 
@@ -165,34 +191,61 @@ test("readableName puts an author's name into English", () => {
   const murakami = {
     name: "村上春樹",
     personal_name: "Murakami, Haruki",
-    alternate_names: ["春樹 村上", "HARUKI MURAKAMI", "Haruki MURAKAMI", "Murakami Haruki", "Haruki Murakami"],
+    alternate_names: [
+      "春樹 村上",
+      "HARUKI MURAKAMI",
+      "Haruki MURAKAMI",
+      "Murakami Haruki",
+      "Haruki Murakami",
+    ],
   };
   expect(readableName(murakami)).toBe("Haruki Murakami");
   // Without a personal name, the first plainly written form
-  expect(readableName({ ...murakami, personal_name: null })).toBe("Murakami Haruki");
-  expect(readableName({ name: "Susanna Clarke", personal_name: "Clarke, Susanna" })).toBe("Susanna Clarke");
+  expect(readableName({ ...murakami, personal_name: null })).toBe(
+    "Murakami Haruki",
+  );
+  expect(
+    readableName({ name: "Susanna Clarke", personal_name: "Clarke, Susanna" }),
+  ).toBe("Susanna Clarke");
   expect(readableName({ name: "莫言" })).toBe("莫言");
 });
 
 test("englishTitle uses the English edition's title only for a translation", () => {
   const english = (title: string) => ({ title, language: ["eng"] });
-  expect(englishTitle("海辺のカフカ", english("Kafka on the Shore"))).toBe("Kafka on the Shore");
-  expect(englishTitle("Cien años de soledad", english("One Hundred Years of Solitude"))).toBe(
-    "One Hundred Years of Solitude",
+  expect(englishTitle("海辺のカフカ", english("Kafka on the Shore"))).toBe(
+    "Kafka on the Shore",
   );
-  expect(englishTitle("Sapiens", english("Sapiens: A Brief History of Humankind"))).toBe("Sapiens");
   expect(
-    englishTitle("What We Talk About When We Talk About Love", english("What we talk about when we talk about love")),
+    englishTitle(
+      "Cien años de soledad",
+      english("One Hundred Years of Solitude"),
+    ),
+  ).toBe("One Hundred Years of Solitude");
+  expect(
+    englishTitle("Sapiens", english("Sapiens: A Brief History of Humankind")),
+  ).toBe("Sapiens");
+  expect(
+    englishTitle(
+      "What We Talk About When We Talk About Love",
+      english("What we talk about when we talk about love"),
+    ),
   ).toBe("What We Talk About When We Talk About Love");
-  expect(englishTitle("海辺のカフカ", { title: "Kafka am Strand", language: ["ger"] })).toBe("海辺のカフカ");
+  expect(
+    englishTitle("海辺のカフカ", {
+      title: "Kafka am Strand",
+      language: ["ger"],
+    }),
+  ).toBe("海辺のカフカ");
   expect(englishTitle("Piranesi", undefined)).toBe("Piranesi");
 });
 
 test("coverSrc can ask Open Library for a smaller size", () => {
-  expect(coverSrc("https://covers.openlibrary.org/b/isbn/9780441172719-L.jpg", "M")).toBe(
-    "/covers/b/isbn/9780441172719-M.jpg",
+  expect(
+    coverSrc("https://covers.openlibrary.org/b/isbn/9780441172719-L.jpg", "M"),
+  ).toBe("/covers/b/isbn/9780441172719-M.jpg");
+  expect(coverSrc("https://example.com/cover.jpg", "M")).toBe(
+    "https://example.com/cover.jpg",
   );
-  expect(coverSrc("https://example.com/cover.jpg", "M")).toBe("https://example.com/cover.jpg");
 });
 
 function signupForm(fields: Record<string, string>) {
@@ -203,7 +256,10 @@ function signupForm(fields: Record<string, string>) {
 
 test("looksLikeBot passes a person who took their time", () => {
   const now = 1_000_000;
-  const form = signupForm({ website: "", renderedAt: String(now - MIN_SIGNUP_MS) });
+  const form = signupForm({
+    website: "",
+    renderedAt: String(now - MIN_SIGNUP_MS),
+  });
   expect(looksLikeBot(form, now)).toBe(null);
 });
 
@@ -215,7 +271,118 @@ test("looksLikeBot catches a filled honeypot", () => {
 
 test("looksLikeBot catches forms sent too fast or without a timestamp", () => {
   const now = 1_000_000;
-  expect(looksLikeBot(signupForm({ renderedAt: String(now - 500) }), now)).toBe("too-fast");
+  expect(looksLikeBot(signupForm({ renderedAt: String(now - 500) }), now)).toBe(
+    "too-fast",
+  );
   expect(looksLikeBot(signupForm({}), now)).toBe("too-fast");
-  expect(looksLikeBot(signupForm({ renderedAt: "soon" }), now)).toBe("too-fast");
+  expect(looksLikeBot(signupForm({ renderedAt: "soon" }), now)).toBe(
+    "too-fast",
+  );
+});
+
+describe("tidySearchResults", () => {
+  const real = {
+    title: "Atomic Habits",
+    author_name: ["James Clear"],
+    publisher: ["Avery"],
+    edition_count: 42,
+    cover_i: 1,
+  };
+  test("drops summaries, study guides, workbooks and copycat listings", () => {
+    const docs = [
+      real,
+      {
+        title: "Summary of Atomic Habits by James Clear",
+        author_name: ["James C. Scott"],
+        publisher: ["Independently Published"],
+        edition_count: 1,
+        cover_i: 2,
+      },
+      {
+        title: "Companion Workbook : Atomic Habits",
+        author_name: ["Julie Ann Price"],
+        publisher: ["Independently Published"],
+        edition_count: 1,
+        cover_i: 3,
+      },
+      {
+        title: "Atomic Habits Journal",
+        author_name: ["Atomic Habit Journal"],
+        publisher: ["Independently Published"],
+        edition_count: 1,
+      },
+      {
+        title: "Sapiens",
+        author_name: ["Book Summary"],
+        publisher: ["CreateSpace"],
+        edition_count: 1,
+        cover_i: 4,
+      },
+      {
+        title: "Atomic Habits",
+        author_name: ["Phil Graham"],
+        publisher: ["Independently Published"],
+        edition_count: 1,
+      },
+    ];
+    expect(tidySearchResults(docs)).toEqual([real]);
+  });
+  test("keeps real books that share a word or a title, and puts box sets last", () => {
+    const dune = {
+      title: "Dune",
+      author_name: ["Frank Herbert"],
+      publisher: ["Berkley"],
+      edition_count: 155,
+      cover_i: 1,
+    };
+    const graphic = {
+      title: "Dune",
+      author_name: ["Brian Herbert"],
+      publisher: ["Boom! Studios"],
+      edition_count: 10,
+      cover_i: 2,
+    };
+    const set = {
+      title: "The Martian / Artemis / Project Hail Mary",
+      author_name: ["Andy Weir"],
+      publisher: ["Ballantine"],
+      edition_count: 1,
+      cover_i: 3,
+    };
+    const journal = {
+      title: "The Journal of a Disappointed Man",
+      author_name: ["W. N. P. Barbellion"],
+      publisher: ["Chatto & Windus"],
+      edition_count: 9,
+      cover_i: 4,
+    };
+    expect(tidySearchResults([set, dune, graphic, journal])).toEqual([
+      dune,
+      graphic,
+      journal,
+      set,
+    ]);
+  });
+});
+
+test("editionPublisher wants the usual English edition, or none", () => {
+  const edition = (publisher: string, language = "eng") => ({
+    publisher: [publisher],
+    language: [language],
+  });
+  const of = (...docs: { publisher: string[]; language: string[] }[]) =>
+    editionPublisher({ editions: { docs } });
+  // The print edition over the audiobook's and the large-print one's
+  expect(
+    of(
+      edition("Audible Studios on Brilliance"),
+      edition("Random House Large Print"),
+      edition("Ballantine Books"),
+    ),
+  ).toBe("Ballantine Books");
+  // Only a large-print edition: its imprint, minus the suffix
+  expect(of(edition("Random House Large Print"))).toBe("Random House");
+  // Only an audiobook, or only a translation: no publisher at all
+  expect(of(edition("Blackstone Pub"))).toBeNull();
+  expect(of(edition("Wydawnictwo Naukowe PWN", "pol"))).toBeNull();
 });
