@@ -209,13 +209,15 @@ export function plateColorOf(value: unknown): PlateColor | null {
   return isPlateColor(color) ? color : null;
 }
 
-// Someone who hasn't chosen keeps the same color, worked out from their name
-function plateColorFor(firstname?: string | null, surname?: string | null): PlateColor {
+// Someone who hasn't chosen keeps the same color, worked out from their
+// name. Ink reads as grey, so it's there to choose but never handed out.
+const DEFAULT_PLATES: PlateColor[] = ["forest", "oxblood", "navy", "ochre", "plum"];
+
+export function plateColorFor(firstname?: string | null, surname?: string | null): PlateColor {
   const name = `${firstname ?? ""} ${surname ?? ""}`;
   let hash = 0;
   for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  const colors = Object.keys(PLATE_COLORS) as PlateColor[];
-  return colors[hash % colors.length];
+  return DEFAULT_PLATES[hash % DEFAULT_PLATES.length];
 }
 
 const initialsOf = (firstname?: string | null, surname?: string | null) =>
