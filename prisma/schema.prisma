@@ -56,6 +56,9 @@ model User {
   // The last confirmation email, so the resend button can't be used to
   // flood an inbox
   verificationSentAt DateTime?
+  // The last password-reset email, so the form can't be used to flood an
+  // inbox
+  passwordResetSentAt DateTime?
   // Set on throwaway demo accounts; everyone in one demo sandbox shares it
   demoGroup          String?
   // People who share one shelf: each other's books count as their own

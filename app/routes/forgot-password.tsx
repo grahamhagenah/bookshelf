@@ -3,8 +3,7 @@ import { json } from "@remix-run/node";
 import { Form, Link, useActionData } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 
-import { sendPasswordResetEmail } from "~/email.server";
-import { resetPassword } from "~/models/user.server";
+import { requestPasswordReset } from "~/reset-password.server";
 import { seo } from "~/seo";
 import { validateEmail } from "~/utils";
 
@@ -25,22 +24,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  // Normalize email for consistent lookup
-  const normalizedEmail = email.toLowerCase().trim();
-  const result = await resetPassword(normalizedEmail);
-
-  if (!result.success || !result.tempPassword || !result.userName) {
-    // Don't reveal whether the email exists or not for security
-    return json({ errors: null, success: true });
-  }
-
-  // Send the temporary password via email
-  await sendPasswordResetEmail({
-    toEmail: normalizedEmail,
-    toName: result.userName,
-    tempPassword: result.tempPassword,
-  });
-
+  // The same answer whether or not the address has an account, so the
+  // form can't be used to find out who's on Stacks
+  await requestPasswordReset(email);
   return json({ errors: null, success: true });
 };
 
@@ -65,7 +51,7 @@ export default function ForgotPasswordPage() {
               </h2>
               <p className="text-stone-900 dark:text-stone-100">
                 If an account exists with that email address, we&apos;ve sent a
-                temporary password you can use to log in.
+                link to choose a new password. It works for an hour.
               </p>
             </div>
             <div className="text-center">
@@ -84,8 +70,8 @@ export default function ForgotPasswordPage() {
                 Forgot your password?
               </h1>
               <p className="text-stone-600">
-                Enter your email address and we&apos;ll send you a temporary
-                password.
+                Enter your email address and we&apos;ll send you a link to
+                choose a new one.
               </p>
             </div>
 
@@ -125,7 +111,7 @@ export default function ForgotPasswordPage() {
               type="submit"
               className="w-full rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
             >
-              Send temporary password
+              Send reset link
             </button>
 
             <div className="text-center text-sm text-stone-500">
