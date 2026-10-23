@@ -5,6 +5,7 @@ import { cancelBilling } from "~/billing.server";
 import { prisma } from "~/db.server";
 import { shelfIds } from "~/models/household.server";
 import type { CoverSize, LibraryView, Theme } from "~/utils";
+import { normalizeEmail } from "~/utils";
 
 export type { User } from "@prisma/client";
 
@@ -66,7 +67,7 @@ export async function getUserById(id: User["id"]) {
 
 export async function getUserByEmail(email: User["email"]) {
   return prisma.user.findUnique({
-    where: { email },
+    where: { email: normalizeEmail(email) },
     select: { id: true, demoGroup: true },
   });
 }
@@ -94,6 +95,7 @@ export async function updateUser(
     profileEmoji?: string | null;
   },
 ) {
+  if (data.email !== undefined) data = { ...data, email: normalizeEmail(data.email) };
   // A new address has to be confirmed again
   const current = data.email
     ? await prisma.user.findUnique({ where: { id }, select: { email: true } })
@@ -426,7 +428,7 @@ export async function createUser(
 
   return prisma.user.create({
     data: {
-      email,
+      email: normalizeEmail(email),
       password: {
         create: {
           hash: hashedPassword,
@@ -440,7 +442,7 @@ export async function createUser(
 }
 
 export async function deleteUserByEmail(email: User["email"]) {
-  return prisma.user.delete({ where: { email } });
+  return prisma.user.delete({ where: { email: normalizeEmail(email) } });
 }
 
 // Remove accounts and everything that points at them. Their own books,
@@ -694,8 +696,7 @@ export async function getSuggestedFriends(userId: string, limit = 5) {
 }
 
 export async function resetPassword(email: string) {
-  // Normalize email to lowercase for consistent lookup
-  const normalizedEmail = email.toLowerCase().trim();
+  const normalizedEmail = normalizeEmail(email);
 
   const user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
@@ -740,7 +741,7 @@ export async function verifyLogin(
   password: Password["hash"],
 ) {
   const userWithPassword = await prisma.user.findUnique({
-    where: { email },
+    where: { email: normalizeEmail(email) },
     include: {
       password: true,
     },

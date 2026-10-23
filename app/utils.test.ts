@@ -7,6 +7,7 @@ import {
   readableName,
   isDemoEmail,
   looksLikeBot,
+  normalizeEmail,
   MIN_SIGNUP_MS,
   safeRedirect,
   stripMarkdown,
@@ -385,4 +386,8 @@ test("editionPublisher wants the usual English edition, or none", () => {
   // Only an audiobook, or only a translation: no publisher at all
   expect(of(edition("Blackstone Pub"))).toBeNull();
   expect(of(edition("Wydawnictwo Naukowe PWN", "pol"))).toBeNull();
+});
+
+test("normalizeEmail trims and lowercases", () => {
+  expect(normalizeEmail("  Jane@Gmail.COM ")).toBe("jane@gmail.com");
 });
