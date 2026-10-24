@@ -212,12 +212,15 @@ function BookCover({
   title,
   author,
   onAddCover,
+  fetching = false,
 }: {
   src: string;
   title: string;
   author: string;
   // For the owner: the placeholder offers to fix the missing cover
   onAddCover?: () => void;
+  // A pasted cover is being fetched and kept by the save that's under way
+  fetching?: boolean;
 }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(!src);
@@ -227,6 +230,15 @@ function BookCover({
     if (img.naturalWidth <= 1) setError(true);
     else setLoaded(true);
   };
+  // A new cover starts over: what the last one did is no guide to it.
+  // Without this, a book whose cover had failed never showed the one
+  // saved in its place until the page was reloaded.
+  useEffect(() => {
+    setLoaded(false);
+    setError(!src);
+  }, [src]);
+  // The picture is on its way: being fetched by the save, or loading
+  const waiting = fetching || Boolean(src && !loaded && !error);
 
   return (
     // The cover keeps its own proportions here (some are taller or wider
@@ -241,10 +253,18 @@ function BookCover({
           title={title}
           author={author}
           large
-          className="absolute inset-0"
+          className={`absolute inset-0 ${waiting ? "animate-pulse" : ""}`}
         />
       ) : null}
-      {error && onAddCover ? (
+      {fetching ? (
+        <p
+          role="status"
+          className="absolute inset-x-2 bottom-2 rounded-md bg-white/90 dark:bg-stone-900/90 px-2 py-1.5 text-center text-xs font-medium text-stone-700 dark:text-stone-200 shadow-sm ring-1 ring-stone-900/10 dark:ring-white/10"
+        >
+          Fetching the cover…
+        </p>
+      ) : null}
+      {error && onAddCover && !fetching ? (
         <button
           type="button"
           onClick={onAddCover}
@@ -1454,6 +1474,9 @@ export default function BookDetailsPage() {
               title={data.book.title}
               author={data.book.author}
               onAddCover={data.isOwner && !isEditing ? () => setIsEditing(true) : undefined}
+              // Saving a cover pasted from another site downloads it first,
+              // which takes a few seconds
+              fetching={Boolean(isSaving && navigation.formData?.get("cover") !== data.book.cover)}
             />
             {!isEditing ? (
               <div className="md:hidden min-w-0 flex-1 [overflow-wrap:anywhere]">
