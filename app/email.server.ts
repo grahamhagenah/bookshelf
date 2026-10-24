@@ -448,7 +448,6 @@ export function renderAnnouncement({
     preheader: (title ? `${title}. ` : "") + message.slice(0, 120),
     masthead: scene(),
     content: `
-        <p style="margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: ${muted};">From Stacks</p>
         ${title ? `<h1 style="margin: 0 0 14px; font-size: 24px; line-height: 1.25; font-weight: 600; color: ${ink};">${esc(title)}</h1>` : ""}
         ${paragraph(`Hi ${esc(toName)},`)}
         ${paragraphs
