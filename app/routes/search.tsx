@@ -1,10 +1,11 @@
-import { json } from "@remix-run/node";
+import { defer, json } from "@remix-run/node";
 import type {
   LoaderFunctionArgs,
   ActionFunctionArgs,
   MetaFunction,
 } from "@remix-run/node";
 import {
+  Await,
   useLoaderData,
   useSearchParams,
   useNavigation,
@@ -13,7 +14,7 @@ import {
   Form,
   useRevalidator,
 } from "@remix-run/react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import BarcodeScanner from "~/components/barcode-scanner";
 import { BookmarkIcon, CameraIcon, CheckCircleIcon } from "~/components/icons";
@@ -117,23 +118,45 @@ export async function loader({ request }: LoaderFunctionArgs) {
       ? await searchFriendsBooks(userId, query)
       : [];
 
-  // Return empty results if no query
+  const base = { friendBooks, query, searchType, language, page, libraryKeys, forWant };
   if (!query.trim()) {
-    return json({
-      friendBooks,
-      docs: [],
-      numFound: 0,
-      query: "",
-      searchType,
-      language,
-      page: 1,
-      totalPages: 0,
-      libraryKeys,
-      wantKeys: [],
-      forWant,
-    });
+    return defer({ ...base, query: "", page: 1, openLibrary: Promise.resolve(NO_RESULTS) });
   }
 
+  // Open Library's results stream in after the page, which shows friends'
+  // copies at once and says it's still looking
+  return defer({ ...base, openLibrary: searchOpenLibrary({ query, searchType, language, page, wishes }) });
+}
+
+interface OpenLibraryResults {
+  docs: OpenLibraryBook[];
+  numFound: number;
+  totalPages: number;
+  // Results already on the want-to-read list, by work key
+  wantKeys: string[];
+  // Open Library didn't answer, which is not the same as no matches
+  failed: boolean;
+}
+
+const NO_RESULTS: OpenLibraryResults = { docs: [], numFound: 0, totalPages: 0, wantKeys: [], failed: false };
+
+// Open Library can take ten seconds or more on a slow day. The page is
+// already up by then, so the wait is shown, not hidden.
+const SEARCH_TIMEOUT_MS = 12000;
+
+async function searchOpenLibrary({
+  query,
+  searchType,
+  language,
+  page,
+  wishes,
+}: {
+  query: string;
+  searchType: string;
+  language: string;
+  page: number;
+  wishes: Awaited<ReturnType<typeof getWantToReadWorks>>;
+}): Promise<OpenLibraryResults> {
   // Explicitly request the fields we need
   const fields = [
     "title",
@@ -151,22 +174,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
     ENGLISH_EDITION_FIELDS,
   ].join(",");
 
-  // Build the query with language filter if specified
   // Open Library uses "language:code" syntax within the query
-  let fullQuery = query;
-  if (language) {
-    fullQuery = `${query} language:${language}`;
-  }
-
-  // Build search query based on type
+  const fullQuery = language ? `${query} language:${language}` : query;
   let searchQuery = "";
   switch (searchType) {
     case "title":
       searchQuery = `title=${encodeURIComponent(fullQuery)}`;
       break;
     case "author":
-      // For author search, we need to handle language differently
-      // since language:xxx doesn't work well with author= parameter
+      // language:xxx doesn't work well with author=, so it goes in q=
       searchQuery = language
         ? `q=${encodeURIComponent(`author:${query} language:${language}`)}`
         : `author=${encodeURIComponent(query)}`;
@@ -174,51 +190,37 @@ export async function loader({ request }: LoaderFunctionArgs) {
     default:
       searchQuery = `q=${encodeURIComponent(fullQuery)}`;
   }
-
   const offset = (page - 1) * RESULTS_PER_PAGE;
 
-  // Open Library rejects some queries (e.g. "the") and can be slow or down;
-  // treat any failure as no matches so friends' results still show
-  let data: OpenLibraryResponse = { docs: [], numFound: 0 };
+  let data: OpenLibraryResponse;
   try {
     const res = await fetch(
       `https://openlibrary.org/search.json?${searchQuery}&limit=${RESULTS_PER_PAGE}&offset=${offset}&${ENGLISH_EDITION_PARAMS}&fields=${fields}`,
-      { signal: AbortSignal.timeout(8000) },
+      { signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS) },
     );
     const body = await res.json();
-    if (res.ok && Array.isArray(body.docs)) {
-      data = { ...body, docs: tidySearchResults(await inEnglish(body.docs)) };
-    }
+    if (!res.ok || !Array.isArray(body.docs)) throw new Error(`Open Library answered ${res.status}`);
+    data = { ...body, docs: tidySearchResults(await inEnglish(body.docs)) };
   } catch {
-    // keep the empty result
+    // Slow, down, or a query it rejects ("the"): say so
+    return { ...NO_RESULTS, failed: true };
   }
 
-  const totalPages = Math.ceil(data.numFound / RESULTS_PER_PAGE);
-
-  // Results already on the want-to-read list, by work key or (for books
-  // that came in from an import) by title
   const wantKeys = data.docs
     .filter(
       (doc) =>
         doc.key &&
-        wishes.some((wish) =>
-          sameWork(wish, { title: doc.title, openLibraryKey: doc.key }),
-        ),
+        wishes.some((wish) => sameWork(wish, { title: doc.title, openLibraryKey: doc.key })),
     )
     .map((doc) => doc.key as string);
 
-  return json({
-    ...data,
-    friendBooks,
-    query,
-    searchType,
-    language,
-    page,
-    totalPages,
-    libraryKeys,
+  return {
+    docs: data.docs,
+    numFound: data.numFound,
+    totalPages: Math.ceil(data.numFound / RESULTS_PER_PAGE),
     wantKeys,
-    forWant,
-  });
+    failed: false,
+  };
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -410,6 +412,34 @@ function WorkLink({
   );
 }
 
+// Shown while Open Library is still looking; the friends' results above
+// are already on the page
+function SearchingOpenLibrary() {
+  return (
+    <p className="py-2 text-sm text-stone-400 dark:text-stone-500 animate-pulse" role="status">
+      Searching Open Library…
+    </p>
+  );
+}
+
+// Open Library didn't answer: slow today, or down. Friends' copies above
+// are unaffected.
+function OpenLibraryDown({ onRetry }: { onRetry: () => void }) {
+  return (
+    <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
+      Open Library didn&apos;t answer. It&apos;s slow right now; give it a moment and{" "}
+      <button
+        type="button"
+        onClick={onRetry}
+        className="font-medium text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-white"
+      >
+        try again
+      </button>
+      .
+    </p>
+  );
+}
+
 function SearchResultItem({
   book,
   isInLibrary,
@@ -589,7 +619,6 @@ export default function Search() {
   const currentType = searchParams.get("type") || "all";
   const currentLang = searchParams.get("lang") || "";
   const currentPage = data.page || 1;
-  const totalPages = data.totalPages || 0;
   const friendBooks = data.friendBooks ?? [];
 
   // Build URL for a specific page while preserving other params
@@ -600,7 +629,7 @@ export default function Search() {
   };
 
   // Generate page numbers to show
-  const getPageNumbers = () => {
+  const getPageNumbers = (totalPages: number) => {
     const pages: (number | "...")[] = [];
     const maxVisible = 5;
 
@@ -745,11 +774,17 @@ export default function Search() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
               <h2 className={sectionHeading}>
                 Add to your library
-                {data.numFound > 0 ? (
-                  <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">
-                    {data.numFound.toLocaleString()} on Open Library
-                  </span>
-                ) : null}
+                <Suspense fallback={null}>
+                  <Await resolve={data.openLibrary} errorElement={null}>
+                    {(results) =>
+                      results.numFound > 0 ? (
+                        <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">
+                          {results.numFound.toLocaleString()} on Open Library
+                        </span>
+                      ) : null
+                    }
+                  </Await>
+                </Suspense>
               </h2>
               <Form method="get" className="flex gap-2">
                 <input type="hidden" name="q" value={currentQuery} />
@@ -786,84 +821,97 @@ export default function Search() {
               </Form>
             </div>
 
-            {data.docs.length === 0 ? (
-              <p className="py-2 text-sm text-stone-400 dark:text-stone-500">
-                No matches on Open Library. Try fewer words or another filter.
-              </p>
-            ) : (
-              <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-                {data.docs.map((book, index) => (
-                  <SearchResultItem
-                    forWant={data.forWant}
-                    key={book.key || index}
-                    book={book}
-                    isInLibrary={
-                      book.key ? data.libraryKeys.includes(book.key) : false
-                    }
-                    isWanted={
-                      book.key ? data.wantKeys.includes(book.key) : false
-                    }
-                  />
-                ))}
-              </ul>
-            )}
-
-            {totalPages > 1 ? (
-              <nav
-                className="flex justify-center items-center gap-2 py-8"
-                aria-label="Pagination"
+            <Suspense fallback={<SearchingOpenLibrary />}>
+              <Await
+                resolve={data.openLibrary}
+                errorElement={<OpenLibraryDown onRetry={() => revalidator.revalidate()} />}
               >
-                {currentPage > 1 ? (
-                  <Link
-                    to={getPageUrl(currentPage - 1)}
-                    className={pageLink}
-                    aria-label="Previous page"
-                  >
-                    Previous
-                  </Link>
+                {(results) => (
+                  <>
+                {results.failed ? (
+                  <OpenLibraryDown onRetry={() => revalidator.revalidate()} />
+                ) : results.docs.length === 0 ? (
+                  <p className="py-2 text-sm text-stone-400 dark:text-stone-500">
+                    No matches on Open Library. Try fewer words or another filter.
+                  </p>
                 ) : (
-                  <span className={pageDisabled}>Previous</span>
-                )}
-
-                <div className="flex gap-1">
-                  {getPageNumbers().map((page, index) =>
-                    page === "..." ? (
-                      <span
-                        key={`ellipsis-${index}`}
-                        className="px-2 py-1.5 text-sm text-stone-400"
-                      >
-                        …
-                      </span>
-                    ) : (
-                      <Link
-                        key={page}
-                        to={getPageUrl(page)}
-                        className={
-                          page === currentPage
-                            ? "px-3 py-1.5 text-sm rounded-md border bg-forest-600 text-white border-forest-600"
-                            : pageLink
+                  <ul className="divide-y divide-stone-100 dark:divide-stone-800">
+                    {results.docs.map((book, index) => (
+                      <SearchResultItem
+                        forWant={data.forWant}
+                        key={book.key || index}
+                        book={book}
+                        isInLibrary={
+                          book.key ? data.libraryKeys.includes(book.key) : false
                         }
-                        aria-current={page === currentPage ? "page" : undefined}
-                      >
-                        {page}
-                      </Link>
-                    ),
-                  )}
-                </div>
-
-                {currentPage < totalPages ? (
-                  <Link
-                    to={getPageUrl(currentPage + 1)}
-                    className={pageLink}
-                    aria-label="Next page"
-                  >
-                    Next
-                  </Link>
-                ) : (
-                  <span className={pageDisabled}>Next</span>
+                        isWanted={
+                          book.key ? results.wantKeys.includes(book.key) : false
+                        }
+                      />
+                    ))}
+                  </ul>
                 )}
-              </nav>
-            ) : null}
+
+                {results.totalPages > 1 ? (
+                  <nav
+                    className="flex justify-center items-center gap-2 py-8"
+                    aria-label="Pagination"
+                  >
+                    {currentPage > 1 ? (
+                      <Link
+                        to={getPageUrl(currentPage - 1)}
+                        className={pageLink}
+                        aria-label="Previous page"
+                      >
+                        Previous
+                      </Link>
+                    ) : (
+                      <span className={pageDisabled}>Previous</span>
+                    )}
+
+                    <div className="flex gap-1">
+                      {getPageNumbers(results.totalPages).map((page, index) =>
+                        page === "..." ? (
+                          <span
+                            key={`ellipsis-${index}`}
+                            className="px-2 py-1.5 text-sm text-stone-400"
+                          >
+                            …
+                          </span>
+                        ) : (
+                          <Link
+                            key={page}
+                            to={getPageUrl(page)}
+                            className={
+                              page === currentPage
+                                ? "px-3 py-1.5 text-sm rounded-md border bg-forest-600 text-white border-forest-600"
+                                : pageLink
+                            }
+                            aria-current={page === currentPage ? "page" : undefined}
+                          >
+                            {page}
+                          </Link>
+                        ),
+                      )}
+                    </div>
+
+                    {currentPage < results.totalPages ? (
+                      <Link
+                        to={getPageUrl(currentPage + 1)}
+                        className={pageLink}
+                        aria-label="Next page"
+                      >
+                        Next
+                      </Link>
+                    ) : (
+                      <span className={pageDisabled}>Next</span>
+                    )}
+                  </nav>
+                ) : null}
+                  </>
+                )}
+              </Await>
+            </Suspense>
           </section>
         </div>
       )}

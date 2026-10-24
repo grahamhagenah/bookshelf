@@ -12,7 +12,10 @@ import { RemixServer } from "@remix-run/react";
 import isBot from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 
-const ABORT_DELAY = 5_000;
+// How long a page may keep streaming deferred data before the server
+// gives up on it. The search page waits up to twelve seconds for Open
+// Library, so this has to outlast that.
+const ABORT_DELAY = 15_000;
 
 export default function handleRequest(
   request: Request,
