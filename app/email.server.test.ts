@@ -57,6 +57,7 @@ test("an announcement carries the message, escaped, with its opt-out", () => {
 test("without a headline the announcement still has its eyebrow and a plain subject", () => {
   const { subject, html } = renderAnnouncement({ toName: "Maya", message: "Hello" });
   expect(subject).toBe("News from Stacks");
-  expect(html).toContain("From Stacks");
+  // The brand is in the masthead, over the books, and nowhere else
+  expect(html.split("/icon-192.png").length - 1).toBe(1);
   expect(html).not.toContain("<h1");
 });

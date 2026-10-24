@@ -33,6 +33,13 @@ const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}
 
 // The logo and name, a white card for the message, and a quiet footer.
 // The preheader is the line inboxes show beside the subject.
+// The mark and the name, linking home
+const brand = (size: number, margin = "0") => `
+      <a href="${APP_URL}" style="display: inline-block; margin: ${margin}; color: ${ink}; text-decoration: none;">
+        <img src="${APP_URL}/icon-192.png" width="${size}" height="${size}" alt="" style="vertical-align: middle; border: 0;">
+        <span style="vertical-align: middle; margin-left: 6px; font-size: ${size - 9}px; font-weight: 600;">Stacks</span>
+      </a>`;
+
 function layout({
   preheader,
   masthead = "",
@@ -40,7 +47,8 @@ function layout({
   footer,
 }: {
   preheader: string;
-  // A full-bleed strip at the top of the card, above the message
+  // A full-bleed strip at the top of the card, above the message. It
+  // carries the brand itself, so none goes above the card.
   masthead?: string;
   content: string;
   footer: string;
@@ -51,10 +59,7 @@ function layout({
   <body style="margin: 0; padding: 32px 16px; background: ${page}; font-family: ${font}; color: ${ink};">
     <div style="display: none; max-height: 0; overflow: hidden;">${esc(preheader)}</div>
     <div style="max-width: 560px; margin: 0 auto;">
-      <a href="${APP_URL}" style="display: inline-block; margin: 0 0 16px; color: ${ink}; text-decoration: none;">
-        <img src="${APP_URL}/icon-192.png" width="28" height="28" alt="" style="vertical-align: middle; border: 0;">
-        <span style="vertical-align: middle; margin-left: 6px; font-size: 19px; font-weight: 600;">Stacks</span>
-      </a>
+      ${masthead ? "" : brand(28, "0 0 16px")}
       <div style="background: #ffffff; border: 1px solid ${line}; border-radius: 12px; overflow: hidden;">
         ${masthead}
         <div style="padding: 28px 24px;">
@@ -382,8 +387,8 @@ export async function sendDigestEmail({
 // ---- The homepage's lending scene, as a strip for the top of an email ----
 
 // Three books from the front page stand on the card's edge like a shelf,
-// different heights, after the "Due soon" note and the reminder that's
-// gone out. Tables and plain boxes only: no tilt, since mail clients
+// different heights, under the mark and name, after the "Due soon" note
+// and the reminder that's gone out. Tables and plain boxes only: no tilt, since mail clients
 // drop transforms.
 const SCENE_COVERS = [
   { isbn: "9780063251922", width: 60 },
@@ -410,6 +415,7 @@ function scene() {
       <div style="background: ${page}; border-bottom: 1px solid ${line}; padding: 20px 24px 0; font-size: 0; line-height: 0;">
         <div style="display: inline-block; vertical-align: bottom; width: 270px; max-width: 100%; margin: 0 16px 16px 0; font-size: 13px; line-height: 1.45;">${note}</div>
         <div style="display: inline-block; vertical-align: bottom; white-space: nowrap;">
+          <div style="margin: 0 0 18px; line-height: 1;">${brand(26)}</div>
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse: collapse;"><tr>${books}</tr></table>
         </div>
       </div>`;
