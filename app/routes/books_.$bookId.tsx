@@ -8,10 +8,8 @@ import { json, redirect } from "@remix-run/node";
 import {
   useFetcher,
   Form,
-  isRouteErrorResponse,
   Link,
   useLoaderData,
-  useRouteError,
   useNavigation,
   useActionData,
 } from "@remix-run/react";
@@ -20,6 +18,7 @@ import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
+import ErrorPage from "~/components/error-page";
 import { LentIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
@@ -1036,20 +1035,24 @@ function CoverPicker({
   selected: string;
   onPick: (url: string) => void;
 }) {
-  const fetcher = useFetcher<{ covers: CoversResponse }>({ key: `covers-${bookId}` });
+  const fetcher = useFetcher<{ covers: CoversResponse; failed?: boolean }>({ key: `covers-${bookId}` });
   const covers = fetcher.data?.covers;
+  const failed = fetcher.data?.failed === true;
   const loading = fetcher.state !== "idle";
 
-  if (!covers) {
+  if (!covers || failed) {
     return (
-      <button
-        type="button"
-        disabled={loading}
-        onClick={() => fetcher.load(`/api/covers?bookId=${bookId}`)}
-        className="mt-3 text-sm text-stone-700 dark:text-stone-200 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline disabled:opacity-60"
-      >
-        {loading ? "Looking on Open Library…" : "Or pick a cover from Open Library"}
-      </button>
+      <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
+        {failed && !loading ? "Open Library didn't answer. " : null}
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => fetcher.load(`/api/covers?bookId=${bookId}`)}
+          className="text-stone-700 dark:text-stone-200 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline disabled:opacity-60"
+        >
+          {loading ? "Looking on Open Library…" : failed ? "Try again" : "Or pick a cover from Open Library"}
+        </button>
+      </p>
     );
   }
   if (covers.length === 0) {
@@ -1878,19 +1881,5 @@ export default function BookDetailsPage() {
 }
 
 export function ErrorBoundary() {
-  const error = useRouteError();
-
-  if (error instanceof Error) {
-    return <div>An unexpected error occurred: {error.message}</div>;
-  }
-
-  if (!isRouteErrorResponse(error)) {
-    return <h1>Unknown Error</h1>;
-  }
-
-  if (error.status === 404) {
-    return <div>Book not found</div>;
-  }
-
-  return <div>An unexpected error occurred: {error.statusText}</div>;
+  return <ErrorPage what="book" />;
 }
