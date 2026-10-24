@@ -53,7 +53,10 @@ function layout({
 }) {
   return `<!DOCTYPE html>
 <html>
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+  <head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>@media (max-width: 480px) { .phone { display: block !important; } .wide { display: none !important; } }</style>
+  </head>
   <body style="margin: 0; padding: 32px 16px; background: ${page}; font-family: ${font}; color: ${ink};">
     <div style="display: none; max-height: 0; overflow: hidden;">${esc(preheader)}</div>
     <div style="max-width: 560px; margin: 0 auto;">
@@ -408,12 +411,14 @@ function scene() {
     </div>
     <p style="margin: 10px 0 0;"><span style="display: inline-block; background: ${ink}; color: #ffffff; border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 600;">&#10003;&nbsp; Reminder sent to Anika</span></p>`;
   // Two blocks side by side; on a narrow screen the covers drop under the
-  // note and still stand on the line
+  // note and still stand on the line, and the wordmark moves to the top,
+  // by the one media query mail clients honor
   return `
       <div style="background: ${page}; border-bottom: 1px solid ${line}; padding: 20px 24px 0; font-size: 0; line-height: 0;">
+        <div class="phone" style="display: none; margin: 0 0 18px;">${brand(75)}</div>
         <div style="display: inline-block; vertical-align: bottom; width: 270px; max-width: 100%; margin: 0 16px 16px 0; font-size: 13px; line-height: 1.45;">${note}</div>
         <div style="display: inline-block; vertical-align: bottom; white-space: nowrap;">
-          <div style="margin: 0 0 18px; line-height: 0;">${brand(75)}</div>
+          <div class="wide" style="margin: 0 0 18px; line-height: 0;">${brand(75)}</div>
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse: collapse;"><tr>${books}</tr></table>
         </div>
       </div>`;
