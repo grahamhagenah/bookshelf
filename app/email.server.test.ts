@@ -36,16 +36,27 @@ test("an announcement carries the message, escaped, with its opt-out", () => {
   const { subject, html, text } = renderAnnouncement({
     toUserId: "u1",
     toName: "Maya",
-    message: "Big updates: a public page for your shelf.\nQuestions & notes welcome.",
+    headline: "Big updates",
+    message: "A public page for your shelf.\n\nQuestions & notes welcome.",
   });
-  expect(subject).toBe("News from Stacks");
+  expect(subject).toBe("Stacks: Big updates");
+  expect(html).toContain("<h1");
+  expect(html).toContain("Big updates</h1>");
   expect(html).toContain("Hi Maya");
-  expect(html).toContain("Questions &amp; notes welcome.");
+  // A blank line starts a new paragraph
+  expect(html).toContain("<p style=\"margin: 0 0 16px; white-space: pre-wrap; font-size: 16px; line-height: 1.55; color: #44403c;\">Questions &amp; notes welcome.</p>");
   expect(html).toContain("/notifications");
   // The front page's lending scene sits on top, covers through the site
   expect(html).toContain("Due soon");
   expect(html).toContain("/covers/b/isbn/9780063251922-M.jpg");
   // Turning these off is the email-notifications switch
   expect(html).toContain("k=requests");
-  expect(text).toContain("Big updates: a public page for your shelf.\nQuestions & notes welcome.");
+  expect(text).toContain("BIG UPDATES\n\nHi Maya,\n\nA public page for your shelf.\n\nQuestions & notes welcome.");
+});
+
+test("without a headline the announcement still has its eyebrow and a plain subject", () => {
+  const { subject, html } = renderAnnouncement({ toName: "Maya", message: "Hello" });
+  expect(subject).toBe("News from Stacks");
+  expect(html).toContain("From Stacks");
+  expect(html).not.toContain("<h1");
 });

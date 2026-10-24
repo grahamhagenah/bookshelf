@@ -422,30 +422,43 @@ function scene() {
 export function renderAnnouncement({
   toUserId,
   toName,
+  headline,
   message,
 }: {
   toUserId?: string;
   toName: string;
+  // A short title above the message, and the subject
+  headline?: string | null;
   message: string;
 }) {
   const link = `${APP_URL}/notifications`;
+  const title = headline?.trim() || "";
+  // Blank lines in the message are paragraph breaks
+  const paragraphs = message.split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
   const html = layout({
-    preheader: message.slice(0, 120),
+    preheader: (title ? `${title}. ` : "") + message.slice(0, 120),
     masthead: scene(),
     content: `
-        ${paragraph(`Hi ${esc(toName)}, a word from Stacks:`)}
-        <p style="margin: 0; white-space: pre-wrap; font-size: 16px; line-height: 1.55; color: ${ink};">${esc(message)}</p>
+        <p style="margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: ${muted};">From Stacks</p>
+        ${title ? `<h1 style="margin: 0 0 14px; font-size: 24px; line-height: 1.25; font-weight: 600; color: ${ink};">${esc(title)}</h1>` : ""}
+        ${paragraph(`Hi ${esc(toName)},`)}
+        ${paragraphs
+          .map(
+            (part) =>
+              `<p style="margin: 0 0 16px; white-space: pre-wrap; font-size: 16px; line-height: 1.55; color: ${body};">${esc(part)}</p>`,
+          )
+          .join("")}
         ${button(link, "Open Stacks")}`,
     footer: optOutFooter(toUserId, "requests", "Stop email notifications"),
   });
-  const text = `Hi ${toName}, a word from Stacks:
+  const text = `${title ? `${title.toUpperCase()}\n\n` : ""}Hi ${toName},
 
 ${message}
 
 ${link}
 
 ${optOutText(toUserId, "requests", "Stop email notifications")}`;
-  return { subject: "News from Stacks", html, text };
+  return { subject: title ? `Stacks: ${title}` : "News from Stacks", html, text };
 }
 
 export async function sendAnnouncementEmail({
