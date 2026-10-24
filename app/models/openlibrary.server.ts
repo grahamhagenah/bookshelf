@@ -273,6 +273,20 @@ export async function findCovers(book: {
   }));
 }
 
+// Everything the work page shows about a book that's on no one's shelf
+// yet: the search record for it, its description, and its author with
+// bio. Null when Open Library doesn't know the key.
+export async function lookupWorkPage(key: string) {
+  const found = await lookupWork({ title: "", author: "", openLibraryKey: key });
+  if (!found || !found.title) return null;
+  const [description] = await Promise.all([
+    fetchDescription(key),
+    found.authorKey ? refreshAuthor(found.authorKey).catch(() => undefined) : undefined,
+  ]);
+  const authorDetails = found.authorKey ? await getAuthor(found.authorKey) : null;
+  return { ...found, key, description, authorDetails };
+}
+
 // A work's description, which the search results don't carry
 export async function fetchDescription(key: string): Promise<string> {
   try {

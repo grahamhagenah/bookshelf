@@ -390,6 +390,26 @@ function FriendBookRow({ book }: { book: FriendBook }) {
   );
 }
 
+// The page for a book that's on no shelf yet, when Open Library gives it
+// a work key; otherwise the children stand as they are
+function WorkLink({
+  workKey,
+  className,
+  children,
+}: {
+  workKey?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const olid = workKey?.match(/^\/works\/(OL\d+W)$/)?.[1];
+  if (!olid) return <span className={className}>{children}</span>;
+  return (
+    <Link to={`/works/${olid}`} className={className}>
+      {children}
+    </Link>
+  );
+}
+
 function SearchResultItem({
   book,
   isInLibrary,
@@ -424,19 +444,24 @@ function SearchResultItem({
   return (
     <li className="py-4">
       <fetcher.Form method="post" className="flex gap-4">
-        <SmallCover
-          src={
-            book.cover_i
-              ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
-              : null
-          }
-          title={book.title}
-          author={author}
-          className="w-[74px] self-stretch"
-        />
+        {/* The cover and title open the book's own page; the buttons stay here */}
+        <WorkLink workKey={book.key} className="flex-shrink-0 self-stretch">
+          <SmallCover
+            src={
+              book.cover_i
+                ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
+                : null
+            }
+            title={book.title}
+            author={author}
+            className="w-[74px] h-full"
+          />
+        </WorkLink>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-stone-900 dark:text-stone-100 leading-snug">
-            {book.title}
+            <WorkLink workKey={book.key} className="hover:underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600">
+              {book.title}
+            </WorkLink>
           </h3>
           <p className="text-stone-500 dark:text-stone-400">{author}</p>
           {details.length > 0 ? (

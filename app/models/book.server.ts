@@ -2,6 +2,8 @@ import type { User, Book } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 import { cleanSubjects, hasTranslationSubjects } from "~/utils";
+import type { Work } from "~/works";
+import { sameWork } from "~/works";
 
 import { shelfIdsFor } from "./household.server";
 
@@ -414,6 +416,16 @@ export async function getUserLibraryKeys(ownerIds: User["id"][]) {
     select: { openLibraryKey: true },
   });
   return books.map((b) => b.openLibraryKey).filter(Boolean) as string[];
+}
+
+// Your shelf's copy of a book, by work key or, for books that came in
+// without one (imports, scans), by title. Null when you don't have it.
+export async function findOwnCopy(ownerIds: User["id"][], work: Work) {
+  const books = await prisma.book.findMany({
+    where: { userId: { in: ownerIds } },
+    select: { id: true, title: true, openLibraryKey: true, isbn: true },
+  });
+  return books.find((book) => sameWork(book, work)) ?? null;
 }
 
 export async function bookExistsInLibrary(
