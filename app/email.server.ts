@@ -33,12 +33,10 @@ const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}
 
 // The logo and name, a white card for the message, and a quiet footer.
 // The preheader is the line inboxes show beside the subject.
-// The mark and the name, linking home
-const brand = (size: number, margin = "0") => `
-      <a href="${APP_URL}" style="display: inline-block; margin: ${margin}; color: ${ink}; text-decoration: none;">
-        <img src="${APP_URL}/icon-192.png" width="${size}" height="${size}" alt="" style="vertical-align: middle; border: 0;">
-        <span style="vertical-align: middle; margin-left: 6px; font-size: ${size - 9}px; font-weight: 600;">Stacks</span>
-      </a>`;
+// The wordmark, linking home: a picture, since mail clients don't load
+// the serif. It's drawn at twice this size, 150 by 45, for sharp screens.
+const brand = (width: number, margin = "0") => `
+      <a href="${APP_URL}" style="display: inline-block; margin: ${margin};"><img src="${APP_URL}/wordmark.png" width="${width}" height="${Math.round((width * 45) / 150)}" alt="Stacks" style="display: block; border: 0;"></a>`;
 
 function layout({
   preheader,
@@ -59,7 +57,7 @@ function layout({
   <body style="margin: 0; padding: 32px 16px; background: ${page}; font-family: ${font}; color: ${ink};">
     <div style="display: none; max-height: 0; overflow: hidden;">${esc(preheader)}</div>
     <div style="max-width: 560px; margin: 0 auto;">
-      ${masthead ? "" : brand(28, "0 0 16px")}
+      ${masthead ? "" : brand(80, "0 0 16px")}
       <div style="background: #ffffff; border: 1px solid ${line}; border-radius: 12px; overflow: hidden;">
         ${masthead}
         <div style="padding: 28px 24px;">
@@ -415,7 +413,7 @@ function scene() {
       <div style="background: ${page}; border-bottom: 1px solid ${line}; padding: 20px 24px 0; font-size: 0; line-height: 0;">
         <div style="display: inline-block; vertical-align: bottom; width: 270px; max-width: 100%; margin: 0 16px 16px 0; font-size: 13px; line-height: 1.45;">${note}</div>
         <div style="display: inline-block; vertical-align: bottom; white-space: nowrap;">
-          <div style="margin: 0 0 18px; line-height: 1;">${brand(26)}</div>
+          <div style="margin: 0 0 18px; line-height: 0;">${brand(75)}</div>
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse: collapse;"><tr>${books}</tr></table>
         </div>
       </div>`;
