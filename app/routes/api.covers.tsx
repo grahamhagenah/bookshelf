@@ -18,7 +18,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       })
     : null;
   if (!book) throw new Response("Not Found", { status: 404 });
-  return json({ covers: await findCovers(book) });
+  // Open Library can be slow or down. Say so, rather than fail the page
+  // the picker sits on.
+  try {
+    return json({ covers: await findCovers(book), failed: false });
+  } catch {
+    return json({ covers: [], failed: true });
+  }
 };
 
 export type CoversResponse = Awaited<ReturnType<typeof findCovers>>;

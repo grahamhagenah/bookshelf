@@ -26,6 +26,7 @@ import { themeOf } from "~/utils";
 
 import Breadcrumbs from "./components/breadcrumbs";
 import DemoBanner from "./components/demo-banner";
+import ErrorPage from "./components/error-page";
 import Footer from "./components/footer";
 import Header from "./components/header";
 import SharePrompt from "./components/share-prompt";
@@ -157,6 +158,32 @@ export default function App() {
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
+      </body>
+    </html>
+  );
+}
+
+// A page the app itself couldn't serve (an address that goes nowhere, a
+// loader that threw): the same header and footer, around the error page.
+// Nothing is known about the viewer here, so the look follows the device.
+export function ErrorBoundary() {
+  return (
+    <html lang="en" className="h-full bg-white dark:bg-stone-950" suppressHydrationWarning>
+      <head>
+        <meta charSet="utf-8" />
+        <script dangerouslySetInnerHTML={{ __html: FOLLOW_DEVICE }} />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="color-scheme" content="light dark" />
+        <Meta />
+        <Links />
+      </head>
+      <body className="min-h-full flex flex-col bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100">
+        <Header />
+        <div className="mx-auto w-full max-w-5xl flex-1">
+          <ErrorPage />
+        </div>
+        <Footer />
+        <Scripts />
       </body>
     </html>
   );
