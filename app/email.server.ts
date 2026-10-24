@@ -33,7 +33,18 @@ const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}
 
 // The logo and name, a white card for the message, and a quiet footer.
 // The preheader is the line inboxes show beside the subject.
-function layout({ preheader, content, footer }: { preheader: string; content: string; footer: string }) {
+function layout({
+  preheader,
+  masthead = "",
+  content,
+  footer,
+}: {
+  preheader: string;
+  // A full-bleed strip at the top of the card, above the message
+  masthead?: string;
+  content: string;
+  footer: string;
+}) {
   return `<!DOCTYPE html>
 <html>
   <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
@@ -44,8 +55,11 @@ function layout({ preheader, content, footer }: { preheader: string; content: st
         <img src="${APP_URL}/icon-192.png" width="28" height="28" alt="" style="vertical-align: middle; border: 0;">
         <span style="vertical-align: middle; margin-left: 6px; font-size: 19px; font-weight: 600;">Stacks</span>
       </a>
-      <div style="background: #ffffff; border: 1px solid ${line}; border-radius: 12px; padding: 28px 24px;">
+      <div style="background: #ffffff; border: 1px solid ${line}; border-radius: 12px; overflow: hidden;">
+        ${masthead}
+        <div style="padding: 28px 24px;">
         ${content}
+        </div>
       </div>
       <p style="margin: 16px 4px 0; font-size: 12px; line-height: 1.5; color: ${faint};">${footer}</p>
     </div>
@@ -365,6 +379,42 @@ export async function sendDigestEmail({
   });
 }
 
+// ---- The homepage's lending scene, as a strip for the top of an email ----
+
+// Three books from the front page stand on the card's edge like a shelf,
+// different heights, after the "Due soon" note and the reminder that's
+// gone out. Tables and plain boxes only: no tilt, since mail clients
+// drop transforms.
+const SCENE_COVERS = [
+  { isbn: "9780063251922", width: 60 },
+  { isbn: "9780593321447", width: 70 },
+  { isbn: "9780670026197", width: 64 },
+];
+
+function scene() {
+  const books = SCENE_COVERS.map(
+    ({ isbn, width }) =>
+      `<td style="padding: 0 8px 0 0; vertical-align: bottom;">${cover(`https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`, width).replace("border-radius: 3px;", "border-radius: 3px 3px 0 0;")}</td>`,
+  ).join("");
+  const name = (text: string) => `<strong style="color: ${ink};">${esc(text)}</strong>`;
+  const note = `
+    <div style="background: #ffffff; border: 1px solid ${line}; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.45; color: ${body};">
+      <p style="margin: 0 0 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: ${muted};">Due soon</p>
+      <p style="margin: 0;">${name("Demon Copperhead")} is with Anika · ${name("3 days late")}</p>
+      <p style="margin: 2px 0 0;">${name("Sea of Tranquility")} goes back to Maya · tomorrow</p>
+    </div>
+    <p style="margin: 10px 0 0;"><span style="display: inline-block; background: ${ink}; color: #ffffff; border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 600;">&#10003;&nbsp; Reminder sent to Anika</span></p>`;
+  // Two blocks side by side; on a narrow screen the covers drop under the
+  // note and still stand on the line
+  return `
+      <div style="background: ${page}; border-bottom: 1px solid ${line}; padding: 20px 24px 0; font-size: 0; line-height: 0;">
+        <div style="display: inline-block; vertical-align: bottom; width: 270px; max-width: 100%; margin: 0 16px 16px 0; font-size: 13px; line-height: 1.45;">${note}</div>
+        <div style="display: inline-block; vertical-align: bottom; white-space: nowrap;">
+          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse: collapse;"><tr>${books}</tr></table>
+        </div>
+      </div>`;
+}
+
 // ---- A word from Stacks to everyone ----
 
 // The same message that lands in Activity, as an email. It goes out under
@@ -381,6 +431,7 @@ export function renderAnnouncement({
   const link = `${APP_URL}/notifications`;
   const html = layout({
     preheader: message.slice(0, 120),
+    masthead: scene(),
     content: `
         ${paragraph(`Hi ${esc(toName)}, a word from Stacks:`)}
         <p style="margin: 0; white-space: pre-wrap; font-size: 16px; line-height: 1.55; color: ${ink};">${esc(message)}</p>

@@ -42,6 +42,9 @@ test("an announcement carries the message, escaped, with its opt-out", () => {
   expect(html).toContain("Hi Maya");
   expect(html).toContain("Questions &amp; notes welcome.");
   expect(html).toContain("/notifications");
+  // The front page's lending scene sits on top, covers through the site
+  expect(html).toContain("Due soon");
+  expect(html).toContain("/covers/b/isbn/9780063251922-M.jpg");
   // Turning these off is the email-notifications switch
   expect(html).toContain("k=requests");
   expect(text).toContain("Big updates: a public page for your shelf.\nQuestions & notes welcome.");
