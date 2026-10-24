@@ -1,4 +1,4 @@
-import { Form, useLocation, useMatches } from "@remix-run/react";
+import { Form, Link, useLocation, useMatches } from "@remix-run/react";
 import { useState, useRef, useEffect } from "react";
 
 import Avatar from "./avatar";
@@ -97,36 +97,36 @@ export default function PositionedMenu() {
             </div>
           ) : null}
           {/* The header has its own link on wider screens */}
-          <a href="/books" onClick={() => setOpen(false)} className={`md:hidden ${item}`}>
+          <Link to="/books" onClick={() => setOpen(false)} className={`md:hidden ${item}`}>
             <BookIcon size={18} />
             <span>My library</span>
-          </a>
-          <a href="/friends" onClick={() => setOpen(false)} className={item}>
+          </Link>
+          <Link to="/friends" onClick={() => setOpen(false)} className={item}>
             <GroupIcon size={18} />
             <span>Friends</span>
-          </a>
-          <a href="/want-to-read" onClick={() => setOpen(false)} className={item}>
+          </Link>
+          <Link to="/want-to-read" onClick={() => setOpen(false)} className={item}>
             <BookmarkIcon size={18} />
             <span>Want to read</span>
-          </a>
-          <a href="/account" onClick={() => setOpen(false)} className={item}>
+          </Link>
+          <Link to="/account" onClick={() => setOpen(false)} className={item}>
             <SettingsIcon size={18} />
             <span>Settings</span>
-          </a>
+          </Link>
           {user?.isAdmin ? (
-            <a href="/dashboard" onClick={() => setOpen(false)} className={item}>
+            <Link to="/dashboard" onClick={() => setOpen(false)} className={item}>
               <DashboardIcon size={18} />
               <span>Admin</span>
-            </a>
+            </Link>
           ) : null}
-          <a
-            href={`/feedback?from=${encodeURIComponent(pathname)}`}
+          <Link
+            to={`/feedback?from=${encodeURIComponent(pathname)}`}
             onClick={() => setOpen(false)}
             className={item}
           >
             <PencilIcon />
             <span>Send feedback</span>
-          </a>
+          </Link>
           <div className="border-t dark:border-stone-800 my-1" />
           <Form action="/logout" method="post">
             <button
