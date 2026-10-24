@@ -5,9 +5,8 @@ import type {
 } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useFetcher, useLoaderData, useLocation } from "@remix-run/react";
-import { useState } from "react";
 
-import CoverPlaceholder from "~/components/cover-placeholder";
+import BookCover from "~/components/book-cover";
 import { BookmarkIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
@@ -23,7 +22,6 @@ import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
 import { roomForBooks } from "~/plan.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
-import { coverSrc } from "~/utils";
 
 export const meta: MetaFunction = () =>
   seo({ title: "Want to read", noindex: true });
@@ -69,25 +67,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 type Item = Awaited<ReturnType<typeof getWantToRead>>[number];
 
 function Cover({ cover, title, author }: { cover: string; title: string; author: string }) {
-  const [failed, setFailed] = useState(!cover);
-  return (
-    <div className="relative h-[72px] w-12 flex-shrink-0 overflow-hidden rounded-xs ring-1 ring-stone-900/5 dark:ring-white/10">
-      <CoverPlaceholder title={title} author={author} className="absolute inset-0" />
-      {!failed ? (
-        <img
-          src={coverSrc(cover, "M")}
-          alt=""
-          loading="lazy"
-          className="relative h-full w-full object-cover"
-          onLoad={(e) => {
-            // Open Library answers unknown covers with a 1x1 pixel
-            if (e.currentTarget.naturalWidth <= 1) setFailed(true);
-          }}
-          onError={() => setFailed(true)}
-        />
-      ) : null}
-    </div>
-  );
+  return <BookCover cover={cover} title={title} author={author} className="h-[72px] w-12 flex-shrink-0" />;
 }
 
 const quietButton =

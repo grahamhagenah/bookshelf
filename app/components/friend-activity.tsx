@@ -3,10 +3,9 @@ import { Link, useFetcher } from "@remix-run/react";
 import { useState } from "react";
 
 import type { FriendActivity, getNotePrompts } from "~/models/activity.server";
-import { coverSrc } from "~/utils";
 
 import Avatar from "./avatar";
-import CoverPlaceholder from "./cover-placeholder";
+import BookCover from "./book-cover";
 import { HeartIcon } from "./icons";
 import PersonLink from "./person-link";
 
@@ -34,28 +33,7 @@ function FeedCover({
   book: Pick<FeedBook, "title" | "author" | "cover">;
   className: string;
 }) {
-  // A cover that fails to load leaves the placeholder, not a broken image
-  const [failed, setFailed] = useState(false);
-  return (
-    <span
-      className={`relative block flex-shrink-0 overflow-hidden rounded-xs bg-stone-100 dark:bg-stone-800 ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}
-    >
-      <CoverPlaceholder title={book.title} author={book.author} className="absolute inset-0" />
-      {book.cover && !failed ? (
-        <img
-          src={coverSrc(book.cover, "M")}
-          alt=""
-          loading="lazy"
-          className="relative h-full w-full object-cover"
-          // A cover can fail before React hydrates and attaches onError
-          ref={(img) => {
-            if (img?.complete && img.naturalWidth === 0) setFailed(true);
-          }}
-          onError={() => setFailed(true)}
-        />
-      ) : null}
-    </span>
-  );
+  return <BookCover cover={book.cover} title={book.title} author={book.author} className={className} />;
 }
 
 // The compact entry for the home page sidebar

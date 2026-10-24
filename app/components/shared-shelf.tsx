@@ -2,13 +2,12 @@ import type { SerializeFrom } from "@remix-run/node";
 import { Link, useFetcher, useLocation } from "@remix-run/react";
 
 import Avatar from "~/components/avatar";
-import CoverPlaceholder from "~/components/cover-placeholder";
+import BookCover from "~/components/book-cover";
 import { HeartIcon, StacksLogo } from "~/components/icons";
 import Library from "~/components/library";
 import type { FriendStatus } from "~/models/user.server";
 import { UPGRADE_PATH } from "~/plan";
 import type { loadSharedShelf } from "~/share.server";
-import { coverSrc } from "~/utils";
 
 // A shared shelf's page, whichever address it's reached by: who it
 // belongs to, a few of their favorites, the shelf, and an invite to
@@ -85,17 +84,7 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
           <ul className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-5">
             {profile.favorites.map((book) => (
               <li key={book.id} className="min-w-0">
-                <span className="relative block aspect-[2/3] w-full overflow-hidden rounded-xs bg-stone-100 dark:bg-stone-800 ring-1 ring-stone-900/5 dark:ring-white/10">
-                  <CoverPlaceholder title={book.title} author={book.author} className="absolute inset-0" />
-                  {book.cover ? (
-                    <img
-                      src={coverSrc(book.cover, "M")}
-                      alt=""
-                      loading="lazy"
-                      className="relative h-full w-full object-cover"
-                    />
-                  ) : null}
-                </span>
+                <BookCover cover={book.cover} title={book.title} author={book.author} className="aspect-[2/3] w-full" />
                 <span className="mt-1.5 block truncate text-sm font-medium text-stone-900 dark:text-stone-100">
                   {book.title}
                 </span>

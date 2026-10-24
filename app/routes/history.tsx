@@ -3,7 +3,7 @@ import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 
-import CoverPlaceholder from "~/components/cover-placeholder";
+import BookCover from "~/components/book-cover";
 import { BorrowedIcon, HeartIcon, HistoryIcon, LentIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
@@ -12,7 +12,6 @@ import { getHistory, getShelfCounts } from "~/models/history.server";
 import { getUserById } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
-import { coverSrc } from "~/utils";
 
 // Every book that's passed between you and a friend, so you can find the
 // one you read a few weeks ago and say what you thought of it
@@ -50,25 +49,7 @@ const monthDay = (date: string) => {
 };
 
 function Cover({ cover, title, author }: { cover: string; title: string; author: string }) {
-  const [failed, setFailed] = useState(!cover);
-  return (
-    <div className="relative h-full w-full overflow-hidden rounded-xs ring-1 ring-stone-900/5 dark:ring-white/10">
-      <CoverPlaceholder title={title} author={author} className="absolute inset-0" />
-      {!failed ? (
-        <img
-          src={coverSrc(cover, "M")}
-          alt=""
-          loading="lazy"
-          className="relative h-full w-full object-cover"
-          onLoad={(e) => {
-            // Open Library answers unknown covers with a 1x1 pixel
-            if (e.currentTarget.naturalWidth <= 1) setFailed(true);
-          }}
-          onError={() => setFailed(true)}
-        />
-      ) : null}
-    </div>
-  );
+  return <BookCover cover={cover} title={title} author={author} className="h-full w-full" />;
 }
 
 const noteLink =

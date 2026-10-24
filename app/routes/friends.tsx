@@ -9,8 +9,8 @@ import { useLoaderData, useFetcher, Link, Form, useActionData } from "@remix-run
 import { useEffect, useRef, useState } from "react";
 
 import Avatar from "~/components/avatar";
+import BookCover from "~/components/book-cover";
 import CopyButton from "~/components/copy-button";
-import CoverPlaceholder from "~/components/cover-placeholder";
 import {
   BookIcon,
   BookmarkIcon,
@@ -40,7 +40,7 @@ import { friendLimitMessage, LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
 import { roomForFriend } from "~/plan.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
-import { coverSrc, isDemoEmail } from "~/utils";
+import { isDemoEmail } from "~/utils";
 
 export const meta: MetaFunction = () =>
   seo({ title: "Friends", noindex: true });
@@ -562,24 +562,7 @@ function FriendCard({ friend }: { friend: Friend }) {
 }
 
 function MiniCover({ cover, title, author }: { cover: string; title: string; author: string }) {
-  const [failed, setFailed] = useState(false);
-  return (
-    <div className="relative aspect-[2/3] overflow-hidden rounded-xs ring-1 ring-stone-900/5 dark:ring-white/10">
-      <CoverPlaceholder title={title} author={author} className="absolute inset-0" />
-      {cover && !failed ? (
-        <img
-          src={coverSrc(cover, "M")}
-          alt={title}
-          loading="lazy"
-          // Visible from the first paint, over the placeholder; gone if
-          // there's no picture (Open Library answers some with a 1px image)
-          onLoad={(e) => setFailed(e.currentTarget.naturalWidth <= 1)}
-          onError={() => setFailed(true)}
-          className="relative h-full w-full object-cover"
-        />
-      ) : null}
-    </div>
-  );
+  return <BookCover cover={cover} title={title} author={author} alt={title} className="aspect-[2/3]" />;
 }
 
 function IncomingRequest({

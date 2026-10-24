@@ -3,8 +3,8 @@ import { Link, useFetcher } from "@remix-run/react";
 
 import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
-import { coverSrc } from "~/utils";
 
+import BookCover from "./book-cover";
 import CopyButton from "./copy-button";
 import FriendActivityItem from "./friend-activity";
 
@@ -73,30 +73,6 @@ const headingClass = "text-lg font-semibold text-stone-900 dark:text-stone-100";
 const subheadingClass =
   "mb-1 flex items-baseline gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400";
 
-function Cover({
-  book,
-  className,
-  size = "L",
-}: {
-  book: { cover: string };
-  className: string;
-  size?: "M" | "L";
-}) {
-  return (
-    <span
-      className={`block flex-shrink-0 overflow-hidden rounded-xs bg-stone-100 dark:bg-stone-800 ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}
-    >
-      {book.cover ? (
-        <img
-          src={coverSrc(book.cover, size)}
-          alt=""
-          loading="lazy"
-          className="h-full w-full object-cover"
-        />
-      ) : null}
-    </span>
-  );
-}
 
 // A compact list for one direction of lending (the feed's rail shows it too)
 export function LoanList({
@@ -135,7 +111,7 @@ export function LoanList({
                   to={`/books/${book.id}`}
                   className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
                 >
-                  <Cover book={book} className="w-14 h-21" size="M" />
+                  <BookCover cover={book.cover} title={book.title} className="w-14 h-21" />
                   <span className="min-w-0 flex-1">
                     {/* Up to two lines: still shorter than the cover, so rows keep their height */}
                     <span className="line-clamp-2 font-medium leading-snug text-stone-900 dark:text-stone-100">
@@ -348,7 +324,7 @@ function CoverRow({
   items,
   caption,
 }: {
-  items: { id: string; title: string; cover: string; to: string }[];
+  items: { id: string; title: string; author?: string | null; cover: string; to: string }[];
   caption: (index: number) => React.ReactNode;
 }) {
   return (
@@ -363,7 +339,7 @@ function CoverRow({
             title={item.title}
             className="block hover:opacity-90 transition-opacity"
           >
-            <Cover book={item} className="w-full aspect-[2/3]" size="M" />
+            <BookCover cover={item.cover} title={item.title} author={item.author} className="w-full aspect-[2/3]" />
             <span className="mt-1.5 block truncate text-xs text-stone-600 dark:text-stone-300">
               {item.title}
             </span>

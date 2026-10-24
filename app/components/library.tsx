@@ -3,7 +3,7 @@ import { useState } from "react";
 
 import { coverSizeOf, coverSrc, libraryViewOf, useOptionalUser } from "~/utils";
 
-import CoverPlaceholder from "./cover-placeholder";
+import BookCover from "./book-cover";
 import {
   SearchIcon,
   BookIcon,
@@ -112,8 +112,8 @@ interface LibraryProps {
   sharedWith?: { members: Member[]; viewerId: string } | null;
 }
 
-// One rounded box that clips both the image and its placeholder
-function BookCover({
+// The grid's cover, with a 2x candidate for sharp screens
+function GridCover({
   cover,
   title,
   author,
@@ -129,49 +129,7 @@ function BookCover({
   eager?: boolean;
 }) {
   const { src, srcSet } = getCoverSources(cover);
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
-  const showCover = (img: HTMLImageElement) => {
-    // Open Library answers unknown covers with a 1x1 pixel, and a broken
-    // image has no width at all
-    if (img.naturalWidth <= 1) setError(true);
-    else setLoaded(true);
-  };
-
-  // Small corners: scans often carry a thin border, and tight corners keep
-  // it reading as part of the cover rather than a clipped edge
-  return (
-    <div className={`relative overflow-hidden rounded-xs ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}>
-      {!loaded || error ? (
-        <CoverPlaceholder
-          title={title}
-          author={author}
-          className="absolute inset-0"
-        />
-      ) : null}
-      {!error ? (
-        <img
-          src={src}
-          srcSet={srcSet}
-          sizes={srcSet ? sizes : undefined}
-          alt={title}
-          // The first row is usually on screen right away
-          loading={eager ? "eager" : "lazy"}
-          decoding="async"
-          // Visible from the first paint, before any JavaScript runs: a
-          // loading image draws nothing, so the placeholder shows through
-          className="relative w-full h-full object-cover"
-          // A cached cover can finish loading before React hydrates and
-          // attaches onLoad, so also check it once it's in the page
-          ref={(img) => {
-            if (img?.complete) showCover(img);
-          }}
-          onLoad={(e) => showCover(e.currentTarget)}
-          onError={() => setError(true)}
-        />
-      ) : null}
-    </div>
-  );
+  return <BookCover src={src} srcSet={srcSet} sizes={sizes} title={title} author={author} alt={title} className={className} eager={eager} />;
 }
 
 export default function Library({ bookListItems, ownerName, header, sharedWith }: LibraryProps) {
@@ -345,7 +303,7 @@ export default function Library({ bookListItems, ownerName, header, sharedWith }
                 <li key={book.id} className="cover-wrapper">
                   <NavLink to={`/books/${book.id}`} className="group block">
                     <div className="relative">
-                      <BookCover
+                      <GridCover
                         cover={book.cover}
                         eager={index < 7}
                         sizes={grid.sizes}

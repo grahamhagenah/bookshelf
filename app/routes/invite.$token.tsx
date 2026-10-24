@@ -4,12 +4,11 @@ import { Link, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
-import CoverPlaceholder from "~/components/cover-placeholder";
+import BookCover from "~/components/book-cover";
 import { acceptFriendInvite, getInviter } from "~/models/friend.server";
 import { friendLimitMessage } from "~/plan";
 import { seo } from "~/seo";
 import { getUserId } from "~/session.server";
-import { coverSrc } from "~/utils";
 
 // Someone's personal invite. Signed in, opening it makes you friends on the
 // spot. Signed out, it says who's asking and what's on their shelf, and
@@ -94,18 +93,8 @@ export default function Invite() {
         <div className="mt-8">
           <ul className="grid grid-cols-6 gap-2" aria-label={`On ${inviter.firstname}'s shelf`}>
             {inviter.recent.map((book) => (
-              <li
-                key={book.id}
-                className="relative aspect-[2/3] overflow-hidden rounded-xs ring-1 ring-stone-900/5 dark:ring-white/10"
-              >
-                <CoverPlaceholder title={book.title} author={book.author} className="absolute inset-0" />
-                {book.cover ? (
-                  <img
-                    src={coverSrc(book.cover, "M")}
-                    alt={book.title}
-                    className="relative h-full w-full object-cover"
-                  />
-                ) : null}
+              <li key={book.id}>
+                <BookCover cover={book.cover} title={book.title} author={book.author} alt={book.title} className="aspect-[2/3]" eager />
               </li>
             ))}
           </ul>
