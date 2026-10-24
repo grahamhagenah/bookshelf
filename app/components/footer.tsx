@@ -20,7 +20,7 @@ export default function Footer() {
       <div className="mx-auto max-w-5xl px-4 md:px-8 py-8 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2 max-w-xs">
           <Link to={user ? "/books" : "/"} className="inline-block font-semibold text-stone-900 dark:text-stone-100">
-            <Wordmark className="text-[1.125rem]" />
+            <Wordmark className="text-[1.375rem] leading-none" />
           </Link>
           <p>Lend and borrow books with friends.</p>
         </div>

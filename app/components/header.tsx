@@ -43,7 +43,7 @@ export default function Header() {
             href="/"
             className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0"
           >
-            <Wordmark className="text-xl sm:text-[1.375rem] text-stone-900 dark:text-stone-100" />
+            <Wordmark className="text-2xl sm:text-[1.75rem] leading-none text-stone-900 dark:text-stone-100" />
           </a>
           {landing ? (
             <p className="hidden md:block ml-1 border-l border-stone-200 dark:border-stone-800 pl-3 text-sm text-stone-400 dark:text-stone-500">
