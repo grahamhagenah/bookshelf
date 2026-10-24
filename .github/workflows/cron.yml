@@ -15,11 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Due-date reminders
-        run: curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET_KEY }}" https://bookstacks.app/api/check-overdue
+        # A block scalar, since the ": " in the header would end a plain one
+        run: |
+          curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET_KEY }}" https://bookstacks.app/api/check-overdue
 
   digest:
     runs-on: ubuntu-latest
     if: github.event.schedule == '0 13 * * 0' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Weekly digest
-        run: curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET_KEY }}" https://bookstacks.app/api/weekly-digest
+        # A block scalar, since the ": " in the header would end a plain one
+        run: |
+          curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET_KEY }}" https://bookstacks.app/api/weekly-digest
