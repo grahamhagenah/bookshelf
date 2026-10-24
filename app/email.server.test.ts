@@ -59,8 +59,8 @@ test("without a headline the announcement still has its eyebrow and a plain subj
   expect(subject).toBe("News from Stacks");
   // The brand is in the masthead, once for wide screens and once for
   // phones, and not above the card
-  expect(html.split("/wordmark.png").length - 1).toBe(2);
-  expect(html.indexOf("/wordmark.png")).toBeGreaterThan(html.indexOf("border-bottom: 1px solid"));
+  expect(html.split("wordmark").length - 1).toBe(2);
+  expect(html.indexOf("wordmark")).toBeGreaterThan(html.indexOf("border-bottom: 1px solid"));
   expect(html).not.toContain("<h1");
 });
 

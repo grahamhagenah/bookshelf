@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 
+import wordmark from "~/images/wordmark.png";
 import type { Digest } from "~/models/digest.server";
 import type { EmailKind } from "~/models/user.server";
 import { unsubscribeUrl } from "~/unsubscribe.server";
@@ -36,7 +37,7 @@ const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}
 // The wordmark, linking home: a picture, since mail clients don't load
 // the serif. It's drawn at twice this size, 150 by 45, for sharp screens.
 const brand = (width: number, margin = "0") => `
-      <a href="${APP_URL}" style="display: inline-block; margin: ${margin};"><img src="${APP_URL}/wordmark.png" width="${width}" height="${Math.round((width * 45) / 150)}" alt="Stacks" style="display: block; border: 0;"></a>`;
+      <a href="${APP_URL}" style="display: inline-block; margin: ${margin};"><img src="${APP_URL}${wordmark}" width="${width}" height="${Math.round((width * 45) / 150)}" alt="Stacks" style="display: block; border: 0;"></a>`;
 
 function layout({
   preheader,

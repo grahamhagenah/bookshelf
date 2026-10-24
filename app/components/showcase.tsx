@@ -70,11 +70,29 @@ function Heart({ size = 12 }: { size?: number }) {
   );
 }
 
-function Cover({ src, className = "" }: { src: string; className?: string }) {
+// The medium cover, with the large one only for screens dense enough to
+// need it at the size shown: most of these are thumbnails
+function Cover({
+  src,
+  className = "",
+  sizes = "72px",
+  eager = false,
+}: {
+  src: string;
+  className?: string;
+  // How wide it's shown, so the browser picks the file to fetch
+  sizes?: string;
+  eager?: boolean;
+}) {
+  const medium = src.replace(/-L\.jpg$/, "-M.jpg");
   return (
     <img
-      src={src}
+      src={medium}
+      srcSet={medium === src ? undefined : `${medium} 180w, ${src} 400w`}
+      sizes={medium === src ? undefined : sizes}
       alt=""
+      loading={eager ? "eager" : "lazy"}
+      decoding="async"
       className={`aspect-[2/3] rounded-xs object-cover ring-1 ring-stone-900/5 ${className}`}
     />
   );
@@ -94,7 +112,8 @@ function BookCard({ book, width = "w-[34%]" }: { book: CardBook; width?: string 
   return (
     <div className={`${panel} ${width} p-2 ${book.className}`}>
       <div className="relative">
-        <Cover src={book.cover} className="w-full" />
+        {/* The big ones up front: about a third of the picture each */}
+        <Cover src={book.cover} className="w-full" sizes="(min-width: 640px) 170px, 32vw" eager />
         {book.status === "lent" || book.status === "borrowed" ? (
           <span className="absolute left-1 top-1 inline-flex items-center gap-1 rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[10px] leading-4 text-stone-700 dark:text-stone-200 shadow-sm">
             {book.status === "lent" ? <LentIcon size={10} /> : <BorrowedIcon size={10} />}
@@ -207,7 +226,7 @@ export default function ShowcaseLending({ set = LENDING_SET }: { set?: LendingSe
       <div className="absolute bottom-[7%] left-[2%] right-0 z-20 flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className={`${skin} rotate-1 p-3.5 pr-4`}>
           <div className="flex items-center gap-3">
-            <Cover src={set.lending.cover} className="w-8" />
+            <Cover src={set.lending.cover} className="w-8" sizes="32px" eager />
             <div className="min-w-0 flex-1">
               <p className="text-sm text-stone-800 dark:text-stone-200">
                 Lend <span className="font-semibold">{set.lending.title}</span> to Sam

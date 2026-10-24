@@ -18,6 +18,8 @@ import {
 } from "@remix-run/react";
 import { useEffect } from "react";
 
+import sansFont from "~/fonts/source-sans-3-latin-normal.woff2";
+import serifFont from "~/fonts/source-serif-4-latin-600-normal.woff2";
 import { OLD_HOSTS, SITE_URL, seo } from "~/seo";
 import { getUser } from "~/session.server";
 import { sharePromptDismissed } from "~/share-prompt.server";
@@ -42,7 +44,7 @@ export const links: LinksFunction = () => [
   // Start the body font straight away instead of after the stylesheet
   {
     rel: "preload",
-    href: "/fonts/source-sans-3-latin-normal.woff2",
+    href: sansFont,
     as: "font",
     type: "font/woff2",
     crossOrigin: "anonymous",
@@ -50,7 +52,7 @@ export const links: LinksFunction = () => [
   // And the wordmark's, which is on every page
   {
     rel: "preload",
-    href: "/fonts/source-serif-4-latin-600-normal.woff2",
+    href: serifFont,
     as: "font",
     type: "font/woff2",
     crossOrigin: "anonymous",

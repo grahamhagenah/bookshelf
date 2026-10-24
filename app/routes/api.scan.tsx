@@ -4,7 +4,7 @@ import { json } from "@remix-run/node";
 import { prisma } from "~/db.server";
 import { createBook } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
-import { lookupWork } from "~/models/openlibrary.server";
+import { PATIENT_MS, lookupWork } from "~/models/openlibrary.server";
 import { notifyWanters } from "~/models/wish.server";
 import { roomForBooks } from "~/plan.server";
 import { requireUserId } from "~/session.server";
@@ -25,7 +25,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   let found;
   try {
-    found = await lookupWork({ title: "", author: "", isbn });
+    // Someone is holding a book up to the camera: wait out a slow day
+    found = await lookupWork({ title: "", author: "", isbn }, PATIENT_MS);
   } catch {
     return json({ error: "Open Library didn't answer" }, { status: 502 });
   }

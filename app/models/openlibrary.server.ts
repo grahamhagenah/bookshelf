@@ -16,7 +16,7 @@ import type { WithEnglishEdition } from "~/utils";
 // someone asked for and is waiting on (picking a cover, opening a book's
 // page) gets more patience: its slow days run to ten seconds a call.
 const TIMEOUT_MS = 4000;
-const PATIENT_MS = 12000;
+export const PATIENT_MS = 12000;
 
 // Refresh an author's bio after a month
 const AUTHOR_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -334,7 +334,7 @@ async function coverExists(url: string) {
 // Fills in whatever a book is missing (cover, description, details, the
 // opening line, the author) from Open Library, and remembers it was
 // looked up. Leaves what the owner already has alone.
-export async function fillInBook(bookId: Book["id"]) {
+export async function fillInBook(bookId: Book["id"], timeoutMs = TIMEOUT_MS) {
   const book = await prisma.book.findUnique({
     where: { id: bookId },
     select: {
@@ -354,10 +354,13 @@ export async function fillInBook(bookId: Book["id"]) {
   if (!book) return;
 
   try {
-    const found = await lookupWork(book);
+    const found = await lookupWork(book, timeoutMs);
     const key = book.openLibraryKey ?? found?.key ?? null;
-    const description = !book.body && key ? await fetchDescription(key) : "";
-    if (found?.authorKey) await refreshAuthor(found.authorKey);
+    // The description and the author don't depend on each other
+    const [description] = await Promise.all([
+      !book.body && key ? fetchDescription(key, timeoutMs) : "",
+      found?.authorKey ? refreshAuthor(found.authorKey, timeoutMs) : undefined,
+    ]);
 
     // A cover made from the ISBN may be blank; swap it for the work's
     let cover = book.cover;
@@ -400,6 +403,20 @@ export async function fillInBooks(bookIds: Book["id"][], concurrency = 3) {
 
 // Looks up a book's details once, then remembers it. Failures are quiet:
 // the page shows what it has and tries again next time.
+// A book's first look-up, started by its page and finished in the
+// background, so the page never waits on Open Library. A second visit
+// while it's under way joins the first rather than starting another.
+const filling = new Map<string, Promise<void>>();
+
+export function fillInBookOnce(bookId: Book["id"]) {
+  let pending = filling.get(bookId);
+  if (!pending) {
+    pending = fillInBook(bookId, PATIENT_MS).finally(() => filling.delete(bookId));
+    filling.set(bookId, pending);
+  }
+  return pending;
+}
+
 export async function ensureBookDetails(
   book: Pick<Book, "id" | "detailsFetchedAt">,
   { force = false } = {},

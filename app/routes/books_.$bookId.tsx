@@ -12,6 +12,7 @@ import {
   useLoaderData,
   useNavigation,
   useActionData,
+  useRevalidator,
 } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
@@ -54,7 +55,7 @@ import {
   getReaderNotes,
   saveReaderNote,
 } from "~/models/note.server";
-import { ensureBookDetails, getAuthor, tidyAuthor } from "~/models/openlibrary.server";
+import { ensureBookDetails, fillInBookOnce, getAuthor, tidyAuthor } from "~/models/openlibrary.server";
 import {
   getUserById,
   getUserEmailById,
@@ -351,11 +352,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw new Response("Not Found", { status: 404 });
   }
 
-  // First visit: look up the opening sentence and author from Open Library
-  if (!book.detailsFetchedAt) {
-    await ensureBookDetails(book);
-    book = (await getBookById(params.bookId)) ?? book;
-  }
+  // First visit: the opening sentence, the author and any missing
+  // details come from Open Library. The page doesn't wait for them; it
+  // starts the look-up, shows what it has, and reloads when they're in.
+  const fillingIn = !book.detailsFetchedAt;
+  if (fillingIn) void fillInBookOnce(book.id);
   const [subjects, authorName] = await Promise.all([tidySubjects(book), tidyAuthor(book)]);
   if (subjects !== undefined) book = { ...book, subjects };
   if (authorName !== undefined) book = { ...book, author: authorName };
@@ -425,6 +426,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     friendIds: followingIds,
     // What the lender said when they said yes, for the one borrowing it
     loanReply: isBorrower ? await getLoanReply(book.id, userId) : null,
+    fillingIn,
   });
 };
 
@@ -1403,6 +1405,37 @@ export default function BookDetailsPage() {
   } | null;
   const navigation = useNavigation();
   const [isEditing, setIsEditing] = useState(false);
+
+  // A book seen for the first time finishes its look-up on Open Library
+  // after the page is up; the page reloads its data when that's done. A
+  // plain fetch, since a fetcher started this early in hydration can be
+  // dropped.
+  const { revalidate } = useRevalidator();
+  const askedFor = useRef<string | null>(null);
+  const [lookingUp, setLookingUp] = useState(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (!data.fillingIn || askedFor.current === data.book.id) return;
+    const id = data.book.id;
+    askedFor.current = id;
+    setLookingUp(true);
+    fetch(`/api/book-details?bookId=${encodeURIComponent(id)}`)
+      .then((response) => (response.ok ? response.json() : { done: false }))
+      .then((result: { done?: boolean }) => {
+        // Still on this book: show what was found
+        if (mounted.current && askedFor.current === id && result.done) revalidate();
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (mounted.current && askedFor.current === id) setLookingUp(false);
+      });
+  }, [data.fillingIn, data.book.id, revalidate]);
   // The cover field is controlled so the picker below it can fill it in
   const [cover, setCover] = useState(data.book.cover);
 
@@ -1878,6 +1911,11 @@ export default function BookDetailsPage() {
             </>
           )}
 
+          {!isEditing && lookingUp ? (
+            <p role="status" className="mt-6 text-sm text-stone-400 dark:text-stone-500 motion-safe:animate-pulse">
+              Looking up more about this book on Open Library…
+            </p>
+          ) : null}
           {!isEditing && data.book.firstSentence ? (
             <div className="mt-8">
               <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
