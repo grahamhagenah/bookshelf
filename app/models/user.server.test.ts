@@ -12,6 +12,9 @@ import {
   verifyLogin,
   createReminderNotification,
   getAnnouncementRecipients,
+  createBookApprovedNotification,
+  createBookDeclinedNotification,
+  getLoanReply,
   generateShareToken,
   getSuggestedFriends,
   searchUsers,
@@ -196,5 +199,31 @@ describe("getAnnouncementRecipients", () => {
     expect(ids).not.toContain(unverified.id);
     expect(ids).not.toContain(demo.id);
     expect(ids).not.toContain(off.id);
+  });
+});
+
+describe("answering a borrow request", () => {
+  test("a decline reaches the borrower with the owner's note", async () => {
+    const owner = await makeUser("Maya");
+    const borrower = await makeUser("Sam");
+    const book = await makeBook(owner.id, "Piranesi");
+    await createBookDeclinedNotification(owner.id, borrower.id, "Maya Reader", "Piranesi", book.id, "  My sister has it until December.  ");
+    const notice = await prisma.notification.findFirstOrThrow({ where: { receiverId: borrower.id, type: "BOOK_DECLINED" } });
+    expect(notice.bookId).toBe(book.id);
+    expect(notice.message).toBe("My sister has it until December.");
+  });
+
+  test("the lender's reply is found for the borrower, and only theirs", async () => {
+    const owner = await makeUser("Maya");
+    const borrower = await makeUser("Sam");
+    const other = await makeUser("Ada");
+    const book = await makeBook(owner.id, "Circe");
+    await createBookApprovedNotification(owner.id, borrower.id, "Maya Reader", "Circe", book.id, "On the porch Saturday.");
+    expect((await getLoanReply(book.id, borrower.id))?.message).toBe("On the porch Saturday.");
+    expect(await getLoanReply(book.id, other.id)).toBeNull();
+    // A yes with nothing said leaves nothing to show
+    const quiet = await makeBook(owner.id, "Dune");
+    await createBookApprovedNotification(owner.id, borrower.id, "Maya Reader", "Dune", quiet.id, "   ");
+    expect(await getLoanReply(quiet.id, borrower.id)).toBeNull();
   });
 });

@@ -1468,6 +1468,8 @@ export async function respondAsDemoPersona(notificationId: string) {
       notification.senderId,
       `${persona.firstname} ${persona.surname}`,
       notification.bookTitle ?? "",
+      notification.bookId,
+      "Of course! I'm around Saturday morning if you want to grab it.",
     );
     await markNotificationAsRead(notification.id, "approved");
   }

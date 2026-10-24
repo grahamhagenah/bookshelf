@@ -204,6 +204,66 @@ export async function sendBookRequestEmail({
   });
 }
 
+// ---- The owner answered a borrow request ----
+
+export function renderRequestAnswer({
+  toUserId,
+  toName,
+  ownerName,
+  bookTitle,
+  bookId,
+  approved,
+  message,
+}: {
+  toUserId?: string;
+  toName: string;
+  ownerName: string;
+  bookTitle: string;
+  bookId?: string | null;
+  approved: boolean;
+  // What the owner said with their answer
+  message?: string | null;
+}) {
+  const note = message?.trim() || null;
+  const link = approved && bookId ? `${APP_URL}/books/${bookId}` : `${APP_URL}/notifications`;
+  const subject = approved
+    ? `${ownerName} is lending you ${bookTitle}`
+    : `${ownerName} can't lend ${bookTitle} right now`;
+  const lead = approved
+    ? `Hi ${esc(toName)}, <strong style="color: ${ink};">${esc(ownerName)}</strong> said yes: ${bookBold(bookTitle)} is yours to borrow.`
+    : `Hi ${esc(toName)}, <strong style="color: ${ink};">${esc(ownerName)}</strong> can't lend ${bookBold(bookTitle)} right now.`;
+  const html = layout({
+    preheader: note ?? (approved ? "Time to pick it up." : "Maybe another time."),
+    content: `
+        ${paragraph(lead)}
+        ${note ? `<blockquote style="margin: 0 0 16px; padding: 0 0 0 12px; border-left: 2px solid ${line}; font-size: 15px; line-height: 1.5; color: ${body}; white-space: pre-wrap;">${esc(note)}</blockquote>` : ""}
+        ${button(link, approved ? "See the book" : "Open Stacks")}`,
+    footer: optOutFooter(toUserId, "requests", "Stop emails about borrow requests"),
+  });
+  const text = `Hi ${toName},
+
+${approved ? `${ownerName} said yes: ${bookTitle} is yours to borrow.` : `${ownerName} can't lend ${bookTitle} right now.`}
+${note ? `\nThey said: ${note}\n` : ""}
+${link}
+
+${optOutText(toUserId, "requests", "Stop emails about borrow requests")}`;
+  return { subject, html, text };
+}
+
+const bookBold = (title: string) => `<strong style="color: ${ink};">${esc(title)}</strong>`;
+
+export async function sendRequestAnswerEmail({
+  toEmail,
+  ...details
+}: Parameters<typeof renderRequestAnswer>[0] & { toEmail: string; toUserId: string }) {
+  if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
+  return send({
+    to: toEmail,
+    ...renderRequestAnswer(details),
+    headers: optOutHeaders(details.toUserId, "requests"),
+  });
+}
+
 // ---- A link to choose a new password ----
 
 export function renderPasswordReset({ toName, token }: { toName: string; token: string }) {

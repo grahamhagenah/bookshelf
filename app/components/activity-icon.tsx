@@ -27,6 +27,13 @@ const PATHS: Record<string, React.ReactNode> = {
   WANT_MATCH: <path d="M6.5 3.5h11v17l-5.5-4-5.5 4z" />,
   // Check mark
   BOOK_APPROVED: <path d="M5 12.5l4.5 4.5L19 7.5" />,
+  // A circle with a line through: not this time
+  BOOK_DECLINED: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M6 18L18 6" />
+    </>
+  ),
   // Arrow curling back
   BOOK_RETURNED: (
     <>
