@@ -12,14 +12,17 @@ import {
 } from "~/utils";
 import type { WithEnglishEdition } from "~/utils";
 
-// Open Library can be slow; never hold a page up for long
+// Open Library can be slow; never hold a page up for long. A lookup
+// someone asked for and is waiting on (picking a cover, opening a book's
+// page) gets more patience: its slow days run to ten seconds a call.
 const TIMEOUT_MS = 4000;
+const PATIENT_MS = 12000;
 
 // Refresh an author's bio after a month
 const AUTHOR_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
-async function getJson(url: string) {
-  const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+async function getJson(url: string, timeoutMs = TIMEOUT_MS) {
+  const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
   if (!res.ok) throw new Error(`Open Library answered ${res.status}`);
   return res.json();
 }
@@ -103,7 +106,7 @@ function cleanBio(bio: string | null): string | null {
   return cleaned || null;
 }
 
-async function refreshAuthor(key: string) {
+async function refreshAuthor(key: string, timeoutMs = TIMEOUT_MS) {
   const existing = await prisma.author.findUnique({ where: { key } });
   // A name saved in another script before names were put into English is
   // looked up again
@@ -115,7 +118,7 @@ async function refreshAuthor(key: string) {
     return;
   }
 
-  const data = await getJson(`https://openlibrary.org/authors/${key}.json`);
+  const data = await getJson(`https://openlibrary.org/authors/${key}.json`, timeoutMs);
   const links: { url?: string }[] = Array.isArray(data.links) ? data.links : [];
   const wikipedia =
     (typeof data.wikipedia === "string" ? data.wikipedia : null) ??
@@ -201,12 +204,15 @@ interface Found {
 
 // Open Library's best match for a book: by ISBN when there is one, else
 // by title and author. Null when it has nothing.
-export async function lookupWork(book: {
-  title: string;
-  author: string;
-  isbn?: string | null;
-  openLibraryKey?: string | null;
-}): Promise<Found | null> {
+export async function lookupWork(
+  book: {
+    title: string;
+    author: string;
+    isbn?: string | null;
+    openLibraryKey?: string | null;
+  },
+  timeoutMs = TIMEOUT_MS,
+): Promise<Found | null> {
   const query = book.openLibraryKey
     ? `q=${encodeURIComponent(`key:"${book.openLibraryKey}"`)}`
     : book.isbn
@@ -214,6 +220,7 @@ export async function lookupWork(book: {
       : `title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}`;
   const data = await getJson(
     `https://openlibrary.org/search.json?${query}&limit=1&${ENGLISH_EDITION_PARAMS}&fields=${SEARCH_FIELDS}`,
+    timeoutMs,
   );
   const doc = data.docs?.[0];
   if (!doc) return null;
@@ -234,35 +241,46 @@ export async function lookupWork(book: {
 }
 
 // Every cover Open Library has for a book: the work's own, then its
-// editions', newest-listed first. For the owner to pick from.
+// editions', newest-listed first. For the owner to pick from. Someone
+// clicked for this, so it waits out a slow Open Library; a book whose
+// work is known skips the search and asks for the work and its
+// editions at once.
 export async function findCovers(book: {
   title: string;
   author: string;
   isbn?: string | null;
   openLibraryKey?: string | null;
 }) {
-  const query = book.openLibraryKey
-    ? `q=${encodeURIComponent(`key:"${book.openLibraryKey}"`)}`
-    : book.isbn
+  const ids: number[] = [];
+  const take = (covers: unknown) => {
+    if (!Array.isArray(covers)) return;
+    for (const id of covers) if (typeof id === "number" && id > 0) ids.push(id);
+  };
+  let key = book.openLibraryKey ?? null;
+
+  if (key) {
+    const [work, editions] = await Promise.all([
+      getJson(`https://openlibrary.org${key}.json`, PATIENT_MS).catch(() => null),
+      getJson(`https://openlibrary.org${key}/editions.json?limit=50`, PATIENT_MS).catch(() => null),
+    ]);
+    if (!work && !editions) throw new Error("Open Library didn't answer");
+    take(work?.covers);
+    for (const edition of editions?.entries ?? []) take(edition.covers);
+  } else {
+    const query = book.isbn
       ? `q=${encodeURIComponent(`isbn:${book.isbn}`)}`
       : `title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}`;
-  const data = await getJson(
-    `https://openlibrary.org/search.json?${query}&limit=3&fields=key,cover_i`,
-  );
-  const docs: { key?: string; cover_i?: number }[] = data.docs ?? [];
-  const ids: number[] = docs.flatMap((doc) => (doc.cover_i ? [doc.cover_i] : []));
-
-  const key = book.openLibraryKey ?? docs[0]?.key;
-  if (key) {
-    try {
-      const editions = await getJson(`https://openlibrary.org${key}/editions.json?limit=50`);
-      for (const edition of editions.entries ?? []) {
-        for (const id of edition.covers ?? []) {
-          if (typeof id === "number" && id > 0) ids.push(id);
-        }
+    const data = await getJson(`https://openlibrary.org/search.json?${query}&limit=3&fields=key,cover_i`, PATIENT_MS);
+    const docs: { key?: string; cover_i?: number }[] = data.docs ?? [];
+    for (const doc of docs) if (doc.cover_i) ids.push(doc.cover_i);
+    key = docs[0]?.key ?? null;
+    if (key) {
+      try {
+        const editions = await getJson(`https://openlibrary.org${key}/editions.json?limit=50`, PATIENT_MS);
+        for (const edition of editions.entries ?? []) take(edition.covers);
+      } catch {
+        // The search's covers are still something
       }
-    } catch {
-      // The work's own cover is still something
     }
   }
 
@@ -276,21 +294,23 @@ export async function findCovers(book: {
 // Everything the work page shows about a book that's on no one's shelf
 // yet: the search record for it, its description, and its author with
 // bio. Null when Open Library doesn't know the key.
+// Throws when Open Library didn't answer, which is not the same as not
+// knowing the book.
 export async function lookupWorkPage(key: string) {
-  const found = await lookupWork({ title: "", author: "", openLibraryKey: key });
+  const found = await lookupWork({ title: "", author: "", openLibraryKey: key }, PATIENT_MS);
   if (!found || !found.title) return null;
   const [description] = await Promise.all([
-    fetchDescription(key),
-    found.authorKey ? refreshAuthor(found.authorKey).catch(() => undefined) : undefined,
+    fetchDescription(key, PATIENT_MS),
+    found.authorKey ? refreshAuthor(found.authorKey, PATIENT_MS).catch(() => undefined) : undefined,
   ]);
   const authorDetails = found.authorKey ? await getAuthor(found.authorKey) : null;
   return { ...found, key, description, authorDetails };
 }
 
 // A work's description, which the search results don't carry
-export async function fetchDescription(key: string): Promise<string> {
+export async function fetchDescription(key: string, timeoutMs = TIMEOUT_MS): Promise<string> {
   try {
-    const work = await getJson(`https://openlibrary.org${key}.json`);
+    const work = await getJson(`https://openlibrary.org${key}.json`, timeoutMs);
     return textValue(work.description) ?? "";
   } catch {
     return "";

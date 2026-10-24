@@ -20,7 +20,12 @@ export default function ErrorPage({ what = "page" }: { what?: string }) {
             title: "Not yours to see",
             body: "This belongs to someone who hasn't shared it with you.",
           }
-        : {
+        : status === 503
+          ? {
+              title: "Open Library didn't answer",
+              body: "Book details come from Open Library, which is slow right now. Give it a moment and try again.",
+            }
+          : {
             title: "Something went wrong",
             body: "Stacks hit a snag on this page. It's been noted. Trying again usually does it; if it keeps happening, say so with Send feedback.",
           };

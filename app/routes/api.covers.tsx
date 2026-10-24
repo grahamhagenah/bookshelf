@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 
 import { prisma } from "~/db.server";
+import { shelfIds } from "~/models/household.server";
 import { findCovers } from "~/models/openlibrary.server";
 import { requireUserId } from "~/session.server";
 
@@ -11,9 +12,10 @@ import { requireUserId } from "~/session.server";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const bookId = new URL(request.url).searchParams.get("bookId");
+  // Anyone sharing the shelf the book is on can pick its cover
   const book = bookId
     ? await prisma.book.findFirst({
-        where: { id: bookId, userId },
+        where: { id: bookId, userId: { in: await shelfIds(userId) } },
         select: { title: true, author: true, isbn: true, openLibraryKey: true },
       })
     : null;

@@ -3,6 +3,7 @@ import { json } from "@remix-run/node";
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 
 import BookCover from "~/components/book-cover";
+import ErrorPage from "~/components/error-page";
 import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import { createBook, findOwnCopy, searchFriendsBooks } from "~/models/book.server";
@@ -43,7 +44,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   if (!OLID.test(olid)) throw new Response("Not Found", { status: 404 });
   const key = `/works/${olid}`;
 
-  const work = await lookupWorkPage(key);
+  const work = await lookupWorkPage(key).catch(() => {
+    throw new Response("Open Library didn't answer", { status: 503 });
+  });
   if (!work) throw new Response("Not Found", { status: 404 });
 
   const [ownCopy, wanted, matches, user] = await Promise.all([
@@ -72,7 +75,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const olid = params.olid ?? "";
   if (!OLID.test(olid)) throw new Response("Not Found", { status: 404 });
   const key = `/works/${olid}`;
-  const work = await lookupWorkPage(key);
+  const work = await lookupWorkPage(key).catch(() => {
+    throw new Response("Open Library didn't answer", { status: 503 });
+  });
   if (!work || !work.title) throw new Response("Not Found", { status: 404 });
 
   const form = await request.formData();
@@ -282,4 +287,8 @@ export default function WorkPage() {
       </section>
     </main>
   );
+}
+
+export function ErrorBoundary() {
+  return <ErrorPage what="book" />;
 }

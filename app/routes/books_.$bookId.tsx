@@ -785,7 +785,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         return json({
           edited: false,
           coverError:
-            "That cover couldn't be fetched. Use an image link from Amazon, Goodreads, Google Books or Open Library, under 5 MB.",
+            "That cover couldn't be fetched. Use an image link from Open Library, Amazon, Goodreads, Google Books, Bookshop.org, Wikipedia or the Internet Archive, under 5 MB.",
         });
       }
       coverToSave = local;
@@ -1050,7 +1050,7 @@ function CoverPicker({
           onClick={() => fetcher.load(`/api/covers?bookId=${bookId}`)}
           className="text-stone-700 dark:text-stone-200 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline disabled:opacity-60"
         >
-          {loading ? "Looking on Open Library…" : failed ? "Try again" : "Or pick a cover from Open Library"}
+          {loading ? "Looking on Open Library, which can take a few seconds…" : failed ? "Try again" : "Or pick a cover from Open Library"}
         </button>
       </p>
     );
@@ -1672,8 +1672,9 @@ export default function BookDetailsPage() {
                   className={inputClass}
                 />
                 <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
-                  The preview on the left updates after you save. A link from another site is
-                  copied here when you save.
+                  An image link from Open Library, Amazon, Goodreads, Google Books, Bookshop.org,
+                  Wikipedia or the Internet Archive, under 5 MB. It&apos;s copied here when you
+                  save, and the preview on the left updates then.
                 </p>
                 {actionData?.coverError ? (
                   <p role="alert" className="mt-1.5 text-sm text-red-700 dark:text-red-400">
