@@ -116,6 +116,12 @@ export default function App() {
         <meta charSet="utf-8" />
         {theme === "system" ? <script dangerouslySetInnerHTML={{ __html: FOLLOW_DEVICE }} /> : null}
         <meta name="viewport" content="width=device-width,initial-scale=1" />
+        {/* Tells the browser which way to paint its own canvas before the
+            stylesheet arrives, so a dark page doesn't start out white */}
+        <meta
+          name="color-scheme"
+          content={theme === "system" ? "light dark" : theme}
+        />
         {/* Other sites' images and links don't learn which page was open */}
         <meta name="referrer" content="same-origin" />
         {theme === "system" ? (
@@ -129,7 +135,9 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className="min-h-full flex flex-col bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors">
+      {/* No color transition here: Safari can resolve styles once before
+          the stylesheet loads and then animate the page from white to dark */}
+      <body className="min-h-full flex flex-col bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100">
         {standalone ? null : (
           <>
             <Header />
