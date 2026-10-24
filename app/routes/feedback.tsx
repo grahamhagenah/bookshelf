@@ -2,6 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remi
 import { json } from "@remix-run/node";
 import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 
+import { MIN_SECONDS, clientIp, formAge, formToken, looksLikeSpam, tooMany } from "~/feedback-guard.server";
 import { FEEDBACK_MAX_LENGTH, saveFeedback } from "~/models/feedback.server";
 import { seo } from "~/seo";
 import { getUserId } from "~/session.server";
@@ -18,18 +19,33 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
   // The page they came from, to go back to and to say where it was about
   const from = safeRedirect(new URL(request.url).searchParams.get("from"), "/");
-  return json({ signedIn: Boolean(userId), from });
+  return json({ signedIn: Boolean(userId), from, token: formToken() });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = (await getUserId(request)) ?? null;
   const form = await request.formData();
-  // Bots fill in every field; people never see this one
-  if (form.get("website")) return json({ sent: true, error: null });
-
   const body = String(form.get("body") ?? "").trim();
   const email = String(form.get("email") ?? "").trim();
   if (!body) return json({ sent: false, error: "Write a few words first." }, { status: 400 });
+
+  // Spam gets the same thank-you as everyone and goes nowhere: a bot that
+  // filled in the field people never see, a form sent faster than anyone
+  // reads it, a visitor's mailshot, or one address sending over and over
+  const age = formAge(form.get("t"));
+  const held = form.get("website")
+    ? "honeypot"
+    : age === null || age < MIN_SECONDS
+      ? "too fast"
+      : looksLikeSpam(body, { signedIn: Boolean(userId) })
+        ? "mailshot"
+        : tooMany(clientIp(request))
+          ? "too many"
+          : null;
+  if (held) {
+    console.log(`Feedback held (${held})`);
+    return json({ sent: true, error: null });
+  }
   if (body.length > FEEDBACK_MAX_LENGTH) {
     return json({ sent: false, error: `Keep it under ${FEEDBACK_MAX_LENGTH} characters.` }, { status: 400 });
   }
@@ -47,7 +63,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function Feedback() {
-  const { signedIn, from } = useLoaderData<typeof loader>();
+  const { signedIn, from, token } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const sending = useNavigation().state === "submitting";
 
@@ -79,6 +95,7 @@ export default function Feedback() {
 
       <Form method="post" className="mt-6 space-y-4">
         <input type="hidden" name="from" value={from} />
+        <input type="hidden" name="t" value={token} />
         {/* Hidden from people, irresistible to bots */}
         <div className="hidden" aria-hidden="true">
           <label>
