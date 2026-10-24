@@ -168,12 +168,14 @@ export default function WorkPage() {
         {/* The two choices from the search result, for this book */}
         <fetcher.Form method="post" className="flex flex-col gap-2">
           {added || inLibrary ? (
+            // Just added: back to the library, where it sits with the rest.
+            // Opening the new copy would look like nothing happened.
             <Link
-              to={`/books/${added ?? ownCopyId}`}
+              to={added ? "/books" : `/books/${ownCopyId}`}
               className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-stone-100 dark:bg-stone-800 px-4 py-2 text-sm text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
             >
               <CheckCircleIcon size={14} />
-              {added ? "Added. Open it on your shelf" : "In your library. Open it"}
+              {added ? "Added. See it in my library" : "In your library. Open it"}
             </Link>
           ) : (
             <button
