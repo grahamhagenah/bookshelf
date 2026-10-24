@@ -33,19 +33,39 @@ const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}
 
 // The logo and name, a white card for the message, and a quiet footer.
 // The preheader is the line inboxes show beside the subject.
-function layout({ preheader, content, footer }: { preheader: string; content: string; footer: string }) {
+// The wordmark, linking home: a picture, since mail clients don't load
+// the serif. It's drawn at twice this size, 150 by 45, for sharp screens.
+const brand = (width: number, margin = "0") => `
+      <a href="${APP_URL}" style="display: inline-block; margin: ${margin};"><img src="${APP_URL}/wordmark.png" width="${width}" height="${Math.round((width * 45) / 150)}" alt="Stacks" style="display: block; border: 0;"></a>`;
+
+function layout({
+  preheader,
+  masthead = "",
+  content,
+  footer,
+}: {
+  preheader: string;
+  // A full-bleed strip at the top of the card, above the message. It
+  // carries the brand itself, so none goes above the card.
+  masthead?: string;
+  content: string;
+  footer: string;
+}) {
   return `<!DOCTYPE html>
 <html>
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+  <head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>@media (max-width: 480px) { .phone { display: block !important; } .wide { display: none !important; } }</style>
+  </head>
   <body style="margin: 0; padding: 32px 16px; background: ${page}; font-family: ${font}; color: ${ink};">
     <div style="display: none; max-height: 0; overflow: hidden;">${esc(preheader)}</div>
     <div style="max-width: 560px; margin: 0 auto;">
-      <a href="${APP_URL}" style="display: inline-block; margin: 0 0 16px; color: ${ink}; text-decoration: none;">
-        <img src="${APP_URL}/icon-192.png" width="28" height="28" alt="" style="vertical-align: middle; border: 0;">
-        <span style="vertical-align: middle; margin-left: 6px; font-size: 19px; font-weight: 600;">Stacks</span>
-      </a>
-      <div style="background: #ffffff; border: 1px solid ${line}; border-radius: 12px; padding: 28px 24px;">
+      ${masthead ? "" : brand(80, "0 0 16px")}
+      <div style="background: #ffffff; border: 1px solid ${line}; border-radius: 12px; overflow: hidden;">
+        ${masthead}
+        <div style="padding: 28px 24px;">
         ${content}
+        </div>
       </div>
       <p style="margin: 16px 4px 0; font-size: 12px; line-height: 1.5; color: ${faint};">${footer}</p>
     </div>
@@ -362,6 +382,103 @@ export async function sendDigestEmail({
     to: toEmail,
     ...renderDigest(details),
     headers: optOutHeaders(details.toUserId, "weekly"),
+  });
+}
+
+// ---- The homepage's lending scene, as a strip for the top of an email ----
+
+// Three books from the front page stand on the card's edge like a shelf,
+// different heights, under the mark and name, after the "Due soon" note
+// and the reminder that's gone out. Tables and plain boxes only: no tilt, since mail clients
+// drop transforms.
+const SCENE_COVERS = [
+  { isbn: "9780063251922", width: 60 },
+  { isbn: "9780593321447", width: 70 },
+  { isbn: "9780670026197", width: 64 },
+];
+
+function scene() {
+  const books = SCENE_COVERS.map(
+    ({ isbn, width }) =>
+      `<td style="padding: 0 8px 0 0; vertical-align: bottom;">${cover(`https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`, width).replace("border-radius: 3px;", "border-radius: 3px 3px 0 0;")}</td>`,
+  ).join("");
+  const name = (text: string) => `<strong style="color: ${ink};">${esc(text)}</strong>`;
+  const note = `
+    <div style="background: #ffffff; border: 1px solid ${line}; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.45; color: ${body};">
+      <p style="margin: 0 0 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: ${muted};">Due soon</p>
+      <p style="margin: 0;">${name("Demon Copperhead")} is with Anika · ${name("3 days late")}</p>
+      <p style="margin: 2px 0 0;">${name("Sea of Tranquility")} goes back to Maya · tomorrow</p>
+    </div>
+    <p style="margin: 10px 0 0;"><span style="display: inline-block; background: ${ink}; color: #ffffff; border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 600;">&#10003;&nbsp; Reminder sent to Anika</span></p>`;
+  // Two blocks side by side; on a narrow screen the covers drop under the
+  // note and still stand on the line, and the wordmark moves to the top,
+  // by the one media query mail clients honor
+  return `
+      <div style="background: ${page}; border-bottom: 1px solid ${line}; padding: 20px 24px 0; font-size: 0; line-height: 0;">
+        <div class="phone" style="display: none; margin: 0 0 18px;">${brand(75)}</div>
+        <div style="display: inline-block; vertical-align: bottom; width: 270px; max-width: 100%; margin: 0 16px 16px 0; font-size: 13px; line-height: 1.45;">${note}</div>
+        <div style="display: inline-block; vertical-align: bottom; white-space: nowrap;">
+          <div class="wide" style="margin: 0 0 18px; line-height: 0;">${brand(75)}</div>
+          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse: collapse;"><tr>${books}</tr></table>
+        </div>
+      </div>`;
+}
+
+// ---- A word from Stacks to everyone ----
+
+// The same message that lands in Activity, as an email. It goes out under
+// the email-notifications switch, so the opt-out link turns that off.
+export function renderAnnouncement({
+  toUserId,
+  toName,
+  headline,
+  message,
+}: {
+  toUserId?: string;
+  toName: string;
+  // A short title above the message, and the subject
+  headline?: string | null;
+  message: string;
+}) {
+  const link = `${APP_URL}/notifications`;
+  const title = headline?.trim() || "";
+  // Blank lines in the message are paragraph breaks
+  const paragraphs = message.split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
+  const html = layout({
+    preheader: (title ? `${title}. ` : "") + message.slice(0, 120),
+    masthead: scene(),
+    content: `
+        <p style="margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: ${muted};">From Stacks</p>
+        ${title ? `<h1 style="margin: 0 0 14px; font-size: 24px; line-height: 1.25; font-weight: 600; color: ${ink};">${esc(title)}</h1>` : ""}
+        ${paragraph(`Hi ${esc(toName)},`)}
+        ${paragraphs
+          .map(
+            (part) =>
+              `<p style="margin: 0 0 16px; white-space: pre-wrap; font-size: 16px; line-height: 1.55; color: ${body};">${esc(part)}</p>`,
+          )
+          .join("")}
+        ${button(link, "Open Stacks")}`,
+    footer: optOutFooter(toUserId, "requests", "Stop email notifications"),
+  });
+  const text = `${title ? `${title.toUpperCase()}\n\n` : ""}Hi ${toName},
+
+${message}
+
+${link}
+
+${optOutText(toUserId, "requests", "Stop email notifications")}`;
+  return { subject: title ? `Stacks: ${title}` : "News from Stacks", html, text };
+}
+
+export async function sendAnnouncementEmail({
+  toEmail,
+  ...details
+}: Parameters<typeof renderAnnouncement>[0] & { toEmail: string; toUserId: string }) {
+  if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
+  return send({
+    to: toEmail,
+    ...renderAnnouncement(details),
+    headers: optOutHeaders(details.toUserId, "requests"),
   });
 }
 

@@ -11,6 +11,7 @@ import {
   updateUser,
   verifyLogin,
   createReminderNotification,
+  getAnnouncementRecipients,
   generateShareToken,
   getSuggestedFriends,
   searchUsers,
@@ -180,4 +181,20 @@ test("a changed address is stored the same way", async () => {
   // The same address in other capitals isn't a change
   const again = await updateUser(user.id, { email: updated.email.toUpperCase() });
   expect(again.emailChanged).toBe(false);
+});
+
+describe("getAnnouncementRecipients", () => {
+  test("only people who confirmed their email and kept notifications on, never demo visitors", async () => {
+    const yes = await makeUser("Yes");
+    const unverified = await makeUser("Unverified", { emailVerifiedAt: null });
+    const demo = await makeUser("Demo", { demoGroup: crypto.randomUUID() });
+    const off = await makeUser("Off");
+    await prisma.user.update({ where: { id: off.id }, data: { emailNotifications: false } });
+
+    const ids = (await getAnnouncementRecipients()).map((person) => person.id);
+    expect(ids).toContain(yes.id);
+    expect(ids).not.toContain(unverified.id);
+    expect(ids).not.toContain(demo.id);
+    expect(ids).not.toContain(off.id);
+  });
 });

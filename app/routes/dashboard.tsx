@@ -19,6 +19,7 @@ import {
   UserIcon,
 } from "~/components/icons";
 import Layout from "~/components / Layout/Layout";
+import { sendAnnouncementEmail } from "~/email.server";
 import {
   getAdminUsers,
   getDataQuality,
@@ -36,10 +37,30 @@ import {
   isUserAdmin,
   updateUser,
   createAnnouncement,
+  getAnnouncementRecipients,
 } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 import { validateEmail } from "~/utils";
+
+// One announcement email per person, spaced out, logging any that don't go
+async function emailAnnouncement(
+  recipients: Awaited<ReturnType<typeof getAnnouncementRecipients>>,
+  headline: string,
+  message: string,
+) {
+  for (const person of recipients) {
+    const result = await sendAnnouncementEmail({
+      toEmail: person.email,
+      toUserId: person.id,
+      toName: person.firstname || "there",
+      headline,
+      message,
+    });
+    if (!result.success) console.error("Announcement email not sent:", person.email, result.error);
+    await new Promise((resolve) => setTimeout(resolve, 600));
+  }
+}
 
 export const meta: MetaFunction = () => seo({ title: "Admin", noindex: true });
 
@@ -91,6 +112,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "announce") {
     const message = String(form.get("message") ?? "").trim();
+    const headline = String(form.get("headline") ?? "").trim();
+    if (headline.length > HEADLINE_MAX) {
+      return json(
+        { announceError: `Keep the headline under ${HEADLINE_MAX} characters.` },
+        { status: 400 },
+      );
+    }
     if (!message)
       return json(
         { announceError: "Write the announcement first." },
@@ -102,8 +130,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         { status: 400 },
       );
     }
-    const sentTo = await createAnnouncement(userId, message);
-    return json({ announced: sentTo });
+    // In Activity the headline leads the message on one line; the email
+    // sets it as a title
+    const sentTo = await createAnnouncement(userId, headline ? `${headline}: ${message}` : message);
+    const recipients = await getAnnouncementRecipients();
+    // The emails go out one at a time behind the response, well under
+    // the email service's rate limit, so the dashboard answers at once
+    void emailAnnouncement(recipients, headline, message);
+    return json({ announced: sentTo, emailed: recipients.length });
   }
 
   if (intent === "feedbackDone") {
@@ -620,12 +654,14 @@ function Funnel({ funnel }: { funnel: Data["funnel"] }) {
 // What people have sent from the feedback page, open ones first
 // A word to everyone: lands in each person's Activity as a notification
 const ANNOUNCEMENT_MAX = 500;
+const HEADLINE_MAX = 80;
 
 function Announce({ people }: { people: number }) {
-  const fetcher = useFetcher<{ announced?: number; announceError?: string }>();
+  const fetcher = useFetcher<{ announced?: number; emailed?: number; announceError?: string }>();
   const [text, setText] = useState("");
   const sending = fetcher.state !== "idle";
   const sent = fetcher.state === "idle" ? fetcher.data?.announced : undefined;
+  const emailed = fetcher.state === "idle" ? fetcher.data?.emailed : undefined;
   const error =
     fetcher.state === "idle" ? fetcher.data?.announceError : undefined;
   return (
@@ -636,7 +672,9 @@ function Announce({ people }: { people: number }) {
       <p className={`mt-1 text-sm ${mutedClass}`}>
         Goes to everyone with an account ({people}{" "}
         {people === 1 ? "person" : "people"}) as a notification in their
-        Activity, from Stacks. Not emailed. Demo visitors don&apos;t get it.
+        Activity, from Stacks, and by email to those who&apos;ve confirmed
+        their address and kept email notifications on. Demo visitors
+        don&apos;t get it.
       </p>
       <fetcher.Form
         method="post"
@@ -652,6 +690,17 @@ function Announce({ people }: { people: number }) {
         }}
       >
         <input type="hidden" name="intent" value="announce" />
+        <label htmlFor="announcement-headline" className="sr-only">
+          Headline
+        </label>
+        <input
+          id="announcement-headline"
+          name="headline"
+          type="text"
+          maxLength={HEADLINE_MAX}
+          placeholder="Headline (optional): the email's title, and the first words in Activity"
+          className="mb-2 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm font-medium text-stone-900 dark:text-stone-100 placeholder:font-normal placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+        />
         <label htmlFor="announcement" className="sr-only">
           Announcement
         </label>
@@ -681,7 +730,8 @@ function Announce({ people }: { people: number }) {
               <span className="text-red-700 dark:text-red-400">{error}</span>
             ) : sent !== undefined ? (
               <span className="text-forest-700 dark:text-forest-400">
-                Sent to {sent} {sent === 1 ? "person" : "people"}.
+                Sent to {sent} {sent === 1 ? "person" : "people"}
+                {emailed ? `, emailing ${emailed}` : ""}.
               </span>
             ) : null}
           </span>
