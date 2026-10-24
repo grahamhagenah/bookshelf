@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { renderBookRequest, renderVerification } from "~/email.server";
+import { renderAnnouncement, renderBookRequest, renderVerification } from "~/email.server";
 
 test("a borrow request names the person and book, with its cover", () => {
   const { subject, html, text } = renderBookRequest({
@@ -30,4 +30,19 @@ test("names and titles are escaped", () => {
 test("the confirm email carries its link", () => {
   const { html } = renderVerification({ toName: "Maya", token: "a b" });
   expect(html).toContain("/verify-email?token=a%20b");
+});
+
+test("an announcement carries the message, escaped, with its opt-out", () => {
+  const { subject, html, text } = renderAnnouncement({
+    toUserId: "u1",
+    toName: "Maya",
+    message: "Big updates: a public page for your shelf.\nQuestions & notes welcome.",
+  });
+  expect(subject).toBe("News from Stacks");
+  expect(html).toContain("Hi Maya");
+  expect(html).toContain("Questions &amp; notes welcome.");
+  expect(html).toContain("/notifications");
+  // Turning these off is the email-notifications switch
+  expect(html).toContain("k=requests");
+  expect(text).toContain("Big updates: a public page for your shelf.\nQuestions & notes welcome.");
 });

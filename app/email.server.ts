@@ -365,6 +365,50 @@ export async function sendDigestEmail({
   });
 }
 
+// ---- A word from Stacks to everyone ----
+
+// The same message that lands in Activity, as an email. It goes out under
+// the email-notifications switch, so the opt-out link turns that off.
+export function renderAnnouncement({
+  toUserId,
+  toName,
+  message,
+}: {
+  toUserId?: string;
+  toName: string;
+  message: string;
+}) {
+  const link = `${APP_URL}/notifications`;
+  const html = layout({
+    preheader: message.slice(0, 120),
+    content: `
+        ${paragraph(`Hi ${esc(toName)}, a word from Stacks:`)}
+        <p style="margin: 0; white-space: pre-wrap; font-size: 16px; line-height: 1.55; color: ${ink};">${esc(message)}</p>
+        ${button(link, "Open Stacks")}`,
+    footer: optOutFooter(toUserId, "requests", "Stop email notifications"),
+  });
+  const text = `Hi ${toName}, a word from Stacks:
+
+${message}
+
+${link}
+
+${optOutText(toUserId, "requests", "Stop email notifications")}`;
+  return { subject: "News from Stacks", html, text };
+}
+
+export async function sendAnnouncementEmail({
+  toEmail,
+  ...details
+}: Parameters<typeof renderAnnouncement>[0] & { toEmail: string; toUserId: string }) {
+  if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
+  return send({
+    to: toEmail,
+    ...renderAnnouncement(details),
+    headers: optOutHeaders(details.toUserId, "requests"),
+  });
+}
+
 // ---- A note to the admins when someone sends feedback ----
 
 export function renderFeedback({ from, body: message, page: sentFrom }: { from: string; body: string; page: string | null }) {

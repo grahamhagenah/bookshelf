@@ -217,6 +217,16 @@ export async function createAnnouncement(senderId: User["id"], message: string) 
   return people.length;
 }
 
+// Who an announcement is also emailed to: people who've confirmed their
+// address and kept email notifications on. Demo visitors never are.
+export function getAnnouncementRecipients() {
+  return prisma.user.findMany({
+    where: { demoGroup: null, emailNotifications: true, emailVerifiedAt: { not: null } },
+    select: { id: true, email: true, firstname: true },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
 // A notification, only if it was sent to this person
 export function getReceivedNotification(userId: string, notificationId: string) {
   return prisma.notification.findFirst({
