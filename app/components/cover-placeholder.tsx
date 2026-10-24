@@ -21,19 +21,32 @@ export default function CoverPlaceholder({
   author,
   className = "",
   large = false,
+  compact = false,
 }: {
   title: string;
   author?: string | null;
   className?: string;
   large?: boolean;
+  // Too small for words: the title's first letter, like a spine
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <div
+        className={`flex items-center justify-center overflow-hidden text-stone-500 dark:text-stone-400 ${tintFor(title)} ${className}`}
+        aria-hidden="true"
+      >
+        <span className="font-serif text-lg font-semibold leading-none">{title.trim().charAt(0).toUpperCase()}</span>
+      </div>
+    );
+  }
   return (
     <div
       className={`flex flex-col justify-between overflow-hidden text-stone-800 dark:text-stone-100 ${tintFor(title)} ${
         large ? "p-5" : "p-2.5 sm:p-3"
       } ${className}`}
     >
-      <span className={`font-medium leading-snug line-clamp-4 ${large ? "text-xl" : "text-xs sm:text-sm"}`}>{title}</span>
+      <span className={`font-medium leading-snug line-clamp-4 [overflow-wrap:anywhere] ${large ? "text-xl" : "text-xs sm:text-sm"}`}>{title}</span>
       {author ? (
         <span className={`text-stone-500 dark:text-stone-400 line-clamp-2 ${large ? "text-sm" : "text-[11px] sm:text-xs"}`}>
           {author}

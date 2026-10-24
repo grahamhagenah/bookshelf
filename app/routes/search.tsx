@@ -1,11 +1,10 @@
-import { defer, json } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import type {
   LoaderFunctionArgs,
   ActionFunctionArgs,
   MetaFunction,
 } from "@remix-run/node";
 import {
-  Await,
   useLoaderData,
   useSearchParams,
   useNavigation,
@@ -14,9 +13,10 @@ import {
   Form,
   useRevalidator,
 } from "@remix-run/react";
-import { Suspense, useState } from "react";
+import { useEffect, useState } from "react";
 
 import BarcodeScanner from "~/components/barcode-scanner";
+import BookCover from "~/components/book-cover";
 import { BookmarkIcon, CameraIcon, CheckCircleIcon } from "~/components/icons";
 import SearchBox from "~/components/search-box";
 import {
@@ -26,53 +26,20 @@ import {
   searchFriendsBooks,
 } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
-import { fetchDescription, inEnglish } from "~/models/openlibrary.server";
-import {
-  addWantToRead,
-  getWantToReadWorks,
-  notifyWanters,
-} from "~/models/wish.server";
+import { fetchDescription } from "~/models/openlibrary.server";
+import { addWantToRead, notifyWanters } from "~/models/wish.server";
 import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
 import { roomForBooks } from "~/plan.server";
+import type { OpenLibraryBook, OpenLibraryResults } from "~/search.server";
 import { seo } from "~/seo";
 import { requireUserId, getUserId } from "~/session.server";
-import {
-  cleanSubjects,
-  coverSrc,
-  editionPublisher,
-  ENGLISH_EDITION_FIELDS,
-  ENGLISH_EDITION_PARAMS,
-  tidySearchResults,
-} from "~/utils";
-import { sameWork } from "~/works";
+import { cleanSubjects, editionPublisher } from "~/utils";
 
 export const meta: MetaFunction = () => seo({ title: "Search", noindex: true });
 
 export const handle = {
   breadcrumb: () => <span>Search</span>,
 };
-
-interface OpenLibraryBook {
-  title: string;
-  author_name?: string[];
-  author_key?: string[];
-  cover_i?: number;
-  first_publish_year?: number;
-  number_of_pages_median?: number;
-  subject?: string[];
-  editions?: {
-    docs?: { title?: string; language?: string[]; publisher?: string[] }[];
-  };
-  key?: string;
-  language?: string[];
-  publisher?: string[];
-  edition_count?: number;
-}
-
-interface OpenLibraryResponse {
-  docs: OpenLibraryBook[];
-  numFound: number;
-}
 
 const LANGUAGES = [
   { code: "", label: "All Languages" },
@@ -93,7 +60,6 @@ const LANGUAGES = [
   { code: "pol", label: "Polish" },
 ];
 
-const RESULTS_PER_PAGE = 20;
 
 // Make GET request to Open Library API
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -110,7 +76,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const libraryKeys = userId
     ? await getUserLibraryKeys(await shelfIds(userId))
     : [];
-  const wishes = userId ? await getWantToReadWorks(userId) : [];
 
   // Friends' copies come first, so only look them up for the first page
   const friendBooks =
@@ -118,109 +83,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
       ? await searchFriendsBooks(userId, query)
       : [];
 
-  const base = { friendBooks, query, searchType, language, page, libraryKeys, forWant };
-  if (!query.trim()) {
-    return defer({ ...base, query: "", page: 1, openLibrary: Promise.resolve(NO_RESULTS) });
-  }
-
-  // Open Library's results stream in after the page, which shows friends'
-  // copies at once and says it's still looking
-  return defer({ ...base, openLibrary: searchOpenLibrary({ query, searchType, language, page, wishes }) });
-}
-
-interface OpenLibraryResults {
-  docs: OpenLibraryBook[];
-  numFound: number;
-  totalPages: number;
-  // Results already on the want-to-read list, by work key
-  wantKeys: string[];
-  // Open Library didn't answer, which is not the same as no matches
-  failed: boolean;
-}
-
-const NO_RESULTS: OpenLibraryResults = { docs: [], numFound: 0, totalPages: 0, wantKeys: [], failed: false };
-
-// Open Library can take ten seconds or more on a slow day. The page is
-// already up by then, so the wait is shown, not hidden.
-const SEARCH_TIMEOUT_MS = 12000;
-
-async function searchOpenLibrary({
-  query,
-  searchType,
-  language,
-  page,
-  wishes,
-}: {
-  query: string;
-  searchType: string;
-  language: string;
-  page: number;
-  wishes: Awaited<ReturnType<typeof getWantToReadWorks>>;
-}): Promise<OpenLibraryResults> {
-  // Explicitly request the fields we need
-  const fields = [
-    "title",
-    "author_name",
-    "author_key",
-    "cover_i",
-    "first_publish_year",
-    "number_of_pages_median",
-    "subject",
-    "key",
-    "language",
-    // To tell a book from the summaries and box sets sold around it
-    "publisher",
-    "edition_count",
-    ENGLISH_EDITION_FIELDS,
-  ].join(",");
-
-  // Open Library uses "language:code" syntax within the query
-  const fullQuery = language ? `${query} language:${language}` : query;
-  let searchQuery = "";
-  switch (searchType) {
-    case "title":
-      searchQuery = `title=${encodeURIComponent(fullQuery)}`;
-      break;
-    case "author":
-      // language:xxx doesn't work well with author=, so it goes in q=
-      searchQuery = language
-        ? `q=${encodeURIComponent(`author:${query} language:${language}`)}`
-        : `author=${encodeURIComponent(query)}`;
-      break;
-    default:
-      searchQuery = `q=${encodeURIComponent(fullQuery)}`;
-  }
-  const offset = (page - 1) * RESULTS_PER_PAGE;
-
-  let data: OpenLibraryResponse;
-  try {
-    const res = await fetch(
-      `https://openlibrary.org/search.json?${searchQuery}&limit=${RESULTS_PER_PAGE}&offset=${offset}&${ENGLISH_EDITION_PARAMS}&fields=${fields}`,
-      { signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS) },
-    );
-    const body = await res.json();
-    if (!res.ok || !Array.isArray(body.docs)) throw new Error(`Open Library answered ${res.status}`);
-    data = { ...body, docs: tidySearchResults(await inEnglish(body.docs)) };
-  } catch {
-    // Slow, down, or a query it rejects ("the"): say so
-    return { ...NO_RESULTS, failed: true };
-  }
-
-  const wantKeys = data.docs
-    .filter(
-      (doc) =>
-        doc.key &&
-        wishes.some((wish) => sameWork(wish, { title: doc.title, openLibraryKey: doc.key })),
-    )
-    .map((doc) => doc.key as string);
-
-  return {
-    docs: data.docs,
-    numFound: data.numFound,
-    totalPages: Math.ceil(data.numFound / RESULTS_PER_PAGE),
-    wantKeys,
-    failed: false,
-  };
+  // Open Library's results are fetched by the page once it's up
+  return json({
+    friendBooks,
+    query: query.trim() ? query : "",
+    searchType,
+    language,
+    page: query.trim() ? page : 1,
+    libraryKeys,
+    forWant,
+  });
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -307,41 +179,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return json({ success: true, addedKey: openLibraryKey });
 };
 
-function SmallCover({
-  src,
-  title,
-  author,
-  className,
-}: {
-  src: string | null;
-  title: string;
-  author: string;
-  className: string;
-}) {
-  const [failed, setFailed] = useState(false);
-  return (
-    <div
-      className={`relative flex-shrink-0 overflow-hidden rounded-xs shadow-sm ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}
-    >
-      {/* Too small for the placeholder's text; the title sits alongside */}
-      <div className="absolute inset-0 bg-stone-200 dark:bg-stone-800" />
-      {src && !failed ? (
-        <img
-          src={coverSrc(src, "M")}
-          alt={`${title} by ${author}`}
-          loading="lazy"
-          className="relative h-full w-full object-cover"
-          onLoad={(e) => {
-            // Open Library answers unknown covers with a 1x1 pixel
-            if (e.currentTarget.naturalWidth <= 1) setFailed(true);
-          }}
-          onError={() => setFailed(true)}
-        />
-      ) : null}
-    </div>
-  );
-}
-
 interface FriendBook {
   id: string;
   title: string;
@@ -359,12 +196,7 @@ function FriendBookRow({ book }: { book: FriendBook }) {
         to={`/books/${book.id}`}
         className="flex items-center gap-3 rounded-lg -mx-2 px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
       >
-        <SmallCover
-          src={book.cover}
-          title={book.title}
-          author={book.author}
-          className="w-10 h-15"
-        />
+        <BookCover cover={book.cover} title={book.title} author={book.author} compact className="w-10 h-15" />
         <div className="min-w-0 flex-1">
           <p className="font-medium text-stone-900 dark:text-stone-100 truncate">
             {book.title}
@@ -413,12 +245,32 @@ function WorkLink({
 }
 
 // Shown while Open Library is still looking; the friends' results above
-// are already on the page
+// are already on the page. Three rows in the shape of the results to
+// come: a cover, a title, an author, the details, the two buttons.
 function SearchingOpenLibrary() {
+  const bar = "rounded bg-stone-200/80 dark:bg-stone-800";
   return (
-    <p className="py-2 text-sm text-stone-400 dark:text-stone-500 animate-pulse" role="status">
-      Searching Open Library…
-    </p>
+    <div aria-busy="true">
+      <p className="sr-only" role="status">
+        Searching Open Library…
+      </p>
+      <ul className="divide-y divide-stone-100 dark:divide-stone-800 motion-safe:animate-pulse" aria-hidden="true">
+        {[0, 1, 2].map((row) => (
+          <li key={row} className="flex gap-4 py-4">
+            <div className={`${bar} h-[112px] w-[74px] flex-shrink-0 rounded-xs`} />
+            <div className="flex-1 min-w-0 pt-1">
+              <div className={`${bar} h-4 ${row === 1 ? "w-2/3" : "w-1/2"}`} />
+              <div className={`${bar} mt-2.5 h-3.5 w-1/3`} />
+              <div className={`${bar} mt-3 h-3 w-2/5`} />
+              <div className="mt-3.5 flex gap-2">
+                <div className={`${bar} h-8 w-32 rounded-md`} />
+                <div className={`${bar} h-8 w-28 rounded-md`} />
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -476,12 +328,8 @@ function SearchResultItem({
       <fetcher.Form method="post" className="flex gap-4">
         {/* The cover and title open the book's own page; the buttons stay here */}
         <WorkLink workKey={book.key} className="flex-shrink-0 self-stretch">
-          <SmallCover
-            src={
-              book.cover_i
-                ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
-                : null
-            }
+          <BookCover
+            cover={book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : null}
             title={book.title}
             author={author}
             className="w-[74px] h-full"
@@ -610,6 +458,24 @@ export default function Search() {
   const [searchParams] = useSearchParams();
   const navigation = useNavigation();
   const revalidator = useRevalidator();
+
+  // Open Library's results come after the page, from their own route, so
+  // a slow Open Library shows as a wait where the results will be rather
+  // than a page that hasn't changed yet
+  const openLibrary = useFetcher<OpenLibraryResults>({ key: "open-library-search" });
+  const resultsUrl = data.query
+    ? `/api/search?${new URLSearchParams({ q: data.query, type: data.searchType, lang: data.language, page: String(data.page) })}`
+    : null;
+  const { load: loadResults } = openLibrary;
+  useEffect(() => {
+    if (resultsUrl) loadResults(resultsUrl);
+  }, [resultsUrl, loadResults]);
+  // What's loaded is for this search, not the one before it
+  const results =
+    resultsUrl && openLibrary.data && `/api/search?${openLibrary.data.key}` === resultsUrl ? openLibrary.data : null;
+  const retryResults = () => {
+    if (resultsUrl) loadResults(resultsUrl);
+  };
   const [scanning, setScanning] = useState(false);
 
   const isSearching =
@@ -774,17 +640,11 @@ export default function Search() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
               <h2 className={sectionHeading}>
                 Add to your library
-                <Suspense fallback={null}>
-                  <Await resolve={data.openLibrary} errorElement={null}>
-                    {(results) =>
-                      results.numFound > 0 ? (
-                        <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">
-                          {results.numFound.toLocaleString()} on Open Library
-                        </span>
-                      ) : null
-                    }
-                  </Await>
-                </Suspense>
+                {results && results.numFound > 0 ? (
+                  <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">
+                    {results.numFound.toLocaleString()} on Open Library
+                  </span>
+                ) : null}
               </h2>
               <Form method="get" className="flex gap-2">
                 <input type="hidden" name="q" value={currentQuery} />
@@ -821,15 +681,12 @@ export default function Search() {
               </Form>
             </div>
 
-            <Suspense fallback={<SearchingOpenLibrary />}>
-              <Await
-                resolve={data.openLibrary}
-                errorElement={<OpenLibraryDown onRetry={() => revalidator.revalidate()} />}
-              >
-                {(results) => (
-                  <>
+            {!results ? (
+              <SearchingOpenLibrary />
+            ) : (
+              <>
                 {results.failed ? (
-                  <OpenLibraryDown onRetry={() => revalidator.revalidate()} />
+                  <OpenLibraryDown onRetry={retryResults} />
                 ) : results.docs.length === 0 ? (
                   <p className="py-2 text-sm text-stone-400 dark:text-stone-500">
                     No matches on Open Library. Try fewer words or another filter.
@@ -908,10 +765,8 @@ export default function Search() {
                     )}
                   </nav>
                 ) : null}
-                  </>
-                )}
-              </Await>
-            </Suspense>
+              </>
+            )}
           </section>
         </div>
       )}

@@ -21,6 +21,7 @@ export default function BookCover({
   alt = "",
   className = "",
   eager = false,
+  compact = false,
 }: {
   // The cover's address as stored, turned into the site's own URL at `size`
   cover?: string | null;
@@ -35,6 +36,8 @@ export default function BookCover({
   className?: string;
   // The first row of a page is usually on screen right away
   eager?: boolean;
+  // A tiny tile: the placeholder shows one letter, not the title
+  compact?: boolean;
 }) {
   const source = src ?? (cover ? coverSrc(cover, size) : null);
   const [state, setState] = useState<"loading" | "shown" | "failed">(source ? "loading" : "failed");
@@ -44,7 +47,7 @@ export default function BookCover({
   // it reading as part of the cover rather than a clipped edge
   return (
     <span className={`relative block overflow-hidden rounded-xs ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}>
-      {state !== "shown" ? <CoverPlaceholder title={title} author={author} className="absolute inset-0" /> : null}
+      {state !== "shown" ? <CoverPlaceholder title={title} author={author} compact={compact} className="absolute inset-0" /> : null}
       {source && state !== "failed" ? (
         <img
           src={source}
