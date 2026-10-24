@@ -35,6 +35,9 @@ import VerifyEmailBanner from "./components/verify-email-banner";
 // Fallback for any page without its own meta; those are signed-in pages
 export const meta: MetaFunction = () => seo({ noindex: true });
 
+// Bump when the favicon or app icons change
+const ICON_VERSION = 2;
+
 export const links: LinksFunction = () => [
   // Start the body font straight away instead of after the stylesheet
   {
@@ -54,10 +57,12 @@ export const links: LinksFunction = () => [
   },
   { rel: "stylesheet", href: stylesheet },
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
-  { rel: "icon", href: "/favicon.ico", sizes: "32x32" },
-  { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-  { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
-  { rel: "manifest", href: "/site.webmanifest" },
+  // The ?v= changes with the icons: browsers keep a favicon long after it's
+  // replaced, and only a new address makes them fetch it again
+  { rel: "icon", href: `/favicon.ico?v=${ICON_VERSION}`, sizes: "32x32" },
+  { rel: "icon", type: "image/svg+xml", href: `/favicon.svg?v=${ICON_VERSION}` },
+  { rel: "apple-touch-icon", href: `/apple-touch-icon.png?v=${ICON_VERSION}` },
+  { rel: "manifest", href: `/site.webmanifest?v=${ICON_VERSION}` },
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
