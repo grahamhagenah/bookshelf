@@ -13,6 +13,7 @@ import PersonLink from "~/components/person-link";
 import SideRail from "~/components/side-rail";
 import Layout from "~/components / Layout/Layout";
 import { prisma } from "~/db.server";
+import { sendRequestAnswerEmail } from "~/email.server";
 import {
   DEFAULT_LOAN_WEEKS,
   LOAN_WEEKS,
@@ -29,6 +30,9 @@ import {
   getPendingBookRequests,
   getReceivedNotification,
   dismissUpdates,
+  createBookDeclinedNotification,
+  getUserEmailById,
+  REQUEST_NOTE_MAX,
 } from "~/models/user.server";
 import { friendLimitMessage, UPGRADE_PATH } from "~/plan";
 import { seo } from "~/seo";
@@ -107,6 +111,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           select: { userId: true, borrowerId: true, title: true },
         })
       : null;
+    // A word back to the borrower, whichever way the answer goes
+    const reply = String(formData.get("reply") ?? "").trim().slice(0, REQUEST_NOTE_MAX) || null;
+    const currentUser = await getUserById(userId);
+    const ownerName = currentUser ? `${currentUser.firstname} ${currentUser.surname}` : "Your friend";
+    const title = notification.bookTitle ?? book?.title ?? "the book";
+    const tell = async (approved: boolean) => {
+      const borrower = await getUserEmailById(notification.senderId);
+      if (borrower && borrower.emailNotifications && borrower.emailVerifiedAt) {
+        await sendRequestAnswerEmail({
+          toEmail: borrower.email,
+          toUserId: borrower.id,
+          toName: borrower.firstname || "there",
+          ownerName,
+          bookTitle: title,
+          bookId: notification.bookId,
+          approved,
+          message: reply,
+        });
+      }
+    };
     if (answer === "approve" && book && !book.borrowerId) {
       // Only a book on your own shelf (yours or your household's)
       if (!(await shelfIds(userId)).includes(book.userId)) return null;
@@ -115,18 +139,30 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         notification.senderId,
         loanWeeks(formData.get("weeks")),
       );
-      const currentUser = await getUserById(userId);
-      if (currentUser) {
-        await createBookApprovedNotification(
+      await createBookApprovedNotification(
+        userId,
+        notification.senderId,
+        ownerName,
+        title,
+        notification.bookId ?? undefined,
+        reply,
+      );
+      await markNotificationAsRead(notification.id, "approved");
+      await tell(true);
+    } else if (answer === "decline") {
+      // The borrower hears no as well as yes, with a reason if there is one
+      if (notification.bookId) {
+        await createBookDeclinedNotification(
           userId,
           notification.senderId,
-          `${currentUser.firstname} ${currentUser.surname}`,
-          notification.bookTitle ?? book.title,
+          ownerName,
+          title,
+          notification.bookId,
+          reply,
         );
       }
-      await markNotificationAsRead(notification.id, "approved");
-    } else if (answer === "decline") {
       await markNotificationAsRead(notification.id, "declined");
+      await tell(false);
     }
     return null;
   }
@@ -208,6 +244,15 @@ interface ActivityNotification {
 
 // One notification, as a card of its own: who, what, when, and what you
 // can do
+// What someone wrote with a request or an answer, under the line about it
+function Quote({ text }: { text: string }) {
+  return (
+    <span className="mt-1 block border-l-2 border-stone-200 dark:border-stone-700 pl-2.5 text-sm italic text-stone-600 dark:text-stone-300">
+      “{text}”
+    </span>
+  );
+}
+
 function Card({
   type,
   person,
@@ -351,11 +396,19 @@ function ActivityItem({
       text = (
         <>
           {name} would like to borrow {book}
-          {notification.message ? (
-            <span className="mt-1 block border-l-2 border-stone-200 dark:border-stone-700 pl-2.5 text-sm italic text-stone-600 dark:text-stone-300">
-              “{notification.message}”
-            </span>
-          ) : null}
+          {notification.message ? <Quote text={notification.message} /> : null}
+          {/* Goes back with Lend it or Decline */}
+          <label htmlFor={`reply-${notification.id}`} className="sr-only">
+            A note back to {notification.senderName.split(" ")[0]}
+          </label>
+          <input
+            id={`reply-${notification.id}`}
+            name="reply"
+            type="text"
+            maxLength={REQUEST_NOTE_MAX}
+            placeholder={`A note back to ${notification.senderName.split(" ")[0]} (optional)`}
+            className="mt-2 block w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 py-1.5 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+          />
         </>
       );
       actions = (
@@ -441,6 +494,15 @@ function ActivityItem({
       text = (
         <>
           {name} is lending you {book}
+          {notification.message ? <Quote text={notification.message} /> : null}
+        </>
+      );
+      break;
+    case "BOOK_DECLINED":
+      text = (
+        <>
+          {name} can&apos;t lend you {book} right now
+          {notification.message ? <Quote text={notification.message} /> : null}
         </>
       );
       break;
@@ -567,6 +629,12 @@ const getHistoryText = (
       return (
         <>
           {name} lent you {book}
+        </>
+      );
+    case "BOOK_DECLINED":
+      return (
+        <>
+          {name} couldn&apos;t lend you {book}
         </>
       );
     case "HOLD_READY":

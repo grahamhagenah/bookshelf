@@ -66,6 +66,7 @@ import {
   createLoanExtendedNotification,
   createReaderNoteNotification,
   REQUEST_NOTE_MAX,
+  getLoanReply,
 } from "~/models/user.server";
 import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
 import { roomForFriend } from "~/plan.server";
@@ -422,6 +423,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     linePosition: holdIndex === -1 ? null : holdIndex + 1,
     author,
     friendIds: followingIds,
+    // What the lender said when they said yes, for the one borrowing it
+    loanReply: isBorrower ? await getLoanReply(book.id, userId) : null,
   });
 };
 
@@ -1585,6 +1588,15 @@ export default function BookDetailsPage() {
                 </p>
               ) : null}
             </div>
+          ) : null}
+          {/* What the lender said when they agreed: where, when */}
+          {data.isBorrower && data.loanReply?.message ? (
+            <figure className="rounded-md border border-stone-200 dark:border-stone-700 px-3 py-2.5 text-sm">
+              <blockquote className="italic text-stone-700 dark:text-stone-200">“{data.loanReply.message}”</blockquote>
+              <figcaption className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                {data.loanReply.senderName.split(" ")[0]}, when they said yes
+              </figcaption>
+            </figure>
           ) : null}
           {/* Whose it is and when it's due are in the lending history */}
           {data.isBorrower ? (

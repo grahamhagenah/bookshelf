@@ -311,16 +311,52 @@ export async function createBookRequestNotification(
   });
 }
 
+// The owner said no to a borrow request, with their reason if they gave one
+export function createBookDeclinedNotification(
+  senderId: User["id"],
+  receiverId: User["id"],
+  senderName: string,
+  bookTitle: string,
+  bookId: string,
+  message: string | null = null,
+) {
+  return prisma.notification.create({
+    data: {
+      type: "BOOK_DECLINED",
+      message: message?.trim().slice(0, REQUEST_NOTE_MAX) || null,
+      book: { connect: { id: bookId } },
+      receiver: { connect: { id: receiverId } },
+      sender: { connect: { id: senderId } },
+      senderName,
+      bookTitle,
+    },
+    select: { id: true },
+  });
+}
+
+// The lender's reply when they said yes, for the borrower's book page
+export async function getLoanReply(bookId: string, borrowerId: User["id"]) {
+  const approval = await prisma.notification.findFirst({
+    where: { type: "BOOK_APPROVED", bookId, receiverId: borrowerId, message: { not: null } },
+    orderBy: { createdAt: "desc" },
+    select: { message: true, senderName: true, createdAt: true },
+  });
+  return approval;
+}
+
 export async function createBookApprovedNotification(
   senderId: User["id"],
   receiverId: User["id"],
   senderName: string,
   bookTitle: string,
   bookId?: string,
+  // The lender's reply to the request: where, when
+  message: string | null = null,
 ) {
   return prisma.notification.create({
     data: {
       type: "BOOK_APPROVED",
+      message: message?.trim().slice(0, REQUEST_NOTE_MAX) || null,
       ...(bookId ? { book: { connect: { id: bookId } } } : {}),
       receiver: {
         connect: { id: receiverId },

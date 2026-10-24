@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { renderAnnouncement, renderBookRequest, renderVerification } from "~/email.server";
+import { renderAnnouncement, renderBookRequest, renderRequestAnswer, renderVerification } from "~/email.server";
 
 test("a borrow request names the person and book, with its cover", () => {
   const { subject, html, text } = renderBookRequest({
@@ -73,4 +73,30 @@ test("a borrow request carries the borrower's note, escaped", () => {
   });
   expect(html).toContain("Could I grab it Saturday &amp; keep it two weeks?");
   expect(text).toContain("They said: Could I grab it Saturday & keep it two weeks?");
+});
+
+test("the answer to a request says yes or no, with the owner's note", () => {
+  const { subject, html } = renderRequestAnswer({
+    toName: "Sam",
+    ownerName: "Maya Chen",
+    bookTitle: "Piranesi",
+    bookId: "b1",
+    approved: true,
+    message: "On the porch Saturday & yours for a month.",
+  });
+  expect(subject).toBe("Maya Chen is lending you Piranesi");
+  expect(html).toContain("On the porch Saturday &amp; yours for a month.");
+  expect(html).toContain("/books/b1");
+});
+
+test("a declined request says so, and points at Activity", () => {
+  const { subject, html } = renderRequestAnswer({
+    toName: "Sam",
+    ownerName: "Maya Chen",
+    bookTitle: "Piranesi",
+    approved: false,
+  });
+  expect(subject).toBe("Maya Chen can't lend Piranesi right now");
+  expect(html).toContain("/notifications");
+  expect(html).not.toContain("<blockquote");
 });
