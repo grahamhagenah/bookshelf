@@ -1,4 +1,4 @@
-import { NavLink, useLocation, useMatches } from "@remix-run/react";
+import { Link, NavLink, useLocation, useMatches } from "@remix-run/react";
 
 import { BookIcon, GroupIcon } from "./icons";
 import PositionedMenu from "./menu";
@@ -38,13 +38,13 @@ export default function Header() {
     <header className="sticky top-0 z-40 w-full border-b border-stone-200 dark:border-stone-800 bg-white/90 backdrop-blur dark:bg-stone-950 dark:backdrop-blur-none">
       <div className="mx-auto max-w-5xl flex items-center justify-between px-4 md:px-8 py-1.5">
         <div className="flex items-center gap-2 min-w-0">
-          <a
+          <Link
             id="logo"
-            href="/"
+            to="/"
             className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0"
           >
             <Wordmark className="text-2xl sm:text-[1.75rem] leading-none text-stone-900 dark:text-stone-100" />
-          </a>
+          </Link>
           {landing ? (
             <p className="hidden md:block ml-1 border-l border-stone-200 dark:border-stone-800 pl-3 text-sm text-stone-400 dark:text-stone-500">
               Lend and borrow books with friends
@@ -78,14 +78,14 @@ export default function Header() {
           ) : null}
           {user ? <Search /> : null}
           {user ? (
-            <a
-              href="/feed"
+            <Link
+              to="/feed"
               aria-label="Friend activity"
               title="Friend activity"
               className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             >
               <GroupIcon size={24} />
-            </a>
+            </Link>
           ) : null}
           {user ? <Notifications /> : null}
           {user ? (
@@ -93,18 +93,18 @@ export default function Header() {
           ) : (
             // Signed out: the two ways in, rather than an empty menu
             <>
-              <a
-                href="/login"
+              <Link
+                to="/login"
                 className="rounded-md px-3 py-1.5 text-[15px] text-stone-700 dark:text-stone-200 hover:text-stone-900 dark:hover:text-white transition-colors"
               >
                 Sign in
-              </a>
-              <a
-                href="/join"
+              </Link>
+              <Link
+                to="/join"
                 className="rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
               >
                 Create account
-              </a>
+              </Link>
             </>
           )}
         </div>

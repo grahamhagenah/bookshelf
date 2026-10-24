@@ -1,4 +1,4 @@
-import { useMatches } from "@remix-run/react";
+import { Link, useMatches } from "@remix-run/react";
 
 import { BellIcon } from "./icons";
 
@@ -16,8 +16,8 @@ export default function Notifications() {
   const notificationCount = rootData?.user?.notificationsReceived?.length ?? 0;
 
   return (
-    <a
-      href="/notifications"
+    <Link
+      to="/notifications"
       aria-label={
         notificationCount > 0
           ? `Activity (${notificationCount} new)`
@@ -33,6 +33,6 @@ export default function Notifications() {
           {notificationCount > 9 ? "9+" : notificationCount}
         </span>
       ) : null}
-    </a>
+    </Link>
   );
 }
