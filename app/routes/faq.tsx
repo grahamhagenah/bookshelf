@@ -200,7 +200,7 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         a: (
           <>
             Yes, for your own shelf: mark a book read on its page, and filter your
-            library by read and not read. It&apos;s personal, so two people sharing a
+            shelf by read and not read. It&apos;s personal, so two people sharing a
             shelf each have their own marks.
           </>
         ),

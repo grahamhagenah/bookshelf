@@ -54,7 +54,7 @@ function AddFromSuggestion({
   if (owned || added) {
     return (
       <span className="flex-shrink-0 text-xs text-stone-400 dark:text-stone-500">
-        {added ? (want ? "On your list ✓" : "Added ✓") : "In your library"}
+        {added ? (want ? "On your list ✓" : "Added ✓") : "On your shelf"}
       </span>
     );
   }

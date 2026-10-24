@@ -34,7 +34,7 @@ export default function ShelfTabs({
       >
         <NavLink to="/books" end className={tab}>
           <BookIcon size={16} className="hidden sm:block" />
-          My library
+          My shelf
           <span className={count}>{counts.library}</span>
         </NavLink>
         <NavLink to="/want-to-read" className={tab}>

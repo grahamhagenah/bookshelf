@@ -200,7 +200,7 @@ export default function Import() {
                 to="/books"
                 className="inline-flex items-center rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
               >
-                See your library
+                See your shelf
               </Link>
               {result.wanted ? (
                 <Link

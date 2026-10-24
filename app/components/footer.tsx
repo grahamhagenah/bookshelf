@@ -29,7 +29,7 @@ export default function Footer() {
           <ul className="space-y-2">
             {user ? (
               <>
-                <li><Link to="/books" className={linkClass}>My library</Link></li>
+                <li><Link to="/books" className={linkClass}>My shelf</Link></li>
                 <li><Link to="/search" className={linkClass}>Add books</Link></li>
                 <li><Link to="/import" className={linkClass}>Import books</Link></li>
                 <li><Link to="/want-to-read" className={linkClass}>Want to read</Link></li>

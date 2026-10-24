@@ -25,7 +25,7 @@ export default function ShareShelfButton({ iconOnly = false }: { iconOnly?: bool
   const hand = async (url: string) => {
     if (typeof navigator.share === "function" && matchMedia("(pointer: coarse)").matches) {
       // Closing the share sheet isn't an error worth showing
-      await navigator.share({ title: "My bookshelf on Stacks", url }).catch(() => undefined);
+      await navigator.share({ title: "My shelf on Stacks", url }).catch(() => undefined);
       return;
     }
     try {

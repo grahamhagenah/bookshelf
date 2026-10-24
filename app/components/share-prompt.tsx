@@ -45,7 +45,7 @@ export default function SharePrompt({ show }: { show: boolean }) {
         ) : (
           <>
             <p className="min-w-0 flex-1 text-stone-900 dark:text-stone-200">
-              <strong>Share your bookshelf.</strong>
+              <strong>Share your shelf.</strong>
               <span className="hidden sm:inline">
                 {" "}
                 Make a link anyone can open to browse your books.

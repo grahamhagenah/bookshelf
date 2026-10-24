@@ -13,7 +13,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return new Response(booksToCsv(books), {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="stacks-library-${date}.csv"`,
+      "Content-Disposition": `attachment; filename="stacks-shelf-${date}.csv"`,
       "Cache-Control": "private, no-store",
     },
   });

@@ -175,7 +175,7 @@ export default function WorkPage() {
               className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-stone-100 dark:bg-stone-800 px-4 py-2 text-sm text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
             >
               <CheckCircleIcon size={14} />
-              {added ? "Added. See it in my library" : "In your library. Open it"}
+              {added ? "Added. See it on my shelf" : "On your shelf. Open it"}
             </Link>
           ) : (
             <button
@@ -183,7 +183,7 @@ export default function WorkPage() {
               disabled={adding}
               className="w-full rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-60"
             >
-              {adding ? "Adding…" : "Add to my library"}
+              {adding ? "Adding…" : "Add to my shelf"}
             </button>
           )}
           {added || inLibrary ? null : wanted ? (

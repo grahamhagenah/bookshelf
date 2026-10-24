@@ -642,7 +642,7 @@ export default function Account() {
           <Choice
             name="libraryView"
             value={libraryViewOf(user)}
-            label="Library view"
+            label="Shelf view"
             hint="For your shelf and your friends'"
             options={[
               ["cover", "Covers", GridViewIcon],
@@ -1348,7 +1348,7 @@ function PublicPage({
       <div>
         {heading}
         <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-          A page anyone can open to see your bookshelf, no sign-in needed.
+          A page anyone can open to see your shelf, no sign-in needed.
         </p>
         <Form method="post" className="mt-3">
           <input type="hidden" name="intent" value="generateShareToken" />
@@ -1376,7 +1376,7 @@ function PublicPage({
     <div>
       {heading}
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-        Anyone with the link can see your bookshelf without signing in. Your favorites are the
+        Anyone with the link can see your shelf without signing in. Your favorites are the
         books you&apos;ve hearted.
       </p>
       <fetcher.Form method="post" className="mt-3 grid grid-cols-1 gap-3">

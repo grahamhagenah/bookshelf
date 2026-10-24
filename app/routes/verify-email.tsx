@@ -58,7 +58,7 @@ export default function VerifyEmail() {
           to={loggedIn ? "/" : "/login"}
           className="mt-6 inline-block rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 transition-colors"
         >
-          {loggedIn ? "Go to your library" : "Log in"}
+          {loggedIn ? "Go to your shelf" : "Log in"}
         </Link>
       </div>
     </div>

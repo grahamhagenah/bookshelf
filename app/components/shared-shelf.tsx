@@ -126,7 +126,7 @@ function Invite({ data }: { data: SharedShelfData }) {
     text = (
       <>
         <strong className="font-semibold text-stone-900 dark:text-stone-100">{ownerName}</strong>{" "}
-        shares their bookshelf on{" "}
+        shares their shelf on{" "}
         <Link
           to="/"
           className="text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-white hover:decoration-stone-500"
@@ -198,7 +198,7 @@ function Invite({ data }: { data: SharedShelfData }) {
     actions = (
       <>
         <Link to="/books" className={secondaryButton}>
-          My library
+          My shelf
         </Link>
         <Link to="/account#sharing" className={secondaryButton}>
           Edit your page

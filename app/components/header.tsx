@@ -68,7 +68,7 @@ export default function Header() {
                 }
               >
                 <BookIcon size={16} />
-                My library
+                My shelf
               </NavLink>
               <NavLink to="/feed" className={navClass}>
                 <GroupIcon size={16} />

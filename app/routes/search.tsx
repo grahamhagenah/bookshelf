@@ -400,10 +400,10 @@ function SearchResultItem({
               {isAdded
                 ? "Added"
                 : alreadyInLibrary
-                  ? "In your library"
+                  ? "On your shelf"
                   : isAdding
                     ? "Adding…"
-                    : "Add to my library"}
+                    : "Add to my shelf"}
             </button>
             {/* Don't own it? Keep an eye out for it on friends' shelves */}
             {isAdded || alreadyInLibrary ? null : wanted ? (
@@ -580,7 +580,7 @@ export default function Search() {
             </>
           ) : (
             <p className="text-stone-700 dark:text-stone-300">
-              Find a book on a friend&apos;s shelf, or add one to your library.
+              Find a book on a friend&apos;s shelf, or add one to your own.
             </p>
           )}
           {/* Ways to fill a library; beside the point when filling the list */}
@@ -639,7 +639,7 @@ export default function Search() {
           <section>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
               <h2 className={sectionHeading}>
-                Add to your library
+                Add to your shelf
                 {results && results.numFound > 0 ? (
                   <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">
                     {results.numFound.toLocaleString()} on Open Library

@@ -99,7 +99,7 @@ export default function PositionedMenu() {
           {/* The header has its own link on wider screens */}
           <Link to="/books" onClick={() => setOpen(false)} className={`md:hidden ${item}`}>
             <BookIcon size={18} />
-            <span>My library</span>
+            <span>My shelf</span>
           </Link>
           <Link to="/friends" onClick={() => setOpen(false)} className={item}>
             <GroupIcon size={18} />

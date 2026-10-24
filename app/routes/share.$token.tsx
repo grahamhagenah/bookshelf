@@ -25,7 +25,7 @@ export const handle = {
   // Shown like its own website: no app header, just the shelf and footer
   standalone: true,
   breadcrumb: (data: { ownerName?: string } | undefined) => (
-    <span>{data?.ownerName ? `${data.ownerName}'s library` : "Library"}</span>
+    <span>{data?.ownerName ? `${data.ownerName}'s shelf` : "Shelf"}</span>
   ),
 };
 

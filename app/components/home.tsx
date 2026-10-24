@@ -191,7 +191,7 @@ function Welcome({
   const steps = [
     {
       title: "Add your books",
-      text: "Search by title or author, or bring your Goodreads or StoryGraph library over in one go.",
+      text: "Search by title or author, or bring your books over from Goodreads or StoryGraph in one go.",
       done: bookCount > 0,
       doneText: `${bookCount} ${bookCount === 1 ? "book" : "books"} added`,
       action: (
@@ -422,11 +422,11 @@ export default function Home({
                         <>
                           <span className="sm:hidden">All {ownCount}</span>
                           <span className="hidden sm:inline">
-                            All {ownCount} in your library
+                            All {ownCount} on your shelf
                           </span>
                         </>
                       ) : (
-                        "Library"
+                        "Your shelf"
                       )}
                     </Link>
                     <Link to="/import" className={linkClass}>

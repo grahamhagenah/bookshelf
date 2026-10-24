@@ -16,10 +16,10 @@ import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
 export const meta: MetaFunction = () =>
-  seo({ title: "My books", noindex: true });
+  seo({ title: "My shelf", noindex: true });
 
 export const handle = {
-  breadcrumb: () => <Link to="/books">My books</Link>,
+  breadcrumb: () => <Link to="/books">My shelf</Link>,
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

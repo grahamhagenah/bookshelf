@@ -327,7 +327,7 @@ export const handle = {
 
     // Your own book sits in your library; a friend's, on their shelf
     if (data?.isOwner) {
-      crumbs.push({ label: "My library", href: "/books" });
+      crumbs.push({ label: "My shelf", href: "/books" });
     } else if (data?.book?.user) {
       crumbs.push({ label: "Friends", href: "/friends" });
       crumbs.push({
@@ -1854,14 +1854,14 @@ export default function BookDetailsPage() {
                       Delete this book
                     </p>
                     <p className="text-stone-500 dark:text-stone-400">
-                      Removes it from your library for good.
+                      Removes it from your shelf for good.
                     </p>
                   </div>
                   <Form
                     method="post"
                     className="flex-shrink-0"
                     onSubmit={(event) => {
-                      if (!confirm(`Delete ${data.book.title} from your library?`)) {
+                      if (!confirm(`Delete ${data.book.title} from your shelf?`)) {
                         event.preventDefault();
                       }
                     }}
