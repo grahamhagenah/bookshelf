@@ -20,12 +20,14 @@ type Loan = HomeBook & { owner?: Person | null; borrower?: Person | null };
 export interface SideRailProps {
   loans: { borrowed: Loan[]; lent: Loan[] };
   friends: Friend[];
+  // A page's own section, after the loans
+  children?: React.ReactNode;
 }
 
 // A glance, not the whole ledger: the home page has every loan
 const FEW = 4;
 
-export default function SideRail({ loans, friends }: SideRailProps) {
+export default function SideRail({ loans, friends, children }: SideRailProps) {
   const heading = "text-lg font-semibold text-stone-900 dark:text-stone-100";
   const link =
     "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
@@ -113,6 +115,7 @@ export default function SideRail({ loans, friends }: SideRailProps) {
           ) : null}
         </section>
       ) : null}
+      {children}
     </aside>
   );
 }
