@@ -657,7 +657,26 @@ export default function Activity() {
   return (
     <Layout
       title="Activity"
-      aside={<SideRail loans={data.loans} friends={data.friends} />}
+      aside={
+        <SideRail loans={data.loans} friends={data.friends}>
+          {/* Where to change what reaches your inbox, since this is the
+              page people come to when something did */}
+          <section aria-labelledby="rail-settings">
+            <h2 id="rail-settings" className="mb-2 text-lg font-semibold text-stone-900 dark:text-stone-100">
+              Settings
+            </h2>
+            <p className="text-sm text-stone-500 dark:text-stone-400">
+              Everything here is also in your inbox if you want it: borrow requests, news from Stacks, and a weekly roundup.
+            </p>
+            <Link
+              to="/account#emails"
+              className="mt-2 inline-block text-sm text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-white"
+            >
+              Email settings
+            </Link>
+          </section>
+        </SideRail>
+      }
     >
       <section className={section}>
         {limit ? (

@@ -663,6 +663,7 @@ export default function Account() {
       </Section>
 
       <Section
+        id="emails"
         title="Email"
         description="What Stacks emails you. Every email also has a link at the bottom to turn it off."
       >
@@ -671,8 +672,8 @@ export default function Account() {
             intent="toggleEmailNotifications"
             name="emailNotifications"
             on={Boolean(user?.emailNotifications)}
-            label="Borrow requests"
-            hint="When a friend asks to borrow one of your books"
+            label="Borrow requests and news"
+            hint="When a friend asks to borrow one of your books, and the occasional word from Stacks"
           />
           <Toggle
             intent="toggleWeeklyDigest"
