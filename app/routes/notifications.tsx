@@ -18,7 +18,6 @@ import {
   LOAN_WEEKS,
   lendBook,
   loanWeeks,
-  getHomeBooks,
 } from "~/models/book.server";
 import { answerFriendRequest } from "~/models/friend.server";
 import { shelfIds } from "~/models/household.server";
@@ -44,12 +43,10 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [user, history, pendingBookRequests, books] = await Promise.all([
+  const [user, history, pendingBookRequests] = await Promise.all([
     getUserById(userId),
     getNotificationHistory(userId, 30),
     getPendingBookRequests(userId),
-    // For the rail beside the page
-    getHomeBooks(userId, await shelfIds(userId)),
   ]);
   const friends =
     user?.following.map(({ id, firstname, surname, profileEmoji }) => ({
@@ -64,7 +61,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     pendingBookRequests,
     friendIds: friends.map((friend) => friend.id),
     friends,
-    loans: { borrowed: books.borrowed, lent: books.lent },
     loanChoices: { weeks: LOAN_WEEKS, defaultWeeks: DEFAULT_LOAN_WEEKS },
   });
 };
@@ -658,7 +654,7 @@ export default function Activity() {
     <Layout
       title="Activity"
       aside={
-        <SideRail loans={data.loans} friends={data.friends}>
+        <SideRail friends={data.friends}>
           {/* Where to change what reaches your inbox, since this is the
               page people come to when something did */}
           <section aria-labelledby="rail-settings">

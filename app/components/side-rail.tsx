@@ -18,7 +18,8 @@ export interface Friend {
 type Loan = HomeBook & { owner?: Person | null; borrower?: Person | null };
 
 export interface SideRailProps {
-  loans: { borrowed: Loan[]; lent: Loan[] };
+  // Left out on pages where the loans would be noise
+  loans?: { borrowed: Loan[]; lent: Loan[] };
   friends: Friend[];
   // A page's own section, after the loans
   children?: React.ReactNode;
@@ -31,10 +32,10 @@ export default function SideRail({ loans, friends, children }: SideRailProps) {
   const heading = "text-lg font-semibold text-stone-900 dark:text-stone-100";
   const link =
     "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
-  const anyLoans = loans.borrowed.length + loans.lent.length > 0;
-  const more =
-    Math.max(0, loans.borrowed.length - FEW) +
-    Math.max(0, loans.lent.length - FEW);
+  const anyLoans = loans ? loans.borrowed.length + loans.lent.length > 0 : false;
+  const more = loans
+    ? Math.max(0, loans.borrowed.length - FEW) + Math.max(0, loans.lent.length - FEW)
+    : 0;
 
   return (
     <aside className="hidden space-y-10 self-start lg:block">
@@ -79,7 +80,7 @@ export default function SideRail({ loans, friends, children }: SideRailProps) {
         )}
       </section>
 
-      {anyLoans ? (
+      {loans && anyLoans ? (
         <section aria-labelledby="rail-loans">
           <h2 id="rail-loans" className={`${heading} mb-3`}>
             Loans
