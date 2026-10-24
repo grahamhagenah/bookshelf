@@ -65,6 +65,7 @@ import {
   createReminderNotification,
   createLoanExtendedNotification,
   createReaderNoteNotification,
+  REQUEST_NOTE_MAX,
 } from "~/models/user.server";
 import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
 import { roomForFriend } from "~/plan.server";
@@ -521,12 +522,14 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
 
     const senderName = `${currentUser.firstname} ${currentUser.surname}`;
+    const message = String(formData.get("message") ?? "").trim().slice(0, REQUEST_NOTE_MAX) || null;
     const bookRequest = await createBookRequestNotification(
       userId,
       book.userId,
       senderName,
       book.id,
       book.title,
+      message,
     );
 
     // Demo friends approve on the spot
@@ -543,6 +546,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         bookTitle: book.title,
         bookAuthor: book.author,
         bookCover: book.cover,
+        message,
       });
     }
 
@@ -1503,8 +1507,24 @@ export default function BookDetailsPage() {
             />
           ) : null}
           {canRequestBook ? (
-            <Form method="post">
+            <Form method="post" className="space-y-2">
               <input type="hidden" name="intent" value="request" />
+              {/* A word for the owner goes with the ask: when, how long, where */}
+              {requestSent ? null : (
+                <>
+                  <label htmlFor="request-message" className="sr-only">
+                    A note for {data.book.user?.firstname ?? "the owner"}
+                  </label>
+                  <textarea
+                    id="request-message"
+                    name="message"
+                    rows={2}
+                    maxLength={REQUEST_NOTE_MAX}
+                    placeholder={`A note for ${data.book.user?.firstname ?? "the owner"}: when you'd pick it up, how long you'd like it…`}
+                    className="w-full resize-none rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+                  />
+                </>
+              )}
               <button
                 type="submit"
                 disabled={isSubmitting || requestSent}

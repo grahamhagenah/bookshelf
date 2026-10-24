@@ -20,6 +20,7 @@ import {
   createReaderNoteNotification,
   getUserById,
   getUserEmailById,
+  REQUEST_NOTE_MAX,
 } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
@@ -130,12 +131,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       throw new Response("Book is already borrowed", { status: 400 });
     }
     const senderName = `${viewer.firstname} ${viewer.surname}`;
+    const message = String(form.get("message") ?? "").trim().slice(0, REQUEST_NOTE_MAX) || null;
     const bookRequest = await createBookRequestNotification(
       userId,
       book.userId,
       senderName,
       book.id,
       book.title,
+      message,
     );
     // Demo friends approve on the spot
     await respondAsDemoPersona(bookRequest.id);
@@ -149,6 +152,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         bookTitle: book.title,
         bookAuthor: book.author,
         bookCover: book.cover,
+        message,
       });
     }
     return json({ ok: true });

@@ -150,6 +150,7 @@ export function renderBookRequest({
   bookTitle,
   bookAuthor,
   bookCover,
+  message,
 }: {
   toUserId?: string;
   toName: string;
@@ -157,9 +158,12 @@ export function renderBookRequest({
   bookTitle: string;
   bookAuthor?: string | null;
   bookCover?: string | null;
+  // What the borrower said with the request
+  message?: string | null;
 }) {
   const link = `${APP_URL}/notifications`;
   const subject = `${requesterName} wants to borrow ${bookTitle}`;
+  const note = message?.trim() || null;
   const html = layout({
     preheader: `Say yes or no from your notifications.`,
     content: `
@@ -173,13 +177,14 @@ export function renderBookRequest({
             </td>
           </tr>
         </table>
+        ${note ? `<blockquote style="margin: 16px 0 0; padding: 0 0 0 12px; border-left: 2px solid ${line}; font-size: 15px; line-height: 1.5; color: ${body}; white-space: pre-wrap;">${esc(note)}</blockquote>` : ""}
         ${button(link, "See the request")}`,
     footer: optOutFooter(toUserId, "requests", "Stop emails about borrow requests"),
   });
   const text = `Hi ${toName},
 
 ${requesterName} would like to borrow ${bookTitle}${bookAuthor ? ` by ${bookAuthor}` : ""} from your shelf.
-
+${note ? `\nThey said: ${note}\n` : ""}
 Say yes or no here: ${link}
 
 ${optOutText(toUserId, "requests", "Stop emails about borrow requests")}`;

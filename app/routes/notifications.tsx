@@ -351,6 +351,11 @@ function ActivityItem({
       text = (
         <>
           {name} would like to borrow {book}
+          {notification.message ? (
+            <span className="mt-1 block border-l-2 border-stone-200 dark:border-stone-700 pl-2.5 text-sm italic text-stone-600 dark:text-stone-300">
+              “{notification.message}”
+            </span>
+          ) : null}
         </>
       );
       actions = (

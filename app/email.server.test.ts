@@ -63,3 +63,14 @@ test("without a headline the announcement still has its eyebrow and a plain subj
   expect(html.indexOf("/wordmark.png")).toBeGreaterThan(html.indexOf("border-bottom: 1px solid"));
   expect(html).not.toContain("<h1");
 });
+
+test("a borrow request carries the borrower's note, escaped", () => {
+  const { html, text } = renderBookRequest({
+    toName: "Maya",
+    requesterName: "Sam Okafor",
+    bookTitle: "Piranesi",
+    message: "Could I grab it Saturday & keep it two weeks?",
+  });
+  expect(html).toContain("Could I grab it Saturday &amp; keep it two weeks?");
+  expect(text).toContain("They said: Could I grab it Saturday & keep it two weeks?");
+});

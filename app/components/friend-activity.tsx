@@ -202,6 +202,8 @@ function Actions({
   const love = useFetcher({ key: `love-${book.id}` });
   const borrow = useFetcher({ key: `borrow-${book.id}` });
   const { viewer } = book;
+  // Asking opens a line for a note first; the ask goes with it
+  const [asking, setAsking] = useState(false);
 
   // What's shown while a change is on its way
   const pendingLove = love.formData?.get("loved");
@@ -253,14 +255,32 @@ function Actions({
       ) : viewer.canRequest && book.available ? (
         requested ? (
           <span className={stateClass}>Requested</span>
-        ) : (
-          <borrow.Form method="post">
+        ) : asking ? (
+          <borrow.Form method="post" className="flex w-full flex-wrap items-center gap-2" onSubmit={() => setAsking(false)}>
             <input type="hidden" name="intent" value="request" />
             <input type="hidden" name="bookId" value={book.id} />
-            <button type="submit" className={actionClass}>
+            <label htmlFor={`request-note-${book.id}`} className="sr-only">
+              A note for {book.owner.firstname}
+            </label>
+            <input
+              id={`request-note-${book.id}`}
+              name="message"
+              type="text"
+              maxLength={300}
+              placeholder={`A note for ${book.owner.firstname} (optional)`}
+              className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 py-1.5 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
+            />
+            <button type="submit" className="rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors">
               Ask to borrow
             </button>
+            <button type="button" onClick={() => setAsking(false)} className={actionClass}>
+              Cancel
+            </button>
           </borrow.Form>
+        ) : (
+          <button type="button" onClick={() => setAsking(true)} className={actionClass}>
+            Ask to borrow
+          </button>
         )
       ) : viewer.canRequest ? (
         <borrow.Form method="post">

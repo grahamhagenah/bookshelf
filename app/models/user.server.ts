@@ -270,16 +270,22 @@ export async function createNotification(
   });
 }
 
+// How much a borrower can say with their request
+export const REQUEST_NOTE_MAX = 300;
+
 export async function createBookRequestNotification(
   senderId: User["id"],
   receiverId: User["id"],
   senderName: string,
   bookId: string,
   bookTitle: string,
+  // A word from the borrower: when they'd pick it up, how long they'd like it
+  message: string | null = null,
 ) {
   return prisma.notification.create({
     data: {
       type: "BOOK_REQUEST",
+      message: message?.trim().slice(0, REQUEST_NOTE_MAX) || null,
       receiver: {
         connect: { id: receiverId },
       },
@@ -300,6 +306,7 @@ export async function createBookRequestNotification(
       receiverId: true,
       bookId: true,
       bookTitle: true,
+      message: true,
     },
   });
 }
