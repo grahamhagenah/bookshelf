@@ -997,7 +997,7 @@ function IconPicker({
           </button>
         ))}
       </div>
-      <div className="grid w-fit grid-cols-5 gap-2 sm:grid-cols-9">
+      <div className="!mt-6 grid w-fit grid-cols-5 gap-3 sm:grid-cols-9">
         {/* Your initials first, then the icons: 45 in all, so five or
             nine across leaves no stragglers */}
         <button
