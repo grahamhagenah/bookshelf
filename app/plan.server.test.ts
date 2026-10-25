@@ -2,12 +2,24 @@
 import { makeBook, makeUser, prisma } from "../test/db";
 
 import type { ImportRow } from "./import-books";
-import { acceptFriendInvite, answerFriendRequest, getFriendInvite } from "./models/friend.server";
-import { createHouseholdInvite, joinHousehold } from "./models/household.server";
+import {
+  acceptFriendInvite,
+  answerFriendRequest,
+  getFriendInvite,
+} from "./models/friend.server";
+import {
+  createHouseholdInvite,
+  joinHousehold,
+} from "./models/household.server";
 import { importBooks } from "./models/import.server";
 import { createFriendship, createNotification } from "./models/user.server";
 import { FREE_LIMITS } from "./plan";
-import { getPlanUsage, hasPlus, roomForBooks, roomForFriend } from "./plan.server";
+import {
+  getPlanUsage,
+  hasPlus,
+  roomForBooks,
+  roomForFriend,
+} from "./plan.server";
 
 const fillShelf = async (userId: string, count: number) => {
   for (let i = 0; i < count; i++) await makeBook(userId, `Book ${i}`);
@@ -40,7 +52,7 @@ test("Plus covers its subscriber, their shared shelf, and every demo", async () 
   expect(await hasPlus(demo.id)).toBe(true);
 });
 
-test("the free shelf holds 100 books, shared shelves together", async () => {
+test("the free shelf holds its limit of books, shared shelves together", async () => {
   const me = await makeUser("Me");
   await fillShelf(me.id, FREE_LIMITS.books - 1);
   expect(await roomForBooks(me.id)).toBe(1);
@@ -50,7 +62,18 @@ test("the free shelf holds 100 books, shared shelves together", async () => {
   await joinHousehold(housemate.id, await createHouseholdInvite(me.id));
   await makeBook(housemate.id, "Theirs");
   expect(await roomForBooks(me.id)).toBe(0);
-  expect(await getPlanUsage(me.id)).toMatchObject({ plus: false, books: 100, shared: true });
+  expect(await getPlanUsage(me.id)).toMatchObject({
+    plus: false,
+    books: FREE_LIMITS.books,
+    shared: true,
+  });
+
+  // Over the limit (from when it was higher): no room, and nothing taken away
+  await makeBook(housemate.id, "From before");
+  expect(await roomForBooks(me.id)).toBe(0);
+  expect(await getPlanUsage(me.id)).toMatchObject({
+    books: FREE_LIMITS.books + 1,
+  });
 
   await plus(housemate.id);
   expect(await roomForBooks(me.id)).toBe(Infinity);
@@ -59,7 +82,10 @@ test("the free shelf holds 100 books, shared shelves together", async () => {
 test("an import fills the free shelf and says how many didn't fit", async () => {
   const me = await makeUser("Me");
   await fillShelf(me.id, FREE_LIMITS.books - 2);
-  const row = (title: string, status: ImportRow["status"] = "read"): ImportRow => ({
+  const row = (
+    title: string,
+    status: ImportRow["status"] = "read",
+  ): ImportRow => ({
     title,
     author: "Someone",
     isbn: null,
@@ -73,7 +99,13 @@ test("an import fills the free shelf and says how many didn't fit", async () => 
   });
   const result = await importBooks(
     me.id,
-    [row("A"), row("B"), row("C"), row("D"), { ...row("E", "to-read"), owned: false }],
+    [
+      row("A"),
+      row("B"),
+      row("C"),
+      row("D"),
+      { ...row("E", "to-read"), owned: false },
+    ],
     { shelf: "owned", wantToRead: true },
   );
   // Two fit, two wait; the want-to-read list has no limit
@@ -89,7 +121,9 @@ test("a request neither side has room for stays waiting", async () => {
 
   const other = await makeUser("Other");
   const theirs = await createNotification(full.id, other.id, "Full Reader");
-  expect(await answerFriendRequest(other.id, theirs.id, true)).toBe("they-are-full");
+  expect(await answerFriendRequest(other.id, theirs.id, true)).toBe(
+    "they-are-full",
+  );
 
   const pending = await prisma.notification.findMany({
     where: { id: { in: [request.id, theirs.id] } },
@@ -107,7 +141,12 @@ test("an invite link waits while either side is full", async () => {
   const full = await popular("Inviter");
   const token = await getFriendInvite(full.id);
   const newcomer = await makeUser("Newcomer");
-  expect(await acceptFriendInvite(newcomer.id, token)).toEqual({ ok: false, reason: "they-are-full" });
+  expect(await acceptFriendInvite(newcomer.id, token)).toEqual({
+    ok: false,
+    reason: "they-are-full",
+  });
   await plus(full.id);
-  expect(await acceptFriendInvite(newcomer.id, token)).toMatchObject({ ok: true });
+  expect(await acceptFriendInvite(newcomer.id, token)).toMatchObject({
+    ok: true,
+  });
 });

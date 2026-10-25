@@ -1,7 +1,7 @@
 // The free plan's limits and Plus's prices, shared by the server and the
 // pages that explain them
 
-export const FREE_LIMITS = { books: 100, friends: 10 };
+export const FREE_LIMITS = { books: 50, friends: 10 };
 
 export const PLUS_PRICES = { monthly: 3, yearly: 24 };
 

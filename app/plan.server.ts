@@ -4,7 +4,7 @@ import { prisma } from "~/db.server";
 import { shelfIds } from "~/models/household.server";
 import { FREE_LIMITS } from "~/plan";
 
-// The free plan holds 100 books and 10 friends; Stacks Plus lifts both.
+// The free plan holds 50 books and 10 friends; Stacks Plus lifts both.
 // One subscription covers everyone on a shared shelf, and the demo sandbox
 // is never limited.
 
