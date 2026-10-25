@@ -129,6 +129,31 @@ const inputClass =
   "w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors";
 
 // "1920–1986" from Open Library's free-form dates
+// Grey bars holding the place of text that's still on its way, one per
+// line and a line of body text tall, so nothing jumps when it lands
+function Placeholder({
+  lines = 1,
+  className = "",
+}: {
+  lines?: number;
+  className?: string;
+}) {
+  return (
+    <span aria-hidden="true" className={`block leading-relaxed ${className}`}>
+      {Array.from({ length: lines }, (_, index) => (
+        <span
+          key={index}
+          className={`block h-[1lh] py-[0.3em] ${
+            index === lines - 1 && lines > 1 ? "w-2/3" : "w-full"
+          }`}
+        >
+          <span className="block h-full rounded bg-stone-200/60 dark:bg-stone-800 motion-safe:animate-pulse" />
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function lifespan(birth: string | null, death: string | null) {
   const year = (date: string | null) => date?.match(/\d{3,4}/)?.[0] ?? null;
   const born = year(birth);
@@ -1705,7 +1730,8 @@ export default function BookDetailsPage() {
   // dropped.
   const { revalidate } = useRevalidator();
   const askedFor = useRef<string | null>(null);
-  const [lookingUp, setLookingUp] = useState(false);
+  // The look-up that came back empty-handed; its placeholders go away
+  const [gaveUp, setGaveUp] = useState<string | null>(null);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -1717,19 +1743,22 @@ export default function BookDetailsPage() {
     if (!data.fillingIn || askedFor.current === data.book.id) return;
     const id = data.book.id;
     askedFor.current = id;
-    setLookingUp(true);
+    let done = false;
     fetch(`/api/book-details?bookId=${encodeURIComponent(id)}`)
       .then((response) => (response.ok ? response.json() : { done: false }))
       .then((result: { done?: boolean }) => {
         // Still on this book: show what was found
-        if (mounted.current && askedFor.current === id && result.done)
-          revalidate();
+        done = result.done === true;
+        if (mounted.current && askedFor.current === id && done) revalidate();
       })
       .catch(() => undefined)
       .finally(() => {
-        if (mounted.current && askedFor.current === id) setLookingUp(false);
+        if (mounted.current && askedFor.current === id && !done) setGaveUp(id);
       });
   }, [data.fillingIn, data.book.id, revalidate]);
+  // Until it's in, what's to come keeps its place on the page. From the
+  // server's render on, so the first paint already has the room.
+  const lookingUp = data.fillingIn && gaveUp !== data.book.id && !isEditing;
   // The cover field is controlled so the picker below it can fill it in
   const [cover, setCover] = useState(data.book.cover);
 
@@ -1796,6 +1825,8 @@ export default function BookDetailsPage() {
         <p className="mt-3 md:mt-4 text-sm text-stone-500 dark:text-stone-400">
           {details.join(" · ")}
         </p>
+      ) : lookingUp ? (
+        <Placeholder className="mt-3 md:mt-4 w-48 max-w-full text-sm" />
       ) : null}
       {!data.isOwner && data.book.user ? (
         <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
@@ -2244,6 +2275,15 @@ export default function BookDetailsPage() {
                     </span>
                   ))}
                 </div>
+              ) : lookingUp ? (
+                <div aria-hidden="true" className="md:mt-4 flex gap-1.5">
+                  {["w-16", "w-24", "w-20"].map((width) => (
+                    <span
+                      key={width}
+                      className={`h-5 ${width} rounded-full bg-stone-200/60 dark:bg-stone-800 motion-safe:animate-pulse`}
+                    />
+                  ))}
+                </div>
               ) : null}
 
               {/* Rarely needed, so it sits quietly in the top corner on
@@ -2260,13 +2300,19 @@ export default function BookDetailsPage() {
             </>
           )}
 
-          {!isEditing && lookingUp ? (
-            <p
-              role="status"
-              className="mt-6 text-sm text-stone-400 dark:text-stone-500 motion-safe:animate-pulse"
-            >
-              Looking up more about this book on Open Library…
-            </p>
+          {lookingUp && !data.book.firstSentence ? (
+            <div className="mt-8">
+              <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
+                Opening line
+              </h2>
+              <p role="status" className="sr-only">
+                Looking up more about this book on Open Library…
+              </p>
+              <Placeholder
+                lines={3}
+                className="border-l-2 border-stone-200 dark:border-stone-700 pl-4 max-w-prose"
+              />
+            </div>
           ) : null}
           {!isEditing && data.book.firstSentence ? (
             <div className="mt-8">
@@ -2284,30 +2330,41 @@ export default function BookDetailsPage() {
               <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
                 About this book
               </h2>
-              <p className="summary text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
-                {data.book.body ? (
-                  stripMarkdown(data.book.body)
-                ) : data.isOwner ? (
-                  <>
-                    No description yet.{" "}
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(true)}
-                      className={gapLink}
-                    >
-                      Add one
-                    </button>
-                    , or refresh from Open Library.
-                  </>
-                ) : (
-                  "No description yet."
-                )}
-              </p>
+              {!data.book.body && lookingUp ? (
+                <Placeholder lines={4} className="max-w-prose" />
+              ) : (
+                <p className="summary text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
+                  {data.book.body ? (
+                    stripMarkdown(data.book.body)
+                  ) : data.isOwner ? (
+                    <>
+                      No description yet.{" "}
+                      <button
+                        type="button"
+                        onClick={() => setIsEditing(true)}
+                        className={gapLink}
+                      >
+                        Add one
+                      </button>
+                      , or refresh from Open Library.
+                    </>
+                  ) : (
+                    "No description yet."
+                  )}
+                </p>
+              )}
             </div>
           ) : null}
 
           {!isEditing && data.author ? (
             <AboutAuthor author={data.author} />
+          ) : lookingUp ? (
+            <div aria-hidden="true" className="mt-8">
+              <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
+                About the author
+              </h2>
+              <Placeholder lines={3} className="max-w-prose" />
+            </div>
           ) : null}
 
           {!isEditing ? (
