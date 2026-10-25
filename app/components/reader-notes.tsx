@@ -150,14 +150,24 @@ function usePageStanding(page: PageStanding) {
 
 // Why it can't be pinned when the page's favorites are all taken, and
 // where to make room
-function FullNote({ className }: { className: string }) {
+function FullNote({
+  className,
+  after = false,
+}: {
+  className: string;
+  after?: boolean;
+}) {
   return (
-    <span className="basis-full">
-      Your page already shows {PIN_MAX} favorites.{" "}
+    <span>
+      {after ? (
+        <span aria-hidden="true" className="mr-1.5">
+          ·
+        </span>
+      ) : null}
+      Favorites full ({PIN_MAX} of {PIN_MAX}).{" "}
       <Link to="/account#pinned" className={className}>
-        Unpin one in Settings
-      </Link>{" "}
-      to pin this.
+        Unpin one
+      </Link>
     </span>
   );
 }
@@ -271,7 +281,7 @@ function PageLine({ page }: { page: PageStanding }) {
       >
         {hidden ? "Show it" : "Keep it off"}
       </button>
-      {full && !hidden ? <FullNote className={link} /> : null}
+      {full && !hidden ? <FullNote className={link} after /> : null}
       {fetcher.data?.pinError ? (
         <span role="alert" className="text-red-700 dark:text-red-400">
           {fetcher.data.pinError}
