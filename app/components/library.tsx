@@ -53,6 +53,8 @@ interface Book {
   lendCount?: number;
   isBorrowed?: boolean;
   isLending?: boolean;
+  // Your own copy you're not lending for now
+  notLending?: boolean;
   loveCount?: number;
   borrowerId?: string | null;
   readAt?: string | null;
@@ -133,10 +135,27 @@ function GridCover({
   eager?: boolean;
 }) {
   const { src, srcSet } = getCoverSources(cover);
-  return <BookCover src={src} srcSet={srcSet} sizes={sizes} title={title} author={author} alt={title} className={className} eager={eager} />;
+  return (
+    <BookCover
+      src={src}
+      srcSet={srcSet}
+      sizes={sizes}
+      title={title}
+      author={author}
+      alt={title}
+      className={className}
+      eager={eager}
+    />
+  );
 }
 
-export default function Library({ bookListItems, ownerName, header, sharedWith, shownAbove = [] }: LibraryProps) {
+export default function Library({
+  bookListItems,
+  ownerName,
+  header,
+  sharedWith,
+  shownAbove = [],
+}: LibraryProps) {
   // Set on the account page, and the same on every shelf you look at
   const viewer = useOptionalUser();
   const viewMode = libraryViewOf(viewer);
@@ -170,7 +189,8 @@ export default function Library({ bookListItems, ownerName, header, sharedWith, 
   // Browsing, the books above don't come round again, unless they're all
   // there is
   const notAbove = visibleBooks.filter((book) => !shownAbove.includes(book.id));
-  const shelfBooks = !isFiltered && notAbove.length > 0 ? notAbove : visibleBooks;
+  const shelfBooks =
+    !isFiltered && notAbove.length > 0 ? notAbove : visibleBooks;
   const showMarks = !ownerName && visibleBooks.some((book) => book.readAt);
 
   return (
@@ -197,7 +217,10 @@ export default function Library({ bookListItems, ownerName, header, sharedWith, 
         <main className="mt-8 md:mt-10 px-4 md:px-8 pb-8">
           {header}
           <section className="rounded-xl border border-stone-200 dark:border-stone-800 px-6 py-12 text-center">
-            <BookIcon size={28} className="mx-auto text-stone-400 dark:text-stone-500" />
+            <BookIcon
+              size={28}
+              className="mx-auto text-stone-400 dark:text-stone-500"
+            />
             <h1 className="mt-3 text-lg font-semibold text-stone-900 dark:text-stone-100">
               Your library is empty
             </h1>
@@ -230,60 +253,65 @@ export default function Library({ bookListItems, ownerName, header, sharedWith, 
               wider screens. On phones the pills drop to a second line of
               their own (and scroll if they run out of room) */}
           <div className="mb-6 flex flex-wrap md:flex-nowrap items-center gap-2">
-              <div className="relative min-w-0 flex-1 md:w-56 md:flex-none">
-                <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400">
-                  <SearchIcon size={14} />
-                </div>
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Filter books"
-                  aria-label="Filter by title or author"
-                  className="h-8 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 pl-8 pr-2 text-sm placeholder:text-stone-400 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
-                />
+            <div className="relative min-w-0 flex-1 md:w-56 md:flex-none">
+              <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400">
+                <SearchIcon size={14} />
               </div>
-              {statuses.length > 1 ? (
-                <div className="order-last w-full md:order-none md:w-auto flex gap-1.5 overflow-x-auto min-w-0 [scrollbar-width:none]" role="group" aria-label="Show">
-                  {statuses.map(({ value, label, count }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      aria-pressed={status === value}
-                      onClick={() => setStatus(value)}
-                      className={`flex-shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-sm transition-colors ${
-                        status === value
-                          ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
-                          : "text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-900 hover:text-stone-800 dark:hover:text-stone-200"
-                      }`}
-                    >
-                      {label}
-                      <span
-                        className="ml-1.5 font-normal text-stone-400 dark:text-stone-500"
-                      >
-                        {count}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-              {ownerName ? null : (
-                <Link
-                  to="/search"
-                  className="ml-auto inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Filter books"
+                aria-label="Filter by title or author"
+                className="h-8 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 pl-8 pr-2 text-sm placeholder:text-stone-400 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+              />
+            </div>
+            {statuses.length > 1 ? (
+              <div
+                className="order-last w-full md:order-none md:w-auto flex gap-1.5 overflow-x-auto min-w-0 [scrollbar-width:none]"
+                role="group"
+                aria-label="Show"
+              >
+                {statuses.map(({ value, label, count }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={status === value}
+                    onClick={() => setStatus(value)}
+                    className={`flex-shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-sm transition-colors ${
+                      status === value
+                        ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
+                        : "text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-900 hover:text-stone-800 dark:hover:text-stone-200"
+                    }`}
+                  >
+                    {label}
+                    <span className="ml-1.5 font-normal text-stone-400 dark:text-stone-500">
+                      {count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            {ownerName ? null : (
+              <Link
+                to="/search"
+                className="ml-auto inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+              >
+                <span
+                  aria-hidden="true"
+                  className="text-base leading-none text-stone-400 dark:text-stone-500"
                 >
-                  <span aria-hidden="true" className="text-base leading-none text-stone-400 dark:text-stone-500">
-                    +
-                  </span>
-                  Add books
-                </Link>
-              )}
-              {ownerName ? null : (
-                <div className="flex items-center gap-2 sm:hidden">
-                  {sharedWith ? <SharedWith {...sharedWith} compact /> : null}
-                  <ShareShelfButton iconOnly />
-                </div>
-              )}
+                  +
+                </span>
+                Add books
+              </Link>
+            )}
+            {ownerName ? null : (
+              <div className="flex items-center gap-2 sm:hidden">
+                {sharedWith ? <SharedWith {...sharedWith} compact /> : null}
+                <ShareShelfButton iconOnly />
+              </div>
+            )}
           </div>
 
           {shelfBooks.length === 0 ? (
@@ -322,8 +350,16 @@ export default function Library({ bookListItems, ownerName, header, sharedWith, 
                       {/* Where the copy is, as a small tag on the cover itself */}
                       {book.isBorrowed || book.isLending ? (
                         <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[11px] leading-4 text-stone-700 dark:text-stone-200 shadow-sm">
-                          {book.isBorrowed ? <BorrowedIcon size={11} /> : <LentIcon size={11} />}
+                          {book.isBorrowed ? (
+                            <BorrowedIcon size={11} />
+                          ) : (
+                            <LentIcon size={11} />
+                          )}
                           {book.isBorrowed ? "Borrowed" : "Lent out"}
+                        </span>
+                      ) : book.notLending ? (
+                        <span className="absolute left-1.5 top-1.5 inline-flex items-center rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[11px] leading-4 text-stone-500 dark:text-stone-400 shadow-sm">
+                          Not lending
                         </span>
                       ) : null}
                     </div>
@@ -336,7 +372,11 @@ export default function Library({ bookListItems, ownerName, header, sharedWith, 
                           className="inline-flex flex-shrink-0 items-center gap-1 text-xs text-stone-400 dark:text-stone-500"
                           title={`${book.loveCount} ${book.loveCount === 1 ? "reader loved" : "readers loved"} this`}
                         >
-                          <HeartIcon size={11} filled className="text-rose-400" />
+                          <HeartIcon
+                            size={11}
+                            filled
+                            className="text-rose-400"
+                          />
                           {book.loveCount}
                         </span>
                       ) : null}
@@ -444,13 +484,16 @@ export default function Library({ bookListItems, ownerName, header, sharedWith, 
                         <LentIcon size={12} />
                         Lent out
                       </span>
+                    ) : book.notLending && !book.isBorrowed ? (
+                      <span className="bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 text-xs px-2 py-1 rounded-full flex-shrink-0">
+                        Not lending
+                      </span>
                     ) : null}
                   </NavLink>
                 </li>
               ))}
             </ol>
           ) : null}
-
         </main>
       )}
     </>

@@ -1,6 +1,7 @@
 import type { User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
+import { isNotLending } from "~/lending";
 import { friendLimitBetween } from "~/plan.server";
 import { isDemoEmail } from "~/utils";
 import { sameWork } from "~/works";
@@ -66,6 +67,7 @@ export async function getFriendCards(userId: User["id"]) {
         cover: true,
         userId: true,
         borrowerId: true,
+        notLendingUntil: true,
         openLibraryKey: true,
         isbn: true,
         createdAt: true,
@@ -80,7 +82,10 @@ export async function getFriendCards(userId: User["id"]) {
 
   return friends
     .map((friend) => {
-      const shelf = new Set([friend.id, ...(friend.household?.members.map((m) => m.id) ?? [])]);
+      const shelf = new Set([
+        friend.id,
+        ...(friend.household?.members.map((m) => m.id) ?? []),
+      ]);
       const books = theirBooks.filter((book) => shelf.has(book.userId));
       const since = accepted
         .filter((n) => n.senderId === friend.id || n.receiverId === friend.id)
@@ -94,19 +99,27 @@ export async function getFriendCards(userId: User["id"]) {
         email: isDemoEmail(friend.email) ? null : friend.email,
         since: since ?? null,
         bookCount: books.length,
-        availableCount: books.filter((book) => !book.borrowerId).length,
+        availableCount: books.filter(
+          (book) => !book.borrowerId && !isNotLending(book.notLendingUntil),
+        ).length,
         lastAddedAt: books[0]?.createdAt ?? null,
-        recent: books.slice(0, RECENT_COVERS).map(({ id, title, author, cover }) => ({
-          id,
-          title,
-          author,
-          cover,
-        })),
+        recent: books
+          .slice(0, RECENT_COVERS)
+          .map(({ id, title, author, cover }) => ({
+            id,
+            title,
+            author,
+            cover,
+          })),
         // Books going back and forth between the two of you
-        hasOfMine: lentToThem.filter((book) => book.borrowerId === friend.id).length,
-        iHaveOfTheirs: books.filter((book) => book.borrowerId === userId).length,
+        hasOfMine: lentToThem.filter((book) => book.borrowerId === friend.id)
+          .length,
+        iHaveOfTheirs: books.filter((book) => book.borrowerId === userId)
+          .length,
         // Books on your want-to-read list that they own
-        wanted: wishes.filter((wish) => books.some((book) => sameWork(wish, book))).length,
+        wanted: wishes.filter((wish) =>
+          books.some((book) => sameWork(wish, book)),
+        ).length,
       };
     })
     .sort((a, b) => a.firstname.localeCompare(b.firstname));
@@ -119,7 +132,14 @@ export function getIncomingFriendRequests(userId: User["id"]) {
     select: {
       id: true,
       createdAt: true,
-      sender: { select: { id: true, firstname: true, surname: true, profileEmoji: true } },
+      sender: {
+        select: {
+          id: true,
+          firstname: true,
+          surname: true,
+          profileEmoji: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -153,7 +173,10 @@ export async function answerFriendRequest(
 // Ends a friendship both ways. Books already lent stay lent until they come
 // back; places in line for each other's books are given up.
 export async function removeFriend(userId: User["id"], friendId: User["id"]) {
-  const [myShelf, theirShelf] = await Promise.all([shelfIds(userId), shelfIds(friendId)]);
+  const [myShelf, theirShelf] = await Promise.all([
+    shelfIds(userId),
+    shelfIds(friendId),
+  ]);
   await prisma.$transaction([
     prisma.user.update({
       where: { id: userId },
@@ -183,7 +206,10 @@ export async function getFriendInvite(userId: User["id"]) {
   });
   if (user?.friendInvite) return user.friendInvite;
   const token = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-  await prisma.user.update({ where: { id: userId }, data: { friendInvite: token } });
+  await prisma.user.update({
+    where: { id: userId },
+    data: { friendInvite: token },
+  });
   return token;
 }
 
@@ -211,19 +237,28 @@ export type InviteResult =
   | { ok: true; inviterId: string }
   | {
       ok: false;
-      reason: "no-such-invite" | "own-invite" | "demo-boundary" | "full" | "they-are-full";
+      reason:
+        | "no-such-invite"
+        | "own-invite"
+        | "demo-boundary"
+        | "full"
+        | "they-are-full";
     };
 
 // Opening someone's invite: you're friends from now on, any request between
 // you is settled, and they hear that you've joined
-export async function acceptFriendInvite(userId: User["id"], token: string): Promise<InviteResult> {
+export async function acceptFriendInvite(
+  userId: User["id"],
+  token: string,
+): Promise<InviteResult> {
   const inviter = await prisma.user.findUnique({
     where: { friendInvite: token },
     select: { id: true },
   });
   if (!inviter) return { ok: false, reason: "no-such-invite" };
   if (inviter.id === userId) return { ok: false, reason: "own-invite" };
-  if (!(await canInteract(userId, inviter.id))) return { ok: false, reason: "demo-boundary" };
+  if (!(await canInteract(userId, inviter.id)))
+    return { ok: false, reason: "demo-boundary" };
 
   const already = await prisma.user.count({
     where: { id: userId, following: { some: { id: inviter.id } } },

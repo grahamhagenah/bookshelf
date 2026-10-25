@@ -19,10 +19,20 @@ export function getBook({
   });
 }
 
+// Stops lending a book until a moment (far off means until they say),
+// or, given null, starts again
+export function setNotLending(bookId: Book["id"], until: Date | null) {
+  return prisma.book.update({
+    where: { id: bookId },
+    data: { notLendingUntil: until },
+  });
+}
+
 export function getBookById(id: Book["id"]) {
   return prisma.book.findUnique({
     select: {
       id: true,
+      notLendingUntil: true,
       body: true,
       author: true,
       title: true,
@@ -80,6 +90,7 @@ export function getBookListItems(ownerIds: User["id"][]) {
       lendCount: true,
       userId: true,
       borrowerId: true,
+      notLendingUntil: true,
       readAt: true,
       // The viewer's own read mark is picked out by the caller
       readerNotes: { select: { userId: true, readAt: true } },
@@ -90,7 +101,10 @@ export function getBookListItems(ownerIds: User["id"][]) {
 
 // Everything on the home page: books you've borrowed, books you've lent
 // out (soonest due first), the rest of your shelf, and your newest books
-export async function getHomeBooks(userId: User["id"], ownerIds: User["id"][] = [userId]) {
+export async function getHomeBooks(
+  userId: User["id"],
+  ownerIds: User["id"][] = [userId],
+) {
   const person = { select: { id: true, firstname: true, surname: true } };
   const fields = {
     id: true,
@@ -200,12 +214,19 @@ export function createBook({
 
 // Whether this person has read this copy: kept on their reader note, so
 // two people sharing a shelf each have their own
-export async function setRead(bookId: Book["id"], userId: User["id"], read: boolean) {
+export async function setRead(
+  bookId: Book["id"],
+  userId: User["id"],
+  read: boolean,
+) {
   const readAt = read ? new Date() : null;
   // Unmarking clears the copy's old read date too, if it's yours, so it
   // can't show through
   if (!read) {
-    await prisma.book.updateMany({ where: { id: bookId, userId }, data: { readAt: null } });
+    await prisma.book.updateMany({
+      where: { id: bookId, userId },
+      data: { readAt: null },
+    });
   }
   return prisma.readerNote.upsert({
     where: { bookId_userId: { bookId, userId } },
@@ -223,13 +244,20 @@ export async function getReadAt(
     where: { bookId_userId: { bookId: book.id, userId } },
     select: { readAt: true },
   });
-  return readAtFor(userId, { ...book, readerNotes: note ? [{ userId, ...note }] : [] });
+  return readAtFor(userId, {
+    ...book,
+    readerNotes: note ? [{ userId, ...note }] : [],
+  });
 }
 
 // Their own mark, falling back to the copy's old one for whoever added it
 export function readAtFor(
   userId: User["id"],
-  book: { userId: string; readAt: Date | null; readerNotes: { userId: string; readAt: Date | null }[] },
+  book: {
+    userId: string;
+    readAt: Date | null;
+    readerNotes: { userId: string; readAt: Date | null }[];
+  },
 ) {
   // A note row can exist just for a heart, with no read date of its own
   const mine = book.readerNotes.find((note) => note.userId === userId);
@@ -254,7 +282,10 @@ export const EXTEND_WEEKS = [1, 2, 4] as const;
 const DAY = 24 * 60 * 60 * 1000;
 
 // Keeps a loan length to one of the offered choices
-export function loanWeeks(value: unknown, choices: readonly number[] = LOAN_WEEKS) {
+export function loanWeeks(
+  value: unknown,
+  choices: readonly number[] = LOAN_WEEKS,
+) {
   const weeks = Number(value);
   return choices.includes(weeks) ? weeks : DEFAULT_LOAN_WEEKS;
 }
@@ -403,11 +434,16 @@ export function getBorrowedBooks(userId: User["id"]) {
   });
 }
 
-export async function getBookStats(userId: User["id"], ownerIds: User["id"][] = [userId]) {
+export async function getBookStats(
+  userId: User["id"],
+  ownerIds: User["id"][] = [userId],
+) {
   const [totalBooks, borrowedBooks, lentBooks] = await Promise.all([
     prisma.book.count({ where: { userId: { in: ownerIds } } }),
     prisma.book.count({ where: { borrowerId: userId } }),
-    prisma.book.count({ where: { userId: { in: ownerIds }, borrowerId: { not: null } } }),
+    prisma.book.count({
+      where: { userId: { in: ownerIds }, borrowerId: { not: null } },
+    }),
   ]);
 
   return { totalBooks, borrowedBooks, lentBooks };
@@ -554,6 +590,7 @@ export async function searchFriendsBooks(userId: User["id"], query: string) {
       author: true,
       cover: true,
       borrowerId: true,
+      notLendingUntil: true,
       user: { select: { id: true, firstname: true, surname: true } },
     },
     orderBy: { title: "asc" },
@@ -563,7 +600,10 @@ export async function searchFriendsBooks(userId: User["id"], query: string) {
 
 // A whole shelf for the CSV download, each copy with the viewer's own
 // read date, heart and note
-export async function getExportBooks(userId: User["id"], ownerIds: User["id"][]) {
+export async function getExportBooks(
+  userId: User["id"],
+  ownerIds: User["id"][],
+) {
   const books = await prisma.book.findMany({
     where: { userId: { in: ownerIds } },
     select: {
@@ -595,7 +635,8 @@ export async function getExportBooks(userId: User["id"], ownerIds: User["id"][])
 // them ("Translations into Korean"). Tidy one when it's opened; returns the
 // cleaned list (which may be null), or undefined when there was nothing to do.
 export async function tidySubjects(book: Pick<Book, "id" | "subjects">) {
-  if (!book.subjects || !hasTranslationSubjects(book.subjects)) return undefined;
+  if (!book.subjects || !hasTranslationSubjects(book.subjects))
+    return undefined;
   const subjects = cleanSubjects(book.subjects).join(", ") || null;
   await prisma.book.update({ where: { id: book.id }, data: { subjects } });
   return subjects;

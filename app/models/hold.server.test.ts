@@ -1,8 +1,15 @@
 // @vitest-environment node
+import { NOT_LENDING_FOREVER } from "~/lending";
+
 import { makeBook, makeUser, prisma } from "../../test/db";
 
-import { lendBook, returnBook } from "./book.server";
-import { getHolds, leaveHold, passToNextInLine, placeHold } from "./hold.server";
+import { lendBook, returnBook, setNotLending } from "./book.server";
+import {
+  getHolds,
+  leaveHold,
+  passToNextInLine,
+  placeHold,
+} from "./hold.server";
 
 async function lentBook() {
   const owner = await makeUser("Olive");
@@ -26,7 +33,9 @@ test("holds queue in the order people joined, once each", async () => {
   expect(holds.map((hold) => hold.user.firstname)).toEqual(["Maya", "Priya"]);
 
   await leaveHold(book.id, maya.id);
-  expect((await getHolds(book.id)).map((hold) => hold.user.firstname)).toEqual(["Priya"]);
+  expect((await getHolds(book.id)).map((hold) => hold.user.firstname)).toEqual([
+    "Priya",
+  ]);
 });
 
 describe("passToNextInLine", () => {
@@ -46,7 +55,9 @@ describe("passToNextInLine", () => {
     });
     expect(ready).toMatchObject({ senderId: owner.id, bookId: book.id });
     // Maya has left the line; Priya is now first
-    expect((await getHolds(book.id)).map((hold) => hold.user.firstname)).toEqual(["Priya"]);
+    expect(
+      (await getHolds(book.id)).map((hold) => hold.user.firstname),
+    ).toEqual(["Priya"]);
   });
 
   test("does nothing while the book is still out, or with nobody waiting", async () => {
@@ -72,4 +83,20 @@ test("getting the book clears your own hold", async () => {
   await lendBook(book.id, maya.id);
 
   expect(await getHolds(book.id)).toHaveLength(0);
+});
+
+test("a book back while its owner isn't lending keeps its line until they are", async () => {
+  const { book } = await lentBook();
+  const maya = await makeUser("Maya");
+  await placeHold(book.id, maya.id);
+
+  await setNotLending(book.id, NOT_LENDING_FOREVER);
+  await returnBook(book.id);
+  expect(await passToNextInLine(book.id)).toBeNull();
+  expect((await getHolds(book.id)).map((hold) => hold.user.firstname)).toEqual([
+    "Maya",
+  ]);
+
+  await setNotLending(book.id, null);
+  expect(await passToNextInLine(book.id)).toMatchObject({ senderId: maya.id });
 });

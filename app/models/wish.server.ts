@@ -1,6 +1,7 @@
 import type { Book, User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
+import { isNotLending } from "~/lending";
 import type { Work } from "~/works";
 import { sameWork } from "~/works";
 
@@ -12,7 +13,9 @@ export { normalizeTitle, sameWork } from "~/works";
 // Your want-to-read list: books you don't own but would like to. Stacks
 // watches your friends' shelves for them.
 
-const person = { select: { id: true, firstname: true, surname: true } } as const;
+const person = {
+  select: { id: true, firstname: true, surname: true },
+} as const;
 
 // Work keys and titles on the list, so search results can say so
 export async function getWantToReadWorks(userId: User["id"]) {
@@ -49,6 +52,7 @@ export async function getWantToRead(userId: User["id"]) {
             openLibraryKey: true,
             isbn: true,
             borrowerId: true,
+            notLendingUntil: true,
             user: person,
           },
         })
@@ -61,7 +65,9 @@ export async function getWantToRead(userId: User["id"]) {
       .map((book) => ({
         bookId: book.id,
         owner: book.user,
-        available: book.borrowerId === null,
+        available:
+          book.borrowerId === null && !isNotLending(book.notLendingUntil),
+        notLending: isNotLending(book.notLendingUntil),
       })),
   }));
 }

@@ -8,43 +8,43 @@ generator client {
 }
 
 model User {
-  id                 String  @id @default(cuid())
-  email              String  @unique
-  firstname          String
-  surname            String
-  shareToken         String? @unique
+  id                   String     @id @default(cuid())
+  email                String     @unique
+  firstname            String
+  surname              String
+  shareToken           String?    @unique
   // The public shelf's own address (bookstacks.app/@handle) and a line
   // about yourself at its top; both show only while sharing is on
-  handle             String?   @unique
-  bio                String?
+  handle               String?    @unique
+  bio                  String?
   // A personal link that makes whoever opens it your friend straight away
-  friendInvite       String? @unique
-  isAdmin            Boolean @default(false)
+  friendInvite         String?    @unique
+  isAdmin              Boolean    @default(false)
   // Superseded by theme; still read for accounts that haven't picked one
-  darkMode           Boolean @default(false)
+  darkMode             Boolean    @default(false)
   // "light", "dark" or "system" (follow the device)
-  theme              String?
+  theme                String?
   // The library as "cover" grid or "list", and the grid's covers "large" or "small"
-  libraryView        String  @default("cover")
-  coverSize          String  @default("large")
-  profileEmoji       String?
+  libraryView          String     @default("cover")
+  coverSize            String     @default("large")
+  profileEmoji         String?
   // Two email switches: borrow requests, and the weekly roundup
-  emailNotifications Boolean @default(true)
-  weeklyDigest       Boolean @default(true)
+  emailNotifications   Boolean    @default(true)
+  weeklyDigest         Boolean    @default(true)
   // For admins only: new sign-ups by email "each" time, as one "daily"
   // summary, or "off"; and whether feedback is emailed as it comes in
-  adminSignupEmails   String  @default("each")
-  adminFeedbackEmails Boolean @default(true)
+  adminSignupEmails    String     @default("each")
+  adminFeedbackEmails  Boolean    @default(true)
   // Whether other people can find them: in search and among new people.
   // Off, they're reached by invite link only.
-  discoverable       Boolean @default(true)
+  discoverable         Boolean    @default(true)
   // "free" or "plus". Plus lifts the book and friend limits for everyone
   // on the shelf; set by a subscription, or by an admin as a gift
-  plan               String  @default("free")
+  plan                 String     @default("free")
   // The Stripe subscription behind Plus, kept in step by its webhook:
   // Stripe's status (active, past_due, canceled...), when the paid period
   // renews, and when it ends if they've cancelled
-  stripeCustomerId     String?   @unique
+  stripeCustomerId     String?    @unique
   stripeSubscriptionId String?
   subscriptionStatus   String?
   planRenewsAt         DateTime?
@@ -56,26 +56,26 @@ model User {
   planStartedAt        DateTime?
   // When they clicked the link we emailed; no digests or request emails
   // go out before then
-  emailVerifiedAt    DateTime?
+  emailVerifiedAt      DateTime?
   // The last confirmation email, so the resend button can't be used to
   // flood an inbox
-  verificationSentAt DateTime?
+  verificationSentAt   DateTime?
   // The last password-reset email, so the form can't be used to flood an
   // inbox
-  passwordResetSentAt DateTime?
+  passwordResetSentAt  DateTime?
   // Set on throwaway demo accounts; everyone in one demo sandbox shares it
-  demoGroup          String?
+  demoGroup            String?
   // People who share one shelf: each other's books count as their own
-  household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  household            Household? @relation(fields: [householdId], references: [id])
+  householdId          String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  password  Password?
+  password Password?
 
-  books     Book[]
-  borrowedBooks Book[] @relation("borrowedBooks")
+  books          Book[]
+  borrowedBooks  Book[]           @relation("borrowedBooks")
   lendingHistory LendingHistory[]
   readerNotes    ReaderNote[]
   holds          Hold[]
@@ -85,42 +85,45 @@ model User {
   notificationsSent     Notification[] @relation("sender")
   notificationsReceived Notification[] @relation("receiver")
 
-  followedBy User[]  @relation("UserFollows")
-  following  User[]  @relation("UserFollows")
+  followedBy User[] @relation("UserFollows")
+  following  User[] @relation("UserFollows")
+  pins       Pin[]
 
   @@index([demoGroup], name: "demo_group_index")
-  pins               Pin[]
 }
 
 model Password {
-  hash   String
+  hash String
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String @unique
 }
 
 model Book {
-  id            String  @id @default(cuid())
-  cover         String
-  title         String
-  author        String
-  body          String
-  datePublished String?
-  pageCount     Int?
-  subjects      String?
-  publisher     String?
-  openLibraryKey String?
-  isbn          String?
-  lendCount     Int     @default(0)
+  id               String    @id @default(cuid())
+  cover            String
+  title            String
+  author           String
+  body             String
+  datePublished    String?
+  pageCount        Int?
+  subjects         String?
+  publisher        String?
+  openLibraryKey   String?
+  isbn             String?
+  lendCount        Int       @default(0)
   // When the owner read it; null means not yet
-  readAt        DateTime?
+  readAt           DateTime?
   // Extra Open Library details, looked up once per book
-  firstSentence  String?
-  authorKey      String?
+  firstSentence    String?
+  authorKey        String?
   detailsFetchedAt DateTime?
   // Kept off the owner's public page (and its numbers and preview);
   // friends still see it on the shelf
-  hiddenFromPage Boolean @default(false)
+  hiddenFromPage   Boolean   @default(false)
+  // Not lending it until this moment: friends can't ask for it or wait
+  // for it till then. Far in the future means until the owner says so.
+  notLendingUntil  DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -128,12 +131,12 @@ model Book {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String
 
-  borrower   User?   @relation("borrowedBooks", fields: [borrowerId], references: [id])
+  borrower   User?     @relation("borrowedBooks", fields: [borrowerId], references: [id])
   borrowerId String?
   borrowedAt DateTime?
   dueDate    DateTime?
 
-  notifications Notification[]
+  notifications  Notification[]
   lendingHistory LendingHistory[]
   readerNotes    ReaderNote[]
   holds          Hold[]
@@ -156,41 +159,41 @@ model Pin {
 }
 
 model LendingHistory {
-  id         String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  book       Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  bookId     String
+  book   Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  bookId String
 
-  borrower   User     @relation(fields: [borrowerId], references: [id])
+  borrower   User   @relation(fields: [borrowerId], references: [id])
   borrowerId String
 
   borrowedAt DateTime
   returnedAt DateTime?
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([bookId], name: "lending_history_book_index")
   @@index([borrowerId], name: "lending_history_borrower_index")
 }
 
 model Notification {
-  id        String @id @default(cuid())
-  type      String @default("FRIEND_REQUEST")
+  id   String @id @default(cuid())
+  type String @default("FRIEND_REQUEST")
 
-  sender     User     @relation("sender", fields: [senderId], references: [id])
-  receiver   User     @relation("receiver", fields: [receiverId], references: [id])
+  sender   User @relation("sender", fields: [senderId], references: [id])
+  receiver User @relation("receiver", fields: [receiverId], references: [id])
 
   senderName String
 
   senderId   String
   receiverId String
 
-  book       Book?   @relation(fields: [bookId], references: [id])
-  bookId     String?
-  bookTitle  String?
+  book      Book?   @relation(fields: [bookId], references: [id])
+  bookId    String?
+  bookTitle String?
   // What an announcement from Stacks says, or the note a borrower sent
   // with their request
-  message    String?
+  message   String?
 
   read        Boolean  @default(false)
   actionTaken String?
@@ -203,8 +206,8 @@ model Notification {
 // A reader's heart, optional short note, and whether they've read this
 // copy. One per person per copy.
 model ReaderNote {
-  id     String  @id @default(cuid())
-  loved  Boolean @default(false)
+  id     String    @id @default(cuid())
+  loved  Boolean   @default(false)
   body   String?
   readAt DateTime?
 
@@ -271,9 +274,9 @@ model WantToRead {
 // A shared shelf. Everyone in it can see and manage each other's books;
 // notes, hearts and friends stay their own.
 model Household {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   // Hand this out to let someone join; null once revoked
-  inviteToken String? @unique
+  inviteToken String?  @unique
   createdAt   DateTime @default(now())
 
   members User[]
@@ -282,12 +285,12 @@ model Household {
 // Something a person told us from the feedback page. Kept if their
 // account goes; visitors who aren't signed in can leave an email to hear back.
 model Feedback {
-  id     String  @id @default(cuid())
-  body   String
+  id    String  @id @default(cuid())
+  body  String
   // The page they were on when they opened the form
-  page   String?
+  page  String?
   // How to reach them, when they're not signed in
-  email  String?
+  email String?
 
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   userId String?

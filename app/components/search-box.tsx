@@ -4,9 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { UPGRADE_PATH } from "~/plan";
 import type { SuggestResponse } from "~/routes/api.search-suggest";
 
-
 import { SearchIcon } from "./icons";
-
 
 type Option =
   | {
@@ -16,6 +14,7 @@ type Option =
       author: string;
       owner: string;
       available: boolean;
+      notLending: boolean;
     }
   | ({ kind: "openLibrary" } & SuggestResponse["openLibrary"][number])
   | { kind: "search"; text: string };
@@ -32,7 +31,11 @@ function AddFromSuggestion({
   book: SuggestResponse["openLibrary"][number];
   want?: boolean;
 }) {
-  const fetcher = useFetcher<{ success?: boolean; alreadyExists?: boolean; limit?: string }>();
+  const fetcher = useFetcher<{
+    success?: boolean;
+    alreadyExists?: boolean;
+    limit?: string;
+  }>();
   const added = fetcher.data?.success === true;
   const owned = book.inLibrary || fetcher.data?.alreadyExists === true;
   const adding = fetcher.state !== "idle";
@@ -83,7 +86,13 @@ function AddFromSuggestion({
       }}
       className="flex-shrink-0 whitespace-nowrap rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-xs font-medium text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 disabled:opacity-60 transition-colors"
     >
-      {adding ? (want ? "Saving…" : "Adding…") : want ? "+ Want to read" : "+ Add"}
+      {adding
+        ? want
+          ? "Saving…"
+          : "Adding…"
+        : want
+          ? "+ Want to read"
+          : "+ Add"}
     </button>
   );
 }
@@ -216,8 +225,12 @@ export default function SearchBox({
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         onKeyDown={onKeyDown}
-        placeholder={inHeader ? "Search or add books" : "Search by title or author"}
-        aria-label={inHeader ? "Search or add books" : "Search by title or author"}
+        placeholder={
+          inHeader ? "Search or add books" : "Search by title or author"
+        }
+        aria-label={
+          inHeader ? "Search or add books" : "Search by title or author"
+        }
         // Arriving on an empty search page (e.g. from Add books), start typing
         // eslint-disable-next-line jsx-a11y/no-autofocus
         autoFocus={!inHeader && !defaultValue ? true : undefined}
@@ -244,7 +257,9 @@ export default function SearchBox({
           aria-label="Suggestions"
           // In the header the box is narrow, so the list is wider than it
           className={`absolute top-full z-30 mt-1 overflow-hidden ${
-            inHeader ? "right-0 w-[min(26rem,calc(100vw-2rem))]" : "left-0 right-0"
+            inHeader
+              ? "right-0 w-[min(26rem,calc(100vw-2rem))]"
+              : "left-0 right-0"
           } rounded-lg border border-stone-200/80 dark:border-stone-800 bg-white dark:bg-stone-900 py-1 shadow-soft text-left`}
           // Keep focus in the input so a click registers before blur closes it
           onMouseDown={(event) => event.preventDefault()}
@@ -301,7 +316,11 @@ export default function SearchBox({
                       {option.kind === "friend" ? (
                         <span className="flex-shrink-0 text-xs text-stone-400 dark:text-stone-500">
                           {option.owner}
-                          {option.available ? "" : " · lent out"}
+                          {option.available
+                            ? ""
+                            : option.notLending
+                              ? " · not lending"
+                              : " · lent out"}
                         </span>
                       ) : null}
                     </>

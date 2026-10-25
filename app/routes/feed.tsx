@@ -9,6 +9,7 @@ import { Link, useLoaderData, useNavigation } from "@remix-run/react";
 import { FeedPost, NotePrompt } from "~/components/friend-activity";
 import SideRail from "~/components/side-rail";
 import { sendBookRequestEmail } from "~/email.server";
+import { isNotLending } from "~/lending";
 import { getFriendActivity, getNotePrompts } from "~/models/activity.server";
 import { getBookById, getHomeBooks } from "~/models/book.server";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
@@ -51,7 +52,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [user, activity, prompts, books] = await Promise.all([
     getUserById(userId),
     // One more than shown, to know whether there's anything older
-    getFriendActivity(userId, { days: 365, limit: shown + 1, withOwnNotes: true }),
+    getFriendActivity(userId, {
+      days: 365,
+      limit: shown + 1,
+      withOwnNotes: true,
+    }),
     getNotePrompts(userId),
     // For the rail beside the feed: what's out on loan, both ways
     getHomeBooks(userId, await shelfIds(userId)),
@@ -130,8 +135,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (book.borrowerId !== null) {
       throw new Response("Book is already borrowed", { status: 400 });
     }
+    if (isNotLending(book.notLendingUntil)) {
+      throw new Response("Not lending this book right now", { status: 400 });
+    }
     const senderName = `${viewer.firstname} ${viewer.surname}`;
-    const message = String(form.get("message") ?? "").trim().slice(0, REQUEST_NOTE_MAX) || null;
+    const message =
+      String(form.get("message") ?? "")
+        .trim()
+        .slice(0, REQUEST_NOTE_MAX) || null;
     const bookRequest = await createBookRequestNotification(
       userId,
       book.userId,
@@ -159,7 +170,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (intent === "placeHold") {
-    if (!book.borrowerId || book.borrowerId === userId) {
+    if (
+      !book.borrowerId ||
+      book.borrowerId === userId ||
+      isNotLending(book.notLendingUntil)
+    ) {
       throw new Response("Can't wait for this book", { status: 400 });
     }
     await placeHold(book.id, userId);

@@ -1,4 +1,8 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 
@@ -6,11 +10,20 @@ import BookCover from "~/components/book-cover";
 import ErrorPage from "~/components/error-page";
 import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
-import { createBook, findOwnCopy, searchFriendsBooks } from "~/models/book.server";
+import { isNotLending } from "~/lending";
+import {
+  createBook,
+  findOwnCopy,
+  searchFriendsBooks,
+} from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
 import { lookupWorkPage } from "~/models/openlibrary.server";
 import { getUserById } from "~/models/user.server";
-import { addWantToRead, isOnWantToRead, notifyWanters } from "~/models/wish.server";
+import {
+  addWantToRead,
+  isOnWantToRead,
+  notifyWanters,
+} from "~/models/wish.server";
 import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
 import { roomForBooks } from "~/plan.server";
 import { seo } from "~/seo";
@@ -29,7 +42,10 @@ const quietLink =
   "text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) =>
-  seo({ title: data?.work ? `${data.work.title} by ${data.work.author}` : "Book", noindex: true });
+  seo({
+    title: data?.work ? `${data.work.title} by ${data.work.author}` : "Book",
+    noindex: true,
+  });
 
 export const handle = {
   breadcrumbs: (data: { work?: { title: string } } | undefined) => [
@@ -50,14 +66,20 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   if (!work) throw new Response("Not Found", { status: 404 });
 
   const [ownCopy, wanted, matches, user] = await Promise.all([
-    findOwnCopy(await shelfIds(userId), { title: work.title ?? "", openLibraryKey: key }),
+    findOwnCopy(await shelfIds(userId), {
+      title: work.title ?? "",
+      openLibraryKey: key,
+    }),
     isOnWantToRead(userId, { title: work.title ?? "", openLibraryKey: key }),
     searchFriendsBooks(userId, work.title ?? ""),
     getUserById(userId),
   ]);
   // Friends' copies of this book, not just ones with a similar title
   const friendCopies = matches.filter((book) =>
-    sameWork({ title: book.title, openLibraryKey: null }, { title: work.title ?? "", openLibraryKey: null }),
+    sameWork(
+      { title: book.title, openLibraryKey: null },
+      { title: work.title ?? "", openLibraryKey: null },
+    ),
   );
 
   return json({
@@ -91,10 +113,17 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     return json({ success: true, wanted: true });
   }
 
-  const ownCopy = await findOwnCopy(await shelfIds(userId), { title: work.title, openLibraryKey: key });
-  if (ownCopy) return json({ success: false, alreadyExists: true, ownCopyId: ownCopy.id });
+  const ownCopy = await findOwnCopy(await shelfIds(userId), {
+    title: work.title,
+    openLibraryKey: key,
+  });
+  if (ownCopy)
+    return json({ success: false, alreadyExists: true, ownCopyId: ownCopy.id });
   if ((await roomForBooks(userId)) < 1) {
-    return json({ success: false, limit: LIMIT_MESSAGES.books }, { status: 403 });
+    return json(
+      { success: false, limit: LIMIT_MESSAGES.books },
+      { status: 403 },
+    );
   }
   const book = await createBook({
     title: work.title,
@@ -142,9 +171,13 @@ export default function WorkPage() {
       <h1 className="text-2xl md:text-4xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
         {work.title}
       </h1>
-      <p className="mt-1 md:text-xl text-stone-500 dark:text-stone-400">{work.author}</p>
+      <p className="mt-1 md:text-xl text-stone-500 dark:text-stone-400">
+        {work.author}
+      </p>
       {details.length > 0 ? (
-        <p className="mt-3 md:mt-4 text-sm text-stone-500 dark:text-stone-400">{details.join(" · ")}</p>
+        <p className="mt-3 md:mt-4 text-sm text-stone-500 dark:text-stone-400">
+          {details.join(" · ")}
+        </p>
       ) : null}
     </>
   );
@@ -162,7 +195,9 @@ export default function WorkPage() {
             eager
             className="w-[120px] flex-shrink-0 aspect-[2/3] shadow-sm md:w-[200px] lg:w-[240px]"
           />
-          <div className="min-w-0 flex-1 [overflow-wrap:anywhere] md:hidden">{heading}</div>
+          <div className="min-w-0 flex-1 [overflow-wrap:anywhere] md:hidden">
+            {heading}
+          </div>
         </div>
 
         {/* The two choices from the search result, for this book */}
@@ -206,7 +241,10 @@ export default function WorkPage() {
           {fetcher.data?.limit ? (
             <p className="text-sm text-stone-600 dark:text-stone-300">
               {fetcher.data.limit}{" "}
-              <Link to={UPGRADE_PATH} className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2">
+              <Link
+                to={UPGRADE_PATH}
+                className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2"
+              >
                 See Stacks Plus
               </Link>
             </p>
@@ -217,14 +255,30 @@ export default function WorkPage() {
         {data.friendCopies.length > 0 ? (
           <div className="rounded-md border border-stone-200 dark:border-stone-700 p-3 text-sm">
             <p className="font-medium text-stone-800 dark:text-stone-200">
-              {data.friendCopies.length === 1 ? "A friend has it" : "Friends have it"}
+              {data.friendCopies.length === 1
+                ? "A friend has it"
+                : "Friends have it"}
             </p>
             <ul className="mt-1.5 space-y-1">
               {data.friendCopies.map((copy) => (
-                <li key={copy.id} className="flex items-center justify-between gap-2">
-                  <PersonLink id={copy.user.id} name={`${copy.user.firstname} ${copy.user.surname}`} friendIds={data.friendIds} />
-                  <Link to={`/books/${copy.id}`} className="text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100">
-                    {copy.borrowerId ? "Lent out" : "Ask to borrow"}
+                <li
+                  key={copy.id}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <PersonLink
+                    id={copy.user.id}
+                    name={`${copy.user.firstname} ${copy.user.surname}`}
+                    friendIds={data.friendIds}
+                  />
+                  <Link
+                    to={`/books/${copy.id}`}
+                    className="text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
+                  >
+                    {copy.borrowerId
+                      ? "Lent out"
+                      : isNotLending(copy.notLendingUntil)
+                        ? "Not lending"
+                        : "Ask to borrow"}
                   </Link>
                 </li>
               ))}
@@ -239,7 +293,10 @@ export default function WorkPage() {
         {subjects.length > 0 ? (
           <div className="md:mt-4 flex flex-wrap items-center gap-1.5">
             {subjects.map((subject) => (
-              <span key={subject} className="rounded-full bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 text-xs text-stone-600 dark:text-stone-300">
+              <span
+                key={subject}
+                className="rounded-full bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 text-xs text-stone-600 dark:text-stone-300"
+              >
                 {subject}
               </span>
             ))}
@@ -248,7 +305,9 @@ export default function WorkPage() {
 
         {work.firstSentence ? (
           <div className="mt-8">
-            <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">Opening line</h2>
+            <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
+              Opening line
+            </h2>
             <blockquote className="max-w-prose border-l-2 border-stone-200 dark:border-stone-700 pl-4 italic leading-relaxed text-stone-700 dark:text-stone-300">
               “{work.firstSentence}”
             </blockquote>
@@ -256,23 +315,41 @@ export default function WorkPage() {
         ) : null}
 
         <div className="mt-8">
-          <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">About this book</h2>
+          <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
+            About this book
+          </h2>
           <p className="summary max-w-prose leading-relaxed text-stone-700 dark:text-stone-300">
-            {work.description ? stripMarkdown(work.description) : "Open Library has no description for this one yet."}
+            {work.description
+              ? stripMarkdown(work.description)
+              : "Open Library has no description for this one yet."}
           </p>
         </div>
 
         {work.authorDetails?.bio ? (
           <section className="mt-8">
-            <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">About the author</h2>
-            <p className="summary max-w-prose leading-relaxed text-stone-700 dark:text-stone-300">{work.authorDetails.bio}</p>
+            <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
+              About the author
+            </h2>
+            <p className="summary max-w-prose leading-relaxed text-stone-700 dark:text-stone-300">
+              {work.authorDetails.bio}
+            </p>
             <p className="mt-2 flex gap-4 text-sm">
               {work.authorDetails.wikipedia ? (
-                <a href={work.authorDetails.wikipedia} target="_blank" rel="noopener noreferrer" className={quietLink}>
+                <a
+                  href={work.authorDetails.wikipedia}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={quietLink}
+                >
                   Wikipedia
                 </a>
               ) : null}
-              <a href={`https://openlibrary.org/authors/${work.authorDetails.key}`} target="_blank" rel="noopener noreferrer" className={quietLink}>
+              <a
+                href={`https://openlibrary.org/authors/${work.authorDetails.key}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={quietLink}
+              >
                 More on Open Library
               </a>
             </p>
@@ -281,7 +358,12 @@ export default function WorkPage() {
 
         <p className="mt-8 text-sm text-stone-400 dark:text-stone-500">
           Details from{" "}
-          <a href={`https://openlibrary.org${work.key}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-stone-700 dark:hover:text-stone-200">
+          <a
+            href={`https://openlibrary.org${work.key}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-stone-700 dark:hover:text-stone-200"
+          >
             Open Library
           </a>
           .

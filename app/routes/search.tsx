@@ -19,6 +19,7 @@ import BarcodeScanner from "~/components/barcode-scanner";
 import BookCover from "~/components/book-cover";
 import { BookmarkIcon, CameraIcon, CheckCircleIcon } from "~/components/icons";
 import SearchBox from "~/components/search-box";
+import { isNotLending } from "~/lending";
 import {
   createBook,
   getUserLibraryKeys,
@@ -59,7 +60,6 @@ const LANGUAGES = [
   { code: "swe", label: "Swedish" },
   { code: "pol", label: "Polish" },
 ];
-
 
 // Make GET request to Open Library API
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -185,18 +185,26 @@ interface FriendBook {
   author: string;
   cover: string;
   borrowerId: string | null;
+  notLendingUntil: string | null;
   user: { id: string; firstname: string; surname: string };
 }
 
 function FriendBookRow({ book }: { book: FriendBook }) {
-  const available = book.borrowerId === null;
+  const notLending = isNotLending(book.notLendingUntil);
+  const available = book.borrowerId === null && !notLending;
   return (
     <li>
       <Link
         to={`/books/${book.id}`}
         className="flex items-center gap-3 rounded-lg -mx-2 px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
       >
-        <BookCover cover={book.cover} title={book.title} author={book.author} compact className="w-10 h-15" />
+        <BookCover
+          cover={book.cover}
+          title={book.title}
+          author={book.author}
+          compact
+          className="w-10 h-15"
+        />
         <div className="min-w-0 flex-1">
           <p className="font-medium text-stone-900 dark:text-stone-100 truncate">
             {book.title}
@@ -216,7 +224,7 @@ function FriendBookRow({ book }: { book: FriendBook }) {
                 : "text-stone-400 dark:text-stone-500"
             }
           >
-            {available ? "Available" : "Lent out"}
+            {available ? "Available" : notLending ? "Not lending" : "Lent out"}
           </p>
         </div>
       </Link>
@@ -254,10 +262,15 @@ function SearchingOpenLibrary() {
       <p className="sr-only" role="status">
         Searching Open Library…
       </p>
-      <ul className="divide-y divide-stone-100 dark:divide-stone-800 motion-safe:animate-pulse" aria-hidden="true">
+      <ul
+        className="divide-y divide-stone-100 dark:divide-stone-800 motion-safe:animate-pulse"
+        aria-hidden="true"
+      >
         {[0, 1, 2].map((row) => (
           <li key={row} className="flex gap-4 py-4">
-            <div className={`${bar} h-[112px] w-[74px] flex-shrink-0 rounded-xs`} />
+            <div
+              className={`${bar} h-[112px] w-[74px] flex-shrink-0 rounded-xs`}
+            />
             <div className="flex-1 min-w-0 pt-1">
               <div className={`${bar} h-4 ${row === 1 ? "w-2/3" : "w-1/2"}`} />
               <div className={`${bar} mt-2.5 h-3.5 w-1/3`} />
@@ -279,7 +292,8 @@ function SearchingOpenLibrary() {
 function OpenLibraryDown({ onRetry }: { onRetry: () => void }) {
   return (
     <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
-      Open Library didn&apos;t answer. It&apos;s slow right now; give it a moment and{" "}
+      Open Library didn&apos;t answer. It&apos;s slow right now; give it a
+      moment and{" "}
       <button
         type="button"
         onClick={onRetry}
@@ -329,7 +343,11 @@ function SearchResultItem({
         {/* The cover and title open the book's own page; the buttons stay here */}
         <WorkLink workKey={book.key} className="flex-shrink-0 self-stretch">
           <BookCover
-            cover={book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : null}
+            cover={
+              book.cover_i
+                ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
+                : null
+            }
             title={book.title}
             author={author}
             className="w-[74px] h-full"
@@ -337,7 +355,10 @@ function SearchResultItem({
         </WorkLink>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-stone-900 dark:text-stone-100 leading-snug">
-            <WorkLink workKey={book.key} className="hover:underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600">
+            <WorkLink
+              workKey={book.key}
+              className="hover:underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600"
+            >
               {book.title}
             </WorkLink>
           </h3>
@@ -462,7 +483,9 @@ export default function Search() {
   // Open Library's results come after the page, from their own route, so
   // a slow Open Library shows as a wait where the results will be rather
   // than a page that hasn't changed yet
-  const openLibrary = useFetcher<OpenLibraryResults>({ key: "open-library-search" });
+  const openLibrary = useFetcher<OpenLibraryResults>({
+    key: "open-library-search",
+  });
   const resultsUrl = data.query
     ? `/api/search?${new URLSearchParams({ q: data.query, type: data.searchType, lang: data.language, page: String(data.page) })}`
     : null;
@@ -472,7 +495,11 @@ export default function Search() {
   }, [resultsUrl, loadResults]);
   // What's loaded is for this search, not the one before it
   const results =
-    resultsUrl && openLibrary.data && `/api/search?${openLibrary.data.key}` === resultsUrl ? openLibrary.data : null;
+    resultsUrl &&
+    openLibrary.data &&
+    `/api/search?${openLibrary.data.key}` === resultsUrl
+      ? openLibrary.data
+      : null;
   const retryResults = () => {
     if (resultsUrl) loadResults(resultsUrl);
   };
@@ -562,7 +589,9 @@ export default function Search() {
         </div>
         {/* Keep the Open Library filters through new searches */}
         <input type="hidden" name="type" value={currentType} />
-        {searchParams.get("for") === "want" ? <input type="hidden" name="for" value="want" /> : null}
+        {searchParams.get("for") === "want" ? (
+          <input type="hidden" name="for" value="want" />
+        ) : null}
         <input type="hidden" name="lang" value={currentLang} />
       </Form>
 
@@ -574,8 +603,8 @@ export default function Search() {
                 Find a book you&apos;d like to read.
               </p>
               <p className="mt-2 text-sm text-stone-400 dark:text-stone-500">
-                Borrow it if a friend has it. Otherwise it goes on your list, and
-                you&apos;ll hear when a friend gets it.
+                Borrow it if a friend has it. Otherwise it goes on your list,
+                and you&apos;ll hear when a friend gets it.
               </p>
             </>
           ) : (
@@ -689,7 +718,8 @@ export default function Search() {
                   <OpenLibraryDown onRetry={retryResults} />
                 ) : results.docs.length === 0 ? (
                   <p className="py-2 text-sm text-stone-400 dark:text-stone-500">
-                    No matches on Open Library. Try fewer words or another filter.
+                    No matches on Open Library. Try fewer words or another
+                    filter.
                   </p>
                 ) : (
                   <ul className="divide-y divide-stone-100 dark:divide-stone-800">
@@ -744,7 +774,9 @@ export default function Search() {
                                 ? "px-3 py-1.5 text-sm rounded-md border bg-forest-600 text-white border-forest-600"
                                 : pageLink
                             }
-                            aria-current={page === currentPage ? "page" : undefined}
+                            aria-current={
+                              page === currentPage ? "page" : undefined
+                            }
                           >
                             {page}
                           </Link>

@@ -1,6 +1,7 @@
 import type { User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
+import { isNotLending } from "~/lending";
 
 // What friends have been up to lately: books they've added, and hearts and
 // notes they've left. Built from existing records, newest first.
@@ -24,6 +25,8 @@ interface FeedBook {
   // Whose copy it is, and whether it's on their shelf right now
   owner: { id: string; firstname: string };
   available: boolean;
+  // Its owner isn't lending it for now
+  notLending: boolean;
   borrowerId: string | null;
   // Hearts and written notes on this copy, from everyone
   loves: number;
@@ -41,7 +44,13 @@ interface FeedBook {
 }
 
 export type FriendActivity =
-  | { kind: "added"; id: string; at: Date; friend: FeedPerson; books: FeedBook[] }
+  | {
+      kind: "added";
+      id: string;
+      at: Date;
+      friend: FeedPerson;
+      books: FeedBook[];
+    }
   | {
       kind: "loved" | "note";
       id: string;
@@ -61,11 +70,13 @@ const bookFields = {
   author: true,
   cover: true,
   borrowerId: true,
+  notLendingUntil: true,
   user: { select: { id: true, firstname: true } },
 } as const;
 
 function feedBook({
   borrowerId,
+  notLendingUntil,
   user,
   ...book
 }: {
@@ -74,38 +85,64 @@ function feedBook({
   author: string;
   cover: string;
   borrowerId: string | null;
+  notLendingUntil: Date | null;
   user: { id: string; firstname: string };
 }): FeedBook {
+  const notLending = isNotLending(notLendingUntil);
   return {
     ...book,
     owner: user,
-    available: borrowerId === null,
+    available: borrowerId === null && !notLending,
+    notLending,
     borrowerId,
     loves: 0,
     notes: 0,
-    viewer: { loved: false, canLove: false, canRequest: false, requested: false, inLine: false },
+    viewer: {
+      loved: false,
+      canLove: false,
+      canRequest: false,
+      requested: false,
+      inLine: false,
+    },
   };
 }
 
 // Fill in the hearts, notes and the viewer's standing for every book in
 // the feed, in a few queries rather than one per book
-async function enrich(items: FriendActivity[], userId: User["id"], friendIds: string[]) {
-  const books = items.flatMap((item) => (item.kind === "added" ? item.books : [item.book]));
+async function enrich(
+  items: FriendActivity[],
+  userId: User["id"],
+  friendIds: string[],
+) {
+  const books = items.flatMap((item) =>
+    item.kind === "added" ? item.books : [item.book],
+  );
   const ids = [...new Set(books.map((book) => book.id))];
   if (ids.length === 0) return;
 
   const [notes, pastLoans, holds, requests] = await Promise.all([
     prisma.readerNote.findMany({
-      where: { bookId: { in: ids }, OR: [{ loved: true }, { body: { not: null } }] },
+      where: {
+        bookId: { in: ids },
+        OR: [{ loved: true }, { body: { not: null } }],
+      },
       select: { bookId: true, userId: true, loved: true, body: true },
     }),
     prisma.lendingHistory.findMany({
       where: { bookId: { in: ids }, borrowerId: userId },
       select: { bookId: true },
     }),
-    prisma.hold.findMany({ where: { bookId: { in: ids }, userId }, select: { bookId: true } }),
+    prisma.hold.findMany({
+      where: { bookId: { in: ids }, userId },
+      select: { bookId: true },
+    }),
     prisma.notification.findMany({
-      where: { type: "BOOK_REQUEST", senderId: userId, bookId: { in: ids }, read: false },
+      where: {
+        type: "BOOK_REQUEST",
+        senderId: userId,
+        bookId: { in: ids },
+        read: false,
+      },
       select: { bookId: true },
     }),
   ]);
@@ -160,7 +197,10 @@ export async function getFriendActivity(
       where: {
         updatedAt: { gte: since },
         OR: [
-          { userId: { in: friendIds }, OR: [{ loved: true }, { body: { not: null } }] },
+          {
+            userId: { in: friendIds },
+            OR: [{ loved: true }, { body: { not: null } }],
+          },
           ...(withOwnNotes ? [{ userId, body: { not: null } }] : []),
         ],
       },
@@ -218,7 +258,10 @@ export async function getFriendActivity(
 
 // Books you've borrowed, now or lately, that you haven't written about:
 // something to say to the next reader
-export async function getNotePrompts(userId: User["id"], { days = 90, limit = 3 } = {}) {
+export async function getNotePrompts(
+  userId: User["id"],
+  { days = 90, limit = 3 } = {},
+) {
   const since = new Date(Date.now() - days * DAY);
   const fields = {
     id: true,
@@ -259,7 +302,9 @@ export async function getNotePrompts(userId: User["id"], { days = 90, limit = 3 
       at: returnedAt ?? new Date(0),
     })),
   ]
-    .filter((book) => !noted.has(book.id) && !seen.has(book.id) && seen.add(book.id))
+    .filter(
+      (book) => !noted.has(book.id) && !seen.has(book.id) && seen.add(book.id),
+    )
     .sort((a, b) => b.at.getTime() - a.at.getTime());
   return prompts.slice(0, limit);
 }

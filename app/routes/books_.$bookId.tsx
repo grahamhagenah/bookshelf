@@ -26,6 +26,12 @@ import ReaderNotes from "~/components/reader-notes";
 import { importCover, isOpenLibraryCover } from "~/covers.server";
 import { sendBookRequestEmail } from "~/email.server";
 import {
+  NOT_LENDING_CHOICES,
+  isNotLending,
+  lendingAgainOn,
+  notLendingEnd,
+} from "~/lending";
+import {
   deleteBook,
   getBookById,
   getReadAt,
@@ -34,6 +40,7 @@ import {
   EXTEND_WEEKS,
   extendLoan,
   LOAN_WEEKS,
+  setNotLending,
   lendToFriend,
   loanWeeks,
   returnBook,
@@ -583,6 +590,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     if (book.borrowerId !== null) {
       throw new Response("Book is already borrowed", { status: 400 });
     }
+    // Nor one its owner isn't lending right now
+    if (isNotLending(book.notLendingUntil)) {
+      throw new Response("Not lending this book right now", { status: 400 });
+    }
     if (!(await canInteract(userId, book.userId))) {
       throw new Response("Not Found", { status: 404 });
     }
@@ -644,6 +655,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       managerIds.includes(book.userId) ||
       !book.borrowerId ||
       book.borrowerId === userId ||
+      isNotLending(book.notLendingUntil) ||
       !isFriend ||
       !(await canInteract(userId, book.userId))
     ) {
@@ -651,6 +663,20 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
     await placeHold(book.id, userId);
     return json({ joinedLine: true });
+  }
+
+  // The owner stops lending it for a while, or starts again
+  if (intent === "stopLending" || intent === "resumeLending") {
+    if (!managerIds.includes(book.userId)) {
+      throw new Response("Unauthorized", { status: 403 });
+    }
+    const until =
+      intent === "stopLending" ? notLendingEnd(formData.get("for")) : null;
+    if (intent === "stopLending" && !until) {
+      throw new Response("Choose how long", { status: 400 });
+    }
+    await setNotLending(book.id, until);
+    return json({ ok: true });
   }
 
   if (intent === "lendTo") {
@@ -982,6 +1008,92 @@ function WaitInLine({ position }: { position: number | null }) {
 }
 
 // Lend your book to a friend directly, without waiting for them to ask
+// The owner can stop lending a copy for a while, or until they say:
+// friends see it isn't lending, and can't ask for it or wait for it
+function NotLendingControl({ until }: { until: string | null }) {
+  const fetcher = useFetcher({ key: "not-lending" });
+  const [open, setOpen] = useState(false);
+  const pending = fetcher.formData?.get("intent");
+  // Shown as it will be, while it saves
+  const off =
+    pending === "stopLending"
+      ? true
+      : pending === "resumeLending"
+        ? false
+        : isNotLending(until);
+  const againOn = pending ? null : lendingAgainOn(until);
+
+  if (off) {
+    return (
+      <fetcher.Form
+        method="post"
+        className="rounded-md border border-stone-200 dark:border-stone-700 px-3 py-2.5 text-sm"
+      >
+        <input type="hidden" name="intent" value="resumeLending" />
+        <p className="font-medium text-stone-800 dark:text-stone-200">
+          Not lending
+        </p>
+        <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
+          {againOn
+            ? `Friends can ask for it again on ${monthDay(againOn)}.`
+            : "Friends can't ask for it until you lend it again."}{" "}
+          <button type="submit" className={gapLink}>
+            Lend it again
+          </button>
+        </p>
+      </fetcher.Form>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="w-full text-center text-xs text-stone-500 dark:text-stone-400 underline-offset-2 hover:underline hover:text-stone-800 dark:hover:text-stone-200"
+      >
+        Not lending this one for now?
+      </button>
+    );
+  }
+
+  return (
+    <fetcher.Form
+      method="post"
+      className="space-y-2"
+      onSubmit={() => setOpen(false)}
+    >
+      <input type="hidden" name="intent" value="stopLending" />
+      <label className="block text-xs font-medium text-stone-500 dark:text-stone-400">
+        Stop lending it
+        <select
+          name="for"
+          defaultValue="forever"
+          className="mt-1 h-9 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-800 dark:text-stone-200 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10"
+        >
+          {NOT_LENDING_CHOICES.map((choice) => (
+            <option key={choice.value} value={choice.value}>
+              {choice.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="flex gap-2">
+        <button type="submit" className={`flex-1 ${secondaryButton}`}>
+          Stop lending
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="px-2 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
+        >
+          Cancel
+        </button>
+      </div>
+    </fetcher.Form>
+  );
+}
+
 function LendToFriend({
   friends,
   loanChoices,
@@ -1644,12 +1756,25 @@ export default function BookDetailsPage() {
     }
   }, [actionData?.edited, navigation.state]);
 
+  // Its owner isn't lending it for now: no asking, no waiting
+  const notLending = isNotLending(data.book.notLendingUntil);
   const canRequestBook =
-    !data.isOwner && !data.isBorrowed && !data.isBorrower && data.isFriend;
+    !data.isOwner &&
+    !data.isBorrowed &&
+    !data.isBorrower &&
+    data.isFriend &&
+    !notLending;
   const needsFriendship = !data.isOwner && !data.isFriend;
   // A friend's book someone else has right now: you can wait for it
   const canWaitInLine =
-    !data.isOwner && data.isBorrowed && !data.isBorrower && data.isFriend;
+    !data.isOwner &&
+    data.isBorrowed &&
+    !data.isBorrower &&
+    data.isFriend &&
+    !notLending;
+  const showNotLending =
+    !data.isOwner && !data.isBorrower && data.isFriend && notLending;
+  const lendsAgainOn = lendingAgainOn(data.book.notLendingUntil);
   const details = [
     data.book.datePublished,
     data.book.pageCount ? `${data.book.pageCount} pages` : null,
@@ -1733,6 +1858,16 @@ export default function BookDetailsPage() {
               friends={data.currentUser?.following ?? []}
               loanChoices={data.loanChoices}
             />
+          ) : null}
+          {data.isOwner && !isEditing ? (
+            <NotLendingControl until={data.book.notLendingUntil} />
+          ) : null}
+          {showNotLending ? (
+            <p className={`block text-center ${quietLabel}`}>
+              {lendsAgainOn
+                ? `Not lending until ${monthDay(lendsAgainOn)}`
+                : "Not lending right now"}
+            </p>
           ) : null}
           {canRequestBook ? (
             <Form method="post" className="space-y-2">

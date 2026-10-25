@@ -4,7 +4,14 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form, Link, useActionData, useFetcher, useLoaderData, useLocation } from "@remix-run/react";
+import {
+  Form,
+  Link,
+  useActionData,
+  useFetcher,
+  useLoaderData,
+  useLocation,
+} from "@remix-run/react";
 
 import BookCover from "~/components/book-cover";
 import { BookmarkIcon } from "~/components/icons";
@@ -48,7 +55,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   const form = await request.formData();
   const id = form.get("id");
-  if (typeof id !== "string") return json({ error: "No book given" }, { status: 400 });
+  if (typeof id !== "string")
+    return json({ error: "No book given" }, { status: 400 });
 
   if (form.get("intent") === "remove") {
     await removeWantToRead(id, userId);
@@ -56,7 +64,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   if (form.get("intent") === "gotIt") {
     if ((await roomForBooks(userId)) < 1) {
-      return json({ error: LIMIT_MESSAGES.books, limit: true }, { status: 403 });
+      return json(
+        { error: LIMIT_MESSAGES.books, limit: true },
+        { status: 403 },
+      );
     }
     const book = await moveToShelf(id, userId);
     return book ? redirect(`/books/${book.id}`) : json({ ok: true });
@@ -66,8 +77,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 type Item = Awaited<ReturnType<typeof getWantToRead>>[number];
 
-function Cover({ cover, title, author }: { cover: string; title: string; author: string }) {
-  return <BookCover cover={cover} title={title} author={author} className="h-[72px] w-12 flex-shrink-0" />;
+function Cover({
+  cover,
+  title,
+  author,
+}: {
+  cover: string;
+  title: string;
+  author: string;
+}) {
+  return (
+    <BookCover
+      cover={cover}
+      title={title}
+      author={author}
+      className="h-[72px] w-12 flex-shrink-0"
+    />
+  );
 }
 
 const quietButton =
@@ -106,8 +132,12 @@ function WantRow({
     >
       <Cover cover={item.cover} title={item.title} author={item.author} />
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-stone-900 dark:text-stone-100">{item.title}</p>
-        <p className="text-sm text-stone-500 dark:text-stone-400">{item.author}</p>
+        <p className="font-medium text-stone-900 dark:text-stone-100">
+          {item.title}
+        </p>
+        <p className="text-sm text-stone-500 dark:text-stone-400">
+          {item.author}
+        </p>
         <p className="mt-1.5 text-sm">
           {copies.length === 0 ? (
             <span className="text-stone-400 dark:text-stone-500">
@@ -115,8 +145,16 @@ function WantRow({
             </span>
           ) : (
             copies.map((copy, index) => (
-              <span key={copy.bookId} className="text-stone-600 dark:text-stone-300">
-                {index > 0 ? <span className="text-stone-400 dark:text-stone-500"> · </span> : null}
+              <span
+                key={copy.bookId}
+                className="text-stone-600 dark:text-stone-300"
+              >
+                {index > 0 ? (
+                  <span className="text-stone-400 dark:text-stone-500">
+                    {" "}
+                    ·{" "}
+                  </span>
+                ) : null}
                 <PersonLink
                   id={copy.owner.id}
                   name={copy.owner.firstname}
@@ -127,7 +165,11 @@ function WantRow({
                   to={`/books/${copy.bookId}`}
                   className="font-medium text-stone-800 dark:text-stone-200 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
                 >
-                  {copy.available ? "ask to borrow it" : "lent out right now"}
+                  {copy.available
+                    ? "ask to borrow it"
+                    : copy.notLending
+                      ? "not lending it right now"
+                      : "lent out right now"}
                 </Link>
               </span>
             ))
@@ -138,7 +180,11 @@ function WantRow({
         <Form method="post">
           <input type="hidden" name="intent" value="gotIt" />
           <input type="hidden" name="id" value={item.id} />
-          <button type="submit" className={outlineButton} title="Move it to your shelf">
+          <button
+            type="submit"
+            className={outlineButton}
+            title="Move it to your shelf"
+          >
             Got a copy
           </button>
         </Form>
@@ -159,7 +205,10 @@ export default function WantToRead() {
   const matched = items.filter((item) => item.copies.length > 0).length;
   // "Got a copy" with a full shelf on the free plan
   const actionData = useActionData<typeof action>();
-  const limit = actionData && "limit" in actionData && "error" in actionData ? actionData.error : null;
+  const limit =
+    actionData && "limit" in actionData && "error" in actionData
+      ? actionData.error
+      : null;
 
   return (
     <Layout title="Want to read">
@@ -167,15 +216,20 @@ export default function WantToRead() {
         <ShelfTabs counts={{ ...counts, want: items.length }} />
         <div className="flex flex-wrap items-start justify-between gap-3">
           <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
-            Books you don&apos;t own but would like to read. When a friend has one,
-            it shows up here, and you&apos;ll hear when they add one.
-            {matched ? ` ${matched} of these ${matched === 1 ? "is" : "are"} on a friend's shelf.` : ""}
+            Books you don&apos;t own but would like to read. When a friend has
+            one, it shows up here, and you&apos;ll hear when they add one.
+            {matched
+              ? ` ${matched} of these ${matched === 1 ? "is" : "are"} on a friend's shelf.`
+              : ""}
           </p>
           <Link
             to="/search?for=want"
             className="inline-flex h-8 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
           >
-            <span aria-hidden="true" className="text-base leading-none text-stone-400 dark:text-stone-500">
+            <span
+              aria-hidden="true"
+              className="text-base leading-none text-stone-400 dark:text-stone-500"
+            >
               +
             </span>
             Add a book
@@ -183,9 +237,15 @@ export default function WantToRead() {
         </div>
 
         {limit ? (
-          <p role="alert" className="mt-4 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200">
+          <p
+            role="alert"
+            className="mt-4 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200"
+          >
             {limit}{" "}
-            <Link to={UPGRADE_PATH} className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2">
+            <Link
+              to={UPGRADE_PATH}
+              className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2"
+            >
               See Stacks Plus
             </Link>
           </p>
@@ -193,11 +253,16 @@ export default function WantToRead() {
 
         {items.length === 0 ? (
           <div className="mt-10 flex flex-col items-center py-10 text-center">
-            <BookmarkIcon size={28} className="text-stone-300 dark:text-stone-600" />
-            <p className="mt-3 text-stone-700 dark:text-stone-300">Nothing here yet.</p>
+            <BookmarkIcon
+              size={28}
+              className="text-stone-300 dark:text-stone-600"
+            />
+            <p className="mt-3 text-stone-700 dark:text-stone-300">
+              Nothing here yet.
+            </p>
             <p className="mt-1 max-w-xs text-sm text-stone-500 dark:text-stone-400">
-              Search for a book and choose <strong className="font-medium">Want to read</strong>,
-              or{" "}
+              Search for a book and choose{" "}
+              <strong className="font-medium">Want to read</strong>, or{" "}
               <Link to="/import" className="underline underline-offset-2">
                 import your to-read shelf
               </Link>{" "}

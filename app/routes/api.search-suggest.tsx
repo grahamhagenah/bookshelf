@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 
+import { isNotLending } from "~/lending";
 import { getUserLibraryKeys, searchFriendsBooks } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
 import { inEnglish } from "~/models/openlibrary.server";
@@ -34,6 +35,7 @@ interface FriendSuggestion {
   author: string;
   owner: string;
   available: boolean;
+  notLending: boolean;
 }
 
 export interface SuggestResponse {
@@ -73,13 +75,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       title: book.title,
       author: book.author,
       owner: `${book.user.firstname} ${book.user.surname}`,
-      available: book.borrowerId === null,
+      available:
+        book.borrowerId === null && !isNotLending(book.notLendingUntil),
+      notLending: isNotLending(book.notLendingUntil),
     })),
     openLibrary: [],
   });
 };
 
-const words = (text: string) => text.toLowerCase().match(/[\p{L}\p{N}']+/gu) ?? [];
+const words = (text: string) =>
+  text.toLowerCase().match(/[\p{L}\p{N}']+/gu) ?? [];
 
 // Every typed word must start a word in the title or author, so "piran"
 // suggests Piranesi rather than whatever Open Library ranks first
@@ -92,10 +97,16 @@ function matchesTyped(typed: string, title: string, author: string | null) {
 
 // Asking for the English edition (for its title and publisher) makes
 // wildcard searches several times slower, so only plain ones do
-const FIELDS = "key,title,author_name,author_key,cover_i,first_publish_year,number_of_pages_median,subject";
+const FIELDS =
+  "key,title,author_name,author_key,cover_i,first_publish_year,number_of_pages_median,subject";
 
-async function searchOpenLibrary(q: string, { englishEdition }: { englishEdition: boolean }) {
-  const edition = englishEdition ? `&${ENGLISH_EDITION_PARAMS}&fields=${FIELDS},${ENGLISH_EDITION_FIELDS}` : `&fields=${FIELDS}`;
+async function searchOpenLibrary(
+  q: string,
+  { englishEdition }: { englishEdition: boolean },
+) {
+  const edition = englishEdition
+    ? `&${ENGLISH_EDITION_PARAMS}&fields=${FIELDS},${ENGLISH_EDITION_FIELDS}`
+    : `&fields=${FIELDS}`;
   try {
     const res = await fetch(
       `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=40${edition}`,
@@ -103,9 +114,10 @@ async function searchOpenLibrary(q: string, { englishEdition }: { englishEdition
     );
     if (!res.ok) return [];
     const body = await res.json();
+    if (!Array.isArray(body.docs)) return [];
     // Open Library's results, loosely typed as they always were here
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return Array.isArray(body.docs) ? await inEnglish<Record<string, any>>(body.docs) : [];
+    return await inEnglish<Record<string, any>>(body.docs);
   } catch {
     return [];
   }
@@ -120,14 +132,19 @@ async function suggestFromOpenLibrary(
 ): Promise<OpenLibrarySuggestion[]> {
   const lastWord = words(query).at(-1) ?? "";
   const [prefixed, plain] = await Promise.all([
-    lastWord.length >= 2 ? searchOpenLibrary(`${query}*`, { englishEdition: false }) : [],
+    lastWord.length >= 2
+      ? searchOpenLibrary(`${query}*`, { englishEdition: false })
+      : [],
     searchOpenLibrary(query, { englishEdition: true }),
   ]);
 
   // A book both searches found takes the plain one's English details. One
   // only the wildcard found has no publisher yet; it's filled in once added.
   const plainByKey = new Map(plain.map((doc) => [doc.key, doc]));
-  const ordered = [...prefixed.map((doc) => plainByKey.get(doc.key) ?? doc), ...plain];
+  const ordered = [
+    ...prefixed.map((doc) => plainByKey.get(doc.key) ?? doc),
+    ...plain,
+  ];
 
   // Editions repeat; keep one suggestion per title and author
   const seen = new Set<string>();
@@ -145,7 +162,10 @@ async function suggestFromOpenLibrary(
       author,
       key,
       coverId: typeof doc.cover_i === "number" ? doc.cover_i : null,
-      year: typeof doc.first_publish_year === "number" ? doc.first_publish_year : null,
+      year:
+        typeof doc.first_publish_year === "number"
+          ? doc.first_publish_year
+          : null,
       pages:
         typeof doc.number_of_pages_median === "number"
           ? doc.number_of_pages_median
@@ -166,7 +186,9 @@ async function suggestFromOpenLibrary(
   };
   const suggestions = candidates
     .map((suggestion, index) => ({ suggestion, index }))
-    .sort((a, b) => rank(a.suggestion) - rank(b.suggestion) || a.index - b.index)
+    .sort(
+      (a, b) => rank(a.suggestion) - rank(b.suggestion) || a.index - b.index,
+    )
     .slice(0, OPEN_LIBRARY_LIMIT)
     .map(({ suggestion }) => suggestion);
   return suggestions;

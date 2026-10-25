@@ -1,6 +1,7 @@
 import type { Book, User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
+import { isNotLending } from "~/lending";
 
 import { createBookRequestNotification } from "./user.server";
 
@@ -15,7 +16,14 @@ export function getHolds(bookId: Book["id"]) {
     select: {
       id: true,
       createdAt: true,
-      user: { select: { id: true, firstname: true, surname: true, profileEmoji: true } },
+      user: {
+        select: {
+          id: true,
+          firstname: true,
+          surname: true,
+          profileEmoji: true,
+        },
+      },
     },
   });
 }
@@ -43,15 +51,21 @@ export async function passToNextInLine(bookId: Book["id"]) {
       id: true,
       title: true,
       borrowerId: true,
+      notLendingUntil: true,
       user: { select: { id: true, firstname: true, surname: true } },
     },
   });
   if (!book || book.borrowerId) return null;
+  // Not lending it for now: the line keeps its place for when it is
+  if (isNotLending(book.notLendingUntil)) return null;
 
   const next = await prisma.hold.findFirst({
     where: { bookId },
     orderBy: { createdAt: "asc" },
-    select: { id: true, user: { select: { id: true, firstname: true, surname: true } } },
+    select: {
+      id: true,
+      user: { select: { id: true, firstname: true, surname: true } },
+    },
   });
   if (!next) return null;
 

@@ -1,13 +1,15 @@
-import type {
-  LoaderFunctionArgs,
-  MetaFunction,
-} from "@remix-run/node";
+import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 
 import Library from "~/components/library";
 import ShelfTabs from "~/components/shelf-tabs";
-import { getBookListItems, getBorrowedBooks, readAtFor } from "~/models/book.server";
+import { isNotLending } from "~/lending";
+import {
+  getBookListItems,
+  getBorrowedBooks,
+  readAtFor,
+} from "~/models/book.server";
 import { getShelfCounts } from "~/models/history.server";
 import { getHousehold, shelfIds } from "~/models/household.server";
 import { getLoveCounts } from "~/models/note.server";
@@ -29,12 +31,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const borrowedBooks = await getBorrowedBooks(userId);
 
   // Mark borrowed books and lending books, then combine
-  const ownedWithFlag = ownedBooks.map(({ readerNotes, ...book }) => ({
-    ...book,
-    readAt: readAtFor(userId, { ...book, readerNotes }),
-    isBorrowed: false,
-    isLending: book.borrowerId !== null,
-  }));
+  const ownedWithFlag = ownedBooks.map(
+    ({ readerNotes, notLendingUntil, ...book }) => ({
+      ...book,
+      readAt: readAtFor(userId, { ...book, readerNotes }),
+      isBorrowed: false,
+      isLending: book.borrowerId !== null,
+      notLending: isNotLending(notLendingUntil),
+    }),
+  );
   const borrowedWithFlag = borrowedBooks.map((book) => ({
     ...book,
     isBorrowed: true,
@@ -53,16 +58,23 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     household && household.members.length > 1
       ? {
           viewerId: userId,
-          members: household.members.map(({ id, firstname, surname, profileEmoji }) => ({
-            id,
-            firstname,
-            surname,
-            profileEmoji,
-          })),
+          members: household.members.map(
+            ({ id, firstname, surname, profileEmoji }) => ({
+              id,
+              firstname,
+              surname,
+              profileEmoji,
+            }),
+          ),
         }
       : null;
 
-  return json({ user, bookListItems, counts: await getShelfCounts(userId), sharedWith });
+  return json({
+    user,
+    bookListItems,
+    counts: await getShelfCounts(userId),
+    sharedWith,
+  });
 };
 
 export default function BooksPage() {
@@ -73,9 +85,7 @@ export default function BooksPage() {
       <Library
         bookListItems={data.bookListItems}
         sharedWith={data.sharedWith}
-        header={
-          <ShelfTabs counts={data.counts} sharedWith={data.sharedWith} />
-        }
+        header={<ShelfTabs counts={data.counts} sharedWith={data.sharedWith} />}
       />
     </>
   );
