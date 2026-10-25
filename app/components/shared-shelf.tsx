@@ -129,28 +129,34 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
               const spot = BUBBLE_SPOTS[i % BUBBLE_SPOTS.length];
               const above = spot.side === "above";
               return (
-                <li key={book.id} className="relative min-w-0">
-                  <BookCover
-                    cover={book.cover}
-                    title={book.title}
-                    author={book.author}
-                    className="aspect-[2/3] w-full"
-                  />
-                  <span className="sr-only">
-                    {book.title} by {book.author}
-                  </span>
-                  {/* Why it's here, in the owner's words, said from the cover */}
-                  {book.note ? (
-                    <p
-                      className={`absolute z-10 w-max max-w-[108%] ${spot.align} ${
-                        above
-                          ? "bottom-[calc(100%-1.25rem)]"
-                          : "top-[calc(100%-1.25rem)]"
-                      } rounded-2xl bg-white px-3 py-2 text-[11px] leading-snug text-stone-700 shadow-[0_1px_3px_rgb(0_0_0/0.08)] ring-1 ring-stone-900/5 dark:ring-white/10 dark:bg-stone-800 dark:text-stone-200 sm:text-xs`}
-                    >
-                      <span className="line-clamp-4">{book.note}</span>
-                    </p>
-                  ) : null}
+                <li key={book.id} className="min-w-0">
+                  {/* To the book's page, as the covers on the shelf below go */}
+                  <Link
+                    to={`/books/${book.id}`}
+                    className="group relative block"
+                  >
+                    <BookCover
+                      cover={book.cover}
+                      title={book.title}
+                      author={book.author}
+                      className="aspect-[2/3] w-full transition-opacity duration-200 group-hover:opacity-90"
+                    />
+                    <span className="sr-only">
+                      {book.title} by {book.author}
+                    </span>
+                    {/* Why it's here, in the owner's words, said from the cover */}
+                    {book.note ? (
+                      <p
+                        className={`absolute z-10 w-max max-w-[108%] ${spot.align} ${
+                          above
+                            ? "bottom-[calc(100%-1.25rem)]"
+                            : "top-[calc(100%-1.25rem)]"
+                        } rounded-2xl bg-white px-3 py-2 text-[11px] leading-snug text-stone-700 shadow-[0_1px_3px_rgb(0_0_0/0.08)] ring-1 ring-stone-900/5 dark:ring-white/10 dark:bg-stone-800 dark:text-stone-200 sm:text-xs`}
+                      >
+                        <span className="line-clamp-4">{book.note}</span>
+                      </p>
+                    ) : null}
+                  </Link>
                 </li>
               );
             })}
