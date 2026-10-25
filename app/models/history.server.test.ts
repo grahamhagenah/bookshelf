@@ -31,5 +31,5 @@ test("history lists books you borrowed and lent, newest first, with the notes on
   expect(history[1].returnedAt).not.toBeNull();
   expect(history[1].note).toMatchObject({ body: "Strange and lovely." });
 
-  expect(await getShelfCounts(me.id)).toEqual({ library: 1, want: 0, history: 2 });
+  expect(await getShelfCounts(me.id)).toEqual({ library: 1, want: 0, elsewhere: 0, history: 2 });
 });

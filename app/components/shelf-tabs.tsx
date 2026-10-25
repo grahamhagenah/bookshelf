@@ -1,18 +1,18 @@
 import { NavLink } from "@remix-run/react";
 
-import { BookIcon, BookmarkIcon, HistoryIcon } from "./icons";
+import { BookIcon, BookmarkIcon, HistoryIcon, ReadIcon } from "./icons";
 import ShareShelfButton from "./share-shelf-button";
 import SharedWith from "./shared-with";
 import type { Member } from "./shared-with";
 
 // Your lists of books, side by side at the top of each: the books you
-// have, the ones you'd like to, and the ones that have passed between you
-// and your friends. Across from them, the link to show your shelf off.
+// have, the ones you'd like to, the ones you read somewhere else, and the
+// ones that have passed between you and your friends. Across from them, the link to show your shelf off.
 export default function ShelfTabs({
   counts,
   sharedWith,
 }: {
-  counts: { library: number; want: number; history: number };
+  counts: { library: number; want: number; elsewhere: number; history: number };
   // On your library, when it's a shelf you share
   sharedWith?: { members: Member[]; viewerId: string } | null;
 }) {
@@ -41,6 +41,11 @@ export default function ShelfTabs({
           <BookmarkIcon size={16} className="hidden sm:block" />
           Want to read
           <span className={count}>{counts.want}</span>
+        </NavLink>
+        <NavLink to="/read-elsewhere" className={tab}>
+          <ReadIcon size={16} className="hidden sm:block" />
+          Read elsewhere
+          <span className={count}>{counts.elsewhere}</span>
         </NavLink>
         <NavLink to="/history" className={tab}>
           <HistoryIcon size={16} className="hidden sm:block" />

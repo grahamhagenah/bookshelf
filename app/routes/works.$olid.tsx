@@ -10,6 +10,7 @@ import BookCover from "~/components/book-cover";
 import ErrorPage from "~/components/error-page";
 import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
+import ReaderNotes from "~/components/reader-notes";
 import { isNotLending } from "~/lending";
 import {
   createBook,
@@ -17,13 +18,24 @@ import {
   searchFriendsBooks,
 } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
-import { lookupWorkPage } from "~/models/openlibrary.server";
+import { NOTE_MAX_LENGTH } from "~/models/note.server";
+import {
+  PATIENT_MS,
+  lookupWork,
+  lookupWorkPage,
+} from "~/models/openlibrary.server";
 import { getUserById } from "~/models/user.server";
 import {
   addWantToRead,
   isOnWantToRead,
   notifyWanters,
 } from "~/models/wish.server";
+import {
+  getMyWorkNote,
+  getWorkNotes,
+  getWorkSnapshot,
+  saveWorkNote,
+} from "~/models/work-note.server";
 import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
 import { roomForBooks } from "~/plan.server";
 import { seo } from "~/seo";
@@ -60,12 +72,36 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   if (!OLID.test(olid)) throw new Response("Not Found", { status: 404 });
   const key = `/works/${olid}`;
 
-  const work = await lookupWorkPage(key).catch(() => {
-    throw new Response("Open Library didn't answer", { status: 503 });
-  });
-  if (!work) throw new Response("Not Found", { status: 404 });
+  // Open Library is slow some days: a book someone has already noted
+  // still opens, from what was saved of it
+  let offline = false;
+  let work = await lookupWorkPage(key).catch(() => undefined);
+  if (!work) {
+    const saved = await getWorkSnapshot(key);
+    if (!saved) {
+      throw work === undefined
+        ? new Response("Open Library didn't answer", { status: 503 })
+        : new Response("Not Found", { status: 404 });
+    }
+    offline = true;
+    work = {
+      key,
+      title: saved.title,
+      author: saved.author,
+      cover: saved.cover,
+      datePublished: null,
+      pageCount: null,
+      subjects: null,
+      publisher: null,
+      firstSentence: null,
+      authorKey: null,
+      isbn: null,
+      description: "",
+      authorDetails: null,
+    };
+  }
 
-  const [ownCopy, wanted, matches, user] = await Promise.all([
+  const [ownCopy, wanted, matches, user, myNote, notes] = await Promise.all([
     findOwnCopy(await shelfIds(userId), {
       title: work.title ?? "",
       openLibraryKey: key,
@@ -73,6 +109,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     isOnWantToRead(userId, { title: work.title ?? "", openLibraryKey: key }),
     searchFriendsBooks(userId, work.title ?? ""),
     getUserById(userId),
+    getMyWorkNote(userId, key),
+    getWorkNotes(userId, key),
   ]);
   // Friends' copies of this book, not just ones with a similar title
   const friendCopies = matches.filter((book) =>
@@ -88,8 +126,20 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     wanted,
     friendCopies,
     friendIds: user?.following?.map((friend) => friend.id) ?? [],
+    offline,
+    // Hearts and notes from you and your friends; your read mark is yours
+    myNote,
+    notes,
+    noteMaxLength: NOTE_MAX_LENGTH,
   });
 };
+
+const NOTE_INTENTS = new Set([
+  "toggleLove",
+  "toggleRead",
+  "saveNote",
+  "deleteNote",
+]);
 
 // The same work as the search page's buttons, for this one book
 export const action = async ({ params, request }: ActionFunctionArgs) => {
@@ -97,13 +147,53 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const olid = params.olid ?? "";
   if (!OLID.test(olid)) throw new Response("Not Found", { status: 404 });
   const key = `/works/${olid}`;
+  const form = await request.formData();
+  const intent = String(form.get("intent") ?? "");
+
+  // A heart, read mark or note on a book read somewhere else. What it's
+  // saved with comes from an earlier note when there is one, so Open
+  // Library is asked only the first time.
+  if (NOTE_INTENTS.has(intent)) {
+    let snapshot = await getWorkSnapshot(key);
+    if (!snapshot) {
+      const found = await lookupWork(
+        { title: "", author: "", openLibraryKey: key },
+        PATIENT_MS,
+      ).catch(() => null);
+      if (!found?.title)
+        throw new Response("Open Library didn't answer", { status: 503 });
+      snapshot = {
+        title: found.title,
+        author: found.author ?? "",
+        cover: found.cover ?? "",
+      };
+    }
+    const body = form.get("body");
+    await saveWorkNote(
+      userId,
+      { key, ...snapshot },
+      intent === "toggleLove"
+        ? { loved: form.get("loved") === "true" }
+        : intent === "toggleRead"
+          ? { read: form.get("read") === "true" }
+          : {
+              body:
+                intent === "saveNote" && typeof body === "string" ? body : null,
+            },
+    );
+    return json(
+      intent === "saveNote" || intent === "deleteNote"
+        ? { noteSaved: true }
+        : { ok: true },
+    );
+  }
+
   const work = await lookupWorkPage(key).catch(() => {
     throw new Response("Open Library didn't answer", { status: 503 });
   });
   if (!work || !work.title) throw new Response("Not Found", { status: 404 });
 
-  const form = await request.formData();
-  if (form.get("intent") === "want") {
+  if (intent === "want") {
     await addWantToRead(userId, {
       title: work.title,
       author: work.author ?? "",
@@ -321,7 +411,9 @@ export default function WorkPage() {
           <p className="summary max-w-prose leading-relaxed text-stone-700 dark:text-stone-300">
             {work.description
               ? stripMarkdown(work.description)
-              : "Open Library has no description for this one yet."}
+              : data.offline
+                ? "Open Library isn't answering right now, so the details are missing for the moment."
+                : "Open Library has no description for this one yet."}
           </p>
         </div>
 
@@ -355,6 +447,17 @@ export default function WorkPage() {
             </p>
           </section>
         ) : null}
+
+        {/* Your heart, read mark and note when it isn't on your shelf (on
+            your shelf, they go on your copy), and your friends' */}
+        <ReaderNotes
+          notes={data.notes}
+          myNote={data.myNote}
+          canNote={!inLibrary}
+          maxLength={data.noteMaxLength}
+          friendIds={data.friendIds}
+          readAt={data.myNote?.readAt ?? null}
+        />
 
         <p className="mt-8 text-sm text-stone-400 dark:text-stone-500">
           Details from{" "}
