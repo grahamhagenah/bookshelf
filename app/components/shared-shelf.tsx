@@ -65,31 +65,17 @@ const ACCENTS: Record<string, { strip: string; heart: string }> = {
 };
 const accentOf = (color: string) => ACCENTS[color] ?? ACCENTS.forest;
 
-// Where each favorite's note sits on its cover: a different spot, tilt
-// and tail for each one in turn, hanging a little off the edge, so the
-// row looks like it's talking rather than lined up in a table
+// Where each favorite's note sits: above or below its cover, overlapping
+// the edge a little, and lined up left, right or center, so each one is
+// somewhere different. Two bubbles in one column never face each other
+// across a row, whether the row is three covers wide or five.
 const BUBBLE_SPOTS = [
-  {
-    place: "top-[8%] -right-[10%] rotate-2",
-    tail: "-bottom-[6px] left-5 border-b border-r",
-  },
-  {
-    place: "bottom-[12%] -left-[10%] -rotate-2",
-    tail: "-top-[6px] right-5 border-l border-t",
-  },
-  {
-    place: "top-[38%] -right-[12%] rotate-1",
-    tail: "-left-[6px] top-3 border-b border-l",
-  },
-  {
-    place: "top-[4%] -left-[8%] -rotate-3",
-    tail: "-bottom-[6px] right-6 border-b border-r",
-  },
-  {
-    place: "bottom-[6%] -right-[8%] rotate-3",
-    tail: "-top-[6px] left-6 border-l border-t",
-  },
-];
+  { side: "above", align: "-left-[6%]" },
+  { side: "below", align: "-right-[6%]" },
+  { side: "above", align: "left-1/2 -translate-x-1/2" },
+  { side: "above", align: "-right-[6%]" },
+  { side: "below", align: "-left-[6%]" },
+] as const;
 
 // Who the shelf belongs to, in their words, and what they love
 function ProfileHeader({ data }: { data: SharedShelfData }) {
@@ -153,40 +139,40 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
             />
             Favorites
           </h2>
-          <ul className="mt-3 grid grid-cols-3 gap-x-4 gap-y-5 sm:grid-cols-5 sm:gap-x-6">
+          <ul
+            className={`mt-3 grid grid-cols-3 gap-x-4 sm:grid-cols-5 sm:gap-x-6 ${
+              // Room for the notes that stick out above and below
+              profile.favorites.some((book) => book.note)
+                ? "gap-y-20 py-14 sm:py-11"
+                : "gap-y-4"
+            }`}
+          >
             {profile.favorites.map((book, i) => {
               const spot = BUBBLE_SPOTS[i % BUBBLE_SPOTS.length];
+              const above = spot.side === "above";
               return (
-                <li key={book.id} className="min-w-0">
-                  <div className="relative">
-                    <BookCover
-                      cover={book.cover}
-                      title={book.title}
-                      author={book.author}
-                      className="aspect-[2/3] w-full"
-                    />
-                    {/* Why it's here, in the owner's words: a speech bubble
-                        stuck to the cover, somewhere different on each */}
-                    {book.note ? (
-                      <p
-                        className={`absolute z-10 w-[104%] sm:w-[88%] ${spot.place} rounded-xl border border-stone-200 bg-white px-2 py-1.5 text-pretty text-[11px] leading-snug text-stone-700 shadow-md transition-transform motion-safe:hover:rotate-0 motion-safe:hover:scale-105 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 sm:text-xs`}
-                      >
-                        <span className="line-clamp-5 sm:line-clamp-4">
-                          {book.note}
-                        </span>
-                        <span
-                          aria-hidden
-                          className={`absolute h-2.5 w-2.5 rotate-45 border-stone-200 bg-white dark:border-stone-600 dark:bg-stone-800 ${spot.tail}`}
-                        />
-                      </p>
-                    ) : null}
-                  </div>
-                  <span className="mt-1.5 block truncate text-sm font-medium text-stone-900 dark:text-stone-100">
-                    {book.title}
+                <li key={book.id} className="relative min-w-0">
+                  <BookCover
+                    cover={book.cover}
+                    title={book.title}
+                    author={book.author}
+                    className="aspect-[2/3] w-full"
+                  />
+                  <span className="sr-only">
+                    {book.title} by {book.author}
                   </span>
-                  <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
-                    {book.author}
-                  </span>
+                  {/* Why it's here, in the owner's words, said from the cover */}
+                  {book.note ? (
+                    <p
+                      className={`absolute z-10 w-max max-w-[112%] ${spot.align} ${
+                        above
+                          ? "bottom-[calc(100%-1.25rem)]"
+                          : "top-[calc(100%-1.25rem)]"
+                      } rounded-2xl bg-white px-3 py-2 text-[11px] leading-snug text-stone-700 drop-shadow-[0_2px_6px_rgb(0_0_0/0.2)] dark:bg-stone-800 dark:text-stone-200 sm:text-xs`}
+                    >
+                      <span className="line-clamp-4">{book.note}</span>
+                    </p>
+                  ) : null}
                 </li>
               );
             })}
