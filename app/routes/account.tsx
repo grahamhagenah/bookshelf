@@ -935,9 +935,9 @@ function Saved({ children }: { children: React.ReactNode }) {
 }
 
 // Your picture: your initials as a bookplate, or an icon, in a color of
-// your choosing. Picking a color recolors what you have and saves it.
-// Grey leaves an icon plain grey, and initials in the color your name
-// gives you.
+// your choosing. Picking a color recolors what you have and saves it. Ink
+// is the grey for both. Until a color's picked, initials wear the one
+// your name gives, and icons are plain grey.
 function IconPicker({
   current,
   firstname,
@@ -955,10 +955,7 @@ function IconPicker({
         ? "ring-2 ring-forest-600 dark:ring-forest-400"
         : "ring-1 ring-stone-200 dark:ring-stone-700 hover:ring-stone-400 dark:hover:ring-stone-500"
     }`;
-  const choices: (PlateColor | null)[] = [
-    null,
-    ...(Object.keys(PLATE_COLORS) as PlateColor[]),
-  ];
+  const choices = Object.keys(PLATE_COLORS) as PlateColor[];
   // What a picture with this icon (or none, for initials) and color saves as
   const value = (icon: string | null, tone: PlateColor | null) =>
     icon ? (tone ? `${icon}:${tone}` : icon) : tone ? `${PLATE}${tone}` : "";
@@ -974,18 +971,12 @@ function IconPicker({
         </span>
         {choices.map((choice) => (
           <button
-            key={choice ?? "grey"}
+            key={choice}
             type="submit"
             name="emoji"
             value={value(picture.icon, choice)}
             onClick={() => setColor(choice)}
-            aria-label={
-              choice
-                ? `Use ${choice}`
-                : picture.icon
-                  ? "Use grey"
-                  : "Use the color your name gives"
-            }
+            aria-label={`Use ${choice === "ink" ? "grey" : choice}`}
             aria-pressed={color === choice}
             className={`flex h-7 w-7 items-center justify-center rounded-full ${iconTone(choice)} ${ring(color === choice)}`}
           >
