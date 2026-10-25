@@ -89,12 +89,14 @@ export function GroupIcon({ className = "", size = 24 }: IconProps) {
 }
 
 // A speech bubble with a line or two in it: the feed, which is mostly
-// what friends have said about books
-export function FeedIcon({ className = "", size = 24 }: IconProps) {
+// what friends have said about books. Lucide's bubble, so it sits evenly
+// beside search and notifications (2px there); 1.5px beside the book
+// icon in the desktop links.
+export function FeedIcon({ className = "", size = 24, strokeWidth = 2 }: IconProps & { strokeWidth?: number }) {
   return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 11.5c0 4.1-3.6 7.5-8 7.5-1.2 0-2.3-.2-3.3-.6L4 20l1.3-3.6C4.5 15 4 13.3 4 11.5 4 7.4 7.6 4 12 4s8 3.4 8 7.5z"/>
-      <path d="M9 10.5h6M9 13.5h3.5"/>
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
+      <path d="M8 10.5h8M8 14h5"/>
     </svg>
   );
 }

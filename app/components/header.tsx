@@ -71,7 +71,7 @@ export default function Header() {
                 My shelf
               </NavLink>
               <NavLink to="/feed" className={navClass}>
-                <FeedIcon size={16} />
+                <FeedIcon size={16} strokeWidth={1.5} />
                 Feed
               </NavLink>
             </nav>
