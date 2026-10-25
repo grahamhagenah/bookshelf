@@ -106,13 +106,9 @@ export default function App() {
       (match.handle as { standalone?: boolean } | undefined)?.standalone,
   );
   // One page width for the content and the header, banners and footer
-  // around it: wider for a page that asks (the signed-in home)
-  const wide = matches.some((match) => {
-    const ask = (
-      match.handle as { wide?: (data: unknown) => boolean } | undefined
-    )?.wide;
-    return ask ? ask(match.data) : false;
-  });
+  // around it: wider for someone signed in, on every page, so the header
+  // never moves; the signed-out pages keep the width they were laid out for
+  const wide = Boolean(user);
 
   useEffect(() => {
     if (theme !== "system") return;

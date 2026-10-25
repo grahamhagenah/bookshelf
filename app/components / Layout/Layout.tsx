@@ -8,7 +8,7 @@ interface LayoutProps {
 const Layout = ({ children, title, aside }: LayoutProps) => {
   return (
     <main
-      className={`w-full max-w-5xl mx-auto px-4 py-8 md:px-8 md:py-10 ${
+      className={`w-full max-w-[var(--page-max,64rem)] mx-auto px-4 py-8 md:px-8 md:py-10 ${
         aside ? "lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,16rem)] lg:gap-14" : ""
       }`}
     >

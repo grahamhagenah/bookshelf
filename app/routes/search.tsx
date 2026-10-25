@@ -549,7 +549,7 @@ export default function Search() {
     "text-sm font-semibold text-stone-500 dark:text-stone-400";
 
   return (
-    <main className="w-full max-w-5xl mx-auto px-4 py-8 md:px-8 md:py-10">
+    <main className="w-full max-w-[var(--page-max,64rem)] mx-auto px-4 py-8 md:px-8 md:py-10">
       <h1 className="sr-only">Search</h1>
 
       {scanning ? (

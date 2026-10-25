@@ -34,12 +34,12 @@ function getCoverSources(original: string) {
 // cover is in it, so the browser picks the right image
 const GRIDS = {
   large: {
-    columns: "grid-cols-3 sm:grid-cols-4 md:grid-cols-5",
-    sizes: "(min-width: 768px) 160px, (min-width: 640px) 22vw, 31vw",
+    columns: "grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6",
+    sizes: "(min-width: 768px) 170px, (min-width: 640px) 22vw, 31vw",
   },
   small: {
-    columns: "grid-cols-4 sm:grid-cols-5 md:grid-cols-7",
-    sizes: "(min-width: 768px) 120px, (min-width: 640px) 18vw, 23vw",
+    columns: "grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-8",
+    sizes: "(min-width: 768px) 125px, (min-width: 640px) 18vw, 23vw",
   },
 };
 

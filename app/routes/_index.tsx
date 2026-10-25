@@ -39,12 +39,6 @@ function haveIt(names: string[]) {
   return `${names[0]} and ${names.length - 1} others have it`;
 }
 
-// Signed in, the home page is two full columns, so on big screens it gets
-// a wider page than the rest of the app
-export const handle = {
-  wide: (data: { home?: unknown } | undefined) => Boolean(data?.home),
-};
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
   const user = userId ? await getUserById(userId) : null;
