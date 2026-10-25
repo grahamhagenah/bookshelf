@@ -455,22 +455,32 @@ export default function Home({
                     caption={() => null}
                   />
                 ) : (
-                  <p className="py-6 text-center text-stone-500 dark:text-stone-400">
-                    Nothing here yet.{" "}
-                    <Link
-                      to="/search"
-                      className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-                    >
-                      Add your first books
-                    </Link>{" "}
-                    or{" "}
-                    <Link
-                      to="/import"
-                      className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-                    >
-                      import them
-                    </Link>
-                  </p>
+                  // A blank, book-shaped slot where the first cover will go
+                  <ul className="grid grid-cols-4 gap-3 sm:grid-cols-6">
+                    <li>
+                      <Link
+                        to="/search"
+                        className="flex w-full aspect-[2/3] flex-col items-center justify-center gap-1.5 rounded-sm rounded-r-md border-2 border-dashed border-stone-300 dark:border-stone-700 border-l-[6px] border-l-stone-300 dark:border-l-stone-700 [border-left-style:solid] text-stone-500 dark:text-stone-400 hover:border-stone-400 hover:text-stone-800 dark:hover:border-stone-500 dark:hover:text-stone-200 transition-colors"
+                      >
+                        <span aria-hidden="true" className="text-2xl leading-none">
+                          +
+                        </span>
+                        <span className="px-1 text-center text-xs font-medium">
+                          Add a book
+                        </span>
+                      </Link>
+                    </li>
+                    <li className="col-span-3 self-center text-sm text-stone-500 dark:text-stone-400 sm:col-span-5">
+                      Nothing here yet. Add your first, or{" "}
+                      <Link
+                        to="/import"
+                        className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                      >
+                        import them
+                      </Link>
+                      .
+                    </li>
+                  </ul>
                 )}
               </section>
             ) : null}

@@ -39,61 +39,72 @@ function AddFromSuggestion({
   const added = fetcher.data?.success === true;
   const owned = book.inLibrary || fetcher.data?.alreadyExists === true;
   const adding = fetcher.state !== "idle";
+  // Every state sits in the same fixed box, so the row doesn't shift when
+  // "+ Add" turns into "Adding…" and then "Added ✓"
+  const slot = `inline-flex h-6 flex-shrink-0 items-center justify-end ${
+    want ? "w-[7.5rem]" : "w-24"
+  }`;
 
   // The free plan's shelf is full
   if (fetcher.data?.limit) {
     return (
-      <a
-        href={UPGRADE_PATH}
-        title={fetcher.data.limit}
-        onClick={(event) => event.stopPropagation()}
-        className="flex-shrink-0 text-xs font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2"
-      >
-        Shelf full
-      </a>
+      <span className={slot}>
+        <a
+          href={UPGRADE_PATH}
+          title={fetcher.data.limit}
+          onClick={(event) => event.stopPropagation()}
+          className="text-xs font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2"
+        >
+          Shelf full
+        </a>
+      </span>
     );
   }
 
   if (owned || added) {
     return (
-      <span className="flex-shrink-0 text-xs text-stone-400 dark:text-stone-500">
+      <span
+        className={`${slot} whitespace-nowrap text-xs text-stone-400 dark:text-stone-500`}
+      >
         {added ? (want ? "On your list ✓" : "Added ✓") : "On your shelf"}
       </span>
     );
   }
 
   return (
-    <button
-      type="button"
-      disabled={adding}
-      onClick={(event) => {
-        // Don't also run the row's search
-        event.stopPropagation();
-        fetcher.submit(
-          {
-            title: book.title,
-            author: book.author ?? "",
-            cover: book.coverId?.toString() ?? "",
-            datePublished: book.year?.toString() ?? "",
-            pageCount: book.pages?.toString() ?? "",
-            subjects: book.subjects ?? "",
-            publisher: book.publisher ?? "",
-            openLibraryKey: book.key ?? "",
-            ...(want ? { intent: "want" } : {}),
-          },
-          { method: "post", action: "/search" },
-        );
-      }}
-      className="flex-shrink-0 whitespace-nowrap rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-xs font-medium text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 disabled:opacity-60 transition-colors"
-    >
-      {adding
-        ? want
-          ? "Saving…"
-          : "Adding…"
-        : want
-          ? "+ Want to read"
-          : "+ Add"}
-    </button>
+    <span className={slot}>
+      <button
+        type="button"
+        disabled={adding}
+        onClick={(event) => {
+          // Don't also run the row's search
+          event.stopPropagation();
+          fetcher.submit(
+            {
+              title: book.title,
+              author: book.author ?? "",
+              cover: book.coverId?.toString() ?? "",
+              datePublished: book.year?.toString() ?? "",
+              pageCount: book.pages?.toString() ?? "",
+              subjects: book.subjects ?? "",
+              publisher: book.publisher ?? "",
+              openLibraryKey: book.key ?? "",
+              ...(want ? { intent: "want" } : {}),
+            },
+            { method: "post", action: "/search" },
+          );
+        }}
+        className="inline-flex h-6 items-center whitespace-nowrap rounded-md border border-stone-200 dark:border-stone-700 px-2 text-xs font-medium text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 disabled:opacity-60 transition-colors"
+      >
+        {adding
+          ? want
+            ? "Saving…"
+            : "Adding…"
+          : want
+            ? "+ Want to read"
+            : "+ Add"}
+      </button>
+    </span>
   );
 }
 
