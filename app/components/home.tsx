@@ -73,6 +73,7 @@ const headingClass = "text-lg font-semibold text-stone-900 dark:text-stone-100";
 const subheadingClass =
   "mb-1 flex items-baseline gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400";
 
+
 // A compact list for one direction of lending (the feed's rail shows it too)
 export function LoanList({
   id,
@@ -110,11 +111,7 @@ export function LoanList({
                   to={`/books/${book.id}`}
                   className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
                 >
-                  <BookCover
-                    cover={book.cover}
-                    title={book.title}
-                    className="w-14 h-21"
-                  />
+                  <BookCover cover={book.cover} title={book.title} className="w-14 h-21" />
                   <span className="min-w-0 flex-1">
                     {/* Up to two lines: still shorter than the cover, so rows keep their height */}
                     <span className="line-clamp-2 font-medium leading-snug text-stone-900 dark:text-stone-100">
@@ -327,13 +324,7 @@ function CoverRow({
   items,
   caption,
 }: {
-  items: {
-    id: string;
-    title: string;
-    author?: string | null;
-    cover: string;
-    to: string;
-  }[];
+  items: { id: string; title: string; author?: string | null; cover: string; to: string }[];
   caption: (index: number) => React.ReactNode;
 }) {
   return (
@@ -348,12 +339,7 @@ function CoverRow({
             title={item.title}
             className="block hover:opacity-90 transition-opacity"
           >
-            <BookCover
-              cover={item.cover}
-              title={item.title}
-              author={item.author}
-              className="w-full aspect-[2/3]"
-            />
+            <BookCover cover={item.cover} title={item.title} author={item.author} className="w-full aspect-[2/3]" />
             <span className="mt-1.5 block truncate text-xs text-stone-600 dark:text-stone-300">
               {item.title}
             </span>
@@ -476,10 +462,7 @@ export default function Home({
                         to="/search"
                         className="flex w-full aspect-[2/3] flex-col items-center justify-center gap-1.5 rounded-sm rounded-r-md border-2 border-dashed border-stone-300 dark:border-stone-700 border-l-[6px] border-l-stone-300 dark:border-l-stone-700 [border-left-style:solid] text-stone-500 dark:text-stone-400 hover:border-stone-400 hover:text-stone-800 dark:hover:border-stone-500 dark:hover:text-stone-200 transition-colors"
                       >
-                        <span
-                          aria-hidden="true"
-                          className="text-2xl leading-none"
-                        >
+                        <span aria-hidden="true" className="text-2xl leading-none">
                           +
                         </span>
                         <span className="px-1 text-center text-xs font-medium">
