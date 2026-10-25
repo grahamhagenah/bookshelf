@@ -1,6 +1,6 @@
 import type { SerializeFrom } from "@remix-run/node";
 import { Link, useFetcher } from "@remix-run/react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
@@ -432,185 +432,214 @@ export default function Home({
       >
         {showMain ? (
           <div className={showFeed ? "lg:pr-10" : undefined}>
-            {showLoans ? (
-              <section aria-labelledby="loans">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <h2
-                    id="loans"
-                    className={`${headingClass} whitespace-nowrap`}
+            {/* Sections with something in them come first, in this order;
+                empty ones (shown once setup's done) drop to the bottom, so
+                a page without loans doesn't open on an empty Loans */}
+            {[
+              {
+                key: "loans",
+                show: showLoans,
+                has: books.borrowed.length + books.lent.length > 0,
+                render: (first: boolean) => (
+                  <section
+                    aria-labelledby="loans"
+                    className={first ? undefined : divided}
                   >
-                    Loans
-                  </h2>
-                  {/* The most pressing few each way show (late and due
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h2
+                        id="loans"
+                        className={`${headingClass} whitespace-nowrap`}
+                      >
+                        Loans
+                      </h2>
+                      {/* The most pressing few each way show (late and due
                       soon come first); the rest on request */}
-                  {hiddenLoans > 0 || allLoans ? (
-                    <button
-                      type="button"
-                      onClick={() => setAllLoans((all) => !all)}
-                      aria-expanded={allLoans}
-                      className={`whitespace-nowrap ${linkClass}`}
-                    >
-                      {allLoans
-                        ? "Show fewer loans"
-                        : `Show all ${books.borrowed.length + books.lent.length} loans`}
-                    </button>
-                  ) : null}
-                </div>
-                <div className="grid gap-8 sm:grid-cols-2 sm:gap-10">
-                  <LoanList
-                    id="borrowing"
-                    title="Borrowing"
-                    books={books.borrowed
-                      .slice(0, allLoans ? undefined : LOANS_SHOWN)
-                      .map((book) => ({ book, person: book.owner }))}
-                    total={books.borrowed.length}
-                    personLabel="From"
-                    empty="Nothing borrowed right now."
-                  />
-                  <LoanList
-                    id="lent-out"
-                    title="Lent out"
-                    books={books.lent
-                      .slice(0, allLoans ? undefined : LOANS_SHOWN)
-                      .map((book) => ({ book, person: book.borrower }))}
-                    total={books.lent.length}
-                    personLabel="To"
-                    empty="Everything's on your shelf."
-                  />
-                </div>
-              </section>
-            ) : null}
-            {showWanted ? (
-              <section
-                aria-labelledby="want-to-read"
-                className={showLoans ? divided : undefined}
-              >
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <h2
-                    id="want-to-read"
-                    className={`${headingClass} whitespace-nowrap`}
-                  >
-                    Want to read
-                  </h2>
-                  <div className="flex items-center gap-4 whitespace-nowrap">
-                    {wanted.length > 0 ? (
-                      <Link to="/want-to-read" className={linkClass}>
-                        All {wanted.length}
-                      </Link>
-                    ) : null}
-                    <Link to="/search?for=want" className={linkClass}>
-                      Find a book
-                    </Link>
-                  </div>
-                </div>
-                {wanted.length > 0 ? (
-                  <CoverRow
-                    items={wanted}
-                    caption={(index) => (
-                      // Two lines, so "Maya and Sam have it" isn't cut short
-                      <span className="line-clamp-2 text-xs text-stone-400 dark:text-stone-500">
-                        {wanted[index].owners ?? "\u00a0"}
-                      </span>
-                    )}
-                  />
-                ) : (
-                  <p className="py-6 text-center text-stone-500 dark:text-stone-400">
-                    Books you&apos;d like to read go here, and you&apos;ll hear
-                    when a friend has one.{" "}
-                    <Link
-                      to="/search?for=want"
-                      className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-                    >
-                      Find one
-                    </Link>
-                  </p>
-                )}
-              </section>
-            ) : null}
-
-            {showRecent ? (
-              <section
-                aria-labelledby="recently-added"
-                className={showLoans || showWanted ? divided : undefined}
-              >
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <h2
-                    id="recently-added"
-                    className={`${headingClass} whitespace-nowrap`}
-                  >
-                    Recently added
-                  </h2>
-                  <div className="flex items-center gap-4 whitespace-nowrap">
-                    <Link to="/books" className={linkClass}>
-                      {ownCount > 0 ? (
-                        <>
-                          <span className="sm:hidden">All {ownCount}</span>
-                          <span className="hidden sm:inline">
-                            All {ownCount} on your shelf
-                          </span>
-                        </>
-                      ) : (
-                        "Your shelf"
-                      )}
-                    </Link>
-                    <Link to="/import" className={linkClass}>
-                      Import
-                    </Link>
-                    <Link
-                      to="/search"
-                      className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="text-base leading-none text-stone-400"
-                      >
-                        +
-                      </span>
-                      Add books
-                    </Link>
-                  </div>
-                </div>
-                {books.recent.length > 0 ? (
-                  <CoverRow
-                    items={books.recent.map((book) => ({
-                      ...book,
-                      to: `/books/${book.id}`,
-                    }))}
-                    caption={() => null}
-                  />
-                ) : (
-                  // A blank, book-shaped slot where the first cover will go
-                  <ul className="grid grid-cols-4 gap-3 sm:grid-cols-6">
-                    <li>
-                      <Link
-                        to="/search"
-                        className="flex w-full aspect-[2/3] flex-col items-center justify-center gap-1.5 rounded-sm rounded-r-md border-2 border-dashed border-stone-300 dark:border-stone-700 border-l-[6px] border-l-stone-300 dark:border-l-stone-700 [border-left-style:solid] text-stone-500 dark:text-stone-400 hover:border-stone-400 hover:text-stone-800 dark:hover:border-stone-500 dark:hover:text-stone-200 transition-colors"
-                      >
-                        <span
-                          aria-hidden="true"
-                          className="text-2xl leading-none"
+                      {hiddenLoans > 0 || allLoans ? (
+                        <button
+                          type="button"
+                          onClick={() => setAllLoans((all) => !all)}
+                          aria-expanded={allLoans}
+                          className={`whitespace-nowrap ${linkClass}`}
                         >
-                          +
-                        </span>
-                        <span className="px-1 text-center text-xs font-medium">
-                          Add a book
-                        </span>
-                      </Link>
-                    </li>
-                    <li className="col-span-3 self-center text-sm text-stone-500 dark:text-stone-400 sm:col-span-5">
-                      Nothing here yet. Add your first, or{" "}
-                      <Link
-                        to="/import"
-                        className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                          {allLoans
+                            ? "Show fewer loans"
+                            : `Show all ${books.borrowed.length + books.lent.length} loans`}
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="grid gap-8 sm:grid-cols-2 sm:gap-10">
+                      <LoanList
+                        id="borrowing"
+                        title="Borrowing"
+                        books={books.borrowed
+                          .slice(0, allLoans ? undefined : LOANS_SHOWN)
+                          .map((book) => ({ book, person: book.owner }))}
+                        total={books.borrowed.length}
+                        personLabel="From"
+                        empty="Nothing borrowed right now."
+                      />
+                      <LoanList
+                        id="lent-out"
+                        title="Lent out"
+                        books={books.lent
+                          .slice(0, allLoans ? undefined : LOANS_SHOWN)
+                          .map((book) => ({ book, person: book.borrower }))}
+                        total={books.lent.length}
+                        personLabel="To"
+                        empty="Everything's on your shelf."
+                      />
+                    </div>
+                  </section>
+                ),
+              },
+              {
+                key: "wanted",
+                show: showWanted,
+                has: wanted.length > 0,
+                render: (first: boolean) => (
+                  <section
+                    aria-labelledby="want-to-read"
+                    className={first ? undefined : divided}
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h2
+                        id="want-to-read"
+                        className={`${headingClass} whitespace-nowrap`}
                       >
-                        import them
-                      </Link>
-                      .
-                    </li>
-                  </ul>
-                )}
-              </section>
-            ) : null}
+                        Want to read
+                      </h2>
+                      <div className="flex items-center gap-4 whitespace-nowrap">
+                        {wanted.length > 0 ? (
+                          <Link to="/want-to-read" className={linkClass}>
+                            All {wanted.length}
+                          </Link>
+                        ) : null}
+                        <Link to="/search?for=want" className={linkClass}>
+                          Find a book
+                        </Link>
+                      </div>
+                    </div>
+                    {wanted.length > 0 ? (
+                      <CoverRow
+                        items={wanted}
+                        caption={(index) => (
+                          // Two lines, so "Maya and Sam have it" isn't cut short
+                          <span className="line-clamp-2 text-xs text-stone-400 dark:text-stone-500">
+                            {wanted[index].owners ?? "\u00a0"}
+                          </span>
+                        )}
+                      />
+                    ) : (
+                      <p className="py-6 text-center text-stone-500 dark:text-stone-400">
+                        Books you&apos;d like to read go here, and you&apos;ll
+                        hear when a friend has one.{" "}
+                        <Link
+                          to="/search?for=want"
+                          className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                        >
+                          Find one
+                        </Link>
+                      </p>
+                    )}
+                  </section>
+                ),
+              },
+              {
+                key: "recent",
+                show: showRecent,
+                has: books.recent.length > 0,
+                render: (first: boolean) => (
+                  <section
+                    aria-labelledby="recently-added"
+                    className={first ? undefined : divided}
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h2
+                        id="recently-added"
+                        className={`${headingClass} whitespace-nowrap`}
+                      >
+                        Recently added
+                      </h2>
+                      <div className="flex items-center gap-4 whitespace-nowrap">
+                        <Link to="/books" className={linkClass}>
+                          {ownCount > 0 ? (
+                            <>
+                              <span className="sm:hidden">All {ownCount}</span>
+                              <span className="hidden sm:inline">
+                                All {ownCount} on your shelf
+                              </span>
+                            </>
+                          ) : (
+                            "Your shelf"
+                          )}
+                        </Link>
+                        <Link to="/import" className={linkClass}>
+                          Import
+                        </Link>
+                        <Link
+                          to="/search"
+                          className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="text-base leading-none text-stone-400"
+                          >
+                            +
+                          </span>
+                          Add books
+                        </Link>
+                      </div>
+                    </div>
+                    {books.recent.length > 0 ? (
+                      <CoverRow
+                        items={books.recent.map((book) => ({
+                          ...book,
+                          to: `/books/${book.id}`,
+                        }))}
+                        caption={() => null}
+                      />
+                    ) : (
+                      // A blank, book-shaped slot where the first cover will go
+                      <ul className="grid grid-cols-4 gap-3 sm:grid-cols-6">
+                        <li>
+                          <Link
+                            to="/search"
+                            className="flex w-full aspect-[2/3] flex-col items-center justify-center gap-1.5 rounded-sm rounded-r-md border-2 border-dashed border-stone-300 dark:border-stone-700 border-l-[6px] border-l-stone-300 dark:border-l-stone-700 [border-left-style:solid] text-stone-500 dark:text-stone-400 hover:border-stone-400 hover:text-stone-800 dark:hover:border-stone-500 dark:hover:text-stone-200 transition-colors"
+                          >
+                            <span
+                              aria-hidden="true"
+                              className="text-2xl leading-none"
+                            >
+                              +
+                            </span>
+                            <span className="px-1 text-center text-xs font-medium">
+                              Add a book
+                            </span>
+                          </Link>
+                        </li>
+                        <li className="col-span-3 self-center text-sm text-stone-500 dark:text-stone-400 sm:col-span-5">
+                          Nothing here yet. Add your first, or{" "}
+                          <Link
+                            to="/import"
+                            className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                          >
+                            import them
+                          </Link>
+                          .
+                        </li>
+                      </ul>
+                    )}
+                  </section>
+                ),
+              },
+            ]
+              .filter((section) => section.show)
+              .sort((a, b) => Number(b.has) - Number(a.has))
+              .map((section, index) => (
+                <Fragment key={section.key}>
+                  {section.render(index === 0)}
+                </Fragment>
+              ))}
           </div>
         ) : null}
 
