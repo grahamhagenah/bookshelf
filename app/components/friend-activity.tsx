@@ -84,6 +84,36 @@ function CoverBeside({
   );
 }
 
+// A title's last word and what follows it (a heart) stay on one line, so
+// the heart never wraps onto a line by itself
+function KeepWithLast({
+  text,
+  after,
+}: {
+  text: string;
+  after: React.ReactNode;
+}) {
+  if (!after) return <>{text}</>;
+  const at = text.lastIndexOf(" ");
+  return (
+    <>
+      {text.slice(0, at + 1)}
+      <span className="whitespace-nowrap">
+        {text.slice(at + 1)}
+        {after}
+      </span>
+    </>
+  );
+}
+
+const SmallHeart = ({ size }: { size: number }) => (
+  <HeartIcon
+    size={size}
+    filled
+    className="ml-1.5 inline text-rose-400 align-[-1px]"
+  />
+);
+
 // The compact entry for the home page sidebar
 export default function FriendActivityItem({
   item,
@@ -118,15 +148,11 @@ export default function FriendActivityItem({
               to={item.work.key}
               className="font-semibold underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
             >
-              {item.work.title}
-            </Link>
-            {item.loved ? (
-              <HeartIcon
-                size={12}
-                filled
-                className="ml-1.5 inline text-rose-400 align-[-1px]"
+              <KeepWithLast
+                text={item.work.title}
+                after={item.loved ? <SmallHeart size={12} /> : null}
               />
-            ) : null}
+            </Link>
           </p>
           <CoverBeside
             to={item.work.key}
@@ -138,12 +164,12 @@ export default function FriendActivityItem({
       </div>
     );
   }
-  const bookLink = (book: FeedBook) => (
+  const bookLink = (book: FeedBook, after: React.ReactNode = null) => (
     <Link
       to={`/books/${book.id}`}
       className="font-semibold underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
     >
-      {book.title}
+      <KeepWithLast text={book.title} after={after} />
     </Link>
   );
 
@@ -165,14 +191,10 @@ export default function FriendActivityItem({
     text = (
       <>
         {name} {item.kind === "loved" ? "loved" : "wrote about"}{" "}
-        {bookLink(item.book)}
-        {item.kind === "note" && item.loved ? (
-          <HeartIcon
-            size={12}
-            filled
-            className="ml-1.5 inline text-rose-400 align-[-1px]"
-          />
-        ) : null}
+        {bookLink(
+          item.book,
+          item.kind === "note" && item.loved ? <SmallHeart size={12} /> : null,
+        )}
       </>
     );
     books = [item.book];
@@ -583,14 +605,16 @@ export function FeedPost({
           size="md"
         />
         <p className="min-w-0 leading-snug text-stone-600 dark:text-stone-300">
-          {name} {did}
-          {(item.kind === "note" || item.kind === "elsewhere") && item.loved ? (
-            <HeartIcon
-              size={13}
-              filled
-              className="ml-1.5 inline text-rose-400 align-[-1px]"
-            />
-          ) : null}
+          {name}{" "}
+          <KeepWithLast
+            text={did}
+            after={
+              (item.kind === "note" || item.kind === "elsewhere") &&
+              item.loved ? (
+                <SmallHeart size={13} />
+              ) : null
+            }
+          />
           <span className="text-stone-400 dark:text-stone-500"> · </span>
           <time
             dateTime={item.at}
