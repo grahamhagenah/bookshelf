@@ -26,7 +26,7 @@ export default function SharePrompt({ show }: { show: boolean }) {
       <fetcher.Form
         method="post"
         action="/share-link"
-        className="mx-auto max-w-5xl px-4 md:px-8 flex items-center gap-3"
+        className="mx-auto max-w-[var(--page-max,64rem)] px-4 md:px-8 flex items-center gap-3"
       >
         {url ? (
           <>

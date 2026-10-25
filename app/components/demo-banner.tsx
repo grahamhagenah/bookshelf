@@ -3,7 +3,7 @@ import { Form } from "@remix-run/react";
 export default function DemoBanner() {
   return (
     <div className="w-full bg-stone-50 dark:bg-stone-950/40 border-b border-stone-200 dark:border-stone-900 py-2 text-sm">
-      <div className="mx-auto max-w-5xl px-4 md:px-8 flex items-center justify-between gap-3">
+      <div className="mx-auto max-w-[var(--page-max,64rem)] px-4 md:px-8 flex items-center justify-between gap-3">
         <p className="min-w-0 text-stone-900 dark:text-stone-200">
           <strong>You&apos;re in a demo.</strong>
           {/* Too long to share a line with the buttons on phones */}

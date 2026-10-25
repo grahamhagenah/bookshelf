@@ -62,7 +62,11 @@ export const links: LinksFunction = () => [
   // The ?v= changes with the icons: browsers keep a favicon long after it's
   // replaced, and only a new address makes them fetch it again
   { rel: "icon", href: `/favicon.ico?v=${ICON_VERSION}`, sizes: "32x32" },
-  { rel: "icon", type: "image/svg+xml", href: `/favicon.svg?v=${ICON_VERSION}` },
+  {
+    rel: "icon",
+    type: "image/svg+xml",
+    href: `/favicon.svg?v=${ICON_VERSION}`,
+  },
   { rel: "apple-touch-icon", href: `/apple-touch-icon.png?v=${ICON_VERSION}` },
   { rel: "manifest", href: `/site.webmanifest?v=${ICON_VERSION}` },
 ];
@@ -79,7 +83,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return json({
     user,
     // Invite people without a public link yet, until they say no thanks
-    sharePrompt: Boolean(user && !user.shareToken && !sharePromptDismissed(request)),
+    sharePrompt: Boolean(
+      user && !user.shareToken && !sharePromptDismissed(request),
+    ),
   });
 };
 
@@ -94,14 +100,25 @@ export default function App() {
   const theme = themeOf(user);
   // A page that stands on its own (a public shelf) leaves out the app's
   // header, banners and breadcrumbs, and keeps the footer
-  const standalone = useMatches().some(
-    (match) => (match.handle as { standalone?: boolean } | undefined)?.standalone,
+  const matches = useMatches();
+  const standalone = matches.some(
+    (match) =>
+      (match.handle as { standalone?: boolean } | undefined)?.standalone,
   );
+  // One page width for the content and the header, banners and footer
+  // around it: wider for a page that asks (the signed-in home)
+  const wide = matches.some((match) => {
+    const ask = (
+      match.handle as { wide?: (data: unknown) => boolean } | undefined
+    )?.wide;
+    return ask ? ask(match.data) : false;
+  });
 
   useEffect(() => {
     if (theme !== "system") return;
     const media = matchMedia("(prefers-color-scheme: dark)");
-    const follow = () => document.documentElement.classList.toggle("dark", media.matches);
+    const follow = () =>
+      document.documentElement.classList.toggle("dark", media.matches);
     follow();
     media.addEventListener("change", follow);
     return () => media.removeEventListener("change", follow);
@@ -122,7 +139,9 @@ export default function App() {
     >
       <head>
         <meta charSet="utf-8" />
-        {theme === "system" ? <script dangerouslySetInnerHTML={{ __html: FOLLOW_DEVICE }} /> : null}
+        {theme === "system" ? (
+          <script dangerouslySetInnerHTML={{ __html: FOLLOW_DEVICE }} />
+        ) : null}
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         {/* Tells the browser which way to paint its own canvas before the
             stylesheet arrives, so a dark page doesn't start out white */}
@@ -134,18 +153,34 @@ export default function App() {
         <meta name="referrer" content="same-origin" />
         {theme === "system" ? (
           <>
-            <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c0a09" />
-            <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+            <meta
+              name="theme-color"
+              media="(prefers-color-scheme: dark)"
+              content="#0c0a09"
+            />
+            <meta
+              name="theme-color"
+              media="(prefers-color-scheme: light)"
+              content="#ffffff"
+            />
           </>
         ) : (
-          <meta name="theme-color" content={theme === "dark" ? "#0c0a09" : "#ffffff"} />
+          <meta
+            name="theme-color"
+            content={theme === "dark" ? "#0c0a09" : "#ffffff"}
+          />
         )}
         <Meta />
         <Links />
       </head>
       {/* No color transition here: Safari can resolve styles once before
           the stylesheet loads and then animate the page from white to dark */}
-      <body className="min-h-full flex flex-col bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100">
+      <body
+        className="min-h-full flex flex-col bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100"
+        style={
+          { "--page-max": wide ? "72rem" : "64rem" } as React.CSSProperties
+        }
+      >
         {standalone ? null : (
           <>
             <Header />
@@ -157,7 +192,7 @@ export default function App() {
           </>
         )}
         {/* One shared page width; the header and banner backgrounds stay full-bleed */}
-        <div className="mx-auto w-full max-w-5xl flex-1">
+        <div className="mx-auto w-full max-w-[var(--page-max,64rem)] flex-1">
           {standalone ? null : <Breadcrumbs />}
           <Outlet />
         </div>
@@ -175,7 +210,11 @@ export default function App() {
 // Nothing is known about the viewer here, so the look follows the device.
 export function ErrorBoundary() {
   return (
-    <html lang="en" className="h-full bg-white dark:bg-stone-950" suppressHydrationWarning>
+    <html
+      lang="en"
+      className="h-full bg-white dark:bg-stone-950"
+      suppressHydrationWarning
+    >
       <head>
         <meta charSet="utf-8" />
         <script dangerouslySetInnerHTML={{ __html: FOLLOW_DEVICE }} />
@@ -186,7 +225,7 @@ export function ErrorBoundary() {
       </head>
       <body className="min-h-full flex flex-col bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100">
         <Header />
-        <div className="mx-auto w-full max-w-5xl flex-1">
+        <div className="mx-auto w-full max-w-[var(--page-max,64rem)] flex-1">
           <ErrorPage />
         </div>
         <Footer />

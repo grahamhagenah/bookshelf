@@ -1,5 +1,6 @@
 import type { SerializeFrom } from "@remix-run/node";
 import { Link, useFetcher } from "@remix-run/react";
+import { useState } from "react";
 
 import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
@@ -73,12 +74,14 @@ const headingClass = "text-lg font-semibold text-stone-900 dark:text-stone-100";
 const subheadingClass =
   "mb-1 flex items-baseline gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400";
 
+const LOANS_SHOWN = 3;
 
 // A compact list for one direction of lending (the feed's rail shows it too)
 export function LoanList({
   id,
   title,
   books,
+  total,
   personLabel,
   empty,
 }: {
@@ -88,13 +91,15 @@ export function LoanList({
   // "From" or "To", so the name doesn't read as the author's
   personLabel: string;
   empty: string;
+  // How many there are in all, when only the first few are shown
+  total?: number;
 }) {
   return (
     <section aria-labelledby={id} className="min-w-0">
       <h3 id={id} className={subheadingClass}>
         {title}
         <span className="font-normal text-stone-400 dark:text-stone-500">
-          {books.length}
+          {total ?? books.length}
         </span>
       </h3>
       {books.length === 0 ? (
@@ -111,7 +116,11 @@ export function LoanList({
                   to={`/books/${book.id}`}
                   className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
                 >
-                  <BookCover cover={book.cover} title={book.title} className="w-14 h-21" />
+                  <BookCover
+                    cover={book.cover}
+                    title={book.title}
+                    className="w-14 h-21"
+                  />
                   <span className="min-w-0 flex-1">
                     {/* Up to two lines: still shorter than the cover, so rows keep their height */}
                     <span className="line-clamp-2 font-medium leading-snug text-stone-900 dark:text-stone-100">
@@ -324,7 +333,13 @@ function CoverRow({
   items,
   caption,
 }: {
-  items: { id: string; title: string; author?: string | null; cover: string; to: string }[];
+  items: {
+    id: string;
+    title: string;
+    author?: string | null;
+    cover: string;
+    to: string;
+  }[];
   caption: (index: number) => React.ReactNode;
 }) {
   return (
@@ -339,7 +354,12 @@ function CoverRow({
             title={item.title}
             className="block hover:opacity-90 transition-opacity"
           >
-            <BookCover cover={item.cover} title={item.title} author={item.author} className="w-full aspect-[2/3]" />
+            <BookCover
+              cover={item.cover}
+              title={item.title}
+              author={item.author}
+              className="w-full aspect-[2/3]"
+            />
             <span className="mt-1.5 block truncate text-xs text-stone-600 dark:text-stone-300">
               {item.title}
             </span>
@@ -386,6 +406,11 @@ export default function Home({
   const showMain = showLoans || showRecent || showWanted;
   // Every section after the first is set off by a rule
   const divided = "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6";
+  // Loans, three each way unless asked for all
+  const [allLoans, setAllLoans] = useState(false);
+  const hiddenLoans =
+    Math.max(0, books.borrowed.length - LOANS_SHOWN) +
+    Math.max(0, books.lent.length - LOANS_SHOWN);
 
   return (
     <main className="px-4 md:px-8 pt-4 md:pt-8 pb-8 md:pb-10">
@@ -407,8 +432,107 @@ export default function Home({
       >
         {showMain ? (
           <div className={showFeed ? "lg:pr-10" : undefined}>
+            {showLoans ? (
+              <section aria-labelledby="loans">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h2
+                    id="loans"
+                    className={`${headingClass} whitespace-nowrap`}
+                  >
+                    Loans
+                  </h2>
+                  {/* The most pressing few each way show (late and due
+                      soon come first); the rest on request */}
+                  {hiddenLoans > 0 || allLoans ? (
+                    <button
+                      type="button"
+                      onClick={() => setAllLoans((all) => !all)}
+                      aria-expanded={allLoans}
+                      className={`whitespace-nowrap ${linkClass}`}
+                    >
+                      {allLoans
+                        ? "Show fewer loans"
+                        : `Show all ${books.borrowed.length + books.lent.length} loans`}
+                    </button>
+                  ) : null}
+                </div>
+                <div className="grid gap-8 sm:grid-cols-2 sm:gap-10">
+                  <LoanList
+                    id="borrowing"
+                    title="Borrowing"
+                    books={books.borrowed
+                      .slice(0, allLoans ? undefined : LOANS_SHOWN)
+                      .map((book) => ({ book, person: book.owner }))}
+                    total={books.borrowed.length}
+                    personLabel="From"
+                    empty="Nothing borrowed right now."
+                  />
+                  <LoanList
+                    id="lent-out"
+                    title="Lent out"
+                    books={books.lent
+                      .slice(0, allLoans ? undefined : LOANS_SHOWN)
+                      .map((book) => ({ book, person: book.borrower }))}
+                    total={books.lent.length}
+                    personLabel="To"
+                    empty="Everything's on your shelf."
+                  />
+                </div>
+              </section>
+            ) : null}
+            {showWanted ? (
+              <section
+                aria-labelledby="want-to-read"
+                className={showLoans ? divided : undefined}
+              >
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h2
+                    id="want-to-read"
+                    className={`${headingClass} whitespace-nowrap`}
+                  >
+                    Want to read
+                  </h2>
+                  <div className="flex items-center gap-4 whitespace-nowrap">
+                    {wanted.length > 0 ? (
+                      <Link to="/want-to-read" className={linkClass}>
+                        All {wanted.length}
+                      </Link>
+                    ) : null}
+                    <Link to="/search?for=want" className={linkClass}>
+                      Find a book
+                    </Link>
+                  </div>
+                </div>
+                {wanted.length > 0 ? (
+                  <CoverRow
+                    items={wanted}
+                    caption={(index) => (
+                      // Two lines, so "Maya and Sam have it" isn't cut short
+                      <span className="line-clamp-2 text-xs text-stone-400 dark:text-stone-500">
+                        {wanted[index].owners ?? "\u00a0"}
+                      </span>
+                    )}
+                  />
+                ) : (
+                  <p className="py-6 text-center text-stone-500 dark:text-stone-400">
+                    Books you&apos;d like to read go here, and you&apos;ll hear
+                    when a friend has one.{" "}
+                    <Link
+                      to="/search?for=want"
+                      className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                    >
+                      Find one
+                    </Link>
+                  </p>
+                )}
+              </section>
+            ) : null}
+
             {showRecent ? (
-              <section aria-labelledby="recently-added">
+              <section
+                aria-labelledby="recently-added"
+                className={showLoans || showWanted ? divided : undefined}
+              >
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <h2
                     id="recently-added"
@@ -462,7 +586,10 @@ export default function Home({
                         to="/search"
                         className="flex w-full aspect-[2/3] flex-col items-center justify-center gap-1.5 rounded-sm rounded-r-md border-2 border-dashed border-stone-300 dark:border-stone-700 border-l-[6px] border-l-stone-300 dark:border-l-stone-700 [border-left-style:solid] text-stone-500 dark:text-stone-400 hover:border-stone-400 hover:text-stone-800 dark:hover:border-stone-500 dark:hover:text-stone-200 transition-colors"
                       >
-                        <span aria-hidden="true" className="text-2xl leading-none">
+                        <span
+                          aria-hidden="true"
+                          className="text-2xl leading-none"
+                        >
                           +
                         </span>
                         <span className="px-1 text-center text-xs font-medium">
@@ -482,86 +609,6 @@ export default function Home({
                     </li>
                   </ul>
                 )}
-              </section>
-            ) : null}
-            {showWanted ? (
-              <section
-                aria-labelledby="want-to-read"
-                className={showRecent ? divided : undefined}
-              >
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <h2
-                    id="want-to-read"
-                    className={`${headingClass} whitespace-nowrap`}
-                  >
-                    Want to read
-                  </h2>
-                  <div className="flex items-center gap-4 whitespace-nowrap">
-                    {wanted.length > 0 ? (
-                      <Link to="/want-to-read" className={linkClass}>
-                        All {wanted.length}
-                      </Link>
-                    ) : null}
-                    <Link to="/search?for=want" className={linkClass}>
-                      Find a book
-                    </Link>
-                  </div>
-                </div>
-                {wanted.length > 0 ? (
-                  <CoverRow
-                    items={wanted}
-                    caption={(index) => (
-                      // Two lines, so "Maya and Sam have it" isn't cut short
-                      <span className="line-clamp-2 text-xs text-stone-400 dark:text-stone-500">
-                        {wanted[index].owners ?? "\u00a0"}
-                      </span>
-                    )}
-                  />
-                ) : (
-                  <p className="py-6 text-center text-stone-500 dark:text-stone-400">
-                    Books you&apos;d like to read go here, and you&apos;ll hear
-                    when a friend has one.{" "}
-                    <Link
-                      to="/search?for=want"
-                      className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-                    >
-                      Find one
-                    </Link>
-                  </p>
-                )}
-              </section>
-            ) : null}
-
-            {showLoans ? (
-              <section
-                aria-labelledby="loans"
-                className={showRecent || showWanted ? divided : undefined}
-              >
-                <h2 id="loans" className={`${headingClass} mb-3`}>
-                  Loans
-                </h2>
-                <div className="grid gap-8 sm:grid-cols-2 sm:gap-10">
-                  <LoanList
-                    id="borrowing"
-                    title="Borrowing"
-                    books={books.borrowed.map((book) => ({
-                      book,
-                      person: book.owner,
-                    }))}
-                    personLabel="From"
-                    empty="Nothing borrowed right now."
-                  />
-                  <LoanList
-                    id="lent-out"
-                    title="Lent out"
-                    books={books.lent.map((book) => ({
-                      book,
-                      person: book.borrower,
-                    }))}
-                    personLabel="To"
-                    empty="Everything's on your shelf."
-                  />
-                </div>
               </section>
             ) : null}
           </div>

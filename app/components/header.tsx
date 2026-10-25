@@ -36,7 +36,7 @@ export default function Header() {
     // a translucent, blurred one, which in dark mode put a white bar
     // across the top of the phone. Dark mode keeps it solid.
     <header className="sticky top-0 z-40 w-full border-b border-stone-200 dark:border-stone-800 bg-white/90 backdrop-blur dark:bg-stone-950 dark:backdrop-blur-none">
-      <div className="mx-auto max-w-5xl flex items-center justify-between px-4 md:px-8 py-1.5">
+      <div className="mx-auto max-w-[var(--page-max,64rem)] flex items-center justify-between px-4 md:px-8 py-1.5">
         <div className="flex items-center gap-2 min-w-0">
           <Link
             id="logo"

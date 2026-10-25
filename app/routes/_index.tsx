@@ -17,7 +17,11 @@ import { publicOrigin } from "~/origin.server";
 import { shelfPath } from "~/profile";
 import { ABOUT_STACKS, seo, structuredData } from "~/seo";
 import { getUserId, requireUserId } from "~/session.server";
-import { WELCOME_COOKIE, dismissCookie, welcomeDismissed } from "~/share-prompt.server";
+import {
+  WELCOME_COOKIE,
+  dismissCookie,
+  welcomeDismissed,
+} from "~/share-prompt.server";
 import { workPath } from "~/utils";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) =>
@@ -35,12 +39,21 @@ function haveIt(names: string[]) {
   return `${names[0]} and ${names.length - 1} others have it`;
 }
 
+// Signed in, the home page is two full columns, so on big screens it gets
+// a wider page than the rest of the app
+export const handle = {
+  wide: (data: { home?: unknown } | undefined) => Boolean(data?.home),
+};
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
   const user = userId ? await getUserById(userId) : null;
   if (!user) {
     // Just deleted their account from Settings
-    return json({ home: null, deleted: new URL(request.url).searchParams.has("deleted") });
+    return json({
+      home: null,
+      deleted: new URL(request.url).searchParams.has("deleted"),
+    });
   }
 
   const [books, activity, sentRequests, wanted] = await Promise.all([
@@ -55,11 +68,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       activity,
       // The want-to-read list, ones a friend has first
       wanted: [...wanted]
-        .sort((a, b) => Number(b.copies.length > 0) - Number(a.copies.length > 0))
+        .sort(
+          (a, b) => Number(b.copies.length > 0) - Number(a.copies.length > 0),
+        )
         .map(({ id, title, author, cover, copies, openLibraryKey }) => {
           // Friends with a copy on their shelf come first
-          const sorted = [...copies].sort((a, b) => Number(b.available) - Number(a.available));
-          const owners = [...new Set(sorted.map((copy) => copy.owner.firstname))];
+          const sorted = [...copies].sort(
+            (a, b) => Number(b.available) - Number(a.available),
+          );
+          const owners = [
+            ...new Set(sorted.map((copy) => copy.owner.firstname)),
+          ];
           const available = sorted.filter((copy) => copy.available);
           // Where the cover goes: with a choice of copies to borrow, the
           // book on the list to pick from; else the one copy (on a shelf if
@@ -77,7 +96,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       requestsSent: sentRequests.length,
       welcomeDismissed: welcomeDismissed(request),
       // For the "Share your shelf" step on a new account's welcome
-      shareUrl: shelfPath(user) ? `${publicOrigin(request)}${shelfPath(user)}` : null,
+      shareUrl: shelfPath(user)
+        ? `${publicOrigin(request)}${shelfPath(user)}`
+        : null,
     },
   });
 };
@@ -97,8 +118,12 @@ export default function Index() {
   return (
     <>
       {"deleted" in data && data.deleted ? (
-        <p role="status" className="mx-4 mt-6 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-center text-sm text-stone-700 dark:text-stone-200 md:mx-8">
-          Your account and everything in it has been deleted. Thanks for being part of Stacks.
+        <p
+          role="status"
+          className="mx-4 mt-6 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-center text-sm text-stone-700 dark:text-stone-200 md:mx-8"
+        >
+          Your account and everything in it has been deleted. Thanks for being
+          part of Stacks.
         </p>
       ) : null}
       <Landing />
