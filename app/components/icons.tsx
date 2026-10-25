@@ -101,6 +101,17 @@ export function FeedIcon({ className = "", size = 24, strokeWidth = 2 }: IconPro
   );
 }
 
+// A small "i" in a circle: more about this, on request
+export function InfoIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 11v5"/>
+      <path d="M12 7.5h.01" strokeWidth="2"/>
+    </svg>
+  );
+}
+
 export function LogoutIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

@@ -1,9 +1,10 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
+import { useEffect, useRef, useState } from "react";
 
 import BookCover from "~/components/book-cover";
-import { HeartIcon, ReadIcon } from "~/components/icons";
+import { HeartIcon, InfoIcon, ReadIcon } from "~/components/icons";
 import ShelfTabs from "~/components/shelf-tabs";
 import Layout from "~/components / Layout/Layout";
 import { getShelfCounts } from "~/models/history.server";
@@ -31,6 +32,55 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return json({ items, counts });
 };
 
+// Who sees what, kept out of the way until asked for
+function WhoSees() {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: MouseEvent | KeyboardEvent) => {
+      if (
+        event instanceof KeyboardEvent
+          ? event.key === "Escape"
+          : !box.current?.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [open]);
+  return (
+    <span ref={box} className="relative inline-block align-[-3px]">
+      <button
+        type="button"
+        onClick={() => setOpen((was) => !was)}
+        aria-expanded={open}
+        aria-controls="who-sees"
+        aria-label="Who sees these"
+        title="Who sees these"
+        className="ml-1 rounded-full text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200"
+      >
+        <InfoIcon size={16} />
+      </button>
+      {open ? (
+        <span
+          id="who-sees"
+          role="note"
+          className="absolute -right-2 top-full z-20 mt-2 w-64 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm text-stone-600 dark:text-stone-300 shadow-md"
+        >
+          Friends see your hearts and notes. What you&apos;ve read is only for
+          you.
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 export default function ReadElsewhere() {
   const { items, counts } = useLoaderData<typeof loader>();
 
@@ -41,8 +91,8 @@ export default function ReadElsewhere() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
             Books you&apos;ve read that aren&apos;t on your shelf: from the
-            library, given away, borrowed long ago. Friends see your hearts and
-            notes. What you&apos;ve read is only for you.
+            library, given away, borrowed long ago.
+            <WhoSees />
           </p>
           <Link
             to="/search"
