@@ -42,19 +42,18 @@ const VISITOR = {
   profileEmoji: null,
 };
 
-// Friends have chosen bookplates, each its own color (Jordan's name gives
-// ochre and Lena's forest, so those go to no one else who's often beside
-// them). The visitor keeps the plate their name gives, so choosing a
-// picture is theirs to try.
+// Friends have picked icons, each in its own color, to show what's there
+// to choose from. The visitor keeps the plain initials their name gives,
+// so choosing a picture is theirs to try.
 const PERSONAS = {
-  maya: { firstname: "Maya", surname: "Chen", profileEmoji: "plate:plum" },
-  sam: { firstname: "Sam", surname: "Okafor", profileEmoji: "plate:navy" },
-  anika: { firstname: "Anika", surname: "Rao", profileEmoji: "plate:oxblood" },
+  maya: { firstname: "Maya", surname: "Chen", profileEmoji: "owl:plum" },
+  sam: { firstname: "Sam", surname: "Okafor", profileEmoji: "planet:navy" },
+  anika: { firstname: "Anika", surname: "Rao", profileEmoji: "teapot:oxblood" },
   // Theo has sent the visitor a friend request; Lena shows up as a suggestion
-  theo: { firstname: "Theo", surname: "Martin", profileEmoji: "plate:ink" },
-  lena: { firstname: "Lena", surname: "Fischer", profileEmoji: null },
+  theo: { firstname: "Theo", surname: "Martin", profileEmoji: "fox:ochre" },
+  lena: { firstname: "Lena", surname: "Fischer", profileEmoji: "frog:forest" },
   // The visitor's housemate: one shared shelf, their own notes and friends
-  noah: { firstname: "Noah", surname: "Brennan", profileEmoji: "plate:forest" },
+  noah: { firstname: "Noah", surname: "Brennan", profileEmoji: "cat:ink" },
 } as const;
 
 type PersonaKey = keyof typeof PERSONAS;
