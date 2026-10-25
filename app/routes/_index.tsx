@@ -18,6 +18,7 @@ import { shelfPath } from "~/profile";
 import { ABOUT_STACKS, seo, structuredData } from "~/seo";
 import { getUserId, requireUserId } from "~/session.server";
 import { WELCOME_COOKIE, dismissCookie, welcomeDismissed } from "~/share-prompt.server";
+import { workPath } from "~/utils";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) =>
   data?.home
@@ -55,20 +56,21 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       // The want-to-read list, ones a friend has first
       wanted: [...wanted]
         .sort((a, b) => Number(b.copies.length > 0) - Number(a.copies.length > 0))
-        .map(({ id, title, author, cover, copies }) => {
+        .map(({ id, title, author, cover, copies, openLibraryKey }) => {
           // Friends with a copy on their shelf come first
           const sorted = [...copies].sort((a, b) => Number(b.available) - Number(a.available));
           const owners = [...new Set(sorted.map((copy) => copy.owner.firstname))];
           const available = sorted.filter((copy) => copy.available);
           // Where the cover goes: with a choice of copies to borrow, the
           // book on the list to pick from; else the one copy (on a shelf if
-          // there is); with none, a search for it
+          // there is); with none, the book's own page, or, for one that
+          // came without an Open Library key, its place on the list
           const to =
             available.length > 1
               ? `/want-to-read#wish-${id}`
               : sorted[0]
                 ? `/books/${sorted[0].bookId}`
-                : `/search?q=${encodeURIComponent(title)}`;
+                : (workPath(openLibraryKey) ?? `/want-to-read#wish-${id}`);
           return { id, title, author, cover, owners: haveIt(owners), to };
         }),
       friendIds: user.following.map((friend) => friend.id),

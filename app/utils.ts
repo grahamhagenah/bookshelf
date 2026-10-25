@@ -108,6 +108,13 @@ export function isDemoEmail(email: string) {
 // caches them; other cover URLs (pasted by hand) are used as they are.
 // Open Library keeps each cover in three sizes, S (~45px wide), M (~180px)
 // and L (~400px+): thumbnails ask for M, which is a fraction of L's weight.
+// The page for a book that's on no shelf yet, from its Open Library work
+// key ("/works/OL45804W"); null when there's no key or it isn't a work
+export function workPath(openLibraryKey: string | null | undefined) {
+  const olid = openLibraryKey?.match(/^\/works\/(OL\d+W)$/)?.[1];
+  return olid ? `/works/${olid}` : null;
+}
+
 export function coverSrc(url: string, size?: "M" | "L") {
   if (!url.startsWith("https://covers.openlibrary.org/")) return url;
   const local = url.replace("https://covers.openlibrary.org/", "/covers/");

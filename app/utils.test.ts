@@ -13,6 +13,7 @@ import {
   stripMarkdown,
   validateEmail,
   tidySearchResults,
+  workPath,
 } from "./utils";
 
 test("validateEmail returns false for non-emails", () => {
@@ -390,4 +391,12 @@ test("editionPublisher wants the usual English edition, or none", () => {
 
 test("normalizeEmail trims and lowercases", () => {
   expect(normalizeEmail("  Jane@Gmail.COM ")).toBe("jane@gmail.com");
+});
+
+test("a work key becomes the book's page; anything else, nothing", () => {
+  expect(workPath("/works/OL45804W")).toBe("/works/OL45804W");
+  expect(workPath("/books/OL7353617M")).toBeNull();
+  expect(workPath("")).toBeNull();
+  expect(workPath(null)).toBeNull();
+  expect(workPath(undefined)).toBeNull();
 });

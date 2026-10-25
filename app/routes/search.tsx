@@ -33,7 +33,7 @@ import { roomForBooks } from "~/plan.server";
 import type { OpenLibraryBook, OpenLibraryResults } from "~/search.server";
 import { seo } from "~/seo";
 import { requireUserId, getUserId } from "~/session.server";
-import { cleanSubjects, editionPublisher } from "~/utils";
+import { cleanSubjects, editionPublisher, workPath } from "~/utils";
 
 export const meta: MetaFunction = () => seo({ title: "Search", noindex: true });
 
@@ -235,10 +235,10 @@ function WorkLink({
   className?: string;
   children: React.ReactNode;
 }) {
-  const olid = workKey?.match(/^\/works\/(OL\d+W)$/)?.[1];
-  if (!olid) return <span className={className}>{children}</span>;
+  const path = workPath(workKey);
+  if (!path) return <span className={className}>{children}</span>;
   return (
-    <Link to={`/works/${olid}`} className={className}>
+    <Link to={path} className={className}>
       {children}
     </Link>
   );
