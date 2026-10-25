@@ -262,7 +262,16 @@ export default function WorkPage() {
         {work.title}
       </h1>
       <p className="mt-1 md:text-xl text-stone-500 dark:text-stone-400">
-        {work.author}
+        {/* More by them, from Open Library */}
+        {work.author ? (
+          <Link
+            to={`/search?${new URLSearchParams({ q: work.author, type: "author" })}`}
+            title={`More books by ${work.author}`}
+            className="underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200 hover:underline"
+          >
+            {work.author}
+          </Link>
+        ) : null}
       </p>
       {details.length > 0 ? (
         <p className="mt-3 md:mt-4 text-sm text-stone-500 dark:text-stone-400">

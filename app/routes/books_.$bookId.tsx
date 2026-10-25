@@ -1830,7 +1830,16 @@ export default function BookDetailsPage() {
         {data.book.title}
       </h1>
       <p className="mt-1 md:text-xl text-stone-500 dark:text-stone-400">
-        {data.book.author}
+        {/* More by them, from Open Library */}
+        {data.book.author ? (
+          <Link
+            to={`/search?${new URLSearchParams({ q: data.book.author, type: "author" })}`}
+            title={`More books by ${data.book.author}`}
+            className="underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200 hover:underline"
+          >
+            {data.book.author}
+          </Link>
+        ) : null}
       </p>
 
       {details.length > 0 ? (
