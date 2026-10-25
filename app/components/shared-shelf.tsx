@@ -38,6 +38,11 @@ const plural = (n: number, word: string) => `${n.toLocaleString()} ${n === 1 ? w
 function ProfileHeader({ data }: { data: SharedShelfData }) {
   const { profile } = data;
   const { stats } = profile;
+  // The favorites on this shelf are shown first and not again below, so
+  // the grid is the rest of it (unless that's nothing, when it's all)
+  const favoriteIds = new Set(profile.favorites.map((book) => book.id));
+  const rest = data.bookListItems.filter((book) => !favoriteIds.has(book.id)).length;
+  const setAside = rest > 0 && rest < data.bookListItems.length;
   const facts = [
     plural(stats.books, "book"),
     // How generous the shelf has been, rather than how much anyone's read
@@ -98,7 +103,8 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
       ) : null}
 
       <h2 className="mt-8 text-sm font-semibold text-stone-500 dark:text-stone-400">
-        On the shelf <span className="font-normal">{stats.books.toLocaleString()}</span>
+        {setAside ? "More on the shelf" : "On the shelf"}{" "}
+        <span className="font-normal">{(setAside ? rest : stats.books).toLocaleString()}</span>
       </h2>
     </header>
   );
@@ -256,6 +262,8 @@ export default function SharedShelf({ data }: { data: SharedShelfData }) {
         bookListItems={data.bookListItems}
         ownerName={data.ownerName}
         header={<ProfileHeader data={data} />}
+        // The favorites are already at the top of the page
+        shownAbove={data.profile.favorites.map((book) => book.id)}
       />
       {/* Signed in, they've already got one */}
       {data.signedIn ? null : <MakeYourOwn />}

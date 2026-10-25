@@ -110,6 +110,10 @@ interface LibraryProps {
   // Your library, when it's a shelf you share: shown here on phones, where
   // the tabs leave no room
   sharedWith?: { members: Member[]; viewerId: string } | null;
+  // Books already shown above the grid (a public page's favorites): left
+  // out while browsing, so nothing shows twice, and back in any search or
+  // filter, so those still find them
+  shownAbove?: string[];
 }
 
 // The grid's cover, with a 2x candidate for sharp screens
@@ -132,7 +136,7 @@ function GridCover({
   return <BookCover src={src} srcSet={srcSet} sizes={sizes} title={title} author={author} alt={title} className={className} eager={eager} />;
 }
 
-export default function Library({ bookListItems, ownerName, header, sharedWith }: LibraryProps) {
+export default function Library({ bookListItems, ownerName, header, sharedWith, shownAbove = [] }: LibraryProps) {
   // Set on the account page, and the same on every shelf you look at
   const viewer = useOptionalUser();
   const viewMode = libraryViewOf(viewer);
@@ -163,6 +167,10 @@ export default function Library({ bookListItems, ownerName, header, sharedWith }
         (book.author ?? "").toLowerCase().includes(term),
     );
   const isFiltered = Boolean(term) || status !== "all";
+  // Browsing, the books above don't come round again, unless they're all
+  // there is
+  const notAbove = visibleBooks.filter((book) => !shownAbove.includes(book.id));
+  const shelfBooks = !isFiltered && notAbove.length > 0 ? notAbove : visibleBooks;
   const showMarks = !ownerName && visibleBooks.some((book) => book.readAt);
 
   return (
@@ -278,7 +286,7 @@ export default function Library({ bookListItems, ownerName, header, sharedWith }
               )}
           </div>
 
-          {visibleBooks.length === 0 ? (
+          {shelfBooks.length === 0 ? (
             <div className="py-16 text-center text-stone-500 dark:text-stone-400">
               <p>No books match.</p>
               {isFiltered ? (
@@ -299,7 +307,7 @@ export default function Library({ bookListItems, ownerName, header, sharedWith }
           {/* Cover View */}
           {viewMode === "cover" ? (
             <ol className={`grid gap-3 sm:gap-4 ${grid.columns}`}>
-              {visibleBooks.map((book, index) => (
+              {shelfBooks.map((book, index) => (
                 <li key={book.id} className="cover-wrapper">
                   <NavLink to={`/books/${book.id}`} className="group block">
                     <div className="relative">
@@ -355,7 +363,7 @@ export default function Library({ bookListItems, ownerName, header, sharedWith }
           {/* List View */}
           {viewMode === "list" ? (
             <ol className="border-t border-stone-100 dark:border-stone-800">
-              {visibleBooks.map((book) => (
+              {shelfBooks.map((book) => (
                 <li
                   key={book.id}
                   className="border-b border-stone-100 dark:border-stone-800"
