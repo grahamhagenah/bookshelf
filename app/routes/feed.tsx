@@ -217,7 +217,7 @@ export default function Feed() {
   return (
     // The feed reads best in a narrow column; it lines up under the logo
     // like every other page, with the rail in the room that leaves
-    <main className="mx-auto w-full max-w-[var(--page-max,64rem)] px-4 py-6 md:px-8 md:py-8 lg:grid lg:grid-cols-[minmax(0,40rem)_minmax(0,1fr)] lg:gap-14">
+    <main className="mx-auto w-full max-w-[var(--page-max,64rem)] px-4 py-6 md:px-8 md:py-8 lg:grid lg:grid-cols-[minmax(0,42rem)_20rem] lg:justify-between lg:gap-14">
       <div className="min-w-0">
         <h1 className="sr-only">Feed</h1>
         {prompts.length > 0 ? (
