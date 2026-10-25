@@ -416,7 +416,7 @@ export default function Home({
 
       <div
         className={`grid gap-10 lg:gap-0 ${
-          showMain && showFeed ? "lg:grid-cols-[minmax(0,1fr)_26rem]" : ""
+          showMain && showFeed ? "lg:grid-cols-[minmax(0,1fr)_24.5rem]" : ""
         }`}
       >
         {showMain ? (
