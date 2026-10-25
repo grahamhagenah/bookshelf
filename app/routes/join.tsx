@@ -13,6 +13,7 @@ import {
 } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 
+import { notifyAdminsOfSignup } from "~/models/admin.server";
 import { getInviter } from "~/models/friend.server";
 import { getHouseholdByInvite } from "~/models/household.server";
 import {
@@ -175,6 +176,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (inviter && !inviter.demoGroup) {
     await createNotification(user.id, inviter.id, `${firstname} ${surname}`);
   }
+
+  // Not awaited, so a slow or failing email never holds up signing up
+  void notifyAdminsOfSignup(user, {
+    invitedBy:
+      inviter && !inviter.demoGroup
+        ? `${inviter.firstname} ${inviter.surname}`
+        : null,
+  }).catch((error) => console.error("Couldn't email admins about a sign-up:", error));
 
   return createUserSession({
     redirectTo,
