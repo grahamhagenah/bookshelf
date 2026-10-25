@@ -50,7 +50,10 @@ function Features({ items }: { items: string[] }) {
     <ul className="mt-5 space-y-2 text-sm text-stone-700 dark:text-stone-300">
       {items.map((item) => (
         <li key={item} className="flex gap-2">
-          <CheckCircleIcon size={18} className="mt-px flex-shrink-0 text-forest-600 dark:text-forest-400" />
+          <CheckCircleIcon
+            size={18}
+            className="mt-px flex-shrink-0 text-forest-600 dark:text-forest-400"
+          />
           {item}
         </li>
       ))}
@@ -69,22 +72,30 @@ export default function Pricing() {
   return (
     <GuidePage
       eyebrow="Pricing"
-      title="Free for most shelves. A few dollars for big ones."
+      title="Free to start. A few dollars for the whole library."
       intro={
         <>
-          Stacks is free for up to {FREE_LIMITS.books} books and {FREE_LIMITS.friends} friends,
-          which covers most home libraries. If yours outgrows that, Stacks Plus lifts both limits.
+          Stacks is free for up to {FREE_LIMITS.books} books and{" "}
+          {FREE_LIMITS.friends} friends, enough to start with the shelf you lend
+          from most. When you want the whole library on it, Stacks Plus lifts
+          both limits.
         </>
       }
       cta={false}
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <section className="flex flex-col rounded-xl border border-stone-200 dark:border-stone-800 p-6">
-          <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">Free</h2>
+          <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+            Free
+          </h2>
           <p className="mt-2">
-            <span className="text-3xl font-bold text-stone-900 dark:text-stone-50">$0</span>
+            <span className="text-3xl font-bold text-stone-900 dark:text-stone-50">
+              $0
+            </span>
           </p>
-          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">For as long as you like</p>
+          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+            For as long as you like
+          </p>
           <Features items={FREE_FEATURES} />
           <div className="mt-auto pt-6">
             {signedIn ? (
@@ -100,9 +111,13 @@ export default function Pricing() {
         </section>
 
         <section className="flex flex-col rounded-xl border-2 border-forest-600 dark:border-forest-400 p-6">
-          <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">Stacks Plus</h2>
+          <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+            Stacks Plus
+          </h2>
           <p className="mt-2">
-            <span className="text-3xl font-bold text-stone-900 dark:text-stone-50">${PLUS_PRICES.monthly}</span>
+            <span className="text-3xl font-bold text-stone-900 dark:text-stone-50">
+              ${PLUS_PRICES.monthly}
+            </span>
             <span className="text-stone-500 dark:text-stone-400"> a month</span>
           </p>
           <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
@@ -131,44 +146,61 @@ export default function Pricing() {
         // The demo button is a form, so the line is laid out as a row
         <div className="flex flex-wrap items-baseline justify-center gap-x-1 text-sm text-stone-500 dark:text-stone-400">
           <span>Not sure yet?</span>
-          <DemoButton className={proseLink}>Look around a demo library</DemoButton>
+          <DemoButton className={proseLink}>
+            Look around a demo library
+          </DemoButton>
           <span>— no account needed.</span>
         </div>
       ) : null}
 
       <GuideSection title="What counts toward the limits?">
         <p>
-          <strong className="font-semibold text-stone-900 dark:text-stone-100">Books</strong> are
-          the ones on your shelf. Books you&apos;ve borrowed and your want-to-read list don&apos;t
-          count. If you share a shelf with someone you live with, your books count together.
+          <strong className="font-semibold text-stone-900 dark:text-stone-100">
+            Books
+          </strong>{" "}
+          are the ones on your shelf. Books you&apos;ve borrowed and your
+          want-to-read list don&apos;t count. If you share a shelf with someone
+          you live with, your books count together.
         </p>
         <p>
-          <strong className="font-semibold text-stone-900 dark:text-stone-100">Friends</strong> are
-          people you&apos;ve become friends with on Stacks. The limit is each person&apos;s own, so
-          a friend who already has {FREE_LIMITS.friends} would need room too.
+          <strong className="font-semibold text-stone-900 dark:text-stone-100">
+            Friends
+          </strong>{" "}
+          are people you&apos;ve become friends with on Stacks. The limit is
+          each person&apos;s own, so a friend who already has{" "}
+          {FREE_LIMITS.friends} would need room too.
         </p>
       </GuideSection>
 
       <GuideSection title="What if I reach a limit, or stop paying?">
         <p>
-          Nothing is ever deleted or hidden. You just can&apos;t add more books or friends until
-          you&apos;re back under the limit or on Plus again. Lending, notes and everything else
-          keep working.
+          Nothing is ever deleted or hidden. You just can&apos;t add more books
+          or friends until you&apos;re back under the limit or on Plus again.
+          Lending, notes and everything else keep working.
         </p>
       </GuideSection>
 
       <GuideSection title="Paying and canceling">
         <p>
-          Payments go through Stripe, so Stacks never sees your card. Prices are in US dollars,
-          and sales tax or VAT is added at checkout where it applies. Plus renews automatically;
-          cancel any time from Settings and it stays on until the end of the period you&apos;ve
-          paid for.
+          Payments go through Stripe, so Stacks never sees your card. Prices are
+          in US dollars, and sales tax or VAT is added at checkout where it
+          applies. Plus renews automatically; cancel any time from Settings and
+          it stays on until the end of the period you&apos;ve paid for.
         </p>
         <p>
-          More detail is in the <Link to="/terms" className={proseLink}>terms</Link>, and what
-          Stacks keeps about you is in the{" "}
-          <Link to="/privacy" className={proseLink}>privacy policy</Link>. Questions?{" "}
-          <Link to="/feedback?from=/pricing" className={proseLink}>Send a note</Link>.
+          More detail is in the{" "}
+          <Link to="/terms" className={proseLink}>
+            terms
+          </Link>
+          , and what Stacks keeps about you is in the{" "}
+          <Link to="/privacy" className={proseLink}>
+            privacy policy
+          </Link>
+          . Questions?{" "}
+          <Link to="/feedback?from=/pricing" className={proseLink}>
+            Send a note
+          </Link>
+          .
         </p>
       </GuideSection>
     </GuidePage>

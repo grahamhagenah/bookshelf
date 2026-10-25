@@ -30,7 +30,8 @@ export const meta: MetaFunction = () => [
 
 // The words in an answer, without its links and paragraphs
 function textOf(node: React.ReactNode): string {
-  if (node === null || node === undefined || typeof node === "boolean") return "";
+  if (node === null || node === undefined || typeof node === "boolean")
+    return "";
   if (typeof node === "string" || typeof node === "number") return String(node);
   if (Array.isArray(node)) return node.map(textOf).join("");
   if (isValidElement<{ children?: React.ReactNode }>(node)) {
@@ -47,7 +48,10 @@ export const handle = {
 const link =
   "text-stone-900 dark:text-stone-100 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:decoration-stone-500";
 
-const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[] = [
+const sections: {
+  heading: string;
+  items: { q: string; a: React.ReactNode }[];
+}[] = [
   {
     heading: "The idea",
     items: [
@@ -55,10 +59,10 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         q: "What is Stacks?",
         a: (
           <>
-            A lending library for the books you own. You list the books on your shelf,
-            your friends list theirs, and you borrow from each other. Each book page
-            knows where that copy is, who has had it, and what the people who read it
-            thought.
+            A lending library for the books you own. You list the books on your
+            shelf, your friends list theirs, and you borrow from each other.
+            Each book page knows where that copy is, who has had it, and what
+            the people who read it thought.
           </>
         ),
       },
@@ -67,16 +71,18 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         a: (
           <>
             <p>
-              Those are for tracking your reading: what you&apos;ve read, how you rated
-              it, what to read next. Stacks is about the physical copies and the people
-              around you. The unit isn&apos;t &ldquo;a book&rdquo; but &ldquo;your copy of
-              it&rdquo;, and the point is to get it into a friend&apos;s hands.
+              Those are for tracking your reading: what you&apos;ve read, how
+              you rated it, what to read next. Stacks is about the physical
+              copies and the people around you. The unit isn&apos;t &ldquo;a
+              book&rdquo; but &ldquo;your copy of it&rdquo;, and the point is to
+              get it into a friend&apos;s hands.
             </p>
             <p className="mt-3">
               So there are no star ratings, no reviews of books in general, no
-              recommendation engine and no feed of strangers. Notes stay with the copy as
-              it passes between friends, like a penciled line inside the cover. If you
-              already keep a list on Goodreads or StoryGraph, you can{" "}
+              recommendation engine and no feed of strangers. Notes stay with
+              the copy as it passes between friends, like a penciled line inside
+              the cover. If you already keep a list on Goodreads or StoryGraph,
+              you can{" "}
               <Link to="/import" className={link}>
                 import it
               </Link>{" "}
@@ -93,9 +99,9 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         q: "Do I have to lend my books out?",
         a: (
           <>
-            No. Every request comes to you and you can decline it. Plenty of people use
-            Stacks as a catalog of what they own and borrow from friends without
-            lending much themselves.
+            No. Every request comes to you and you can decline it. Plenty of
+            people use Stacks as a catalog of what they own and borrow from
+            friends without lending much themselves.
           </>
         ),
       },
@@ -103,8 +109,9 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         q: "Does it cost anything?",
         a: (
           <>
-            It&apos;s free for up to {FREE_LIMITS.books} books and {FREE_LIMITS.friends} friends,
-            which covers most home libraries. Stacks Plus lifts both limits for $
+            It&apos;s free for up to {FREE_LIMITS.books} books and{" "}
+            {FREE_LIMITS.friends} friends, enough to start with the shelf you
+            lend from most. Stacks Plus lifts both limits for $
             {PLUS_PRICES.monthly} a month or ${PLUS_PRICES.yearly} a year;{" "}
             <Link to="/pricing" className={link}>
               see pricing
@@ -119,7 +126,12 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
               open source
             </a>
             . Book details and covers come from{" "}
-            <a href="https://openlibrary.org" target="_blank" rel="noreferrer" className={link}>
+            <a
+              href="https://openlibrary.org"
+              target="_blank"
+              rel="noreferrer"
+              className={link}
+            >
               Open Library
             </a>
             , the Internet Archive&apos;s catalog.
@@ -135,12 +147,12 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         q: "How does borrowing work?",
         a: (
           <>
-            Search for a book and you&apos;ll see which friends have it. Ask to borrow
-            it; the owner gets a notification and lends it to you with a due date (four
-            weeks by default). You&apos;ll both see it on your home page, with reminders
-            as the date gets close. When you hand it back, either of you marks it
-            returned. Owners can also hand a book straight to a friend without being
-            asked.
+            Search for a book and you&apos;ll see which friends have it. Ask to
+            borrow it; the owner gets a notification and lends it to you with a
+            due date (four weeks by default). You&apos;ll both see it on your
+            home page, with reminders as the date gets close. When you hand it
+            back, either of you marks it returned. Owners can also hand a book
+            straight to a friend without being asked.
           </>
         ),
       },
@@ -148,8 +160,8 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         q: "What if someone else has the book I want?",
         a: (
           <>
-            Get in line. When the book comes back, Stacks asks the owner on your behalf
-            and lets you know. Lines are first come, first served.
+            Get in line. When the book comes back, Stacks asks the owner on your
+            behalf and lets you know. Lines are first come, first served.
           </>
         ),
       },
@@ -157,13 +169,13 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         q: "What do my friends see?",
         a: (
           <>
-            Your shelf: every book you own, whether it&apos;s in or out, and the notes
-            on each copy. Nobody else sees anything unless you make a{" "}
+            Your shelf: every book you own, whether it&apos;s in or out, and the
+            notes on each copy. Nobody else sees anything unless you make a{" "}
             <Link to="/account" className={link}>
               share link
             </Link>
-            , which gives you a public page to send to anyone. Your want-to-read list
-            and email settings are yours alone.
+            , which gives you a public page to send to anyone. Your want-to-read
+            list and email settings are yours alone.
           </>
         ),
       },
@@ -171,11 +183,13 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         q: "Can I add books I don't own?",
         a: (
           <>
-            Not to your shelf, since a friend might ask to borrow it. Put them on your{" "}
+            Not to your shelf, since a friend might ask to borrow it. Put them
+            on your{" "}
             <Link to="/want-to-read" className={link}>
               want-to-read list
             </Link>{" "}
-            instead: Stacks tells you when a friend has one and lets you ask for it.
+            instead: Stacks tells you when a friend has one and lets you ask for
+            it.
           </>
         ),
       },
@@ -188,10 +202,10 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         q: "What's a reader note?",
         a: (
           <>
-            A heart, or a line or two, left on a copy by someone who has read it. Only
-            readers of that copy can leave one: the owner, whoever&apos;s borrowing it,
-            and anyone who has borrowed it before. Notes stay with the copy, so the next
-            reader finds them.
+            A heart, or a line or two, left on a copy by someone who has read
+            it. Only readers of that copy can leave one: the owner,
+            whoever&apos;s borrowing it, and anyone who has borrowed it before.
+            Notes stay with the copy, so the next reader finds them.
           </>
         ),
       },
@@ -199,9 +213,9 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         q: "Can I keep track of what I've read?",
         a: (
           <>
-            Yes, for your own shelf: mark a book read on its page, and filter your
-            shelf by read and not read. It&apos;s personal, so two people sharing a
-            shelf each have their own marks.
+            Yes, for your own shelf: mark a book read on its page, and filter
+            your shelf by read and not read. It&apos;s personal, so two people
+            sharing a shelf each have their own marks.
           </>
         ),
       },
@@ -218,10 +232,11 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
             <Link to="/account" className={link}>
               Account
             </Link>
-            , make an invite link and send it to the other person. Once they join,
-            you both see and lend everything, and each of you keeps your own notes,
-            hearts, read marks, want-to-read list and friends. Books show who added
-            them. Either of you can leave later and take your own books with you.
+            , make an invite link and send it to the other person. Once they
+            join, you both see and lend everything, and each of you keeps your
+            own notes, hearts, read marks, want-to-read list and friends. Books
+            show who added them. Either of you can leave later and take your own
+            books with you.
           </>
         ),
       },
@@ -229,9 +244,9 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         q: "Who approves a borrow request on a shared shelf?",
         a: (
           <>
-            Requests go to whoever added the book, but either of you can lend it to a
-            friend directly, and either can mark it returned, extend a loan or send a
-            reminder.
+            Requests go to whoever added the book, but either of you can lend it
+            to a friend directly, and either can mark it returned, extend a loan
+            or send a reminder.
           </>
         ),
       },
@@ -248,12 +263,13 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
             <Link to="/search" className={link}>
               Search
             </Link>{" "}
-            and tap Scan: point the camera at each barcode and the books add themselves.
-            If you already keep a list on Goodreads or StoryGraph,{" "}
+            and tap Scan: point the camera at each barcode and the books add
+            themselves. If you already keep a list on Goodreads or StoryGraph,{" "}
             <Link to="/import" className={link}>
               import their export file
             </Link>{" "}
-            and choose what goes on your shelf and what goes on your want-to-read list.
+            and choose what goes on your shelf and what goes on your
+            want-to-read list.
           </>
         ),
       },
@@ -261,8 +277,9 @@ const sections: { heading: string; items: { q: string; a: React.ReactNode }[] }[
         q: "A book has the wrong cover or details. Can I fix it?",
         a: (
           <>
-            Yes. On the book page, Edit details or cover lets you change anything, pick another
-            cover from Open Library, or refresh the details from there.
+            Yes. On the book page, Edit details or cover lets you change
+            anything, pick another cover from Open Library, or refresh the
+            details from there.
           </>
         ),
       },
@@ -280,7 +297,10 @@ export default function Faq() {
         What Stacks is, what it isn&apos;t, and how the lending works.
       </p>
 
-      <nav aria-label="Sections" className="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+      <nav
+        aria-label="Sections"
+        className="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-sm"
+      >
         {sections.map((section) => (
           <a
             key={section.heading}

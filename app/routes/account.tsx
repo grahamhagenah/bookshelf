@@ -1441,6 +1441,13 @@ function Meter({
           style={{ width: `${Math.min(100, (used / limit) * 100)}%` }}
         />
       </div>
+      {/* From before the limit was lower: nothing is taken away */}
+      {used > limit ? (
+        <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
+          Over the free limit. You keep everything you have; adding more needs
+          Plus.
+        </p>
+      ) : null}
     </div>
   );
 }
