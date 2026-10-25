@@ -432,14 +432,17 @@ export default function Home({
       >
         {showMain ? (
           <div className={showFeed ? "lg:pr-10" : undefined}>
-            {/* Sections with something in them come first, in this order;
-                empty ones (shown once setup's done) drop to the bottom, so
-                a page without loans doesn't open on an empty Loans */}
+            {/* By rank: loans first when there are any, then your recent
+                books, then want-to-read (lifted above your books when a
+                friend has one of them). Empty ones (shown once setup's
+                done) drop to the bottom, so a page without loans doesn't
+                open on an empty Loans */}
             {[
               {
                 key: "loans",
                 show: showLoans,
-                has: books.borrowed.length + books.lent.length > 0,
+                // Late and due-soon books need doing
+                rank: books.borrowed.length + books.lent.length > 0 ? 0 : 10,
                 render: (first: boolean) => (
                   <section
                     aria-labelledby="loans"
@@ -495,7 +498,12 @@ export default function Home({
               {
                 key: "wanted",
                 show: showWanted,
-                has: wanted.length > 0,
+                // Above your own books only when a friend has one to lend
+                rank: wanted.some((item) => item.owners)
+                  ? 1
+                  : wanted.length > 0
+                    ? 3
+                    : 11,
                 render: (first: boolean) => (
                   <section
                     aria-labelledby="want-to-read"
@@ -547,7 +555,7 @@ export default function Home({
               {
                 key: "recent",
                 show: showRecent,
-                has: books.recent.length > 0,
+                rank: books.recent.length > 0 ? 2 : 12,
                 render: (first: boolean) => (
                   <section
                     aria-labelledby="recently-added"
@@ -634,7 +642,7 @@ export default function Home({
               },
             ]
               .filter((section) => section.show)
-              .sort((a, b) => Number(b.has) - Number(a.has))
+              .sort((a, b) => a.rank - b.rank)
               .map((section, index) => (
                 <Fragment key={section.key}>
                   {section.render(index === 0)}
