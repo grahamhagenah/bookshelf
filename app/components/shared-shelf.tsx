@@ -35,35 +35,17 @@ const secondaryButton =
 const plural = (n: number, word: string) =>
   `${n.toLocaleString()} ${n === 1 ? word : `${word}s`}`;
 
-// The page wears its owner's bookplate color: a strip across the top and
-// the heart on their favorites. One of the six plates, so it stays Stacks.
-const ACCENTS: Record<string, { strip: string; heart: string }> = {
-  forest: {
-    strip: "bg-forest-600 dark:bg-forest-400",
-    heart: "text-forest-600 dark:text-forest-400",
-  },
-  oxblood: {
-    strip: "bg-red-900 dark:bg-red-400",
-    heart: "text-red-800 dark:text-red-300",
-  },
-  navy: {
-    strip: "bg-blue-900 dark:bg-blue-400",
-    heart: "text-blue-800 dark:text-blue-300",
-  },
-  ochre: {
-    strip: "bg-amber-600 dark:bg-amber-400",
-    heart: "text-amber-600 dark:text-amber-300",
-  },
-  plum: {
-    strip: "bg-purple-900 dark:bg-purple-400",
-    heart: "text-purple-800 dark:text-purple-300",
-  },
-  ink: {
-    strip: "bg-stone-800 dark:bg-stone-300",
-    heart: "text-stone-700 dark:text-stone-300",
-  },
+// The heart on their favorites wears the owner's bookplate color. One of
+// the six plates, so it stays Stacks.
+const HEARTS: Record<string, string> = {
+  forest: "text-forest-600 dark:text-forest-400",
+  oxblood: "text-red-800 dark:text-red-300",
+  navy: "text-blue-800 dark:text-blue-300",
+  ochre: "text-amber-600 dark:text-amber-300",
+  plum: "text-purple-800 dark:text-purple-300",
+  ink: "text-stone-700 dark:text-stone-300",
 };
-const accentOf = (color: string) => ACCENTS[color] ?? ACCENTS.forest;
+const heartOf = (color: string) => HEARTS[color] ?? HEARTS.forest;
 
 // Where each favorite's note sits: above or below its cover, overlapping
 // the edge a little, and lined up left, right or center, so each one is
@@ -132,11 +114,7 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
             id="favorites"
             className="flex items-center gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400"
           >
-            <HeartIcon
-              size={14}
-              filled
-              className={accentOf(profile.color).heart}
-            />
+            <HeartIcon size={14} filled className={heartOf(profile.color)} />
             Favorites
           </h2>
           <ul
@@ -354,11 +332,6 @@ function MakeYourOwn() {
 export default function SharedShelf({ data }: { data: SharedShelfData }) {
   return (
     <>
-      {/* The owner's color, edge to edge across the top of the page */}
-      <div
-        aria-hidden="true"
-        className={`fixed inset-x-0 top-0 z-50 h-1 ${accentOf(data.profile.color).strip}`}
-      />
       <Invite data={data} />
       <Library
         bookListItems={data.bookListItems}
