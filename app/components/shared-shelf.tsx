@@ -50,13 +50,13 @@ const heartOf = (color: string) => HEARTS[color] ?? HEARTS.forest;
 // Where each favorite's note sits: above or below its cover, overlapping
 // the edge a little, and lined up left, right or center, so each one is
 // somewhere different. Two bubbles in one column never face each other
-// across a row, whether the row is three covers wide or five.
+// across a row, whether the row is two covers wide (phones) or five.
 const BUBBLE_SPOTS = [
-  { side: "above", align: "-left-[6%]" },
-  { side: "below", align: "-right-[6%]" },
+  { side: "above", align: "-left-[4%]" },
+  { side: "below", align: "-right-[4%]" },
   { side: "above", align: "left-1/2 -translate-x-1/2" },
-  { side: "above", align: "-right-[6%]" },
-  { side: "below", align: "-left-[6%]" },
+  { side: "below", align: "-left-[4%]" },
+  { side: "below", align: "-right-[4%]" },
 ] as const;
 
 // Who the shelf belongs to, in their words, and what they love
@@ -118,10 +118,10 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
             Favorites
           </h2>
           <ul
-            className={`mt-3 grid grid-cols-3 gap-x-4 sm:grid-cols-5 sm:gap-x-6 ${
+            className={`mt-3 grid grid-cols-2 gap-x-4 sm:grid-cols-5 sm:gap-x-6 ${
               // Room for the notes that stick out above and below
               profile.favorites.some((book) => book.note)
-                ? "gap-y-20 py-14 sm:py-11"
+                ? "gap-y-16 py-14 sm:py-11"
                 : "gap-y-4"
             }`}
           >
@@ -142,7 +142,7 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
                   {/* Why it's here, in the owner's words, said from the cover */}
                   {book.note ? (
                     <p
-                      className={`absolute z-10 w-max max-w-[112%] ${spot.align} ${
+                      className={`absolute z-10 w-max max-w-[108%] ${spot.align} ${
                         above
                           ? "bottom-[calc(100%-1.25rem)]"
                           : "top-[calc(100%-1.25rem)]"
