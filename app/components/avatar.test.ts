@@ -1,4 +1,11 @@
-import { isAvatarIcon, isPlateColor, plateColorFor, plateColorOf } from "./avatar";
+import {
+  isAvatarIcon,
+  isPicture,
+  isPlateColor,
+  pictureOf,
+  plateColorFor,
+  plateColorOf,
+} from "./avatar";
 
 test("a stored bookplate gives its color; anything else gives none", () => {
   expect(plateColorOf("plate:oxblood")).toBe("oxblood");
@@ -11,10 +18,30 @@ test("a stored bookplate gives its color; anything else gives none", () => {
 });
 
 test("everyone gets a real color by default, never grey ink, and keeps it", () => {
-  const names = ["Jordan Avery", "Priya Patel", "Maya Chen", "Sam Okafor", "Lena Fischer"];
+  const names = [
+    "Jordan Avery",
+    "Priya Patel",
+    "Maya Chen",
+    "Sam Okafor",
+    "Lena Fischer",
+  ];
   for (const name of names) {
     const [first, last] = name.split(" ");
     expect(plateColorFor(first, last)).not.toBe("ink");
     expect(plateColorFor(first, last)).toBe(plateColorFor(first, last));
   }
+});
+
+test("an icon can carry a color; the page takes its color from either", () => {
+  expect(pictureOf("owl")).toEqual({ icon: "owl", color: null });
+  expect(pictureOf("owl:plum")).toEqual({ icon: "owl", color: "plum" });
+  expect(pictureOf("plate:navy")).toEqual({ icon: null, color: "navy" });
+  // An unknown color leaves the icon grey; an unknown icon is nothing
+  expect(pictureOf("owl:neon")).toEqual({ icon: "owl", color: null });
+  expect(pictureOf("dragon:plum")).toEqual({ icon: null, color: null });
+  expect(plateColorOf("owl:plum")).toBe("plum");
+  expect(isPicture("owl:plum")).toBe(true);
+  expect(isPicture("plate:plum")).toBe(true);
+  expect(isPicture("dragon")).toBe(false);
+  expect(isPicture(null)).toBe(false);
 });

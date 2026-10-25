@@ -300,11 +300,30 @@ export const PLATE = "plate:";
 export const isPlateColor = (value: unknown): value is PlateColor =>
   typeof value === "string" && value in PLATE_COLORS;
 
-// The chosen color from a stored picture, if it's a bookplate
+// A stored picture, taken apart: an icon, or a bookplate (no icon), each
+// with the color chosen for it, if any. "owl", "owl:plum", "plate:plum".
+export function pictureOf(value: unknown): {
+  icon: AvatarIcon | null;
+  color: PlateColor | null;
+} {
+  if (typeof value !== "string") return { icon: null, color: null };
+  const [head, tail] = value.split(":");
+  const color = isPlateColor(tail) ? tail : null;
+  if (head === PLATE.slice(0, -1)) return { icon: null, color };
+  return isAvatarIcon(head)
+    ? { icon: head, color }
+    : { icon: null, color: null };
+}
+
+// Whether a value is one the picture picker could have stored
+export function isPicture(value: unknown) {
+  const { icon, color } = pictureOf(value);
+  return icon !== null || color !== null;
+}
+
+// The chosen color from a stored picture, bookplate or icon
 export function plateColorOf(value: unknown): PlateColor | null {
-  if (typeof value !== "string" || !value.startsWith(PLATE)) return null;
-  const color = value.slice(PLATE.length);
-  return isPlateColor(color) ? color : null;
+  return pictureOf(value).color;
 }
 
 // Someone who hasn't chosen keeps the same color, worked out from their
@@ -389,13 +408,20 @@ export function AvatarGlyph({
   );
 }
 
+// An icon's circle: the tint and ink of its chosen color, as a bookplate in
+// that color has, or plain grey
+export const iconTone = (color: PlateColor | null) =>
+  color
+    ? PLATE_COLORS[color]
+    : "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200";
+
 const SIZES = {
-  xs: { box: "w-6 h-6 text-[10px]", icon: 14 },
+  xs: { box: "w-6 h-6 text-[10px]", icon: 15 },
   // A list beside other things, like the home page's friend activity
-  compact: { box: "w-7 h-7 text-[11px]", icon: 16 },
-  sm: { box: "w-8 h-8 text-xs", icon: 18 },
-  md: { box: "w-10 h-10 text-sm", icon: 20 },
-  lg: { box: "w-16 h-16 text-xl", icon: 30 },
+  compact: { box: "w-7 h-7 text-[11px]", icon: 18 },
+  sm: { box: "w-8 h-8 text-xs", icon: 20 },
+  md: { box: "w-10 h-10 text-sm", icon: 25 },
+  lg: { box: "w-16 h-16 text-xl", icon: 38 },
 };
 
 export default function Avatar({
@@ -412,12 +438,13 @@ export default function Avatar({
   className?: string;
 }) {
   const { box, icon: iconSize } = SIZES[size];
-  if (!isAvatarIcon(icon)) {
+  const picture = pictureOf(icon);
+  if (!picture.icon) {
     return (
       <Bookplate
         firstname={firstname}
         surname={surname}
-        color={plateColorOf(icon)}
+        color={picture.color}
         box={box}
         framed={size === "md" || size === "lg"}
         className={className}
@@ -426,9 +453,9 @@ export default function Avatar({
   }
   return (
     <span
-      className={`${box} rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 font-semibold flex items-center justify-center flex-shrink-0 ${className}`}
+      className={`${box} rounded-full ${iconTone(picture.color)} font-semibold flex items-center justify-center flex-shrink-0 ${className}`}
     >
-      <AvatarGlyph icon={icon} size={iconSize} />
+      <AvatarGlyph icon={picture.icon} size={iconSize} />
     </span>
   );
 }

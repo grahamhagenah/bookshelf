@@ -21,11 +21,13 @@ import Avatar, {
   AVATAR_ICONS,
   AvatarGlyph,
   Bookplate,
-  isAvatarIcon,
+  iconTone,
+  isPicture,
   PLATE,
   PLATE_COLORS,
-  plateColorOf,
+  pictureOf,
 } from "~/components/avatar";
+import type { PlateColor } from "~/components/avatar";
 import BookCover from "~/components/book-cover";
 import CopyButton from "~/components/copy-button";
 import {
@@ -286,8 +288,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (intent === "updateProfileEmoji") {
     const emoji = formData.get("emoji");
     await updateUser(userId, {
-      profileEmoji:
-        isAvatarIcon(emoji) || plateColorOf(emoji) ? String(emoji) : null,
+      profileEmoji: isPicture(emoji) ? String(emoji) : null,
     });
     return json({
       errors: null,
@@ -603,7 +604,9 @@ export default function Account() {
             <div className="flex flex-wrap gap-2">
               {(Object.keys(PLATE_COLORS) as (keyof typeof PLATE_COLORS)[]).map(
                 (color) => {
-                  const chosen = plateColorOf(user?.profileEmoji) === color;
+                  // A bookplate, not an icon in this color
+                  const picture = pictureOf(user?.profileEmoji);
+                  const chosen = !picture.icon && picture.color === color;
                   return (
                     <button
                       key={color}
@@ -632,28 +635,7 @@ export default function Account() {
                 },
               )}
             </div>
-            <div className="flex flex-wrap gap-2">
-              {AVATAR_ICONS.map((icon) => {
-                const chosen = user?.profileEmoji === icon;
-                return (
-                  <button
-                    key={icon}
-                    type="submit"
-                    name="emoji"
-                    value={icon}
-                    aria-label={`Use the ${icon} icon`}
-                    aria-pressed={chosen}
-                    className={`flex h-11 w-11 items-center justify-center rounded-full border text-stone-700 dark:text-stone-200 transition-colors ${
-                      chosen
-                        ? "border-forest-600 dark:border-forest-400 ring-1 ring-forest-600 dark:ring-forest-400 bg-stone-50 dark:bg-stone-800"
-                        : "border-stone-200 dark:border-stone-700 hover:border-stone-400 dark:hover:border-stone-500"
-                    }`}
-                  >
-                    <AvatarGlyph icon={icon} size={22} />
-                  </button>
-                );
-              })}
-            </div>
+            <IconPicker current={user?.profileEmoji ?? null} />
           </Form>
         </div>
       </Section>
@@ -980,6 +962,100 @@ function Saved({ children }: { children: React.ReactNode }) {
       />
       {children}
     </span>
+  );
+}
+
+// The icons, in a color of your choosing (or plain grey). Picking a color
+// recolors the icon you have; with a bookplate on, it colors the icons
+// here, ready for one to be picked.
+function IconPicker({ current }: { current: string | null }) {
+  const picture = pictureOf(current);
+  const [color, setColor] = useState<PlateColor | null>(
+    picture.icon ? picture.color : null,
+  );
+  const swatch = (on: boolean) =>
+    `h-7 w-7 rounded-full ring-offset-2 ring-offset-white dark:ring-offset-stone-950 transition-shadow ${
+      on
+        ? "ring-2 ring-forest-600 dark:ring-forest-400"
+        : "ring-1 ring-transparent hover:ring-stone-300 dark:hover:ring-stone-600"
+    }`;
+  const choices: (PlateColor | null)[] = [
+    null,
+    ...(Object.keys(PLATE_COLORS) as PlateColor[]),
+  ];
+  return (
+    <>
+      <div
+        className="flex flex-wrap items-center gap-2.5 pt-1"
+        role="group"
+        aria-label="Icon color"
+      >
+        <span className="mr-1 text-sm text-stone-500 dark:text-stone-400">
+          Icon color
+        </span>
+        {choices.map((choice) => {
+          const label = choice
+            ? `Color the icon ${choice}`
+            : "Leave the icon grey";
+          // With an icon on, a color is saved straight away
+          return picture.icon ? (
+            <button
+              key={choice ?? "grey"}
+              type="submit"
+              name="emoji"
+              value={choice ? `${picture.icon}:${choice}` : picture.icon}
+              onClick={() => setColor(choice)}
+              aria-label={label}
+              aria-pressed={color === choice}
+              className={`${swatch(color === choice)} ${iconTone(choice)} flex items-center justify-center`}
+            >
+              {/* The ink as a dot, since the tints alone look much alike */}
+              <span
+                aria-hidden="true"
+                className="h-3 w-3 rounded-full bg-current"
+              />
+            </button>
+          ) : (
+            <button
+              key={choice ?? "grey"}
+              type="button"
+              onClick={() => setColor(choice)}
+              aria-label={label}
+              aria-pressed={color === choice}
+              className={`${swatch(color === choice)} ${iconTone(choice)} flex items-center justify-center`}
+            >
+              {/* The ink as a dot, since the tints alone look much alike */}
+              <span
+                aria-hidden="true"
+                className="h-3 w-3 rounded-full bg-current"
+              />
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {AVATAR_ICONS.map((icon) => {
+          const chosen = picture.icon === icon;
+          return (
+            <button
+              key={icon}
+              type="submit"
+              name="emoji"
+              value={color ? `${icon}:${color}` : icon}
+              aria-label={`Use the ${icon} icon`}
+              aria-pressed={chosen}
+              className={`flex h-11 w-11 items-center justify-center rounded-full transition-shadow ${iconTone(color)} ring-offset-2 ring-offset-white dark:ring-offset-stone-950 ${
+                chosen
+                  ? "ring-2 ring-forest-600 dark:ring-forest-400"
+                  : "ring-1 ring-stone-200 dark:ring-stone-700 hover:ring-stone-400 dark:hover:ring-stone-500"
+              }`}
+            >
+              <AvatarGlyph icon={icon} size={27} />
+            </button>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
