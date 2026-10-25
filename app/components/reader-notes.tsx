@@ -1,8 +1,10 @@
 import { useFetcher } from "@remix-run/react";
 import { useEffect, useState } from "react";
 
+import { PIN_MAX } from "~/profile";
+
 import Avatar from "./avatar";
-import { HeartIcon, PencilIcon, ReadIcon } from "./icons";
+import { HeartIcon, HiddenIcon, PencilIcon, PinIcon, ReadIcon } from "./icons";
 import PersonLink from "./person-link";
 
 interface ReaderNote {
@@ -29,7 +31,8 @@ const formatDate = (date: string) =>
 // look: a small rounded toggle, tinted once it's on
 const chip = (on: string | false) =>
   `inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
-    on || "border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500"
+    on ||
+    "border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500"
   }`;
 
 const LOVE_FETCHER = "reader-love";
@@ -61,7 +64,11 @@ function HeartToggle({ myNote }: { myNote: ReaderNote | null }) {
             "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300",
         )}
       >
-        <HeartIcon size={14} filled={loved} className={loved ? "text-rose-500" : ""} />
+        <HeartIcon
+          size={14}
+          filled={loved}
+          className={loved ? "text-rose-500" : ""}
+        />
         {loved ? "You loved it" : "Love it"}
       </button>
     </fetcher.Form>
@@ -81,7 +88,9 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
       <button
         type="submit"
         aria-pressed={read}
-        title={read ? "Mark as not read. Only you see this." : "Only you see this"}
+        title={
+          read ? "Mark as not read. Only you see this." : "Only you see this"
+        }
         className={chip(
           read &&
             "border-forest-600/25 bg-forest-600/10 text-forest-700 dark:border-forest-400/30 dark:bg-forest-400/15 dark:text-forest-400",
@@ -91,16 +100,132 @@ function ReadToggle({ readAt }: { readAt: string | null }) {
             the button keeps its width and the row doesn't shift. No date:
             when you marked it isn't always when you read it */}
         <span className="grid justify-items-center">
-          <span className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${read ? "invisible" : ""}`}>
+          <span
+            className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${read ? "invisible" : ""}`}
+          >
             <ReadIcon size={14} />
             Mark as read
           </span>
-          <span className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${read ? "" : "invisible"}`}>
+          <span
+            className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${read ? "" : "invisible"}`}
+          >
             <ReadIcon size={14} />
             You read it
           </span>
         </span>
       </button>
+    </fetcher.Form>
+  );
+}
+
+// Where this book stands on its owner's public page
+export interface PageStanding {
+  pinned: boolean;
+  hasNote: boolean;
+  count: number;
+  hidden: boolean;
+  on: boolean;
+}
+
+function usePageStanding(page: PageStanding) {
+  const fetcher = useFetcher<{ pinError?: string }>({ key: "public-page" });
+  const intent = fetcher.formData?.get("intent");
+  // Shown as it will be, while it saves
+  const pinned =
+    intent === "pin" ? true : intent === "unpin" ? false : page.pinned;
+  const hidden =
+    intent === "hideFromPage"
+      ? true
+      : intent === "showOnPage"
+        ? false
+        : page.hidden;
+  return { fetcher, pinned, hidden };
+}
+
+// Pinning it to the favorites at the top of your public page, beside the
+// heart and the read mark, since it's another thing you say about it.
+// Your note on it is what shows there with it.
+function PinToggle({ page }: { page: PageStanding }) {
+  const { fetcher, pinned, hidden } = usePageStanding(page);
+  const full = !pinned && page.count >= PIN_MAX;
+  // A book kept off the page can't be at the top of it
+  const off = !pinned && hidden;
+  return (
+    <fetcher.Form method="post">
+      <input type="hidden" name="intent" value={pinned ? "unpin" : "pin"} />
+      <button
+        type="submit"
+        aria-pressed={pinned}
+        disabled={full || off}
+        title={
+          off
+            ? "It's kept off your public page. Show it there first."
+            : full
+              ? `Your public page shows ${PIN_MAX}. Unpin one in Settings first.`
+              : pinned
+                ? "Unpin it from your public page"
+                : "Put it in the favorites at the top of your public page, with your note"
+        }
+        className={`${chip(
+          pinned &&
+            "border-stone-300 bg-stone-100 text-stone-800 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100",
+        )} disabled:cursor-not-allowed disabled:opacity-50`}
+      >
+        {/* Both labels share one cell, so the row doesn't shift */}
+        <span className="grid justify-items-center">
+          <span
+            className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${pinned ? "invisible" : ""}`}
+          >
+            <PinIcon size={14} />
+            Pin to my page
+          </span>
+          <span
+            className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${pinned ? "" : "invisible"}`}
+          >
+            <PinIcon size={14} filled />
+            Pinned to my page
+          </span>
+        </span>
+      </button>
+    </fetcher.Form>
+  );
+}
+
+// One quiet line under the buttons, for the owner: is this book on their
+// public page at all, and the switch to keep it off
+function PageLine({ page }: { page: PageStanding }) {
+  const { fetcher, pinned, hidden } = usePageStanding(page);
+  const link =
+    "underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100";
+  return (
+    <fetcher.Form
+      method="post"
+      className="mb-4 flex flex-wrap items-center gap-x-1.5 text-xs text-stone-500 dark:text-stone-400"
+    >
+      {hidden ? <HiddenIcon size={12} className="flex-shrink-0" /> : null}
+      <span>
+        {hidden
+          ? "Kept off your public page"
+          : pinned
+            ? page.hasNote
+              ? "Pinned to your public page, with your note"
+              : "Pinned to your public page. Leave a note to show with it"
+            : "Shown on your public page"}
+        {page.on ? null : " (it's off for now)"}.
+      </span>
+      <button
+        type="submit"
+        name="intent"
+        value={hidden ? "showOnPage" : "hideFromPage"}
+        className={link}
+      >
+        {hidden ? "Show it" : "Keep it off"}
+      </button>
+      {fetcher.data?.pinError ? (
+        <span role="alert" className="text-red-700 dark:text-red-400">
+          {fetcher.data.pinError}
+        </span>
+      ) : null}
     </fetcher.Form>
   );
 }
@@ -113,6 +238,7 @@ export default function ReaderNotes({
   maxLength,
   friendIds,
   readAt,
+  page,
 }: {
   notes: ReaderNote[];
   myNote: ReaderNote | null;
@@ -121,6 +247,8 @@ export default function ReaderNotes({
   friendIds: string[];
   // When you read it, for readers of this copy
   readAt?: string | null;
+  // For the owner: where it stands on their public page
+  page?: PageStanding | null;
 }) {
   const { loved } = useLoved(myNote);
   const noteFetcher = useFetcher<{ noteSaved?: boolean }>();
@@ -141,7 +269,10 @@ export default function ReaderNotes({
 
   return (
     <div className="mt-12 border-t border-stone-200 dark:border-stone-800 pt-8">
-      <h2 id="notes" className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100">
+      <h2
+        id="notes"
+        className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100"
+      >
         Reader notes
       </h2>
       {/* Hearts first: yours to give, and who else gave one without a note
@@ -149,20 +280,33 @@ export default function ReaderNotes({
       {canNote || heartsOnly.length > 0 ? (
         <div className="mb-3 flex flex-wrap items-center gap-2">
           {canNote ? <HeartToggle myNote={myNote} /> : null}
-          {canNote && readAt !== undefined ? <ReadToggle readAt={readAt} /> : null}
+          {canNote && readAt !== undefined ? (
+            <ReadToggle readAt={readAt} />
+          ) : null}
+          {page ? <PinToggle page={page} /> : null}
           {canNote && !myNote?.body && !isWriting ? (
-            <button type="button" onClick={() => setIsWriting(true)} className={chip(false)}>
+            <button
+              type="button"
+              onClick={() => setIsWriting(true)}
+              className={chip(false)}
+            >
               <PencilIcon size={14} />
               {hasNotes ? "Add a note" : "Leave a note"}
             </button>
           ) : null}
           {heartsOnly.length > 0 ? (
             <p className="inline-flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
-              {canNote ? null : <HeartIcon size={13} filled className="text-rose-400" />}
+              {canNote ? null : (
+                <HeartIcon size={13} filled className="text-rose-400" />
+              )}
               {loved || hasNotes ? "Also loved by " : "Loved by "}
               {heartsOnly.map((note, index) => (
                 <span key={note.id}>
-                  {index > 0 ? (index === heartsOnly.length - 1 ? " and " : ", ") : null}
+                  {index > 0
+                    ? index === heartsOnly.length - 1
+                      ? " and "
+                      : ", "
+                    : null}
                   <PersonLink
                     id={note.user.id}
                     name={note.user.firstname}
@@ -174,6 +318,7 @@ export default function ReaderNotes({
           ) : null}
         </div>
       ) : null}
+      {page ? <PageLine page={page} /> : null}
 
       {isWriting ? (
         <noteFetcher.Form method="post" className="py-3">
@@ -244,12 +389,17 @@ export default function ReaderNotes({
                         )}
                       </span>
                       <span className="text-stone-600 dark:text-stone-300">
-                        {(isMine ? loved : note.loved) ? "loved it" : "wrote about it"}
+                        {(isMine ? loved : note.loved)
+                          ? "loved it"
+                          : "wrote about it"}
                       </span>
                       {(isMine ? loved : note.loved) ? (
                         <HeartIcon size={13} filled className="text-rose-400" />
                       ) : null}
-                      <span className="text-stone-400 dark:text-stone-500"> · </span>
+                      <span className="text-stone-400 dark:text-stone-500">
+                        {" "}
+                        ·{" "}
+                      </span>
                       <span className="text-sm text-stone-400 dark:text-stone-500">
                         {formatDate(note.updatedAt)}
                       </span>
@@ -287,7 +437,6 @@ export default function ReaderNotes({
           No notes yet.
         </p>
       ) : null}
-
     </div>
   );
 }

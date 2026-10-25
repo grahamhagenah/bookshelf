@@ -1,12 +1,11 @@
 -- A book can be kept off its owner's public page
 ALTER TABLE "Book" ADD COLUMN "hiddenFromPage" BOOLEAN NOT NULL DEFAULT false;
 
--- Books pinned to the top of a public page, with a line about each
+-- Books pinned to the top of a public page
 CREATE TABLE "Pin" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "bookId" TEXT NOT NULL,
-    "note" TEXT,
     "position" INTEGER NOT NULL DEFAULT 0,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Pin_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,

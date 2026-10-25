@@ -141,14 +141,13 @@ model Book {
 }
 
 // A book its owner has put at the top of their public page, in their
-// order, with a line about it
+// order. What it says about the book is the owner's own reader note.
 model Pin {
   id        String   @id @default(cuid())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
   book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
   bookId    String
-  note      String?
   position  Int      @default(0)
   createdAt DateTime @default(now())
 

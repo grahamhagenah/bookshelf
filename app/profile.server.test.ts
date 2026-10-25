@@ -87,7 +87,9 @@ test("pinned books replace hearts on the page, in their order, with their lines"
   await prisma.readerNote.create({ data: { userId: owner.id, bookId: gilead.id, loved: true } });
   expect((await getShelfProfile(owner.id)).favorites.map((b) => b.title)).toEqual(["Gilead"]);
 
-  expect(await pinBook(owner.id, circe.id, "  Read it   every winter. ")).toEqual({ ok: true });
+  // What a pin says is the owner's own note on the book
+  await prisma.readerNote.create({ data: { userId: owner.id, bookId: circe.id, body: "Read it every winter." } });
+  expect(await pinBook(owner.id, circe.id)).toEqual({ ok: true });
   expect(await pinBook(owner.id, dune.id)).toEqual({ ok: true });
   let profile = await getShelfProfile(owner.id);
   expect(profile.pinned).toBe(true);
@@ -120,7 +122,8 @@ test("a book kept off the page leaves its list, its favorites and its numbers", 
   const shown = await makeBook(owner.id, "Shown");
   const kept = await makeBook(owner.id, "Kept");
   await prisma.book.update({ where: { id: kept.id }, data: { lendCount: 4 } });
-  await pinBook(owner.id, kept.id, "Secret favorite");
+  await prisma.readerNote.create({ data: { userId: owner.id, bookId: kept.id, body: "Secret favorite" } });
+  await pinBook(owner.id, kept.id);
   await setHiddenFromPage(owner.id, kept.id, true);
 
   const profile = await getShelfProfile(owner.id);
@@ -143,10 +146,12 @@ test("the page wears the owner's bookplate color, or the one their name gives", 
   expect(["forest", "oxblood", "navy", "ochre", "plum"]).toContain((await getShelfProfile(didnt.id)).color);
 });
 
-test("pinning a pinned book again keeps its line", async () => {
+test("only the owner's own note shows with a pin, not someone else's", async () => {
   const owner = await makeUser("Maya");
+  const friend = await makeUser("Sam");
   const book = await makeBook(owner.id, "Dune");
-  await pinBook(owner.id, book.id, "The one I lend most.");
+  await prisma.readerNote.create({ data: { userId: friend.id, bookId: book.id, body: "Loved it, thanks!" } });
   await pinBook(owner.id, book.id);
-  expect((await getShelfProfile(owner.id)).favorites.map((b) => b.note)).toEqual(["The one I lend most."]);
+  await pinBook(owner.id, book.id);
+  expect((await getShelfProfile(owner.id)).favorites.map((b) => b.note)).toEqual([null]);
 });

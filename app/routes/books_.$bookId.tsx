@@ -20,7 +20,7 @@ import invariant from "tiny-invariant";
 import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
 import ErrorPage from "~/components/error-page";
-import { LentIcon, HiddenIcon, PinIcon } from "~/components/icons";
+import { LentIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
 import { importCover, isOpenLibraryCover } from "~/covers.server";
@@ -71,8 +71,7 @@ import {
 } from "~/models/user.server";
 import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
 import { roomForFriend } from "~/plan.server";
-import { PIN_MAX, PIN_NOTE_MAX } from "~/profile";
-import { getPin, pinBook, setHiddenFromPage, setPinNote, unpinBook } from "~/profile.server";
+import { getPin, pinBook, setHiddenFromPage, unpinBook } from "~/profile.server";
 import type { CoversResponse } from "~/routes/api.covers";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
@@ -464,22 +463,14 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   // Anyone sharing the shelf the book is on can manage it
   const managerIds = await shelfIds(userId);
 
-  // The owner's public page: pin it, say why, or keep it off
-  if (
-    intent === "pin" ||
-    intent === "unpin" ||
-    intent === "pinNote" ||
-    intent === "hideFromPage" ||
-    intent === "showOnPage"
-  ) {
+  // The owner's public page: pin it, or keep it off
+  if (intent === "pin" || intent === "unpin" || intent === "hideFromPage" || intent === "showOnPage") {
     if (!managerIds.includes(book.userId)) throw new Response("Not Found", { status: 404 });
-    const note = formData.get("note");
     if (intent === "pin") {
-      const result = await pinBook(userId, book.id, typeof note === "string" ? note : undefined);
+      const result = await pinBook(userId, book.id);
       return json(result.ok ? { pinned: true } : { pinError: result.error });
     }
     if (intent === "unpin") await unpinBook(userId, book.id);
-    if (intent === "pinNote") await setPinNote(userId, book.id, typeof note === "string" ? note : null);
     if (intent === "hideFromPage" || intent === "showOnPage") {
       await setHiddenFromPage(userId, book.id, intent === "hideFromPage");
     }
@@ -999,109 +990,6 @@ type BookData = SerializeFrom<typeof loader>;
 
 // A few facts beside the cover: where the book is, when it arrived, how
 // often it's been lent
-// The owner's say over how this book appears on their public page: pin
-// it to the top with a line about it, or keep it off the page entirely
-function PublicPagePanel({
-  page,
-}: {
-  page: { pinned: boolean; note: string | null; count: number; hidden: boolean; on: boolean };
-}) {
-  const fetcher = useFetcher<{ pinned?: boolean; pinError?: string; ok?: boolean }>({ key: "public-page" });
-  const intent = fetcher.formData?.get("intent");
-  // Shown as it will be, while it saves
-  const pinned = intent === "pin" ? true : intent === "unpin" ? false : page.pinned;
-  const hidden = intent === "hideFromPage" ? true : intent === "showOnPage" ? false : page.hidden;
-  const full = !pinned && page.count >= PIN_MAX;
-  const [note, setNote] = useState(page.note ?? "");
-  useEffect(() => setNote(page.note ?? ""), [page.note]);
-  const quiet =
-    "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
-
-  // Whether anyone can see the page yet, said once, quietly
-  const off = page.on ? null : (
-    <span className="font-normal text-stone-400 dark:text-stone-500"> · page off</span>
-  );
-  const row = "flex items-center gap-2 text-sm";
-  const label = "min-w-0 flex-1 truncate text-stone-700 dark:text-stone-200";
-
-  return (
-    // One line for where it stands and what to do about it, and the
-    // book's line on the page under it once it's pinned
-    <section aria-label="Your public page" className="rounded-md border border-stone-200 dark:border-stone-700 px-3 py-2">
-      {hidden ? (
-        <fetcher.Form method="post" className={row}>
-          <HiddenIcon size={14} className="flex-shrink-0 text-stone-400 dark:text-stone-500" />
-          <span className={label}>Off your public page{off}</span>
-          <button type="submit" name="intent" value="showOnPage" className={quiet}>
-            Show
-          </button>
-        </fetcher.Form>
-      ) : pinned ? (
-        <>
-          <fetcher.Form method="post" className={row}>
-            <PinIcon size={14} filled className="flex-shrink-0 text-stone-500 dark:text-stone-400" />
-            <span className={label} title="Pinned to the favorites on your public page">
-              Pinned{off}
-            </span>
-            <button type="submit" name="intent" value="unpin" className={quiet}>
-              Unpin
-            </button>
-            <span aria-hidden="true" className="text-stone-300 dark:text-stone-600">
-              ·
-            </span>
-            <button type="submit" name="intent" value="hideFromPage" className={quiet} title="Keep it off your public page">
-              Hide
-            </button>
-          </fetcher.Form>
-          <fetcher.Form method="post" className="mt-1.5">
-            <input type="hidden" name="intent" value="pinNote" />
-            <label htmlFor="pin-note" className="sr-only">
-              A line about it on your page
-            </label>
-            <input
-              id="pin-note"
-              name="note"
-              type="text"
-              value={note}
-              maxLength={PIN_NOTE_MAX}
-              onChange={(event) => setNote(event.target.value)}
-              // Saved when they leave the field, if it changed
-              onBlur={(event) => {
-                if (note.trim() !== (page.note ?? "")) fetcher.submit(event.currentTarget.form);
-              }}
-              placeholder="A line about it (optional)"
-              className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 py-1 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
-            />
-          </fetcher.Form>
-        </>
-      ) : (
-        <fetcher.Form method="post" className={row}>
-          <PinIcon size={14} className="flex-shrink-0 text-stone-400 dark:text-stone-500" />
-          <button
-            type="submit"
-            name="intent"
-            value="pin"
-            disabled={full}
-            title={full ? `Your page shows ${PIN_MAX}. Unpin one in Settings first.` : undefined}
-            className={`${label} text-left hover:text-stone-950 dark:hover:text-white disabled:cursor-not-allowed disabled:text-stone-400`}
-          >
-            {full ? `Your page has ${PIN_MAX} pinned` : "Pin to your page"}
-            {off}
-          </button>
-          <button type="submit" name="intent" value="hideFromPage" className={quiet} title="Keep it off your public page">
-            Hide
-          </button>
-        </fetcher.Form>
-      )}
-      {fetcher.data?.pinError ? (
-        <p role="alert" className="mt-1.5 text-xs text-red-700 dark:text-red-400">
-          {fetcher.data.pinError}
-        </p>
-      ) : null}
-    </section>
-  );
-}
-
 function BookFacts({ data }: { data: BookData }) {
   const { book } = data;
   const rows: [string, React.ReactNode][] = [];
@@ -1677,7 +1565,6 @@ export default function BookDetailsPage() {
               loanChoices={data.loanChoices}
             />
           ) : null}
-          {data.page && !isEditing ? <PublicPagePanel page={data.page} /> : null}
           {canRequestBook ? (
             <Form method="post" className="space-y-2">
               <input type="hidden" name="intent" value="request" />
@@ -2096,6 +1983,7 @@ export default function BookDetailsPage() {
               maxLength={data.noteMaxLength}
               friendIds={data.friendIds}
               readAt={data.readAt}
+              page={data.page}
             />
           ) : null}
 

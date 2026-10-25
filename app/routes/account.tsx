@@ -1358,8 +1358,8 @@ function PinnedFavorites({ pins }: { pins: PinItem[] }) {
       </p>
       <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
         {pins.length === 0
-          ? "Pin books from their pages, with a line about each. Until you do, your page shows the books you've hearted."
-          : "In the order they appear. Pin more, or change a book's line, from its page."}
+          ? "Pin books from their pages; your note on each shows with it. Until you do, your page shows the books you've hearted."
+          : "In the order they appear, each with your note on it if you've written one. Pin more from a book's page."}
       </p>
       {pins.length > 0 ? (
         <ol className="mt-2 divide-y divide-stone-100 dark:divide-stone-800 rounded-md border border-stone-200 dark:border-stone-700">

@@ -3,9 +3,8 @@
 export const HANDLE_MIN = 3;
 export const HANDLE_MAX = 24;
 export const BIO_MAX = 160;
-// Books pinned to the top of a public page, and the line about each
+// Books pinned to the top of a public page
 export const PIN_MAX = 5;
-export const PIN_NOTE_MAX = 140;
 
 // Lowercase letters, numbers and underscores; what's typed is tidied first
 export const normalizeHandle = (text: string) =>
