@@ -88,6 +88,17 @@ export function GroupIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
+// A speech bubble with a line or two in it: the feed, which is mostly
+// what friends have said about books
+export function FeedIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 11.5c0 4.1-3.6 7.5-8 7.5-1.2 0-2.3-.2-3.3-.6L4 20l1.3-3.6C4.5 15 4 13.3 4 11.5 4 7.4 7.6 4 12 4s8 3.4 8 7.5z"/>
+      <path d="M9 10.5h6M9 13.5h3.5"/>
+    </svg>
+  );
+}
+
 export function LogoutIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
