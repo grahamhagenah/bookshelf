@@ -111,7 +111,13 @@ export default function App() {
   const wide = Boolean(user);
 
   useEffect(() => {
-    if (theme !== "system") return;
+    // Light and Dark are set outright: following the device may have left
+    // "dark" on the page, and Auto and Light render the same class, so
+    // nothing else would take it off until a reload
+    if (theme !== "system") {
+      document.documentElement.classList.toggle("dark", theme === "dark");
+      return;
+    }
     const media = matchMedia("(prefers-color-scheme: dark)");
     const follow = () =>
       document.documentElement.classList.toggle("dark", media.matches);
