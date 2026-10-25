@@ -1533,7 +1533,7 @@ function PinnedFavorites({ pins }: { pins: PinItem[] }) {
   const arrow =
     "flex h-7 w-7 items-center justify-center rounded-md text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-100 disabled:opacity-30 disabled:hover:bg-transparent";
   return (
-    <div className="mt-6">
+    <div id="pinned" className="mt-6 scroll-mt-24">
       <p className="text-sm font-medium text-stone-800 dark:text-stone-200">
         Favorites on your page{" "}
         <span className="font-normal text-stone-400 dark:text-stone-500">

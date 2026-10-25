@@ -1,4 +1,4 @@
-import { useFetcher } from "@remix-run/react";
+import { Link, useFetcher } from "@remix-run/react";
 import { useEffect, useState } from "react";
 
 import { PIN_MAX } from "~/profile";
@@ -142,15 +142,31 @@ function usePageStanding(page: PageStanding) {
       : intent === "showOnPage"
         ? false
         : page.hidden;
-  return { fetcher, pinned, hidden };
+  // The page's five are taken, counting this one as it's about to be
+  const count = page.count + (pinned ? 1 : 0) - (page.pinned ? 1 : 0);
+  const full = !pinned && count >= PIN_MAX;
+  return { fetcher, pinned, hidden, full };
+}
+
+// Why it can't be pinned when the page's favorites are all taken, and
+// where to make room
+function FullNote({ className }: { className: string }) {
+  return (
+    <span className="basis-full">
+      Your page already shows {PIN_MAX} favorites.{" "}
+      <Link to="/account#pinned" className={className}>
+        Unpin one in Settings
+      </Link>{" "}
+      to pin this.
+    </span>
+  );
 }
 
 // Pinning it to the favorites at the top of your public page, beside the
 // heart and the read mark, since it's another thing you say about it.
 // Your note on it is what shows there with it.
 function PinToggle({ page }: { page: PageStanding }) {
-  const { fetcher, pinned, hidden } = usePageStanding(page);
-  const full = !pinned && page.count >= PIN_MAX;
+  const { fetcher, pinned, hidden, full } = usePageStanding(page);
   // A book kept off the page can't be at the top of it
   const off = !pinned && hidden;
   return (
@@ -199,13 +215,20 @@ function PinToggle({ page }: { page: PageStanding }) {
 // One quiet line under the buttons, for the owner: is this book on their
 // public page at all, and the switch to keep it off
 function PageLine({ page }: { page: PageStanding }) {
-  const { fetcher, pinned, hidden } = usePageStanding(page);
+  const { fetcher, pinned, hidden, full } = usePageStanding(page);
   const link =
     "underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100";
   // A friend's book: whether it's shown at all is theirs to say, so
   // there's only something to say once it's pinned, or can't be
   if (!page.own) {
-    if (!pinned && !hidden) return null;
+    if (!pinned && !hidden && !full) return null;
+    if (full && !hidden) {
+      return (
+        <p className="mb-4 text-xs text-stone-500 dark:text-stone-400">
+          <FullNote className={link} />
+        </p>
+      );
+    }
     return (
       <p className="mb-4 text-xs text-stone-500 dark:text-stone-400">
         {hidden
@@ -248,6 +271,7 @@ function PageLine({ page }: { page: PageStanding }) {
       >
         {hidden ? "Show it" : "Keep it off"}
       </button>
+      {full && !hidden ? <FullNote className={link} /> : null}
       {fetcher.data?.pinError ? (
         <span role="alert" className="text-red-700 dark:text-red-400">
           {fetcher.data.pinError}
