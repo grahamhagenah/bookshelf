@@ -67,3 +67,9 @@ export function getFeedback(take = 50) {
 export function setFeedbackDone(id: string, done: boolean) {
   return prisma.feedback.update({ where: { id }, data: { done } });
 }
+
+// Gone for good, for spam or anything not worth keeping. deleteMany, so a
+// second click on something already deleted is harmless.
+export function deleteFeedback(id: string) {
+  return prisma.feedback.deleteMany({ where: { id } });
+}
