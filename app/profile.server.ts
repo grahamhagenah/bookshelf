@@ -40,6 +40,14 @@ export async function saveProfile(
 
 const FAVORITES = PIN_MAX;
 
+// A note in a bubble on the public page: its opening paragraph, which
+// ends where the writer chose to, rather than wherever the bubble runs out
+const firstParagraph = (body: string | null | undefined) =>
+  body
+    ?.trim()
+    .split(/\n\s*\n/)[0]
+    .trim() || null;
+
 // What a public page shows of a shelf: none of the books kept off it
 const onPage = (ids: string[]) => ({
   userId: { in: ids },
@@ -146,7 +154,7 @@ export async function getShelfProfile(userId: User["id"]) {
         ? pins.map(({ book: { readerNotes, userId: ownerId, ...book } }) => ({
             ...book,
             onShelf: ids.includes(ownerId),
-            note: readerNotes[0]?.body?.trim() || null,
+            note: firstParagraph(readerNotes[0]?.body),
           }))
         : [
             ...loved.map(

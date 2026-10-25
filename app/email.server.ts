@@ -132,6 +132,9 @@ function cover(url: string | null | undefined, width: number) {
   return `<img src="${absolute}" width="${width}" height="${height}" alt="" style="${box} display: block; object-fit: cover; background: #f5f5f4; border: 0;">`;
 }
 
+// A note's own line breaks, kept, after escaping
+const paragraphs = (text: string) => esc(text).replace(/\n/g, "<br>");
+
 const bookLink = (id: string | null, title: string) =>
   id
     ? `<a href="${APP_URL}/books/${id}" style="color: ${ink}; font-weight: 600; text-decoration: none;">${esc(title)}</a>`
@@ -440,7 +443,7 @@ function activityRow(item: Digest["activity"][number]) {
     const work = `<a href="${APP_URL}${item.work.key}" style="color: ${ink}; font-weight: 600; text-decoration: none;">${esc(item.work.title)}</a>`;
     return withCover(
       item.work.cover,
-      `${name} wrote about ${work}<br><span style="display: inline-block; margin-top: 6px; padding-left: 10px; border-left: 2px solid ${line}; font-style: italic; color: ${body};">“${esc(item.body)}”</span>`,
+      `${name} wrote about ${work}<br><span style="display: inline-block; margin-top: 6px; padding-left: 10px; border-left: 2px solid ${line}; font-style: italic; color: ${body};">“${paragraphs(item.body)}”</span>`,
     );
   }
   if (item.kind === "loved") {
@@ -450,7 +453,7 @@ function activityRow(item: Digest["activity"][number]) {
     );
   }
   const quote = item.body
-    ? `<br><span style="display: inline-block; margin-top: 6px; padding-left: 10px; border-left: 2px solid ${line}; font-style: italic; color: ${body};">“${esc(item.body)}”</span>`
+    ? `<br><span style="display: inline-block; margin-top: 6px; padding-left: 10px; border-left: 2px solid ${line}; font-style: italic; color: ${body};">“${paragraphs(item.body)}”</span>`
     : "";
   return withCover(
     item.book.cover,

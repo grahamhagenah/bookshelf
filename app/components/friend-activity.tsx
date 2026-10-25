@@ -419,7 +419,7 @@ function Actions({
 // A friend's note on a book they read somewhere else. Nothing of theirs
 // to borrow, so it offers what can be done: want it, or ask a friend
 // who has a copy.
-function ElsewhereCard({ item }: { item: ElsewhereItem }) {
+function ElsewhereCard({ item, mine }: { item: ElsewhereItem; mine: boolean }) {
   const want = useFetcher<{ wanted?: boolean }>();
   const { ownCopyId, copies } = item.viewer;
   const wanted =
@@ -448,9 +448,11 @@ function ElsewhereCard({ item }: { item: ElsewhereItem }) {
             <span className="mt-2 block text-sm text-stone-500 dark:text-stone-400">
               {ownCopyId
                 ? "On your shelf"
-                : copy
-                  ? `${copy.owner.firstname} has a copy`
-                  : `${item.friend.firstname} read it elsewhere`}
+                : mine
+                  ? "You read it elsewhere"
+                  : copy
+                    ? `${copy.owner.firstname} has a copy`
+                    : `${item.friend.firstname} read it elsewhere`}
             </span>
           </span>
         </Link>
@@ -460,7 +462,7 @@ function ElsewhereCard({ item }: { item: ElsewhereItem }) {
           <Link to={`/books/${ownCopyId}`} className={actionClass}>
             Open your copy
           </Link>
-        ) : (
+        ) : mine ? null : (
           <>
             {wanted ? (
               <span className={stateClass}>
@@ -566,13 +568,13 @@ export function FeedPost({
       </header>
 
       {(item.kind === "note" || item.kind === "elsewhere") && item.body ? (
-        <blockquote className="mt-3 text-pretty leading-relaxed text-stone-800 dark:text-stone-200">
+        <blockquote className="mt-3 whitespace-pre-line text-pretty leading-relaxed text-stone-800 dark:text-stone-200">
           &ldquo;{item.body}&rdquo;
         </blockquote>
       ) : null}
 
       {item.kind === "elsewhere" ? (
-        <ElsewhereCard item={item} />
+        <ElsewhereCard item={item} mine={item.friend.id === userId} />
       ) : item.kind === "added" && item.books.length > 1 ? (
         <>
           {/* Even columns: three across on phones, four on wider screens */}
