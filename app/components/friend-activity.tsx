@@ -109,7 +109,7 @@ export default function FriendActivityItem({
           firstname={item.friend.firstname}
           surname={item.friend.surname}
           icon={item.friend.profileEmoji}
-          size="sm"
+          size="compact"
         />
         <div className="min-w-0 flex-1 pt-1">
           <p className="text-stone-800 dark:text-stone-200 leading-snug">
@@ -185,7 +185,7 @@ export default function FriendActivityItem({
         firstname={item.friend.firstname}
         surname={item.friend.surname}
         icon={item.friend.profileEmoji}
-        size="sm"
+        size="compact"
       />
       <div className="min-w-0 flex-1 pt-1">
         <p className="text-stone-800 dark:text-stone-200 leading-snug">

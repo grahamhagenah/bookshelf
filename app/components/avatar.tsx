@@ -25,7 +25,9 @@ const ICON_PATHS = {
       <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />
     </>
   ),
-  star: <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />,
+  star: (
+    <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />
+  ),
   mountain: (
     <>
       <path d="M2.5 20 9 8.5l4 7 2.5-4L21.5 20z" />
@@ -86,6 +88,66 @@ const ICON_PATHS = {
       <path d="M7.5 11h.01" />
     </>
   ),
+  owl: (
+    <>
+      <path d="M6 9.5C6 6.5 8.5 4.5 12 4.5s6 2 6 5V15a6 6 0 0 1-12 0z" />
+      <path d="M7 6.5 6 3.5l3.5 1.6M17 6.5l1-3-3.5 1.6" />
+      <circle cx="9.5" cy="10.5" r="2" />
+      <circle cx="14.5" cy="10.5" r="2" />
+      <circle cx="9.5" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="14.5" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
+      <path d="M11.3 13.5 12 14.7l.7-1.2" />
+    </>
+  ),
+  fox: (
+    <>
+      <path d="M4 4.5l3 6.5-1 3 6 6 6-6-1-3 3-6.5-5 3.5h-6z" />
+      <circle cx="9.5" cy="12.5" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="14.5" cy="12.5" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="16.8" r="0.9" fill="currentColor" stroke="none" />
+    </>
+  ),
+  frog: (
+    <>
+      <path d="M4 14.5c0-3.5 3.6-5.5 8-5.5s8 2 8 5.5-3.6 5-8 5-8-1.5-8-5z" />
+      <circle cx="8" cy="8.5" r="2.4" />
+      <circle cx="16" cy="8.5" r="2.4" />
+      <circle cx="8" cy="8.5" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="16" cy="8.5" r="0.9" fill="currentColor" stroke="none" />
+      <path d="M9 15c1.8 1.2 4.2 1.2 6 0" />
+    </>
+  ),
+  bee: (
+    <>
+      <path d="M12 9c2.8 0 4.5 2.4 4.5 5.5S14.8 20.5 12 20.5s-4.5-2.9-4.5-6S9.2 9 12 9z" />
+      <path d="M7.7 13h8.6M7.9 16.5h8.2" />
+      <path d="M10.6 9.3C8.3 8.8 5.6 7.2 6.6 5.3s4 .9 4.6 3.9M13.4 9.3c2.3-.5 5-2.1 4-4s-4 .9-4.6 3.9" />
+    </>
+  ),
+  octopus: (
+    <>
+      <path d="M6 11.5a6 6 0 0 1 12 0v2H6z" />
+      <path d="M7 13.5c0 3-2 4-2 6M10 13.5c0 3-1 5-.5 7M14 13.5c0 3 1 5 .5 7M17 13.5c0 3 2 4 2 6" />
+      <circle cx="9.5" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="14.5" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
+    </>
+  ),
+  snail: (
+    <>
+      <path d="M3 19h13.5a3.5 3.5 0 0 0 3.5-3.5V9.5" />
+      <path d="M20 9.5 18.8 6M20 9.5l1.6-3" />
+      <circle cx="11" cy="13" r="5" />
+      <path d="M11 13a1.6 1.6 0 1 1 1.6-1.6 3 3 0 0 1-3 3" />
+    </>
+  ),
+  ghost: (
+    <>
+      <path d="M6 20.5V11a6 6 0 0 1 12 0v9.5l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5z" />
+      <circle cx="10" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="14" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
+      <path d="M10.6 14c.8.6 2 .6 2.8 0" />
+    </>
+  ),
   tree: (
     <>
       <path d="M12 3l6 8.5h-3.5l4.5 6.5H5l4.5-6.5H6z" />
@@ -136,6 +198,19 @@ const ICON_PATHS = {
       <path d="M6 16l3.5-6.5h6L18 16M9.5 9.5 12 16H6M8 6.5h3M15.5 9.5l-1-3H17" />
     </>
   ),
+  balloon: (
+    <>
+      <path d="M12 3a6.5 6.5 0 0 0-6.5 6.5c0 3.5 3.5 6 4.5 8h4c1-2 4.5-4.5 4.5-8A6.5 6.5 0 0 0 12 3z" />
+      <path d="M12 3c-1.8 2-2.5 4.4-2.5 6.5s.4 5 .5 8M12 3c1.8 2 2.5 4.4 2.5 6.5s-.4 5-.5 8" />
+      <path d="M10.3 17.5h3.4v3h-3.4z" />
+    </>
+  ),
+  planet: (
+    <>
+      <circle cx="12" cy="12" r="5.5" />
+      <ellipse cx="12" cy="12" rx="10" ry="3.2" transform="rotate(-20 12 12)" />
+    </>
+  ),
   music: (
     <>
       <path d="M9 18V5.5l11-2V16" />
@@ -163,9 +238,7 @@ const ICON_PATHS = {
       <circle cx="14.5" cy="7.5" r="1" />
     </>
   ),
-  pencil: (
-    <path d="M16.5 3.5l4 4L8 20H4v-4zM14 6l4 4" />
-  ),
+  pencil: <path d="M16.5 3.5l4 4L8 20H4v-4zM14 6l4 4" />,
   lightbulb: (
     <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.5.4.5 1 .5 1.6V16h6v-.5c0-.6.1-1.2.6-1.6A6 6 0 0 0 12 3z" />
   ),
@@ -173,6 +246,29 @@ const ICON_PATHS = {
     <>
       <circle cx="8" cy="15" r="4.5" />
       <path d="M11.2 11.8 20 3M17 6l2.5 2.5M14.5 8.5l2 2" />
+    </>
+  ),
+  crown: (
+    <>
+      <path d="M4 17.5 3 7.5l5 4 4-6.5 4 6.5 5-4-1 10z" />
+      <path d="M4.5 20.5h15" />
+    </>
+  ),
+  teapot: (
+    <>
+      <path d="M5.5 9h13c.3 0 .5.2.5.5C19 15 16 18.5 12 18.5S5 15 5 9.5c0-.3.2-.5.5-.5z" />
+      <path d="M10 9V7.5h4V9M12 7.5V5.5" />
+      <path d="M5.3 11.5 2.5 9M19 11h1a2 2 0 0 1 0 4h-1.5M8 21h8" />
+    </>
+  ),
+  dice: (
+    <>
+      <path d="M5 6.5A1.5 1.5 0 0 1 6.5 5h11A1.5 1.5 0 0 1 19 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 17.5z" />
+      <circle cx="9" cy="9" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="9" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="15" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="15" r="0.9" fill="currentColor" stroke="none" />
     </>
   ),
 };
@@ -189,10 +285,12 @@ export function isAvatarIcon(value: unknown): value is AvatarIcon {
 // label pasted inside a book's cover. Chosen ones are kept as "plate:" and
 // a color; without a choice, a color is picked from the person's name.
 export const PLATE_COLORS = {
-  forest: "bg-forest-600/10 text-forest-700 dark:bg-forest-400/15 dark:text-forest-400",
+  forest:
+    "bg-forest-600/10 text-forest-700 dark:bg-forest-400/15 dark:text-forest-400",
   oxblood: "bg-red-900/10 text-red-900 dark:bg-red-400/15 dark:text-red-300",
   navy: "bg-blue-900/10 text-blue-900 dark:bg-blue-400/15 dark:text-blue-300",
-  ochre: "bg-amber-600/15 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300",
+  ochre:
+    "bg-amber-600/15 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300",
   plum: "bg-purple-900/10 text-purple-900 dark:bg-purple-400/15 dark:text-purple-300",
   ink: "bg-stone-900/10 text-stone-800 dark:bg-stone-100/10 dark:text-stone-200",
 };
@@ -211,9 +309,18 @@ export function plateColorOf(value: unknown): PlateColor | null {
 
 // Someone who hasn't chosen keeps the same color, worked out from their
 // name. Ink reads as grey, so it's there to choose but never handed out.
-const DEFAULT_PLATES: PlateColor[] = ["forest", "oxblood", "navy", "ochre", "plum"];
+const DEFAULT_PLATES: PlateColor[] = [
+  "forest",
+  "oxblood",
+  "navy",
+  "ochre",
+  "plum",
+];
 
-export function plateColorFor(firstname?: string | null, surname?: string | null): PlateColor {
+export function plateColorFor(
+  firstname?: string | null,
+  surname?: string | null,
+): PlateColor {
   const name = `${firstname ?? ""} ${surname ?? ""}`;
   let hash = 0;
   for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
@@ -244,18 +351,27 @@ export function Bookplate({
   // left keeps the pair centered
   return (
     <span
-      className={`${box} ${tone} relative flex flex-shrink-0 items-center justify-center rounded-full pl-[0.1em] font-serif font-semibold tracking-[0.1em] ${className}`}
+      className={`${box} ${tone} relative flex flex-shrink-0 items-center justify-center rounded-full pl-[0.03em] font-serif font-semibold tracking-[0.03em] ${className}`}
     >
       {/* The frame: a thin ring inside the edge, at sizes where it shows */}
       {framed ? (
-        <span aria-hidden="true" className="absolute inset-[3px] rounded-full border border-current opacity-30" />
+        <span
+          aria-hidden="true"
+          className="absolute inset-[3px] rounded-full border border-current opacity-30"
+        />
       ) : null}
       {initialsOf(firstname, surname)}
     </span>
   );
 }
 
-export function AvatarGlyph({ icon, size = 20 }: { icon: AvatarIcon; size?: number }) {
+export function AvatarGlyph({
+  icon,
+  size = 20,
+}: {
+  icon: AvatarIcon;
+  size?: number;
+}) {
   return (
     <svg
       width={size}
@@ -275,6 +391,8 @@ export function AvatarGlyph({ icon, size = 20 }: { icon: AvatarIcon; size?: numb
 
 const SIZES = {
   xs: { box: "w-6 h-6 text-[10px]", icon: 14 },
+  // A list beside other things, like the home page's friend activity
+  compact: { box: "w-7 h-7 text-[11px]", icon: 16 },
   sm: { box: "w-8 h-8 text-xs", icon: 18 },
   md: { box: "w-10 h-10 text-sm", icon: 20 },
   lg: { box: "w-16 h-16 text-xl", icon: 30 },
