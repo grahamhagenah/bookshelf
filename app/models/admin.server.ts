@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "~/db.server";
-import { sendNewSignupEmail } from "~/email.server";
+import { sendNewSignupEmail, sendSignupSummaryEmail } from "~/email.server";
 
 // Everything the admin dashboard shows. Demo sandboxes are left out of
 // every number: only real accounts (demoGroup null) count.
@@ -356,7 +356,7 @@ export async function notifyAdminsOfSignup(
 ) {
   const [admins, total] = await Promise.all([
     prisma.user.findMany({
-      where: { isAdmin: true, ...real, id: { not: newUser.id } },
+      where: { isAdmin: true, ...real, adminSignupEmails: "each", id: { not: newUser.id } },
       select: { email: true },
     }),
     prisma.user.count({ where: real }),
@@ -369,4 +369,66 @@ export async function notifyAdminsOfSignup(
     ),
   );
   return admins.length;
+}
+
+// How each admin hears about sign-ups: one email "each" time, one "daily"
+// summary, or "off". Feedback emails are a plain on or off.
+export const SIGNUP_EMAIL_CHOICES = ["each", "daily", "off"] as const;
+export type SignupEmailChoice = (typeof SIGNUP_EMAIL_CHOICES)[number];
+
+export const isSignupEmailChoice = (value: unknown): value is SignupEmailChoice =>
+  typeof value === "string" && (SIGNUP_EMAIL_CHOICES as readonly string[]).includes(value);
+
+export async function getAdminEmailChoices(userId: string) {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { adminSignupEmails: true, adminFeedbackEmails: true },
+  });
+  return {
+    signups: isSignupEmailChoice(user.adminSignupEmails) ? user.adminSignupEmails : "each",
+    feedback: user.adminFeedbackEmails,
+  };
+}
+
+export function setAdminEmailChoices(
+  userId: string,
+  choices: { signups?: SignupEmailChoice; feedback?: boolean },
+) {
+  return prisma.user.update({
+    where: { id: userId },
+    data: { adminSignupEmails: choices.signups, adminFeedbackEmails: choices.feedback },
+  });
+}
+
+// The daily summary for admins who chose it: everyone who joined in the
+// day before `now`. Nothing is sent on a day with no sign-ups.
+export async function sendDailySignupSummaries({
+  now = new Date(),
+  send = sendSignupSummaryEmail,
+}: {
+  now?: Date;
+  send?: (message: Parameters<typeof sendSignupSummaryEmail>[0]) => Promise<unknown>;
+} = {}) {
+  const since = new Date(now.getTime() - DAY);
+  const [admins, signups, total] = await Promise.all([
+    prisma.user.findMany({
+      where: { isAdmin: true, ...real, adminSignupEmails: "daily" },
+      select: { email: true },
+    }),
+    prisma.user.findMany({
+      where: { ...real, createdAt: { gte: since, lt: now } },
+      select: { firstname: true, surname: true, email: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.user.count({ where: real }),
+  ]);
+  if (signups.length === 0 || admins.length === 0) return { sent: 0, signups: signups.length };
+  const people = signups.map((person) => ({
+    name: `${person.firstname} ${person.surname}`,
+    email: person.email,
+  }));
+  await Promise.all(
+    admins.map((admin) => send({ toEmail: admin.email, signups: people, total }).catch(() => null)),
+  );
+  return { sent: admins.length, signups: signups.length };
 }

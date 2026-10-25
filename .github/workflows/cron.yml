@@ -1,6 +1,7 @@
-# Timed jobs the app can't run itself: due-date reminders every day and
-# the weekly digest on Sunday mornings (US Eastern). Both endpoints
-# refuse anyone without CRON_SECRET_KEY, which must match the app's secret
+# Timed jobs the app can't run itself: due-date reminders and the admins'
+# sign-up summary every day, and the weekly digest on Sunday mornings
+# (US Eastern). Every endpoint
+# refuses anyone without CRON_SECRET_KEY, which must match the app's secret
 # on Fly. It goes in a header, so it stays out of the server's logs.
 name: Scheduled jobs
 
@@ -18,6 +19,17 @@ jobs:
         # A block scalar, since the ": " in the header would end a plain one
         run: |
           curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET_KEY }}" https://bookstacks.app/api/check-overdue
+
+  # Admins who chose a daily summary of sign-ups. The daily schedule
+  # only, since Sunday's would send a second one.
+  signup-summary:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 13 * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Daily sign-up summary
+        # A block scalar, since the ": " in the header would end a plain one
+        run: |
+          curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET_KEY }}" https://bookstacks.app/api/signup-summary
 
   digest:
     runs-on: ubuntu-latest
