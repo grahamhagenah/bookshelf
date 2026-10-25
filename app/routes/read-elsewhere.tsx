@@ -14,7 +14,7 @@ import { requireUserId } from "~/session.server";
 
 // Books you've read, loved or written about that aren't on your shelf:
 // from the library, given away, borrowed before Stacks. Your hearts and
-// notes are seen by friends; what you've read stays yours.
+// notes are seen by friends; marking a book read is just for you.
 
 export const meta: MetaFunction = () =>
   seo({ title: "Read elsewhere", noindex: true });
@@ -73,7 +73,7 @@ function WhoSees() {
           role="note"
           className="absolute -right-2 top-full z-20 mt-2 w-64 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm text-stone-600 dark:text-stone-300 shadow-md"
         >
-          Friends see your hearts and notes. What you&apos;ve read is only for
+          Friends see your hearts and notes. Marking a book as read is just for
           you.
         </span>
       ) : null}
