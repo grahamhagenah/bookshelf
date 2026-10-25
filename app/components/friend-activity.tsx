@@ -47,6 +47,43 @@ function FeedCover({
   );
 }
 
+// One book in the sidebar: its cover, with the note (if any) and the
+// date beside it, so the words sit with the book they're about
+function CoverBeside({
+  to,
+  book,
+  body,
+  at,
+}: {
+  to: string;
+  book: Pick<FeedBook, "title" | "author" | "cover">;
+  body: string | null;
+  at: string;
+}) {
+  return (
+    <div className="mt-2 flex items-start gap-3">
+      <Link to={to} title={book.title} className="flex-shrink-0">
+        <FeedCover
+          book={book}
+          className="h-[66px] w-11 hover:opacity-90 transition-opacity"
+        />
+      </Link>
+      <div className="min-w-0">
+        {body ? (
+          <p className="text-pretty text-sm leading-snug text-stone-600 dark:text-stone-300 line-clamp-3">
+            &ldquo;{body}&rdquo;
+          </p>
+        ) : null}
+        <p
+          className={`text-xs text-stone-400 dark:text-stone-500 ${body ? "mt-1" : ""}`}
+        >
+          {formatDate(at)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // The compact entry for the home page sidebar
 export default function FriendActivityItem({
   item,
@@ -91,20 +128,12 @@ export default function FriendActivityItem({
               />
             ) : null}
           </p>
-          <p className="mt-1 text-pretty text-sm text-stone-600 dark:text-stone-300 line-clamp-2">
-            &ldquo;{item.body}&rdquo;
-          </p>
-          <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
-            {formatDate(item.at)}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Link to={item.work.key} title={item.work.title}>
-              <FeedCover
-                book={item.work}
-                className="h-[66px] w-11 hover:opacity-90 transition-opacity"
-              />
-            </Link>
-          </div>
+          <CoverBeside
+            to={item.work.key}
+            book={item.work}
+            body={item.body}
+            at={item.at}
+          />
         </div>
       </div>
     );
@@ -162,29 +191,35 @@ export default function FriendActivityItem({
         <p className="text-stone-800 dark:text-stone-200 leading-snug">
           {text}
         </p>
-        {item.kind === "note" && item.body ? (
-          <p className="mt-1 text-pretty text-sm text-stone-600 dark:text-stone-300 line-clamp-2">
-            &ldquo;{item.body}&rdquo;
-          </p>
-        ) : null}
-        <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
-          {formatDate(item.at)}
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {books.map((book) => (
-            <Link key={book.id} to={`/books/${book.id}`} title={book.title}>
-              <FeedCover
-                book={book}
-                className="h-[66px] w-11 hover:opacity-90 transition-opacity"
-              />
-            </Link>
-          ))}
-          {more > 0 ? (
-            <span className="self-center text-xs text-stone-400 dark:text-stone-500">
-              +{more}
-            </span>
-          ) : null}
-        </div>
+        {item.kind !== "added" ? (
+          <CoverBeside
+            to={`/books/${item.book.id}`}
+            book={item.book}
+            body={item.kind === "note" ? item.body : null}
+            at={item.at}
+          />
+        ) : (
+          <>
+            <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+              {formatDate(item.at)}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {books.map((book) => (
+                <Link key={book.id} to={`/books/${book.id}`} title={book.title}>
+                  <FeedCover
+                    book={book}
+                    className="h-[66px] w-11 hover:opacity-90 transition-opacity"
+                  />
+                </Link>
+              ))}
+              {more > 0 ? (
+                <span className="self-center text-xs text-stone-400 dark:text-stone-500">
+                  +{more}
+                </span>
+              ) : null}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
