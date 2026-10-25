@@ -60,62 +60,77 @@ const canFavorite = (ids: string[], userId: User["id"]) => ({
 // The header for a shared shelf
 export async function getShelfProfile(userId: User["id"]) {
   const ids = await shelfIds(userId);
-  const [user, pins, loved, lends, mostLent, books] = await Promise.all([
-    prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: {
-        handle: true,
-        bio: true,
-        firstname: true,
-        surname: true,
-        profileEmoji: true,
-      },
-    }),
-    // The books they've pinned, in their order, each with their own
-    // reader note on it, if they've written one
-    prisma.pin.findMany({
-      where: { userId, book: canFavorite(ids, userId) },
-      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-      take: FAVORITES,
-      select: {
-        book: {
-          select: {
-            id: true,
-            title: true,
-            author: true,
-            cover: true,
-            userId: true,
-            readerNotes: { where: { userId }, select: { body: true } },
+  const [user, pins, loved, lovedElsewhere, lends, mostLent, books] =
+    await Promise.all([
+      prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: {
+          handle: true,
+          bio: true,
+          firstname: true,
+          surname: true,
+          profileEmoji: true,
+        },
+      }),
+      // The books they've pinned, in their order, each with their own
+      // reader note on it, if they've written one
+      prisma.pin.findMany({
+        where: { userId, book: canFavorite(ids, userId) },
+        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        take: FAVORITES,
+        select: {
+          book: {
+            select: {
+              id: true,
+              title: true,
+              author: true,
+              cover: true,
+              userId: true,
+              readerNotes: { where: { userId }, select: { body: true } },
+            },
           },
         },
-      },
-    }),
-    // Until they pin some: their hearts, newest first
-    prisma.readerNote.findMany({
-      where: { userId, loved: true, book: canFavorite(ids, userId) },
-      orderBy: { updatedAt: "desc" },
-      take: FAVORITES,
-      select: {
-        book: {
-          select: {
-            id: true,
-            title: true,
-            author: true,
-            cover: true,
-            userId: true,
+      }),
+      // Until they pin some: their hearts, newest first
+      prisma.readerNote.findMany({
+        where: { userId, loved: true, book: canFavorite(ids, userId) },
+        orderBy: { updatedAt: "desc" },
+        take: FAVORITES,
+        select: {
+          updatedAt: true,
+          book: {
+            select: {
+              id: true,
+              title: true,
+              author: true,
+              cover: true,
+              userId: true,
+            },
           },
         },
-      },
-    }),
-    // Every time a book from this shelf has gone out on loan
-    prisma.book.aggregate({ where: onPage(ids), _sum: { lendCount: true } }),
-    prisma.book.findFirst({
-      where: { ...onPage(ids), lendCount: { gt: 0 } },
-      orderBy: [{ lendCount: "desc" }, { createdAt: "asc" }],
-      select: { title: true, lendCount: true },
-    }),
-    prisma.book.count({ where: onPage(ids) }),
-  ]);
+      }),
+      // And hearts on books they read somewhere else
+      prisma.workNote.findMany({
+        where: { userId, loved: true },
+        orderBy: { updatedAt: "desc" },
+        take: FAVORITES,
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          cover: true,
+          updatedAt: true,
+        },
+      }),
+      // Every time a book from this shelf has gone out on loan
+      prisma.book.aggregate({ where: onPage(ids), _sum: { lendCount: true } }),
+      prisma.book.findFirst({
+        where: { ...onPage(ids), lendCount: { gt: 0 } },
+        orderBy: [{ lendCount: "desc" }, { createdAt: "asc" }],
+        select: { title: true, lendCount: true },
+      }),
+      prisma.book.count({ where: onPage(ids) }),
+    ]);
   return {
     handle: user.handle,
     bio: user.bio,
@@ -133,11 +148,26 @@ export async function getShelfProfile(userId: User["id"]) {
             onShelf: ids.includes(ownerId),
             note: readerNotes[0]?.body?.trim() || null,
           }))
-        : loved.map(({ book: { userId: ownerId, ...book } }) => ({
-            ...book,
-            onShelf: ids.includes(ownerId),
-            note: null as string | null,
-          })),
+        : [
+            ...loved.map(
+              ({ updatedAt, book: { userId: ownerId, ...book } }) => ({
+                ...book,
+                updatedAt,
+                onShelf: ids.includes(ownerId),
+              }),
+            ),
+            ...lovedElsewhere.map((work) => ({ ...work, onShelf: false })),
+          ]
+            .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+            .slice(0, FAVORITES)
+            .map(({ id, title, author, cover, onShelf }) => ({
+              id,
+              title,
+              author,
+              cover,
+              onShelf,
+              note: null as string | null,
+            })),
     stats: {
       books,
       timesLent: lends._sum.lendCount ?? 0,

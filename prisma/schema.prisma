@@ -80,6 +80,7 @@ model User {
   readerNotes    ReaderNote[]
   holds          Hold[]
   wantToRead     WantToRead[]
+  workNotes      WorkNote[]
 
   feedback              Feedback[]
   notificationsSent     Notification[] @relation("sender")
@@ -300,4 +301,30 @@ model Feedback {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+// A reader's heart, read mark and note on a book that isn't on their
+// shelf: one they read somewhere else. Keyed by its Open Library work,
+// with enough saved to show it when Open Library doesn't answer. The
+// heart and note are for friends; the read mark is theirs alone.
+model WorkNote {
+  id String @id @default(cuid())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  workKey String
+  title   String
+  author  String
+  cover   String
+
+  loved  Boolean   @default(false)
+  body   String?
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, workKey])
+  @@index([workKey])
 }

@@ -9,8 +9,15 @@ import { shelfIds } from "./household.server";
 // friends (with your note on each, so you can come back and leave one)
 // and your own books you lent out (with what the borrower thought)
 
-const bookFields = { id: true, title: true, author: true, cover: true } as const;
-const person = { select: { id: true, firstname: true, surname: true } } as const;
+const bookFields = {
+  id: true,
+  title: true,
+  author: true,
+  cover: true,
+} as const;
+const person = {
+  select: { id: true, firstname: true, surname: true },
+} as const;
 
 export async function getHistory(userId: User["id"]) {
   const myShelf = await shelfIds(userId);
@@ -25,7 +32,10 @@ export async function getHistory(userId: User["id"]) {
           select: {
             ...bookFields,
             user: person,
-            readerNotes: { where: { userId }, select: { body: true, loved: true } },
+            readerNotes: {
+              where: { userId },
+              select: { body: true, loved: true },
+            },
           },
         },
       },
@@ -48,43 +58,64 @@ export async function getHistory(userId: User["id"]) {
   ]);
 
   const entries = [
-    ...borrowed.map(({ id, borrowedAt, returnedAt, book: { user, readerNotes, ...book } }) => ({
-      id,
-      kind: "borrowed" as const,
-      borrowedAt,
-      returnedAt,
-      book,
-      // Whose it is
-      person: user,
-      note: readerNotes[0] ?? null,
-    })),
-    ...lent.map(({ id, borrowedAt, returnedAt, borrower, book: { readerNotes, ...book } }) => ({
-      id,
-      kind: "lent" as const,
-      borrowedAt,
-      returnedAt,
-      book,
-      // Who had it
-      person: borrower,
-      note: readerNotes.find((note) => note.userId === borrower.id) ?? null,
-    })),
+    ...borrowed.map(
+      ({
+        id,
+        borrowedAt,
+        returnedAt,
+        book: { user, readerNotes, ...book },
+      }) => ({
+        id,
+        kind: "borrowed" as const,
+        borrowedAt,
+        returnedAt,
+        book,
+        // Whose it is
+        person: user,
+        note: readerNotes[0] ?? null,
+      }),
+    ),
+    ...lent.map(
+      ({
+        id,
+        borrowedAt,
+        returnedAt,
+        borrower,
+        book: { readerNotes, ...book },
+      }) => ({
+        id,
+        kind: "lent" as const,
+        borrowedAt,
+        returnedAt,
+        book,
+        // Who had it
+        person: borrower,
+        note: readerNotes.find((note) => note.userId === borrower.id) ?? null,
+      }),
+    ),
   ];
-  return entries.sort((a, b) => b.borrowedAt.getTime() - a.borrowedAt.getTime());
+  return entries.sort(
+    (a, b) => b.borrowedAt.getTime() - a.borrowedAt.getTime(),
+  );
 }
 
 // The numbers on the tabs above your library, want-to-read list and history
 export async function getShelfCounts(userId: User["id"]) {
   const myShelf = await shelfIds(userId);
-  const [stats, want, borrowed, lent] = await Promise.all([
+  const [stats, want, elsewhere, borrowed, lent] = await Promise.all([
     getBookStats(userId, myShelf),
     prisma.wantToRead.count({ where: { userId } }),
+    prisma.workNote.count({ where: { userId } }),
     prisma.lendingHistory.count({ where: { borrowerId: userId } }),
-    prisma.lendingHistory.count({ where: { book: { userId: { in: myShelf } } } }),
+    prisma.lendingHistory.count({
+      where: { book: { userId: { in: myShelf } } },
+    }),
   ]);
   return {
     // As the library counts it: your shelf and what you've borrowed
     library: stats.totalBooks + stats.borrowedBooks,
     want,
+    elsewhere,
     history: borrowed + lent,
   };
 }

@@ -81,6 +81,7 @@ import {
   REQUEST_NOTE_MAX,
   getLoanReply,
 } from "~/models/user.server";
+import { getFriendsWorkNotes } from "~/models/work-note.server";
 import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
 import { roomForFriend } from "~/plan.server";
 import {
@@ -424,6 +425,17 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       getAuthor(book.authorKey),
       getHolds(params.bookId),
     ]);
+  // Friends who read it somewhere else, and said something about it
+  const readElsewhere = book.openLibraryKey
+    ? await getFriendsWorkNotes(
+        userId,
+        book.openLibraryKey,
+        readerNotes.map((note) => note.user.id),
+      )
+    : [];
+  const notes = [...readerNotes, ...readElsewhere].sort(
+    (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
+  );
   // Where you are in line for this book, counting from 1
   const holdIndex = holds.findIndex((hold) => hold.user.id === userId);
 
@@ -444,7 +456,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     isFriend,
     currentUser,
     lendingHistory: lendingHistoryWithFriendStatus,
-    readerNotes,
+    readerNotes: notes,
     myNote: readerNotes.find((note) => note.user.id === userId) ?? null,
     canNote,
     noteMaxLength: NOTE_MAX_LENGTH,
