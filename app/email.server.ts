@@ -571,6 +571,47 @@ export async function sendFeedbackEmail({
   return send({ to: toEmail, ...renderFeedback(details) });
 }
 
+// ---- A note to the admins when someone new signs up ----
+
+export function renderNewSignup({
+  name,
+  email,
+  invitedBy,
+  total,
+}: {
+  name: string;
+  email: string;
+  invitedBy: string | null;
+  total: number;
+}) {
+  const count = `That makes ${total.toLocaleString("en-US")} ${total === 1 ? "account" : "accounts"}.`;
+  const html = layout({
+    preheader: `${name} just joined Stacks.`,
+    content: `
+        ${paragraph(`<strong style="color: ${ink};">${esc(name)}</strong> just created an account with ${esc(email)}.`)}
+        ${invitedBy ? paragraph(`They joined from ${esc(invitedBy)}'s shared shelf.`) : ""}
+        <p style="margin: 0; font-size: 14px; color: ${muted};">${count}</p>
+        ${button(`${APP_URL}/dashboard`, "Open the dashboard")}`,
+    footer: "You get these because you're an admin of Stacks.",
+  });
+  const text = [
+    `${name} just created an account with ${email}.`,
+    invitedBy ? `They joined from ${invitedBy}'s shared shelf.` : null,
+    count,
+    `${APP_URL}/dashboard`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  return { subject: `New sign-up: ${name}`, html, text };
+}
+
+export async function sendNewSignupEmail({
+  toEmail,
+  ...details
+}: Parameters<typeof renderNewSignup>[0] & { toEmail: string }) {
+  return send({ to: toEmail, ...renderNewSignup(details) });
+}
+
 // ---- The link that confirms an address is really theirs ----
 
 export function renderVerification({ toName, token }: { toName: string; token: string }) {

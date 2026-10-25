@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "~/db.server";
+import { sendNewSignupEmail } from "~/email.server";
 
 // Everything the admin dashboard shows. Demo sandboxes are left out of
 // every number: only real accounts (demoGroup null) count.
@@ -342,4 +343,30 @@ export async function getRevenue() {
       pastDue: user.subscriptionStatus === "past_due",
     })),
   };
+}
+
+// Lets the admins know someone new joined: one email each, with the new
+// total. Demo accounts never get here, and demo admins aren't written to.
+export async function notifyAdminsOfSignup(
+  newUser: { id: string; firstname: string; surname: string; email: string },
+  { invitedBy = null, send = sendNewSignupEmail }: {
+    invitedBy?: string | null;
+    send?: (message: Parameters<typeof sendNewSignupEmail>[0]) => Promise<unknown>;
+  } = {},
+) {
+  const [admins, total] = await Promise.all([
+    prisma.user.findMany({
+      where: { isAdmin: true, ...real, id: { not: newUser.id } },
+      select: { email: true },
+    }),
+    prisma.user.count({ where: real }),
+  ]);
+  const name = `${newUser.firstname} ${newUser.surname}`;
+  // One admin's failed email shouldn't stop the others
+  await Promise.all(
+    admins.map((admin) =>
+      send({ toEmail: admin.email, name, email: newUser.email, invitedBy, total }).catch(() => null),
+    ),
+  );
+  return admins.length;
 }
