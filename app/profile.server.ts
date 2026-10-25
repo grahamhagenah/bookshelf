@@ -130,7 +130,10 @@ export async function pinBook(
   if (!book) return { ok: false, error: "That book isn't on your shelf." };
   const existing = await prisma.pin.findUnique({ where: { userId_bookId: { userId, bookId } } });
   if (existing) {
-    await prisma.pin.update({ where: { id: existing.id }, data: { note: tidyNote(note) } });
+    // Pinning it again leaves its line alone unless a new one comes with it
+    if (note !== undefined) {
+      await prisma.pin.update({ where: { id: existing.id }, data: { note: tidyNote(note) } });
+    }
     return { ok: true };
   }
   const pins = await prisma.pin.findMany({ where: { userId }, select: { position: true } });

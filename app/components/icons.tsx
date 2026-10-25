@@ -261,6 +261,27 @@ export function CameraIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
+// A push pin: pinned to the top of a public page
+export function PinIcon({ className = "", size = 24, filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 3.5h6l-1 6 3.5 3.5v1.5h-11V13L10 9.5z" />
+      <path d="M12 14.5V21" />
+    </svg>
+  );
+}
+
+// An eye struck through: kept out of sight
+export function HiddenIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 12s3.5-6.5 9-6.5S21 12 21 12s-3.5 6.5-9 6.5S3 12 3 12z" />
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M4 20L20 4" />
+    </svg>
+  );
+}
+
 export function BookmarkIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

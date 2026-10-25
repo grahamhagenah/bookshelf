@@ -20,7 +20,7 @@ import invariant from "tiny-invariant";
 import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
 import ErrorPage from "~/components/error-page";
-import { LentIcon } from "~/components/icons";
+import { LentIcon, HiddenIcon, PinIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
 import { importCover, isOpenLibraryCover } from "~/covers.server";
@@ -475,7 +475,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     if (!managerIds.includes(book.userId)) throw new Response("Not Found", { status: 404 });
     const note = formData.get("note");
     if (intent === "pin") {
-      const result = await pinBook(userId, book.id, typeof note === "string" ? note : null);
+      const result = await pinBook(userId, book.id, typeof note === "string" ? note : undefined);
       return json(result.ok ? { pinned: true } : { pinError: result.error });
     }
     if (intent === "unpin") await unpinBook(userId, book.id);
@@ -1017,75 +1017,80 @@ function PublicPagePanel({
   const quiet =
     "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
 
+  // Whether anyone can see the page yet, said once, quietly
+  const off = page.on ? null : (
+    <span className="font-normal text-stone-400 dark:text-stone-500"> · page off</span>
+  );
+  const row = "flex items-center gap-2 text-sm";
+  const label = "min-w-0 flex-1 truncate text-stone-700 dark:text-stone-200";
+
   return (
-    <section aria-labelledby="public-page-heading" className="rounded-md border border-stone-200 dark:border-stone-700 p-3">
-      <h2 id="public-page-heading" className="text-xs font-semibold text-stone-500 dark:text-stone-400">
-        Your public page{page.on ? null : <span className="font-normal"> · off for now</span>}
-      </h2>
+    // One line for where it stands and what to do about it, and the
+    // book's line on the page under it once it's pinned
+    <section aria-label="Your public page" className="rounded-md border border-stone-200 dark:border-stone-700 px-3 py-2">
       {hidden ? (
-        <div className="mt-1.5 flex items-center justify-between gap-2 text-sm">
-          <span className="text-stone-600 dark:text-stone-300">Kept off your page</span>
-          <fetcher.Form method="post">
-            <input type="hidden" name="intent" value="showOnPage" />
-            <button type="submit" className={quiet}>
-              Show it
+        <fetcher.Form method="post" className={row}>
+          <HiddenIcon size={14} className="flex-shrink-0 text-stone-400 dark:text-stone-500" />
+          <span className={label}>Off your public page{off}</span>
+          <button type="submit" name="intent" value="showOnPage" className={quiet}>
+            Show
+          </button>
+        </fetcher.Form>
+      ) : pinned ? (
+        <>
+          <fetcher.Form method="post" className={row}>
+            <PinIcon size={14} filled className="flex-shrink-0 text-stone-500 dark:text-stone-400" />
+            <span className={label} title="Pinned to the favorites on your public page">
+              Pinned{off}
+            </span>
+            <button type="submit" name="intent" value="unpin" className={quiet}>
+              Unpin
+            </button>
+            <span aria-hidden="true" className="text-stone-300 dark:text-stone-600">
+              ·
+            </span>
+            <button type="submit" name="intent" value="hideFromPage" className={quiet} title="Keep it off your public page">
+              Hide
             </button>
           </fetcher.Form>
-        </div>
-      ) : pinned ? (
-        <fetcher.Form method="post" className="mt-1.5 space-y-2">
-          <input type="hidden" name="intent" value="pinNote" />
-          <p className="text-sm text-stone-700 dark:text-stone-200">Pinned to your favorites</p>
-          <label htmlFor="pin-note" className="sr-only">
-            A line about it
-          </label>
-          <input
-            id="pin-note"
-            name="note"
-            type="text"
-            value={note}
-            maxLength={PIN_NOTE_MAX}
-            onChange={(event) => setNote(event.target.value)}
-            // Saved when they leave the field, if it changed
-            onBlur={(event) => {
-              if (note.trim() !== (page.note ?? "")) fetcher.submit(event.currentTarget.form);
-            }}
-            placeholder="A line about it (optional)"
-            className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 py-1.5 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
-          />
-        </fetcher.Form>
-      ) : null}
-      {pinned && !hidden ? (
-        // Its own form, so these buttons' intent isn't the note's
-        <fetcher.Form method="post" className="mt-2 flex items-center justify-between gap-2">
-          <button type="submit" name="intent" value="unpin" className={quiet}>
-            Unpin
-          </button>
-          <button type="submit" name="intent" value="hideFromPage" className={quiet}>
-            Keep it off my page
-          </button>
-        </fetcher.Form>
-      ) : null}
-      {hidden || pinned ? null : (
-        <fetcher.Form method="post" className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+          <fetcher.Form method="post" className="mt-1.5">
+            <input type="hidden" name="intent" value="pinNote" />
+            <label htmlFor="pin-note" className="sr-only">
+              A line about it on your page
+            </label>
+            <input
+              id="pin-note"
+              name="note"
+              type="text"
+              value={note}
+              maxLength={PIN_NOTE_MAX}
+              onChange={(event) => setNote(event.target.value)}
+              // Saved when they leave the field, if it changed
+              onBlur={(event) => {
+                if (note.trim() !== (page.note ?? "")) fetcher.submit(event.currentTarget.form);
+              }}
+              placeholder="A line about it (optional)"
+              className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 py-1 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
+            />
+          </fetcher.Form>
+        </>
+      ) : (
+        <fetcher.Form method="post" className={row}>
+          <PinIcon size={14} className="flex-shrink-0 text-stone-400 dark:text-stone-500" />
           <button
             type="submit"
             name="intent"
             value="pin"
             disabled={full}
-            title={full ? `Your page shows ${PIN_MAX}. Unpin one first.` : undefined}
-            className="rounded-md border border-stone-200 dark:border-stone-700 px-2.5 py-1 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            title={full ? `Your page shows ${PIN_MAX}. Unpin one in Settings first.` : undefined}
+            className={`${label} text-left hover:text-stone-950 dark:hover:text-white disabled:cursor-not-allowed disabled:text-stone-400`}
           >
-            Pin to my favorites
+            {full ? `Your page has ${PIN_MAX} pinned` : "Pin to your page"}
+            {off}
           </button>
-          <button type="submit" name="intent" value="hideFromPage" className={quiet}>
-            Keep it off my page
+          <button type="submit" name="intent" value="hideFromPage" className={quiet} title="Keep it off your public page">
+            Hide
           </button>
-          {full ? (
-            <p className="w-full text-xs text-stone-500 dark:text-stone-400">
-              Your page shows {PIN_MAX}. Unpin one in Settings first.
-            </p>
-          ) : null}
         </fetcher.Form>
       )}
       {fetcher.data?.pinError ? (

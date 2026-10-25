@@ -142,3 +142,11 @@ test("the page wears the owner's bookplate color, or the one their name gives", 
   const didnt = await makeUser("Sam");
   expect(["forest", "oxblood", "navy", "ochre", "plum"]).toContain((await getShelfProfile(didnt.id)).color);
 });
+
+test("pinning a pinned book again keeps its line", async () => {
+  const owner = await makeUser("Maya");
+  const book = await makeBook(owner.id, "Dune");
+  await pinBook(owner.id, book.id, "The one I lend most.");
+  await pinBook(owner.id, book.id);
+  expect((await getShelfProfile(owner.id)).favorites.map((b) => b.note)).toEqual(["The one I lend most."]);
+});
