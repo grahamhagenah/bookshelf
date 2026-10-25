@@ -41,7 +41,21 @@ export async function saveProfile(
 const FAVORITES = PIN_MAX;
 
 // What a public page shows of a shelf: none of the books kept off it
-const onPage = (ids: string[]) => ({ userId: { in: ids }, hiddenFromPage: false });
+const onPage = (ids: string[]) => ({
+  userId: { in: ids },
+  hiddenFromPage: false,
+});
+
+// What can be among their favorites: a book from their shelf, or one
+// they've borrowed from a friend, unless whoever owns it keeps it off
+// their own page
+const canFavorite = (ids: string[], userId: User["id"]) => ({
+  hiddenFromPage: false,
+  OR: [
+    { userId: { in: ids } },
+    { lendingHistory: { some: { borrowerId: userId } } },
+  ],
+});
 
 // The header for a shared shelf
 export async function getShelfProfile(userId: User["id"]) {
@@ -49,12 +63,18 @@ export async function getShelfProfile(userId: User["id"]) {
   const [user, pins, loved, lends, mostLent, books] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      select: { handle: true, bio: true, firstname: true, surname: true, profileEmoji: true },
+      select: {
+        handle: true,
+        bio: true,
+        firstname: true,
+        surname: true,
+        profileEmoji: true,
+      },
     }),
     // The books they've pinned, in their order, each with their own
     // reader note on it, if they've written one
     prisma.pin.findMany({
-      where: { userId, book: onPage(ids) },
+      where: { userId, book: canFavorite(ids, userId) },
       orderBy: [{ position: "asc" }, { createdAt: "asc" }],
       take: FAVORITES,
       select: {
@@ -64,17 +84,28 @@ export async function getShelfProfile(userId: User["id"]) {
             title: true,
             author: true,
             cover: true,
+            userId: true,
             readerNotes: { where: { userId }, select: { body: true } },
           },
         },
       },
     }),
-    // Until they pin some: hearts on books from this shelf, newest first
+    // Until they pin some: their hearts, newest first
     prisma.readerNote.findMany({
-      where: { userId, loved: true, book: onPage(ids) },
+      where: { userId, loved: true, book: canFavorite(ids, userId) },
       orderBy: { updatedAt: "desc" },
       take: FAVORITES,
-      select: { book: { select: { id: true, title: true, author: true, cover: true } } },
+      select: {
+        book: {
+          select: {
+            id: true,
+            title: true,
+            author: true,
+            cover: true,
+            userId: true,
+          },
+        },
+      },
     }),
     // Every time a book from this shelf has gone out on loan
     prisma.book.aggregate({ where: onPage(ids), _sum: { lendCount: true } }),
@@ -89,16 +120,30 @@ export async function getShelfProfile(userId: User["id"]) {
     handle: user.handle,
     bio: user.bio,
     // The page's color: their bookplate's, or the one their name gives
-    color: plateColorOf(user.profileEmoji) ?? plateColorFor(user.firstname, user.surname),
+    color:
+      plateColorOf(user.profileEmoji) ??
+      plateColorFor(user.firstname, user.surname),
     pinned: pins.length > 0,
+    // Each says whether it's from this shelf, and so has a page to open,
+    // and never whose it is when it isn't
     favorites:
       pins.length > 0
-        ? pins.map(({ book: { readerNotes, ...book } }) => ({ ...book, note: readerNotes[0]?.body?.trim() || null }))
-        : loved.map((note) => ({ ...note.book, note: null as string | null })),
+        ? pins.map(({ book: { readerNotes, userId: ownerId, ...book } }) => ({
+            ...book,
+            onShelf: ids.includes(ownerId),
+            note: readerNotes[0]?.body?.trim() || null,
+          }))
+        : loved.map(({ book: { userId: ownerId, ...book } }) => ({
+            ...book,
+            onShelf: ids.includes(ownerId),
+            note: null as string | null,
+          })),
     stats: {
       books,
       timesLent: lends._sum.lendCount ?? 0,
-      mostLent: mostLent ? { title: mostLent.title, times: mostLent.lendCount } : null,
+      mostLent: mostLent
+        ? { title: mostLent.title, times: mostLent.lendCount }
+        : null,
     },
   };
 }
@@ -107,6 +152,7 @@ export async function getShelfProfile(userId: User["id"]) {
 
 // Their pins, in order, for Settings, each with their own note on it
 export async function getPins(userId: User["id"]) {
+  const ids = await shelfIds(userId);
   const pins = await prisma.pin.findMany({
     where: { userId },
     orderBy: [{ position: "asc" }, { createdAt: "asc" }],
@@ -119,45 +165,80 @@ export async function getPins(userId: User["id"]) {
           author: true,
           cover: true,
           hiddenFromPage: true,
+          userId: true,
           readerNotes: { where: { userId }, select: { body: true } },
         },
       },
     },
   });
-  return pins.map(({ id, book: { readerNotes, ...book } }) => ({
-    id,
-    note: readerNotes[0]?.body?.trim() || null,
-    book,
-  }));
+  return pins.map(
+    ({ id, book: { readerNotes, userId: ownerId, ...book } }) => ({
+      id,
+      note: readerNotes[0]?.body?.trim() || null,
+      // A friend's book they borrowed; whether it shows is the friend's call
+      borrowed: !ids.includes(ownerId),
+      book,
+    }),
+  );
 }
 
 // Where a book stands on their page, for its own page: pinned or not,
 // how many pins there are, and whether their note on it would show
 export async function getPin(userId: User["id"], bookId: string) {
   const [pin, count, note] = await Promise.all([
-    prisma.pin.findUnique({ where: { userId_bookId: { userId, bookId } }, select: { id: true } }),
+    prisma.pin.findUnique({
+      where: { userId_bookId: { userId, bookId } },
+      select: { id: true },
+    }),
     prisma.pin.count({ where: { userId } }),
-    prisma.readerNote.findUnique({ where: { bookId_userId: { bookId, userId } }, select: { body: true } }),
+    prisma.readerNote.findUnique({
+      where: { bookId_userId: { bookId, userId } },
+      select: { body: true },
+    }),
   ]);
   return { pinned: Boolean(pin), hasNote: Boolean(note?.body?.trim()), count };
 }
 
-// Pins a book from their shelf to the end of their page's favorites.
-// Says why not when the page already has its five.
+// Pins a book from their shelf, or one they've borrowed, to the end of
+// their page's favorites. Says why not when it can't.
 export async function pinBook(
   userId: User["id"],
   bookId: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const ids = await shelfIds(userId);
-  const book = await prisma.book.findFirst({ where: { id: bookId, userId: { in: ids } }, select: { id: true } });
-  if (!book) return { ok: false, error: "That book isn't on your shelf." };
-  const existing = await prisma.pin.findUnique({ where: { userId_bookId: { userId, bookId } } });
+  const book = await prisma.book.findFirst({
+    where: {
+      id: bookId,
+      OR: [
+        { userId: { in: ids } },
+        { lendingHistory: { some: { borrowerId: userId } } },
+      ],
+    },
+    select: { userId: true, hiddenFromPage: true },
+  });
+  if (!book)
+    return {
+      ok: false,
+      error: "Only books from your shelf, or ones you've borrowed.",
+    };
+  if (book.hiddenFromPage && !ids.includes(book.userId)) {
+    return { ok: false, error: "Its owner keeps it off public pages." };
+  }
+  const existing = await prisma.pin.findUnique({
+    where: { userId_bookId: { userId, bookId } },
+  });
   if (existing) return { ok: true };
-  const pins = await prisma.pin.findMany({ where: { userId }, select: { position: true } });
+  const pins = await prisma.pin.findMany({
+    where: { userId },
+    select: { position: true },
+  });
   if (pins.length >= PIN_MAX) {
     return { ok: false, error: `Your page shows ${PIN_MAX}. Unpin one first.` };
   }
-  const position = pins.reduce((max, pin) => Math.max(max, pin.position + 1), 0);
+  const position = pins.reduce(
+    (max, pin) => Math.max(max, pin.position + 1),
+    0,
+  );
   await prisma.pin.create({ data: { userId, bookId, position } });
   return { ok: true };
 }
@@ -167,7 +248,11 @@ export function unpinBook(userId: User["id"], bookId: string) {
 }
 
 // Swaps a pin with its neighbor, earlier or later on the page
-export async function movePin(userId: User["id"], bookId: string, direction: "earlier" | "later") {
+export async function movePin(
+  userId: User["id"],
+  bookId: string,
+  direction: "earlier" | "later",
+) {
   const pins = await prisma.pin.findMany({
     where: { userId },
     orderBy: [{ position: "asc" }, { createdAt: "asc" }],
@@ -179,12 +264,21 @@ export async function movePin(userId: User["id"], bookId: string, direction: "ea
   [pins[at], pins[to]] = [pins[to], pins[at]];
   // Positions written fresh, so old ties can't confuse the order
   await prisma.$transaction(
-    pins.map((pin, index) => prisma.pin.update({ where: { id: pin.id }, data: { position: index } })),
+    pins.map((pin, index) =>
+      prisma.pin.update({ where: { id: pin.id }, data: { position: index } }),
+    ),
   );
 }
 
 // Keeps a book off (or puts it back on) its shelf's public page
-export async function setHiddenFromPage(userId: User["id"], bookId: string, hidden: boolean) {
+export async function setHiddenFromPage(
+  userId: User["id"],
+  bookId: string,
+  hidden: boolean,
+) {
   const ids = await shelfIds(userId);
-  return prisma.book.updateMany({ where: { id: bookId, userId: { in: ids } }, data: { hiddenFromPage: hidden } });
+  return prisma.book.updateMany({
+    where: { id: bookId, userId: { in: ids } },
+    data: { hiddenFromPage: hidden },
+  });
 }

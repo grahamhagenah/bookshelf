@@ -5,7 +5,14 @@ import type {
   SerializeFrom,
 } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Link, useLoaderData, Form, useActionData, useFetcher, useNavigation } from "@remix-run/react";
+import {
+  Link,
+  useLoaderData,
+  Form,
+  useActionData,
+  useFetcher,
+  useNavigation,
+} from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import type { ComponentType } from "react";
 
@@ -105,17 +112,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     plan,
     billing: billingEnabled(),
     upgraded: new URL(request.url).searchParams.has("upgraded"),
-    billingFailed: new URL(request.url).searchParams.get("billing") === "failed",
+    billingFailed:
+      new URL(request.url).searchParams.get("billing") === "failed",
     origin: publicOrigin(request),
     bookStats,
     household: household
       ? {
-          members: household.members.map(({ id, firstname, surname, profileEmoji }) => ({
-            id,
-            firstname,
-            surname,
-            profileEmoji,
-          })),
+          members: household.members.map(
+            ({ id, firstname, surname, profileEmoji }) => ({
+              id,
+              firstname,
+              surname,
+              profileEmoji,
+            }),
+          ),
           inviteUrl: household.inviteToken
             ? `${publicOrigin(request)}/household/join/${household.inviteToken}`
             : null,
@@ -169,7 +179,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const bookId = formData.get("bookId");
     if (typeof bookId !== "string") return null;
     if (intent === "unpinFromPage") await unpinBook(userId, bookId);
-    else await movePin(userId, bookId, formData.get("direction") === "earlier" ? "earlier" : "later");
+    else
+      await movePin(
+        userId,
+        bookId,
+        formData.get("direction") === "earlier" ? "earlier" : "later",
+      );
     return null;
   }
 
@@ -237,9 +252,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // The two email switches: borrow requests, and the weekly roundup
-  if (intent === "toggleEmailNotifications" || intent === "toggleWeeklyDigest") {
+  if (
+    intent === "toggleEmailNotifications" ||
+    intent === "toggleWeeklyDigest"
+  ) {
     const requests = intent === "toggleEmailNotifications";
-    const on = formData.get(requests ? "emailNotifications" : "weeklyDigest") === "true";
+    const on =
+      formData.get(requests ? "emailNotifications" : "weeklyDigest") === "true";
     await setEmailSetting(userId, requests ? "requests" : "weekly", on);
     return json({
       errors: null,
@@ -267,7 +286,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (intent === "updateProfileEmoji") {
     const emoji = formData.get("emoji");
     await updateUser(userId, {
-      profileEmoji: isAvatarIcon(emoji) || plateColorOf(emoji) ? String(emoji) : null,
+      profileEmoji:
+        isAvatarIcon(emoji) || plateColorOf(emoji) ? String(emoji) : null,
     });
     return json({
       errors: null,
@@ -439,7 +459,9 @@ export default function Account() {
   const surnameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
 
-  const shareUrl = user?.shareToken ? `${data.origin}/share/${user.shareToken}` : null;
+  const shareUrl = user?.shareToken
+    ? `${data.origin}/share/${user.shareToken}`
+    : null;
 
   useEffect(() => {
     if (actionData?.errors?.firstname) {
@@ -454,7 +476,11 @@ export default function Account() {
   const stats = [
     { label: "Friends", value: user?.following.length ?? 0, Icon: GroupIcon },
     { label: "Books", value: data.bookStats.totalBooks, Icon: BookIcon },
-    { label: "Borrowed", value: data.bookStats.borrowedBooks, Icon: BorrowedIcon },
+    {
+      label: "Borrowed",
+      value: data.bookStats.borrowedBooks,
+      Icon: BorrowedIcon,
+    },
     { label: "Lent out", value: data.bookStats.lentBooks, Icon: LentIcon },
   ];
 
@@ -489,7 +515,9 @@ export default function Account() {
                 <Icon size={12} />
                 {label}
               </dt>
-              <dd className="text-xl font-semibold text-stone-900 dark:text-stone-100">{value}</dd>
+              <dd className="text-xl font-semibold text-stone-900 dark:text-stone-100">
+                {value}
+              </dd>
             </div>
           ))}
         </dl>
@@ -500,7 +528,11 @@ export default function Account() {
         description="Your name and picture are what friends see beside your books and notes."
       >
         <Form method="post" className="grid gap-4 sm:grid-cols-2">
-          <Field label="First name" id="firstname" error={actionData?.errors?.firstname}>
+          <Field
+            label="First name"
+            id="firstname"
+            error={actionData?.errors?.firstname}
+          >
             <input
               ref={firstnameRef}
               id="firstname"
@@ -513,7 +545,11 @@ export default function Account() {
               className={inputClass}
             />
           </Field>
-          <Field label="Last name" id="surname" error={actionData?.errors?.surname}>
+          <Field
+            label="Last name"
+            id="surname"
+            error={actionData?.errors?.surname}
+          >
             <input
               ref={surnameRef}
               id="surname"
@@ -558,39 +594,43 @@ export default function Account() {
         </Form>
 
         <div className="mt-8 border-t border-stone-100 dark:border-stone-800 pt-6">
-          <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">Picture</h3>
+          <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">
+            Picture
+          </h3>
           <Form method="post" className="mt-3 space-y-3">
             <input type="hidden" name="intent" value="updateProfileEmoji" />
             {/* Your initials as a bookplate, in a color of your choosing */}
             <div className="flex flex-wrap gap-2">
-              {(Object.keys(PLATE_COLORS) as (keyof typeof PLATE_COLORS)[]).map((color) => {
-                const chosen = plateColorOf(user?.profileEmoji) === color;
-                return (
-                  <button
-                    key={color}
-                    type="submit"
-                    name="emoji"
-                    value={`${PLATE}${color}`}
-                    aria-label={`Use the ${color} bookplate`}
-                    aria-pressed={chosen}
-                    // The same 44px as the icons below, so the two rows line
-                    // up; the ring sits outside, off the plate by a gap
-                    className={`rounded-full ring-offset-2 ring-offset-white dark:ring-offset-stone-950 transition-shadow ${
-                      chosen
-                        ? "ring-2 ring-forest-600 dark:ring-forest-400"
-                        : "ring-1 ring-transparent hover:ring-stone-300 dark:hover:ring-stone-600"
-                    }`}
-                  >
-                    <Bookplate
-                      firstname={user?.firstname}
-                      surname={user?.surname}
-                      color={color}
-                      box="h-11 w-11 text-sm"
-                      framed
-                    />
-                  </button>
-                );
-              })}
+              {(Object.keys(PLATE_COLORS) as (keyof typeof PLATE_COLORS)[]).map(
+                (color) => {
+                  const chosen = plateColorOf(user?.profileEmoji) === color;
+                  return (
+                    <button
+                      key={color}
+                      type="submit"
+                      name="emoji"
+                      value={`${PLATE}${color}`}
+                      aria-label={`Use the ${color} bookplate`}
+                      aria-pressed={chosen}
+                      // The same 44px as the icons below, so the two rows line
+                      // up; the ring sits outside, off the plate by a gap
+                      className={`rounded-full ring-offset-2 ring-offset-white dark:ring-offset-stone-950 transition-shadow ${
+                        chosen
+                          ? "ring-2 ring-forest-600 dark:ring-forest-400"
+                          : "ring-1 ring-transparent hover:ring-stone-300 dark:hover:ring-stone-600"
+                      }`}
+                    >
+                      <Bookplate
+                        firstname={user?.firstname}
+                        surname={user?.surname}
+                        color={color}
+                        box="h-11 w-11 text-sm"
+                        framed
+                      />
+                    </button>
+                  );
+                },
+              )}
             </div>
             <div className="flex flex-wrap gap-2">
               {AVATAR_ICONS.map((icon) => {
@@ -624,8 +664,12 @@ export default function Account() {
         description={`Free holds ${FREE_LIMITS.books} books and ${FREE_LIMITS.friends} friends. Stacks Plus has no limits.`}
       >
         {data.billingFailed ? (
-          <p role="alert" className="mb-3 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200">
-            Stripe couldn&apos;t open just now. Nothing was charged; try again in a minute.
+          <p
+            role="alert"
+            className="mb-3 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200"
+          >
+            Stripe couldn&apos;t open just now. Nothing was charged; try again
+            in a minute.
           </p>
         ) : null}
         <PlanPanel
@@ -738,8 +782,8 @@ export default function Account() {
               Share a shelf
             </h3>
             <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-              Live with someone whose books are your books? You both see and lend everything,
-              and keep your own notes, hearts and friends.
+              Live with someone whose books are your books? You both see and
+              lend everything, and keep your own notes, hearts and friends.
             </p>
             <div className="mt-3">
               <HouseholdPanel household={household} />
@@ -753,17 +797,25 @@ export default function Account() {
         description="Bring your shelf over from Goodreads or StoryGraph in one go, or take a copy of it with you."
       >
         <div className="flex flex-wrap gap-3">
-          <Link to="/import" className={`inline-flex items-center gap-2 ${quietButton}`}>
+          <Link
+            to="/import"
+            className={`inline-flex items-center gap-2 ${quietButton}`}
+          >
             <ImportIcon size={16} />
             Import from a file
           </Link>
-          <a href="/export" download className={`inline-flex items-center gap-2 ${quietButton}`}>
+          <a
+            href="/export"
+            download
+            className={`inline-flex items-center gap-2 ${quietButton}`}
+          >
             <ExportIcon size={16} />
             Export as CSV
           </a>
         </div>
         <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
-          Uses Goodreads&apos; columns, so Goodreads, StoryGraph and Stacks can all read it back.
+          Uses Goodreads&apos; columns, so Goodreads, StoryGraph and Stacks can
+          all read it back.
         </p>
       </Section>
 
@@ -781,7 +833,9 @@ export default function Account() {
                 name="currentPassword"
                 type="password"
                 autoComplete="current-password"
-                aria-invalid={actionData?.passwordErrors?.currentPassword ? true : undefined}
+                aria-invalid={
+                  actionData?.passwordErrors?.currentPassword ? true : undefined
+                }
                 aria-describedby="currentPassword-error"
                 className={inputClass}
               />
@@ -797,7 +851,9 @@ export default function Account() {
                 name="newPassword"
                 type="password"
                 autoComplete="new-password"
-                aria-invalid={actionData?.passwordErrors?.newPassword ? true : undefined}
+                aria-invalid={
+                  actionData?.passwordErrors?.newPassword ? true : undefined
+                }
                 aria-describedby="newPassword-error"
                 className={inputClass}
               />
@@ -812,7 +868,9 @@ export default function Account() {
                 name="confirmPassword"
                 type="password"
                 autoComplete="new-password"
-                aria-invalid={actionData?.passwordErrors?.confirmPassword ? true : undefined}
+                aria-invalid={
+                  actionData?.passwordErrors?.confirmPassword ? true : undefined
+                }
                 aria-describedby="confirmPassword-error"
                 className={inputClass}
               />
@@ -821,7 +879,9 @@ export default function Account() {
               <button type="submit" className={primaryButton}>
                 Change password
               </button>
-              {actionData?.passwordSuccess ? <Saved>Password changed</Saved> : null}
+              {actionData?.passwordSuccess ? (
+                <Saved>Password changed</Saved>
+              ) : null}
             </div>
           </Form>
         </Section>
@@ -857,9 +917,14 @@ function Section({
 }) {
   return (
     // Clear of the sticky header when linked to
-    <section id={id} className="grid scroll-mt-24 gap-5 md:grid-cols-3 md:gap-10">
+    <section
+      id={id}
+      className="grid scroll-mt-24 gap-5 md:grid-cols-3 md:gap-10"
+    >
       <div>
-        <h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">{title}</h2>
+        <h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+          {title}
+        </h2>
         <p className="mt-1 text-pretty text-sm text-stone-500 dark:text-stone-400">
           {description}
         </p>
@@ -884,12 +949,18 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <label htmlFor={id} className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-stone-700 dark:text-stone-300"
+      >
         {label}
       </label>
       <div className="mt-1">{children}</div>
       {error ? (
-        <p className="mt-1 text-sm text-rose-700 dark:text-rose-400" id={`${id}-error`}>
+        <p
+          className="mt-1 text-sm text-rose-700 dark:text-rose-400"
+          id={`${id}-error`}
+        >
           {error}
         </p>
       ) : null}
@@ -899,8 +970,14 @@ function Field({
 
 function Saved({ children }: { children: React.ReactNode }) {
   return (
-    <span role="status" className="inline-flex items-center gap-1 text-sm text-stone-500 dark:text-stone-400">
-      <CheckCircleIcon size={16} className="text-forest-600 dark:text-forest-400" />
+    <span
+      role="status"
+      className="inline-flex items-center gap-1 text-sm text-stone-500 dark:text-stone-400"
+    >
+      <CheckCircleIcon
+        size={16}
+        className="text-forest-600 dark:text-forest-400"
+      />
       {children}
     </span>
   );
@@ -949,7 +1026,9 @@ function Toggle({
           <span className="block text-sm font-medium text-stone-900 dark:text-stone-100">
             {label}
           </span>
-          <span className="block text-sm text-stone-500 dark:text-stone-400">{hint}</span>
+          <span className="block text-sm text-stone-500 dark:text-stone-400">
+            {hint}
+          </span>
         </span>
       </button>
     </fetcher.Form>
@@ -976,7 +1055,10 @@ function Choice({
   const id = `choice-${name}`;
   return (
     <div className="rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3">
-      <p id={id} className="text-sm font-medium text-stone-900 dark:text-stone-100">
+      <p
+        id={id}
+        className="text-sm font-medium text-stone-900 dark:text-stone-100"
+      >
         {label}
       </p>
       <p className="text-sm text-stone-500 dark:text-stone-400">{hint}</p>
@@ -1000,7 +1082,10 @@ function Choice({
               value={option}
               checked={current === option}
               onChange={() =>
-                fetcher.submit({ intent: "appearance", [name]: option }, { method: "post" })
+                fetcher.submit(
+                  { intent: "appearance", [name]: option },
+                  { method: "post" },
+                )
               }
               className="sr-only"
             />
@@ -1035,7 +1120,12 @@ function HouseholdPanel({
   household,
 }: {
   household: {
-    members: { id: string; firstname: string; surname: string; profileEmoji: string | null }[];
+    members: {
+      id: string;
+      firstname: string;
+      surname: string;
+      profileEmoji: string | null;
+    }[];
     inviteUrl: string | null;
   } | null;
 }) {
@@ -1044,9 +1134,13 @@ function HouseholdPanel({
   const invite = household?.inviteUrl ? (
     <div className="space-y-2">
       <p className="text-sm text-stone-600 dark:text-stone-300">
-        Send this to the person you share with. They&apos;ll join your shelf when they open it.
+        Send this to the person you share with. They&apos;ll join your shelf
+        when they open it.
       </p>
-      <CopyField value={household.inviteUrl} label="Invite link for your shelf" />
+      <CopyField
+        value={household.inviteUrl}
+        label="Invite link for your shelf"
+      />
       <Form method="post">
         <input type="hidden" name="intent" value="householdRevoke" />
         <button type="submit" className={textButton}>
@@ -1058,7 +1152,9 @@ function HouseholdPanel({
     // In the shared shelf's card, under a line saying what it's for, like
     // the choices on a loan
     <Form method="post">
-      <p className="text-sm text-stone-500 dark:text-stone-400">Anyone else live with you?</p>
+      <p className="text-sm text-stone-500 dark:text-stone-400">
+        Anyone else live with you?
+      </p>
       <input type="hidden" name="intent" value="householdInvite" />
       <button type="submit" className={`mt-2 ${quietButton}`}>
         Invite them to this shelf
@@ -1082,28 +1178,47 @@ function HouseholdPanel({
       <div className="flex items-center gap-3 p-4">
         <ul aria-hidden="true" className="flex flex-shrink-0 -space-x-2.5">
           {household.members.map((member) => (
-            <li key={member.id} className="rounded-full ring-2 ring-white dark:ring-stone-950">
-              <Avatar firstname={member.firstname} surname={member.surname} icon={member.profileEmoji} />
+            <li
+              key={member.id}
+              className="rounded-full ring-2 ring-white dark:ring-stone-950"
+            >
+              <Avatar
+                firstname={member.firstname}
+                surname={member.surname}
+                icon={member.profileEmoji}
+              />
             </li>
           ))}
         </ul>
         <div className="min-w-0">
           <p className="text-base text-stone-900 dark:text-stone-100">
-            <span className="font-semibold">{joinNames(household.members.map((member) => member.firstname))}</span>{" "}
+            <span className="font-semibold">
+              {joinNames(household.members.map((member) => member.firstname))}
+            </span>{" "}
             share this shelf
           </p>
           <p className="truncate text-stone-500 dark:text-stone-400">
-            {joinNames(household.members.map((member) => `${member.firstname} ${member.surname}`))}
+            {joinNames(
+              household.members.map(
+                (member) => `${member.firstname} ${member.surname}`,
+              ),
+            )}
           </p>
         </div>
       </div>
-      <div className="border-t border-stone-100 dark:border-stone-800 p-4">{invite}</div>
+      <div className="border-t border-stone-100 dark:border-stone-800 p-4">
+        {invite}
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-stone-100 dark:border-stone-800 px-4 py-3">
         <p className="text-stone-500 dark:text-stone-400">Moving out?</p>
         <Form
           method="post"
           onSubmit={(event) => {
-            if (!confirm("Leave this shelf? Your own books come with you; theirs stay with them.")) {
+            if (
+              !confirm(
+                "Leave this shelf? Your own books come with you; theirs stay with them.",
+              )
+            ) {
               event.preventDefault();
             }
           }}
@@ -1122,7 +1237,11 @@ function HouseholdPanel({
 }
 
 const longDate = (date: string | Date) =>
-  new Date(date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  new Date(date).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 
 // How full the free plan is and what Plus costs, or where their Plus comes
 // from and how to manage it
@@ -1159,14 +1278,19 @@ function PlanPanel({
     return (
       <div className="rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3">
         {upgraded ? (
-          <p className="mb-2 text-sm font-medium text-forest-700 dark:text-forest-400" role="status">
+          <p
+            className="mb-2 text-sm font-medium text-forest-700 dark:text-forest-400"
+            role="status"
+          >
             Welcome to Stacks Plus. Thank you!
           </p>
         ) : null}
         <p className="font-medium text-stone-900 dark:text-stone-100">
           {demo ? "The demo has no limits" : "You're on Stacks Plus"}
         </p>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{detail}</p>
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+          {detail}
+        </p>
         {billing && plan.canManage && !demo ? (
           <BillingButton intent="portal" className={`mt-3 ${quietButton}`}>
             Manage subscription
@@ -1184,12 +1308,19 @@ function PlanPanel({
           used={plan.books}
           limit={FREE_LIMITS.books}
         />
-        <Meter label="Friends" used={plan.friends} limit={FREE_LIMITS.friends} />
+        <Meter
+          label="Friends"
+          used={plan.friends}
+          limit={FREE_LIMITS.friends}
+        />
       </div>
       <div className="rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3">
-        <p className="font-medium text-stone-900 dark:text-stone-100">Stacks Plus</p>
+        <p className="font-medium text-stone-900 dark:text-stone-100">
+          Stacks Plus
+        </p>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
-          Unlimited books and friends, for everyone on your shelf. Cancel any time.
+          Unlimited books and friends, for everyone on your shelf. Cancel any
+          time.
         </p>
         {demo ? (
           <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
@@ -1197,23 +1328,40 @@ function PlanPanel({
           </p>
         ) : billing ? (
           <div className="mt-3 flex flex-wrap gap-2">
-            <BillingButton intent="checkout" interval="monthly" className={primaryButton}>
+            <BillingButton
+              intent="checkout"
+              interval="monthly"
+              className={primaryButton}
+            >
               ${PLUS_PRICES.monthly} a month
             </BillingButton>
-            <BillingButton intent="checkout" interval="yearly" className={quietButton}>
+            <BillingButton
+              intent="checkout"
+              interval="yearly"
+              className={quietButton}
+            >
               ${PLUS_PRICES.yearly} a year
             </BillingButton>
           </div>
         ) : (
           <div className="mt-3 flex flex-wrap items-center gap-3">
-            <button type="button" disabled className={`${primaryButton} disabled:opacity-60`}>
+            <button
+              type="button"
+              disabled
+              className={`${primaryButton} disabled:opacity-60`}
+            >
               Upgrade
             </button>
-            <span className="text-sm text-stone-500 dark:text-stone-400">Coming soon</span>
+            <span className="text-sm text-stone-500 dark:text-stone-400">
+              Coming soon
+            </span>
           </div>
         )}
         {plan.canManage ? (
-          <BillingButton intent="portal" className="mt-3 text-sm text-stone-500 dark:text-stone-400 underline underline-offset-2">
+          <BillingButton
+            intent="portal"
+            className="mt-3 text-sm text-stone-500 dark:text-stone-400 underline underline-offset-2"
+          >
             Billing history
           </BillingButton>
         ) : null}
@@ -1242,9 +1390,16 @@ function BillingButton({
     return () => window.removeEventListener("pageshow", reset);
   }, []);
   return (
-    <Form method="post" action="/api/billing" reloadDocument onSubmit={() => setGoing(true)}>
+    <Form
+      method="post"
+      action="/api/billing"
+      reloadDocument
+      onSubmit={() => setGoing(true)}
+    >
       <input type="hidden" name="intent" value={intent} />
-      {interval ? <input type="hidden" name="interval" value={interval} /> : null}
+      {interval ? (
+        <input type="hidden" name="interval" value={interval} />
+      ) : null}
       <button type="submit" className={className}>
         {going ? "Opening Stripe…" : children}
       </button>
@@ -1252,14 +1407,25 @@ function BillingButton({
   );
 }
 
-function Meter({ label, used, limit }: { label: string; used: number; limit: number }) {
+function Meter({
+  label,
+  used,
+  limit,
+}: {
+  label: string;
+  used: number;
+  limit: number;
+}) {
   const full = used >= limit;
   return (
     <div className="rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3">
       <div className="flex items-baseline justify-between gap-3 text-sm">
         <span className="text-stone-700 dark:text-stone-300">{label}</span>
         <span className="tabular-nums text-stone-500 dark:text-stone-400">
-          <span className="font-medium text-stone-900 dark:text-stone-100">{used}</span> of {limit}
+          <span className="font-medium text-stone-900 dark:text-stone-100">
+            {used}
+          </span>{" "}
+          of {limit}
         </span>
       </div>
       <div
@@ -1285,7 +1451,8 @@ function DeleteAccount({ plus, shared }: { plus: boolean; shared: boolean }) {
   const [armed, setArmed] = useState(false);
   const navigation = useNavigation();
   const deleting =
-    navigation.state !== "idle" && navigation.formData?.get("intent") === "deleteAccount";
+    navigation.state !== "idle" &&
+    navigation.formData?.get("intent") === "deleteAccount";
 
   useEffect(() => {
     if (!armed) return;
@@ -1296,9 +1463,14 @@ function DeleteAccount({ plus, shared }: { plus: boolean; shared: boolean }) {
   return (
     <div className="space-y-3 text-sm text-stone-600 dark:text-stone-300">
       <p>
-        This deletes your account with your books, notes, hearts, friendships and lending history.
-        {shared ? " The books you added leave the shared shelf; everyone else keeps theirs." : ""}
-        {plus ? " Your Stacks Plus subscription is canceled, so you won't be billed again." : ""}{" "}
+        This deletes your account with your books, notes, hearts, friendships
+        and lending history.
+        {shared
+          ? " The books you added leave the shared shelf; everyone else keeps theirs."
+          : ""}
+        {plus
+          ? " Your Stacks Plus subscription is canceled, so you won't be billed again."
+          : ""}{" "}
         It can&apos;t be undone, so you might{" "}
         <a href="/export" download className="underline underline-offset-2">
           download your shelf
@@ -1326,7 +1498,11 @@ function DeleteAccount({ plus, shared }: { plus: boolean; shared: boolean }) {
               : "text-red-700 ring-red-200 hover:bg-red-50 dark:text-red-400 dark:ring-red-900 dark:hover:bg-red-950/40"
           }`}
         >
-          {deleting ? "Deleting…" : armed ? "Click again to delete" : "Delete my account"}
+          {deleting
+            ? "Deleting…"
+            : armed
+              ? "Click again to delete"
+              : "Delete my account"}
         </button>
       </Form>
     </div>
@@ -1339,7 +1515,15 @@ function DeleteAccount({ plus, shared }: { plus: boolean; shared: boolean }) {
 interface PinItem {
   id: string;
   note: string | null;
-  book: { id: string; title: string; author: string; cover: string; hiddenFromPage: boolean };
+  // A friend's book, borrowed, rather than one from their shelf
+  borrowed: boolean;
+  book: {
+    id: string;
+    title: string;
+    author: string;
+    cover: string;
+    hiddenFromPage: boolean;
+  };
 }
 
 // The books pinned to the top of the public page: their order here is the
@@ -1358,36 +1542,69 @@ function PinnedFavorites({ pins }: { pins: PinItem[] }) {
       </p>
       <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
         {pins.length === 0
-          ? "Pin books from their pages; your note on each shows with it. Until you do, your page shows the books you've hearted."
+          ? "Pin books from their pages, yours or ones you've borrowed; your note on each shows with it. Until you do, your page shows the books you've hearted."
           : "In the order they appear, each with your note on it if you've written one. Pin more from a book's page."}
       </p>
       {pins.length > 0 ? (
         <ol className="mt-2 divide-y divide-stone-100 dark:divide-stone-800 rounded-md border border-stone-200 dark:border-stone-700">
           {pins.map((pin, index) => (
             <li key={pin.id} className="flex items-center gap-3 px-3 py-2">
-              <BookCover cover={pin.book.cover} title={pin.book.title} compact className="h-12 w-8 flex-shrink-0" />
+              <BookCover
+                cover={pin.book.cover}
+                title={pin.book.title}
+                compact
+                className="h-12 w-8 flex-shrink-0"
+              />
               <div className="min-w-0 flex-1">
-                <Link to={`/books/${pin.book.id}`} className="block truncate text-sm font-medium text-stone-900 dark:text-stone-100 hover:underline underline-offset-2">
+                <Link
+                  to={`/books/${pin.book.id}`}
+                  className="block truncate text-sm font-medium text-stone-900 dark:text-stone-100 hover:underline underline-offset-2"
+                >
                   {pin.book.title}
                 </Link>
                 <p className="truncate text-xs text-stone-500 dark:text-stone-400">
-                  {pin.book.hiddenFromPage ? "Kept off your page, so not shown" : pin.note ? `“${pin.note}”` : pin.book.author}
+                  {pin.book.hiddenFromPage
+                    ? pin.borrowed
+                      ? "Its owner keeps it off public pages, so not shown"
+                      : "Kept off your page, so not shown"
+                    : pin.note
+                      ? `“${pin.note}”`
+                      : pin.borrowed
+                        ? `Borrowed · ${pin.book.author}`
+                        : pin.book.author}
                 </p>
               </div>
               <fetcher.Form method="post" className="flex items-center gap-0.5">
                 <input type="hidden" name="intent" value="movePin" />
                 <input type="hidden" name="bookId" value={pin.book.id} />
-                <button type="submit" name="direction" value="earlier" disabled={index === 0} aria-label={`Move ${pin.book.title} earlier`} className={arrow}>
+                <button
+                  type="submit"
+                  name="direction"
+                  value="earlier"
+                  disabled={index === 0}
+                  aria-label={`Move ${pin.book.title} earlier`}
+                  className={arrow}
+                >
                   ↑
                 </button>
-                <button type="submit" name="direction" value="later" disabled={index === pins.length - 1} aria-label={`Move ${pin.book.title} later`} className={arrow}>
+                <button
+                  type="submit"
+                  name="direction"
+                  value="later"
+                  disabled={index === pins.length - 1}
+                  aria-label={`Move ${pin.book.title} later`}
+                  className={arrow}
+                >
                   ↓
                 </button>
               </fetcher.Form>
               <fetcher.Form method="post">
                 <input type="hidden" name="intent" value="unpinFromPage" />
                 <input type="hidden" name="bookId" value={pin.book.id} />
-                <button type="submit" className="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 underline-offset-2 hover:underline">
+                <button
+                  type="submit"
+                  className="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 underline-offset-2 hover:underline"
+                >
                   Unpin
                 </button>
               </fetcher.Form>
@@ -1412,7 +1629,10 @@ function PublicPage({
   shareUrl: string | null;
   pins: PinItem[];
 }) {
-  const fetcher = useFetcher<{ profileSaved?: boolean; profileError?: string }>();
+  const fetcher = useFetcher<{
+    profileSaved?: boolean;
+    profileError?: string;
+  }>();
   const [bioText, setBioText] = useState(bio ?? "");
   const [copied, setCopied] = useState(false);
   const saving = fetcher.state !== "idle";
@@ -1420,7 +1640,11 @@ function PublicPage({
   const saved = fetcher.state === "idle" && fetcher.data?.profileSaved;
   const host = origin.replace(/^https?:\/\//, "");
 
-  const heading = <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">Public page</h3>;
+  const heading = (
+    <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">
+      Public page
+    </h3>
+  );
 
   if (!shareUrl) {
     return (
@@ -1455,18 +1679,23 @@ function PublicPage({
     <div>
       {heading}
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-        Anyone with the link can see your shelf without signing in, apart from any book you
-        keep off it from that book&apos;s page.
+        Anyone with the link can see your shelf without signing in, apart from
+        any book you keep off it from that book&apos;s page.
       </p>
       <fetcher.Form method="post" className="mt-3 grid grid-cols-1 gap-3">
         <input type="hidden" name="intent" value="saveProfile" />
         <div>
-          <label htmlFor="handle" className="block text-sm text-stone-700 dark:text-stone-300">
+          <label
+            htmlFor="handle"
+            className="block text-sm text-stone-700 dark:text-stone-300"
+          >
             Address
           </label>
           <div className="mt-1 flex gap-2">
             <div className="flex min-w-0 flex-1 items-center rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 focus-within:border-stone-400 dark:focus-within:border-stone-500">
-              <span className="select-none pl-3 text-stone-400 dark:text-stone-500">{host}/@</span>
+              <span className="select-none pl-3 text-stone-400 dark:text-stone-500">
+                {host}/@
+              </span>
               <input
                 id="handle"
                 name="handle"
@@ -1489,15 +1718,26 @@ function PublicPage({
             >
               {/* Both labels share one cell, so the button keeps its width */}
               <span className="grid">
-                <span className={`col-start-1 row-start-1 ${copied ? "invisible" : ""}`}>Copy</span>
-                <span className={`col-start-1 row-start-1 ${copied ? "" : "invisible"}`}>Copied</span>
+                <span
+                  className={`col-start-1 row-start-1 ${copied ? "invisible" : ""}`}
+                >
+                  Copy
+                </span>
+                <span
+                  className={`col-start-1 row-start-1 ${copied ? "" : "invisible"}`}
+                >
+                  Copied
+                </span>
               </span>
             </button>
           </div>
           {handle ? null : (
-            <p id="handle-hint" className="mt-1.5 text-sm text-stone-500 dark:text-stone-400">
-              Pick a handle for a link that&apos;s easy to share. Until then, Copy gives you a
-              longer link that works just the same.
+            <p
+              id="handle-hint"
+              className="mt-1.5 text-sm text-stone-500 dark:text-stone-400"
+            >
+              Pick a handle for a link that&apos;s easy to share. Until then,
+              Copy gives you a longer link that works just the same.
             </p>
           )}
         </div>
@@ -1519,14 +1759,20 @@ function PublicPage({
           />
         </label>
         <div className="flex flex-wrap items-center gap-3">
-          <button type="submit" disabled={saving} className={`${quietButton} disabled:opacity-60`}>
+          <button
+            type="submit"
+            disabled={saving}
+            className={`${quietButton} disabled:opacity-60`}
+          >
             {saving ? "Saving…" : "Save"}
           </button>
           <span role="status" className="text-sm">
             {error ? (
               <span className="text-red-700 dark:text-red-400">{error}</span>
             ) : saved ? (
-              <span className="text-forest-700 dark:text-forest-400">Saved</span>
+              <span className="text-forest-700 dark:text-forest-400">
+                Saved
+              </span>
             ) : null}
           </span>
         </div>

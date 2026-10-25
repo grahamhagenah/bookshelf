@@ -55,7 +55,12 @@ import {
   getReaderNotes,
   saveReaderNote,
 } from "~/models/note.server";
-import { ensureBookDetails, fillInBookOnce, getAuthor, tidyAuthor } from "~/models/openlibrary.server";
+import {
+  ensureBookDetails,
+  fillInBookOnce,
+  getAuthor,
+  tidyAuthor,
+} from "~/models/openlibrary.server";
 import {
   getUserById,
   getUserEmailById,
@@ -71,7 +76,12 @@ import {
 } from "~/models/user.server";
 import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
 import { roomForFriend } from "~/plan.server";
-import { getPin, pinBook, setHiddenFromPage, unpinBook } from "~/profile.server";
+import {
+  getPin,
+  pinBook,
+  setHiddenFromPage,
+  unpinBook,
+} from "~/profile.server";
 import type { CoversResponse } from "~/routes/api.covers";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
@@ -90,7 +100,9 @@ const monthDay = (date: string | Date) => {
   return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    ...(d.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}),
+    ...(d.getFullYear() !== new Date().getFullYear()
+      ? { year: "numeric" }
+      : {}),
   });
 };
 
@@ -152,14 +164,20 @@ function AboutAuthor({
     <section className="mt-8">
       <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
         About the author
-        {years ? <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">{years}</span> : null}
+        {years ? (
+          <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">
+            {years}
+          </span>
+        ) : null}
       </h2>
       {author.bio ? (
         <p
           ref={bioRef}
           id={`bio-${author.key}`}
           className={`summary max-w-prose text-pretty leading-relaxed text-stone-700 dark:text-stone-300 ${
-            clipped ? "line-clamp-3 [mask-image:linear-gradient(to_bottom,black_45%,transparent)]" : ""
+            clipped
+              ? "line-clamp-3 [mask-image:linear-gradient(to_bottom,black_45%,transparent)]"
+              : ""
           }`}
         >
           {author.bio}
@@ -193,7 +211,12 @@ function AboutAuthor({
       {!clipped ? (
         <p className="mt-2 flex gap-4 text-sm">
           {author.wikipedia ? (
-            <a href={author.wikipedia} target="_blank" rel="noopener noreferrer" className={linkClass}>
+            <a
+              href={author.wikipedia}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={linkClass}
+            >
               Wikipedia
             </a>
           ) : null}
@@ -358,7 +381,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   // starts the look-up, shows what it has, and reloads when they're in.
   const fillingIn = !book.detailsFetchedAt;
   if (fillingIn) void fillInBookOnce(book.id);
-  const [subjects, authorName] = await Promise.all([tidySubjects(book), tidyAuthor(book)]);
+  const [subjects, authorName] = await Promise.all([
+    tidySubjects(book),
+    tidyAuthor(book),
+  ]);
   if (subjects !== undefined) book = { ...book, subjects };
   if (authorName !== undefined) book = { ...book, author: authorName };
 
@@ -383,13 +409,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   // Fetch lending history and reader notes for the book
-  const [lendingHistory, readerNotes, canNote, author, holds] = await Promise.all([
-    getLendingHistory(params.bookId),
-    getReaderNotes(params.bookId),
-    canLeaveNote(userId, book),
-    getAuthor(book.authorKey),
-    getHolds(params.bookId),
-  ]);
+  const [lendingHistory, readerNotes, canNote, author, holds] =
+    await Promise.all([
+      getLendingHistory(params.bookId),
+      getReaderNotes(params.bookId),
+      canLeaveNote(userId, book),
+      getAuthor(book.authorKey),
+      getHolds(params.bookId),
+    ]);
   // Where you are in line for this book, counting from 1
   const holdIndex = holds.findIndex((hold) => hold.user.id === userId);
 
@@ -428,14 +455,17 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     // What the lender said when they said yes, for the one borrowing it
     loanReply: isBorrower ? await getLoanReply(book.id, userId) : null,
     fillingIn,
-    // Where this book stands on the owner's public page
-    page: isOwner
-      ? {
-          ...(await getPin(userId, book.id)),
-          hidden: book.hiddenFromPage,
-          on: Boolean(currentUser?.shareToken),
-        }
-      : null,
+    // Where this book stands on the viewer's public page: theirs to pin
+    // or keep off, or, once they've borrowed it, theirs to pin
+    page:
+      isOwner || lendingHistory.some((entry) => entry.borrower.id === userId)
+        ? {
+            ...(await getPin(userId, book.id)),
+            own: isOwner,
+            hidden: book.hiddenFromPage,
+            on: Boolean(currentUser?.shareToken),
+          }
+        : null,
   });
 };
 
@@ -463,9 +493,20 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   // Anyone sharing the shelf the book is on can manage it
   const managerIds = await shelfIds(userId);
 
-  // The owner's public page: pin it, or keep it off
-  if (intent === "pin" || intent === "unpin" || intent === "hideFromPage" || intent === "showOnPage") {
-    if (!managerIds.includes(book.userId)) throw new Response("Not Found", { status: 404 });
+  // Your public page: pin it (pinBook checks it's yours or borrowed), or,
+  // when it's from your shelf, keep it off
+  if (
+    intent === "pin" ||
+    intent === "unpin" ||
+    intent === "hideFromPage" ||
+    intent === "showOnPage"
+  ) {
+    if (
+      (intent === "hideFromPage" || intent === "showOnPage") &&
+      !managerIds.includes(book.userId)
+    ) {
+      throw new Response("Not Found", { status: 404 });
+    }
     if (intent === "pin") {
       const result = await pinBook(userId, book.id);
       return json(result.ok ? { pinned: true } : { pinError: result.error });
@@ -479,7 +520,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   if (intent === "toggleRead") {
     if (!(await canLeaveNote(userId, book))) {
-      throw new Response("Only readers of this copy can mark it read", { status: 403 });
+      throw new Response("Only readers of this copy can mark it read", {
+        status: 403,
+      });
     }
     await setRead(book.id, userId, formData.get("read") === "true");
     return json({ ok: true });
@@ -550,7 +593,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
 
     const senderName = `${currentUser.firstname} ${currentUser.surname}`;
-    const message = String(formData.get("message") ?? "").trim().slice(0, REQUEST_NOTE_MAX) || null;
+    const message =
+      String(formData.get("message") ?? "")
+        .trim()
+        .slice(0, REQUEST_NOTE_MAX) || null;
     const bookRequest = await createBookRequestNotification(
       userId,
       book.userId,
@@ -565,7 +611,11 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
     // Send email notification to book owner (if they have email notifications enabled)
     const bookOwner = await getUserEmailById(book.userId);
-    if (bookOwner && bookOwner.emailNotifications && bookOwner.emailVerifiedAt) {
+    if (
+      bookOwner &&
+      bookOwner.emailNotifications &&
+      bookOwner.emailVerifiedAt
+    ) {
       await sendBookRequestEmail({
         toEmail: bookOwner.email,
         toUserId: book.userId,
@@ -620,7 +670,12 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       throw new Response("Not a friend", { status: 400 });
     }
 
-    await lendToFriend(book.id, userId, friendId, loanWeeks(formData.get("weeks")));
+    await lendToFriend(
+      book.id,
+      userId,
+      friendId,
+      loanWeeks(formData.get("weeks")),
+    );
     await createBookApprovedNotification(
       userId,
       friendId,
@@ -672,7 +727,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
     // No new requests once the free plan's friends are all taken
     if (!(await roomForFriend(userId))) {
-      return json({ friendRequestSent: false, friendLimit: LIMIT_MESSAGES.friends }, { status: 403 });
+      return json(
+        { friendRequestSent: false, friendLimit: LIMIT_MESSAGES.friends },
+        { status: 403 },
+      );
     }
 
     const currentUser = await getUserById(userId);
@@ -740,8 +798,16 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
     const ownerName = `${currentUser.firstname} ${currentUser.surname}`;
     // "Overdue" only once the due date has passed; before that it's a nudge
-    const overdue = book.dueDate !== null && book.dueDate.getTime() < Date.now();
-    await createReminderNotification(userId, book.borrowerId, ownerName, book.id, book.title, overdue);
+    const overdue =
+      book.dueDate !== null && book.dueDate.getTime() < Date.now();
+    await createReminderNotification(
+      userId,
+      book.borrowerId,
+      ownerName,
+      book.id,
+      book.title,
+      overdue,
+    );
 
     return json({ reminderSent: true, message: "Reminder sent!" });
   }
@@ -800,7 +866,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         openLibraryKey: bookData.key || null,
         body: description,
       });
-      await ensureBookDetails({ id: book.id, detailsFetchedAt: null }, { force: true });
+      await ensureBookDetails(
+        { id: book.id, detailsFetchedAt: null },
+        { force: true },
+      );
       return json({
         refreshed: true,
         message: "Book info updated from Open Library!",
@@ -831,7 +900,11 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     // A cover pasted from another site is fetched once and kept here, so
     // it's served like any other and doesn't depend on that site
     let coverToSave = typeof cover === "string" && cover ? cover : undefined;
-    if (coverToSave && /^https?:/.test(coverToSave) && !isOpenLibraryCover(coverToSave)) {
+    if (
+      coverToSave &&
+      /^https?:/.test(coverToSave) &&
+      !isOpenLibraryCover(coverToSave)
+    ) {
       const local = await importCover(coverToSave);
       if (!local) {
         return json({
@@ -927,7 +1000,11 @@ function LendToFriend({
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className={`w-full ${secondaryButton}`}>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={`w-full ${secondaryButton}`}
+      >
         Lend to a friend
       </button>
     );
@@ -937,7 +1014,10 @@ function LendToFriend({
     return (
       <p className="text-sm text-stone-500 dark:text-stone-400">
         Add friends to lend them books.{" "}
-        <Link to="/friends" className="text-stone-800 dark:text-stone-200 underline underline-offset-2">
+        <Link
+          to="/friends"
+          className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+        >
           Find friends
         </Link>
       </p>
@@ -949,7 +1029,12 @@ function LendToFriend({
       <input type="hidden" name="intent" value="lendTo" />
       <label className="block text-xs font-medium text-stone-500 dark:text-stone-400">
         Lend to
-        <select name="friendId" required className={`mt-1 ${field}`} defaultValue="">
+        <select
+          name="friendId"
+          required
+          className={`mt-1 ${field}`}
+          defaultValue=""
+        >
           <option value="" disabled>
             Choose a friend
           </option>
@@ -962,7 +1047,11 @@ function LendToFriend({
       </label>
       <label className="block text-xs font-medium text-stone-500 dark:text-stone-400">
         For
-        <select name="weeks" defaultValue={loanChoices.defaultWeeks} className={`mt-1 ${field}`}>
+        <select
+          name="weeks"
+          defaultValue={loanChoices.defaultWeeks}
+          className={`mt-1 ${field}`}
+        >
           {loanChoices.weeks.map((weeks) => (
             <option key={weeks} value={weeks}>
               {weeks} {weeks === 1 ? "week" : "weeks"}
@@ -978,7 +1067,11 @@ function LendToFriend({
         >
           {lending ? "Lending…" : "Lend it"}
         </button>
-        <button type="button" onClick={() => setOpen(false)} className={secondaryButton}>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className={secondaryButton}
+        >
           Cancel
         </button>
       </div>
@@ -1021,7 +1114,9 @@ function BookFacts({ data }: { data: BookData }) {
 
 // "2 days", "3 weeks": how long someone's been in line
 function waitedFor(since: string) {
-  const days = Math.floor((Date.now() - new Date(since).getTime()) / 86_400_000);
+  const days = Math.floor(
+    (Date.now() - new Date(since).getTime()) / 86_400_000,
+  );
   if (days < 1) return "today";
   if (days < 14) return `${days} ${days === 1 ? "day" : "days"}`;
   return `${Math.floor(days / 7)} weeks`;
@@ -1038,7 +1133,9 @@ function WaitingLine({ data }: { data: BookData }) {
     >
       <p className="flex items-baseline justify-between border-b border-stone-100 dark:border-stone-800 px-3 py-2 font-medium text-stone-700 dark:text-stone-300">
         In line for it
-        <span className="font-normal text-stone-400 dark:text-stone-500">{waiting.length}</span>
+        <span className="font-normal text-stone-400 dark:text-stone-500">
+          {waiting.length}
+        </span>
       </p>
       <ol className="space-y-2 px-3 py-2.5">
         {waiting.map((person, index) => (
@@ -1087,7 +1184,9 @@ function CoverPicker({
   selected: string;
   onPick: (url: string) => void;
 }) {
-  const fetcher = useFetcher<{ covers: CoversResponse; failed?: boolean }>({ key: `covers-${bookId}` });
+  const fetcher = useFetcher<{ covers: CoversResponse; failed?: boolean }>({
+    key: `covers-${bookId}`,
+  });
   const covers = fetcher.data?.covers;
   const failed = fetcher.data?.failed === true;
   const loading = fetcher.state !== "idle";
@@ -1102,7 +1201,11 @@ function CoverPicker({
           onClick={() => fetcher.load(`/api/covers?bookId=${bookId}`)}
           className="text-stone-700 dark:text-stone-200 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline disabled:opacity-60"
         >
-          {loading ? "Looking on Open Library, which can take a few seconds…" : failed ? "Try again" : "Or pick a cover from Open Library"}
+          {loading
+            ? "Looking on Open Library, which can take a few seconds…"
+            : failed
+              ? "Try again"
+              : "Or pick a cover from Open Library"}
         </button>
       </p>
     );
@@ -1115,7 +1218,10 @@ function CoverPicker({
     );
   }
   return (
-    <ul className="mt-3 flex flex-wrap gap-2" aria-label="Covers on Open Library">
+    <ul
+      className="mt-3 flex flex-wrap gap-2"
+      aria-label="Covers on Open Library"
+    >
       {covers.map((cover) => {
         const picked = selected === cover.full;
         return (
@@ -1130,7 +1236,12 @@ function CoverPicker({
                   : "ring-1 ring-stone-900/10 dark:ring-white/10 hover:ring-stone-400"
               }`}
             >
-              <img src={cover.thumb} alt="" loading="lazy" className="h-full w-full object-cover" />
+              <img
+                src={cover.thumb}
+                alt=""
+                loading="lazy"
+                className="h-full w-full object-cover"
+              />
             </button>
           </li>
         );
@@ -1150,7 +1261,9 @@ function LoanCard({ data }: { data: BookData }) {
   if (!borrower) return null;
 
   const due = data.book.dueDate ? new Date(data.book.dueDate) : null;
-  const daysLeft = due ? Math.ceil((due.getTime() - Date.now()) / 86_400_000) : null;
+  const daysLeft = due
+    ? Math.ceil((due.getTime() - Date.now()) / 86_400_000)
+    : null;
   const overdue = daysLeft !== null && daysLeft < 0;
   const status =
     daysLeft === null
@@ -1173,7 +1286,9 @@ function LoanCard({ data }: { data: BookData }) {
   const name = borrower.firstname;
   const label = "text-sm text-stone-500 dark:text-stone-400";
   const chip = `flex-shrink-0 rounded-full bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 text-xs ${
-    overdue ? "font-semibold text-stone-900 dark:text-stone-100" : "text-stone-500 dark:text-stone-400"
+    overdue
+      ? "font-semibold text-stone-900 dark:text-stone-100"
+      : "text-stone-500 dark:text-stone-400"
   }`;
   const button =
     "rounded-md border border-stone-200 dark:border-stone-700 px-2 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
@@ -1204,16 +1319,24 @@ function LoanCard({ data }: { data: BookData }) {
           </p>
           <p className="text-stone-500 dark:text-stone-400">
             {[
-              data.book.borrowedAt ? `Since ${monthDay(data.book.borrowedAt)}` : null,
+              data.book.borrowedAt
+                ? `Since ${monthDay(data.book.borrowedAt)}`
+                : null,
               due ? `due ${monthDay(due)}` : null,
             ]
               .filter(Boolean)
               .join(" · ")}
           </p>
           {/* On phones the status goes under the dates, leaving the name room */}
-          {status ? <span className={`mt-2 inline-flex sm:hidden ${chip}`}>{status}</span> : null}
+          {status ? (
+            <span className={`mt-2 inline-flex sm:hidden ${chip}`}>
+              {status}
+            </span>
+          ) : null}
         </div>
-        {status ? <span className={`hidden sm:inline-flex ${chip}`}>{status}</span> : null}
+        {status ? (
+          <span className={`hidden sm:inline-flex ${chip}`}>{status}</span>
+        ) : null}
       </div>
 
       {/* Two unrelated choices side by side, so a line between them */}
@@ -1237,12 +1360,21 @@ function LoanCard({ data }: { data: BookData }) {
               </button>
             ))}
           </extend.Form>
-          <p role="status" className="mt-2 min-h-4 text-xs text-stone-500 dark:text-stone-400">
-            {extended && due ? `Now due ${monthDay(due)}. ${name} has been told.` : ""}
+          <p
+            role="status"
+            className="mt-2 min-h-4 text-xs text-stone-500 dark:text-stone-400"
+          >
+            {extended && due
+              ? `Now due ${monthDay(due)}. ${name} has been told.`
+              : ""}
           </p>
         </div>
         <div className="sm:pl-5">
-          <p className={label}>{overdue ? `Ask ${name} to bring it back` : `Remind ${name} it's due`}</p>
+          <p className={label}>
+            {overdue
+              ? `Ask ${name} to bring it back`
+              : `Remind ${name} it's due`}
+          </p>
           <reminder.Form method="post" className="mt-2">
             <input type="hidden" name="intent" value="sendReminder" />
             <button
@@ -1251,18 +1383,27 @@ function LoanCard({ data }: { data: BookData }) {
               // The one thing to do on a loan, so it's the green button
               className={`w-full ${reminderSent ? quietLabel : primaryButton} py-1.5 disabled:cursor-default`}
             >
-              {reminderSent ? "Reminder sent" : sendingReminder ? "Sending…" : "Send a reminder"}
+              {reminderSent
+                ? "Reminder sent"
+                : sendingReminder
+                  ? "Sending…"
+                  : "Send a reminder"}
             </button>
           </reminder.Form>
         </div>
       </div>
 
-      <div className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 ${divider}`}>
-        <p className="text-stone-500 dark:text-stone-400">Got it back in person?</p>
+      <div
+        className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 ${divider}`}
+      >
+        <p className="text-stone-500 dark:text-stone-400">
+          Got it back in person?
+        </p>
         <returned.Form
           method="post"
           onSubmit={(event) => {
-            if (!confirm(`Mark ${data.book.title} as returned?`)) event.preventDefault();
+            if (!confirm(`Mark ${data.book.title} as returned?`))
+              event.preventDefault();
           }}
         >
           <input type="hidden" name="intent" value="markReturned" />
@@ -1299,7 +1440,13 @@ function CurrentLoan({ data }: { data: BookData }) {
 // Everyone who has had this copy, newest first, down to the day it
 // joined the owner's shelf
 function LendingHistory({ data }: { data: BookData }) {
-  const { book, currentUser, lendingHistory: entries, isOwner, isFriend } = data;
+  const {
+    book,
+    currentUser,
+    lendingHistory: entries,
+    isOwner,
+    isFriend,
+  } = data;
   const owner = book.user;
   const ownerPerson = book.userId === currentUser?.id ? currentUser : owner;
   const lendCount = book.lendCount;
@@ -1326,19 +1473,26 @@ function LendingHistory({ data }: { data: BookData }) {
       <h2 className="mb-2 text-lg font-semibold text-stone-900 dark:text-stone-100">
         Lending history
         <span className="ml-2 text-sm font-normal text-stone-400 dark:text-stone-500">
-          {lendCount === 0 ? "not lent yet" : `lent ${lendCount} ${lendCount === 1 ? "time" : "times"}`}
+          {lendCount === 0
+            ? "not lent yet"
+            : `lent ${lendCount} ${lendCount === 1 ? "time" : "times"}`}
         </span>
       </h2>
       <ul className="space-y-3">
         {entries.map((entry) => {
-          if (!entry.returnedAt && isOwner && book.borrower?.id === entry.borrower.id) {
+          if (
+            !entry.returnedAt &&
+            isOwner &&
+            book.borrower?.id === entry.borrower.id
+          ) {
             return (
               <li key={entry.id}>
                 <LoanCard data={data} />
               </li>
             );
           }
-          const person = entry.isCurrentUser && currentUser ? currentUser : entry.borrower;
+          const person =
+            entry.isCurrentUser && currentUser ? currentUser : entry.borrower;
           const name = `${entry.borrower.firstname} ${entry.borrower.surname}`;
           return (
             <li
@@ -1378,7 +1532,8 @@ function LendingHistory({ data }: { data: BookData }) {
                     `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
                   ) : (
                     <>
-                      Since {monthDay(entry.borrowedAt)} · <CurrentLoan data={data} />
+                      Since {monthDay(entry.borrowedAt)} ·{" "}
+                      <CurrentLoan data={data} />
                     </>
                   )}
                 </p>
@@ -1400,10 +1555,13 @@ function LendingHistory({ data }: { data: BookData }) {
                   ? "You"
                   : isOwner
                     ? `${ownerPerson.firstname} ${ownerPerson.surname}`
-                    : ownerLink(`${ownerPerson.firstname} ${ownerPerson.surname}`)}
+                    : ownerLink(
+                        `${ownerPerson.firstname} ${ownerPerson.surname}`,
+                      )}
               </p>
               <p className="text-sm text-stone-500 dark:text-stone-400">
-                Added to {isOwner ? "your" : "their"} shelf · {monthDay(book.createdAt)}
+                Added to {isOwner ? "your" : "their"} shelf ·{" "}
+                {monthDay(book.createdAt)}
               </p>
             </div>
           </li>
@@ -1421,8 +1579,8 @@ export default function BookDetailsPage() {
     friendRequestSent?: boolean;
     friendLimit?: string;
     reminderSent?: boolean;
-  // The pasted cover link couldn't be fetched
-  coverError?: string;
+    // The pasted cover link couldn't be fetched
+    coverError?: string;
     edited?: boolean;
     message?: string;
   } | null;
@@ -1452,7 +1610,8 @@ export default function BookDetailsPage() {
       .then((response) => (response.ok ? response.json() : { done: false }))
       .then((result: { done?: boolean }) => {
         // Still on this book: show what was found
-        if (mounted.current && askedFor.current === id && result.done) revalidate();
+        if (mounted.current && askedFor.current === id && result.done)
+          revalidate();
       })
       .catch(() => undefined)
       .finally(() => {
@@ -1536,10 +1695,17 @@ export default function BookDetailsPage() {
               src={data.book.cover}
               title={data.book.title}
               author={data.book.author}
-              onAddCover={data.isOwner && !isEditing ? () => setIsEditing(true) : undefined}
+              onAddCover={
+                data.isOwner && !isEditing
+                  ? () => setIsEditing(true)
+                  : undefined
+              }
               // Saving a cover pasted from another site downloads it first,
               // which takes a few seconds
-              fetching={Boolean(isSaving && navigation.formData?.get("cover") !== data.book.cover)}
+              fetching={Boolean(
+                isSaving &&
+                navigation.formData?.get("cover") !== data.book.cover,
+              )}
             />
             {!isEditing ? (
               <div className="md:hidden min-w-0 flex-1 [overflow-wrap:anywhere]">
@@ -1555,7 +1721,10 @@ export default function BookDetailsPage() {
               href="#lending"
               className="flex w-full items-center justify-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-600 dark:text-stone-300 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
             >
-              <LentIcon size={14} className="text-stone-400 dark:text-stone-500" />
+              <LentIcon
+                size={14}
+                className="text-stone-400 dark:text-stone-500"
+              />
               Lent to {data.book.borrower.firstname}
             </a>
           ) : null}
@@ -1638,7 +1807,10 @@ export default function BookDetailsPage() {
               {actionData?.friendLimit ? (
                 <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
                   {actionData.friendLimit}{" "}
-                  <Link to={UPGRADE_PATH} className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2">
+                  <Link
+                    to={UPGRADE_PATH}
+                    className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2"
+                  >
                     See Stacks Plus
                   </Link>
                 </p>
@@ -1648,7 +1820,9 @@ export default function BookDetailsPage() {
           {/* What the lender said when they agreed: where, when */}
           {data.isBorrower && data.loanReply?.message ? (
             <figure className="rounded-md border border-stone-200 dark:border-stone-700 px-3 py-2.5 text-sm">
-              <blockquote className="italic text-stone-700 dark:text-stone-200">“{data.loanReply.message}”</blockquote>
+              <blockquote className="italic text-stone-700 dark:text-stone-200">
+                “{data.loanReply.message}”
+              </blockquote>
               <figcaption className="mt-1 text-xs text-stone-500 dark:text-stone-400">
                 {data.loanReply.senderName.split(" ")[0]}, when they said yes
               </figcaption>
@@ -1659,7 +1833,9 @@ export default function BookDetailsPage() {
             <Form method="post">
               <input type="hidden" name="intent" value="return" />
               <button type="submit" className={`w-full ${secondaryButton}`}>
-                {data.book.user ? `Return book to ${data.book.user.firstname}` : "Return book"}
+                {data.book.user
+                  ? `Return book to ${data.book.user.firstname}`
+                  : "Return book"}
               </button>
             </Form>
           ) : null}
@@ -1675,125 +1851,133 @@ export default function BookDetailsPage() {
               <Form method="post" className="space-y-5">
                 <input type="hidden" name="intent" value="edit" />
 
-              <div>
-                <label htmlFor="title" className={labelClass}>
-                  Title
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  defaultValue={data.book.title}
-                  className={inputClass}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="author" className={labelClass}>
-                  Author
-                </label>
-                <input
-                  type="text"
-                  id="author"
-                  name="author"
-                  defaultValue={data.book.author}
-                  className={inputClass}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="body" className={labelClass}>
-                  Description
-                </label>
-                <textarea
-                  id="body"
-                  name="body"
-                  rows={5}
-                  defaultValue={data.book.body}
-                  className={`${inputClass} leading-relaxed`}
-                />
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_2fr] gap-4">
                 <div>
-                  <label htmlFor="datePublished" className={labelClass}>
-                    Year
+                  <label htmlFor="title" className={labelClass}>
+                    Title
                   </label>
                   <input
                     type="text"
-                    id="datePublished"
-                    name="datePublished"
-                    defaultValue={data.book.datePublished || ""}
-                    placeholder="1984"
-                    inputMode="numeric"
+                    id="title"
+                    name="title"
+                    defaultValue={data.book.title}
                     className={inputClass}
+                    required
                   />
                 </div>
                 <div>
-                  <label htmlFor="pageCount" className={labelClass}>
-                    Pages
-                  </label>
-                  <input
-                    type="number"
-                    id="pageCount"
-                    name="pageCount"
-                    defaultValue={data.book.pageCount || ""}
-                    className={inputClass}
-                  />
-                </div>
-                <div className="col-span-2 sm:col-span-1">
-                  <label htmlFor="publisher" className={labelClass}>
-                    Publisher
+                  <label htmlFor="author" className={labelClass}>
+                    Author
                   </label>
                   <input
                     type="text"
-                    id="publisher"
-                    name="publisher"
-                    defaultValue={data.book.publisher || ""}
+                    id="author"
+                    name="author"
+                    defaultValue={data.book.author}
                     className={inputClass}
+                    required
                   />
                 </div>
-              </div>
-              <div>
-                <label htmlFor="subjects" className={labelClass}>
-                  Subjects
-                </label>
-                <input
-                  type="text"
-                  id="subjects"
-                  name="subjects"
-                  defaultValue={data.book.subjects || ""}
-                  placeholder="Fiction, Adventure, Classic"
-                  className={inputClass}
-                />
-                <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
-                  Separate with commas.
-                </p>
-              </div>
-              <div>
-                <label htmlFor="cover" className={labelClass}>
-                  Cover image URL
-                </label>
-                <input
-                  type="url"
-                  id="cover"
-                  name="cover"
-                  value={cover}
-                  onChange={(event) => setCover(event.target.value)}
-                  placeholder="https://covers.openlibrary.org/..."
-                  className={inputClass}
-                />
-                <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
-                  An image link from Open Library, Amazon, Goodreads, Google Books, Bookshop.org,
-                  Wikipedia or the Internet Archive, under 5 MB. It&apos;s copied here when you
-                  save, and the preview on the left updates then.
-                </p>
-                {actionData?.coverError ? (
-                  <p role="alert" className="mt-1.5 text-sm text-red-700 dark:text-red-400">
-                    {actionData.coverError}
+                <div>
+                  <label htmlFor="body" className={labelClass}>
+                    Description
+                  </label>
+                  <textarea
+                    id="body"
+                    name="body"
+                    rows={5}
+                    defaultValue={data.book.body}
+                    className={`${inputClass} leading-relaxed`}
+                  />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_2fr] gap-4">
+                  <div>
+                    <label htmlFor="datePublished" className={labelClass}>
+                      Year
+                    </label>
+                    <input
+                      type="text"
+                      id="datePublished"
+                      name="datePublished"
+                      defaultValue={data.book.datePublished || ""}
+                      placeholder="1984"
+                      inputMode="numeric"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="pageCount" className={labelClass}>
+                      Pages
+                    </label>
+                    <input
+                      type="number"
+                      id="pageCount"
+                      name="pageCount"
+                      defaultValue={data.book.pageCount || ""}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="col-span-2 sm:col-span-1">
+                    <label htmlFor="publisher" className={labelClass}>
+                      Publisher
+                    </label>
+                    <input
+                      type="text"
+                      id="publisher"
+                      name="publisher"
+                      defaultValue={data.book.publisher || ""}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="subjects" className={labelClass}>
+                    Subjects
+                  </label>
+                  <input
+                    type="text"
+                    id="subjects"
+                    name="subjects"
+                    defaultValue={data.book.subjects || ""}
+                    placeholder="Fiction, Adventure, Classic"
+                    className={inputClass}
+                  />
+                  <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
+                    Separate with commas.
                   </p>
-                ) : null}
-                <CoverPicker bookId={data.book.id} selected={cover} onPick={setCover} />
-              </div>
+                </div>
+                <div>
+                  <label htmlFor="cover" className={labelClass}>
+                    Cover image URL
+                  </label>
+                  <input
+                    type="url"
+                    id="cover"
+                    name="cover"
+                    value={cover}
+                    onChange={(event) => setCover(event.target.value)}
+                    placeholder="https://covers.openlibrary.org/..."
+                    className={inputClass}
+                  />
+                  <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
+                    An image link from Open Library, Amazon, Goodreads, Google
+                    Books, Bookshop.org, Wikipedia or the Internet Archive,
+                    under 5 MB. It&apos;s copied here when you save, and the
+                    preview on the left updates then.
+                  </p>
+                  {actionData?.coverError ? (
+                    <p
+                      role="alert"
+                      className="mt-1.5 text-sm text-red-700 dark:text-red-400"
+                    >
+                      {actionData.coverError}
+                    </p>
+                  ) : null}
+                  <CoverPicker
+                    bookId={data.book.id}
+                    selected={cover}
+                    onPick={setCover}
+                  />
+                </div>
 
                 <div className="flex items-center gap-2 pt-2">
                   <button
@@ -1850,7 +2034,8 @@ export default function BookDetailsPage() {
                         >
                           Fix it on Open Library
                         </a>
-                        , then refresh. That fixes it for everyone who adds this book after you.
+                        , then refresh. That fixes it for everyone who adds this
+                        book after you.
                       </p>
                     ) : null}
                     {refreshResult ? (
@@ -1884,7 +2069,9 @@ export default function BookDetailsPage() {
                     method="post"
                     className="flex-shrink-0"
                     onSubmit={(event) => {
-                      if (!confirm(`Delete ${data.book.title} from your shelf?`)) {
+                      if (
+                        !confirm(`Delete ${data.book.title} from your shelf?`)
+                      ) {
                         event.preventDefault();
                       }
                     }}
@@ -1905,7 +2092,11 @@ export default function BookDetailsPage() {
             <>
               {/* Room on the right for "Edit details or cover", so a long
                   title wraps before it reaches the button */}
-              <div className={`hidden md:block ${data.isOwner ? "md:pr-40" : ""}`}>{heading}</div>
+              <div
+                className={`hidden md:block ${data.isOwner ? "md:pr-40" : ""}`}
+              >
+                {heading}
+              </div>
 
               {cleanSubjects(data.book.subjects).length > 0 ? (
                 <div className="md:mt-4 flex flex-wrap items-center gap-1.5">
@@ -1935,7 +2126,10 @@ export default function BookDetailsPage() {
           )}
 
           {!isEditing && lookingUp ? (
-            <p role="status" className="mt-6 text-sm text-stone-400 dark:text-stone-500 motion-safe:animate-pulse">
+            <p
+              role="status"
+              className="mt-6 text-sm text-stone-400 dark:text-stone-500 motion-safe:animate-pulse"
+            >
               Looking up more about this book on Open Library…
             </p>
           ) : null}
@@ -1961,7 +2155,11 @@ export default function BookDetailsPage() {
                 ) : data.isOwner ? (
                   <>
                     No description yet.{" "}
-                    <button type="button" onClick={() => setIsEditing(true)} className={gapLink}>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(true)}
+                      className={gapLink}
+                    >
                       Add one
                     </button>
                     , or refresh from Open Library.
@@ -1973,7 +2171,9 @@ export default function BookDetailsPage() {
             </div>
           ) : null}
 
-          {!isEditing && data.author ? <AboutAuthor author={data.author} /> : null}
+          {!isEditing && data.author ? (
+            <AboutAuthor author={data.author} />
+          ) : null}
 
           {!isEditing ? (
             <ReaderNotes

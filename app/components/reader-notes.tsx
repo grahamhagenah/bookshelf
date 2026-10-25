@@ -123,6 +123,9 @@ export interface PageStanding {
   pinned: boolean;
   hasNote: boolean;
   count: number;
+  // From their own shelf, rather than borrowed from a friend
+  own: boolean;
+  // Kept off public pages (by its owner, when it's a friend's)
   hidden: boolean;
   on: boolean;
 }
@@ -159,7 +162,9 @@ function PinToggle({ page }: { page: PageStanding }) {
         disabled={full || off}
         title={
           off
-            ? "It's kept off your public page. Show it there first."
+            ? page.own
+              ? "It's kept off your public page. Show it there first."
+              : "Its owner keeps it off public pages."
             : full
               ? `Your public page shows ${PIN_MAX}. Unpin one in Settings first.`
               : pinned
@@ -197,6 +202,28 @@ function PageLine({ page }: { page: PageStanding }) {
   const { fetcher, pinned, hidden } = usePageStanding(page);
   const link =
     "underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100";
+  // A friend's book: whether it's shown at all is theirs to say, so
+  // there's only something to say once it's pinned, or can't be
+  if (!page.own) {
+    if (!pinned && !hidden) return null;
+    return (
+      <p className="mb-4 text-xs text-stone-500 dark:text-stone-400">
+        {hidden
+          ? pinned
+            ? "Pinned, but its owner keeps it off public pages, so it isn't shown"
+            : "Its owner keeps it off public pages"
+          : page.hasNote
+            ? "Pinned to your public page, with your note. Who lent it isn't shown"
+            : "Pinned to your public page. Leave a note to show with it"}
+        {page.on ? null : " (yours is off for now)"}.
+        {fetcher.data?.pinError ? (
+          <span role="alert" className="ml-1.5 text-red-700 dark:text-red-400">
+            {fetcher.data.pinError}
+          </span>
+        ) : null}
+      </p>
+    );
+  }
   return (
     <fetcher.Form
       method="post"
