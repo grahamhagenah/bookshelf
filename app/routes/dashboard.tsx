@@ -918,7 +918,10 @@ function Feedback({ feedback }: { feedback: Data["feedback"] }) {
 }
 
 function FeedbackItem({ item }: { item: Data["feedback"][number] }) {
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<{ ok?: boolean; error?: string }>();
+  // Delete asks on the page rather than with confirm(), which Safari can
+  // silently stop showing; it then answers "cancel" and nothing happens
+  const [confirming, setConfirming] = useState(false);
   const deleting = fetcher.formData?.get("intent") === "deleteFeedback";
   const done =
     fetcher.formData?.get("intent") === "feedbackDone"
@@ -959,24 +962,39 @@ function FeedbackItem({ item }: { item: Data["feedback"][number] }) {
             {done ? "Reopen" : "Dismiss"}
           </button>
         </fetcher.Form>
-        <fetcher.Form
-          method="post"
-          onSubmit={(event) => {
-            if (!confirm("Delete this feedback? It can't be brought back.")) {
-              event.preventDefault();
-            }
-          }}
-        >
-          <input type="hidden" name="intent" value="deleteFeedback" />
-          <input type="hidden" name="feedbackId" value={item.id} />
+        {confirming ? (
+          <fetcher.Form method="post" className="flex gap-2">
+            <input type="hidden" name="intent" value="deleteFeedback" />
+            <input type="hidden" name="feedbackId" value={item.id} />
+            <button
+              type="submit"
+              className="rounded-md bg-red-700 px-2.5 py-1 text-sm font-medium text-white hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700 transition-colors"
+            >
+              Delete for good
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className={outlineButton}
+            >
+              Cancel
+            </button>
+          </fetcher.Form>
+        ) : (
           <button
-            type="submit"
-            className={`${outlineButton} hover:text-red-700 dark:hover:text-red-400`}
+            type="button"
+            onClick={() => setConfirming(true)}
+            className={outlineButton}
           >
             Delete
           </button>
-        </fetcher.Form>
+        )}
       </div>
+      {fetcher.state === "idle" && fetcher.data?.error ? (
+        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+          {fetcher.data.error}
+        </p>
+      ) : null}
     </li>
   );
 }
