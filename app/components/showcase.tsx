@@ -56,7 +56,9 @@ function Initials({ text, small = false }: { text: string; small?: boolean }) {
   return (
     <span
       className={`flex flex-shrink-0 items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 font-semibold text-stone-700 dark:text-stone-200 ${
-        small ? "h-7 w-7 text-[10px] ring-2 ring-white dark:ring-stone-900" : "h-8 w-8 text-xs"
+        small
+          ? "h-7 w-7 text-[10px] ring-2 ring-white dark:ring-stone-900"
+          : "h-8 w-8 text-xs"
       }`}
     >
       {text}
@@ -66,7 +68,11 @@ function Initials({ text, small = false }: { text: string; small?: boolean }) {
 
 function Heart({ size = 12 }: { size?: number }) {
   return (
-    <HeartIcon size={size} filled className="inline align-[-1px] text-rose-400" />
+    <HeartIcon
+      size={size}
+      filled
+      className="inline align-[-1px] text-rose-400"
+    />
   );
 }
 
@@ -108,15 +114,30 @@ interface CardBook {
 
 // A book as it appears in the library grid: where it is as a tag on the
 // cover, hearts beside the title
-function BookCard({ book, width = "w-[34%]" }: { book: CardBook; width?: string }) {
+function BookCard({
+  book,
+  width = "w-[34%]",
+}: {
+  book: CardBook;
+  width?: string;
+}) {
   return (
     <div className={`${panel} ${width} p-2 ${book.className}`}>
       <div className="relative">
         {/* The big ones up front: about a third of the picture each */}
-        <Cover src={book.cover} className="w-full" sizes="(min-width: 640px) 170px, 32vw" eager />
+        <Cover
+          src={book.cover}
+          className="w-full"
+          sizes="(min-width: 640px) 170px, 32vw"
+          eager
+        />
         {book.status === "lent" || book.status === "borrowed" ? (
           <span className="absolute left-1 top-1 inline-flex items-center gap-1 rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[10px] leading-4 text-stone-700 dark:text-stone-200 shadow-sm">
-            {book.status === "lent" ? <LentIcon size={10} /> : <BorrowedIcon size={10} />}
+            {book.status === "lent" ? (
+              <LentIcon size={10} />
+            ) : (
+              <BorrowedIcon size={10} />
+            )}
             {book.status === "lent" ? "Lent out" : "Borrowed"}
           </span>
         ) : null}
@@ -137,7 +158,13 @@ function BookCard({ book, width = "w-[34%]" }: { book: CardBook; width?: string 
 }
 
 // A small dark label, stuck on at an angle
-function Tag({ children, className }: { children: React.ReactNode; className: string }) {
+function Tag({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className: string;
+}) {
   return (
     <span
       className={`absolute z-30 rounded-md bg-stone-900 px-2 py-1 text-[11px] font-medium text-white shadow-soft dark:bg-stone-100 dark:text-stone-900 ${className}`}
@@ -176,24 +203,41 @@ export interface LendingSet {
 export const LENDING_SET: LendingSet = {
   lent: { title: "Demon Copperhead", cover: COVERS.demonCopperhead, hearts: 3 },
   borrowed: { title: "Sea of Tranquility", cover: COVERS.seaOfTranquility },
-  loved: { title: "A Gentleman in Moscow", cover: COVERS.gentlemanInMoscow, hearts: 5, lentTimes: 8 },
+  loved: {
+    title: "A Gentleman in Moscow",
+    cover: COVERS.gentlemanInMoscow,
+    hearts: 5,
+    lentTimes: 8,
+  },
   lending: { title: "Dune", cover: COVERS.dune },
 };
 
-export default function ShowcaseLending({ set = LENDING_SET }: { set?: LendingSet }) {
+export default function ShowcaseLending({
+  set = LENDING_SET,
+}: {
+  set?: LendingSet;
+}) {
   // The page's main picture, so it gets more room than the others
   return (
     <Stage width="max-w-[496px]" height="h-[530px] sm:h-[540px]">
       {/* What's due, both ways */}
       <div className={`${panel} left-0 right-[10%] top-0 z-30 -rotate-1 p-3.5`}>
-        <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">Due soon</p>
+        <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">
+          Due soon
+        </p>
         <p className="mt-1.5 text-sm text-stone-600 dark:text-stone-300">
-          <span className="font-semibold text-stone-900 dark:text-stone-100">{set.lent.title}</span>{" "}
+          <span className="font-semibold text-stone-900 dark:text-stone-100">
+            {set.lent.title}
+          </span>{" "}
           is with Anika Rao ·{" "}
-          <span className="font-semibold text-stone-900 dark:text-stone-100">3 days late</span>
+          <span className="font-semibold text-stone-900 dark:text-stone-100">
+            3 days late
+          </span>
         </p>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
-          <span className="font-semibold text-stone-900 dark:text-stone-100">{set.borrowed.title}</span>{" "}
+          <span className="font-semibold text-stone-900 dark:text-stone-100">
+            {set.borrowed.title}
+          </span>{" "}
           goes back to Maya Chen · tomorrow
         </p>
       </div>
@@ -229,12 +273,21 @@ export default function ShowcaseLending({ set = LENDING_SET }: { set?: LendingSe
             <Cover src={set.lending.cover} className="w-8" sizes="32px" eager />
             <div className="min-w-0 flex-1">
               <p className="text-sm text-stone-800 dark:text-stone-200">
-                Lend <span className="font-semibold">{set.lending.title}</span> to Sam
+                Lend <span className="font-semibold">{set.lending.title}</span>{" "}
+                to Sam
               </p>
               <div className="mt-1.5 flex items-center gap-2">
                 <span className="inline-flex items-center gap-1 rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-xs text-stone-700 dark:text-stone-200">
                   4 weeks
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  >
                     <path d="M6 9l6 6 6-6" />
                   </svg>
                 </span>
@@ -271,7 +324,9 @@ export function ShowcaseFriends() {
           <Cover src={COVERS.neverLetMeGo} className="w-7" />
           <p className="min-w-0 flex-1 text-sm leading-tight text-stone-800 dark:text-stone-200">
             <span className="font-medium">Never Let Me Go</span>
-            <span className="block text-xs text-stone-500 dark:text-stone-400">Anika Rao</span>
+            <span className="block text-xs text-stone-500 dark:text-stone-400">
+              Anika Rao
+            </span>
           </p>
           <span className="rounded-md bg-forest-600 px-2 py-0.5 text-xs font-medium text-white">
             Ask to borrow
@@ -284,7 +339,9 @@ export function ShowcaseFriends() {
           <Cover src={COVERS.klara} className="w-7" />
           <p className="min-w-0 flex-1 text-sm leading-tight text-stone-800 dark:text-stone-200">
             <span className="font-medium">Klara and the Sun</span>
-            <span className="block text-xs text-stone-500 dark:text-stone-400">2021</span>
+            <span className="block text-xs text-stone-500 dark:text-stone-400">
+              2021
+            </span>
           </p>
           <span className="rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-xs text-stone-700 dark:text-stone-200">
             + Add
@@ -292,20 +349,28 @@ export function ShowcaseFriends() {
         </div>
       </div>
 
-      <div className={`${panel} left-0 right-[7%] top-[46%] z-20 -rotate-2 p-3.5`}>
+      <div
+        className={`${panel} left-0 right-[7%] top-[46%] z-20 -rotate-2 p-3.5`}
+      >
         <div className="flex items-center gap-2.5">
           <Initials text="AR" />
           <p className="text-sm text-stone-800 dark:text-stone-200">
             <span className="font-semibold">Anika Rao&apos;s shelf</span>
-            <span className="text-stone-500 dark:text-stone-400"> · 5 books</span>
+            <span className="text-stone-500 dark:text-stone-400">
+              {" "}
+              · 5 books
+            </span>
           </p>
         </div>
         <div className="mt-3 grid grid-cols-4 gap-2">
-          {[COVERS.jonathanStrange, COVERS.midnightLibrary, COVERS.neverLetMeGo, COVERS.anxiousPeople].map(
-            (src) => (
-              <Cover key={src} src={src} className="w-full" />
-            ),
-          )}
+          {[
+            COVERS.jonathanStrange,
+            COVERS.midnightLibrary,
+            COVERS.neverLetMeGo,
+            COVERS.anxiousPeople,
+          ].map((src) => (
+            <Cover key={src} src={src} className="w-full" />
+          ))}
         </div>
       </div>
 
@@ -342,32 +407,42 @@ export function ShowcaseNotes() {
           <Initials text="SO" />
           <div className="min-w-0">
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              <span className="font-semibold text-stone-900 dark:text-stone-100">Sam Okafor</span>{" "}
+              <span className="font-semibold text-stone-900 dark:text-stone-100">
+                Sam Okafor
+              </span>{" "}
               <Heart size={10} />
             </p>
             <p className="mt-0.5 text-pretty text-sm text-stone-700 dark:text-stone-300">
-              &ldquo;Rocky is the best character in any book I&apos;ve read this year.&rdquo;
+              &ldquo;Rocky is the best character in any book I&apos;ve read this
+              year.&rdquo;
             </p>
           </div>
         </div>
       </div>
 
-      <div className={`${panel} right-[4%] top-[40%] w-[60%] z-20 -rotate-2 p-3.5`}>
+      <div
+        className={`${panel} right-[4%] top-[40%] w-[60%] z-20 -rotate-2 p-3.5`}
+      >
         <div className="flex items-start gap-2.5">
           <Initials text="AR" />
           <div className="min-w-0">
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              <span className="font-semibold text-stone-900 dark:text-stone-100">Anika Rao</span>{" "}
+              <span className="font-semibold text-stone-900 dark:text-stone-100">
+                Anika Rao
+              </span>{" "}
               <Heart size={10} />
             </p>
             <p className="mt-0.5 text-pretty text-sm text-stone-700 dark:text-stone-300">
-              &ldquo;Read it in one weekend. Hand it to anyone who liked The Martian.&rdquo;
+              &ldquo;Read it in one weekend. Hand it to anyone who liked The
+              Martian.&rdquo;
             </p>
           </div>
         </div>
       </div>
 
-      <div className={`${panel} bottom-[6%] left-[6%] right-[10%] z-30 rotate-1 p-3.5`}>
+      <div
+        className={`${panel} bottom-[6%] left-[6%] right-[10%] z-30 rotate-1 p-3.5`}
+      >
         <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">
           This copy has been to
         </p>
@@ -378,7 +453,9 @@ export function ShowcaseNotes() {
             ["AR", "Anika"],
           ].map(([initials, name], index) => (
             <span key={initials} className="flex items-center gap-2">
-              {index > 0 ? <span className="text-stone-300 dark:text-stone-600">→</span> : null}
+              {index > 0 ? (
+                <span className="text-stone-300 dark:text-stone-600">→</span>
+              ) : null}
               <span className="flex items-center gap-1.5">
                 <Initials text={initials} small />
                 {name}
@@ -394,10 +471,20 @@ export function ShowcaseNotes() {
 // Your shelf's own page, as anyone with the link sees it: a browser window
 // at your address, with your bookplate, a line about you, your favorites
 // and the shelf beneath
+// The favorites on Maya's page, and what she says about two of them
+const FAVORITES: { src: string; note?: string; above?: boolean }[] = [
+  { src: COVERS.circe, note: "Gods are petty. Witches are not.", above: true },
+  { src: COVERS.piranesi },
+  { src: COVERS.hailMary, note: "Made me laugh out loud on a plane." },
+  { src: COVERS.klara },
+];
+
 export function ShowcasePage() {
   return (
-    <Stage height="h-[350px] sm:h-[390px]">
-      <div className={`${panel} inset-x-0 top-[3%] z-20 -rotate-1 overflow-hidden`}>
+    <Stage height="h-[400px] sm:h-[440px]">
+      <div
+        className={`${panel} inset-x-0 top-[3%] z-20 -rotate-1 overflow-hidden`}
+      >
         {/* The window's top: three dots and the address */}
         <div className="flex items-center gap-3 border-b border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 px-3 py-2">
           <span className="flex gap-1">
@@ -406,19 +493,32 @@ export function ShowcasePage() {
             <span className="h-2 w-2 rounded-full bg-stone-300 dark:bg-stone-700" />
           </span>
           <span className="flex-1 truncate rounded-md bg-white dark:bg-stone-900 px-2.5 py-1 text-center text-xs text-stone-500 dark:text-stone-400 ring-1 ring-stone-900/5 dark:ring-white/10">
-            bookstacks.app/<span className="font-medium text-stone-800 dark:text-stone-200">@maya</span>
+            bookstacks.app/
+            <span className="font-medium text-stone-800 dark:text-stone-200">
+              @maya
+            </span>
           </span>
         </div>
 
         <div className="p-4">
           <div className="flex items-start gap-3">
-            <Bookplate firstname="Maya" surname="Chen" color="plum" box="h-12 w-12 text-base" framed />
+            <Bookplate
+              firstname="Maya"
+              surname="Chen"
+              color="plum"
+              box="h-12 w-12 text-base"
+              framed
+            />
             <div className="min-w-0">
-              <p className="text-lg font-bold leading-tight tracking-tight text-stone-900 dark:text-stone-50">Maya Chen</p>
+              <p className="text-lg font-bold leading-tight tracking-tight text-stone-900 dark:text-stone-50">
+                Maya Chen
+              </p>
               <p className="mt-0.5 text-sm leading-snug text-stone-700 dark:text-stone-300">
                 Sci-fi, slow mornings, always happy to lend
               </p>
-              <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">142 books · lent 31 times</p>
+              <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
+                142 books · lent 31 times
+              </p>
             </div>
           </div>
 
@@ -426,9 +526,24 @@ export function ShowcasePage() {
             <Heart size={11} />
             Favorites
           </p>
-          <div className="mt-2 grid grid-cols-4 gap-2">
-            {[COVERS.circe, COVERS.piranesi, COVERS.hailMary, COVERS.klara].map((src) => (
-              <Cover key={src} src={src} className="w-full" />
+          {/* Pinned favorites, two with a line on why, as the real page
+              shows them: round bubbles over the top or bottom of the cover */}
+          <div className="mt-1 grid grid-cols-4 gap-2 pt-7 pb-7">
+            {FAVORITES.map(({ src, note, above }) => (
+              <div key={src} className="relative">
+                <Cover src={src} className="w-full" />
+                {note ? (
+                  <p
+                    className={`absolute z-10 w-max max-w-[190%] text-balance rounded-xl bg-white px-2 py-1 text-[10px] leading-snug text-stone-700 shadow-[0_1px_3px_rgb(0_0_0/0.08)] ring-1 ring-stone-900/5 dark:bg-stone-800 dark:text-stone-200 dark:ring-white/10 ${
+                      above
+                        ? "-left-[4%] bottom-[calc(100%-0.75rem)]"
+                        : "-right-[4%] top-[calc(100%-0.75rem)]"
+                    }`}
+                  >
+                    {note}
+                  </p>
+                ) : null}
+              </div>
             ))}
           </div>
 
@@ -437,7 +552,13 @@ export function ShowcasePage() {
           </p>
           {/* Cut off at the window's edge, as a long shelf would be */}
           <div className="mt-2 grid h-16 grid-cols-5 gap-2 overflow-hidden">
-            {[COVERS.dune, COVERS.stationEleven, COVERS.overstory, COVERS.gilead, COVERS.neverLetMeGo].map((src) => (
+            {[
+              COVERS.dune,
+              COVERS.stationEleven,
+              COVERS.overstory,
+              COVERS.gilead,
+              COVERS.neverLetMeGo,
+            ].map((src) => (
               <Cover key={src} src={src} className="w-full" />
             ))}
           </div>

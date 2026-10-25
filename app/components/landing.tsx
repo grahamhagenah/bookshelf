@@ -3,7 +3,11 @@ import { Link } from "@remix-run/react";
 import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
 
 import DemoButton from "./demo-button";
-import Showcase, { ShowcaseFriends, ShowcaseNotes, ShowcasePage } from "./showcase";
+import Showcase, {
+  ShowcaseFriends,
+  ShowcaseNotes,
+  ShowcasePage,
+} from "./showcase";
 
 // The signed-out home page: what Stacks is, beside a small, staged glimpse
 // of the app itself, so people see what they're signing up for
@@ -42,9 +46,10 @@ const QUESTIONS: { q: string; a: React.ReactNode }[] = [
     q: "How is this different from Goodreads or StoryGraph?",
     a: (
       <>
-        Those track your reading. Stacks is about the physical copies on your shelves and
-        the people around you: who has which book, and getting it into a friend&apos;s
-        hands. No ratings, no recommendation engine, no feed of strangers.
+        Those track your reading. Stacks is about the physical copies on your
+        shelves and the people around you: who has which book, and getting it
+        into a friend&apos;s hands. No ratings, no recommendation engine, no
+        feed of strangers.
       </>
     ),
   },
@@ -52,8 +57,8 @@ const QUESTIONS: { q: string; a: React.ReactNode }[] = [
     q: "Do I have to lend my books out?",
     a: (
       <>
-        No. Every request comes to you and you can say no. Plenty of people use Stacks as a
-        catalog of what they own and mostly borrow.
+        No. Every request comes to you and you can say no. Plenty of people use
+        Stacks as a catalog of what they own and mostly borrow.
       </>
     ),
   },
@@ -61,8 +66,8 @@ const QUESTIONS: { q: string; a: React.ReactNode }[] = [
     q: "We share our books at home. Do we need two accounts?",
     a: (
       <>
-        One each, sharing a shelf. You both see and lend everything, and keep your own
-        notes, hearts, read marks and friends.
+        One each, sharing a shelf. You both see and lend everything, and keep
+        your own notes, hearts, read marks and friends.
       </>
     ),
   },
@@ -70,9 +75,9 @@ const QUESTIONS: { q: string; a: React.ReactNode }[] = [
     q: "Does it cost anything?",
     a: (
       <>
-        It&apos;s free for up to {FREE_LIMITS.books} books and {FREE_LIMITS.friends} friends.
-        Stacks Plus lifts both limits for ${PLUS_PRICES.monthly} a month or ${PLUS_PRICES.yearly} a
-        year.{" "}
+        It&apos;s free for up to {FREE_LIMITS.books} books and{" "}
+        {FREE_LIMITS.friends} friends. Stacks Plus lifts both limits for $
+        {PLUS_PRICES.monthly} a month or ${PLUS_PRICES.yearly} a year.{" "}
         <Link to="/pricing" className="underline underline-offset-2">
           See pricing
         </Link>
@@ -93,8 +98,8 @@ export default function Landing() {
             <em className="font-serif font-semibold italic">Our</em> shelf.
           </h1>
           <p className="mt-5 max-w-lg text-balance text-xl sm:text-2xl leading-snug text-stone-600 dark:text-stone-300">
-            Catalog your home library, borrow from your friends&apos; shelves, and
-            lend yours with reminders so books come back.
+            Catalog your home library, borrow from your friends&apos; shelves,
+            and lend yours with reminders so books come back.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <Link
@@ -126,8 +131,8 @@ export default function Landing() {
           visual={<ShowcaseFriends />}
         >
           Search once and see which friends have a book, then ask to borrow it
-          with a tap. Not on anyone&apos;s shelf yet? Add it to your want-to-read
-          list and you&apos;ll hear the moment a friend does.
+          with a tap. Not on anyone&apos;s shelf yet? Add it to your
+          want-to-read list and you&apos;ll hear the moment a friend does.
         </Feature>
 
         <Feature
@@ -135,15 +140,12 @@ export default function Landing() {
           visual={<ShowcasePage />}
           flip
         >
-          Your shelf gets its own page, with your favorites and a line about
-          you. Anyone can browse it without an account, and friends can ask to
-          borrow.
+          Your shelf gets its own page, with a line about you and the favorites
+          you pin, each with a note on why you love it. Anyone can browse it
+          without an account, and friends can ask to borrow.
         </Feature>
 
-        <Feature
-          title="Books with a history."
-          visual={<ShowcaseNotes />}
-        >
+        <Feature title="Books with a history." visual={<ShowcaseNotes />}>
           Leave a heart or a line for the next reader. Notes stay with the book
           as it moves between friends, so you can see where it&apos;s been and
           what everyone thought.
@@ -197,8 +199,8 @@ export default function Landing() {
             Start your shelf
           </h2>
           <p className="mx-auto mt-3 max-w-md text-balance text-lg text-stone-600 dark:text-stone-300">
-            Scan your shelf with your phone&apos;s camera or bring your Goodreads list over.
-            Free for your first {FREE_LIMITS.books} books.
+            Scan your shelf with your phone&apos;s camera or bring your
+            Goodreads list over. Free for your first {FREE_LIMITS.books} books.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
