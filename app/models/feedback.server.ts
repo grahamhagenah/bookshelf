@@ -30,7 +30,7 @@ export async function saveFeedback({
   });
 
   const admins = await prisma.user.findMany({
-    where: { isAdmin: true, demoGroup: null },
+    where: { isAdmin: true, demoGroup: null, adminFeedbackEmails: true },
     select: { email: true },
   });
   const from = feedback.user

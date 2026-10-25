@@ -31,6 +31,10 @@ model User {
   // Two email switches: borrow requests, and the weekly roundup
   emailNotifications Boolean @default(true)
   weeklyDigest       Boolean @default(true)
+  // For admins only: new sign-ups by email "each" time, as one "daily"
+  // summary, or "off"; and whether feedback is emailed as it comes in
+  adminSignupEmails   String  @default("each")
+  adminFeedbackEmails Boolean @default(true)
   // Whether other people can find them: in search and among new people.
   // Off, they're reached by invite link only.
   discoverable       Boolean @default(true)

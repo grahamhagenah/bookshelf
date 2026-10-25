@@ -549,6 +549,9 @@ export async function sendAnnouncementEmail({
 
 // ---- A note to the admins when someone sends feedback ----
 
+const ADMIN_FOOTER =
+  "You get these because you're an admin of Stacks. Change which ones you get on the dashboard.";
+
 export function renderFeedback({ from, body: message, page: sentFrom }: { from: string; body: string; page: string | null }) {
   const subject = `Feedback from ${from.replace(/ <.*>$/, "")}`;
   const html = layout({
@@ -558,7 +561,7 @@ export function renderFeedback({ from, body: message, page: sentFrom }: { from: 
         <p style="margin: 0; white-space: pre-wrap; font-size: 16px; line-height: 1.55; color: ${ink};">${esc(message)}</p>
         ${sentFrom ? `<p style="margin: 16px 0 0; font-size: 13px; color: ${muted};">Sent from ${esc(sentFrom)}</p>` : ""}
         ${button(`${APP_URL}/dashboard#feedback`, "See all feedback")}`,
-    footer: "You get these because you're an admin of Stacks.",
+    footer: ADMIN_FOOTER,
   });
   const text = `${from} wrote:\n\n${message}\n\n${sentFrom ? `Sent from ${sentFrom}\n` : ""}${APP_URL}/dashboard#feedback`;
   return { subject, html, text };
@@ -592,7 +595,7 @@ export function renderNewSignup({
         ${invitedBy ? paragraph(`They joined from ${esc(invitedBy)}'s shared shelf.`) : ""}
         <p style="margin: 0; font-size: 14px; color: ${muted};">${count}</p>
         ${button(`${APP_URL}/dashboard`, "Open the dashboard")}`,
-    footer: "You get these because you're an admin of Stacks.",
+    footer: ADMIN_FOOTER,
   });
   const text = [
     `${name} just created an account with ${email}.`,
@@ -610,6 +613,49 @@ export async function sendNewSignupEmail({
   ...details
 }: Parameters<typeof renderNewSignup>[0] & { toEmail: string }) {
   return send({ to: toEmail, ...renderNewSignup(details) });
+}
+
+// ---- The same, as one summary a day, for admins who chose that ----
+
+export function renderSignupSummary({
+  signups,
+  total,
+}: {
+  signups: { name: string; email: string }[];
+  total: number;
+}) {
+  const n = signups.length;
+  const headline = `${n} new ${n === 1 ? "sign-up" : "sign-ups"} in the last day`;
+  const count = `That makes ${total.toLocaleString("en-US")} ${total === 1 ? "account" : "accounts"}.`;
+  const list = signups
+    .map(
+      (person) =>
+        `<li style="margin: 0 0 6px;"><strong style="color: ${ink};">${esc(person.name)}</strong> <span style="color: ${muted};">${esc(person.email)}</span></li>`,
+    )
+    .join("");
+  const html = layout({
+    preheader: headline,
+    content: `
+        ${paragraph(`${headline}:`)}
+        <ul style="margin: 0 0 16px; padding-left: 20px; font-size: 15px; line-height: 1.5;">${list}</ul>
+        <p style="margin: 0; font-size: 14px; color: ${muted};">${count}</p>
+        ${button(`${APP_URL}/dashboard`, "Open the dashboard")}`,
+    footer: ADMIN_FOOTER,
+  });
+  const text = [
+    `${headline}:`,
+    signups.map((person) => `- ${person.name} (${person.email})`).join("\n"),
+    count,
+    `${APP_URL}/dashboard`,
+  ].join("\n\n");
+  return { subject: headline, html, text };
+}
+
+export async function sendSignupSummaryEmail({
+  toEmail,
+  ...details
+}: Parameters<typeof renderSignupSummary>[0] & { toEmail: string }) {
+  return send({ to: toEmail, ...renderSignupSummary(details) });
 }
 
 // ---- The link that confirms an address is really theirs ----

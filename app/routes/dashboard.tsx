@@ -28,6 +28,9 @@ import {
   getLending,
   getRevenue,
   setPlan,
+  getAdminEmailChoices,
+  isSignupEmailChoice,
+  setAdminEmailChoices,
 } from "~/models/admin.server";
 import { deleteExpiredDemoGroups } from "~/models/demo.server";
 import { getFeedback, setFeedbackDone } from "~/models/feedback.server";
@@ -78,7 +81,7 @@ async function requireAdmin(request: Request) {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireAdmin(request);
-  const [health, revenue, funnel, feedback, lending, users, quality] =
+  const [health, revenue, funnel, feedback, lending, users, quality, emailChoices] =
     await Promise.all([
       getHealth(),
       getRevenue(),
@@ -87,9 +90,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getLending(),
       getAdminUsers(),
       getDataQuality(),
+      getAdminEmailChoices(userId),
     ]);
   return json({
     userId,
+    emailChoices,
     health,
     revenue,
     funnel,
@@ -138,6 +143,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // the email service's rate limit, so the dashboard answers at once
     void emailAnnouncement(recipients, headline, message);
     return json({ announced: sentTo, emailed: recipients.length });
+  }
+
+  // This admin's own email choices; each setting saves on its own
+  if (intent === "adminEmails") {
+    const signups = form.get("signups");
+    const feedbackEmails = form.get("feedback");
+    await setAdminEmailChoices(userId, {
+      signups: isSignupEmailChoice(signups) ? signups : undefined,
+      feedback:
+        feedbackEmails === "on" ? true : feedbackEmails === "off" ? false : undefined,
+    });
+    return json({ ok: true });
   }
 
   if (intent === "feedbackDone") {
@@ -741,6 +758,98 @@ function Announce({ people }: { people: number }) {
   );
 }
 
+// A setting with a few options, side by side like segments of one
+// button, saved as soon as one is picked (like the Settings page's)
+function EmailChoice({
+  name,
+  value,
+  label,
+  hint,
+  options,
+}: {
+  name: string;
+  value: string;
+  label: string;
+  hint: string;
+  options: [string, string][];
+}) {
+  const fetcher = useFetcher();
+  const current = (fetcher.formData?.get(name) as string | undefined) ?? value;
+  const id = `admin-email-${name}`;
+  return (
+    <div className="rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3">
+      <p id={id} className="text-sm font-medium text-stone-900 dark:text-stone-100">
+        {label}
+      </p>
+      <p className={`text-sm ${mutedClass}`}>{hint}</p>
+      <div
+        role="radiogroup"
+        aria-labelledby={id}
+        className="mt-3 grid auto-cols-fr grid-flow-col gap-1 rounded-md bg-stone-100 dark:bg-stone-800 p-1"
+      >
+        {options.map(([option, text]) => (
+          <label
+            key={option}
+            className={`flex cursor-pointer items-center justify-center rounded px-2 py-1 text-sm transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-stone-400 ${
+              current === option
+                ? "bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-50 shadow-sm"
+                : "text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
+            }`}
+          >
+            <input
+              type="radio"
+              name={name}
+              value={option}
+              checked={current === option}
+              onChange={() =>
+                fetcher.submit({ intent: "adminEmails", [name]: option }, { method: "post" })
+              }
+              className="sr-only"
+            />
+            {text}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AdminEmails({ choices }: { choices: Data["emailChoices"] }) {
+  return (
+    <section aria-labelledby="admin-emails-heading" id="emails">
+      <h2 id="admin-emails-heading" className={headingClass}>
+        Your admin emails
+      </h2>
+      <p className={`mt-1 text-sm ${mutedClass}`}>
+        Just for you; each admin chooses their own.
+      </p>
+      <div className="mt-4 grid max-w-2xl gap-3 sm:grid-cols-2">
+        <EmailChoice
+          name="signups"
+          value={choices.signups}
+          label="New sign-ups"
+          hint="The daily summary comes each morning, only on days someone joins"
+          options={[
+            ["each", "Each one"],
+            ["daily", "Daily"],
+            ["off", "Off"],
+          ]}
+        />
+        <EmailChoice
+          name="feedback"
+          value={choices.feedback ? "on" : "off"}
+          label="Feedback"
+          hint="An email whenever someone sends feedback"
+          options={[
+            ["on", "On"],
+            ["off", "Off"],
+          ]}
+        />
+      </div>
+    </section>
+  );
+}
+
 function Feedback({ feedback }: { feedback: Data["feedback"] }) {
   const open = feedback.filter((item) => !item.done).length;
   return (
@@ -1310,8 +1419,17 @@ function DataQuality({ quality }: { quality: Data["quality"] }) {
 }
 
 export default function Dashboard() {
-  const { userId, health, revenue, funnel, feedback, lending, users, quality } =
-    useLoaderData<typeof loader>();
+  const {
+    userId,
+    health,
+    revenue,
+    funnel,
+    feedback,
+    lending,
+    users,
+    quality,
+    emailChoices,
+  } = useLoaderData<typeof loader>();
   return (
     <Layout title="Admin Dashboard">
       <Health health={health} />
@@ -1322,6 +1440,7 @@ export default function Dashboard() {
       <Lending lending={lending} />
       <People users={users} userId={userId} />
       <DataQuality quality={quality} />
+      <AdminEmails choices={emailChoices} />
     </Layout>
   );
 }
