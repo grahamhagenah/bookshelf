@@ -281,6 +281,7 @@ function Stat({
   noteClass = mutedClass,
   icon: Icon,
   tone = "stone",
+  className = "",
 }: {
   label: string;
   // A count, or something already formatted, like an amount of money
@@ -289,27 +290,31 @@ function Stat({
   noteClass?: string;
   icon?: (props: { size?: number }) => JSX.Element;
   tone?: Tone;
+  className?: string;
 }) {
   return (
-    // The tile is centerd on the label and figure, close to their height
-    <div className="flex items-center gap-3">
-      {Icon ? (
-        <span
-          className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${tones[tone].tile}`}
-          aria-hidden
-        >
-          <Icon size={20} />
-        </span>
-      ) : null}
-      <div>
-        <dt className={`text-sm ${mutedClass}`}>{label}</dt>
-        <dd className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
-          <span className="text-2xl font-semibold tabular-nums text-stone-900 dark:text-stone-50">
-            {typeof value === "number" ? value.toLocaleString() : value}
+    // A card of its own: label, figure, then a line for the note, kept
+    // even when empty so every card in a row lines up
+    <div
+      className={`rounded-xl border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900/60 sm:p-4 ${className}`}
+    >
+      <dt className={`flex items-center gap-2 text-sm ${mutedClass}`}>
+        {Icon ? (
+          <span
+            className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg ${tones[tone].tile}`}
+            aria-hidden
+          >
+            <Icon size={16} />
           </span>
-          {note ? <span className={`text-sm ${noteClass}`}>{note}</span> : null}
-        </dd>
-      </div>
+        ) : null}
+        <span className="truncate">{label}</span>
+      </dt>
+      <dd className="mt-2 text-2xl font-semibold leading-tight tabular-nums text-stone-900 dark:text-stone-50">
+        {typeof value === "number" ? value.toLocaleString() : value}
+      </dd>
+      <dd className={`mt-0.5 min-h-5 truncate text-sm ${note ? noteClass : ""}`}>
+        {note ?? ""}
+      </dd>
     </div>
   );
 }
@@ -414,7 +419,7 @@ function Plus({ revenue }: { revenue: Data["revenue"] }) {
       <h2 id="plus" className={headingClass}>
         Stacks Plus
       </h2>
-      <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5 rounded-xl border border-stone-200 bg-stone-50/60 p-4 dark:border-stone-800 dark:bg-stone-900/40 sm:p-5 lg:grid-cols-4">
+      <dl className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
           label="Paying"
           value={revenue.paying}
@@ -504,8 +509,9 @@ function Health({ health }: { health: Data["health"] }) {
       <h2 id="health" className={headingClass}>
         Health
       </h2>
-      {/* One card, so the five read as a set */}
-      <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5 rounded-xl border border-stone-200 bg-stone-50/60 p-4 dark:border-stone-800 dark:bg-stone-900/40 sm:grid-cols-3 sm:p-5 lg:grid-cols-5">
+      {/* Two to a row on phones and tablets, with the fifth spanning the
+          last row; all five in one row on wide screens */}
+      <dl className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Stat
           label="People"
           value={health.users}
@@ -535,9 +541,11 @@ function Health({ health }: { health: Data["health"] }) {
           tone="violet"
         />
         <Stat
-          label="Demo visits today"
+          label="Demo visits"
           value={health.demosToday}
+          note="today"
           icon={DashboardIcon}
+          className="col-span-2 lg:col-span-1"
         />
       </dl>
       <div className="mt-8 grid gap-8 sm:grid-cols-2 sm:gap-10">
