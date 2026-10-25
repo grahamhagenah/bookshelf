@@ -3,8 +3,11 @@ import type { User } from "@prisma/client";
 import { prisma } from "~/db.server";
 import { isNotLending } from "~/lending";
 
-// What friends have been up to lately: books they've added, and hearts and
-// notes they've left. Built from existing records, newest first.
+import { shelfIds } from "./household.server";
+
+// What friends have been up to lately: books they've added, hearts and
+// notes they've left on copies, and notes on books they read somewhere
+// else. Built from existing records, newest first.
 
 const DAY = 24 * 60 * 60 * 1000;
 // Additions this close together read as one batch: "Maya added 3 books"
@@ -59,6 +62,28 @@ export type FriendActivity =
       book: FeedBook;
       loved: boolean;
       body: string | null;
+    }
+  | {
+      // A note on a book read somewhere else: no copy to borrow from
+      // them, so what's offered is wanting it, or a friend's copy
+      kind: "elsewhere";
+      id: string;
+      at: Date;
+      friend: FeedPerson;
+      work: { key: string; title: string; author: string; cover: string };
+      loved: boolean;
+      body: string;
+      viewer: {
+        // Their own copy of it, if they have one
+        ownCopyId: string | null;
+        wanted: boolean;
+        // Friends' copies, the ones that can be asked for first
+        copies: {
+          bookId: string;
+          owner: { id: string; firstname: string };
+          available: boolean;
+        }[];
+      };
     };
 
 const person = {
@@ -114,8 +139,13 @@ async function enrich(
   userId: User["id"],
   friendIds: string[],
 ) {
+  await enrichElsewhere(items, userId, friendIds);
   const books = items.flatMap((item) =>
-    item.kind === "added" ? item.books : [item.book],
+    item.kind === "added"
+      ? item.books
+      : item.kind === "elsewhere"
+        ? []
+        : [item.book],
   );
   const ids = [...new Set(books.map((book) => book.id))];
   if (ids.length === 0) return;
@@ -167,6 +197,60 @@ async function enrich(
   }
 }
 
+// For notes on books read elsewhere: whether the viewer has it, wants it,
+// or can borrow it from a friend
+async function enrichElsewhere(
+  items: FriendActivity[],
+  userId: User["id"],
+  friendIds: string[],
+) {
+  const notes = items.filter(
+    (item): item is Extract<FriendActivity, { kind: "elsewhere" }> =>
+      item.kind === "elsewhere",
+  );
+  const keys = [...new Set(notes.map((item) => item.work.key))];
+  if (keys.length === 0) return;
+  const [own, wants, copies] = await Promise.all([
+    prisma.book.findMany({
+      where: {
+        userId: { in: await shelfIds(userId) },
+        openLibraryKey: { in: keys },
+      },
+      select: { id: true, openLibraryKey: true },
+    }),
+    prisma.wantToRead.findMany({
+      where: { userId, openLibraryKey: { in: keys } },
+      select: { openLibraryKey: true },
+    }),
+    prisma.book.findMany({
+      where: { userId: { in: friendIds }, openLibraryKey: { in: keys } },
+      select: {
+        id: true,
+        openLibraryKey: true,
+        borrowerId: true,
+        notLendingUntil: true,
+        user: { select: { id: true, firstname: true } },
+      },
+    }),
+  ]);
+  for (const item of notes) {
+    item.viewer = {
+      ownCopyId:
+        own.find((book) => book.openLibraryKey === item.work.key)?.id ?? null,
+      wanted: wants.some((wish) => wish.openLibraryKey === item.work.key),
+      copies: copies
+        .filter((book) => book.openLibraryKey === item.work.key)
+        .map((book) => ({
+          bookId: book.id,
+          owner: book.user,
+          available:
+            book.borrowerId === null && !isNotLending(book.notLendingUntil),
+        }))
+        .sort((a, b) => Number(b.available) - Number(a.available)),
+    };
+  }
+}
+
 // withOwnNotes adds the viewer's own written notes (not bare hearts), so
 // a note posted from the feed shows up there as friends will see it
 export async function getFriendActivity(
@@ -185,7 +269,7 @@ export async function getFriendActivity(
   if (friendIds.length === 0) return [];
 
   const since = new Date(Date.now() - days * DAY);
-  const [books, notes] = await Promise.all([
+  const [books, notes, elsewhere] = await Promise.all([
     prisma.book.findMany({
       where: { userId: { in: friendIds }, createdAt: { gte: since } },
       select: { ...bookFields, createdAt: true, user: person },
@@ -211,6 +295,28 @@ export async function getFriendActivity(
         updatedAt: true,
         user: person,
         book: { select: bookFields },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: limit,
+    }),
+    // Notes on books read somewhere else; bare hearts and read marks
+    // stay out of the feed
+    prisma.workNote.findMany({
+      where: {
+        updatedAt: { gte: since },
+        body: { not: null },
+        userId: { in: withOwnNotes ? [...friendIds, userId] : friendIds },
+      },
+      select: {
+        id: true,
+        workKey: true,
+        title: true,
+        author: true,
+        cover: true,
+        loved: true,
+        body: true,
+        updatedAt: true,
+        user: person,
       },
       orderBy: { updatedAt: "desc" },
       take: limit,
@@ -249,7 +355,23 @@ export async function getFriendActivity(
     body: note.body,
   }));
 
-  const feed = [...added, ...reactions]
+  const readElsewhere: FriendActivity[] = elsewhere.map((note) => ({
+    kind: "elsewhere",
+    id: `elsewhere-${note.id}`,
+    at: note.updatedAt,
+    friend: note.user,
+    work: {
+      key: note.workKey,
+      title: note.title,
+      author: note.author,
+      cover: note.cover,
+    },
+    loved: note.loved,
+    body: note.body ?? "",
+    viewer: { ownCopyId: null, wanted: false, copies: [] },
+  }));
+
+  const feed = [...added, ...reactions, ...readElsewhere]
     .sort((a, b) => b.at.getTime() - a.at.getTime())
     .slice(0, limit);
   await enrich(feed, userId, friendIds);

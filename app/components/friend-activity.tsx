@@ -6,11 +6,12 @@ import type { FriendActivity, getNotePrompts } from "~/models/activity.server";
 
 import Avatar from "./avatar";
 import BookCover from "./book-cover";
-import { HeartIcon } from "./icons";
+import { BookmarkIcon, HeartIcon } from "./icons";
 import PersonLink from "./person-link";
 
 type FeedItem = SerializeFrom<FriendActivity>;
 type FeedBook = Extract<FeedItem, { kind: "added" }>["books"][number];
+type ElsewhereItem = Extract<FeedItem, { kind: "elsewhere" }>;
 
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString(undefined, {
@@ -63,6 +64,51 @@ export default function FriendActivityItem({
       />
     </strong>
   );
+  // A note on a book read somewhere else: the book's own page, not a copy
+  if (item.kind === "elsewhere") {
+    return (
+      <div className="flex items-start gap-3 py-3">
+        <Avatar
+          firstname={item.friend.firstname}
+          surname={item.friend.surname}
+          icon={item.friend.profileEmoji}
+          size="sm"
+        />
+        <div className="min-w-0 flex-1 pt-1">
+          <p className="text-stone-800 dark:text-stone-200 leading-snug">
+            {name} wrote about{" "}
+            <Link
+              to={item.work.key}
+              className="font-semibold underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+            >
+              {item.work.title}
+            </Link>
+            {item.loved ? (
+              <HeartIcon
+                size={12}
+                filled
+                className="ml-1.5 inline text-rose-400 align-[-1px]"
+              />
+            ) : null}
+          </p>
+          <p className="mt-1 text-pretty text-sm text-stone-600 dark:text-stone-300 line-clamp-2">
+            &ldquo;{item.body}&rdquo;
+          </p>
+          <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+            {formatDate(item.at)}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Link to={item.work.key} title={item.work.title}>
+              <FeedCover
+                book={item.work}
+                className="h-[66px] w-11 hover:opacity-90 transition-opacity"
+              />
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
   const bookLink = (book: FeedBook) => (
     <Link
       to={`/books/${book.id}`}
@@ -370,6 +416,84 @@ function Actions({
   );
 }
 
+// A friend's note on a book they read somewhere else. Nothing of theirs
+// to borrow, so it offers what can be done: want it, or ask a friend
+// who has a copy.
+function ElsewhereCard({ item }: { item: ElsewhereItem }) {
+  const want = useFetcher<{ wanted?: boolean }>();
+  const { ownCopyId, copies } = item.viewer;
+  const wanted =
+    item.viewer.wanted ||
+    want.formData !== undefined ||
+    want.data?.wanted === true;
+  const copy = copies[0];
+  return (
+    <>
+      <div className="mt-3">
+        <Link
+          to={item.work.key}
+          className="group -mx-2 flex items-center gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+        >
+          <FeedCover
+            book={item.work}
+            className="h-[102px] w-[68px] transition-opacity group-hover:opacity-90"
+          />
+          <span className="min-w-0">
+            <span className="block font-medium leading-snug text-stone-900 dark:text-stone-100">
+              {item.work.title}
+            </span>
+            <span className="mt-0.5 block text-sm text-stone-500 dark:text-stone-400">
+              {item.work.author}
+            </span>
+            <span className="mt-2 block text-sm text-stone-500 dark:text-stone-400">
+              {ownCopyId
+                ? "On your shelf"
+                : copy
+                  ? `${copy.owner.firstname} has a copy`
+                  : `${item.friend.firstname} read it elsewhere`}
+            </span>
+          </span>
+        </Link>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-stone-100 dark:border-stone-800 pt-2">
+        {ownCopyId ? (
+          <Link to={`/books/${ownCopyId}`} className={actionClass}>
+            Open your copy
+          </Link>
+        ) : (
+          <>
+            {wanted ? (
+              <span className={stateClass}>
+                <BookmarkIcon size={14} />
+                On your want-to-read list
+              </span>
+            ) : (
+              <want.Form method="post">
+                <input type="hidden" name="intent" value="want" />
+                <input type="hidden" name="workKey" value={item.work.key} />
+                <button type="submit" className={actionClass}>
+                  <BookmarkIcon size={14} />
+                  Want to read
+                </button>
+              </want.Form>
+            )}
+            {copy ? (
+              <Link to={`/books/${copy.bookId}`} className={actionClass}>
+                {copy.available
+                  ? `Ask ${copy.owner.firstname} to borrow it`
+                  : `${copy.owner.firstname}'s copy is out`}
+              </Link>
+            ) : null}
+          </>
+        )}
+        <Link to={item.work.key} className={`${actionClass} ml-auto`}>
+          View book
+        </Link>
+      </div>
+    </>
+  );
+}
+
 export function FeedPost({
   item,
   friendIds,
@@ -398,11 +522,18 @@ export function FeedPost({
       ? item.books.length === 1
         ? "added a book"
         : `added ${item.books.length} books`
-      : item.kind === "loved"
-        ? `loved ${item.book.title}`
-        : `wrote about ${item.book.title}`;
+      : item.kind === "elsewhere"
+        ? `wrote about ${item.work.title}`
+        : item.kind === "loved"
+          ? `loved ${item.book.title}`
+          : `wrote about ${item.book.title}`;
 
-  const books = item.kind === "added" ? item.books.slice(0, 8) : [item.book];
+  const books =
+    item.kind === "added"
+      ? item.books.slice(0, 8)
+      : item.kind === "elsewhere"
+        ? []
+        : [item.book];
   const more = item.kind === "added" ? item.books.length - books.length : 0;
 
   return (
@@ -416,7 +547,7 @@ export function FeedPost({
         />
         <p className="min-w-0 leading-snug text-stone-600 dark:text-stone-300">
           {name} {did}
-          {item.kind === "note" && item.loved ? (
+          {(item.kind === "note" || item.kind === "elsewhere") && item.loved ? (
             <HeartIcon
               size={13}
               filled
@@ -434,13 +565,15 @@ export function FeedPost({
         </p>
       </header>
 
-      {item.kind === "note" && item.body ? (
+      {(item.kind === "note" || item.kind === "elsewhere") && item.body ? (
         <blockquote className="mt-3 text-pretty leading-relaxed text-stone-800 dark:text-stone-200">
           &ldquo;{item.body}&rdquo;
         </blockquote>
       ) : null}
 
-      {item.kind === "added" && item.books.length > 1 ? (
+      {item.kind === "elsewhere" ? (
+        <ElsewhereCard item={item} />
+      ) : item.kind === "added" && item.books.length > 1 ? (
         <>
           {/* Even columns: three across on phones, four on wider screens */}
           <ul className="mt-3 grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-4">

@@ -23,6 +23,8 @@ import {
   getUserEmailById,
   REQUEST_NOTE_MAX,
 } from "~/models/user.server";
+import { addWantToRead } from "~/models/wish.server";
+import { getWorkSnapshot } from "~/models/work-note.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -85,6 +87,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   const form = await request.formData();
   const intent = form.get("intent");
+
+  // A friend's note on a book read elsewhere: want it too
+  if (intent === "want") {
+    const workKey = String(form.get("workKey") ?? "");
+    const saved = workKey ? await getWorkSnapshot(workKey) : null;
+    if (!saved) throw new Response("Not Found", { status: 404 });
+    await addWantToRead(userId, { ...saved, openLibraryKey: workKey });
+    return json({ wanted: true });
+  }
+
   const bookId = form.get("bookId");
   const book = typeof bookId === "string" ? await getBookById(bookId) : null;
   if (!book) throw new Response("Not Found", { status: 404 });

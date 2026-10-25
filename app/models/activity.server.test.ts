@@ -5,13 +5,18 @@ import { getFriendActivity, getNotePrompts } from "./activity.server";
 import { lendBook } from "./book.server";
 import { saveReaderNote } from "./note.server";
 import { createFriendship } from "./user.server";
+import { addWantToRead } from "./wish.server";
+import { saveWorkNote } from "./work-note.server";
 
 const DAY = 24 * 60 * 60 * 1000;
 const daysAgo = (days: number) => new Date(Date.now() - days * DAY);
 
 async function bookAddedAt(userId: string, title: string, at: Date) {
   const book = await makeBook(userId, title);
-  return prisma.book.update({ where: { id: book.id }, data: { createdAt: at } });
+  return prisma.book.update({
+    where: { id: book.id },
+    data: { createdAt: at },
+  });
 }
 
 async function setup() {
@@ -39,7 +44,12 @@ test("batches a friend's additions that land within a week", async () => {
   const feed = await getFriendActivity(me.id);
   const batches = feed.flatMap((item) =>
     item.kind === "added"
-      ? [{ friend: item.friend.id, titles: item.books.map((book) => book.title) }]
+      ? [
+          {
+            friend: item.friend.id,
+            titles: item.books.map((book) => book.title),
+          },
+        ]
       : [],
   );
   expect(batches).toEqual([
@@ -55,7 +65,10 @@ test("shows hearts and notes, but only from friends", async () => {
 
   await saveReaderNote(friend.id, book.id, { loved: true, body: "Gorgeous." });
   await saveReaderNote(friend.id, other.id, { loved: true });
-  await saveReaderNote(stranger.id, book.id, { loved: true, body: "Not a friend" });
+  await saveReaderNote(stranger.id, book.id, {
+    loved: true,
+    body: "Not a friend",
+  });
   // A note with neither a heart nor words isn't news
   await saveReaderNote(friend.id, (await makeBook(me.id, "Blank")).id, {
     loved: false,
@@ -68,7 +81,11 @@ test("shows hearts and notes, but only from friends", async () => {
   expect(reactions.every((item) => item.friend.id === friend.id)).toBe(true);
   expect(reactions.map((item) => item.kind).sort()).toEqual(["loved", "note"]);
   const note = reactions.find((item) => item.kind === "note");
-  expect(note).toMatchObject({ body: "Gorgeous.", loved: true, book: { title: "Circe" } });
+  expect(note).toMatchObject({
+    body: "Gorgeous.",
+    loved: true,
+    book: { title: "Circe" },
+  });
 });
 
 test("leaves out old news and your own activity, newest first", async () => {
@@ -81,7 +98,11 @@ test("leaves out old news and your own activity, newest first", async () => {
 
   const feed = await getFriendActivity(me.id);
   const titles = feed.map((item) =>
-    item.kind === "added" ? item.books.map((b) => b.title).join() : item.book.title,
+    item.kind === "added"
+      ? item.books.map((b) => b.title).join()
+      : item.kind === "elsewhere"
+        ? item.work.title
+        : item.book.title,
   );
   expect(titles).toEqual(["Loved today", "Recent"]);
 });
@@ -104,6 +125,7 @@ test("feed books carry hearts, notes and where you stand with them", async () =>
   await saveReaderNote(other.id, book.id, { loved: true });
 
   const [item] = await getFriendActivity(me.id);
+  if (item.kind === "elsewhere") throw new Error("Expected a copy");
   const seen = item.kind === "added" ? item.books[0] : item.book;
   expect(seen).toMatchObject({ loves: 2, notes: 1, available: true });
   // Not a reader of this copy, but a friend of its owner
@@ -124,7 +146,12 @@ test("note prompts are the books you've borrowed and not written about", async (
   await lendBook(current.id, me.id);
   for (const book of [done, noted]) {
     await prisma.lendingHistory.create({
-      data: { bookId: book.id, borrowerId: me.id, borrowedAt: daysAgo(30), returnedAt: daysAgo(5) },
+      data: {
+        bookId: book.id,
+        borrowerId: me.id,
+        borrowedAt: daysAgo(30),
+        returnedAt: daysAgo(5),
+      },
     });
   }
   await saveReaderNote(me.id, noted.id, { body: "Said my piece." });
@@ -145,10 +172,18 @@ test("a longer page of the feed starts with the shorter one, so showing older ad
   for (let i = 0; i < 8; i++) {
     const book = await makeBook(friend.id, `Book ${i}`);
     // Far enough apart that each is its own post
-    await prisma.book.update({ where: { id: book.id }, data: { createdAt: new Date(Date.now() - i * 10 * DAY) } });
+    await prisma.book.update({
+      where: { id: book.id },
+      data: { createdAt: new Date(Date.now() - i * 10 * DAY) },
+    });
     if (i % 2) {
       await prisma.readerNote.create({
-        data: { bookId: book.id, userId: friend.id, loved: true, updatedAt: new Date(Date.now() - i * 10 * DAY - 3600_000) },
+        data: {
+          bookId: book.id,
+          userId: friend.id,
+          loved: true,
+          updatedAt: new Date(Date.now() - i * 10 * DAY - 3600_000),
+        },
       });
     }
   }
@@ -156,7 +191,9 @@ test("a longer page of the feed starts with the shorter one, so showing older ad
   const long = await getFriendActivity(me.id, { days: 365, limit: 10 });
   expect(short).toHaveLength(5);
   expect(long).toHaveLength(10);
-  expect(long.slice(0, 5).map((item) => item.id)).toEqual(short.map((item) => item.id));
+  expect(long.slice(0, 5).map((item) => item.id)).toEqual(
+    short.map((item) => item.id),
+  );
   expect(new Set(long.map((item) => item.id)).size).toBe(10);
 });
 
@@ -175,4 +212,79 @@ test("the feed can include your own written notes, but not your bare hearts", as
   const own = mine(await getFriendActivity(me.id, { withOwnNotes: true }));
   expect(own).toHaveLength(1);
   expect(own[0]).toMatchObject({ kind: "note", body: "Strange and lovely." });
+});
+
+const fox = {
+  key: "/works/OL45804W",
+  title: "Fantastic Mr Fox",
+  author: "Roald Dahl",
+  cover: "",
+};
+
+test("a friend's note on a book read elsewhere is in the feed; bare hearts and read marks aren't", async () => {
+  const { me, friend, stranger } = await setup();
+  const sam = await makeUser("Sam");
+  await createFriendship(me.id, sam.id);
+  await saveWorkNote(friend.id, fox, {
+    loved: true,
+    body: "Read it to my niece.",
+  });
+  await saveWorkNote(
+    sam.id,
+    { ...fox, key: "/works/OL1W", title: "Hearted only" },
+    { loved: true, read: true },
+  );
+  await saveWorkNote(stranger.id, fox, { body: "Not a friend" });
+  // Two friends' copies of it, one out on loan
+  const lent = await makeBook(sam.id, "Fantastic Mr Fox");
+  const free = await makeBook(sam.id, "Fantastic Mr Fox");
+  await prisma.book.updateMany({
+    where: { id: { in: [lent.id, free.id] } },
+    data: { openLibraryKey: fox.key },
+  });
+  await lendBook(lent.id, friend.id);
+
+  const feed = await getFriendActivity(me.id);
+  const notes = feed.filter((item) => item.kind === "elsewhere");
+  expect(notes).toHaveLength(1);
+  const [note] = notes;
+  if (note.kind !== "elsewhere")
+    throw new Error("Expected a note from elsewhere");
+  expect(note).toMatchObject({
+    friend: { firstname: "Maya" },
+    work: { key: fox.key, title: "Fantastic Mr Fox" },
+    loved: true,
+    body: "Read it to my niece.",
+  });
+  // A copy that can be asked for comes first
+  expect(note.viewer).toEqual({
+    ownCopyId: null,
+    wanted: false,
+    copies: [
+      {
+        bookId: free.id,
+        owner: { id: sam.id, firstname: "Sam" },
+        available: true,
+      },
+      {
+        bookId: lent.id,
+        owner: { id: sam.id, firstname: "Sam" },
+        available: false,
+      },
+    ],
+  });
+
+  // Once wanted, and once on your own shelf, it says so
+  await addWantToRead(me.id, { ...fox, openLibraryKey: fox.key });
+  const mine = await makeBook(me.id, "Fantastic Mr Fox");
+  await prisma.book.update({
+    where: { id: mine.id },
+    data: { openLibraryKey: fox.key },
+  });
+  const [again] = (await getFriendActivity(me.id)).filter(
+    (item) => item.kind === "elsewhere",
+  );
+  if (again.kind !== "elsewhere")
+    throw new Error("Expected a note from elsewhere");
+  expect(again.viewer).toMatchObject({ ownCopyId: mine.id, wanted: true });
 });

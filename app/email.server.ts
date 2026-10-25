@@ -25,12 +25,20 @@ const line = "#e7e5e4";
 const page = "#fafaf9";
 const green = "#1f6b4e";
 const red = "#b91c1c";
-const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+const font =
+  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
 const esc = (text: string) =>
-  text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
+  text.replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ] ?? c,
+  );
 
-const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
+const plural = (n: number, word: string) =>
+  `${n} ${n === 1 ? word : `${word}s`}`;
 
 // The logo and name, a white card for the message, and a quiet footer.
 // The preheader is the line inboxes show beside the subject.
@@ -86,7 +94,11 @@ const footerLink = (href: string, label: string) =>
 
 // Every email someone can opt out of ends with a link that turns off just
 // that kind, no sign-in needed, beside a link to all their settings
-const optOutFooter = (userId: string | undefined, kind: EmailKind, label: string) =>
+const optOutFooter = (
+  userId: string | undefined,
+  kind: EmailKind,
+  label: string,
+) =>
   [
     userId ? footerLink(unsubscribeUrl(userId, kind), label) : null,
     footerLink(`${APP_URL}/account`, "Email settings"),
@@ -94,8 +106,14 @@ const optOutFooter = (userId: string | undefined, kind: EmailKind, label: string
     .filter(Boolean)
     .join(" · ");
 
-const optOutText = (userId: string | undefined, kind: EmailKind, label: string) =>
-  userId ? `${label}: ${unsubscribeUrl(userId, kind)}` : `Email settings: ${APP_URL}/account`;
+const optOutText = (
+  userId: string | undefined,
+  kind: EmailKind,
+  label: string,
+) =>
+  userId
+    ? `${label}: ${unsubscribeUrl(userId, kind)}`
+    : `Email settings: ${APP_URL}/account`;
 
 // Lets inboxes show their own Unsubscribe button (RFC 8058)
 const optOutHeaders = (userId: string, kind: EmailKind) => ({
@@ -107,7 +125,8 @@ const optOutHeaders = (userId: string, kind: EmailKind) => ({
 function cover(url: string | null | undefined, width: number) {
   const height = Math.round(width * 1.5);
   const box = `width: ${width}px; height: ${height}px; border-radius: 3px;`;
-  if (!url) return `<div style="${box} background: #f5f5f4; border: 1px solid ${line};"></div>`;
+  if (!url)
+    return `<div style="${box} background: #f5f5f4; border: 1px solid ${line};"></div>`;
   const src = coverSrc(url, "M");
   const absolute = src.startsWith("/") ? `${APP_URL}${src}` : src;
   return `<img src="${absolute}" width="${width}" height="${height}" alt="" style="${box} display: block; object-fit: cover; background: #f5f5f4; border: 0;">`;
@@ -126,11 +145,17 @@ async function send(message: {
   headers?: Record<string, string>;
 }) {
   if (!resend) {
-    console.log("Email not sent (RESEND_API_KEY not configured):", { to: message.to, subject: message.subject });
+    console.log("Email not sent (RESEND_API_KEY not configured):", {
+      to: message.to,
+      subject: message.subject,
+    });
     return { success: false, error: "Email service not configured" };
   }
   try {
-    const { data, error } = await resend.emails.send({ from: FROM_EMAIL, ...message });
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      ...message,
+    });
     if (error) {
       console.error("Failed to send email:", error);
       return { success: false, error: error.message };
@@ -180,7 +205,11 @@ export function renderBookRequest({
         </table>
         ${note ? `<blockquote style="margin: 16px 0 0; padding: 0 0 0 12px; border-left: 2px solid ${line}; font-size: 15px; line-height: 1.5; color: ${body}; white-space: pre-wrap;">${esc(note)}</blockquote>` : ""}
         ${button(link, "See the request")}`,
-    footer: optOutFooter(toUserId, "requests", "Stop emails about borrow requests"),
+    footer: optOutFooter(
+      toUserId,
+      "requests",
+      "Stop emails about borrow requests",
+    ),
   });
   const text = `Hi ${toName},
 
@@ -195,7 +224,10 @@ ${optOutText(toUserId, "requests", "Stop emails about borrow requests")}`;
 export async function sendBookRequestEmail({
   toEmail,
   ...details
-}: Parameters<typeof renderBookRequest>[0] & { toEmail: string; toUserId: string }) {
+}: Parameters<typeof renderBookRequest>[0] & {
+  toEmail: string;
+  toUserId: string;
+}) {
   // Demo sandbox addresses are undeliverable by design
   if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
   return send({
@@ -226,7 +258,10 @@ export function renderRequestAnswer({
   message?: string | null;
 }) {
   const note = message?.trim() || null;
-  const link = approved && bookId ? `${APP_URL}/books/${bookId}` : `${APP_URL}/notifications`;
+  const link =
+    approved && bookId
+      ? `${APP_URL}/books/${bookId}`
+      : `${APP_URL}/notifications`;
   const subject = approved
     ? `${ownerName} is lending you ${bookTitle}`
     : `${ownerName} can't lend ${bookTitle} right now`;
@@ -234,12 +269,17 @@ export function renderRequestAnswer({
     ? `Hi ${esc(toName)}, <strong style="color: ${ink};">${esc(ownerName)}</strong> said yes: ${bookBold(bookTitle)} is yours to borrow.`
     : `Hi ${esc(toName)}, <strong style="color: ${ink};">${esc(ownerName)}</strong> can't lend ${bookBold(bookTitle)} right now.`;
   const html = layout({
-    preheader: note ?? (approved ? "Time to pick it up." : "Maybe another time."),
+    preheader:
+      note ?? (approved ? "Time to pick it up." : "Maybe another time."),
     content: `
         ${paragraph(lead)}
         ${note ? `<blockquote style="margin: 0 0 16px; padding: 0 0 0 12px; border-left: 2px solid ${line}; font-size: 15px; line-height: 1.5; color: ${body}; white-space: pre-wrap;">${esc(note)}</blockquote>` : ""}
         ${button(link, approved ? "See the book" : "Open Stacks")}`,
-    footer: optOutFooter(toUserId, "requests", "Stop emails about borrow requests"),
+    footer: optOutFooter(
+      toUserId,
+      "requests",
+      "Stop emails about borrow requests",
+    ),
   });
   const text = `Hi ${toName},
 
@@ -251,12 +291,16 @@ ${optOutText(toUserId, "requests", "Stop emails about borrow requests")}`;
   return { subject, html, text };
 }
 
-const bookBold = (title: string) => `<strong style="color: ${ink};">${esc(title)}</strong>`;
+const bookBold = (title: string) =>
+  `<strong style="color: ${ink};">${esc(title)}</strong>`;
 
 export async function sendRequestAnswerEmail({
   toEmail,
   ...details
-}: Parameters<typeof renderRequestAnswer>[0] & { toEmail: string; toUserId: string }) {
+}: Parameters<typeof renderRequestAnswer>[0] & {
+  toEmail: string;
+  toUserId: string;
+}) {
   if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
   return send({
     to: toEmail,
@@ -267,14 +311,21 @@ export async function sendRequestAnswerEmail({
 
 // ---- A link to choose a new password ----
 
-export function renderPasswordReset({ toName, token }: { toName: string; token: string }) {
+export function renderPasswordReset({
+  toName,
+  token,
+}: {
+  toName: string;
+  token: string;
+}) {
   const link = `${APP_URL}/reset-password?token=${encodeURIComponent(token)}`;
   const html = layout({
     preheader: "Choose a new password for Stacks.",
     content: `
         ${paragraph(`Hi ${esc(toName)}, someone asked to reset the password for your Stacks account. If it was you, tap the button to choose a new one.`)}
         ${button(link, "Choose a new password")}`,
-    footer: "The link works for an hour, and only once. If you didn't ask for this, ignore this email: your password hasn't changed.",
+    footer:
+      "The link works for an hour, and only once. If you didn't ask for this, ignore this email: your password hasn't changed.",
   });
   const text = `Hi ${toName},
 
@@ -292,7 +343,11 @@ export async function sendPasswordResetEmail({
 }: Parameters<typeof renderPasswordReset>[0] & { toEmail: string }) {
   // Demo sandbox addresses are undeliverable by design
   if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
-  if (!resend) console.log("Password reset link (email not configured):", renderPasswordReset(details).text.split("\n")[4]);
+  if (!resend)
+    console.log(
+      "Password reset link (email not configured):",
+      renderPasswordReset(details).text.split("\n")[4],
+    );
   return send({ to: toEmail, ...renderPasswordReset(details) });
 }
 
@@ -315,6 +370,8 @@ function digestLines(digest: Digest) {
       const more = item.books.length - titles.length;
       return `${name} added ${item.books.length === 1 ? "" : `${item.books.length} books: `}${titles.join(", ")}${more > 0 ? ` and ${more} more` : ""}`;
     }
+    if (item.kind === "elsewhere")
+      return `${name} wrote about ${item.work.title}: “${item.body}”`;
     if (item.kind === "loved") return `${name} loved ${item.book.title}`;
     return `${name} wrote about ${item.book.title}${item.body ? `: “${item.body}”` : ""}`;
   });
@@ -322,7 +379,9 @@ function digestLines(digest: Digest) {
     (item) =>
       `${item.title} · ${item.direction === "borrowed" ? "back to" : "with"} ${item.person} · ${dueWords(item.days)}`,
   );
-  const wanted = digest.wanted.map((item) => `${item.friend} added ${item.title}`);
+  const wanted = digest.wanted.map(
+    (item) => `${item.friend} added ${item.title}`,
+  );
   return { activity, due, wanted };
 }
 
@@ -347,7 +406,10 @@ function dueRow(item: Digest["due"][number]) {
     item.days < 0
       ? `<span style="color: ${red}; font-weight: 600;">${dueWords(item.days)}</span>`
       : dueWords(item.days);
-  return withCover(item.cover, `${bookLink(item.bookId, item.title)}<br><span style="font-size: 14px; color: ${muted};">${who} · ${when}</span>`);
+  return withCover(
+    item.cover,
+    `${bookLink(item.bookId, item.title)}<br><span style="font-size: 14px; color: ${muted};">${who} · ${when}</span>`,
+  );
 }
 
 function activityRow(item: Digest["activity"][number]) {
@@ -355,7 +417,10 @@ function activityRow(item: Digest["activity"][number]) {
   if (item.kind === "added") {
     if (item.books.length === 1) {
       const [book] = item.books;
-      return withCover(book.cover, `${name} added ${bookLink(book.id, book.title)}<br><span style="font-size: 14px; color: ${muted};">${esc(book.author)}</span>`);
+      return withCover(
+        book.cover,
+        `${name} added ${bookLink(book.id, book.title)}<br><span style="font-size: 14px; color: ${muted};">${esc(book.author)}</span>`,
+      );
     }
     // A row of up to four covers, each linking to its book
     const shown = item.books.slice(0, 4);
@@ -371,17 +436,32 @@ function activityRow(item: Digest["activity"][number]) {
       <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse: collapse;"><tr>${covers}</tr></table>`,
     );
   }
+  if (item.kind === "elsewhere") {
+    const work = `<a href="${APP_URL}${item.work.key}" style="color: ${ink}; font-weight: 600; text-decoration: none;">${esc(item.work.title)}</a>`;
+    return withCover(
+      item.work.cover,
+      `${name} wrote about ${work}<br><span style="display: inline-block; margin-top: 6px; padding-left: 10px; border-left: 2px solid ${line}; font-style: italic; color: ${body};">“${esc(item.body)}”</span>`,
+    );
+  }
   if (item.kind === "loved") {
-    return withCover(item.book.cover, `${name} loved ${bookLink(item.book.id, item.book.title)} <span style="color: #e11d48;">♥</span>`);
+    return withCover(
+      item.book.cover,
+      `${name} loved ${bookLink(item.book.id, item.book.title)} <span style="color: #e11d48;">♥</span>`,
+    );
   }
   const quote = item.body
     ? `<br><span style="display: inline-block; margin-top: 6px; padding-left: 10px; border-left: 2px solid ${line}; font-style: italic; color: ${body};">“${esc(item.body)}”</span>`
     : "";
-  return withCover(item.book.cover, `${name} wrote about ${bookLink(item.book.id, item.book.title)}${quote}`);
+  return withCover(
+    item.book.cover,
+    `${name} wrote about ${bookLink(item.book.id, item.book.title)}${quote}`,
+  );
 }
 
 function wantedRow(item: Digest["wanted"][number]) {
-  return textOnly(`<strong style="color: ${ink};">${esc(item.friend)}</strong> added ${bookLink(item.bookId, item.title)}, which is on your want-to-read list`);
+  return textOnly(
+    `<strong style="color: ${ink};">${esc(item.friend)}</strong> added ${bookLink(item.bookId, item.title)}, which is on your want-to-read list`,
+  );
 }
 
 export function renderDigest({
@@ -396,8 +476,16 @@ export function renderDigest({
   const lines = digestLines(digest);
   const sections: [string, string[], string][] = [
     ["Due back", digest.due.map(dueRow), `${APP_URL}/`],
-    ["From your want-to-read list", digest.wanted.map(wantedRow), `${APP_URL}/want-to-read`],
-    ["This week from your friends", digest.activity.map(activityRow), `${APP_URL}/feed`],
+    [
+      "From your want-to-read list",
+      digest.wanted.map(wantedRow),
+      `${APP_URL}/want-to-read`,
+    ],
+    [
+      "This week from your friends",
+      digest.activity.map(activityRow),
+      `${APP_URL}/feed`,
+    ],
   ];
   const filled = sections.filter(([, cells]) => cells.length > 0);
 
@@ -423,11 +511,24 @@ export function renderDigest({
     `Hi ${toName}, here's your week on Stacks.`,
     ...[
       ["Due back", lines.due, `${APP_URL}/`] as const,
-      ["From your want-to-read list", lines.wanted, `${APP_URL}/want-to-read`] as const,
-      ["This week from your friends", lines.activity, `${APP_URL}/feed`] as const,
+      [
+        "From your want-to-read list",
+        lines.wanted,
+        `${APP_URL}/want-to-read`,
+      ] as const,
+      [
+        "This week from your friends",
+        lines.activity,
+        `${APP_URL}/feed`,
+      ] as const,
     ]
       .filter(([, items]) => items.length > 0)
-      .flatMap(([title, items, link]) => ["", title.toUpperCase(), ...items.map((item) => `- ${item}`), link]),
+      .flatMap(([title, items, link]) => [
+        "",
+        title.toUpperCase(),
+        ...items.map((item) => `- ${item}`),
+        link,
+      ]),
     "",
     optOutText(toUserId, "weekly", "Stop the weekly roundup"),
   ].join("\n");
@@ -468,7 +569,8 @@ function scene() {
     ({ isbn, width }) =>
       `<td style="padding: 0 8px 0 0; vertical-align: bottom;">${cover(`https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`, width).replace("border-radius: 3px;", "border-radius: 3px 3px 0 0;")}</td>`,
   ).join("");
-  const name = (text: string) => `<strong style="color: ${ink};">${esc(text)}</strong>`;
+  const name = (text: string) =>
+    `<strong style="color: ${ink};">${esc(text)}</strong>`;
   const note = `
     <div style="background: #ffffff; border: 1px solid ${line}; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.45; color: ${body};">
       <p style="margin: 0 0 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: ${muted};">Due soon</p>
@@ -509,7 +611,10 @@ export function renderAnnouncement({
   const link = `${APP_URL}/notifications`;
   const title = headline?.trim() || "";
   // Blank lines in the message are paragraph breaks
-  const paragraphs = message.split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
+  const paragraphs = message
+    .split(/\n\s*\n/)
+    .map((part) => part.trim())
+    .filter(Boolean);
   const html = layout({
     preheader: (title ? `${title}. ` : "") + message.slice(0, 120),
     masthead: scene(),
@@ -532,13 +637,20 @@ ${message}
 ${link}
 
 ${optOutText(toUserId, "requests", "Stop email notifications")}`;
-  return { subject: title ? `Stacks: ${title}` : "News from Stacks", html, text };
+  return {
+    subject: title ? `Stacks: ${title}` : "News from Stacks",
+    html,
+    text,
+  };
 }
 
 export async function sendAnnouncementEmail({
   toEmail,
   ...details
-}: Parameters<typeof renderAnnouncement>[0] & { toEmail: string; toUserId: string }) {
+}: Parameters<typeof renderAnnouncement>[0] & {
+  toEmail: string;
+  toUserId: string;
+}) {
   if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
   return send({
     to: toEmail,
@@ -552,7 +664,15 @@ export async function sendAnnouncementEmail({
 const ADMIN_FOOTER =
   "You get these because you're an admin of Stacks. Change which ones you get on the dashboard.";
 
-export function renderFeedback({ from, body: message, page: sentFrom }: { from: string; body: string; page: string | null }) {
+export function renderFeedback({
+  from,
+  body: message,
+  page: sentFrom,
+}: {
+  from: string;
+  body: string;
+  page: string | null;
+}) {
   const subject = `Feedback from ${from.replace(/ <.*>$/, "")}`;
   const html = layout({
     preheader: message.slice(0, 120),
@@ -660,14 +780,21 @@ export async function sendSignupSummaryEmail({
 
 // ---- The link that confirms an address is really theirs ----
 
-export function renderVerification({ toName, token }: { toName: string; token: string }) {
+export function renderVerification({
+  toName,
+  token,
+}: {
+  toName: string;
+  token: string;
+}) {
   const link = `${APP_URL}/verify-email?token=${encodeURIComponent(token)}`;
   const html = layout({
     preheader: "One tap to confirm your email for Stacks.",
     content: `
         ${paragraph(`Hi ${esc(toName)}, tap the button to confirm this is your email address. Then Stacks can let you know when friends want to borrow your books.`)}
         ${button(link, "Confirm email")}`,
-    footer: "The link works for a week. If you didn't sign up for Stacks, ignore this email and nothing will happen.",
+    footer:
+      "The link works for a week. If you didn't sign up for Stacks, ignore this email and nothing will happen.",
   });
   const text = `Hi ${toName}, confirm this is your email address for Stacks:\n\n${link}\n\nThe link works for a week. If you didn't sign up for Stacks, ignore this email and nothing will happen.`;
   return { subject: "Confirm your email for Stacks", html, text };
@@ -678,6 +805,10 @@ export async function sendVerificationEmail({
   ...details
 }: Parameters<typeof renderVerification>[0] & { toEmail: string }) {
   if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
-  if (!resend) console.log("Verification link (email not configured):", renderVerification(details).text.split("\n")[2]);
+  if (!resend)
+    console.log(
+      "Verification link (email not configured):",
+      renderVerification(details).text.split("\n")[2],
+    );
   return send({ to: toEmail, ...renderVerification(details) });
 }
