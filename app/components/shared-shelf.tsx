@@ -168,7 +168,7 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
                         above
                           ? "bottom-[calc(100%-1.25rem)]"
                           : "top-[calc(100%-1.25rem)]"
-                      } rounded-2xl bg-white px-3 py-2 text-[11px] leading-snug text-stone-700 drop-shadow-[0_2px_6px_rgb(0_0_0/0.2)] dark:bg-stone-800 dark:text-stone-200 sm:text-xs`}
+                      } rounded-2xl bg-white px-3 py-2 text-[11px] leading-snug text-stone-700 shadow-[0_1px_3px_rgb(0_0_0/0.08)] ring-1 ring-stone-900/5 dark:ring-white/10 dark:bg-stone-800 dark:text-stone-200 sm:text-xs`}
                     >
                       <span className="line-clamp-4">{book.note}</span>
                     </p>
