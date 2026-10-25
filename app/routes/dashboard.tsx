@@ -33,7 +33,11 @@ import {
   setAdminEmailChoices,
 } from "~/models/admin.server";
 import { deleteExpiredDemoGroups } from "~/models/demo.server";
-import { getFeedback, setFeedbackDone } from "~/models/feedback.server";
+import {
+  deleteFeedback,
+  getFeedback,
+  setFeedbackDone,
+} from "~/models/feedback.server";
 import {
   deleteUsers,
   getUserByEmail,
@@ -154,6 +158,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       feedback:
         feedbackEmails === "on" ? true : feedbackEmails === "off" ? false : undefined,
     });
+    return json({ ok: true });
+  }
+
+  if (intent === "deleteFeedback") {
+    const id = form.get("feedbackId");
+    if (typeof id !== "string")
+      return json({ error: "No feedback given" }, { status: 400 });
+    await deleteFeedback(id);
     return json({ ok: true });
   }
 
@@ -859,14 +871,15 @@ function AdminEmails({ choices }: { choices: Data["emailChoices"] }) {
 }
 
 function Feedback({ feedback }: { feedback: Data["feedback"] }) {
-  const open = feedback.filter((item) => !item.done).length;
+  const open = feedback.filter((item) => !item.done);
+  const dismissed = feedback.filter((item) => item.done);
   return (
     <section aria-labelledby="feedback-heading" id="feedback">
       <h2 id="feedback-heading" className={headingClass}>
         Feedback
-        {open ? (
+        {open.length ? (
           <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 align-middle text-xs font-medium text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-            {open} open
+            {open.length} open
           </span>
         ) : null}
       </h2>
@@ -875,11 +888,30 @@ function Feedback({ feedback }: { feedback: Data["feedback"] }) {
           Nothing yet. It&apos;s linked from the footer and the account menu.
         </p>
       ) : (
-        <ul className="mt-4 divide-y divide-stone-100 dark:divide-stone-800 rounded-xl border border-stone-200 dark:border-stone-800">
-          {feedback.map((item) => (
-            <FeedbackItem key={item.id} item={item} />
-          ))}
-        </ul>
+        <>
+          {open.length ? (
+            <ul className="mt-4 divide-y divide-stone-100 dark:divide-stone-800 rounded-xl border border-stone-200 dark:border-stone-800">
+              {open.map((item) => (
+                <FeedbackItem key={item.id} item={item} />
+              ))}
+            </ul>
+          ) : (
+            <p className={`mt-4 ${mutedClass}`}>All caught up.</p>
+          )}
+          {/* Dismissed feedback stays out of the way until it's wanted */}
+          {dismissed.length ? (
+            <details className="group mt-3">
+              <summary className={`cursor-pointer select-none text-sm ${mutedClass} hover:text-stone-900 dark:hover:text-stone-100`}>
+                Dismissed ({dismissed.length})
+              </summary>
+              <ul className="mt-2 divide-y divide-stone-100 dark:divide-stone-800 rounded-xl border border-stone-200 dark:border-stone-800">
+                {dismissed.map((item) => (
+                  <FeedbackItem key={item.id} item={item} />
+                ))}
+              </ul>
+            </details>
+          ) : null}
+        </>
       )}
     </section>
   );
@@ -887,16 +919,20 @@ function Feedback({ feedback }: { feedback: Data["feedback"] }) {
 
 function FeedbackItem({ item }: { item: Data["feedback"][number] }) {
   const fetcher = useFetcher();
-  const done = fetcher.formData
-    ? fetcher.formData.get("done") === "true"
-    : item.done;
+  const deleting = fetcher.formData?.get("intent") === "deleteFeedback";
+  const done =
+    fetcher.formData?.get("intent") === "feedbackDone"
+      ? fetcher.formData.get("done") === "true"
+      : item.done;
   const who = item.user
     ? `${item.user.firstname} ${item.user.surname}${item.user.demoGroup ? " (demo)" : ""}`
     : "A visitor";
   const replyTo =
     item.user && !item.user.demoGroup ? item.user.email : item.email;
+  // Hidden at once while it's deleted, rather than waiting for the reload
+  if (deleting) return null;
   return (
-    <li className={`flex gap-4 px-4 py-3 ${done ? "opacity-50" : ""}`}>
+    <li className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:gap-4">
       <div className="min-w-0 flex-1">
         <p className="whitespace-pre-wrap text-pretty text-stone-800 dark:text-stone-200">
           {item.body}
@@ -914,14 +950,33 @@ function FeedbackItem({ item }: { item: Data["feedback"][number] }) {
           {item.page ? <> · from {item.page}</> : null} · {ago(item.createdAt)}
         </p>
       </div>
-      <fetcher.Form method="post" className="flex-shrink-0">
-        <input type="hidden" name="intent" value="feedbackDone" />
-        <input type="hidden" name="feedbackId" value={item.id} />
-        <input type="hidden" name="done" value={done ? "false" : "true"} />
-        <button type="submit" className={outlineButton}>
-          {done ? "Reopen" : "Done"}
-        </button>
-      </fetcher.Form>
+      <div className="flex flex-shrink-0 items-start gap-2">
+        <fetcher.Form method="post">
+          <input type="hidden" name="intent" value="feedbackDone" />
+          <input type="hidden" name="feedbackId" value={item.id} />
+          <input type="hidden" name="done" value={done ? "false" : "true"} />
+          <button type="submit" className={outlineButton}>
+            {done ? "Reopen" : "Dismiss"}
+          </button>
+        </fetcher.Form>
+        <fetcher.Form
+          method="post"
+          onSubmit={(event) => {
+            if (!confirm("Delete this feedback? It can't be brought back.")) {
+              event.preventDefault();
+            }
+          }}
+        >
+          <input type="hidden" name="intent" value="deleteFeedback" />
+          <input type="hidden" name="feedbackId" value={item.id} />
+          <button
+            type="submit"
+            className={`${outlineButton} hover:text-red-700 dark:hover:text-red-400`}
+          >
+            Delete
+          </button>
+        </fetcher.Form>
+      </div>
     </li>
   );
 }

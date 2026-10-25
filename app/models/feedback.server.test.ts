@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { makeUser, prisma } from "../../test/db";
 
-import { getFeedback, saveFeedback, setFeedbackDone } from "./feedback.server";
+import { deleteFeedback, getFeedback, saveFeedback, setFeedbackDone } from "./feedback.server";
 import { deleteUsers } from "./user.server";
 
 test("feedback is saved, listed open-first, and outlives the account that sent it", async () => {
@@ -17,4 +17,11 @@ test("feedback is saved, listed open-first, and outlives the account that sent i
   await deleteUsers([reader.id]);
   const kept = await prisma.feedback.findUniqueOrThrow({ where: { id: first.id } });
   expect(kept).toMatchObject({ userId: null, body: "Love it, but search is slow.", done: true });
+});
+
+test("deleted feedback is gone, and deleting it again is harmless", async () => {
+  const item = await saveFeedback({ userId: null, body: "Buy cheap watches", email: "spam@example.test" });
+  await deleteFeedback(item.id);
+  expect(await prisma.feedback.findUnique({ where: { id: item.id } })).toBeNull();
+  await expect(deleteFeedback(item.id)).resolves.toMatchObject({ count: 0 });
 });
