@@ -32,10 +32,10 @@ import { requireUserId } from "~/session.server";
 // feed of posts you can act on
 
 export const meta: MetaFunction = () =>
-  seo({ title: "Friend activity", noindex: true });
+  seo({ title: "Feed", noindex: true });
 
 export const handle = {
-  breadcrumb: () => <span>Friend activity</span>,
+  breadcrumb: () => <span>Feed</span>,
 };
 
 // Posts at a time: "Show older" adds another page's worth below. How many
@@ -219,7 +219,7 @@ export default function Feed() {
     // like every other page, with the rail in the room that leaves
     <main className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8 md:py-8 lg:grid lg:grid-cols-[minmax(0,40rem)_minmax(0,1fr)] lg:gap-14">
       <div className="min-w-0">
-        <h1 className="sr-only">Friend activity</h1>
+        <h1 className="sr-only">Feed</h1>
         {prompts.length > 0 ? (
           <div className="mb-6">
             <NotePrompt books={prompts} />

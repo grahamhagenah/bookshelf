@@ -72,7 +72,7 @@ export default function Header() {
               </NavLink>
               <NavLink to="/feed" className={navClass}>
                 <GroupIcon size={16} />
-                Friend activity
+                Feed
               </NavLink>
             </nav>
           ) : null}
@@ -80,8 +80,8 @@ export default function Header() {
           {user ? (
             <Link
               to="/feed"
-              aria-label="Friend activity"
-              title="Friend activity"
+              aria-label="Feed"
+              title="Feed"
               className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             >
               <GroupIcon size={24} />
