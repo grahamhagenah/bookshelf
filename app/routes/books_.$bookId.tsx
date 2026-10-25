@@ -71,6 +71,8 @@ import {
 } from "~/models/user.server";
 import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
 import { roomForFriend } from "~/plan.server";
+import { PIN_MAX, PIN_NOTE_MAX } from "~/profile";
+import { getPin, pinBook, setHiddenFromPage, setPinNote, unpinBook } from "~/profile.server";
 import type { CoversResponse } from "~/routes/api.covers";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
@@ -427,6 +429,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     // What the lender said when they said yes, for the one borrowing it
     loanReply: isBorrower ? await getLoanReply(book.id, userId) : null,
     fillingIn,
+    // Where this book stands on the owner's public page
+    page: isOwner
+      ? {
+          ...(await getPin(userId, book.id)),
+          hidden: book.hiddenFromPage,
+          on: Boolean(currentUser?.shareToken),
+        }
+      : null,
   });
 };
 
@@ -453,6 +463,28 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   }
   // Anyone sharing the shelf the book is on can manage it
   const managerIds = await shelfIds(userId);
+
+  // The owner's public page: pin it, say why, or keep it off
+  if (
+    intent === "pin" ||
+    intent === "unpin" ||
+    intent === "pinNote" ||
+    intent === "hideFromPage" ||
+    intent === "showOnPage"
+  ) {
+    if (!managerIds.includes(book.userId)) throw new Response("Not Found", { status: 404 });
+    const note = formData.get("note");
+    if (intent === "pin") {
+      const result = await pinBook(userId, book.id, typeof note === "string" ? note : null);
+      return json(result.ok ? { pinned: true } : { pinError: result.error });
+    }
+    if (intent === "unpin") await unpinBook(userId, book.id);
+    if (intent === "pinNote") await setPinNote(userId, book.id, typeof note === "string" ? note : null);
+    if (intent === "hideFromPage" || intent === "showOnPage") {
+      await setHiddenFromPage(userId, book.id, intent === "hideFromPage");
+    }
+    return json({ ok: true });
+  }
 
   if (intent === "toggleRead") {
     if (!(await canLeaveNote(userId, book))) {
@@ -967,6 +999,104 @@ type BookData = SerializeFrom<typeof loader>;
 
 // A few facts beside the cover: where the book is, when it arrived, how
 // often it's been lent
+// The owner's say over how this book appears on their public page: pin
+// it to the top with a line about it, or keep it off the page entirely
+function PublicPagePanel({
+  page,
+}: {
+  page: { pinned: boolean; note: string | null; count: number; hidden: boolean; on: boolean };
+}) {
+  const fetcher = useFetcher<{ pinned?: boolean; pinError?: string; ok?: boolean }>({ key: "public-page" });
+  const intent = fetcher.formData?.get("intent");
+  // Shown as it will be, while it saves
+  const pinned = intent === "pin" ? true : intent === "unpin" ? false : page.pinned;
+  const hidden = intent === "hideFromPage" ? true : intent === "showOnPage" ? false : page.hidden;
+  const full = !pinned && page.count >= PIN_MAX;
+  const [note, setNote] = useState(page.note ?? "");
+  useEffect(() => setNote(page.note ?? ""), [page.note]);
+  const quiet =
+    "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
+
+  return (
+    <section aria-labelledby="public-page-heading" className="rounded-md border border-stone-200 dark:border-stone-700 p-3">
+      <h2 id="public-page-heading" className="text-xs font-semibold text-stone-500 dark:text-stone-400">
+        Your public page{page.on ? null : <span className="font-normal"> · off for now</span>}
+      </h2>
+      {hidden ? (
+        <div className="mt-1.5 flex items-center justify-between gap-2 text-sm">
+          <span className="text-stone-600 dark:text-stone-300">Kept off your page</span>
+          <fetcher.Form method="post">
+            <input type="hidden" name="intent" value="showOnPage" />
+            <button type="submit" className={quiet}>
+              Show it
+            </button>
+          </fetcher.Form>
+        </div>
+      ) : pinned ? (
+        <fetcher.Form method="post" className="mt-1.5 space-y-2">
+          <input type="hidden" name="intent" value="pinNote" />
+          <p className="text-sm text-stone-700 dark:text-stone-200">Pinned to your favorites</p>
+          <label htmlFor="pin-note" className="sr-only">
+            A line about it
+          </label>
+          <input
+            id="pin-note"
+            name="note"
+            type="text"
+            value={note}
+            maxLength={PIN_NOTE_MAX}
+            onChange={(event) => setNote(event.target.value)}
+            // Saved when they leave the field, if it changed
+            onBlur={(event) => {
+              if (note.trim() !== (page.note ?? "")) fetcher.submit(event.currentTarget.form);
+            }}
+            placeholder="A line about it (optional)"
+            className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 py-1.5 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
+          />
+        </fetcher.Form>
+      ) : null}
+      {pinned && !hidden ? (
+        // Its own form, so these buttons' intent isn't the note's
+        <fetcher.Form method="post" className="mt-2 flex items-center justify-between gap-2">
+          <button type="submit" name="intent" value="unpin" className={quiet}>
+            Unpin
+          </button>
+          <button type="submit" name="intent" value="hideFromPage" className={quiet}>
+            Keep it off my page
+          </button>
+        </fetcher.Form>
+      ) : null}
+      {hidden || pinned ? null : (
+        <fetcher.Form method="post" className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+          <button
+            type="submit"
+            name="intent"
+            value="pin"
+            disabled={full}
+            title={full ? `Your page shows ${PIN_MAX}. Unpin one first.` : undefined}
+            className="rounded-md border border-stone-200 dark:border-stone-700 px-2.5 py-1 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Pin to my favorites
+          </button>
+          <button type="submit" name="intent" value="hideFromPage" className={quiet}>
+            Keep it off my page
+          </button>
+          {full ? (
+            <p className="w-full text-xs text-stone-500 dark:text-stone-400">
+              Your page shows {PIN_MAX}. Unpin one in Settings first.
+            </p>
+          ) : null}
+        </fetcher.Form>
+      )}
+      {fetcher.data?.pinError ? (
+        <p role="alert" className="mt-1.5 text-xs text-red-700 dark:text-red-400">
+          {fetcher.data.pinError}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function BookFacts({ data }: { data: BookData }) {
   const { book } = data;
   const rows: [string, React.ReactNode][] = [];
@@ -1542,6 +1672,7 @@ export default function BookDetailsPage() {
               loanChoices={data.loanChoices}
             />
           ) : null}
+          {data.page && !isEditing ? <PublicPagePanel page={data.page} /> : null}
           {canRequestBook ? (
             <Form method="post" className="space-y-2">
               <input type="hidden" name="intent" value="request" />

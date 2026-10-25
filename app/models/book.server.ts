@@ -35,6 +35,7 @@ export function getBookById(id: Book["id"]) {
       firstSentence: true,
       authorKey: true,
       detailsFetchedAt: true,
+      hiddenFromPage: true,
       userId: true,
       borrowerId: true,
       borrowedAt: true,
@@ -124,10 +125,12 @@ export async function getHomeBooks(userId: User["id"], ownerIds: User["id"][] = 
   };
 }
 
+// A shelf as its public page shows it: everything but what's kept off it
 export function getPublicBookListItems(ownerIds: User["id"][]) {
   return prisma.book.findMany({
     where: {
       userId: { in: ownerIds },
+      hiddenFromPage: false,
     },
     select: { id: true, title: true, cover: true, author: true },
     orderBy: { updatedAt: "desc" },

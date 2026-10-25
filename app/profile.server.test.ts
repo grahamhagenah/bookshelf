@@ -1,9 +1,10 @@
 // @vitest-environment node
 import { makeBook, makeUser, prisma } from "../test/db";
 
+import { getPublicBookListItems } from "./models/book.server";
 import { generateShareToken } from "./models/user.server";
 import { handleProblem, normalizeHandle } from "./profile";
-import { getShelfProfile, saveProfile } from "./profile.server";
+import { getShelfProfile, movePin, pinBook, saveProfile, setHiddenFromPage, unpinBook } from "./profile.server";
 import { loader as profilePage } from "./routes/$profile";
 import { loader as sharePage } from "./routes/share.$token";
 
@@ -73,4 +74,71 @@ test("a shelf is at /@handle only while sharing is on, and its old link moves th
 
   // Only @ addresses are profiles
   await expect(visit(profilePage, `/${handle}`, { profile: handle })).rejects.toMatchObject({ status: 404 });
+});
+
+test("pinned books replace hearts on the page, in their order, with their lines", async () => {
+  const owner = await makeUser("Maya");
+  const [dune, circe, gilead] = await Promise.all([
+    makeBook(owner.id, "Dune"),
+    makeBook(owner.id, "Circe"),
+    makeBook(owner.id, "Gilead"),
+  ]);
+  // A heart alone fills the row until something's pinned
+  await prisma.readerNote.create({ data: { userId: owner.id, bookId: gilead.id, loved: true } });
+  expect((await getShelfProfile(owner.id)).favorites.map((b) => b.title)).toEqual(["Gilead"]);
+
+  expect(await pinBook(owner.id, circe.id, "  Read it   every winter. ")).toEqual({ ok: true });
+  expect(await pinBook(owner.id, dune.id)).toEqual({ ok: true });
+  let profile = await getShelfProfile(owner.id);
+  expect(profile.pinned).toBe(true);
+  expect(profile.favorites.map((b) => [b.title, b.note])).toEqual([
+    ["Circe", "Read it every winter."],
+    ["Dune", null],
+  ]);
+
+  await movePin(owner.id, dune.id, "earlier");
+  profile = await getShelfProfile(owner.id);
+  expect(profile.favorites.map((b) => b.title)).toEqual(["Dune", "Circe"]);
+
+  await unpinBook(owner.id, dune.id);
+  expect((await getShelfProfile(owner.id)).favorites.map((b) => b.title)).toEqual(["Circe"]);
+});
+
+test("a page holds five pins, and only books from your own shelf", async () => {
+  const owner = await makeUser("Maya");
+  const other = await makeUser("Sam");
+  const books = await Promise.all(["A", "B", "C", "D", "E", "F"].map((t) => makeBook(owner.id, t)));
+  for (const book of books.slice(0, 5)) expect((await pinBook(owner.id, book.id)).ok).toBe(true);
+  const sixth = await pinBook(owner.id, books[5].id);
+  expect(sixth.ok).toBe(false);
+  const notMine = await makeBook(other.id, "Theirs");
+  expect((await pinBook(owner.id, notMine.id)).ok).toBe(false);
+});
+
+test("a book kept off the page leaves its list, its favorites and its numbers", async () => {
+  const owner = await makeUser("Maya");
+  const shown = await makeBook(owner.id, "Shown");
+  const kept = await makeBook(owner.id, "Kept");
+  await prisma.book.update({ where: { id: kept.id }, data: { lendCount: 4 } });
+  await pinBook(owner.id, kept.id, "Secret favorite");
+  await setHiddenFromPage(owner.id, kept.id, true);
+
+  const profile = await getShelfProfile(owner.id);
+  expect(profile.stats.books).toBe(1);
+  expect(profile.stats.timesLent).toBe(0);
+  expect(profile.stats.mostLent).toBeNull();
+  expect(profile.favorites).toEqual([]);
+  expect((await getPublicBookListItems([owner.id])).map((b) => b.title)).toEqual([shown.title]);
+
+  // Back on, and its pin with it
+  await setHiddenFromPage(owner.id, kept.id, false);
+  expect((await getShelfProfile(owner.id)).favorites.map((b) => b.note)).toEqual(["Secret favorite"]);
+});
+
+test("the page wears the owner's bookplate color, or the one their name gives", async () => {
+  const chose = await makeUser("Maya");
+  await prisma.user.update({ where: { id: chose.id }, data: { profileEmoji: "plate:plum" } });
+  expect((await getShelfProfile(chose.id)).color).toBe("plum");
+  const didnt = await makeUser("Sam");
+  expect(["forest", "oxblood", "navy", "ochre", "plum"]).toContain((await getShelfProfile(didnt.id)).color);
 });

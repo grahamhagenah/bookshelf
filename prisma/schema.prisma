@@ -89,6 +89,7 @@ model User {
   following  User[]  @relation("UserFollows")
 
   @@index([demoGroup], name: "demo_group_index")
+  pins               Pin[]
 }
 
 model Password {
@@ -117,6 +118,9 @@ model Book {
   firstSentence  String?
   authorKey      String?
   detailsFetchedAt DateTime?
+  // Kept off the owner's public page (and its numbers and preview);
+  // friends still see it on the shelf
+  hiddenFromPage Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -133,6 +137,23 @@ model Book {
   lendingHistory LendingHistory[]
   readerNotes    ReaderNote[]
   holds          Hold[]
+  pins           Pin[]
+}
+
+// A book its owner has put at the top of their public page, in their
+// order, with a line about it
+model Pin {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  bookId    String
+  note      String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, bookId])
+  @@index([userId])
 }
 
 model LendingHistory {

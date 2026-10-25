@@ -19,6 +19,7 @@ import Avatar, {
   PLATE_COLORS,
   plateColorOf,
 } from "~/components/avatar";
+import BookCover from "~/components/book-cover";
 import CopyButton from "~/components/copy-button";
 import {
   BookIcon,
@@ -57,8 +58,8 @@ import {
 import { publicOrigin } from "~/origin.server";
 import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
 import { getPlanUsage } from "~/plan.server";
-import { BIO_MAX, HANDLE_MAX } from "~/profile";
-import { saveProfile } from "~/profile.server";
+import { BIO_MAX, HANDLE_MAX, PIN_MAX } from "~/profile";
+import { getPins, movePin, saveProfile, unpinBook } from "~/profile.server";
 import { seo } from "~/seo";
 import { getSession, requireUserId, sessionStorage } from "~/session.server";
 import {
@@ -90,14 +91,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
     return redirect("/account?upgraded=1#plan");
   }
-  const [user, bookStats, household, plan] = await Promise.all([
+  const [user, bookStats, household, plan, pins] = await Promise.all([
     getUserById(userId),
     getBookStats(userId, await shelfIds(userId)),
     getHousehold(userId),
     getPlanUsage(userId),
+    getPins(userId),
   ]);
   return {
     user,
+    // The books pinned to the top of their public page, in order
+    pins,
     plan,
     billing: billingEnabled(),
     upgraded: new URL(request.url).searchParams.has("upgraded"),
@@ -160,6 +164,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // The public page's handle and bio
+  // Reordering and unpinning the public page's favorites
+  if (intent === "movePin" || intent === "unpinFromPage") {
+    const bookId = formData.get("bookId");
+    if (typeof bookId !== "string") return null;
+    if (intent === "unpinFromPage") await unpinBook(userId, bookId);
+    else await movePin(userId, bookId, formData.get("direction") === "earlier" ? "earlier" : "later");
+    return null;
+  }
+
   if (intent === "saveProfile") {
     const result = await saveProfile(userId, {
       handle: String(formData.get("handle") ?? ""),
@@ -717,6 +730,7 @@ export default function Account() {
             bio={user?.bio ?? null}
             origin={data.origin}
             shareUrl={shareUrl}
+            pins={data.pins}
           />
 
           <div>
@@ -1322,16 +1336,81 @@ function DeleteAccount({ plus, shared }: { plus: boolean; shared: boolean }) {
 // Your public page in one place: whether there is one, its address to
 // pick and copy, and the line at its top. Before you pick a handle, the
 // share link is the address.
+interface PinItem {
+  id: string;
+  note: string | null;
+  book: { id: string; title: string; author: string; cover: string; hiddenFromPage: boolean };
+}
+
+// The books pinned to the top of the public page: their order here is the
+// page's, and pins are made from each book's own page
+function PinnedFavorites({ pins }: { pins: PinItem[] }) {
+  const fetcher = useFetcher({ key: "pins" });
+  const arrow =
+    "flex h-7 w-7 items-center justify-center rounded-md text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-100 disabled:opacity-30 disabled:hover:bg-transparent";
+  return (
+    <div className="mt-6">
+      <p className="text-sm font-medium text-stone-800 dark:text-stone-200">
+        Favorites on your page{" "}
+        <span className="font-normal text-stone-400 dark:text-stone-500">
+          {pins.length}/{PIN_MAX}
+        </span>
+      </p>
+      <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
+        {pins.length === 0
+          ? "Pin books from their pages, with a line about each. Until you do, your page shows the books you've hearted."
+          : "In the order they appear. Pin more, or change a book's line, from its page."}
+      </p>
+      {pins.length > 0 ? (
+        <ol className="mt-2 divide-y divide-stone-100 dark:divide-stone-800 rounded-md border border-stone-200 dark:border-stone-700">
+          {pins.map((pin, index) => (
+            <li key={pin.id} className="flex items-center gap-3 px-3 py-2">
+              <BookCover cover={pin.book.cover} title={pin.book.title} compact className="h-12 w-8 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <Link to={`/books/${pin.book.id}`} className="block truncate text-sm font-medium text-stone-900 dark:text-stone-100 hover:underline underline-offset-2">
+                  {pin.book.title}
+                </Link>
+                <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+                  {pin.book.hiddenFromPage ? "Kept off your page, so not shown" : pin.note ? `“${pin.note}”` : pin.book.author}
+                </p>
+              </div>
+              <fetcher.Form method="post" className="flex items-center gap-0.5">
+                <input type="hidden" name="intent" value="movePin" />
+                <input type="hidden" name="bookId" value={pin.book.id} />
+                <button type="submit" name="direction" value="earlier" disabled={index === 0} aria-label={`Move ${pin.book.title} earlier`} className={arrow}>
+                  ↑
+                </button>
+                <button type="submit" name="direction" value="later" disabled={index === pins.length - 1} aria-label={`Move ${pin.book.title} later`} className={arrow}>
+                  ↓
+                </button>
+              </fetcher.Form>
+              <fetcher.Form method="post">
+                <input type="hidden" name="intent" value="unpinFromPage" />
+                <input type="hidden" name="bookId" value={pin.book.id} />
+                <button type="submit" className="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 underline-offset-2 hover:underline">
+                  Unpin
+                </button>
+              </fetcher.Form>
+            </li>
+          ))}
+        </ol>
+      ) : null}
+    </div>
+  );
+}
+
 function PublicPage({
   handle,
   bio,
   origin,
   shareUrl,
+  pins,
 }: {
   handle: string | null;
   bio: string | null;
   origin: string;
   shareUrl: string | null;
+  pins: PinItem[];
 }) {
   const fetcher = useFetcher<{ profileSaved?: boolean; profileError?: string }>();
   const [bioText, setBioText] = useState(bio ?? "");
@@ -1376,8 +1455,8 @@ function PublicPage({
     <div>
       {heading}
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-        Anyone with the link can see your shelf without signing in. Your favorites are the
-        books you&apos;ve hearted.
+        Anyone with the link can see your shelf without signing in, apart from any book you
+        keep off it from that book&apos;s page.
       </p>
       <fetcher.Form method="post" className="mt-3 grid grid-cols-1 gap-3">
         <input type="hidden" name="intent" value="saveProfile" />
@@ -1452,6 +1531,7 @@ function PublicPage({
           </span>
         </div>
       </fetcher.Form>
+      <PinnedFavorites pins={pins} />
       {/* Its own form, since forms can't nest */}
       <Form method="post" className="mt-4">
         <input type="hidden" name="intent" value="revokeShareToken" />
