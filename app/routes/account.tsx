@@ -600,42 +600,11 @@ export default function Account() {
           </h3>
           <Form method="post" className="mt-3 space-y-3">
             <input type="hidden" name="intent" value="updateProfileEmoji" />
-            {/* Your initials as a bookplate, in a color of your choosing */}
-            <div className="flex flex-wrap gap-2">
-              {(Object.keys(PLATE_COLORS) as (keyof typeof PLATE_COLORS)[]).map(
-                (color) => {
-                  // A bookplate, not an icon in this color
-                  const picture = pictureOf(user?.profileEmoji);
-                  const chosen = !picture.icon && picture.color === color;
-                  return (
-                    <button
-                      key={color}
-                      type="submit"
-                      name="emoji"
-                      value={`${PLATE}${color}`}
-                      aria-label={`Use the ${color} bookplate`}
-                      aria-pressed={chosen}
-                      // The same 44px as the icons below, so the two rows line
-                      // up; the ring sits outside, off the plate by a gap
-                      className={`rounded-full ring-offset-2 ring-offset-white dark:ring-offset-stone-950 transition-shadow ${
-                        chosen
-                          ? "ring-2 ring-forest-600 dark:ring-forest-400"
-                          : "ring-1 ring-transparent hover:ring-stone-300 dark:hover:ring-stone-600"
-                      }`}
-                    >
-                      <Bookplate
-                        firstname={user?.firstname}
-                        surname={user?.surname}
-                        color={color}
-                        box="h-11 w-11 text-sm"
-                        framed
-                      />
-                    </button>
-                  );
-                },
-              )}
-            </div>
-            <IconPicker current={user?.profileEmoji ?? null} />
+            <IconPicker
+              current={user?.profileEmoji ?? null}
+              firstname={user?.firstname ?? null}
+              surname={user?.surname ?? null}
+            />
           </Form>
         </div>
       </Section>
@@ -965,75 +934,88 @@ function Saved({ children }: { children: React.ReactNode }) {
   );
 }
 
-// The icons, in a color of your choosing (or plain grey). Picking a color
-// recolors the icon you have; with a bookplate on, it colors the icons
-// here, ready for one to be picked.
-function IconPicker({ current }: { current: string | null }) {
+// Your picture: your initials as a bookplate, or an icon, in a color of
+// your choosing. Picking a color recolors what you have and saves it.
+// Grey leaves an icon plain grey, and initials in the color your name
+// gives you.
+function IconPicker({
+  current,
+  firstname,
+  surname,
+}: {
+  current: string | null;
+  firstname: string | null;
+  surname: string | null;
+}) {
   const picture = pictureOf(current);
-  const [color, setColor] = useState<PlateColor | null>(
-    picture.icon ? picture.color : null,
-  );
-  const swatch = (on: boolean) =>
-    `h-7 w-7 rounded-full ring-offset-2 ring-offset-white dark:ring-offset-stone-950 transition-shadow ${
+  const [color, setColor] = useState<PlateColor | null>(picture.color);
+  const ring = (on: boolean) =>
+    `ring-offset-2 ring-offset-white dark:ring-offset-stone-950 transition-shadow ${
       on
         ? "ring-2 ring-forest-600 dark:ring-forest-400"
-        : "ring-1 ring-transparent hover:ring-stone-300 dark:hover:ring-stone-600"
+        : "ring-1 ring-stone-200 dark:ring-stone-700 hover:ring-stone-400 dark:hover:ring-stone-500"
     }`;
   const choices: (PlateColor | null)[] = [
     null,
     ...(Object.keys(PLATE_COLORS) as PlateColor[]),
   ];
+  // What a picture with this icon (or none, for initials) and color saves as
+  const value = (icon: string | null, tone: PlateColor | null) =>
+    icon ? (tone ? `${icon}:${tone}` : icon) : tone ? `${PLATE}${tone}` : "";
   return (
     <>
       <div
         className="flex flex-wrap items-center gap-2.5 pt-1"
         role="group"
-        aria-label="Icon color"
+        aria-label="Color"
       >
         <span className="mr-1 text-sm text-stone-500 dark:text-stone-400">
-          Icon color
+          Color
         </span>
-        {choices.map((choice) => {
-          const label = choice
-            ? `Color the icon ${choice}`
-            : "Leave the icon grey";
-          // With an icon on, a color is saved straight away
-          return picture.icon ? (
-            <button
-              key={choice ?? "grey"}
-              type="submit"
-              name="emoji"
-              value={choice ? `${picture.icon}:${choice}` : picture.icon}
-              onClick={() => setColor(choice)}
-              aria-label={label}
-              aria-pressed={color === choice}
-              className={`${swatch(color === choice)} ${iconTone(choice)} flex items-center justify-center`}
-            >
-              {/* The ink as a dot, since the tints alone look much alike */}
-              <span
-                aria-hidden="true"
-                className="h-3 w-3 rounded-full bg-current"
-              />
-            </button>
-          ) : (
-            <button
-              key={choice ?? "grey"}
-              type="button"
-              onClick={() => setColor(choice)}
-              aria-label={label}
-              aria-pressed={color === choice}
-              className={`${swatch(color === choice)} ${iconTone(choice)} flex items-center justify-center`}
-            >
-              {/* The ink as a dot, since the tints alone look much alike */}
-              <span
-                aria-hidden="true"
-                className="h-3 w-3 rounded-full bg-current"
-              />
-            </button>
-          );
-        })}
+        {choices.map((choice) => (
+          <button
+            key={choice ?? "grey"}
+            type="submit"
+            name="emoji"
+            value={value(picture.icon, choice)}
+            onClick={() => setColor(choice)}
+            aria-label={
+              choice
+                ? `Use ${choice}`
+                : picture.icon
+                  ? "Use grey"
+                  : "Use the color your name gives"
+            }
+            aria-pressed={color === choice}
+            className={`flex h-7 w-7 items-center justify-center rounded-full ${iconTone(choice)} ${ring(color === choice)}`}
+          >
+            {/* The ink as a dot, since the tints alone look much alike */}
+            <span
+              aria-hidden="true"
+              className="h-3 w-3 rounded-full bg-current"
+            />
+          </button>
+        ))}
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid w-fit grid-cols-5 gap-2 sm:grid-cols-9">
+        {/* Your initials first, then the icons: 45 in all, so five or
+            nine across leaves no stragglers */}
+        <button
+          type="submit"
+          name="emoji"
+          value={value(null, color)}
+          aria-label="Use your initials"
+          aria-pressed={!picture.icon}
+          className={`rounded-full ${ring(!picture.icon)}`}
+        >
+          <Bookplate
+            firstname={firstname}
+            surname={surname}
+            color={color}
+            box="h-11 w-11 text-sm"
+            framed
+          />
+        </button>
         {AVATAR_ICONS.map((icon) => {
           const chosen = picture.icon === icon;
           return (
@@ -1041,14 +1023,10 @@ function IconPicker({ current }: { current: string | null }) {
               key={icon}
               type="submit"
               name="emoji"
-              value={color ? `${icon}:${color}` : icon}
+              value={value(icon, color)}
               aria-label={`Use the ${icon} icon`}
               aria-pressed={chosen}
-              className={`flex h-11 w-11 items-center justify-center rounded-full transition-shadow ${iconTone(color)} ring-offset-2 ring-offset-white dark:ring-offset-stone-950 ${
-                chosen
-                  ? "ring-2 ring-forest-600 dark:ring-forest-400"
-                  : "ring-1 ring-stone-200 dark:ring-stone-700 hover:ring-stone-400 dark:hover:ring-stone-500"
-              }`}
+              className={`flex h-11 w-11 items-center justify-center rounded-full ${iconTone(color)} ${ring(chosen)}`}
             >
               <AvatarGlyph icon={icon} size={27} />
             </button>
