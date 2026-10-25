@@ -42,17 +42,19 @@ const VISITOR = {
   profileEmoji: null,
 };
 
-// Friends have picked icons; the visitor shows initials, so choosing one is
-// theirs to try
+// Friends have chosen bookplates, each its own color (Jordan's name gives
+// ochre and Lena's forest, so those go to no one else who's often beside
+// them). The visitor keeps the plate their name gives, so choosing a
+// picture is theirs to try.
 const PERSONAS = {
-  maya: { firstname: "Maya", surname: "Chen", profileEmoji: "leaf" },
-  sam: { firstname: "Sam", surname: "Okafor", profileEmoji: "rocket" },
-  anika: { firstname: "Anika", surname: "Rao", profileEmoji: "coffee" },
+  maya: { firstname: "Maya", surname: "Chen", profileEmoji: "plate:plum" },
+  sam: { firstname: "Sam", surname: "Okafor", profileEmoji: "plate:navy" },
+  anika: { firstname: "Anika", surname: "Rao", profileEmoji: "plate:oxblood" },
   // Theo has sent the visitor a friend request; Lena shows up as a suggestion
-  theo: { firstname: "Theo", surname: "Martin", profileEmoji: "compass" },
+  theo: { firstname: "Theo", surname: "Martin", profileEmoji: "plate:ink" },
   lena: { firstname: "Lena", surname: "Fischer", profileEmoji: null },
   // The visitor's housemate: one shared shelf, their own notes and friends
-  noah: { firstname: "Noah", surname: "Brennan", profileEmoji: "cat" },
+  noah: { firstname: "Noah", surname: "Brennan", profileEmoji: "plate:forest" },
 } as const;
 
 type PersonaKey = keyof typeof PERSONAS;
@@ -936,9 +938,16 @@ export async function createDemoSandbox(): Promise<User["id"]> {
   }
 
   // Anika and then Lena are waiting for Piranesi, which Sam still has
-  for (const [person, waited] of [["anika", 9], ["lena", 2]] as const) {
+  for (const [person, waited] of [
+    ["anika", 9],
+    ["lena", 2],
+  ] as const) {
     await prisma.hold.create({
-      data: { bookId: books["Piranesi"], userId: ids[person], createdAt: ago(waited * day) },
+      data: {
+        bookId: books["Piranesi"],
+        userId: ids[person],
+        createdAt: ago(waited * day),
+      },
     });
   }
 
