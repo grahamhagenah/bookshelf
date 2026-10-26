@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 
 import { cancelBilling } from "~/billing.server";
 import { prisma } from "~/db.server";
+import { REQUEST_NOTE_MAX } from "~/lending";
 import { shelfIds } from "~/models/household.server";
 import type { CoverSize, LibraryView, Theme } from "~/utils";
 import { normalizeEmail } from "~/utils";
@@ -231,8 +232,8 @@ export async function createNotification(
   });
 }
 
-// How much a borrower can say with their request
-export const REQUEST_NOTE_MAX = 300;
+// How much a borrower can say with their request; shared with the pages
+export { REQUEST_NOTE_MAX };
 
 export async function createBookRequestNotification(
   senderId: User["id"],

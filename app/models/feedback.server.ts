@@ -2,11 +2,13 @@ import type { User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 import { sendFeedbackEmail } from "~/email.server";
+import { FEEDBACK_MAX_LENGTH } from "~/feedback";
 
 // What people tell us from the feedback page: saved for the admin
 // dashboard, and emailed to the admins as it comes in
 
-export const FEEDBACK_MAX_LENGTH = 2000;
+// Shared with the feedback page
+export { FEEDBACK_MAX_LENGTH };
 
 export async function saveFeedback({
   userId,

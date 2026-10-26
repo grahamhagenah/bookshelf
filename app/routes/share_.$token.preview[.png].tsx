@@ -1,16 +1,12 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
+import sharp from "sharp";
 
 import { loadCover } from "~/covers.server";
 import { getPublicBookListItems } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
 import { getUserByShareToken } from "~/models/user.server";
 import { getShelfProfile } from "~/profile.server";
-
-// sharp's ES module build uses import syntax the Remix compiler can't
-// parse, so load its CommonJS build instead
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const sharp: typeof import("sharp").default = require("sharp");
 
 // The picture shown when a share link is pasted into iMessage, Slack and
 // the like: a row of the owner's covers, favorites first, as the page

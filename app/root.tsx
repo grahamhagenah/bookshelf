@@ -1,4 +1,3 @@
-import { cssBundleHref } from "@remix-run/css-bundle";
 import type {
   LinksFunction,
   LoaderFunctionArgs,
@@ -7,7 +6,6 @@ import type {
 import { json, redirect } from "@remix-run/node";
 import {
   Links,
-  LiveReload,
   Meta,
   Outlet,
   Scripts,
@@ -18,13 +16,13 @@ import {
 } from "@remix-run/react";
 import { useEffect } from "react";
 
-import sansFont from "~/fonts/source-sans-3-latin-normal.woff2";
-import serifFont from "~/fonts/source-serif-4-latin-600-normal.woff2";
+import sansFont from "~/fonts/source-sans-3-latin-normal.woff2?url";
+import serifFont from "~/fonts/source-serif-4-latin-600-normal.woff2?url";
 import { markDemoExplored } from "~/models/demo.server";
 import { OLD_HOSTS, SITE_URL, seo } from "~/seo";
 import { getUser } from "~/session.server";
 import { sharePromptDismissed } from "~/share-prompt.server";
-import stylesheet from "~/styles/tailwind.css";
+import stylesheet from "~/styles/tailwind.css?url";
 import { themeOf } from "~/utils";
 
 import Breadcrumbs from "./components/breadcrumbs";
@@ -59,7 +57,6 @@ export const links: LinksFunction = () => [
     crossOrigin: "anonymous",
   },
   { rel: "stylesheet", href: stylesheet },
-  ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
   // The ?v= changes with the icons: browsers keep a favicon long after it's
   // replaced, and only a new address makes them fetch it again
   { rel: "icon", href: `/favicon.ico?v=${ICON_VERSION}`, sizes: "32x32" },
@@ -207,7 +204,6 @@ export default function App() {
         <Footer />
         <ScrollRestoration />
         <Scripts />
-        <LiveReload />
       </body>
     </html>
   );

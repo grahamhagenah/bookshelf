@@ -26,12 +26,7 @@ import ReaderNotes from "~/components/reader-notes";
 import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
 import { importCover, isOpenLibraryCover } from "~/covers.server";
 import { sendBookRequestEmail } from "~/email.server";
-import {
-  NOT_LENDING_CHOICES,
-  isNotLending,
-  lendingAgainOn,
-  notLendingEnd,
-} from "~/lending";
+import { isNotLending, lendingAgainOn, NOT_LENDING_CHOICES, notLendingEnd, REQUEST_NOTE_MAX } from "~/lending";
 import {
   deleteBook,
   getBookById,
@@ -82,7 +77,6 @@ import {
   createReminderNotification,
   createLoanExtendedNotification,
   createReaderNoteNotification,
-  REQUEST_NOTE_MAX,
   getLoanReply,
 } from "~/models/user.server";
 import { getFriendsWorkNotes } from "~/models/work-note.server";

@@ -35,7 +35,7 @@ export const PUBLIC_PAGES = [
 // What a public page needs to render for a crawler: the built scripts,
 // styles and fonts, the covers it shows, and the icons and preview image
 const PUBLIC_ASSETS = [
-  "/build/",
+  "/assets/",
   "/covers/",
   "/og-image.png",
   "/favicon",

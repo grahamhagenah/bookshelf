@@ -65,7 +65,7 @@ export default function ErrorPage({ what = "page" }: { what?: string }) {
           )}
         </div>
         {/* The message itself, for whoever is fixing it */}
-        {detail && process.env.NODE_ENV === "development" ? (
+        {detail && import.meta.env.DEV ? (
           <pre className="mt-8 overflow-x-auto rounded-md bg-stone-100 dark:bg-stone-800 p-3 text-xs text-stone-600 dark:text-stone-300">
             {detail}
           </pre>

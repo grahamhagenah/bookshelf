@@ -12,3 +12,4 @@ node_modules
 /prisma/data.db-journal
 /prisma/vitest.db
 /prisma/vitest.db-journal
+/.cache

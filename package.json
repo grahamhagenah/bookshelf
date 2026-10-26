@@ -3,15 +3,14 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "build": "remix build",
-    "build:check": "BUILD_DIR=build-check remix build",
-    "dev": "remix dev -c \"npm run dev:serve\"",
-    "dev:serve": "binode --require ./mocks -- @remix-run/serve:remix-serve ./build/index.js",
+    "build": "remix vite:build",
+    "build:check": "BUILD_DIR=build-check remix vite:build",
+    "dev": "remix vite:dev",
     "format": "prettier --write .",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "setup": "prisma generate && prisma migrate deploy && prisma db seed",
-    "start": "remix-serve ./build/index.js",
-    "start:mocks": "binode --require ./mocks -- @remix-run/serve:remix-serve ./build/index.js",
+    "start": "remix-serve ./build/server/index.js",
+    "start:mocks": "binode --require ./mocks -- @remix-run/serve:remix-serve ./build/server/index.js",
     "test": "vitest",
     "test:e2e:dev": "start-server-and-test dev http://localhost:3000 \"npx cypress open\"",
     "pretest:e2e:run": "npm run build",
@@ -23,6 +22,7 @@
   "eslintIgnore": [
     "/node_modules",
     "/build",
+    "/build-check",
     "/public/build"
   ],
   "dependencies": {
@@ -93,6 +93,6 @@
     "node": ">=18.0.0"
   },
   "prisma": {
-    "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
+    "seed": "ts-node -r tsconfig-paths/register -O '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' prisma/seed.ts"
   }
 }

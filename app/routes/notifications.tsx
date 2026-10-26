@@ -16,6 +16,7 @@ import { primaryButton, quietButton, sectionHeading } from "~/components/ui";
 import { prisma } from "~/db.server";
 import { sendRequestAnswerEmail } from "~/email.server";
 import { groupPath } from "~/group-links";
+import { REQUEST_NOTE_MAX } from "~/lending";
 import {
   DEFAULT_LOAN_WEEKS,
   LOAN_WEEKS,
@@ -36,7 +37,6 @@ import {
   dismissUpdates,
   createBookDeclinedNotification,
   getUserEmailById,
-  REQUEST_NOTE_MAX,
 } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";

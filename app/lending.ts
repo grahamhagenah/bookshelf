@@ -35,3 +35,6 @@ export function lendingAgainOn(until: Date | string | null | undefined) {
   const date = new Date(until);
   return date.getUTCFullYear() >= 9999 ? null : date;
 }
+
+// How much a borrower can say with their request
+export const REQUEST_NOTE_MAX = 300;

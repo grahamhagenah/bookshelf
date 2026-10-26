@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-import wordmark from "~/images/wordmark.png";
+import wordmark from "~/images/wordmark.png?url";
 import type { Digest } from "~/models/digest.server";
 import type { EmailKind } from "~/models/user.server";
 import { unsubscribeUrl } from "~/unsubscribe.server";

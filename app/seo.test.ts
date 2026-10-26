@@ -41,8 +41,8 @@ test("every page in the sitemap is open to crawlers", () => {
 
 test("what a public page needs to render is open too", () => {
   for (const path of [
-    "/build/root-ABC123.js",
-    "/build/_assets/tailwind-XYZ.css",
+    "/assets/root-ABC123.js",
+    "/assets/tailwind-XYZ.css",
     "/covers/b/id/8793546-M.jpg",
     "/og-image.png",
     "/favicon.svg",

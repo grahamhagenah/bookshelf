@@ -3,8 +3,9 @@ import { json } from "@remix-run/node";
 import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 
 import { primaryButton } from "~/components/ui";
+import { FEEDBACK_MAX_LENGTH } from "~/feedback";
 import { MIN_SECONDS, clientIp, formAge, formToken, looksLikeSpam, tooMany } from "~/feedback-guard.server";
-import { FEEDBACK_MAX_LENGTH, saveFeedback } from "~/models/feedback.server";
+import { saveFeedback } from "~/models/feedback.server";
 import { seo } from "~/seo";
 import { getUserId } from "~/session.server";
 import { safeRedirect, validateEmail } from "~/utils";
