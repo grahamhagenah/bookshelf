@@ -198,13 +198,13 @@ const ICON_PATHS = {
   ),
   hare: (
     <>
-      {/* The kitty's cousin: a round face, oval eyes and a button nose,
-          with two tall ears instead of whiskers */}
-      <ellipse cx="12" cy="14.6" rx="7" ry="5.2" />
-      <path d="M8.4 10.14C7.4 6.9 7.4 3 9 2.4c1.5-.6 2.2 2.4 1.8 7.08M15.6 10.14C16.6 6.9 16.6 3 15 2.4c-1.5-.6-2.2 2.4-1.8 7.08" />
-      <ellipse cx="9.4" cy="14.2" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
-      <ellipse cx="14.6" cy="14.2" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
-      <ellipse cx="12" cy="16.2" rx=".9" ry=".65" fill="currentColor" stroke="none" />
+      {/* The kitty's cousin, on the same face: oval eyes, a button nose and
+          whiskers, with two tall ears drawn into the outline */}
+      <path d="M7.6 9.19C6.9 6.4 7.2 2.2 9.1 1.9 10.8 1.6 11.2 5.3 10.6 8.29A8 6 0 0 1 13.4 8.29C12.8 5.3 13.2 1.6 14.9 1.9 16.8 2.2 17.1 6.4 16.4 9.19A8 6 0 1 1 7.6 9.19z" />
+      <ellipse cx="9" cy="13.9" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
+      <ellipse cx="15" cy="13.9" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="16" rx=".95" ry=".7" fill="currentColor" stroke="none" />
+      <path d="M6.3 14.2 1.8 13.5M6.3 16.2 2 17.1M17.7 14.2l4.5-.7M17.7 16.2l4.3.9" />
     </>
   ),
   ghost: (
