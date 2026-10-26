@@ -1184,8 +1184,7 @@ function LendToFriend({
   );
   const field =
     "h-9 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-800 dark:text-stone-200 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10";
-  const label =
-    "block text-xs font-medium text-stone-500 dark:text-stone-400";
+  const label = "block text-xs font-medium text-stone-500 dark:text-stone-400";
   const someoneNew = choice === "new";
 
   if (!open) {
@@ -1319,10 +1318,7 @@ function LendToFriend({
       {sorted.length === 0 ? (
         <p className="text-xs text-stone-500 dark:text-stone-400">
           Or{" "}
-          <Link
-            to="/friends/add"
-            className="underline underline-offset-2"
-          >
+          <Link to="/friends/add" className="underline underline-offset-2">
             find friends on Stacks
           </Link>{" "}
           to lend to them in one tap.
@@ -1699,7 +1695,11 @@ function NotBack({ title, name }: { title: string; name: string }) {
       method="post"
       className="inline"
       onSubmit={(event) => {
-        if (!confirm(`${title} isn't back yet? It goes back on ${name}'s loans, due when it was.`))
+        if (
+          !confirm(
+            `${title} isn't back yet? It goes back on ${name}'s loans, due when it was.`,
+          )
+        )
           event.preventDefault();
       }}
     >
@@ -1808,7 +1808,8 @@ function LendingHistory({ data }: { data: BookData }) {
                 <p className="text-sm text-stone-500 dark:text-stone-400">
                   {entry.returnedAt ? (
                     <>
-                      {monthDay(entry.borrowedAt)} – {monthDay(entry.returnedAt)}
+                      {monthDay(entry.borrowedAt)} –{" "}
+                      {monthDay(entry.returnedAt)}
                       {entry.id === data.undoableReturnId ? (
                         <>
                           {" · "}
@@ -2074,10 +2075,17 @@ export default function BookDetailsPage() {
                   <textarea
                     id="request-message"
                     name="message"
-                    rows={2}
+                    // One line until the note needs more, then it grows
+                    // with it (up to a few lines, then it scrolls)
+                    rows={1}
+                    onInput={(event) => {
+                      const box = event.currentTarget;
+                      box.style.height = "auto";
+                      box.style.height = `${box.scrollHeight + box.offsetHeight - box.clientHeight}px`;
+                    }}
                     maxLength={REQUEST_NOTE_MAX}
                     placeholder={`A note for ${data.book.user?.firstname ?? "the owner"}: when, and for how long?`}
-                    className="w-full resize-none rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+                    className="block max-h-40 w-full resize-none overflow-y-auto rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
                   />
                 </>
               )}
