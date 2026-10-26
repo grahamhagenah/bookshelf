@@ -1,52 +1,37 @@
-// Temporary: checks every demo book's Open Library cover, by ISBN and by
-// the work's own cover, and prints a table. Run on a CI runner, which can
-// reach Open Library.
+// Temporary: finds the cover ID each demo ISBN's cover redirects to, and
+// checks that picture is real. Run on a CI runner, which can reach Open
+// Library.
 import { readFileSync } from "node:fs";
 
 const source = readFileSync("app/models/demo.server.ts", "utf8");
 const re = /title:\s*"([^"]+)",\s*author:\s*"([^"]+)",\s*isbn:\s*"(\d+)"/g;
 const books = new Map();
-for (let m; (m = re.exec(source)); ) books.set(m[3], { title: m[1], author: m[2], isbn: m[3] });
+for (let m; (m = re.exec(source)); ) books.set(m[3], { title: m[1], isbn: m[3] });
 
-async function size(url) {
-  for (let attempt = 0; attempt < 3; attempt++) {
+async function attempt(fn) {
+  for (let i = 0; i < 3; i++) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(30000) });
-      if (!res.ok) return `HTTP ${res.status}`;
-      return (await res.arrayBuffer()).byteLength;
+      return await fn();
     } catch (e) {
-      if (attempt === 2) return `ERR ${e.name}`;
+      if (i === 2) return `ERR ${e.name}`;
+      await new Promise((ok) => setTimeout(ok, 2000));
     }
   }
 }
 
-async function search(book) {
-  const q = `title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}`;
-  try {
-    const res = await fetch(`https://openlibrary.org/search.json?${q}&limit=3&fields=key,title,author_name,cover_i,editions,editions.isbn,editions.cover_i&lang=en`, { signal: AbortSignal.timeout(30000) });
-    const data = await res.json();
-    return data.docs?.[0] ?? null;
-  } catch (e) {
-    return { error: e.name };
-  }
+const out = [];
+for (const book of books.values()) {
+  const location = await attempt(async () => {
+    const res = await fetch(`https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`, { redirect: "manual", signal: AbortSignal.timeout(30000) });
+    return res.headers.get("location") ?? `status ${res.status}`;
+  });
+  const id = String(location).match(/\/b\/id\/(\d+)-L\.jpg/)?.[1] ?? null;
+  const bytes = id
+    ? await attempt(async () => {
+        const res = await fetch(`https://covers.openlibrary.org/b/id/${id}-M.jpg`, { signal: AbortSignal.timeout(30000) });
+        return res.ok ? (await res.arrayBuffer()).byteLength : `HTTP ${res.status}`;
+      })
+    : null;
+  out.push(`COVER|${book.isbn}|${id}|${bytes}|${book.title}|${id ? "" : location}`);
 }
-
-const rows = [];
-const queue = [...books.values()];
-await Promise.all(Array.from({ length: 4 }, async () => {
-  for (let book = queue.shift(); book; book = queue.shift()) {
-    const isbnBytes = await size(`https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`);
-    const doc = await search(book);
-    const coverId = doc?.cover_i ?? null;
-    const idBytes = coverId ? await size(`https://covers.openlibrary.org/b/id/${coverId}-L.jpg`) : null;
-    rows.push({ ...book, isbnBytes, coverId, idBytes, workTitle: doc?.title, workAuthor: doc?.author_name?.[0], error: doc?.error });
-  }
-}));
-rows.sort((a, b) => a.title.localeCompare(b.title));
-for (const r of rows) {
-  const isbnOk = typeof r.isbnBytes === "number" && r.isbnBytes > 1000;
-  const idOk = typeof r.idBytes === "number" && r.idBytes > 1000;
-  console.log(
-    `RESULT|${isbnOk ? "ISBN_OK" : idOk ? "WORK_OK" : "NONE"}|${r.isbn}|${r.title}|${r.author}|isbnBytes=${r.isbnBytes}|cover_i=${r.coverId}|idBytes=${r.idBytes}|match=${r.workTitle} / ${r.workAuthor}${r.error ? `|error=${r.error}` : ""}`,
-  );
-}
+console.log(out.join("\n"));
