@@ -13,9 +13,13 @@ export default function Faces({
   return (
     <span className="flex -space-x-2">
       {people.slice(0, max).map((person) => (
+        // On a solid circle the page's color: the pictures' tints are
+        // see-through, and would show the face behind through the overlap.
+        // Positioned, like the initials circle inside, so each face is
+        // drawn over the one before it rather than initials over pictures
         <span
           key={person.id}
-          className="rounded-full ring-2 ring-white dark:ring-stone-950"
+          className="relative rounded-full bg-white ring-2 ring-white dark:bg-stone-950 dark:ring-stone-950"
         >
           <Avatar
             firstname={person.firstname}
