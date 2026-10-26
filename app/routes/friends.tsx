@@ -125,9 +125,40 @@ export default function Friends() {
     <Layout
       title="Friends"
       // Beside your friends on wide screens, the groups you're in
+      // Kept in view while the friends scroll past: your groups, and the
+      // requests you're waiting on
       aside={
-        <aside className="hidden self-start lg:block">
+        <aside className="hidden space-y-10 self-start lg:sticky lg:top-24 lg:block">
           <RailGroups groups={data.groups} limit={10} />
+          {data.pendingRequests.length > 0 ? (
+            <section aria-labelledby="rail-waiting">
+              <h2 id="rail-waiting" className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100">
+                Waiting to hear back
+                <span className="ml-1.5 text-sm font-normal text-stone-400 dark:text-stone-500">
+                  {data.pendingRequests.length}
+                </span>
+              </h2>
+              <ul className="space-y-3">
+                {data.pendingRequests.map((request) => (
+                  <li key={request.id} className="flex items-center gap-3">
+                    <Avatar
+                      firstname={request.receiver.firstname}
+                      surname={request.receiver.surname}
+                      size="sm"
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium text-stone-900 dark:text-stone-100">
+                        {request.receiver.firstname} {request.receiver.surname}
+                      </span>
+                      <span className="block text-xs text-stone-500 dark:text-stone-400">
+                        Asked {ago(request.createdAt)}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
         </aside>
       }
       header={
@@ -189,8 +220,9 @@ export default function Friends() {
           </div>
         )}
 
+        {/* On phones; wider screens have it in the side column */}
         {pendingRequests.length > 0 ? (
-          <div className="mt-8">
+          <div className="mt-8 lg:hidden">
             <h3 className="text-sm font-medium text-stone-500 dark:text-stone-400">
               Waiting to hear back
             </h3>
