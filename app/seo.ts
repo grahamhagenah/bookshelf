@@ -8,7 +8,7 @@ const SITE_NAME = "Stacks";
 // a home library, an alternative to Goodreads for the physical books
 const DEFAULT_TITLE = "Stacks · Lend books to friends and track your home library";
 const DEFAULT_DESCRIPTION =
-  "A free book lending app. Catalog the books you own, lend them to friends with due-date reminders so they come back, and borrow theirs.";
+  "Don't let your books collect dust. Stacks is a free book lending app: catalog the books you own, lend them to friends with due-date reminders so they come back, and borrow theirs.";
 
 // Title, description, canonical link and social card for one page.
 // Private pages pass noindex so search engines leave them out.
