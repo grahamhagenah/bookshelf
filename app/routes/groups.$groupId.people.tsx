@@ -19,8 +19,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   return json({});
 };
 
-const quietButton =
-  "rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors disabled:opacity-50";
 const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
 
 export default function GroupPeople() {
@@ -30,7 +28,9 @@ export default function GroupPeople() {
   const iRunIt = group.members.some((member) => member.isMe && member.isOwner);
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-14">
+    // As the Friends page: the people across most of the width, and a
+    // narrow side column that stays in view
+    <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,16rem)] lg:gap-x-14">
       <section aria-labelledby="people">
         <h2 id="people" className="sr-only">People</h2>
         <ul className="grid gap-3 sm:grid-cols-2">
@@ -46,9 +46,9 @@ export default function GroupPeople() {
         </ul>
       </section>
 
-      <div>
+      <aside className="self-start lg:sticky lg:top-24">
         <GroupInvite name={group.name} url={inviteUrl} alone={group.members.length === 1} path={path} />
-      </div>
+      </aside>
     </div>
   );
 }
@@ -82,7 +82,7 @@ function PersonCard({
         </span>
         <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
           {plural(member.bookCount, "book")}
-          {member.isOwner ? " · started the group" : ""}
+          {member.isOwner ? " · started it" : ""}
         </span>
       </span>
     </>
@@ -168,26 +168,32 @@ function GroupInvite({ name, url, alone, path }: { name: string; url: string; al
   useEffect(() => setCanShare(typeof navigator.share === "function"), []);
   const subject = `Join ${name} on Stacks`;
   const text = `Join ${name} on Stacks, so we can borrow each other's books: ${url}`;
-  const primary =
-    "flex-shrink-0 rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors";
+  // Two answers side by side across the column, as the Friends sidebar's
+  // requests are
+  const half = "inline-flex h-8 flex-1 items-center justify-center rounded-md text-sm transition-colors";
+  const primary = `${half} bg-forest-600 font-medium text-white hover:bg-forest-700`;
   return (
-    <div className="max-w-xl rounded-xl border border-stone-200 dark:border-stone-800 p-4">
-      <h2 className="font-medium text-stone-900 dark:text-stone-100">
+    <section aria-labelledby="invite">
+      <h2 id="invite" className="text-lg font-semibold text-stone-900 dark:text-stone-100">
         {alone ? "Invite people" : "Invite more people"}
       </h2>
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
         Anyone with the link can join, and becomes friends with everyone here.
       </p>
-      <div className="mt-3 flex gap-2">
-        <input
-          type="text"
-          readOnly
-          value={url.replace(/^https?:\/\//, "")}
-          aria-label="Invite link"
-          onFocus={(event) => event.currentTarget.select()}
-          className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-3 py-1.5 text-sm text-stone-600 dark:text-stone-300"
+      <input
+        type="text"
+        readOnly
+        value={url.replace(/^https?:\/\//, "")}
+        aria-label="Invite link"
+        onFocus={(event) => event.currentTarget.select()}
+        className="mt-3 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-3 py-1.5 text-sm text-stone-600 dark:text-stone-300"
+      />
+      <div className="mt-2 flex gap-2">
+        <CopyButton
+          value={url}
+          label="Copy link"
+          className={`${half} border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500`}
         />
-        <CopyButton value={url} label="Copy link" className={`flex-shrink-0 ${quietButton}`} />
         {canShare ? (
           <button
             type="button"
@@ -221,6 +227,6 @@ function GroupInvite({ name, url, alone, path }: { name: string; url: string; al
           Reset link
         </button>
       </Form>
-    </div>
+    </section>
   );
 }
