@@ -1076,11 +1076,12 @@ function WaitInLine({ position }: { position: number | null }) {
 // Lend your book to a friend directly, without waiting for them to ask
 // The owner can stop lending a copy for a while, or until they say:
 // friends see it isn't lending, and can't ask for it or wait for it
-function NotLendingControl({ until }: { until: string | null }) {
+// Whether the owner is lending this one, as it will be while a change
+// saves. Both the notice on the page and the setting under Edit details
+// share one fetcher, so either shows the other's change at once.
+function useNotLending(until: string | null) {
   const fetcher = useFetcher({ key: "not-lending" });
-  const [open, setOpen] = useState(false);
   const pending = fetcher.formData?.get("intent");
-  // Shown as it will be, while it saves
   const off =
     pending === "stopLending"
       ? true
@@ -1088,75 +1089,82 @@ function NotLendingControl({ until }: { until: string | null }) {
         ? false
         : isNotLending(until);
   const againOn = pending ? null : lendingAgainOn(until);
+  return { fetcher, off, againOn };
+}
 
-  if (off) {
-    return (
-      <fetcher.Form
-        method="post"
-        className="rounded-md border border-stone-200 dark:border-stone-700 px-3 py-2.5 text-sm"
-      >
-        <input type="hidden" name="intent" value="resumeLending" />
-        <p className="font-medium text-stone-800 dark:text-stone-200">
-          Not lending
-        </p>
-        <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
-          {againOn
-            ? `Friends can ask for it again on ${monthDay(againOn)}.`
-            : "Friends can't ask for it until you lend it again."}{" "}
-          <button type="submit" className={gapLink}>
-            Lend it again
-          </button>
-        </p>
-      </fetcher.Form>
-    );
-  }
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="w-full text-center text-xs text-stone-500 dark:text-stone-400 underline-offset-2 hover:underline hover:text-stone-800 dark:hover:text-stone-200"
-      >
-        Not lending this one for now?
-      </button>
-    );
-  }
-
+// On the page itself, only while it's off: easy to forget otherwise
+function NotLendingNotice({ until }: { until: string | null }) {
+  const { fetcher, off, againOn } = useNotLending(until);
+  if (!off) return null;
   return (
     <fetcher.Form
       method="post"
-      className="space-y-2"
-      onSubmit={() => setOpen(false)}
+      className="rounded-md border border-stone-200 dark:border-stone-700 px-3 py-2.5 text-sm"
     >
-      <input type="hidden" name="intent" value="stopLending" />
-      <label className="block text-xs font-medium text-stone-500 dark:text-stone-400">
-        Stop lending it
-        <select
-          name="for"
-          defaultValue="forever"
-          className="mt-1 h-9 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-800 dark:text-stone-200 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10"
-        >
-          {NOT_LENDING_CHOICES.map((choice) => (
-            <option key={choice.value} value={choice.value}>
-              {choice.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="flex gap-2">
-        <button type="submit" className={`flex-1 ${secondaryButton}`}>
-          Stop lending
+      <input type="hidden" name="intent" value="resumeLending" />
+      <p className="font-medium text-stone-800 dark:text-stone-200">
+        Not lending
+      </p>
+      <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
+        {againOn
+          ? `Friends can ask for it again on ${monthDay(againOn)}.`
+          : "Friends can't ask for it until you lend it again."}{" "}
+        <button type="submit" className={gapLink}>
+          Lend it again
         </button>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="px-2 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
-        >
-          Cancel
-        </button>
-      </div>
+      </p>
     </fetcher.Form>
+  );
+}
+
+// Under Edit details, beside Refresh and Delete: rarely needed
+function NotLendingSetting({ until }: { until: string | null }) {
+  const { fetcher, off, againOn } = useNotLending(until);
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="text-sm">
+        <p className="font-medium text-stone-800 dark:text-stone-200">
+          {off ? "Not lending" : "Not lending this one for now?"}
+        </p>
+        <p className="text-stone-500 dark:text-stone-400">
+          {off
+            ? againOn
+              ? `Friends can ask for it again on ${monthDay(againOn)}.`
+              : "Friends can't ask for it until you lend it again."
+            : "Friends still see it, but can't ask for it or get in line."}
+        </p>
+      </div>
+      {off ? (
+        <fetcher.Form method="post" className="flex-shrink-0">
+          <input type="hidden" name="intent" value="resumeLending" />
+          <button type="submit" className={secondaryButton}>
+            Lend it again
+          </button>
+        </fetcher.Form>
+      ) : (
+        <fetcher.Form method="post" className="flex flex-shrink-0 gap-2">
+          <input type="hidden" name="intent" value="stopLending" />
+          <label className="sr-only" htmlFor="not-lending-for">
+            For how long
+          </label>
+          <select
+            id="not-lending-for"
+            name="for"
+            defaultValue="forever"
+            className="h-9 min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-800 dark:text-stone-200 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10 sm:flex-none"
+          >
+            {NOT_LENDING_CHOICES.map((choice) => (
+              <option key={choice.value} value={choice.value}>
+                {choice.label}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className={secondaryButton}>
+            Stop lending
+          </button>
+        </fetcher.Form>
+      )}
+    </div>
   );
 }
 
@@ -2054,7 +2062,7 @@ export default function BookDetailsPage() {
             />
           ) : null}
           {data.isOwner && !isEditing ? (
-            <NotLendingControl until={data.book.notLendingUntil} />
+            <NotLendingNotice until={data.book.notLendingUntil} />
           ) : null}
           {showNotLending ? (
             <p className={`block text-center ${quietLabel}`}>
@@ -2324,6 +2332,8 @@ export default function BookDetailsPage() {
 
               {/* Kept outside the edit form: forms can't nest */}
               <div className="mt-10 border-t border-stone-100 dark:border-stone-800 pt-6 space-y-5">
+                <NotLendingSetting until={data.book.notLendingUntil} />
+
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="text-sm">
                     <p className="font-medium text-stone-800 dark:text-stone-200">
