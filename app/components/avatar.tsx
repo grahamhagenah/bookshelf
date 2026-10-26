@@ -424,9 +424,13 @@ const ICON_PATHS = {
   ),
   crystal: (
     <>
-      {/* A crystal ball on its stand, with a glint */}
+      {/* A crystal ball on its stand: a glint, two sparkles inside and one
+          twinkling just outside */}
       <circle cx="12" cy="9.8" r="6.6" />
-      <path d="M8.6 7.9a4 4 0 0 1 2.6-2.7" />
+      <path d="M8.3 7.2a4.2 4.2 0 0 1 2.2-2.1" />
+      <path d="M13.2 7.800000000000001C13.668 9.932 13.668 9.932 15.799999999999999 10.4C13.668 10.868 13.668 10.868 13.2 13.0C12.732 10.868 12.732 10.868 10.6 10.4C12.732 9.932 12.732 9.932 13.2 7.800000000000001z" fill="currentColor" />
+      <path d="M9.6 11.700000000000001C9.815999999999999 12.684000000000001 9.815999999999999 12.684000000000001 10.799999999999999 12.9C9.815999999999999 13.116 9.815999999999999 13.116 9.6 14.1C9.384 13.116 9.384 13.116 8.4 12.9C9.384 12.684000000000001 9.384 12.684000000000001 9.6 11.700000000000001z" fill="currentColor" />
+      <path d="M19.6 2.3C19.834000000000003 3.366 19.834000000000003 3.366 20.900000000000002 3.6C19.834000000000003 3.834 19.834000000000003 3.834 19.6 4.9C19.366 3.834 19.366 3.834 18.3 3.6C19.366 3.366 19.366 3.366 19.6 2.3z" fill="currentColor" />
       <path d="M6.8 20.4l1.4-3h7.6l1.4 3z" />
     </>
   ),
@@ -435,13 +439,6 @@ const ICON_PATHS = {
       {/* A paper plane */}
       <path d="M21.5 2.5 2.5 10.2l7.2 2.9 2.9 7.4z" />
       <path d="M21.5 2.5 9.7 13.1" />
-    </>
-  ),
-  hourglass: (
-    <>
-      {/* An hourglass with sand settled in the bottom */}
-      <path d="M6.5 3h11M6.5 21h11M7.6 3c0 5.2 4.4 6.2 4.4 9s-4.4 3.8-4.4 9M16.4 3c0 5.2-4.4 6.2-4.4 9s4.4 3.8 4.4 9" />
-      <path d="M9.4 19.6c.6-1.7 1.6-2.5 2.6-2.5s2 .8 2.6 2.5z" fill="currentColor" />
     </>
   ),
   sparkles: (
@@ -469,11 +466,11 @@ const ICON_PATHS = {
   ),
   smiley: (
     <>
-      {/* A smiley face */}
+      {/* A smiley face with a big open grin */}
       <circle cx="12" cy="12" r="8.5" />
-      <ellipse cx="9.2" cy="10.2" rx="1" ry="1.35" fill="currentColor" stroke="none" />
-      <ellipse cx="14.8" cy="10.2" rx="1" ry="1.35" fill="currentColor" stroke="none" />
-      <path d="M8.4 14.2q3.6 3.6 7.2 0" />
+      <ellipse cx="9.2" cy="9.4" rx="1" ry="1.35" fill="currentColor" stroke="none" />
+      <ellipse cx="14.8" cy="9.4" rx="1" ry="1.35" fill="currentColor" stroke="none" />
+      <path d="M7.9 13.1h8.2c-.5 2.7-2.1 4.2-4.1 4.2s-3.6-1.5-4.1-4.2z" fill="currentColor" />
     </>
   ),
   pumpkin: (
@@ -669,7 +666,6 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "crystal",
   "robot",
   "alien",
-  "rocket",
   // To wear and to use
   "glasses",
   "crown",
@@ -678,7 +674,6 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "anchor",
   "bicycle",
   "plane",
-  "hourglass",
   // Food and drink
   "wine",
   "cutlery",
