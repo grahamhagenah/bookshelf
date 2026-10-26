@@ -149,7 +149,7 @@ const ICON_PATHS = {
       <circle cx="14.9" cy="12.6" r="2.3" />
       <circle cx="9.1" cy="12.6" r="1" fill="currentColor" stroke="none" />
       <circle cx="14.9" cy="12.6" r="1" fill="currentColor" stroke="none" />
-      <path d="M10.9 15.6h2.2L12 17.2z" fill="currentColor" stroke="none" />
+      <path d="M10.3 15.2Q12 14.5 13.7 15.2L12 18.1z" fill="currentColor" stroke="none" />
     </>
   ),
   fox: (
