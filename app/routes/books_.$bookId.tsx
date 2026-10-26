@@ -2070,7 +2070,7 @@ export default function BookDetailsPage() {
                     name="message"
                     rows={2}
                     maxLength={REQUEST_NOTE_MAX}
-                    placeholder={`A note for ${data.book.user?.firstname ?? "the owner"}: when you'd pick it up, how long you'd like it…`}
+                    placeholder={`A note for ${data.book.user?.firstname ?? "the owner"}: when, and for how long?`}
                     className="w-full resize-none rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
                   />
                 </>
