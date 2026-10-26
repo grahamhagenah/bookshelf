@@ -256,7 +256,11 @@ const ICON_PATHS = {
     <path d="M7 18.5h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.4 1.6A3.3 3.3 0 0 0 7 18.5z" />
   ),
   snowflake: (
-    <path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 6l2.5-1.5M9.5 19.5 12 18l2.5 1.5" />
+    <>
+      {/* Six arms, each with a branch near its tip */}
+      <path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9" />
+      <path d="M9.5 4.5 12 6l2.5-1.5M9.5 19.5 12 18l2.5 1.5M4.25 10.42L6.8 9L6.75 6.08M19.75 13.58L17.2 15L17.25 17.92M6.75 17.92L6.8 15L4.25 13.58M17.25 6.08L17.2 9L19.75 10.42" />
+    </>
   ),
   flame: (
     <path d="M12 21c-3.9 0-6.5-2.6-6.5-6 0-4 3.5-6 4-10 3 1.5 4.5 4 4.5 6.5 1-.5 1.8-1.5 2-3 1.6 1.6 2.5 3.8 2.5 6.5 0 3.4-2.6 6-6.5 6z" />
@@ -356,16 +360,6 @@ const ICON_PATHS = {
       <circle cx="16" cy="11" r="2.2" />
       <path d="M8 8.8h8M8 13.2h8" />
       <path d="M5.5 16.2h13" />
-    </>
-  ),
-  duck: (
-    <>
-      {/* A rubber duck, side on: a round head with an eye and a beak, a plump
-          body, and a tail flicking up */}
-      <circle cx="8.6" cy="8.4" r="3.6" />
-      <path d="M5.3 9.3L2.5 10.4l2.8 1.1" />
-      <circle cx="9.7" cy="7.6" r=".8" fill="currentColor" stroke="none" />
-      <path d="M6.4 11.4C4.6 12.4 4 14.3 4 16.2c0 2.6 3.7 4.3 8.5 4.3 4.6 0 8.5-1.7 8.5-4.3 0-1.4-1-2.5-2.5-3.1L21.6 9.5c-2.4 1-5.6 1.7-9.7 1.6" />
     </>
   ),
   diamond: (
@@ -525,7 +519,6 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "hearts",
   "cutlery",
   "vhs",
-  "duck",
   "diamond",
   "bee",
   "snowflake",
