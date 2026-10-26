@@ -64,9 +64,69 @@ const CACHE_DIR =
 // Several readers can ask for the same new cover at once; fetch it once
 const inFlight = new Map<string, Promise<Buffer | null>>();
 
+// Covers asked for by ISBN count against Open Library's rate limit, about
+// 100 every five minutes per server, and a shelf of new books goes over it
+// at once. Covers asked for by their own ID aren't limited. So an ISBN is
+// first turned into its edition's cover ID, once, and the ID remembered.
+const isbnIds = new Map<string, number | null>();
+const idFileFor = (isbn: string) => path.join(CACHE_DIR, `isbn-id_${isbn}`);
+
+// The cover ID of an ISBN's edition: null when the edition has no
+// picture, undefined when Open Library couldn't say
+export async function editionCoverId(
+  isbn: string,
+): Promise<number | null | undefined> {
+  if (isbnIds.has(isbn)) return isbnIds.get(isbn);
+  const saved = Number(await readFile(idFileFor(isbn), "utf8").catch(() => 0));
+  if (saved > 0) {
+    isbnIds.set(isbn, saved);
+    return saved;
+  }
+  let id: number | null;
+  try {
+    const res = await fetch(`https://openlibrary.org/isbn/${isbn}.json`, {
+      signal: AbortSignal.timeout(15000),
+    });
+    // No record of the edition: the cover server has nothing more to go on
+    if (!res.ok) return undefined;
+    const data = (await res.json()) as { covers?: number[] };
+    id = data.covers?.find((cover) => cover > 0) ?? null;
+  } catch {
+    return undefined;
+  }
+  // No picture is only remembered until the server restarts, in case one
+  // is added; an ID is kept for good
+  isbnIds.set(isbn, id);
+  if (id) {
+    await mkdir(CACHE_DIR, { recursive: true });
+    await writeFile(idFileFor(isbn), String(id)).catch(() => undefined);
+  }
+  return id;
+}
+
+// An ISBN cover's address, taken apart; null for any other cover
+export function isbnCoverParts(url: string) {
+  const match = url.match(
+    /^(?:https:\/\/covers\.openlibrary\.org\/)?b\/isbn\/([0-9Xx]+)-([SML])\.jpg$/,
+  );
+  return match ? { isbn: match[1], size: match[2] } : null;
+}
+
+// The same picture by cover ID, where it can be had that way
+async function upstreamPath(coverPath: string) {
+  const parts = isbnCoverParts(coverPath);
+  if (!parts) return coverPath;
+  const id = await editionCoverId(parts.isbn);
+  if (id === null) return null;
+  return id ? `b/id/${id}-${parts.size}.jpg` : coverPath;
+}
+
 async function fetchAndStore(coverPath: string, file: string) {
   try {
-    const res = await fetch(`${UPSTREAM}/${coverPath}`, {
+    const upstream = await upstreamPath(coverPath);
+    // The edition has no picture
+    if (!upstream) return null;
+    const res = await fetch(`${UPSTREAM}/${upstream}`, {
       signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) return null;

@@ -1,5 +1,6 @@
 import type { Book } from "@prisma/client";
 
+import { editionCoverId, isbnCoverParts } from "~/covers.server";
 import { prisma } from "~/db.server";
 import {
   cleanSubjects,
@@ -317,20 +318,6 @@ export async function fetchDescription(key: string, timeoutMs = TIMEOUT_MS): Pro
   }
 }
 
-// Covers by ISBN come straight from Open Library's cover server, which
-// answers a blank image when it has none. Ask it to say so instead.
-async function coverExists(url: string) {
-  try {
-    const res = await fetch(`${url}?default=false`, {
-      method: "HEAD",
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
-    return res.ok;
-  } catch {
-    return true;
-  }
-}
-
 // Fills in whatever a book is missing (cover, description, details, the
 // opening line, the author) from Open Library, and remembers it was
 // looked up. Leaves what the owner already has alone.
@@ -362,9 +349,16 @@ export async function fillInBook(bookId: Book["id"], timeoutMs = TIMEOUT_MS) {
       found?.authorKey ? refreshAuthor(found.authorKey, timeoutMs) : undefined,
     ]);
 
-    // A cover made from the ISBN may be blank; swap it for the work's
+    // A cover made from the ISBN is kept by its edition's cover ID, which
+    // Open Library doesn't rate limit; if the edition has no picture, the
+    // work's cover stands in
     let cover = book.cover;
-    if (found?.cover && (!cover || (cover.includes("/b/isbn/") && !(await coverExists(cover))))) {
+    const byIsbn = cover ? isbnCoverParts(cover) : null;
+    if (byIsbn) {
+      const id = await editionCoverId(byIsbn.isbn);
+      if (id) cover = `https://covers.openlibrary.org/b/id/${id}-${byIsbn.size}.jpg`;
+      else if (id === null && found?.cover) cover = found.cover;
+    } else if (!cover && found?.cover) {
       cover = found.cover;
     }
 
