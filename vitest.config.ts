@@ -25,6 +25,9 @@ export default defineConfig({
     env: {
       DATABASE_URL: TEST_DATABASE_URL,
       COVER_CACHE_DIR: TEST_COVER_CACHE_DIR,
+      // Signing sessions and links needs a secret; CI has no .env, and
+      // each test file runs on its own, so every one gets it here
+      SESSION_SECRET: "test-secret",
     },
     // One SQLite file, so test files take turns
     fileParallelism: false,
