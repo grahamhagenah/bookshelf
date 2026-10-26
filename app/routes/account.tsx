@@ -988,9 +988,9 @@ function IconPicker({
           </button>
         ))}
       </div>
-      <div className="!mt-6 grid w-fit grid-cols-5 gap-3 sm:grid-cols-9">
-        {/* Your initials first, then the icons: 45 in all, so five or
-            nine across leaves no stragglers */}
+      <div className="!mt-6 grid grid-cols-6 justify-items-center gap-y-3 sm:w-fit sm:grid-cols-9 sm:gap-3">
+        {/* Your initials first, then the icons: six across on phones, the
+            width of the screen; nine across from there, packed */}
         <button
           type="submit"
           name="emoji"
