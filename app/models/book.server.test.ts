@@ -5,7 +5,9 @@ import {
   DEFAULT_LOAN_WEEKS,
   EXTEND_WEEKS,
   extendLoan,
+  getBookListItems,
   getHomeBooks,
+  getPublicBookListItems,
   getReadAt,
   lendBook,
   lendToFriend,
@@ -242,4 +244,24 @@ test("a heart doesn't hide a book you'd already marked read, and unmarking stick
 
   await setRead(book.id, me.id, true);
   expect(await getReadAt(me.id, await current())).not.toBeNull();
+});
+
+test("a shelf stays in the order its books were added, whatever happens to them", async () => {
+  const owner = await makeUser("Owner");
+  const day = 24 * 60 * 60 * 1000;
+  const titles = ["Oldest", "Middle", "Newest"];
+  for (const [index, title] of titles.entries()) {
+    const book = await makeBook(owner.id, title);
+    await prisma.book.update({
+      where: { id: book.id },
+      data: { createdAt: new Date(Date.now() - (3 - index) * day) },
+    });
+  }
+  // Something touches the oldest book, as opening its page can
+  const oldest = await prisma.book.findFirstOrThrow({ where: { title: "Oldest" } });
+  await prisma.book.update({ where: { id: oldest.id }, data: { subjects: "Fiction" } });
+
+  const expected = ["Newest", "Middle", "Oldest"];
+  expect((await getBookListItems([owner.id])).map((b) => b.title)).toEqual(expected);
+  expect((await getPublicBookListItems([owner.id])).map((b) => b.title)).toEqual(expected);
 });
