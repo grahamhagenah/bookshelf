@@ -96,7 +96,9 @@ export function getBookListItems(ownerIds: User["id"][]) {
       // The viewer's own read mark is picked out by the caller
       readerNotes: { select: { userId: true, readAt: true } },
     },
-    orderBy: { updatedAt: "desc" },
+    // Newest added first. Not by last change: opening a book, or a friend
+    // asking for it, touches the row, and the shelf shouldn't reshuffle
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
   });
 }
 
@@ -148,7 +150,8 @@ export function getPublicBookListItems(ownerIds: User["id"][]) {
       hiddenFromPage: false,
     },
     select: { id: true, title: true, cover: true, author: true },
-    orderBy: { updatedAt: "desc" },
+    // In the order they were added, like the shelf itself
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
   });
 }
 
@@ -543,7 +546,8 @@ export function getBorrowedBooks(userId: User["id"]) {
       userId: true,
       borrowerId: true,
     },
-    orderBy: { updatedAt: "desc" },
+    // Most recently borrowed first
+    orderBy: [{ borrowedAt: "desc" }, { id: "desc" }],
   });
 }
 
