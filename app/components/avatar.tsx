@@ -314,6 +314,46 @@ const ICON_PATHS = {
       <path d="M9 16.6h6" />
     </>
   ),
+  knife: (
+    <>
+      {/* A kitchen knife, the horror kind: a big curved blade and a short
+          handle, set on a diagonal */}
+      <g transform="rotate(-40 12 12)">
+        <path d="M9 15V5.5C9 4 9.5 3 10.3 2.3C14 4.8 16 8.5 16 12.5V15z" />
+        <path d="M9.7 15v5.3a1.2 1.2 0 0 0 1.2 1.2h2.2a1.2 1.2 0 0 0 1.2-1.2V15" />
+      </g>
+    </>
+  ),
+  mask: (
+    <>
+      {/* A hockey mask: a tall oval with two eye slits and four vent holes */}
+      <circle cx="12" cy="13.6" r=".65" fill="currentColor" stroke="none" />
+      <path d="M12 2.5C7.6 2.5 4.5 6.2 4.5 11.5c0 5.6 3.5 10 7.5 10s7.5-4.4 7.5-10C19.5 6.2 16.4 2.5 12 2.5z" />
+      <ellipse cx="8.9" cy="9.8" rx="1.7" ry="1.1" fill="currentColor" stroke="none" />
+      <ellipse cx="15.1" cy="9.8" rx="1.7" ry="1.1" fill="currentColor" stroke="none" />
+      <circle cx="10.2" cy="15.8" r=".65" fill="currentColor" stroke="none" />
+      <path d="M12 2.5C7.6 2.5 4.5 6.2 4.5 11.5c0 5.6 3.5 10 7.5 10s7.5-4.4 7.5-10C19.5 6.2 16.4 2.5 12 2.5z" />
+      <ellipse cx="8.9" cy="9.8" rx="1.7" ry="1.1" fill="currentColor" stroke="none" />
+      <ellipse cx="15.1" cy="9.8" rx="1.7" ry="1.1" fill="currentColor" stroke="none" />
+      <circle cx="13.8" cy="15.8" r=".65" fill="currentColor" stroke="none" />
+      <path d="M12 2.5C7.6 2.5 4.5 6.2 4.5 11.5c0 5.6 3.5 10 7.5 10s7.5-4.4 7.5-10C19.5 6.2 16.4 2.5 12 2.5z" />
+      <ellipse cx="8.9" cy="9.8" rx="1.7" ry="1.1" fill="currentColor" stroke="none" />
+      <ellipse cx="15.1" cy="9.8" rx="1.7" ry="1.1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="18" r=".65" fill="currentColor" stroke="none" />
+    </>
+  ),
+  sword: (
+    <>
+      {/* A sword: a tapered blade, a crossguard, a grip and a pommel, set
+          on a diagonal */}
+      <g transform="rotate(-40 12 12)">
+        <path d="M12 2L14.2 5.2V15.3H9.8V5.2z" />
+        <path d="M6 16.6v-1.3h12v1.3" />
+        <path d="M10.7 16.6v3.6h2.6v-3.6" />
+        <circle cx="12" cy="21.3" r="1.1" fill="currentColor" stroke="none" />
+      </g>
+    </>
+  ),
   wine: (
     <>
       {/* A wine glass: a bowl with a flat rim on a stem and a foot, with wine
@@ -470,6 +510,9 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "eye",
   "pyramid",
   "robot",
+  "knife",
+  "mask",
+  "sword",
 ];
 
 export function isAvatarIcon(value: unknown): value is AvatarIcon {
