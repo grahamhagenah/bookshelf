@@ -106,6 +106,9 @@ export interface PoolSearch {
   status?: PoolStatus;
   sort?: PoolSort;
   shown?: number;
+  // Books already shown above (by work), left out of the list but still
+  // counted
+  exclude?: string[];
 }
 
 const isFree = (work: PoolWork) => work.copies.some((copy) => copy.available);
@@ -116,7 +119,7 @@ const isOut = (work: PoolWork) => !isFree(work) && work.copies.some((copy) => co
 // people's shelves can run to thousands.
 export async function searchPool(
   openIds: string[],
-  { q = "", who = null, status = "all", sort = "newest", shown = POOL_PAGE }: PoolSearch,
+  { q = "", who = null, status = "all", sort = "newest", shown = POOL_PAGE, exclude = [] }: PoolSearch,
 ) {
   const ids = who ? openIds.filter((id) => id === who) : openIds;
   const term = q.trim();
@@ -131,7 +134,10 @@ export async function searchPool(
   });
   const all = asWorks(books);
   const counts = { all: all.length, available: all.filter(isFree).length, lent: all.filter(isOut).length };
-  const works = status === "available" ? all.filter(isFree) : status === "lent" ? all.filter(isOut) : all;
+  const left = new Set(exclude);
+  const works = (status === "available" ? all.filter(isFree) : status === "lent" ? all.filter(isOut) : all).filter(
+    (work) => !left.has(work.key),
+  );
   if (sort === "title") {
     works.sort((a, b) => byTitle(a.title).localeCompare(byTitle(b.title)));
   } else if (sort === "author") {

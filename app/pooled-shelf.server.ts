@@ -7,6 +7,8 @@ import { POOL_PAGE, POOL_SORTS, POOL_STATUSES, getPoolWanted, searchPool } from 
 // filters from the address, the matching books, and, until you filter,
 // what's on your want-to-read list
 
+// How many from your want-to-read list come first
+const WANTED_SHOWN = 6;
 // The most a search shows, however many times Show more is pressed
 const POOL_MOST = 1000;
 
@@ -40,14 +42,21 @@ export async function loadPooledShelf(
   // A group narrows the shelf rather than filtering it: its want-to-read
   // row still shows
   const filtered = Boolean(q.trim() || who || status !== "all");
-  const [results, highlights] = await Promise.all([
-    searchPool(scope, { q, who, status, sort, shown }),
-    filtered ? null : getPoolWanted(userId, scope),
-  ]);
+  // Until you search or filter, what's on your want-to-read list comes
+  // first, and isn't repeated in the list below it
+  const wanted = filtered ? [] : (await getPoolWanted(userId, scope)).wanted.slice(0, WANTED_SHOWN);
+  const results = await searchPool(scope, {
+    q,
+    who,
+    status,
+    sort,
+    shown,
+    exclude: wanted.map((work) => work.key),
+  });
   return {
     search: { q, who: group ? `g:${group.id}` : who, status, sort, shown, filtered },
     results,
-    wanted: highlights?.wanted ?? [],
+    wanted,
     lenders: lenders.map(({ id, firstname, surname }) => ({ id, firstname, surname })),
     groups: groups.map(({ id, name }) => ({ id, name, path: groupPath({ id, name }) })),
     // The group it's narrowed to, if it is

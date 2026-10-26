@@ -216,7 +216,7 @@ export default function PooledShelf({
           <h2 id="wanted" className="mb-3 text-sm font-medium text-stone-500 dark:text-stone-400">
             From your want-to-read list
           </h2>
-          <Shelf works={wanted.slice(0, 6)} grid={grid} viewMode={viewMode} />
+          <Shelf works={wanted} grid={grid} viewMode={viewMode} />
         </section>
       ) : null}
 
