@@ -11,6 +11,7 @@ import {
   summarizeGroups,
 } from "./admin.server";
 import { lendBook } from "./book.server";
+import { markDemoExplored } from "./demo.server";
 import { createFriendship, deleteUsers } from "./user.server";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -181,4 +182,16 @@ test("group numbers: groups, people, who came by a link, and who was new", () =>
     newToStacks: 1,
     averageSize: 2.5,
   });
+});
+
+test("demo visits count the demos someone looked around, of all those started", async () => {
+  const before = await getHealth();
+  const group = (name: string) => `test-demo-${name}-${Date.now()}`;
+  const looked = await makeUser("Looked", { demoGroup: group("looked") });
+  await makeUser("Pressed", { demoGroup: group("pressed") });
+  await markDemoExplored(looked.id);
+
+  const after = await getHealth();
+  expect(after.demosToday - before.demosToday).toBe(2);
+  expect(after.demosExploredToday - before.demosExploredToday).toBe(1);
 });

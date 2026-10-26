@@ -13,6 +13,7 @@ import {
   sessionStorage,
   getSession,
 } from "~/session.server";
+import { filledHoneypot } from "~/utils";
 
 // Visiting /demo drops you straight into a populated sandbox library
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -40,6 +41,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Only demo sessions can be reset or ended here
   if (userId && !demoGroup) return redirect("/");
+
+  // A new sandbox, from the button: not for bots, whether they say so or
+  // give themselves away by filling in the hidden field
+  if (
+    !demoGroup &&
+    (isBot(request.headers.get("user-agent")) || filledHoneypot(formData))
+  ) {
+    return redirect("/");
+  }
 
   if (demoGroup) await deleteDemoGroup(demoGroup);
 

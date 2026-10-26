@@ -6,6 +6,7 @@ import {
   canInteract,
   createDemoSandbox,
   deleteDemoGroup,
+  markDemoExplored,
   respondAsDemoPersona,
 } from "./demo.server";
 import { getGroup, getMyGroups } from "./group.server";
@@ -187,4 +188,22 @@ describe("respondAsDemoPersona", () => {
     });
     expect(friends).toBe(0);
   });
+});
+
+test("a demo is marked explored once, and real accounts never are", async () => {
+  const visitor = await makeUser("Visitor", { demoGroup: `test-demo-${Date.now()}` });
+  const real = await makeUser("Real");
+  const exploredAt = async (id: string) =>
+    (await prisma.user.findUniqueOrThrow({ where: { id }, select: { demoExploredAt: true } }))
+      .demoExploredAt;
+
+  await markDemoExplored(visitor.id);
+  const first = await exploredAt(visitor.id);
+  expect(first).toBeInstanceOf(Date);
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  await markDemoExplored(visitor.id);
+  expect(await exploredAt(visitor.id)).toEqual(first);
+
+  await markDemoExplored(real.id);
+  expect(await exploredAt(real.id)).toBeNull();
 });

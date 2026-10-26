@@ -6,6 +6,7 @@ import {
   isLatin,
   readableName,
   isDemoEmail,
+  filledHoneypot,
   looksLikeBot,
   normalizeEmail,
   MIN_SIGNUP_MS,
@@ -399,4 +400,10 @@ test("a work key becomes the book's page; anything else, nothing", () => {
   expect(workPath("")).toBeNull();
   expect(workPath(null)).toBeNull();
   expect(workPath(undefined)).toBeNull();
+});
+
+test("filledHoneypot is only true when the hidden field has something in it", () => {
+  expect(filledHoneypot(signupForm({}))).toBe(false);
+  expect(filledHoneypot(signupForm({ website: "" }))).toBe(false);
+  expect(filledHoneypot(signupForm({ website: "http://spam.example" }))).toBe(true);
 });

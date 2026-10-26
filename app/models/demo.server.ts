@@ -1529,6 +1529,15 @@ export async function createDemoSandbox(): Promise<User["id"]> {
   return ids.you;
 }
 
+// The first time a demo's visitor goes past the page they landed on. Only
+// the first time counts, so later visits leave it alone.
+export function markDemoExplored(userId: User["id"]) {
+  return prisma.user.updateMany({
+    where: { id: userId, demoGroup: { not: null }, demoExploredAt: null },
+    data: { demoExploredAt: new Date() },
+  });
+}
+
 export async function getDemoGroup(userId: User["id"]) {
   const user = await prisma.user.findUnique({
     where: { id: userId },

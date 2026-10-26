@@ -558,9 +558,11 @@ function Health({ health }: { health: Data["health"] }) {
           tone="violet"
         />
         <Stat
+          // People who looked around; bots that only press the button
+          // stay in the note
           label="Demo visits"
-          value={health.demosToday}
-          note="today"
+          value={health.demosExploredToday}
+          note={`today, of ${health.demosToday} started`}
           icon={DashboardIcon}
           className="col-span-2 lg:col-span-1"
         />

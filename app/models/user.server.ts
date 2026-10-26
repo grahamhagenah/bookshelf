@@ -31,6 +31,7 @@ export async function getUserById(id: User["id"]) {
       discoverable: true,
       emailVerifiedAt: true,
       demoGroup: true,
+      demoExploredAt: true,
       notificationsReceived: {
         where: { read: false },
         orderBy: { createdAt: "desc" },

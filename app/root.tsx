@@ -20,6 +20,7 @@ import { useEffect } from "react";
 
 import sansFont from "~/fonts/source-sans-3-latin-normal.woff2";
 import serifFont from "~/fonts/source-serif-4-latin-600-normal.woff2";
+import { markDemoExplored } from "~/models/demo.server";
 import { OLD_HOSTS, SITE_URL, seo } from "~/seo";
 import { getUser } from "~/session.server";
 import { sharePromptDismissed } from "~/share-prompt.server";
@@ -80,6 +81,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw redirect(`${SITE_URL}${url.pathname}${url.search}`, 301);
   }
   const user = await getUser(request);
+  // A demo's visitor opening anything past the page they landed on is a
+  // person looking around, not a bot that pressed the button
+  if (user?.demoGroup && !user.demoExploredAt && new URL(request.url).pathname !== "/") {
+    await markDemoExplored(user.id);
+  }
   return json({
     user,
     // Invite people without a public link yet, until they say no thanks

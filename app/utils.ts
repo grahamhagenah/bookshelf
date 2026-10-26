@@ -75,12 +75,17 @@ export function normalizeEmail(email: string) {
 export const HONEYPOT_FIELD = "website";
 export const MIN_SIGNUP_MS = 2000;
 
+// Whether a form's hidden field was filled in, which only bots do
+export function filledHoneypot(formData: FormData) {
+  const trap = formData.get(HONEYPOT_FIELD);
+  return typeof trap === "string" && trap.length > 0;
+}
+
 export function looksLikeBot(
   formData: FormData,
   now = Date.now(),
 ): "honeypot" | "too-fast" | null {
-  const trap = formData.get(HONEYPOT_FIELD);
-  if (typeof trap === "string" && trap.length > 0) return "honeypot";
+  if (filledHoneypot(formData)) return "honeypot";
   const renderedAt = Number(formData.get("renderedAt"));
   if (!Number.isFinite(renderedAt) || renderedAt <= 0) return "too-fast";
   if (now - renderedAt < MIN_SIGNUP_MS) return "too-fast";

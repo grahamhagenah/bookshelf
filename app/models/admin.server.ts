@@ -86,6 +86,10 @@ export async function getHealth() {
     overdue,
     loansStarted30,
     demosToday: demoGroups.length,
+    // Of those, the ones where someone went past the page they landed on
+    demosExploredToday: await prisma.user.count({
+      where: { demoExploredAt: { not: null }, createdAt: { gte: daysAgo(1) } },
+    }),
     // Friendships go both ways, so each is counted twice
     friendships: Math.floor(
       friendLinks.reduce((sum, user) => sum + user._count.following, 0) / 2,
