@@ -382,6 +382,75 @@ export function ShowcaseFriends() {
   );
 }
 
+// A group: everyone's shelves as one, who has each book, and the link
+// that brings the next person in
+const GROUP_BOOKS: [string, string][] = [
+  [COVERS.circe, "MC"],
+  [COVERS.piranesi, "SO"],
+  [COVERS.seaOfTranquility, "AR"],
+  [COVERS.dune, "TB"],
+  [COVERS.gilead, "MC"],
+  [COVERS.overstory, "PS"],
+  [COVERS.hailMary, "SO"],
+  [COVERS.klara, "AR"],
+];
+
+export function ShowcaseGroups() {
+  return (
+    <Stage height="h-[400px] sm:h-[430px]">
+      <div className={`${panel} left-0 right-[4%] top-0 z-20 -rotate-1 p-3.5`}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+              Thursday book club
+            </p>
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              12 people · 214 books
+            </p>
+          </div>
+          <div className="flex -space-x-2">
+            {["MC", "SO", "AR", "TB"].map((initials) => (
+              <Initials key={initials} text={initials} small />
+            ))}
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-4 gap-x-2.5 gap-y-3">
+          {GROUP_BOOKS.map(([src, initials]) => (
+            <div key={src} className="relative">
+              <Cover src={src} className="w-full" sizes="(min-width: 640px) 90px, 20vw" />
+              {/* Whose copy it is */}
+              <span className="absolute -bottom-1.5 -right-1.5">
+                <Initials text={initials} small />
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div
+        className={`${panel} bottom-[8%] right-0 w-[78%] z-30 rotate-2 p-3.5`}
+      >
+        <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">
+          Invite people
+        </p>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="min-w-0 flex-1 truncate rounded-md bg-stone-100 dark:bg-stone-800 px-2.5 py-1.5 text-xs text-stone-700 dark:text-stone-200">
+            bookstacks.app/g/thursday-book-club
+          </span>
+          <span className="flex-shrink-0 rounded-md bg-forest-600 px-2.5 py-1.5 text-xs font-medium text-white">
+            Copy link
+          </span>
+        </div>
+      </div>
+
+      <div className="absolute bottom-0 left-[2%] z-30 flex -rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
+        <Check />
+        Priya joined Thursday book club
+      </div>
+    </Stage>
+  );
+}
+
 // Hearts, notes, and where a copy has been
 export function ShowcaseNotes() {
   return (

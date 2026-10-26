@@ -5,6 +5,7 @@ import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
 import DemoButton from "./demo-button";
 import Showcase, {
   ShowcaseFriends,
+  ShowcaseGroups,
   ShowcaseNotes,
   ShowcasePage,
 } from "./showcase";
@@ -136,16 +137,26 @@ export default function Landing() {
         </Feature>
 
         <Feature
-          title="Your shelf, out in the world."
-          visual={<ShowcasePage />}
+          title="Bring the whole book club."
+          visual={<ShowcaseGroups />}
           flip
         >
+          Start a group for your book club, your office or your family, and
+          share one link. Everyone who joins can browse and borrow from
+          everyone else&apos;s shelves, without adding each other one by one.
+        </Feature>
+
+        <Feature title="Your shelf, out in the world." visual={<ShowcasePage />}>
           Your shelf gets its own page, with a line about you and the favorites
           you pin, each with a note on why you love it. Anyone can browse it
           without an account, and friends can ask to borrow.
         </Feature>
 
-        <Feature title="Books with a history." visual={<ShowcaseNotes />}>
+        <Feature
+          title="Books with a history."
+          visual={<ShowcaseNotes />}
+          flip
+        >
           Leave a heart or a line for the next reader. Notes stay with the book
           as it moves between friends, so you can see where it&apos;s been and
           what everyone thought.
