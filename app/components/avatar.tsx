@@ -198,14 +198,13 @@ const ICON_PATHS = {
   ),
   hare: (
     <>
-      {/* Sitting, heading right: a round back, a head with an eye, two
-          long ears and a tail */}
-      <path d="M4.6 19.5c-1.3-4 1.2-8.2 5.9-8.2 1.9 0 3.3.6 4.3 1.6" />
-      <circle cx="17" cy="11.6" r="2.5" />
-      <circle cx="18" cy="11.3" r=".6" fill="currentColor" stroke="none" />
-      <path d="M15.3 9.8C13.6 8 12.4 5.6 12.6 3.8c.1-1 1.1-1.3 1.8-.5 1.3 1.6 2.3 3.6 2.6 5.6M17.6 9.1c-.3-2.2 0-4.6.8-6.3.4-.9 1.5-.8 1.7.2.4 2 .2 4.4-.6 6.4" />
-      <path d="M15.4 13.7c.5 1.9.4 3.9-.3 5.8M4.6 19.5h11.3" />
-      <circle cx="4.2" cy="15.2" r="1.1" fill="currentColor" stroke="none" />
+      {/* The kitty's cousin: a round face, oval eyes and a button nose,
+          with two tall ears instead of whiskers */}
+      <ellipse cx="12" cy="14.6" rx="7" ry="5.2" />
+      <path d="M8.4 10.14C7.4 6.9 7.4 3 9 2.4c1.5-.6 2.2 2.4 1.8 7.08M15.6 10.14C16.6 6.9 16.6 3 15 2.4c-1.5-.6-2.2 2.4-1.8 7.08" />
+      <ellipse cx="9.4" cy="14.2" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
+      <ellipse cx="14.6" cy="14.2" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="16.2" rx=".9" ry=".65" fill="currentColor" stroke="none" />
     </>
   ),
   ghost: (
