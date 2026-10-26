@@ -48,9 +48,9 @@ const VISITOR = {
 const PERSONAS = {
   maya: { firstname: "Maya", surname: "Chen", profileEmoji: "owl:plum" },
   sam: { firstname: "Sam", surname: "Okafor", profileEmoji: "planet:navy" },
-  anika: { firstname: "Anika", surname: "Rao", profileEmoji: "teapot:oxblood" },
+  anika: { firstname: "Anika", surname: "Rao", profileEmoji: "star:oxblood" },
   // Theo has sent the visitor a friend request; Lena shows up as a suggestion
-  theo: { firstname: "Theo", surname: "Martin", profileEmoji: "fox:ochre" },
+  theo: { firstname: "Theo", surname: "Martin", profileEmoji: "mountain:ochre" },
   lena: { firstname: "Lena", surname: "Fischer", profileEmoji: "frog:forest" },
   // The visitor's housemate: one shared shelf, their own notes and friends
   noah: { firstname: "Noah", surname: "Brennan", profileEmoji: "cat:ink" },

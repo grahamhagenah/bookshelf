@@ -368,7 +368,35 @@ const ICON_PATHS = {
 
 export type AvatarIcon = keyof typeof ICON_PATHS;
 
-export const AVATAR_ICONS = Object.keys(ICON_PATHS) as AvatarIcon[];
+// What the picker offers, in its order. The rest of ICON_PATHS is retired
+// for now: still drawn for anyone who chose one, no longer on offer.
+export const AVATAR_ICONS: AvatarIcon[] = [
+  "book",
+  "bookmark",
+  "leaf",
+  "flower",
+  "moon",
+  "sun",
+  "star",
+  "mountain",
+  "glasses",
+  "cat",
+  "hare",
+  "paw",
+  "owl",
+  "frog",
+  "octopus",
+  "ghost",
+  "tree",
+  "cactus",
+  "planet",
+  "crown",
+  "anchor",
+  "music",
+  "headphones",
+  "bicycle",
+  "umbrella",
+];
 
 export function isAvatarIcon(value: unknown): value is AvatarIcon {
   return typeof value === "string" && value in ICON_PATHS;
