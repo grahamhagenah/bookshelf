@@ -16,10 +16,6 @@ import { requireUserId } from "~/session.server";
 
 export const meta: MetaFunction = () => seo({ title: "Friends' books", noindex: true });
 
-export const handle = {
-  breadcrumbs: () => [{ label: "Friends", href: "/friends" }, { label: "Their books" }],
-};
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const [user, mine] = await Promise.all([getUserById(userId), shelfIds(userId)]);
