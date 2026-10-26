@@ -2,6 +2,7 @@
 import type Stripe from "stripe";
 
 import { makeUser, prisma } from "../test/db";
+import { routeArgs } from "../test/route";
 
 import { applySubscription, stripe } from "./billing.server";
 import { createHouseholdInvite, joinHousehold } from "./models/household.server";
@@ -96,15 +97,15 @@ test("the webhook acts on signed events and turns away anything else", async () 
   };
   const payload = JSON.stringify(event);
   const post = (signature: string) =>
-    webhook({
-      request: new Request("http://localhost/api/stripe-webhook", {
-        method: "POST",
-        body: payload,
-        headers: { "stripe-signature": signature },
-      }),
-      params: {},
-      context: {},
-    });
+    webhook(
+      routeArgs(
+        new Request("http://localhost/api/stripe-webhook", {
+          method: "POST",
+          body: payload,
+          headers: { "stripe-signature": signature },
+        }),
+      ),
+    );
 
   expect((await post("t=1,v1=forged")).status).toBe(400);
   expect(await planOf(me.id)).toMatchObject({ plan: "free" });

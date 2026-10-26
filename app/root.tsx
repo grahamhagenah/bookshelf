@@ -1,20 +1,6 @@
-import type {
-  LinksFunction,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import {
-  Links,
-  Meta,
-  Outlet,
-  Scripts,
-  ScrollRestoration,
-  useLoaderData,
-  useLocation,
-  useMatches,
-} from "@remix-run/react";
 import { useEffect } from "react";
+import { data, Links, Meta, Outlet, redirect, Scripts, ScrollRestoration, useLoaderData, useLocation, useMatches } from "react-router";
+import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import sansFont from "~/fonts/source-sans-3-latin-normal.woff2?url";
 import serifFont from "~/fonts/source-serif-4-latin-600-normal.woff2?url";
@@ -83,7 +69,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (user?.demoGroup && !user.demoExploredAt && new URL(request.url).pathname !== "/") {
     await markDemoExplored(user.id);
   }
-  return json({
+  return data({
     user,
     // Invite people without a public link yet, until they say no thanks
     sharePrompt: Boolean(

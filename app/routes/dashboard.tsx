@@ -1,12 +1,6 @@
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  MetaFunction,
-  SerializeFrom,
-} from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Link, useFetcher, useLoaderData, useLocation, useSearchParams } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
+import { data, Link, useFetcher, useLoaderData, useLocation, useSearchParams } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import {
   BookIcon,
@@ -52,7 +46,7 @@ import {
 } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
-import { validateEmail } from "~/utils";
+import { type LoaderData, validateEmail } from "~/utils";
 
 // One announcement email per person, spaced out, logging any that don't go
 async function emailAnnouncement(
@@ -101,7 +95,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getAdminEmailChoices(userId),
       getGroupStats(),
     ]);
-  return json({
+  return data({
     userId,
     emailChoices,
     health,
@@ -122,25 +116,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "clearDemos") {
     await deleteExpiredDemoGroups();
-    return json({ ok: true });
+    return data({ ok: true });
   }
 
   if (intent === "announce") {
     const message = String(form.get("message") ?? "").trim();
     const headline = String(form.get("headline") ?? "").trim();
     if (headline.length > HEADLINE_MAX) {
-      return json(
+      return data(
         { announceError: `Keep the headline under ${HEADLINE_MAX} characters.` },
         { status: 400 },
       );
     }
     if (!message)
-      return json(
+      return data(
         { announceError: "Write the announcement first." },
         { status: 400 },
       );
     if (message.length > ANNOUNCEMENT_MAX) {
-      return json(
+      return data(
         { announceError: `Keep it under ${ANNOUNCEMENT_MAX} characters.` },
         { status: 400 },
       );
@@ -152,7 +146,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // The emails go out one at a time behind the response, well under
     // the email service's rate limit, so the dashboard answers at once
     void emailAnnouncement(recipients, headline, message);
-    return json({ announced: sentTo, emailed: recipients.length });
+    return data({ announced: sentTo, emailed: recipients.length });
   }
 
   // This admin's own email choices; each setting saves on its own
@@ -164,28 +158,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       feedback:
         feedbackEmails === "on" ? true : feedbackEmails === "off" ? false : undefined,
     });
-    return json({ ok: true });
+    return data({ ok: true });
   }
 
   if (intent === "deleteFeedback") {
     const id = form.get("feedbackId");
     if (typeof id !== "string")
-      return json({ error: "No feedback given" }, { status: 400 });
+      return data({ error: "No feedback given" }, { status: 400 });
     await deleteFeedback(id);
-    return json({ ok: true });
+    return data({ ok: true });
   }
 
   if (intent === "feedbackDone") {
     const id = form.get("feedbackId");
     if (typeof id !== "string")
-      return json({ error: "No feedback given" }, { status: 400 });
+      return data({ error: "No feedback given" }, { status: 400 });
     await setFeedbackDone(id, form.get("done") === "true");
-    return json({ ok: true });
+    return data({ ok: true });
   }
 
   const targetId = form.get("userId");
   if (typeof targetId !== "string" || !targetId) {
-    return json({ error: "No account given" }, { status: 400 });
+    return data({ error: "No account given" }, { status: 400 });
   }
 
   if (intent === "updateUser") {
@@ -193,42 +187,42 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const surname = String(form.get("surname") ?? "").trim();
     const email = String(form.get("email") ?? "").trim();
     if (!firstname || !surname) {
-      return json({ error: "Both names are needed" }, { status: 400 });
+      return data({ error: "Both names are needed" }, { status: 400 });
     }
     if (!validateEmail(email)) {
-      return json({ error: "That email doesn't look right" }, { status: 400 });
+      return data({ error: "That email doesn't look right" }, { status: 400 });
     }
     const existing = await getUserByEmail(email);
     if (existing && existing.id !== targetId) {
-      return json(
+      return data(
         { error: `${email} belongs to another account` },
         { status: 400 },
       );
     }
     await updateUser(targetId, { firstname, surname, email });
-    return json({ ok: true, saved: true });
+    return data({ ok: true, saved: true });
   }
 
   if (intent === "setPlan") {
     await setPlan(targetId, form.get("plus") === "true");
-    return json({ ok: true });
+    return data({ ok: true });
   }
 
   // Admins can't delete their own account from here
   if (targetId === userId) {
-    return json(
+    return data(
       { error: "You can't delete your own account here" },
       { status: 400 },
     );
   }
   if (intent === "deleteUser") {
     await deleteUsers([targetId]);
-    return json({ ok: true });
+    return data({ ok: true });
   }
-  return json({ error: "Unknown action" }, { status: 400 });
+  return data({ error: "Unknown action" }, { status: 400 });
 };
 
-type Data = SerializeFrom<typeof loader>;
+type Data = LoaderData<typeof loader>;
 
 const subheadingClass =
   "text-sm font-semibold text-stone-500 dark:text-stone-400";
@@ -251,7 +245,7 @@ const shortDate = (date: string | Date) => {
 };
 
 // "today", "3d ago", "5w ago", or the month once it's older than a few months
-function ago(date: string) {
+function ago(date: string | Date) {
   const days = Math.floor((Date.now() - new Date(date).getTime()) / DAY);
   if (days < 1) return "today";
   if (days < 14) return `${days}d ago`;
@@ -1154,12 +1148,12 @@ const sorts = {
   newest: {
     label: "Newest",
     compare: (a: AdminUser, b: AdminUser) =>
-      b.createdAt.localeCompare(a.createdAt),
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   },
   active: {
     label: "Last active",
     compare: (a: AdminUser, b: AdminUser) =>
-      b.lastActive.localeCompare(a.lastActive),
+      new Date(b.lastActive).getTime() - new Date(a.lastActive).getTime(),
   },
   books: {
     label: "Most books",

@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { prisma } from "../../test/db";
+import { routeArgs } from "../../test/route";
 
 import { action } from "./demo";
 
@@ -10,15 +11,15 @@ function press(fields: Record<string, string>, userAgent = BROWSER) {
   const body = new FormData();
   body.set("intent", "start");
   for (const [key, value] of Object.entries(fields)) body.set(key, value);
-  return action({
-    request: new Request("http://localhost/demo", {
-      method: "POST",
-      body,
-      headers: { "user-agent": userAgent },
-    }),
-    params: {},
-    context: {},
-  });
+  return action(
+    routeArgs(
+      new Request("http://localhost/demo", {
+        method: "POST",
+        body,
+        headers: { "user-agent": userAgent },
+      }),
+    ),
+  );
 }
 
 const sandboxes = async () =>

@@ -1,5 +1,5 @@
-import type { SerializeFrom } from "@remix-run/node";
-import { Link, useFetcher, useLocation } from "@remix-run/react";
+
+import { Link, useFetcher, useLocation } from "react-router";
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
@@ -7,6 +7,7 @@ import { HeartIcon, StacksLogo } from "~/components/icons";
 import Library from "~/components/library";
 import type { FriendStatus } from "~/models/user.server";
 import type { loadSharedShelf } from "~/share.server";
+import type { LoaderData } from "~/utils";
 
 import { primaryButton, quietButton } from "./ui";
 
@@ -17,7 +18,7 @@ const quietAction = `${quietButton("sm")} inline-flex items-center justify-cente
 // belongs to, a few of their favorites, the shelf, and an invite to
 // become friends
 
-export type SharedShelfData = SerializeFrom<typeof loadSharedShelf>;
+export type SharedShelfData = LoaderData<typeof loadSharedShelf>;
 
 // "18 books on Jordan Avery's shelf, including Dune, Piranesi and Circe."
 export function shelfSummary(name: string, count: number, titles: string[]) {

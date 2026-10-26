@@ -1,5 +1,5 @@
-import { NavLink, Link } from "@remix-run/react";
 import { useState } from "react";
+import { Link, NavLink } from "react-router";
 
 import { coverSizeOf, coverSrc, libraryViewOf, useOptionalUser } from "~/utils";
 
@@ -58,7 +58,7 @@ interface Book {
   notLending?: boolean;
   loveCount?: number;
   borrowerId?: string | null;
-  readAt?: string | null;
+  readAt?: string | Date | null;
   // First name of the housemate who added it, when it wasn't you
 }
 

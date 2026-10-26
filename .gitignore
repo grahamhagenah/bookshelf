@@ -13,3 +13,5 @@ node_modules
 /prisma/vitest.db
 /prisma/vitest.db-journal
 /.cache
+/.react-router
+/coverage

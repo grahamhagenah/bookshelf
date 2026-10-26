@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { makeBook, makeUser, prisma } from "../test/db";
+import { bodyOf, routeArgs, statusOf } from "../test/route";
 
 import { getPublicBookListItems } from "./models/book.server";
 import { generateShareToken } from "./models/user.server";
@@ -24,11 +25,7 @@ const visit = (
   path: string,
   params: Record<string, string>,
 ) =>
-  loader({
-    request: new Request(`http://localhost${path}`),
-    params,
-    context: {},
-  });
+  loader(routeArgs(new Request(`http://localhost${path}`), params));
 
 test("handles are tidied, and refused when they're odd, reserved or taken", async () => {
   expect(normalizeHandle("  @Graham_H ")).toBe("graham_h");
@@ -112,18 +109,18 @@ test("a shelf is at /@handle only while sharing is on, and its old link moves th
   ).rejects.toMatchObject({ status: 404 });
 
   const token = await generateShareToken(me.id);
-  const page = (await visit(profilePage, `/@${handle}`, {
+  const page = await visit(profilePage, `/@${handle}`, {
     profile: `@${handle}`,
-  })) as Response;
-  expect(page.status).toBe(200);
-  expect(await page.json()).toMatchObject({
+  });
+  expect(statusOf(page)).toBe(200);
+  expect(await bodyOf(page)).toMatchObject({
     ownerId: me.id,
     profile: { handle },
   });
 
-  const moved = (await visit(sharePage, `/share/${token}`, {
+  const moved = (await visit(sharePage as typeof profilePage, `/share/${token}`, {
     token,
-  })) as Response;
+  })) as unknown as Response;
   expect(moved.status).toBe(302);
   expect(moved.headers.get("Location")).toBe(`/@${handle}`);
 

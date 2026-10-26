@@ -1,4 +1,4 @@
-import { useFetcher } from "@remix-run/react";
+import { useFetcher } from "react-router";
 
 // Shown until the address is confirmed; Stacks sends no email before then
 export default function VerifyEmailBanner({ email }: { email: string }) {

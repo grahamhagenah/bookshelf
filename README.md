@@ -16,7 +16,7 @@ A social book-lending app where you can catalog your personal library, connect w
 
 ## Tech Stack
 
-- **[Remix](https://remix.run)** — Full-stack React framework
+- **[React Router](https://reactrouter.com)** — Full-stack React framework (framework mode, formerly Remix)
 - **[Prisma](https://prisma.io)** + **SQLite** — Database and ORM
 - **[Tailwind CSS v4](https://tailwindcss.com)** — Styling
 - **[Resend](https://resend.com)** — Transactional email

@@ -1,9 +1,5 @@
-import type {
-  LoaderFunctionArgs,
-  MetaFunction,
-} from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { data, useLoaderData } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import invariant from "tiny-invariant";
 
 import Library from "~/components/library";
@@ -57,7 +53,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     loveCount: loveCounts.get(book.id) ?? 0,
   }));
 
-  return json({
+  return data({
     user,
     friendName: `${user.firstname} ${user.surname}`,
     bookListItems,

@@ -1,7 +1,6 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
+import { data, useFetcher, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import Avatar from "~/components/avatar";
 import { SearchIcon } from "~/components/icons";
@@ -42,7 +41,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getPendingFriendRequests(userId),
     getFriendInvite(userId),
   ]);
-  return json({
+  return data({
     // Who's already been asked, either way, to leave out of suggestions
     pendingIds: pendingRequests.map((request) => request.receiver.id),
     askedMeIds: incoming.map((request) => request.sender.id),
@@ -70,28 +69,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const user = await getUserById(userId);
   if (!user) {
-    return json<ActionData>({ errors: { email: "User not found" }, success: false }, { status: 404 });
+    return data<ActionData>({ errors: { email: "User not found" }, success: false }, { status: 404 });
   }
   const senderName = `${user.firstname} ${user.surname}`;
 
   // A request to someone found in search or suggestions
   if (typeof friendId === "string" && friendId.length > 0) {
     if (!(await canInteract(userId, friendId))) {
-      return json<ActionData>({ errors: { email: "User not found" }, success: false }, { status: 404 });
+      return data<ActionData>({ errors: { email: "User not found" }, success: false }, { status: 404 });
     }
     const friendRequest = await createNotification(userId, friendId, senderName);
     await respondAsDemoPersona(friendRequest.id);
-    return json<ActionData>({ success: true, friendId, errors: null });
+    return data<ActionData>({ success: true, friendId, errors: null });
   }
 
   // Requests to the people behind a list of email addresses
   const pasted = formData.get("email");
   const addresses = typeof pasted === "string" ? emailsIn(pasted) : [];
   if (addresses.length === 0) {
-    return json<ActionData>({ errors: { email: "Enter an email address" }, success: false }, { status: 400 });
+    return data<ActionData>({ errors: { email: "Enter an email address" }, success: false }, { status: 400 });
   }
   if (addresses.length > EMAILS_AT_ONCE) {
-    return json<ActionData>(
+    return data<ActionData>(
       { errors: { email: `Up to ${EMAILS_AT_ONCE} addresses at a time, please` }, success: false },
       { status: 400 },
     );
@@ -117,7 +116,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       found.push({ name, status: "sent" });
     }
   }
-  return json<ActionData>({ errors: null, success: true, found, missing });
+  return data<ActionData>({ errors: null, success: true, found, missing });
 };
 
 interface SearchUser {

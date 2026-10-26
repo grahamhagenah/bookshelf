@@ -1,5 +1,6 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+
+
+import type { LoaderFunctionArgs } from "react-router";
 
 import { prisma } from "~/db.server";
 import { fillInBookOnce } from "~/models/openlibrary.server";
@@ -17,5 +18,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (!book) throw new Response("Not Found", { status: 404 });
   if (!book.detailsFetchedAt) await fillInBookOnce(book.id);
   const after = await prisma.book.findUnique({ where: { id: book.id }, select: { detailsFetchedAt: true } });
-  return json({ done: Boolean(after?.detailsFetchedAt) });
+  return Response.json({ done: Boolean(after?.detailsFetchedAt) });
 };

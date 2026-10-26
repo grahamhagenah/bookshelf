@@ -1,7 +1,6 @@
-import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, Link, useActionData } from "@remix-run/react";
 import { useEffect, useRef } from "react";
+import { data, Form, Link, useActionData } from "react-router";
+import type { ActionFunctionArgs, MetaFunction } from "react-router";
 
 import { primaryButton, textField } from "~/components/ui";
 import { requestPasswordReset } from "~/reset-password.server";
@@ -16,7 +15,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const email = formData.get("email");
 
   if (!validateEmail(email)) {
-    return json(
+    return data(
       {
         errors: { email: "Please enter a valid email address" },
         success: false,
@@ -28,7 +27,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // The same answer whether or not the address has an account, so the
   // form can't be used to find out who's on Stacks
   await requestPasswordReset(email);
-  return json({ errors: null, success: true });
+  return data({ errors: null, success: true });
 };
 
 export default function ForgotPasswordPage() {

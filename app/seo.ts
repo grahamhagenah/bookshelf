@@ -1,4 +1,4 @@
-import type { MetaDescriptor } from "@remix-run/node";
+import type { MetaDescriptor } from "react-router";
 
 export const SITE_URL = "https://bookstacks.app";
 // Where the site used to live, and its www twins: sent on to SITE_URL

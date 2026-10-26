@@ -1,6 +1,5 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { data, Link, redirect, useLoaderData } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import invariant from "tiny-invariant";
 
 import Layout from "~/components/layout";
@@ -23,7 +22,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
   const result = await joinHousehold(userId, params.token);
   if (result.ok) return redirect("/books?joined=1");
-  return json({ reason: result.reason });
+  return data({ reason: result.reason });
 };
 
 export default function JoinHousehold() {

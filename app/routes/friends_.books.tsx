@@ -1,6 +1,6 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+
+import { data, Link, useLoaderData } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import FriendsTabs from "~/components/friends-tabs";
 import PooledShelf from "~/components/pooled-shelf";
@@ -36,7 +36,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     friends.map((friend) => friend.id),
     { lenders: friends, groups },
   );
-  return json({ shelf, counts });
+  return data({ shelf, counts });
 };
 
 export default function FriendsBooks() {

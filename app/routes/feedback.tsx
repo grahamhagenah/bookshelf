@@ -1,6 +1,6 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
+
+import { data, Form, Link, useActionData, useLoaderData, useNavigation } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { primaryButton } from "~/components/ui";
 import { FEEDBACK_MAX_LENGTH } from "~/feedback";
@@ -21,7 +21,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
   // The page they came from, to go back to and to say where it was about
   const from = safeRedirect(new URL(request.url).searchParams.get("from"), "/");
-  return json({ signedIn: Boolean(userId), from, token: formToken() });
+  return data({ signedIn: Boolean(userId), from, token: formToken() });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -29,7 +29,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const form = await request.formData();
   const body = String(form.get("body") ?? "").trim();
   const email = String(form.get("email") ?? "").trim();
-  if (!body) return json({ sent: false, error: "Write a few words first." }, { status: 400 });
+  if (!body) return data({ sent: false, error: "Write a few words first." }, { status: 400 });
 
   // Spam gets the same thank-you as everyone and goes nowhere: a bot that
   // filled in the field people never see, a form sent faster than anyone
@@ -46,13 +46,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           : null;
   if (held) {
     console.log(`Feedback held (${held})`);
-    return json({ sent: true, error: null });
+    return data({ sent: true, error: null });
   }
   if (body.length > FEEDBACK_MAX_LENGTH) {
-    return json({ sent: false, error: `Keep it under ${FEEDBACK_MAX_LENGTH} characters.` }, { status: 400 });
+    return data({ sent: false, error: `Keep it under ${FEEDBACK_MAX_LENGTH} characters.` }, { status: 400 });
   }
   if (!userId && email && !validateEmail(email)) {
-    return json({ sent: false, error: "That email address doesn't look right." }, { status: 400 });
+    return data({ sent: false, error: "That email address doesn't look right." }, { status: 400 });
   }
 
   await saveFeedback({
@@ -61,7 +61,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     page: safeRedirect(form.get("from"), "/"),
     email: userId ? null : email || null,
   });
-  return json({ sent: true, error: null });
+  return data({ sent: true, error: null });
 };
 
 export default function Feedback() {

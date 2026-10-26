@@ -1,5 +1,6 @@
-import type { MetaFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+
+import { Link } from "react-router";
+import type { MetaFunction } from "react-router";
 
 import { GuidePage, GuideSection, proseLink } from "~/components/guide";
 import { ShowcaseFriends } from "~/components/showcase";

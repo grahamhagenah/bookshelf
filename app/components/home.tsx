@@ -1,6 +1,5 @@
-import type { SerializeFrom } from "@remix-run/node";
-import { Link, useFetcher } from "@remix-run/react";
 import { Fragment, useEffect, useRef, useState } from "react";
+import { Link, useFetcher } from "react-router";
 
 import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
@@ -14,13 +13,13 @@ import { sectionHeading } from "./ui";
 // want-to-read list, then your loans both ways side by side, with what
 // friends have been up to alongside (below, on phones)
 
-type HomeBooks = SerializeFrom<Awaited<ReturnType<typeof getHomeBooks>>>;
+type HomeBooks = Awaited<ReturnType<typeof getHomeBooks>>;
 export interface HomeBook {
   id: string;
   title: string;
   author: string;
   cover: string;
-  dueDate: string | null;
+  dueDate: string | Date | null;
 }
 export interface Person {
   firstname: string;
@@ -31,14 +30,14 @@ const DAY = 24 * 60 * 60 * 1000;
 // How far ahead "Coming up" looks
 const COMING_UP_DAYS = 7;
 
-const monthDay = (date: string) =>
+const monthDay = (date: string | Date) =>
   new Date(date).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
   });
 
 // Whole days from today to the due date; negative once it's passed
-function daysUntil(date: string) {
+function daysUntil(date: string | Date) {
   const startOfToday = new Date().setHours(0, 0, 0, 0);
   const due = new Date(date).setHours(0, 0, 0, 0);
   return Math.round((due - startOfToday) / DAY);
@@ -52,7 +51,7 @@ function inDays(days: number) {
 
 // How a loan's due date reads in the lists: a plain date when it's a way
 // off, counting down once it's within the week, and bold once it's late
-function dueLabel(dueDate: string) {
+function dueLabel(dueDate: string | Date) {
   const days = daysUntil(dueDate);
   if (days < 0) {
     return {
@@ -401,7 +400,7 @@ export default function Home({
 }: {
   books: HomeBooks;
   wanted: Wanted[];
-  activity: SerializeFrom<FriendActivity>[];
+  activity: FriendActivity[];
   friendIds: string[];
   requestsSent: number;
   inviteUrl: string;

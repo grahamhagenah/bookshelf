@@ -1,6 +1,5 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
+import { data, Form, Link, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import invariant from "tiny-invariant";
 
 import BookCover from "~/components/book-cover";
@@ -31,7 +30,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const invite = await getInvite(params.token);
   // Already set up: sign in and go straight to the book
   if (invite === "claimed") return redirect("/login");
-  if (!invite) return json({ person: null, loan: null, others: [], signedIn: false });
+  if (!invite) return data({ person: null, loan: null, others: [], signedIn: false });
   const [loan, ...others] = invite.borrowedBooks.map((book) => ({
     id: book.id,
     title: book.title,
@@ -40,7 +39,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     due: dueWords(book.dueDate),
     lender: book.user.firstname,
   }));
-  return json({
+  return data({
     person: { firstname: invite.firstname, surname: invite.surname, email: invite.email },
     loan: loan ?? null,
     others,
@@ -54,13 +53,13 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const firstname = String(formData.get("firstname") ?? "").trim();
   const surname = String(formData.get("surname") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  if (!firstname) return json({ error: "Add your first name." }, { status: 400 });
+  if (!firstname) return data({ error: "Add your first name." }, { status: 400 });
   if (password.length < 8) {
-    return json({ error: "Use at least 8 characters for your password." }, { status: 400 });
+    return data({ error: "Use at least 8 characters for your password." }, { status: 400 });
   }
   const claimed = await claimInvite(params.token, { firstname, surname, password });
   if (!claimed) {
-    return json({ error: "This link has expired or was already used." }, { status: 400 });
+    return data({ error: "This link has expired or was already used." }, { status: 400 });
   }
   void notifyAdminsOfSignup(
     { id: claimed.userId, firstname, surname, email: claimed.email },

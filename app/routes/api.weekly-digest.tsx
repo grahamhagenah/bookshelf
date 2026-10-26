@@ -1,5 +1,6 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+
+
+import type { LoaderFunctionArgs } from "react-router";
 
 import { cronAuthorized } from "~/cron.server";
 import { renderDigest, sendDigestEmail } from "~/email.server";
@@ -17,7 +18,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (url.searchParams.get("preview")) {
     const userId = await getUserId(request);
     const user = userId && (await isUserAdmin(userId)) ? await getUserById(userId) : null;
-    if (!user) return json({ error: "Admins only" }, { status: 403 });
+    if (!user) return Response.json({ error: "Admins only" }, { status: 403 });
     const digest = await buildDigest(user.id);
     if (digestIsEmpty(digest)) {
       return new Response("Nothing to send this week.", { headers: { "Content-Type": "text/plain" } });
@@ -27,7 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   if (!cronAuthorized(request)) {
-    return json({ error: "Unauthorized" }, { status: 401 });
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   let sent = 0;
@@ -47,5 +48,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     if (result.success) sent++;
     else skipped++;
   }
-  return json({ success: true, sent, skipped });
+  return Response.json({ success: true, sent, skipped });
 };

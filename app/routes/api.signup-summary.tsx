@@ -1,5 +1,6 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+
+
+import type { LoaderFunctionArgs } from "react-router";
 
 import { cronAuthorized } from "~/cron.server";
 import { sendDailySignupSummaries } from "~/models/admin.server";
@@ -9,7 +10,7 @@ import { sendDailySignupSummaries } from "~/models/admin.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (!cronAuthorized(request)) {
-    return json({ error: "Unauthorized" }, { status: 401 });
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-  return json({ success: true, ...(await sendDailySignupSummaries()) });
+  return Response.json({ success: true, ...(await sendDailySignupSummaries()) });
 };

@@ -1,6 +1,5 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { data, Link, redirect, useLoaderData } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import invariant from "tiny-invariant";
 
 import BookCover from "~/components/book-cover";
@@ -29,10 +28,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   if (userId) {
     const result = await joinGroup(userId, token);
     if (result.ok) return redirect(`/groups/${result.groupId}?joined=1`);
-    return json({ group: null, reason: result.reason, token, here: `/g/${params.token}` });
+    return data({ group: null, reason: result.reason, token, here: `/g/${params.token}` });
   }
   const group = await getGroupByToken(token);
-  return json({
+  return data({
     group,
     reason: group ? null : ("no-such-group" as const),
     token,

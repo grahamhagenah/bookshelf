@@ -1,4 +1,4 @@
-import { Link, isRouteErrorResponse, useRouteError } from "@remix-run/react";
+import { isRouteErrorResponse, Link, useRouteError } from "react-router";
 
 // What a page shows when it can't: a plain word on what happened and the
 // two ways out, in the app's own clothes. `what` names the thing that

@@ -1,13 +1,13 @@
-import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, Link, useFetcher, useRouteLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
+import { data, Form, Link, useFetcher, useRouteLoaderData } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 
 import Avatar from "~/components/avatar";
 import CopyButton from "~/components/copy-button";
 import { mailtoInvite } from "~/components/invite-message";
 import { sectionHeading } from "~/components/ui";
 import { loadGroup } from "~/group-page.server";
+import type { LoaderData } from "~/utils";
 
 import type { GroupLayoutData } from "./groups.$groupId";
 
@@ -17,7 +17,7 @@ import type { GroupLayoutData } from "./groups.$groupId";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await loadGroup(request, params);
-  return json({});
+  return data({});
 };
 
 const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
@@ -54,7 +54,7 @@ export default function GroupPeople() {
   );
 }
 
-type Member = NonNullable<SerializeFrom<GroupLayoutData>>["group"]["members"][number];
+type Member = NonNullable<LoaderData<GroupLayoutData>>["group"]["members"][number];
 
 // One person: who they are and how many books they bring, opening their
 // shelf. On your own card, the way out (and, for whoever runs the group,

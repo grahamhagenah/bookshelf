@@ -1,10 +1,6 @@
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+
+import { data, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import Home from "~/components/home";
 import Landing from "~/components/landing";
@@ -44,7 +40,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = userId ? await getUserById(userId) : null;
   if (!user) {
     // Just deleted their account from Settings
-    return json({
+    return data({
       home: null,
       deleted: new URL(request.url).searchParams.has("deleted"),
     });
@@ -57,7 +53,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getWantToRead(user.id),
     getFriendInvite(user.id),
   ]);
-  return json({
+  return data({
     home: {
       books,
       activity,
@@ -99,7 +95,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 // "Skip for now" on the welcome steps
 export const action = async ({ request }: ActionFunctionArgs) => {
   await requireUserId(request);
-  return json(
+  return data(
     { dismissed: true },
     { headers: { "Set-Cookie": dismissCookie(WELCOME_COOKIE) } },
   );

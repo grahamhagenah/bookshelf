@@ -1,5 +1,5 @@
-import { useFetcher, useNavigate, useSearchParams } from "@remix-run/react";
 import { useEffect, useId, useRef, useState } from "react";
+import { useFetcher, useNavigate, useSearchParams } from "react-router";
 
 import { UPGRADE_PATH } from "~/plan";
 import type { SuggestResponse } from "~/routes/api.search-suggest";

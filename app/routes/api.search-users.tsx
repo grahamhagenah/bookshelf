@@ -1,5 +1,6 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+
+
+import type { LoaderFunctionArgs } from "react-router";
 
 import {
   getFriendRequestReceiverIds,
@@ -16,7 +17,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const query = url.searchParams.get("q") || "";
 
   if (query.length < 2) {
-    return json([]);
+    return Response.json([]);
   }
 
   const results = await searchUsers(query, userId);
@@ -32,5 +33,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     (u) => !followingIds.has(u.id) && !pendingRequestIds.has(u.id),
   );
 
-  return json(filteredResults);
+  return Response.json(filteredResults);
 };

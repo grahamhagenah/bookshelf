@@ -1,11 +1,6 @@
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  MetaFunction,
-  SerializeFrom,
-} from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { useLoaderData, useFetcher, Link } from "@remix-run/react";
+
+import { data, Link, useFetcher, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
@@ -36,7 +31,7 @@ import { getMyGroups } from "~/models/group.server";
 import { getPendingFriendRequests } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
-import { agoInWords } from "~/utils";
+import { agoInWords, type LoaderData } from "~/utils";
 
 export const meta: MetaFunction = () =>
   seo({ title: "Friends", noindex: true });
@@ -53,7 +48,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getPendingFriendRequests(userId),
     getMyGroups(userId),
   ]);
-  return json({
+  return data({
     // For the tabs across the top
     counts: await getFriendsTabCounts(userId),
     friends,
@@ -77,26 +72,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if ((intent === "hide" || intent === "show") && typeof friendId === "string") {
     await setHiddenFromFeed(userId, friendId, intent === "hide");
-    return json<ActionData>({ errors: null, success: true });
+    return data<ActionData>({ errors: null, success: true });
   }
 
   if (intent === "remove" && typeof friendId === "string") {
     await removeFriend(userId, friendId);
-    return json<ActionData>({ errors: null, success: true });
+    return data<ActionData>({ errors: null, success: true });
   }
 
   const notificationId = formData.get("notificationId");
   if ((intent === "accept" || intent === "decline") && typeof notificationId === "string") {
     await answerFriendRequest(userId, notificationId, intent === "accept");
-    return json<ActionData>({ errors: null, success: true });
+    return data<ActionData>({ errors: null, success: true });
   }
 
-  return json<ActionData>({ errors: null, success: false }, { status: 400 });
+  return data<ActionData>({ errors: null, success: false }, { status: 400 });
 };
 
-type Friend = SerializeFrom<typeof loader>["friends"][number];
+type Friend = LoaderData<typeof loader>["friends"][number];
 
-function monthYear(date: string) {
+function monthYear(date: string | Date) {
   return new Date(date).toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
 
@@ -426,7 +421,7 @@ function IncomingRequest({
   request,
   compact = false,
 }: {
-  request: SerializeFrom<typeof loader>["incoming"][number];
+  request: LoaderData<typeof loader>["incoming"][number];
   // In the side column: smaller, with the buttons under the name
   compact?: boolean;
 }) {

@@ -1,7 +1,6 @@
-import type { LoaderFunctionArgs, MetaFunction, SerializeFrom } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
+import { data, Link, useLoaderData } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import BookCover from "~/components/book-cover";
 import { BorrowedIcon, HeartIcon, HistoryIcon, LentIcon } from "~/components/icons";
@@ -12,6 +11,7 @@ import { getHistory, getShelfCounts } from "~/models/history.server";
 import { getUserById } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+import type { LoaderData } from "~/utils";
 
 // Every book that's passed between you and a friend, so you can find the
 // one you read a few weeks ago and say what you thought of it
@@ -29,17 +29,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getHistory(userId),
     getShelfCounts(userId),
   ]);
-  return json({
+  return data({
     entries,
     counts,
     friendIds: user?.following.map((friend) => friend.id) ?? [],
   });
 };
 
-type Entry = SerializeFrom<typeof loader>["entries"][number];
+type Entry = LoaderData<typeof loader>["entries"][number];
 type Show = "all" | "borrowed" | "lent";
 
-const monthDay = (date: string) => {
+const monthDay = (date: string | Date) => {
   const d = new Date(date);
   return d.toLocaleDateString("en-US", {
     month: "short",

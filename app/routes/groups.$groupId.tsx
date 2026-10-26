@@ -1,7 +1,6 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { NavLink, Outlet, useFetcher, useLoaderData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
+import { data, NavLink, Outlet, redirect, useFetcher, useLoaderData, useSearchParams } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import invariant from "tiny-invariant";
 
 import Faces from "~/components/faces";
@@ -46,7 +45,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const path = groupPath(group);
   if (here !== path) return redirect(`${path}${url.pathname.slice(here.length)}${url.search}`);
   const { inviteToken, openIds, ...rest } = group;
-  return json({
+  return data({
     group: { ...rest, lenderCount: openIds.length },
     path,
     inviteUrl: `${publicOrigin(request)}${groupInvitePath(group.name, inviteToken)}`,
@@ -68,9 +67,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   }
   if (intent === "rename") {
     const name = cleanGroupName(formData.get("name"));
-    if (!name) return json({ error: "Give the group a name." }, { status: 400 });
+    if (!name) return data({ error: "Give the group a name." }, { status: 400 });
     await renameGroup(userId, groupId, name);
-    return json({ ok: true });
+    return data({ ok: true });
   }
   if (intent === "delete") {
     await deleteGroup(userId, groupId);
@@ -79,13 +78,13 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   if (intent === "remove") {
     const memberId = formData.get("memberId");
     if (typeof memberId === "string") await removeFromGroup(userId, groupId, memberId);
-    return json({ ok: true });
+    return data({ ok: true });
   }
   if (intent === "resetLink") {
     await resetGroupLink(userId, groupId);
-    return json({ ok: true });
+    return data({ ok: true });
   }
-  return json({ error: "Unknown request" }, { status: 400 });
+  return data({ error: "Unknown request" }, { status: 400 });
 };
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;

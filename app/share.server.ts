@@ -1,4 +1,5 @@
-import { json } from "@remix-run/node";
+
+import { data } from "react-router";
 
 import { getPublicBookListItems } from "~/models/book.server";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
@@ -24,7 +25,7 @@ export async function loadSharedShelf(request: Request, owner: { id: string; sha
     getShelfProfile(user.id),
   ]);
 
-  return json({
+  return data({
     ownerId: user.id,
     ownerFirstname: user.firstname,
     ownerName: `${user.firstname} ${user.surname}`,
@@ -50,12 +51,12 @@ export async function askToBeFriends(request: Request, ownerId: string) {
   }
   // Only ask once
   if ((await getFriendStatus(viewerId, ownerId)) !== "none") {
-    return json({ ok: true });
+    return data({ ok: true });
   }
 
   const viewer = await getUserById(viewerId);
   if (!viewer) throw new Response("Not Found", { status: 404 });
   const friendRequest = await createNotification(viewerId, ownerId, `${viewer.firstname} ${viewer.surname}`);
   await respondAsDemoPersona(friendRequest.id);
-  return json({ ok: true });
+  return data({ ok: true });
 }

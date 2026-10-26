@@ -1,6 +1,6 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+
+import { data, useLoaderData } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 
 import FriendActivityItem from "~/components/friend-activity";
 import { loadGroup } from "~/group-page.server";
@@ -10,7 +10,7 @@ import { getFriendActivity } from "~/models/activity.server";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { userId, group } = await loadGroup(request, params);
-  return json({
+  return data({
     activity: await getFriendActivity(userId, { among: group.openIds, days: 365, limit: 30 }),
     friendIds: group.openIds,
   });

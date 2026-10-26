@@ -1,5 +1,6 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+
+
+import type { ActionFunctionArgs } from "react-router";
 
 import { generateShareToken, getUserById } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
@@ -15,7 +16,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const intent = (await request.formData()).get("intent");
 
   if (intent === "dismiss") {
-    return json(
+    return Response.json(
       { dismissed: true },
       { headers: { "Set-Cookie": dismissCookie(SHARE_PROMPT_COOKIE) } },
     );
@@ -24,5 +25,5 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Reuse an existing link rather than breaking one already handed out
   const user = await getUserById(userId);
   const shareToken = user?.shareToken ?? (await generateShareToken(userId));
-  return json({ url: `${publicOrigin(request)}${shelfPath({ handle: user?.handle, shareToken })}` });
+  return Response.json({ url: `${publicOrigin(request)}${shelfPath({ handle: user?.handle, shareToken })}` });
 };

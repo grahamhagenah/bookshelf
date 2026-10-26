@@ -1,6 +1,6 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { useLoaderData, useRouteLoaderData } from "@remix-run/react";
+
+import { data, useLoaderData, useRouteLoaderData } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 
 import PooledShelf from "~/components/pooled-shelf";
 import { sectionHeading } from "~/components/ui";
@@ -16,7 +16,7 @@ import type { GroupLayoutData } from "./groups.$groupId";
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { userId, group } = await loadGroup(request, params);
   const lenders = group.members.filter((member) => member.isFriend);
-  return json(await loadPooledShelf(request, userId, group.openIds, { lenders }));
+  return data(await loadPooledShelf(request, userId, group.openIds, { lenders }));
 };
 
 export default function GroupBooks() {

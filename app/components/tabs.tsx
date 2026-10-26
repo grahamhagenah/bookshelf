@@ -1,4 +1,4 @@
-import { NavLink } from "@remix-run/react";
+import { NavLink } from "react-router";
 
 // A row of tabs over a rule, with room across from them for the page's own
 // actions: My shelf's lists, the Friends page's views

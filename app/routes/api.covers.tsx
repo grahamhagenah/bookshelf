@@ -1,5 +1,6 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+
+
+import type { LoaderFunctionArgs } from "react-router";
 
 import { prisma } from "~/db.server";
 import { shelfIds } from "~/models/household.server";
@@ -23,9 +24,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Open Library can be slow or down. Say so, rather than fail the page
   // the picker sits on.
   try {
-    return json({ covers: await findCovers(book), failed: false });
+    return Response.json({ covers: await findCovers(book), failed: false });
   } catch {
-    return json({ covers: [], failed: true });
+    return Response.json({ covers: [], failed: true });
   }
 };
 

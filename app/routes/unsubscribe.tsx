@@ -1,6 +1,6 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
+
+import { data, Link, useFetcher, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { prisma } from "~/db.server";
 import type { EmailKind } from "~/models/user.server";
@@ -33,21 +33,21 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const link = readUnsubscribe(new URL(request.url).searchParams);
   const on = link ? await isOn(link.userId, link.kind) : null;
   const loggedIn = Boolean(await getUserId(request));
-  if (!link || on === null) return json({ valid: false as const, loggedIn });
-  return json({ valid: true as const, kind: link.kind, on, loggedIn });
+  if (!link || on === null) return data({ valid: false as const, loggedIn });
+  return data({ valid: true as const, kind: link.kind, on, loggedIn });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const link = readUnsubscribe(new URL(request.url).searchParams);
   if (!link || (await isOn(link.userId, link.kind)) === null) {
-    return json({ error: "That link didn't work" }, { status: 400 });
+    return data({ error: "That link didn't work" }, { status: 400 });
   }
   const form = await request.formData();
   // One-click unsubscribe from the inbox (RFC 8058) turns it off; the page's
   // own button can also turn it back on
   const on = form.get("List-Unsubscribe") === "One-Click" ? false : form.get("on") === "true";
   await setEmailSetting(link.userId, link.kind, on);
-  return json({ on });
+  return data({ on });
 };
 
 export default function Unsubscribe() {

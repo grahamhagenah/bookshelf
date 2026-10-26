@@ -1,6 +1,6 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+
+import { data, Link, useLoaderData } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import Library from "~/components/library";
 import ShelfTabs from "~/components/shelf-tabs";
@@ -69,7 +69,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         }
       : null;
 
-  return json({
+  return data({
     user,
     bookListItems,
     counts: await getShelfCounts(userId),

@@ -1,5 +1,6 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+
+import { redirect } from "react-router";
+import type { ActionFunctionArgs } from "react-router";
 
 import { logout } from "~/session.server";
 

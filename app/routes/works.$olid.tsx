@@ -1,10 +1,6 @@
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
+
+import { data, Link, useFetcher, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import BookCover from "~/components/book-cover";
 import ErrorPage from "~/components/error-page";
@@ -121,7 +117,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     ),
   );
 
-  return json({
+  return data({
     work,
     ownCopyId: ownCopy?.id ?? null,
     wanted,
@@ -182,7 +178,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
                 intent === "saveNote" && typeof body === "string" ? body : null,
             },
     );
-    return json(
+    return data(
       intent === "saveNote" || intent === "deleteNote"
         ? { noteSaved: true }
         : { ok: true },
@@ -201,7 +197,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       cover: work.cover ?? "",
       openLibraryKey: key,
     });
-    return json({ success: true, wanted: true });
+    return data({ success: true, wanted: true });
   }
 
   const ownCopy = await findOwnCopy(await shelfIds(userId), {
@@ -209,9 +205,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     openLibraryKey: key,
   });
   if (ownCopy)
-    return json({ success: false, alreadyExists: true, ownCopyId: ownCopy.id });
+    return data({ success: false, alreadyExists: true, ownCopyId: ownCopy.id });
   if ((await roomForBooks(userId)) < 1) {
-    return json(
+    return data(
       { success: false, limit: LIMIT_MESSAGES.books },
       { status: 403 },
     );
@@ -229,7 +225,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     userId,
   });
   await notifyWanters(userId, [book]);
-  return json({ success: true, added: book.id });
+  return data({ success: true, added: book.id });
 };
 
 export default function WorkPage() {

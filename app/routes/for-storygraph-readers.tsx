@@ -1,6 +1,6 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+
+import { data, Link, useLoaderData } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { GuidePage, GuideSection, proseLink } from "~/components/guide";
 import { ShowcaseFriends } from "~/components/showcase";
@@ -21,7 +21,7 @@ export const meta: MetaFunction = () =>
   });
 
 export const loader = async ({ request }: LoaderFunctionArgs) =>
-  json({ signedIn: Boolean(await getUserId(request)) });
+  data({ signedIn: Boolean(await getUserId(request)) });
 
 // Things StoryGraph readers have asked for, and where they are here
 const ASKED: { asked: string; here: string }[] = [

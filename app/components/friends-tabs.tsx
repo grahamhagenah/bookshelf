@@ -1,4 +1,5 @@
-import { Link } from "@remix-run/react";
+
+import { Link } from "react-router";
 
 import { BookIcon, GroupIcon, GroupsIcon } from "./icons";
 import Tabs from "./tabs";

@@ -1,10 +1,6 @@
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Link, useLoaderData, useNavigation } from "@remix-run/react";
+
+import { data, Link, useLoaderData, useNavigation } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { RailLoved, RailPeople, RailWanted } from "~/components/feed-rail";
 import { FeedPost, NotePrompt } from "~/components/friend-activity";
@@ -80,7 +76,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       surname,
       profileEmoji,
     })) ?? [];
-  return json({
+  return data({
     userId,
     activity: activity.slice(0, shown),
     hasOlder: activity.length > shown,
@@ -107,7 +103,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const saved = workKey ? await getWorkSnapshot(workKey) : null;
     if (!saved) throw new Response("Not Found", { status: 404 });
     await addWantToRead(userId, { ...saved, openLibraryKey: workKey });
-    return json({ wanted: true });
+    return data({ wanted: true });
   }
 
   const bookId = form.get("bookId");
@@ -141,7 +137,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         );
       }
     }
-    return json({ ok: true });
+    return data({ ok: true });
   }
 
   const viewer = await getUserById(userId);
@@ -191,7 +187,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         message,
       });
     }
-    return json({ ok: true });
+    return data({ ok: true });
   }
 
   if (intent === "placeHold") {
@@ -203,11 +199,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       throw new Response("Can't wait for this book", { status: 400 });
     }
     await placeHold(book.id, userId);
-    return json({ ok: true });
+    return data({ ok: true });
   }
   if (intent === "leaveHold") {
     await leaveHold(book.id, userId);
-    return json({ ok: true });
+    return data({ ok: true });
   }
   throw new Response("Unknown action", { status: 400 });
 };

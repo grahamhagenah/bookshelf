@@ -1,17 +1,6 @@
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import {
-  Form,
-  Link,
-  useActionData,
-  useFetcher,
-  useLoaderData,
-  useLocation,
-} from "@remix-run/react";
+
+import { data, Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import BookCover from "~/components/book-cover";
 import { BookmarkIcon } from "~/components/icons";
@@ -44,7 +33,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getWantToRead(userId),
     getShelfCounts(userId),
   ]);
-  return json({
+  return data({
     items,
     friendIds: user?.following.map((friend) => friend.id) ?? [],
     counts,
@@ -56,23 +45,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const form = await request.formData();
   const id = form.get("id");
   if (typeof id !== "string")
-    return json({ error: "No book given" }, { status: 400 });
+    return data({ error: "No book given" }, { status: 400 });
 
   if (form.get("intent") === "remove") {
     await removeWantToRead(id, userId);
-    return json({ ok: true });
+    return data({ ok: true });
   }
   if (form.get("intent") === "gotIt") {
     if ((await roomForBooks(userId)) < 1) {
-      return json(
+      return data(
         { error: LIMIT_MESSAGES.books, limit: true },
         { status: 403 },
       );
     }
     const book = await moveToShelf(id, userId);
-    return book ? redirect(`/books/${book.id}`) : json({ ok: true });
+    return book ? redirect(`/books/${book.id}`) : data({ ok: true });
   }
-  return json({ error: "Unknown action" }, { status: 400 });
+  return data({ error: "Unknown action" }, { status: 400 });
 };
 
 type Item = Awaited<ReturnType<typeof getWantToRead>>[number];

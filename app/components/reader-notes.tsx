@@ -1,5 +1,5 @@
-import { Link, useFetcher } from "@remix-run/react";
 import { useEffect, useState } from "react";
+import { Link, useFetcher } from "react-router";
 
 import { PIN_MAX } from "~/profile";
 
@@ -12,7 +12,7 @@ interface ReaderNote {
   id: string;
   loved: boolean;
   body: string | null;
-  updatedAt: string;
+  updatedAt: string | Date;
   user: {
     id: string;
     firstname: string;
@@ -21,7 +21,7 @@ interface ReaderNote {
   };
 }
 
-const formatDate = (date: string) =>
+const formatDate = (date: string | Date) =>
   new Date(date).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -78,7 +78,7 @@ function HeartToggle({ myNote }: { myNote: ReaderNote | null }) {
 
 // Having read it: yours alone, for your library's Read filter and your
 // exports, so friends never see it
-function ReadToggle({ readAt }: { readAt: string | null }) {
+function ReadToggle({ readAt }: { readAt: string | Date | null }) {
   const fetcher = useFetcher({ key: "read" });
   const pending = fetcher.formData?.get("read");
   const read = pending ? pending === "true" : Boolean(readAt);
@@ -308,7 +308,7 @@ export default function ReaderNotes({
   maxLength: number;
   friendIds: string[];
   // When you read it, for readers of this copy
-  readAt?: string | null;
+  readAt?: string | Date | null;
   // For the owner: where it stands on their public page
   page?: PageStanding | null;
 }) {

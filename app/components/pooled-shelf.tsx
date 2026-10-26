@@ -1,14 +1,5 @@
-import type { SerializeFrom } from "@remix-run/node";
-import {
-  Form,
-  Link,
-  NavLink,
-  useNavigate,
-  useNavigation,
-  useSearchParams,
-  useSubmit,
-} from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
+import { Form, Link, NavLink, useNavigate, useNavigation, useSearchParams, useSubmit } from "react-router";
 
 import { LentIcon, SearchIcon } from "~/components/icons";
 import { GRIDS, GridCover } from "~/components/library";
@@ -21,7 +12,7 @@ import { coverSizeOf, libraryViewOf, useOptionalUser } from "~/utils";
 // filter, books from your want-to-read list come first. A group's Shelf
 // tab and your friends' books are both this.
 
-type ShelfWork = SerializeFrom<PoolWork>;
+type ShelfWork = PoolWork;
 
 // "Maya", "Maya and Sam", "Maya, Sam and 4 others"
 function whoHasIt(work: ShelfWork) {
@@ -42,7 +33,7 @@ function standing(work: ShelfWork) {
 const control =
   "h-8 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 pl-2.5 pr-7 text-sm text-stone-700 dark:text-stone-200 focus:outline-none focus:border-stone-400";
 
-export type PooledShelfData = SerializeFrom<Awaited<ReturnType<typeof loadPooledShelf>>>;
+export type PooledShelfData = Awaited<ReturnType<typeof loadPooledShelf>>;
 
 export default function PooledShelf({
   data: { search, results, wanted, lenders, groups, group, pageSize },

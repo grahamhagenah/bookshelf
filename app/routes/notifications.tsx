@@ -1,10 +1,6 @@
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+
+import { data, Link, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import ActivityIcon from "~/components/activity-icon";
 import Avatar from "~/components/avatar";
@@ -78,7 +74,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       undoableReturns.push(notification.id);
     }
   }
-  return json({
+  return data({
     user,
     history,
     pendingBookRequests,
@@ -228,7 +224,7 @@ function startOfDay(date: Date) {
 }
 
 // "Today", "Yesterday", then the date
-function when(dateString: string, withTime = false) {
+function when(dateString: string | Date, withTime = false) {
   const date = new Date(dateString);
   const days = Math.round((startOfDay(new Date()) - startOfDay(date)) / DAY);
   const time = date.toLocaleTimeString(undefined, {
@@ -248,7 +244,7 @@ function when(dateString: string, withTime = false) {
 }
 
 // Which bunch an older notification goes in
-function bucket(dateString: string) {
+function bucket(dateString: string | Date) {
   const days = Math.round(
     (startOfDay(new Date()) - startOfDay(new Date(dateString))) / DAY,
   );
@@ -269,7 +265,7 @@ interface ActivityNotification {
   // What an announcement from Stacks says; a group's name
   message?: string | null;
   groupId?: string | null;
-  createdAt: string;
+  createdAt: string | Date;
   sender?: { profileEmoji: string | null } | null;
 }
 

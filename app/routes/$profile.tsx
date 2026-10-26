@@ -1,5 +1,6 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+
+import { useLoaderData } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import SharedShelf, { shelfSummary } from "~/components/shared-shelf";
 import { getUserByHandle } from "~/profile.server";

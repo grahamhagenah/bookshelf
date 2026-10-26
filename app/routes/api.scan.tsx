@@ -1,5 +1,6 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+
+
+import type { ActionFunctionArgs } from "react-router";
 
 import { prisma } from "~/db.server";
 import { createBook } from "~/models/book.server";
@@ -17,20 +18,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const raw = (await request.formData()).get("isbn");
   const isbn = typeof raw === "string" ? raw.replace(/[^0-9Xx]/g, "") : "";
   if (isbn.length !== 10 && isbn.length !== 13) {
-    return json({ error: "That isn't an ISBN" }, { status: 400 });
+    return Response.json({ error: "That isn't an ISBN" }, { status: 400 });
   }
 
   // The free plan's shelf is full
-  if ((await roomForBooks(userId)) < 1) return json({ limit: true as const }, { status: 403 });
+  if ((await roomForBooks(userId)) < 1) return Response.json({ limit: true as const }, { status: 403 });
 
   let found;
   try {
     // Someone is holding a book up to the camera: wait out a slow day
     found = await lookupWork({ title: "", author: "", isbn }, PATIENT_MS);
   } catch {
-    return json({ error: "Open Library didn't answer" }, { status: 502 });
+    return Response.json({ error: "Open Library didn't answer" }, { status: 502 });
   }
-  if (!found || !found.title) return json({ error: "Not on Open Library" }, { status: 404 });
+  if (!found || !found.title) return Response.json({ error: "Not on Open Library" }, { status: 404 });
 
   // The same book, scanned twice or added some other way (older
   // copies may have neither ISBN nor work key, so titles count too)
@@ -43,7 +44,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       book.isbn === isbn ||
       sameWork(book, { title: found.title ?? "", openLibraryKey: found.key, isbn: found.isbn }),
   );
-  if (existing) return json({ alreadyExists: true as const, title: existing.title });
+  if (existing) return Response.json({ alreadyExists: true as const, title: existing.title });
 
   const book = await createBook({
     title: found.title,
@@ -59,7 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     userId,
   });
   await notifyWanters(userId, [book]);
-  return json({
+  return Response.json({
     added: { id: book.id, title: book.title, author: book.author, cover: book.cover },
   });
 };

@@ -1,5 +1,6 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+
+
+import type { LoaderFunctionArgs } from "react-router";
 
 import { isNotLending } from "~/lending";
 import { getUserLibraryKeys, searchFriendsBooks } from "~/models/book.server";
@@ -53,11 +54,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const source = params.get("source");
 
   if (query.length < 2) {
-    return json<SuggestResponse>({ query, friends: [], openLibrary: [] });
+    return Response.json({ query, friends: [], openLibrary: [] });
   }
 
   if (source === "openLibrary") {
-    return json<SuggestResponse>({
+    return Response.json({
       query,
       friends: [],
       openLibrary: await suggestFromOpenLibrary(
@@ -68,7 +69,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const friendBooks = await searchFriendsBooks(userId, query);
-  return json<SuggestResponse>({
+  return Response.json({
     query,
     friends: friendBooks.slice(0, FRIEND_LIMIT).map((book) => ({
       id: book.id,

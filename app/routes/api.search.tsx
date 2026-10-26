@@ -1,5 +1,6 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+
+
+import type { LoaderFunctionArgs } from "react-router";
 
 import { getWantToReadWorks } from "~/models/wish.server";
 import { NO_RESULTS, searchOpenLibrary } from "~/search.server";
@@ -15,7 +16,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const language = url.searchParams.get("lang") || "";
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
   const key = url.searchParams.toString();
-  if (!query.trim()) return json({ ...NO_RESULTS, key });
+  if (!query.trim()) return Response.json({ ...NO_RESULTS, key });
   const wishes = userId ? await getWantToReadWorks(userId) : [];
-  return json({ ...(await searchOpenLibrary({ query, searchType, language, page, wishes })), key });
+  return Response.json({ ...(await searchOpenLibrary({ query, searchType, language, page, wishes })), key });
 };

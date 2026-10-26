@@ -1,6 +1,6 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
+
+import { data, Form, Link, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import Faces from "~/components/faces";
 import FriendsTabs from "~/components/friends-tabs";
@@ -27,14 +27,14 @@ export const meta: MetaFunction = () => seo({ title: "Groups", noindex: true });
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const [groups, counts] = await Promise.all([getMyGroups(userId), getFriendsTabCounts(userId)]);
-  return json({ groups, counts, nameMax: GROUP_NAME_MAX, maxMembers: GROUP_MAX_MEMBERS });
+  return data({ groups, counts, nameMax: GROUP_NAME_MAX, maxMembers: GROUP_MAX_MEMBERS });
 };
 
 // A new group, and straight to it to invite people
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   const name = cleanGroupName((await request.formData()).get("name"));
-  if (!name) return json({ error: "Give the group a name." }, { status: 400 });
+  if (!name) return data({ error: "Give the group a name." }, { status: 400 });
   const group = await createGroup(userId, name);
   return redirect(groupPath({ id: group.id, name }));
 };

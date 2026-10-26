@@ -1,15 +1,6 @@
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from "@remix-run/node";
-import {
-  json,
-  unstable_createMemoryUploadHandler,
-  unstable_parseMultipartFormData,
-} from "@remix-run/node";
-import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 import { useState } from "react";
+import { data, Form, Link, useActionData, useLoaderData, useNavigation } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import InviteMessage from "~/components/invite-message";
 import Layout from "~/components/layout";
@@ -37,7 +28,7 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   // Once the books are in, a message to bring friends over
-  return json({
+  return data({
     inviteUrl: `${publicOrigin(request)}/invite/${await getFriendInvite(userId)}`,
   });
 };
@@ -46,23 +37,27 @@ const SHELF_CHOICES: ShelfChoice[] = ["owned", "read", "all"];
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
+  const tooBig = data({ error: "That file is too big to import." }, { status: 400 });
+  // Turned away before it's read, when it says it's too big; the form's
+  // other fields are small, so a little room for them is enough
+  if (Number(request.headers.get("content-length")) > MAX_FILE_BYTES + 64 * 1024) {
+    return tooBig;
+  }
   let form: FormData;
   try {
-    form = await unstable_parseMultipartFormData(
-      request,
-      unstable_createMemoryUploadHandler({ maxPartSize: MAX_FILE_BYTES }),
-    );
+    form = await request.formData();
   } catch {
-    return json({ error: "That file is too big to import." }, { status: 400 });
+    return data({ error: "Couldn't read that file. Try choosing it again." }, { status: 400 });
   }
 
   const file = form.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return json({ error: "Choose a file to import first." }, { status: 400 });
+    return data({ error: "Choose a file to import first." }, { status: 400 });
   }
+  if (file.size > MAX_FILE_BYTES) return tooBig;
   const { source, rows } = readExport(await file.text());
   if (rows.length === 0) {
-    return json(
+    return data(
       {
         error:
           "No books found in that file. It should be the CSV that Goodreads or StoryGraph exports.",
@@ -80,7 +75,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
   // Covers and details come from Open Library after the reply goes out
   void fillInBooks(bookIds);
-  return json({ source, ...result });
+  return data({ source, ...result });
 };
 
 const SOURCE_NAMES: Record<ImportSource, string> = {

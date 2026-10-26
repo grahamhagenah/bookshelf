@@ -1,6 +1,6 @@
-import type { MetaFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
 import { isValidElement } from "react";
+import { Link } from "react-router";
+import type { MetaFunction } from "react-router";
 
 import { sectionHeading } from "~/components/ui";
 import { FREE_LIMITS, PLUS_PRICES } from "~/plan";

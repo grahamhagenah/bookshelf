@@ -1,19 +1,6 @@
-import { json } from "@remix-run/node";
-import type {
-  LoaderFunctionArgs,
-  ActionFunctionArgs,
-  MetaFunction,
-} from "@remix-run/node";
-import {
-  useLoaderData,
-  useSearchParams,
-  useNavigation,
-  Link,
-  useFetcher,
-  Form,
-  useRevalidator,
-} from "@remix-run/react";
 import { useEffect, useState } from "react";
+import { data, Form, Link, useFetcher, useLoaderData, useNavigation, useRevalidator, useSearchParams } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import BarcodeScanner from "~/components/barcode-scanner";
 import BookCover from "~/components/book-cover";
@@ -84,7 +71,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       : [];
 
   // Open Library's results are fetched by the page once it's up
-  return json({
+  return data({
     friendBooks,
     query: query.trim() ? query : "",
     searchType,
@@ -119,7 +106,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       openLibraryKey:
         typeof openLibraryKey === "string" ? openLibraryKey : null,
     });
-    return json({ success: true, wanted: true, addedKey: openLibraryKey });
+    return data({ success: true, wanted: true, addedKey: openLibraryKey });
   }
 
   // Check if book already exists in user's library
@@ -129,7 +116,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       openLibraryKey,
     );
     if (exists) {
-      return json({
+      return data({
         success: false,
         alreadyExists: true,
         addedKey: openLibraryKey,
@@ -139,7 +126,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // The free plan's shelf is full
   if ((await roomForBooks(userId)) < 1) {
-    return json(
+    return data(
       { success: false, limit: LIMIT_MESSAGES.books, addedKey: openLibraryKey },
       { status: 403 },
     );
@@ -176,7 +163,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Friends who wanted this one hear about it
   await notifyWanters(userId, [book]);
 
-  return json({ success: true, addedKey: openLibraryKey });
+  return data({ success: true, addedKey: openLibraryKey });
 };
 
 interface FriendBook {
@@ -185,7 +172,7 @@ interface FriendBook {
   author: string;
   cover: string;
   borrowerId: string | null;
-  notLendingUntil: string | null;
+  notLendingUntil: string | Date | null;
   user: { id: string; firstname: string; surname: string };
 }
 

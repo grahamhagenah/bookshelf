@@ -1,11 +1,13 @@
 // @vitest-environment node
 import { makeUser, prisma } from "../test/db";
+import { routeArgs, statusOf } from "../test/route";
 
 // The route signs people in, which needs a secret; set it before the
 // imports run (CI has no .env)
 vi.hoisted(() => {
   process.env.SESSION_SECRET ??= "test-secret";
 });
+
 
 import { renderDigest } from "./email.server";
 import { action } from "./routes/unsubscribe";
@@ -19,11 +21,9 @@ const settings = (id: string) =>
 
 // Posts to an unsubscribe link the way a form or an inbox would
 function post(url: string, body: Record<string, string>) {
-  return action({
-    request: new Request(url, { method: "POST", body: new URLSearchParams(body) }),
-    params: {},
-    context: {},
-  });
+  return action(
+    routeArgs(new Request(url, { method: "POST", body: new URLSearchParams(body) })),
+  );
 }
 
 test("a link names its person and kind, and can't be altered", () => {
@@ -42,7 +42,7 @@ test("a link names its person and kind, and can't be altered", () => {
 test("an inbox's one-click unsubscribe turns off just that kind", async () => {
   const me = await makeUser("Me");
   const response = await post(unsubscribeUrl(me.id, "weekly"), { "List-Unsubscribe": "One-Click" });
-  expect(response.status).toBe(200);
+  expect(statusOf(response)).toBe(200);
   expect(await settings(me.id)).toEqual({ emailNotifications: true, weeklyDigest: false });
 });
 
@@ -60,7 +60,7 @@ test("a tampered link changes nothing", async () => {
   const url = new URL(unsubscribeUrl(me.id, "weekly"));
   url.searchParams.set("s", "forged");
   const response = await post(url.toString(), { "List-Unsubscribe": "One-Click" });
-  expect(response.status).toBe(400);
+  expect(statusOf(response)).toBe(400);
   expect((await settings(me.id)).weeklyDigest).toBe(true);
 });
 

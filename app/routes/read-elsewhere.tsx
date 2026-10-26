@@ -1,7 +1,6 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
+import { data, Link, useLoaderData } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import BookCover from "~/components/book-cover";
 import { HeartIcon, InfoIcon, ReadIcon } from "~/components/icons";
@@ -29,7 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     listMyWorkNotes(userId),
     getShelfCounts(userId),
   ]);
-  return json({ items, counts });
+  return data({ items, counts });
 };
 
 // Who sees what, kept out of the way until asked for

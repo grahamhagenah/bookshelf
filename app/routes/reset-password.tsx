@@ -1,6 +1,6 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, Link, useActionData, useLoaderData } from "@remix-run/react";
+
+import { data, Form, Link, useActionData, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { primaryButton, textField } from "~/components/ui";
 import { checkResetToken, resetPasswordWithToken } from "~/reset-password.server";
@@ -13,7 +13,7 @@ export const meta: MetaFunction = () =>
 // The link from the reset email lands here
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const token = new URL(request.url).searchParams.get("token") ?? "";
-  return json({ token, valid: token ? Boolean(await checkResetToken(token)) : false });
+  return data({ token, valid: token ? Boolean(await checkResetToken(token)) : false });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -22,17 +22,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const password = formData.get("password");
   const confirm = formData.get("confirm");
   if (typeof token !== "string" || typeof password !== "string" || typeof confirm !== "string") {
-    return json({ error: "Something went wrong. Please try again." }, { status: 400 });
+    return data({ error: "Something went wrong. Please try again." }, { status: 400 });
   }
   if (password.length < 8) {
-    return json({ error: "Use at least 8 characters." }, { status: 400 });
+    return data({ error: "Use at least 8 characters." }, { status: 400 });
   }
   if (password !== confirm) {
-    return json({ error: "Those passwords don't match." }, { status: 400 });
+    return data({ error: "Those passwords don't match." }, { status: 400 });
   }
   const userId = await resetPasswordWithToken(token, password);
   if (!userId) {
-    return json(
+    return data(
       { error: "This link has expired or was already used. Ask for a new one." },
       { status: 400 },
     );

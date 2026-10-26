@@ -1,4 +1,6 @@
 // @vitest-environment node
+import { routeArgs } from "../test/route";
+
 import { cronAuthorized } from "./cron.server";
 import { loader as checkOverdue } from "./routes/api.check-overdue";
 
@@ -13,7 +15,7 @@ test("with no key set, the jobs don't run for anyone", async () => {
   delete process.env.CRON_SECRET_KEY;
   expect(cronAuthorized(call())).toBe(false);
   expect(cronAuthorized(call({ authorization: "Bearer " }))).toBe(false);
-  const response = await checkOverdue({ request: call(), params: {}, context: {} });
+  const response = await checkOverdue(routeArgs(call()));
   expect(response.status).toBe(401);
 });
 

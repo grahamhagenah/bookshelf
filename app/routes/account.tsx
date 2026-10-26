@@ -1,20 +1,7 @@
-import type {
-  LoaderFunctionArgs,
-  ActionFunctionArgs,
-  MetaFunction,
-  SerializeFrom,
-} from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import {
-  Link,
-  useLoaderData,
-  Form,
-  useActionData,
-  useFetcher,
-  useNavigation,
-} from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import type { ComponentType } from "react";
+import { data, Form, Link, redirect, useActionData, useFetcher, useLoaderData, useNavigation } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { billingEnabled, confirmCheckout } from "~/billing.server";
 import Avatar, {
@@ -73,14 +60,7 @@ import { BIO_MAX, HANDLE_MAX, PIN_MAX } from "~/profile";
 import { getPins, movePin, saveProfile, unpinBook } from "~/profile.server";
 import { seo } from "~/seo";
 import { getSession, requireUserId, sessionStorage } from "~/session.server";
-import {
-  coverSizeOf,
-  isCoverSize,
-  isLibraryView,
-  isTheme,
-  libraryViewOf,
-  themeOf,
-} from "~/utils";
+import { coverSizeOf, isCoverSize, isLibraryView, isTheme, libraryViewOf, type LoaderData, themeOf } from "~/utils";
 import { sendVerification } from "~/verify-email.server";
 
 export const meta: MetaFunction = () =>
@@ -148,7 +128,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Sharing the shelf with someone
   if (intent === "householdInvite") {
     await createHouseholdInvite(userId);
-    return json({
+    return data({
       errors: null,
       passwordErrors: null,
       success: false,
@@ -158,7 +138,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   if (intent === "householdRevoke") {
     await revokeHouseholdInvite(userId);
-    return json({
+    return data({
       errors: null,
       passwordErrors: null,
       success: false,
@@ -168,7 +148,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   if (intent === "householdLeave") {
     await leaveHousehold(userId);
-    return json({
+    return data({
       errors: null,
       passwordErrors: null,
       success: false,
@@ -197,7 +177,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       handle: String(formData.get("handle") ?? ""),
       bio: String(formData.get("bio") ?? ""),
     });
-    return json(
+    return data(
       {
         errors: null,
         passwordErrors: null,
@@ -214,7 +194,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Handle share token actions
   if (intent === "generateShareToken") {
     await generateShareToken(userId);
-    return json({
+    return data({
       errors: null,
       passwordErrors: null,
       success: false,
@@ -226,7 +206,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "revokeShareToken") {
     await revokeShareToken(userId);
-    return json({
+    return data({
       errors: null,
       passwordErrors: null,
       success: false,
@@ -246,7 +226,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       libraryView: isLibraryView(libraryView) ? libraryView : undefined,
       coverSize: isCoverSize(coverSize) ? coverSize : undefined,
     });
-    return json({
+    return data({
       errors: null,
       passwordErrors: null,
       success: false,
@@ -264,7 +244,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const on =
       formData.get(requests ? "emailNotifications" : "weeklyDigest") === "true";
     await setEmailSetting(userId, requests ? "requests" : "weekly", on);
-    return json({
+    return data({
       errors: null,
       passwordErrors: null,
       success: false,
@@ -276,7 +256,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Whether other people can find you
   if (intent === "toggleDiscoverable") {
     await setDiscoverable(userId, formData.get("discoverable") === "true");
-    return json({
+    return data({
       errors: null,
       passwordErrors: null,
       success: false,
@@ -292,7 +272,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     await updateUser(userId, {
       profileEmoji: isPicture(emoji) ? String(emoji) : null,
     });
-    return json({
+    return data({
       errors: null,
       passwordErrors: null,
       success: false,
@@ -336,7 +316,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     if (Object.keys(passwordErrors).length > 0) {
-      return json(
+      return data(
         {
           errors: null,
           passwordErrors,
@@ -356,7 +336,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (!result.success) {
       passwordErrors.currentPassword = result.error;
-      return json(
+      return data(
         {
           errors: null,
           passwordErrors,
@@ -368,7 +348,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       );
     }
 
-    return json({
+    return data({
       errors: null,
       passwordErrors: null,
       success: false,
@@ -399,7 +379,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (Object.keys(errors).length > 0) {
-    return json(
+    return data(
       {
         errors,
         passwordErrors: null,
@@ -415,7 +395,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const existingUser = isDemo ? null : await getUserByEmail(email as string);
   if (existingUser && existingUser.id !== userId) {
     errors.email = "This email is already in use";
-    return json(
+    return data(
       {
         errors,
         passwordErrors: null,
@@ -435,7 +415,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // A changed address gets its own confirmation link
   if (updated.emailChanged) await sendVerification(userId);
 
-  return json({
+  return data({
     errors: null,
     passwordErrors: null,
     success: true,
@@ -1282,7 +1262,7 @@ function PlanPanel({
   billing,
   upgraded,
 }: {
-  plan: SerializeFrom<typeof loader>["plan"];
+  plan: LoaderData<typeof loader>["plan"];
   demo: boolean;
   billing: boolean;
   upgraded: boolean;

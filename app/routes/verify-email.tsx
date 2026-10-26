@@ -1,6 +1,6 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Link, useActionData, useLoaderData } from "@remix-run/react";
+
+import { data, Link, redirect, useActionData, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { seo } from "~/seo";
 import { getUserId, requireUserId } from "~/session.server";
@@ -19,7 +19,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const confirmed = await confirmEmail(token);
     return redirect(`/verify-email?result=${confirmed ? "confirmed" : "failed"}`);
   }
-  return json({
+  return data({
     confirmed: url.searchParams.get("result") === "confirmed",
     loggedIn: Boolean(await getUserId(request)),
   });
@@ -28,7 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 // The banner's "Resend" button
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
-  return json(await sendVerification(userId));
+  return data(await sendVerification(userId));
 };
 
 export default function VerifyEmail() {

@@ -1,5 +1,6 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+
+import { redirect } from "react-router";
+import type { ActionFunctionArgs } from "react-router";
 
 import { billingEnabled, checkoutUrl, isInterval, portalUrl } from "~/billing.server";
 import { getDemoGroup } from "~/models/demo.server";
@@ -10,15 +11,15 @@ import { requireUserId } from "~/session.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
-  if (!billingEnabled()) return json({ error: "Payments aren't set up yet" }, { status: 503 });
-  if (await getDemoGroup(userId)) return json({ error: "The demo can't subscribe" }, { status: 403 });
+  if (!billingEnabled()) return Response.json({ error: "Payments aren't set up yet" }, { status: 503 });
+  if (await getDemoGroup(userId)) return Response.json({ error: "The demo can't subscribe" }, { status: 403 });
 
   const form = await request.formData();
   const intent = form.get("intent");
   try {
     if (intent === "checkout") {
       const interval = form.get("interval");
-      if (!isInterval(interval)) return json({ error: "Pick monthly or yearly" }, { status: 400 });
+      if (!isInterval(interval)) return Response.json({ error: "Pick monthly or yearly" }, { status: 400 });
       return redirect(await checkoutUrl(userId, interval));
     }
     if (intent === "portal") return redirect(await portalUrl(userId));
@@ -27,5 +28,5 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     console.error("Stripe refused", error);
     return redirect("/account?billing=failed#plan");
   }
-  return json({ error: "Unknown action" }, { status: 400 });
+  return Response.json({ error: "Unknown action" }, { status: 400 });
 };

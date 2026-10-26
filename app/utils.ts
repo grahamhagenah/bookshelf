@@ -1,5 +1,5 @@
-import { useMatches } from "@remix-run/react";
 import { useMemo } from "react";
+import { useLoaderData, useMatches } from "react-router";
 
 import type { User } from "~/models/user.server";
 
@@ -433,3 +433,7 @@ export function agoInWords(date: string | Date) {
   if (days < 730) return `${Math.floor(days / 30)} months ago`;
   return `${Math.floor(days / 365)} years ago`;
 }
+
+// What a page gets from its loader, as useLoaderData gives it: the data as
+// the loader returned it, dates and all
+export type LoaderData<T> = ReturnType<typeof useLoaderData<T>>;

@@ -1,4 +1,4 @@
-import { Link } from "@remix-run/react";
+import { Link } from "react-router";
 
 // A person's name that opens their bookshelf when they're a friend.
 // Anyone else stays plain text, since only friends' shelves can be viewed.

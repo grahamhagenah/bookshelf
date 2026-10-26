@@ -1,6 +1,5 @@
-import type { SerializeFrom } from "@remix-run/node";
-import { Link, useFetcher } from "@remix-run/react";
 import { useState } from "react";
+import { Link, useFetcher } from "react-router";
 
 import type { FriendActivity, getNotePrompts, Lender } from "~/models/activity.server";
 
@@ -10,18 +9,18 @@ import { BookmarkIcon, HeartIcon } from "./icons";
 import PersonLink from "./person-link";
 import { primaryButton } from "./ui";
 
-type FeedItem = SerializeFrom<FriendActivity>;
+type FeedItem = FriendActivity;
 type FeedBook = Extract<FeedItem, { kind: "added" }>["books"][number];
 type ElsewhereItem = Extract<FeedItem, { kind: "elsewhere" }>;
 
-const formatDate = (date: string) =>
+const formatDate = (date: string | Date) =>
   new Date(date).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
   });
 
 // "2h", "3d", then the date, as a feed would
-function ago(date: string) {
+function ago(date: string | Date) {
   const minutes = Math.floor((Date.now() - new Date(date).getTime()) / 60000);
   if (minutes < 60) return `${Math.max(1, minutes)}m`;
   const hours = Math.floor(minutes / 60);
@@ -59,7 +58,7 @@ function CoverBeside({
   to: string;
   book: Pick<FeedBook, "title" | "author" | "cover">;
   body: string | null;
-  at: string;
+  at: string | Date;
 }) {
   return (
     <div className="mt-2 flex items-start gap-3">
@@ -290,7 +289,7 @@ function BookCard({
   book: FeedBook;
   friendId: string;
   userId: string;
-  from?: SerializeFrom<Lender> | null;
+  from?: Lender | null;
 }) {
   const [asking, setAsking] = useState(false);
   const whose = from ? (
@@ -640,7 +639,7 @@ export function FeedPost({
             />
             <span className="text-stone-400 dark:text-stone-500"> · </span>
             <time
-              dateTime={item.at}
+              dateTime={new Date(item.at).toISOString()}
               title={new Date(item.at).toLocaleString()}
               className="text-sm text-stone-400 dark:text-stone-500"
             >
@@ -703,7 +702,7 @@ function LenderName({
   asking,
   onAsk,
 }: {
-  from: SerializeFrom<Lender>;
+  from: Lender;
   asking: boolean;
   onAsk: () => void;
 }) {
@@ -726,7 +725,7 @@ function LenderName({
 }
 
 // Asking a lender you don't know yet to be friends, under their book
-function FriendPrompt({ from }: { from: SerializeFrom<Lender> }) {
+function FriendPrompt({ from }: { from: Lender }) {
   const fetcher = useFetcher();
   const first = from.name.split(" ")[0];
   const sent = from.asked || fetcher.state !== "idle" || fetcher.data !== undefined;
@@ -758,9 +757,7 @@ function FriendPrompt({ from }: { from: SerializeFrom<Lender> }) {
 
 // ---- "What did you think?" at the top of the feed ----
 
-type PromptBook = SerializeFrom<
-  Awaited<ReturnType<typeof getNotePrompts>>
->[number];
+type PromptBook = Awaited<ReturnType<typeof getNotePrompts>>[number];
 
 // Something to answer, rather than a blank box. Picked by book, so the
 // same book keeps the same question. Each fits on one line on a phone.

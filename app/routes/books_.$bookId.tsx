@@ -1,20 +1,6 @@
-import type {
-  SerializeFrom,
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import {
-  useFetcher,
-  Form,
-  Link,
-  useLoaderData,
-  useNavigation,
-  useActionData,
-  useRevalidator,
-} from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
+import { data, Form, Link, redirect, useActionData, useFetcher, useLoaderData, useNavigation, useRevalidator } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
@@ -89,14 +75,7 @@ import {
 import type { CoversResponse } from "~/routes/api.covers";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
-import {
-  cleanSubjects,
-  coverSrc,
-  editionPublisher,
-  ENGLISH_EDITION_FIELDS,
-  ENGLISH_EDITION_PARAMS,
-  stripMarkdown,
-} from "~/utils";
+import { cleanSubjects, coverSrc, editionPublisher, ENGLISH_EDITION_FIELDS, ENGLISH_EDITION_PARAMS, type LoaderData, stripMarkdown } from "~/utils";
 
 // "Oct 21", adding the year only when it isn't this year
 const monthDay = (date: string | Date) => {
@@ -356,7 +335,7 @@ function BookCover({
   );
 }
 
-interface LoaderData {
+interface BreadcrumbData {
   book: {
     title: string;
     user?: {
@@ -375,7 +354,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) =>
   });
 
 export const handle = {
-  breadcrumbs: (data: LoaderData) => {
+  breadcrumbs: (data: BreadcrumbData) => {
     const crumbs: { label: string; href?: string }[] = [];
 
     // Your own book sits in your library; a friend's, on their shelf
@@ -467,7 +446,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     isCurrentUser: entry.borrower.id === userId,
   }));
 
-  return json({
+  return data({
     book,
     // The viewer's own read mark; their housemate has their own
     readAt: await getReadAt(userId, book),
@@ -553,13 +532,13 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
     if (intent === "pin") {
       const result = await pinBook(userId, book.id);
-      return json(result.ok ? { pinned: true } : { pinError: result.error });
+      return data(result.ok ? { pinned: true } : { pinError: result.error });
     }
     if (intent === "unpin") await unpinBook(userId, book.id);
     if (intent === "hideFromPage" || intent === "showOnPage") {
       await setHiddenFromPage(userId, book.id, intent === "hideFromPage");
     }
-    return json({ ok: true });
+    return data({ ok: true });
   }
 
   if (intent === "toggleRead") {
@@ -569,7 +548,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       });
     }
     await setRead(book.id, userId, formData.get("read") === "true");
-    return json({ ok: true });
+    return data({ ok: true });
   }
 
   if (
@@ -606,7 +585,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         );
       }
     }
-    return json({ noteSaved: true });
+    return data({ noteSaved: true });
   }
 
   if (intent === "delete") {
@@ -676,13 +655,13 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       });
     }
 
-    return json({ success: true, message: "Book request sent!" });
+    return data({ success: true, message: "Book request sent!" });
   }
 
   if (intent === "placeHold" || intent === "leaveHold") {
     if (intent === "leaveHold") {
       await leaveHold(book.id, userId);
-      return json({ leftLine: true });
+      return data({ leftLine: true });
     }
     // Only for a friend's book that someone else has right now
     const viewer = await getUserById(userId);
@@ -699,7 +678,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       throw new Response("Can't wait for this book", { status: 400 });
     }
     await placeHold(book.id, userId);
-    return json({ joinedLine: true });
+    return data({ joinedLine: true });
   }
 
   // The owner stops lending it for a while, or starts again
@@ -713,7 +692,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       throw new Response("Choose how long", { status: 400 });
     }
     await setNotLending(book.id, until);
-    return json({ ok: true });
+    return data({ ok: true });
   }
 
   if (intent === "lendTo") {
@@ -736,9 +715,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         weeks,
       });
       if (!result.ok) {
-        return json({ lendError: result.error }, { status: 400 });
+        return data({ lendError: result.error }, { status: 400 });
       }
-      return json({ lentTo: result.borrowerId, invited: result.invited });
+      return data({ lentTo: result.borrowerId, invited: result.invited });
     }
     const owner = await getUserById(userId);
     const isFriend =
@@ -756,7 +735,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       book.title,
       book.id,
     );
-    return json({ lentTo: friendId });
+    return data({ lentTo: friendId });
   }
 
   if (intent === "return") {
@@ -796,7 +775,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
           name: `${owner.firstname} ${owner.surname}`,
         })
       : null;
-    return json({ returnUndone: Boolean(undone) });
+    return data({ returnUndone: Boolean(undone) });
   }
 
   if (intent === "friendRequest") {
@@ -828,7 +807,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
     await respondAsDemoPersona(friendRequest.id);
 
-    return json({ friendRequestSent: true, message: "Friend request sent!" });
+    return data({ friendRequestSent: true, message: "Friend request sent!" });
   }
 
   if (intent === "extendLoan" || intent === "markReturned") {
@@ -844,7 +823,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       // The book came back in person, without the borrower pressing Return
       await returnBook(book.id);
       await handOn(book.id, userId);
-      return json({ markedReturned: true });
+      return data({ markedReturned: true });
     }
 
     await extendLoan(book.id, loanWeeks(formData.get("weeks"), EXTEND_WEEKS));
@@ -858,7 +837,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         book.title,
       );
     }
-    return json({ loanExtended: true });
+    return data({ loanExtended: true });
   }
 
   if (intent === "sendReminder") {
@@ -890,7 +869,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       overdue,
     );
 
-    return json({ reminderSent: true, message: "Reminder sent!" });
+    return data({ reminderSent: true, message: "Reminder sent!" });
   }
 
   if (intent === "refresh") {
@@ -951,13 +930,13 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         { id: book.id, detailsFetchedAt: null },
         { force: true },
       );
-      return json({
+      return data({
         refreshed: true,
         message: "Book info updated from Open Library!",
       });
     }
 
-    return json({
+    return data({
       refreshed: false,
       message: "Could not find book on Open Library.",
     });
@@ -988,7 +967,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     ) {
       const local = await importCover(coverToSave);
       if (!local) {
-        return json({
+        return data({
           edited: false,
           coverError:
             "That cover couldn't be fetched. Use an image link from Open Library, Amazon, Goodreads, Google Books, Bookshop.org, Wikipedia or the Internet Archive, under 5 MB.",
@@ -1014,7 +993,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       subjects: typeof subjects === "string" && subjects ? subjects : null,
     });
 
-    return json({ edited: true, message: "Book updated successfully!" });
+    return data({ edited: true, message: "Book updated successfully!" });
   }
 
   return null;
@@ -1068,7 +1047,7 @@ function WaitInLine({ position }: { position: number | null }) {
 // Whether the owner is lending this one, as it will be while a change
 // saves. Both the notice on the page and the setting under Edit details
 // share one fetcher, so either shows the other's change at once.
-function useNotLending(until: string | null) {
+function useNotLending(until: string | Date | null) {
   const fetcher = useFetcher({ key: "not-lending" });
   const pending = fetcher.formData?.get("intent");
   const off =
@@ -1082,7 +1061,7 @@ function useNotLending(until: string | null) {
 }
 
 // On the page itself, only while it's off: easy to forget otherwise
-function NotLendingNotice({ until }: { until: string | null }) {
+function NotLendingNotice({ until }: { until: string | Date | null }) {
   const { fetcher, off, againOn } = useNotLending(until);
   if (!off) return null;
   return (
@@ -1107,7 +1086,7 @@ function NotLendingNotice({ until }: { until: string | null }) {
 }
 
 // Under Edit details, beside Refresh and Delete: rarely needed
-function NotLendingSetting({ until }: { until: string | null }) {
+function NotLendingSetting({ until }: { until: string | Date | null }) {
   const { fetcher, off, againOn } = useNotLending(until);
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1325,7 +1304,7 @@ function LendToFriend({
   );
 }
 
-type BookData = SerializeFrom<typeof loader>;
+type BookData = LoaderData<typeof loader>;
 
 // A few facts beside the cover: where the book is, when it arrived, how
 // often it's been lent
@@ -1359,7 +1338,7 @@ function BookFacts({ data }: { data: BookData }) {
 }
 
 // "2 days", "3 weeks": how long someone's been in line
-function waitedFor(since: string) {
+function waitedFor(since: string | Date) {
   const days = Math.floor(
     (Date.now() - new Date(since).getTime()) / 86_400_000,
   );

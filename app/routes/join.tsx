@@ -1,17 +1,6 @@
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import {
-  Form,
-  Link,
-  useActionData,
-  useLoaderData,
-  useSearchParams,
-} from "@remix-run/react";
 import { useEffect, useRef } from "react";
+import { data, Form, Link, redirect, useActionData, useLoaderData, useSearchParams } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { primaryButton, textField } from "~/components/ui";
 import { notifyAdminsOfSignup } from "~/models/admin.server";
@@ -51,7 +40,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Or from a group's link: you'll be in it once you're in
   const groupToken = url.searchParams.get("group");
   const group = groupToken ? await getGroupByToken(groupToken) : null;
-  return json({
+  return data({
     inviterName: inviter ? `${inviter.firstname} ${inviter.surname}` : null,
     shelfNames: shelf ? shelf.members.map((m) => m.firstname) : null,
     friendName: friendInviter ? friendInviter.firstname : null,
@@ -74,7 +63,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const bot = looksLikeBot(formData);
   if (bot === "honeypot") return redirect("/");
   if (bot === "too-fast") {
-    return json(
+    return data(
       {
         errors: {
           firstname: null,
@@ -88,7 +77,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (typeof firstname !== "string" || firstname.length === 0) {
-    return json(
+    return data(
       {
         errors: {
           firstname: "First name is required",
@@ -102,7 +91,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (typeof surname !== "string" || surname.length === 0) {
-    return json(
+    return data(
       {
         errors: {
           firstname: null,
@@ -116,7 +105,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (!validateEmail(email)) {
-    return json(
+    return data(
       {
         errors: {
           firstname: null,
@@ -130,7 +119,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (typeof password !== "string" || password.length === 0) {
-    return json(
+    return data(
       {
         errors: {
           firstname: null,
@@ -144,7 +133,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (password.length < 8) {
-    return json(
+    return data(
       {
         errors: {
           firstname: null,
@@ -162,7 +151,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // and the link that claims it goes to their inbox, which proves it's them
   if (existingUser?.invitedAt) {
     await sendLoanInvite(existingUser.id);
-    return json(
+    return data(
       {
         errors: {
           firstname: null,
@@ -176,7 +165,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
   if (existingUser) {
-    return json(
+    return data(
       {
         errors: {
           firstname: null,

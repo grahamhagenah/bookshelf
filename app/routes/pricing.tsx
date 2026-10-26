@@ -1,6 +1,6 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+
+import { data, Link, useLoaderData } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import DemoButton from "~/components/demo-button";
 import { GuidePage, GuideSection, proseLink } from "~/components/guide";
@@ -22,7 +22,7 @@ export const meta: MetaFunction = () =>
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
-  return json({
+  return data({
     signedIn: Boolean(userId),
     plus: userId ? await hasPlus(userId) : false,
   });

@@ -28,5 +28,7 @@ export default defineConfig({
     },
     // One SQLite file, so test files take turns
     fileParallelism: false,
+    // The app's own code, not builds or config lying around the project
+    coverage: { include: ["app/**"] },
   },
 });

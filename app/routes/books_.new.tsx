@@ -1,10 +1,6 @@
-import type {
-  ActionFunctionArgs,
-  MetaFunction,
-} from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef } from "react";
+import { data, Form, redirect, useActionData } from "react-router";
+import type { ActionFunctionArgs, MetaFunction } from "react-router";
 
 import { primaryButton, textField } from "~/components/ui";
 import { createBook } from "~/models/book.server";
@@ -27,7 +23,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const datePublished = formData.get("datePublished");
 
   if (typeof title !== "string" || title.length === 0) {
-    return json(
+    return data(
       {
         errors: {
           title: "Title is required",
@@ -42,7 +38,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (typeof author !== "string" || author.length === 0) {
-    return json(
+    return data(
       {
         errors: {
           title: null,
@@ -57,7 +53,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (typeof body !== "string" || body.length === 0) {
-    return json(
+    return data(
       {
         errors: {
           title: null,
@@ -72,7 +68,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (typeof cover !== "string" || cover.length === 0) {
-    return json(
+    return data(
       {
         errors: {
           title: null,
@@ -87,7 +83,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if ((await roomForBooks(userId)) < 1) {
-    return json(
+    return data(
       { errors: { title: LIMIT_MESSAGES.books, author: null, body: null, cover: null, datePublished: null } },
       { status: 403 },
     );

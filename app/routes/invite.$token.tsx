@@ -1,6 +1,5 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { data, Link, redirect, useLoaderData } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
@@ -27,9 +26,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   if (userId && inviter) {
     const result = await acceptFriendInvite(userId, params.token);
     if (result.ok) return redirect(`/friend/${result.inviterId}`);
-    return json({ inviter: null, reason: result.reason, token: params.token });
+    return data({ inviter: null, reason: result.reason, token: params.token });
   }
-  return json({
+  return data({
     inviter,
     reason: inviter ? null : ("no-such-invite" as const),
     token: params.token,
