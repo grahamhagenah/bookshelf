@@ -223,7 +223,9 @@ export default function Feed() {
     // The feed reads best in a narrow column; it lines up under the logo
     // like every other page, with the rail in the room that leaves
     <main className="mx-auto w-full max-w-[var(--page-max,64rem)] px-4 py-6 md:px-8 md:py-8 lg:grid lg:grid-cols-[minmax(0,42rem)_20rem] lg:justify-between lg:gap-14">
-      <div className="min-w-0">
+      {/* The same width with the rail or without it, so posts and their
+          covers don't balloon on screens just short of room for the rail */}
+      <div className="mx-auto min-w-0 max-w-2xl lg:mx-0 lg:max-w-none">
         <h1 className="sr-only">Feed</h1>
         {prompts.length > 0 ? (
           <div className="mb-6">
