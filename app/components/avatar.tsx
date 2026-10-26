@@ -215,10 +215,12 @@ const ICON_PATHS = {
   ),
   ghost: (
     <>
-      <path d="M6 20.5V11a6 6 0 0 1 12 0v9.5l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5z" />
-      <circle cx="10" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="14" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
-      <path d="M10.6 14c.8.6 2 .6 2.8 0" />
+      {/* At the family's size: a sheet as wide as the kitty's face, rounded
+          on top with three scallops below, her oval eyes, and an "oh" */}
+      <path d="M4.5 11.9C4.5 7.4 7.9 3.9 12 3.9s7.5 3.5 7.5 8v8.4c-1.25-1.15-2.5-1.15-3.75 0s-2.5 1.15-3.75 0-2.5-1.15-3.75 0-2.5 1.15-3.75 0z" />
+      <ellipse cx="9.3" cy="11.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="14.7" cy="11.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="15.2" rx=".9" ry="1.2" fill="currentColor" stroke="none" />
     </>
   ),
   tree: (
