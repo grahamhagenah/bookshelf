@@ -302,6 +302,18 @@ const ICON_PATHS = {
       <path d="M12 3L12.8 21" />
     </>
   ),
+  robot: (
+    <>
+      {/* A robot, kept simple: a rounded square head with an antenna,
+          two square eyes and a straight mouth */}
+      <rect x="4.5" y="6.5" width="15" height="13.5" rx="3" />
+      <path d="M12 6.5V3.9" />
+      <circle cx="12" cy="2.8" r="1.1" fill="currentColor" stroke="none" />
+      <rect x="7.4" y="10.9" width="3" height="3" rx=".7" fill="currentColor" stroke="none" />
+      <rect x="13.6" y="10.9" width="3" height="3" rx=".7" fill="currentColor" stroke="none" />
+      <path d="M9 16.6h6" />
+    </>
+  ),
   wine: (
     <>
       {/* A wine glass: a bowl with a flat rim on a stem and a foot, with wine
@@ -340,10 +352,11 @@ const ICON_PATHS = {
   ),
   planet: (
     <>
-      {/* The ring goes behind the planet: the part that would show through
-          it is left out */}
+      {/* The ring goes behind the globe: the part that would show through
+          it is left out. A slight tilt and a flat ellipse keep the ring
+          around the globe's middle */}
       <circle cx="12" cy="12" r="5.5" />
-      <path d="M15.47 7.73A10 3.2-20 1 1 6.6 10.96" />
+      <path d="M16.56 8.91A10 2.6 -10 1 1 6.67 10.66" />
     </>
   ),
   music: (
@@ -456,6 +469,7 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "skull",
   "eye",
   "pyramid",
+  "robot",
 ];
 
 export function isAvatarIcon(value: unknown): value is AvatarIcon {
