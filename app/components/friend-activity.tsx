@@ -686,13 +686,13 @@ type PromptBook = SerializeFrom<
 >[number];
 
 // Something to answer, rather than a blank box. Picked by book, so the
-// same book keeps the same question.
+// same book keeps the same question. Each fits on one line on a phone.
 const QUESTIONS = [
-  "Worth the hype? Who should read it next?",
-  "Slow start, great ending, couldn't put it down? Say so.",
+  "Worth the hype? Who should read it?",
+  "Slow start? Great ending? Say so.",
   "What stayed with you?",
-  "Loved it, hated it, or somewhere in between? One line is plenty.",
-  "What would you tell the next person who borrows it?",
+  "Loved it, hated it, or in between?",
+  "What should the next reader know?",
 ];
 const questionFor = (id: string) =>
   QUESTIONS[
