@@ -20,6 +20,7 @@ import {
   LinkIcon,
   UserIcon,
 } from "~/components/icons";
+import { primaryButton, sectionHeading } from "~/components/ui";
 import Layout from "~/components / Layout/Layout";
 import { sendAnnouncementEmail } from "~/email.server";
 import {
@@ -229,7 +230,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 type Data = SerializeFrom<typeof loader>;
 
-const headingClass = "text-lg font-semibold text-stone-900 dark:text-stone-100";
 const subheadingClass =
   "text-sm font-semibold text-stone-500 dark:text-stone-400";
 const mutedClass = "text-stone-500 dark:text-stone-400";
@@ -433,7 +433,7 @@ function Plus({ revenue }: { revenue: Data["revenue"] }) {
     .join(" · ");
   return (
     <section aria-labelledby="plus">
-      <h2 id="plus" className={headingClass}>
+      <h2 id="plus" className={sectionHeading}>
         Stacks Plus
       </h2>
       <dl className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -523,7 +523,7 @@ function Plus({ revenue }: { revenue: Data["revenue"] }) {
 function Health({ health }: { health: Data["health"] }) {
   return (
     <section aria-labelledby="health">
-      <h2 id="health" className={headingClass}>
+      <h2 id="health" className={sectionHeading}>
         Health
       </h2>
       {/* Two to a row on phones and tablets, with the fifth spanning the
@@ -589,7 +589,7 @@ function Health({ health }: { health: Data["health"] }) {
 function Groups({ groups }: { groups: Data["groups"] }) {
   return (
     <section aria-labelledby="groups">
-      <h2 id="groups" className={headingClass}>
+      <h2 id="groups" className={sectionHeading}>
         Groups
       </h2>
       <dl className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -626,7 +626,7 @@ function Funnel({ funnel }: { funnel: Data["funnel"] }) {
   return (
     <section aria-labelledby="funnel">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 id="funnel" className={headingClass}>
+        <h2 id="funnel" className={sectionHeading}>
           Funnel
         </h2>
         <div className="flex gap-1.5" role="group" aria-label="Who to count">
@@ -737,7 +737,7 @@ function Announce({ people }: { people: number }) {
     fetcher.state === "idle" ? fetcher.data?.announceError : undefined;
   return (
     <section aria-labelledby="announce-heading" id="announce">
-      <h2 id="announce-heading" className={headingClass}>
+      <h2 id="announce-heading" className={sectionHeading}>
         Announcement
       </h2>
       <p className={`mt-1 text-sm ${mutedClass}`}>
@@ -789,7 +789,7 @@ function Announce({ people }: { people: number }) {
           <button
             type="submit"
             disabled={sending || !text.trim()}
-            className="rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-60"
+            className={`${primaryButton("lg")} disabled:opacity-60`}
           >
             {sending ? "Sending…" : "Send to everyone"}
           </button>
@@ -871,7 +871,7 @@ function EmailChoice({
 function AdminEmails({ choices }: { choices: Data["emailChoices"] }) {
   return (
     <section aria-labelledby="admin-emails-heading" id="emails">
-      <h2 id="admin-emails-heading" className={headingClass}>
+      <h2 id="admin-emails-heading" className={sectionHeading}>
         Your admin emails
       </h2>
       <p className={`mt-1 text-sm ${mutedClass}`}>
@@ -909,7 +909,7 @@ function Feedback({ feedback }: { feedback: Data["feedback"] }) {
   const dismissed = feedback.filter((item) => item.done);
   return (
     <section aria-labelledby="feedback-heading" id="feedback">
-      <h2 id="feedback-heading" className={headingClass}>
+      <h2 id="feedback-heading" className={sectionHeading}>
         Feedback
         {open.length ? (
           <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 align-middle text-xs font-medium text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
@@ -1072,7 +1072,7 @@ function RankedList({
 function Lending({ lending }: { lending: Data["lending"] }) {
   return (
     <section aria-labelledby="lending">
-      <h2 id="lending" className={headingClass}>
+      <h2 id="lending" className={sectionHeading}>
         Lending
       </h2>
       <div className="mt-4">
@@ -1415,7 +1415,7 @@ function People({ users, userId }: { users: Data["users"]; userId: string }) {
   return (
     <section aria-labelledby="people">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="people" className={headingClass}>
+        <h2 id="people" className={sectionHeading}>
           People{" "}
           <span className={`font-normal ${mutedClass}`}>{users.length}</span>
         </h2>
@@ -1474,7 +1474,7 @@ function DataQuality({ quality }: { quality: Data["quality"] }) {
   const clearing = fetcher.state !== "idle";
   return (
     <section aria-labelledby="data-quality">
-      <h2 id="data-quality" className={headingClass}>
+      <h2 id="data-quality" className={sectionHeading}>
         Data quality
       </h2>
       <dl className="mt-4 grid grid-cols-3 gap-6">

@@ -8,6 +8,11 @@ import Library from "~/components/library";
 import type { FriendStatus } from "~/models/user.server";
 import type { loadSharedShelf } from "~/share.server";
 
+import { primaryButton, quietButton } from "./ui";
+
+const primaryAction = `${primaryButton("sm")} inline-flex items-center justify-center`;
+const quietAction = `${quietButton("sm")} inline-flex items-center justify-center`;
+
 // A shared shelf's page, whichever address it's reached by: who it
 // belongs to, a few of their favorites, the shelf, and an invite to
 // become friends
@@ -26,10 +31,6 @@ export function shelfSummary(name: string, count: number, titles: string[]) {
 }
 
 // Small, so the bar stays out of the shelf's way
-const primaryButton =
-  "inline-flex items-center justify-center rounded-md bg-forest-600 px-2.5 py-1 text-sm font-medium text-white hover:bg-forest-700 transition-colors";
-const secondaryButton =
-  "inline-flex items-center justify-center rounded-md border border-stone-200 dark:border-stone-700 px-2.5 py-1 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
 
 const plural = (n: number, word: string) =>
   `${n.toLocaleString()} ${n === 1 ? word : `${word}s`}`;
@@ -229,14 +230,14 @@ function Invite({ data }: { data: SharedShelfData }) {
       <>
         <Link
           to={`/join?${new URLSearchParams({ invite: token, redirectTo: here })}`}
-          className={primaryButton}
+          className={primaryAction}
         >
           Join free
         </Link>
         <Link
           // Carries the invite in case they switch to signing up
           to={`/login?${new URLSearchParams({ invite: token, redirectTo: here })}`}
-          className={secondaryButton}
+          className={quietAction}
         >
           Sign in
         </Link>
@@ -247,7 +248,7 @@ function Invite({ data }: { data: SharedShelfData }) {
     actions = (
       // Always the token's address, which handles the request
       <fetcher.Form method="post" action={`/share/${token}`}>
-        <button type="submit" className={primaryButton}>
+        <button type="submit" className={primaryAction}>
           Add friend
         </button>
       </fetcher.Form>
@@ -262,14 +263,14 @@ function Invite({ data }: { data: SharedShelfData }) {
   } else if (status === "invited") {
     text = <>{ownerName} has asked to be your friend.</>;
     actions = (
-      <Link to="/notifications" className={secondaryButton}>
+      <Link to="/notifications" className={quietAction}>
         See request
       </Link>
     );
   } else if (status === "friends") {
     text = <>You and {ownerFirstname} are friends.</>;
     actions = (
-      <Link to={`/friend/${ownerId}`} className={secondaryButton}>
+      <Link to={`/friend/${ownerId}`} className={quietAction}>
         Borrow from their shelf
       </Link>
     );
@@ -278,10 +279,10 @@ function Invite({ data }: { data: SharedShelfData }) {
     // The page has no app header, so this is the way back
     actions = (
       <>
-        <Link to="/books" className={secondaryButton}>
+        <Link to="/books" className={quietAction}>
           My shelf
         </Link>
-        <Link to="/account#sharing" className={secondaryButton}>
+        <Link to="/account#sharing" className={quietAction}>
           Edit your page
         </Link>
       </>

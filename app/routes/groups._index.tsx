@@ -4,6 +4,7 @@ import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-
 
 import Faces from "~/components/faces";
 import FriendsTabs from "~/components/friends-tabs";
+import { primaryButton, sectionHeading } from "~/components/ui";
 import Layout from "~/components / Layout/Layout";
 import { getFriendsTabCounts } from "~/friends-tabs.server";
 import { groupPath } from "~/group-links";
@@ -84,7 +85,7 @@ export default function Groups() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">Start a group</h2>
+        <h2 className={sectionHeading}>Start a group</h2>
         <p className="mt-1 max-w-xl text-stone-500 dark:text-stone-400">
           You&apos;ll get a link to share. Everyone who joins from it becomes friends with
           everyone else, so all their shelves open up at once. Up to {maxMembers} people.
@@ -103,7 +104,7 @@ export default function Groups() {
           <button
             type="submit"
             disabled={creating}
-            className="flex-shrink-0 rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-60"
+            className={`${primaryButton("lg")} flex-shrink-0 disabled:opacity-60`}
           >
             {creating ? "Starting…" : "Start a group"}
           </button>

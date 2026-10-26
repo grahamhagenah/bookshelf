@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Avatar from "~/components/avatar";
 import CopyButton from "~/components/copy-button";
 import { mailtoInvite } from "~/components/invite-message";
+import { sectionHeading } from "~/components/ui";
 import { loadGroup } from "~/group-page.server";
 
 import type { GroupLayoutData } from "./groups.$groupId";
@@ -174,7 +175,7 @@ function GroupInvite({ name, url, alone, path }: { name: string; url: string; al
   const primary = `${half} bg-forest-600 font-medium text-white hover:bg-forest-700`;
   return (
     <section aria-labelledby="invite">
-      <h2 id="invite" className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+      <h2 id="invite" className={sectionHeading}>
         {alone ? "Invite people" : "Invite more people"}
       </h2>
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">

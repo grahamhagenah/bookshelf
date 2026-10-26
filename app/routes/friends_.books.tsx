@@ -4,6 +4,7 @@ import { Link, useLoaderData } from "@remix-run/react";
 
 import FriendsTabs from "~/components/friends-tabs";
 import PooledShelf from "~/components/pooled-shelf";
+import { sectionHeading } from "~/components/ui";
 import { getFriendsTabCounts } from "~/friends-tabs.server";
 import { getMyGroups } from "~/models/group.server";
 import { shelfIds } from "~/models/household.server";
@@ -48,7 +49,7 @@ export default function FriendsBooks() {
         data={shelf}
         empty={
           <>
-            <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+            <h2 className={sectionHeading}>
               {counts.friends === 0 ? "No friends yet" : "No books on their shelves yet"}
             </h2>
             <p className="mx-auto mt-1 max-w-sm text-stone-500 dark:text-stone-400">

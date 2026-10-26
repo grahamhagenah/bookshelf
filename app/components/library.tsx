@@ -15,6 +15,7 @@ import {
 import ShareShelfButton from "./share-shelf-button";
 import SharedWith from "./shared-with";
 import type { Member } from "./shared-with";
+import { sectionHeading } from "./ui";
 
 const OPEN_LIBRARY_SIZE = /-[SML]\.jpg$/;
 
@@ -221,7 +222,7 @@ export default function Library({
               size={28}
               className="mx-auto text-stone-400 dark:text-stone-500"
             />
-            <h1 className="mt-3 text-lg font-semibold text-stone-900 dark:text-stone-100">
+            <h1 className={`${sectionHeading} mt-3`}>
               Your library is empty
             </h1>
             <p className="mx-auto mt-1 max-w-sm text-stone-500 dark:text-stone-400">

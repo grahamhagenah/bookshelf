@@ -4,7 +4,8 @@ import { useState } from "react";
 import Avatar from "./avatar";
 import BookCover from "./book-cover";
 import { HeartIcon } from "./icons";
-import { railHeading, railLink } from "./side-rail";
+import { railLink } from "./side-rail";
+import { sectionHeading } from "./ui";
 
 // The feed's own sections in the rail beside it: books you want that a
 // friend has, what friends have loved lately, and people your friends
@@ -29,7 +30,7 @@ function Heading({ id, children, to, label }: {
 }) {
   return (
     <div className="mb-3 flex items-baseline justify-between gap-3">
-      <h2 id={id} className={railHeading}>
+      <h2 id={id} className={sectionHeading}>
         {children}
       </h2>
       {to ? (

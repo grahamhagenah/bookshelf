@@ -4,6 +4,7 @@ import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-
 import invariant from "tiny-invariant";
 
 import BookCover from "~/components/book-cover";
+import { primaryButton, textField } from "~/components/ui";
 import { notifyAdminsOfSignup } from "~/models/admin.server";
 import { claimInvite, getInvite } from "~/models/loan-invite.server";
 import { seo } from "~/seo";
@@ -73,8 +74,6 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   });
 };
 
-const inputClass =
-  "w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors";
 const labelClass = "block text-sm font-medium text-stone-700 dark:text-stone-300";
 
 export default function Lent() {
@@ -94,7 +93,7 @@ export default function Lent() {
         </p>
         <Link
           to="/login"
-          className="mt-6 inline-block rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
+          className={`${primaryButton("lg")} mt-6 inline-block`}
         >
           Sign in
         </Link>
@@ -167,7 +166,7 @@ export default function Lent() {
               required
               defaultValue={person.firstname}
               autoComplete="given-name"
-              className={`mt-1 ${inputClass}`}
+              className={`mt-1 ${textField}`}
             />
           </div>
           <div>
@@ -179,7 +178,7 @@ export default function Lent() {
               name="surname"
               defaultValue={person.surname}
               autoComplete="family-name"
-              className={`mt-1 ${inputClass}`}
+              className={`mt-1 ${textField}`}
             />
           </div>
         </div>
@@ -195,7 +194,7 @@ export default function Lent() {
             minLength={8}
             autoComplete="new-password"
             aria-describedby="lent-error"
-            className={`mt-1 ${inputClass}`}
+            className={`mt-1 ${textField}`}
           />
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">At least 8 characters.</p>
         </div>

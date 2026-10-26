@@ -3,6 +3,7 @@ import { json, redirect } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
+import { sectionHeading } from "~/components/ui";
 import Layout from "~/components / Layout/Layout";
 import { joinHousehold } from "~/models/household.server";
 import { seo } from "~/seo";
@@ -36,7 +37,7 @@ export default function JoinHousehold() {
   return (
     <Layout title="Join a shelf">
       <section>
-        <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+        <h2 className={sectionHeading}>
           Couldn&apos;t join that shelf
         </h2>
         <p className="mt-2 max-w-prose text-stone-600 dark:text-stone-300">{message}</p>

@@ -6,6 +6,7 @@ import { PIN_MAX } from "~/profile";
 import Avatar from "./avatar";
 import { HeartIcon, HiddenIcon, PencilIcon, PinIcon, ReadIcon } from "./icons";
 import PersonLink from "./person-link";
+import { sectionHeading } from "./ui";
 
 interface ReaderNote {
   id: string;
@@ -332,7 +333,7 @@ export default function ReaderNotes({
     <div className="mt-12 border-t border-stone-200 dark:border-stone-800 pt-8">
       <h2
         id="notes"
-        className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100"
+        className={`${sectionHeading} mb-3`}
       >
         Reader notes
       </h2>

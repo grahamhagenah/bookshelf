@@ -11,6 +11,7 @@ import Avatar from "~/components/avatar";
 import { StacksLogo } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import SideRail from "~/components/side-rail";
+import { primaryButton, quietButton, sectionHeading } from "~/components/ui";
 import Layout from "~/components / Layout/Layout";
 import { prisma } from "~/db.server";
 import { sendRequestAnswerEmail } from "~/email.server";
@@ -39,6 +40,9 @@ import {
 } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+
+const primaryAction = `${primaryButton("md")} text-center`;
+const quietAction = `${quietButton("md")} text-center`;
 
 export const meta: MetaFunction = () =>
   seo({ title: "Activity", noindex: true });
@@ -212,10 +216,6 @@ const NEEDS_ACTION = new Set([
   "DUE_SOON_REMINDER",
 ]);
 
-const primaryButton =
-  "rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors text-center";
-const secondaryButton =
-  "rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors text-center";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -408,7 +408,7 @@ function ActivityItem({
       actions = (
         <>
           <button
-            className={primaryButton}
+            className={primaryAction}
             type="submit"
             name="friend_request"
             value="accept"
@@ -416,7 +416,7 @@ function ActivityItem({
             Accept
           </button>
           <button
-            className={secondaryButton}
+            className={quietAction}
             type="submit"
             name="friend_request"
             value="decline"
@@ -463,7 +463,7 @@ function ActivityItem({
             ))}
           </select>
           <button
-            className={primaryButton}
+            className={primaryAction}
             type="submit"
             name="book_request"
             value="approve"
@@ -471,7 +471,7 @@ function ActivityItem({
             Lend it
           </button>
           <button
-            className={secondaryButton}
+            className={quietAction}
             type="submit"
             name="book_request"
             value="decline"
@@ -494,7 +494,7 @@ function ActivityItem({
           </>
         );
       actions = (
-        <a href={`/books/${notification.bookId}`} className={secondaryButton}>
+        <a href={`/books/${notification.bookId}`} className={quietAction}>
           View book
         </a>
       );
@@ -507,7 +507,7 @@ function ActivityItem({
         </>
       );
       actions = (
-        <a href={`/books/${notification.bookId}`} className={secondaryButton}>
+        <a href={`/books/${notification.bookId}`} className={quietAction}>
           View book
         </a>
       );
@@ -518,7 +518,7 @@ function ActivityItem({
       actions = (
         <a
           href={`/friend/${notification.senderId}`}
-          className={secondaryButton}
+          className={quietAction}
         >
           See their shelf
         </a>
@@ -534,7 +534,7 @@ function ActivityItem({
       actions = notification.groupId ? (
         <a
           href={groupPath({ id: notification.groupId, name: notification.message ?? "" })}
-          className={secondaryButton}
+          className={quietAction}
         >
           See the group
         </a>
@@ -574,7 +574,7 @@ function ActivityItem({
       // A tap too soon, or it never turned up: the loan carries on
       actions = canUndoReturn ? (
         <button
-          className={secondaryButton}
+          className={quietAction}
           type="submit"
           name="returned"
           value="undo"
@@ -599,7 +599,7 @@ function ActivityItem({
         </>
       );
       actions = (
-        <a href={`/books/${notification.bookId}`} className={secondaryButton}>
+        <a href={`/books/${notification.bookId}`} className={quietAction}>
           View book
         </a>
       );
@@ -618,7 +618,7 @@ function ActivityItem({
         </>
       );
       actions = (
-        <a href={`/books/${notification.bookId}`} className={secondaryButton}>
+        <a href={`/books/${notification.bookId}`} className={quietAction}>
           View book
         </a>
       );
@@ -632,7 +632,7 @@ function ActivityItem({
       actions = (
         <a
           href={`/books/${notification.bookId}#notes`}
-          className={secondaryButton}
+          className={quietAction}
         >
           Read it
         </a>
@@ -826,7 +826,7 @@ export default function Activity() {
           {/* Where to change what reaches your inbox, since this is the
               page people come to when something did */}
           <section aria-labelledby="rail-settings">
-            <h2 id="rail-settings" className="mb-2 text-lg font-semibold text-stone-900 dark:text-stone-100">
+            <h2 id="rail-settings" className={`${sectionHeading} mb-2`}>
               Settings
             </h2>
             <p className="text-sm text-stone-500 dark:text-stone-400">
@@ -907,7 +907,7 @@ export default function Activity() {
                   actions={
                     <a
                       href={`/books/${request.bookId}`}
-                      className={secondaryButton}
+                      className={quietAction}
                     >
                       View book
                     </a>

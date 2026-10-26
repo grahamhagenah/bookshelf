@@ -2,6 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remi
 import { json } from "@remix-run/node";
 import { Form, Link, useActionData, useLoaderData } from "@remix-run/react";
 
+import { primaryButton, textField } from "~/components/ui";
 import { checkResetToken, resetPasswordWithToken } from "~/reset-password.server";
 import { seo } from "~/seo";
 import { createUserSession } from "~/session.server";
@@ -40,8 +41,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return createUserSession({ request, userId, remember: false, redirectTo: "/" });
 };
 
-const inputClass =
-  "w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors";
 
 export default function ResetPassword() {
   const { token, valid } = useLoaderData<typeof loader>();
@@ -71,7 +70,7 @@ export default function ResetPassword() {
                 // eslint-disable-next-line jsx-a11y/no-autofocus
                 autoFocus
                 aria-describedby="reset-error"
-                className={`mt-1 ${inputClass}`}
+                className={`mt-1 ${textField}`}
               />
             </div>
             <div>
@@ -86,7 +85,7 @@ export default function ResetPassword() {
                 required
                 minLength={8}
                 aria-describedby="reset-error"
-                className={`mt-1 ${inputClass}`}
+                className={`mt-1 ${textField}`}
               />
             </div>
             {actionData?.error ? (
@@ -96,7 +95,7 @@ export default function ResetPassword() {
             ) : null}
             <button
               type="submit"
-              className="w-full rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
+              className={`${primaryButton("lg")} w-full`}
             >
               Save and sign in
             </button>
@@ -112,7 +111,7 @@ export default function ResetPassword() {
             </p>
             <Link
               to="/forgot-password"
-              className="mt-6 inline-block rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
+              className={`${primaryButton("lg")} mt-6 inline-block`}
             >
               Send a new link
             </Link>

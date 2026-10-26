@@ -8,6 +8,7 @@ import type { getHomeBooks } from "~/models/book.server";
 import BookCover from "./book-cover";
 import FriendActivityItem from "./friend-activity";
 import { InviteButtons } from "./invite-message";
+import { sectionHeading } from "./ui";
 
 // The signed-in home page: a row of your newest books, a row from your
 // want-to-read list, then your loans both ways side by side, with what
@@ -70,7 +71,6 @@ function dueLabel(dueDate: string) {
 
 const linkClass =
   "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
-const headingClass = "text-lg font-semibold text-stone-900 dark:text-stone-100";
 const subheadingClass =
   "mb-1 flex items-baseline gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400";
 
@@ -485,7 +485,7 @@ export default function Home({
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <h2
                         id="loans"
-                        className={`${headingClass} whitespace-nowrap`}
+                        className={`${sectionHeading} whitespace-nowrap`}
                       >
                         Loans
                       </h2>
@@ -546,7 +546,7 @@ export default function Home({
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <h2
                         id="want-to-read"
-                        className={`${headingClass} whitespace-nowrap`}
+                        className={`${sectionHeading} whitespace-nowrap`}
                       >
                         Want to read
                       </h2>
@@ -598,7 +598,7 @@ export default function Home({
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <h2
                         id="recently-added"
-                        className={`${headingClass} whitespace-nowrap`}
+                        className={`${sectionHeading} whitespace-nowrap`}
                       >
                         Recently added
                       </h2>
@@ -702,7 +702,7 @@ export default function Home({
               className={showMain ? "lg:absolute lg:inset-0 lg:overflow-hidden lg:pl-8" : undefined}
             >
             <div className="mb-2 flex items-center justify-between gap-3">
-              <h2 id="friend-activity" className={headingClass}>
+              <h2 id="friend-activity" className={sectionHeading}>
                 Friend activity
               </h2>
               {activity.length > 0 ? (

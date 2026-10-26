@@ -42,6 +42,7 @@ import {
   ListViewIcon,
 } from "~/components/icons";
 import { joinNames } from "~/components/shared-with";
+import { primaryButton, quietButton, textField } from "~/components/ui";
 import Layout from "~/components / Layout/Layout";
 import { getBookStats } from "~/models/book.server";
 import { getDemoGroup } from "~/models/demo.server";
@@ -442,12 +443,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 };
 
-const inputClass =
-  "w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors";
-const primaryButton =
-  "rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors";
-const quietButton =
-  "rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
 const textButton =
   "text-sm text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200";
 
@@ -543,7 +538,7 @@ export default function Account() {
               defaultValue={user?.firstname}
               aria-invalid={actionData?.errors?.firstname ? true : undefined}
               aria-describedby="firstname-error"
-              className={inputClass}
+              className={textField}
             />
           </Field>
           <Field
@@ -560,7 +555,7 @@ export default function Account() {
               defaultValue={user?.surname}
               aria-invalid={actionData?.errors?.surname ? true : undefined}
               aria-describedby="surname-error"
-              className={inputClass}
+              className={textField}
             />
           </Field>
           {/* A demo account's address is a placeholder, so it's sent but not shown */}
@@ -582,12 +577,12 @@ export default function Account() {
                 defaultValue={user?.email}
                 aria-invalid={actionData?.errors?.email ? true : undefined}
                 aria-describedby="email-error"
-                className={inputClass}
+                className={textField}
               />
             </Field>
           )}
           <div className="flex items-center gap-3 sm:col-span-2">
-            <button type="submit" className={primaryButton}>
+            <button type="submit" className={primaryButton("lg")}>
               Save changes
             </button>
             {actionData?.success ? <Saved>Saved</Saved> : null}
@@ -750,7 +745,7 @@ export default function Account() {
         <div className="flex flex-wrap gap-3">
           <Link
             to="/import"
-            className={`inline-flex items-center gap-2 ${quietButton}`}
+            className={`inline-flex items-center gap-2 ${quietButton("lg")}`}
           >
             <ImportIcon size={16} />
             Import from a file
@@ -758,7 +753,7 @@ export default function Account() {
           <a
             href="/export"
             download
-            className={`inline-flex items-center gap-2 ${quietButton}`}
+            className={`inline-flex items-center gap-2 ${quietButton("lg")}`}
           >
             <ExportIcon size={16} />
             Export as CSV
@@ -788,7 +783,7 @@ export default function Account() {
                   actionData?.passwordErrors?.currentPassword ? true : undefined
                 }
                 aria-describedby="currentPassword-error"
-                className={inputClass}
+                className={textField}
               />
             </Field>
             <Field
@@ -806,7 +801,7 @@ export default function Account() {
                   actionData?.passwordErrors?.newPassword ? true : undefined
                 }
                 aria-describedby="newPassword-error"
-                className={inputClass}
+                className={textField}
               />
             </Field>
             <Field
@@ -823,11 +818,11 @@ export default function Account() {
                   actionData?.passwordErrors?.confirmPassword ? true : undefined
                 }
                 aria-describedby="confirmPassword-error"
-                className={inputClass}
+                className={textField}
               />
             </Field>
             <div className="flex items-center gap-3 sm:col-span-2">
-              <button type="submit" className={primaryButton}>
+              <button type="submit" className={primaryButton("lg")}>
                 Change password
               </button>
               {actionData?.passwordSuccess ? (
@@ -1158,7 +1153,7 @@ function CopyField({ value, label }: { value: string; label: string }) {
         onFocus={(event) => event.currentTarget.select()}
         className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-3 py-2 text-sm text-stone-700 dark:text-stone-300"
       />
-      <CopyButton value={value} className={`flex-shrink-0 ${quietButton}`} />
+      <CopyButton value={value} className={`flex-shrink-0 ${quietButton("lg")}`} />
     </div>
   );
 }
@@ -1204,14 +1199,14 @@ function HouseholdPanel({
         Anyone else live with you?
       </p>
       <input type="hidden" name="intent" value="householdInvite" />
-      <button type="submit" className={`mt-2 ${quietButton}`}>
+      <button type="submit" className={`mt-2 ${quietButton("lg")}`}>
         Invite them to this shelf
       </button>
     </Form>
   ) : (
     <Form method="post">
       <input type="hidden" name="intent" value="householdInvite" />
-      <button type="submit" className={quietButton}>
+      <button type="submit" className={quietButton("lg")}>
         Make an invite link
       </button>
     </Form>
@@ -1341,7 +1336,7 @@ function PlanPanel({
           {detail}
         </p>
         {billing && plan.canManage && !demo ? (
-          <BillingButton intent="portal" className={`mt-3 ${quietButton}`}>
+          <BillingButton intent="portal" className={`mt-3 ${quietButton("lg")}`}>
             Manage subscription
           </BillingButton>
         ) : null}
@@ -1373,14 +1368,14 @@ function PlanPanel({
             <BillingButton
               intent="checkout"
               interval="monthly"
-              className={primaryButton}
+              className={primaryButton("lg")}
             >
               ${PLUS_PRICES.monthly} a month
             </BillingButton>
             <BillingButton
               intent="checkout"
               interval="yearly"
-              className={quietButton}
+              className={quietButton("lg")}
             >
               ${PLUS_PRICES.yearly} a year
             </BillingButton>
@@ -1390,7 +1385,7 @@ function PlanPanel({
             <button
               type="button"
               disabled
-              className={`${primaryButton} disabled:opacity-60`}
+              className={`${primaryButton("lg")} disabled:opacity-60`}
             >
               Upgrade
             </button>
@@ -1704,7 +1699,7 @@ function PublicPage({
         </p>
         <Form method="post" className="mt-3">
           <input type="hidden" name="intent" value="generateShareToken" />
-          <button type="submit" className={quietButton}>
+          <button type="submit" className={quietButton("lg")}>
             Make my shelf public
           </button>
         </Form>
@@ -1763,7 +1758,7 @@ function PublicPage({
               type="button"
               onClick={copy}
               aria-label={`Copy ${link}`}
-              className={`flex-shrink-0 ${quietButton}`}
+              className={`flex-shrink-0 ${quietButton("lg")}`}
             >
               {/* Both labels share one cell, so the button keeps its width */}
               <span className="grid">
@@ -1804,14 +1799,14 @@ function PublicPage({
             value={bioText}
             onChange={(event) => setBioText(event.target.value)}
             placeholder="Sci-fi, slow mornings, always happy to lend"
-            className={`mt-1 resize-none ${inputClass}`}
+            className={`mt-1 resize-none ${textField}`}
           />
         </label>
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="submit"
             disabled={saving}
-            className={`${quietButton} disabled:opacity-60`}
+            className={`${quietButton("lg")} disabled:opacity-60`}
           >
             {saving ? "Saving…" : "Save"}
           </button>

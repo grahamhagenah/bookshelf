@@ -11,6 +11,7 @@ import ErrorPage from "~/components/error-page";
 import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
+import { primaryButton, quietButton } from "~/components/ui";
 import { isNotLending } from "~/lending";
 import {
   createBook,
@@ -315,7 +316,7 @@ export default function WorkPage() {
             <button
               type="submit"
               disabled={adding}
-              className="w-full rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-60"
+              className={`${primaryButton("lg")} w-full disabled:opacity-60`}
             >
               {adding ? "Adding…" : "Add to my shelf"}
             </button>
@@ -331,7 +332,7 @@ export default function WorkPage() {
               name="intent"
               value="want"
               disabled={wanting}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors disabled:opacity-60"
+              className={`${quietButton("lg")} inline-flex w-full items-center justify-center gap-1.5 disabled:opacity-60`}
             >
               <BookmarkIcon size={14} />
               {wanting ? "Saving…" : "Want to read"}

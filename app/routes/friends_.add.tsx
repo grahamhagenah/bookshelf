@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Avatar from "~/components/avatar";
 import { SearchIcon } from "~/components/icons";
 import InviteMessage, { mailtoInvite } from "~/components/invite-message";
+import { primaryButton, quietButton, textField } from "~/components/ui";
 import Layout from "~/components / Layout/Layout";
 import { EMAILS_AT_ONCE, emailsIn } from "~/find-friends";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
@@ -126,10 +127,6 @@ interface SearchUser {
   email: string;
 }
 
-const quietButton =
-  "rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors disabled:opacity-50";
-const primaryButton =
-  "rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-50";
 
 function ago(date: string) {
   const days = Math.floor((Date.now() - new Date(date).getTime()) / 86_400_000);
@@ -293,9 +290,9 @@ function FindByEmail({ inviteUrl }: { inviteUrl: string }) {
           aria-label="Email addresses"
           aria-invalid={result?.errors?.email ? true : undefined}
           aria-describedby="email-error"
-          className="block w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+          className={`${textField} block`}
         />
-        <button type="submit" disabled={busy} className={`${primaryButton} px-4 py-2`}>
+        <button type="submit" disabled={busy} className={`${primaryButton("md")} px-4 py-2`}>
           {busy ? "Looking…" : "Find friends"}
         </button>
       </fetcher.Form>
@@ -358,7 +355,7 @@ function PersonRow({
       {status === "sent" ? (
         <span className="flex-shrink-0 text-sm text-stone-400 dark:text-stone-500">Request sent</span>
       ) : (
-        <button type="button" onClick={onAdd} disabled={busy} className={`flex-shrink-0 ${quietButton}`}>
+        <button type="button" onClick={onAdd} disabled={busy} className={`flex-shrink-0 ${quietButton("md")}`}>
           Add friend
         </button>
       )}

@@ -9,6 +9,7 @@ import Showcase, {
   ShowcaseNotes,
   ShowcasePage,
 } from "./showcase";
+import { sectionHeading } from "./ui";
 
 // The signed-out home page: what Stacks is, beside a small, staged glimpse
 // of the app itself, so people see what they're signing up for
@@ -179,7 +180,7 @@ export default function Landing() {
             <div className="divide-y divide-stone-200 dark:divide-stone-800 border-y border-stone-200 dark:border-stone-800">
               {QUESTIONS.map((item) => (
                 <details key={item.q} className="group py-4">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold text-stone-900 dark:text-stone-100 [&::-webkit-details-marker]:hidden">
+                  <summary className={`${sectionHeading} flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden`}>
                     <span>{item.q}</span>
                     <svg
                       width="16"

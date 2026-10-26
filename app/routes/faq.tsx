@@ -2,6 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { isValidElement } from "react";
 
+import { sectionHeading } from "~/components/ui";
 import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
 import { seo, structuredData } from "~/seo";
 
@@ -324,7 +325,7 @@ export default function Faq() {
           <dl className="mt-4 space-y-8">
             {section.items.map((item) => (
               <div key={item.q}>
-                <dt className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+                <dt className={sectionHeading}>
                   {item.q}
                 </dt>
                 <dd className="mt-2 text-pretty leading-relaxed text-stone-700 dark:text-stone-300">

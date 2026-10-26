@@ -12,6 +12,7 @@ import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-
 import { useState } from "react";
 
 import InviteMessage from "~/components/invite-message";
+import { primaryButton, quietButton, sectionHeading } from "~/components/ui";
 import Layout from "~/components / Layout/Layout";
 import type { ImportSource, ShelfChoice } from "~/import-books";
 import { defaultChoice, readExport, summarize } from "~/import-books";
@@ -124,14 +125,13 @@ export default function Import() {
     { value: "all", label: "Everything in the file", count: summary?.total },
   ];
 
-  const headingClass = "text-lg font-semibold text-stone-900 dark:text-stone-100";
   const muted = "text-stone-500 dark:text-stone-400";
   const linkClass = "underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600";
 
   return (
     <Layout title="Import your books">
       <section>
-        <h2 className={headingClass}>Import your books</h2>
+        <h2 className={sectionHeading}>Import your books</h2>
         <p className={`mt-1 max-w-xl text-pretty ${muted}`}>
           Already keep your books on Goodreads or StoryGraph? Export them there
           and bring the file here. Books you own go on your shelf, and the ones
@@ -182,7 +182,7 @@ export default function Import() {
       <section>
         {result && "added" in result ? (
           <div>
-            <h2 className={headingClass}>Done</h2>
+            <h2 className={sectionHeading}>Done</h2>
             <p className="mt-1 text-stone-700 dark:text-stone-300">
               From {SOURCE_NAMES[result.source]}: {plural(result.added, "book")} added to your shelf
               {result.wanted ? `, ${result.wanted} to your want-to-read list` : ""}.
@@ -205,14 +205,14 @@ export default function Import() {
             <div className="mt-4 flex flex-wrap gap-3">
               <Link
                 to="/books"
-                className="inline-flex items-center rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
+                className={`${primaryButton("lg")} inline-flex items-center`}
               >
                 See your shelf
               </Link>
               {result.wanted ? (
                 <Link
                   to="/want-to-read"
-                  className="inline-flex items-center rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
+                  className={`${quietButton("lg")} inline-flex items-center`}
                 >
                   Want to read
                 </Link>
@@ -229,7 +229,7 @@ export default function Import() {
           </div>
         ) : (
           <Form method="post" encType="multipart/form-data" className="max-w-xl">
-            <h2 className={headingClass}>Choose the file</h2>
+            <h2 className={sectionHeading}>Choose the file</h2>
             <label className="mt-3 block">
               <span className="sr-only">Export file</span>
               <input
@@ -294,7 +294,7 @@ export default function Import() {
             <button
               type="submit"
               disabled={importing || (preview !== null && preview.summary.total === 0)}
-              className="mt-6 inline-flex items-center rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-60"
+              className={`${primaryButton("lg")} mt-6 inline-flex items-center disabled:opacity-60`}
             >
               {importing ? "Importing…" : "Import"}
             </button>

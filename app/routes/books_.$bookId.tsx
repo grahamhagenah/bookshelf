@@ -23,6 +23,7 @@ import ErrorPage from "~/components/error-page";
 import { LentIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
+import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
 import { importCover, isOpenLibraryCover } from "~/covers.server";
 import { sendBookRequestEmail } from "~/email.server";
 import {
@@ -115,20 +116,14 @@ const monthDay = (date: string | Date) => {
   });
 };
 
-const primaryButton =
-  "rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors";
 // A fix offered right where something's missing
 const gapLink =
   "text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-50";
-const secondaryButton =
-  "rounded-md border border-stone-200 dark:border-stone-700 px-4 py-2 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
 const quietLabel =
   "rounded-md bg-stone-100 dark:bg-stone-800 px-4 py-2 text-sm text-stone-500 dark:text-stone-400 cursor-default";
 const panel = "text-sm";
 const labelClass =
   "block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5";
-const inputClass =
-  "w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors";
 
 // "1920–1986" from Open Library's free-form dates
 // Grey bars holding the place of text that's still on its way, one per
@@ -1044,7 +1039,7 @@ function WaitInLine({ position }: { position: number | null }) {
         <button
           type="submit"
           disabled={pending === "placeHold"}
-          className={`w-full ${primaryButton} ${pending === "placeHold" ? "opacity-60 cursor-wait" : ""}`}
+          className={`w-full ${primaryButton("lg")} ${pending === "placeHold" ? "opacity-60 cursor-wait" : ""}`}
         >
           {pending === "placeHold" ? "Joining…" : "Get in line"}
         </button>
@@ -1137,7 +1132,7 @@ function NotLendingSetting({ until }: { until: string | null }) {
       {off ? (
         <fetcher.Form method="post" className="flex-shrink-0">
           <input type="hidden" name="intent" value="resumeLending" />
-          <button type="submit" className={secondaryButton}>
+          <button type="submit" className={quietButton("lg")}>
             Lend it again
           </button>
         </fetcher.Form>
@@ -1159,7 +1154,7 @@ function NotLendingSetting({ until }: { until: string | null }) {
               </option>
             ))}
           </select>
-          <button type="submit" className={secondaryButton}>
+          <button type="submit" className={quietButton("lg")}>
             Stop lending
           </button>
         </fetcher.Form>
@@ -1200,7 +1195,7 @@ function LendToFriend({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`w-full ${secondaryButton}`}
+        className={`w-full ${quietButton("lg")}`}
       >
         Lend this book
       </button>
@@ -1311,14 +1306,14 @@ function LendToFriend({
         <button
           type="submit"
           disabled={lending || (someoneNew && byEmail !== "ok")}
-          className={`flex-1 ${primaryButton} ${lending ? "opacity-60 cursor-wait" : ""} disabled:opacity-60`}
+          className={`flex-1 ${primaryButton("lg")} ${lending ? "opacity-60 cursor-wait" : ""} disabled:opacity-60`}
         >
           {lending ? "Lending…" : "Lend it"}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className={secondaryButton}
+          className={quietButton("lg")}
         >
           Cancel
         </button>
@@ -1638,7 +1633,7 @@ function LoanCard({ data }: { data: BookData }) {
               type="submit"
               disabled={sendingReminder || reminderSent}
               // The one thing to do on a loan, so it's the green button
-              className={`w-full ${reminderSent ? quietLabel : primaryButton} py-1.5 disabled:cursor-default`}
+              className={`w-full ${reminderSent ? quietLabel : primaryButton("lg")} py-1.5 disabled:cursor-default`}
             >
               {reminderSent
                 ? "Reminder sent"
@@ -1756,7 +1751,7 @@ function LendingHistory({ data }: { data: BookData }) {
     );
   return (
     <div>
-      <h2 className="mb-2 text-lg font-semibold text-stone-900 dark:text-stone-100">
+      <h2 className={`${sectionHeading} mb-2`}>
         Lending history
         <span className="ml-2 text-sm font-normal text-stone-400 dark:text-stone-500">
           {lendCount === 0
@@ -2107,8 +2102,8 @@ export default function BookDetailsPage() {
                   requestSent
                     ? quietLabel
                     : isSubmitting
-                      ? `${primaryButton} opacity-60 cursor-wait`
-                      : primaryButton
+                      ? `${primaryButton("lg")} opacity-60 cursor-wait`
+                      : primaryButton("lg")
                 }`}
               >
                 {requestSent
@@ -2140,8 +2135,8 @@ export default function BookDetailsPage() {
                     friendRequestSent
                       ? quietLabel
                       : isSendingFriendRequest
-                        ? `${primaryButton} opacity-60 cursor-wait`
-                        : primaryButton
+                        ? `${primaryButton("lg")} opacity-60 cursor-wait`
+                        : primaryButton("lg")
                   }`}
                 >
                   {friendRequestSent
@@ -2168,7 +2163,7 @@ export default function BookDetailsPage() {
           {data.isBorrower ? (
             <Form method="post">
               <input type="hidden" name="intent" value="return" />
-              <button type="submit" className={`w-full ${secondaryButton}`}>
+              <button type="submit" className={`w-full ${quietButton("lg")}`}>
                 {data.book.user
                   ? `Return book to ${data.book.user.firstname}`
                   : "Return book"}
@@ -2196,7 +2191,7 @@ export default function BookDetailsPage() {
                     id="title"
                     name="title"
                     defaultValue={data.book.title}
-                    className={inputClass}
+                    className={textField}
                     required
                   />
                 </div>
@@ -2209,7 +2204,7 @@ export default function BookDetailsPage() {
                     id="author"
                     name="author"
                     defaultValue={data.book.author}
-                    className={inputClass}
+                    className={textField}
                     required
                   />
                 </div>
@@ -2222,7 +2217,7 @@ export default function BookDetailsPage() {
                     name="body"
                     rows={5}
                     defaultValue={data.book.body}
-                    className={`${inputClass} leading-relaxed`}
+                    className={`${textField} leading-relaxed`}
                   />
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_2fr] gap-4">
@@ -2237,7 +2232,7 @@ export default function BookDetailsPage() {
                       defaultValue={data.book.datePublished || ""}
                       placeholder="1984"
                       inputMode="numeric"
-                      className={inputClass}
+                      className={textField}
                     />
                   </div>
                   <div>
@@ -2249,7 +2244,7 @@ export default function BookDetailsPage() {
                       id="pageCount"
                       name="pageCount"
                       defaultValue={data.book.pageCount || ""}
-                      className={inputClass}
+                      className={textField}
                     />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
@@ -2261,7 +2256,7 @@ export default function BookDetailsPage() {
                       id="publisher"
                       name="publisher"
                       defaultValue={data.book.publisher || ""}
-                      className={inputClass}
+                      className={textField}
                     />
                   </div>
                 </div>
@@ -2275,7 +2270,7 @@ export default function BookDetailsPage() {
                     name="subjects"
                     defaultValue={data.book.subjects || ""}
                     placeholder="Fiction, Adventure, Classic"
-                    className={inputClass}
+                    className={textField}
                   />
                   <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
                     Separate with commas.
@@ -2292,7 +2287,7 @@ export default function BookDetailsPage() {
                     value={cover}
                     onChange={(event) => setCover(event.target.value)}
                     placeholder="https://covers.openlibrary.org/..."
-                    className={inputClass}
+                    className={textField}
                   />
                   <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
                     An image link from Open Library, Amazon, Goodreads, Google
@@ -2319,14 +2314,14 @@ export default function BookDetailsPage() {
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className={`${primaryButton} ${isSaving ? "opacity-60 cursor-wait" : ""}`}
+                    className={`${primaryButton("lg")} ${isSaving ? "opacity-60 cursor-wait" : ""}`}
                   >
                     {isSaving ? "Saving…" : "Save changes"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsEditing(false)}
-                    className={secondaryButton}
+                    className={quietButton("lg")}
                   >
                     Cancel
                   </button>
@@ -2387,7 +2382,7 @@ export default function BookDetailsPage() {
                     <button
                       type="submit"
                       disabled={isRefreshing}
-                      className={`${secondaryButton} ${isRefreshing ? "opacity-60 cursor-wait" : ""}`}
+                      className={`${quietButton("lg")} ${isRefreshing ? "opacity-60 cursor-wait" : ""}`}
                     >
                       {isRefreshing ? "Refreshing…" : "Refresh"}
                     </button>
@@ -2417,7 +2412,7 @@ export default function BookDetailsPage() {
                     <input type="hidden" name="intent" value="delete" />
                     <button
                       type="submit"
-                      className={`${secondaryButton} hover:bg-stone-900 hover:text-white hover:border-stone-900 dark:hover:bg-stone-100 dark:hover:text-stone-900`}
+                      className={`${quietButton("lg")} hover:bg-stone-900 hover:text-white hover:border-stone-900 dark:hover:bg-stone-100 dark:hover:text-stone-900`}
                     >
                       Delete
                     </button>

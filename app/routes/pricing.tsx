@@ -5,6 +5,7 @@ import { Link, useLoaderData } from "@remix-run/react";
 import DemoButton from "~/components/demo-button";
 import { GuidePage, GuideSection, proseLink } from "~/components/guide";
 import { CheckCircleIcon } from "~/components/icons";
+import { sectionHeading } from "~/components/ui";
 import { FREE_LIMITS, PLUS_PRICES, UPGRADE_PATH } from "~/plan";
 import { hasPlus } from "~/plan.server";
 import { seo } from "~/seo";
@@ -83,7 +84,7 @@ export default function Pricing() {
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <section className="flex flex-col rounded-xl border border-stone-200 dark:border-stone-800 p-6">
-          <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+          <h2 className={sectionHeading}>
             Free
           </h2>
           <p className="mt-2">
@@ -109,7 +110,7 @@ export default function Pricing() {
         </section>
 
         <section className="flex flex-col rounded-xl border-2 border-forest-600 dark:border-forest-400 p-6">
-          <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+          <h2 className={sectionHeading}>
             Stacks Plus
           </h2>
           <p className="mt-2">

@@ -4,6 +4,7 @@ import { BookIcon, FeedIcon, GroupIcon } from "./icons";
 import PositionedMenu from "./menu";
 import Notifications from "./notifications";
 import Search from "./search";
+import { primaryButton } from "./ui";
 import Wordmark from "./wordmark";
 
 interface RootLoaderData {
@@ -126,7 +127,7 @@ export default function Header() {
               </Link>
               <Link
                 to="/join"
-                className="rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
+                className={primaryButton("md")}
               >
                 Create account
               </Link>

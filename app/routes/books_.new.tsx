@@ -6,6 +6,7 @@ import { json, redirect } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 
+import { primaryButton, textField } from "~/components/ui";
 import { createBook } from "~/models/book.server";
 import { LIMIT_MESSAGES } from "~/plan";
 import { roomForBooks } from "~/plan.server";
@@ -225,7 +226,7 @@ export default function NewBookPage() {
             ref={bodyRef}
             name="body"
             rows={8}
-            className="w-full flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors leading-relaxed"
+            className={`${textField} flex-1 leading-relaxed`}
             aria-invalid={actionData?.errors?.body ? true : undefined}
             aria-errormessage={
               actionData?.errors?.body ? "body-error" : undefined
@@ -245,7 +246,7 @@ export default function NewBookPage() {
       <div className="text-right">
         <button
           type="submit"
-          className="rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
+          className={primaryButton("lg")}
         >
           Save
         </button>

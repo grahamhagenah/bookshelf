@@ -13,6 +13,7 @@ import {
 } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 
+import { primaryButton, textField } from "~/components/ui";
 import { notifyAdminsOfSignup } from "~/models/admin.server";
 import { getInviter } from "~/models/friend.server";
 import { getGroupByToken } from "~/models/group.server";
@@ -302,7 +303,7 @@ export default function Join() {
                 type="text"
                 aria-invalid={actionData?.errors?.firstname ? true : undefined}
                 aria-describedby="firstname-error"
-                className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+                className={textField}
               />
               {actionData?.errors?.firstname ? (
                 <div
@@ -332,7 +333,7 @@ export default function Join() {
                 type="text"
                 aria-invalid={actionData?.errors?.surname ? true : undefined}
                 aria-describedby="surname-error"
-                className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+                className={textField}
               />
               {actionData?.errors?.surname ? (
                 <div
@@ -364,7 +365,7 @@ export default function Join() {
                 autoComplete="email"
                 aria-invalid={actionData?.errors?.email ? true : undefined}
                 aria-describedby="email-error"
-                className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+                className={textField}
               />
               {actionData?.errors?.email ? (
                 <div
@@ -393,7 +394,7 @@ export default function Join() {
                 autoComplete="new-password"
                 aria-invalid={actionData?.errors?.password ? true : undefined}
                 aria-describedby="password-error"
-                className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+                className={textField}
               />
               {actionData?.errors?.password ? (
                 <div
@@ -423,7 +424,7 @@ export default function Join() {
           {invite ? <input type="hidden" name="invite" value={invite} /> : null}
           <button
             type="submit"
-            className="w-full rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
+            className={`${primaryButton("lg")} w-full`}
           >
             Create Account
           </button>

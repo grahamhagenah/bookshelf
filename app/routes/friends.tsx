@@ -21,6 +21,7 @@ import {
   LentIcon,
 } from "~/components/icons";
 import { RailGroups } from "~/components/side-rail";
+import { primaryButton, quietButton, sectionHeading } from "~/components/ui";
 import Layout from "~/components / Layout/Layout";
 import { getFriendsTabCounts } from "~/friends-tabs.server";
 import { groupPath } from "~/group-links";
@@ -94,10 +95,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 type Friend = SerializeFrom<typeof loader>["friends"][number];
 
-const quietButton =
-  "rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors disabled:opacity-50";
-const primaryButton =
-  "rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-50";
 
 function ago(date: string) {
   const days = Math.floor((Date.now() - new Date(date).getTime()) / 86_400_000);
@@ -131,7 +128,7 @@ export default function Friends() {
         <aside className="hidden space-y-10 self-start lg:sticky lg:top-24 lg:block">
           {data.incoming.length > 0 ? (
             <section aria-labelledby="rail-requests">
-              <h2 id="rail-requests" className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100">
+              <h2 id="rail-requests" className={`${sectionHeading} mb-3`}>
                 Friend requests
                 <span className="ml-1.5 text-sm font-normal text-stone-400 dark:text-stone-500">
                   {data.incoming.length}
@@ -147,7 +144,7 @@ export default function Friends() {
           <RailGroups groups={data.groups} limit={10} />
           {data.pendingRequests.length > 0 ? (
             <section aria-labelledby="rail-waiting">
-              <h2 id="rail-waiting" className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100">
+              <h2 id="rail-waiting" className={`${sectionHeading} mb-3`}>
                 Waiting to hear back
                 <span className="ml-1.5 text-sm font-normal text-stone-400 dark:text-stone-500">
                   {data.pendingRequests.length}
@@ -507,10 +504,10 @@ function IncomingRequest({
       </div>
       <fetcher.Form method="post" className="flex flex-shrink-0 gap-2">
         <input type="hidden" name="notificationId" value={request.id} />
-        <button type="submit" name="intent" value="decline" disabled={Boolean(answering)} className={quietButton}>
+        <button type="submit" name="intent" value="decline" disabled={Boolean(answering)} className={quietButton("md")}>
           Not now
         </button>
-        <button type="submit" name="intent" value="accept" disabled={Boolean(answering)} className={primaryButton}>
+        <button type="submit" name="intent" value="accept" disabled={Boolean(answering)} className={primaryButton("md")}>
           {answering === "accept" ? "Adding…" : "Accept"}
         </button>
       </fetcher.Form>

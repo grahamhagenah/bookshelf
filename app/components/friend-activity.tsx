@@ -8,6 +8,7 @@ import Avatar from "./avatar";
 import BookCover from "./book-cover";
 import { BookmarkIcon, HeartIcon } from "./icons";
 import PersonLink from "./person-link";
+import { primaryButton } from "./ui";
 
 type FeedItem = SerializeFrom<FriendActivity>;
 type FeedBook = Extract<FeedItem, { kind: "added" }>["books"][number];
@@ -446,7 +447,7 @@ function Actions({
             />
             <button
               type="submit"
-              className="rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
+              className={primaryButton("md")}
             >
               Ask to borrow
             </button>
@@ -852,7 +853,7 @@ export function NotePrompt({ books }: { books: PromptBook[] }) {
               // Always full strength; an empty note is stopped by the box
               // being required, not by a faded button
               disabled={saving}
-              className="rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:cursor-wait"
+              className={`${primaryButton("md")} disabled:cursor-wait`}
             >
               {saving ? "Saving…" : "Leave a note"}
             </button>

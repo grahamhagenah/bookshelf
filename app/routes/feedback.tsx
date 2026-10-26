@@ -2,6 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remi
 import { json } from "@remix-run/node";
 import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 
+import { primaryButton } from "~/components/ui";
 import { MIN_SECONDS, clientIp, formAge, formToken, looksLikeSpam, tooMany } from "~/feedback-guard.server";
 import { FEEDBACK_MAX_LENGTH, saveFeedback } from "~/models/feedback.server";
 import { seo } from "~/seo";
@@ -142,7 +143,7 @@ export default function Feedback() {
           <button
             type="submit"
             disabled={sending}
-            className="rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:cursor-wait"
+            className={`${primaryButton("lg")} disabled:cursor-wait`}
           >
             {sending ? "Sending…" : "Send feedback"}
           </button>

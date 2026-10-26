@@ -4,6 +4,7 @@ import { groupPath } from "~/group-links";
 
 import Avatar from "./avatar";
 import Faces from "./faces";
+import { sectionHeading } from "./ui";
 
 // Beside a page's main column on wide screens: who you're following, then
 // your groups. Hidden on phones, where the column has the whole width.
@@ -31,13 +32,12 @@ export interface SideRailProps {
   sticky?: boolean;
 }
 
-// A section's heading, and the link across from it
-export const railHeading = "text-lg font-semibold text-stone-900 dark:text-stone-100";
+// The link across from a section's heading
 export const railLink =
   "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
 
 export default function SideRail({ friends, groups, children, sticky = true }: SideRailProps) {
-  const heading = railHeading;
+  const heading = sectionHeading;
   const link = railLink;
 
   return (
@@ -97,7 +97,7 @@ type RailGroup = NonNullable<SideRailProps["groups"]>[number];
 // The groups you're in, each straight to its page: beside the feed, and
 // beside your friends on the Friends page. With none, what they're for.
 export function RailGroups({ groups, limit = 5 }: { groups: RailGroup[]; limit?: number }) {
-  const heading = railHeading;
+  const heading = sectionHeading;
   const link = railLink;
   return (
     <section aria-labelledby="rail-groups">
