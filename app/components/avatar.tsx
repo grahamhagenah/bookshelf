@@ -213,17 +213,6 @@ const ICON_PATHS = {
       <path d="M6.51 16.1l-4.25-0.67M7.53 18.3l-4.21 0.89M17.49 16.1l4.25-0.67M16.47 18.3l4.21 0.89" />
     </>
   ),
-  bear: (
-    <>
-      {/* The bear: the kitty's face with small round ears on the top corners
-          and a bigger nose */}
-      <ellipse cx="12" cy="13.9" rx="7.5" ry="7" />
-      <path d="M6 9.7A2.4 2.4 0 1 1 9.4 7.33M14.6 7.33A2.4 2.4 0 1 1 18 9.7" />
-      <ellipse cx="9.3" cy="13.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="14.7" cy="13.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="12" cy="15.9" rx="1.5" ry="1.1" fill="currentColor" stroke="none" />
-    </>
-  ),
   mouse: (
     <>
       {/* The mouse: bigger round ears up top, the kitty's whiskers, a small nose */}
@@ -233,27 +222,6 @@ const ICON_PATHS = {
       <ellipse cx="14.7" cy="13.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
       <ellipse cx="12" cy="15.7" rx="1.15" ry="0.85" fill="currentColor" stroke="none" />
       <path d="M6.51 14.9l-4.25-0.67M7.53 17.1l-4.21 0.89M17.49 14.9l4.25-0.67M16.47 17.1l4.21 0.89" />
-    </>
-  ),
-  pig: (
-    <>
-      {/* The pig: ears leaning out, and a snout with two nostrils */}
-      <path d="M4.99 11.4L4.4 7.2Q4.3 5.6 5.9 6.6L8.6 8.3A8 6 0 0 1 15.4 8.3L18.1 6.6Q19.7 5.6 19.6 7.2L19.01 11.4A7.5 7 0 1 1 4.99 11.4z" />
-      <ellipse cx="9.3" cy="12.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="14.7" cy="12.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="12" cy="16.1" rx="2.5" ry="1.75" />
-      <circle cx="11.05" cy="16.1" r=".5" fill="currentColor" stroke="none" />
-      <circle cx="12.95" cy="16.1" r=".5" fill="currentColor" stroke="none" />
-    </>
-  ),
-  panda: (
-    <>
-      {/* The panda: the bear's ears, with filled eye patches the eyes show
-          through (a hole in each, by fill-rule) */}
-      <ellipse cx="12" cy="13.9" rx="7.5" ry="7" />
-      <path d="M6 9.7A2.6 2.6 0 1 1 9.4 7.33M14.6 7.33A2.6 2.6 0 1 1 18 9.7" />
-      <path fillRule="evenodd" fill="currentColor" stroke="none" d="M7.1 13.2a2.1 2.5 0 1 0 4.2 0a2.1 2.5 0 1 0-4.2 0zM8.55 13.2a.65.65 0 1 0 1.3 0a.65.65 0 1 0-1.3 0zM12.7 13.2a2.1 2.5 0 1 0 4.2 0a2.1 2.5 0 1 0-4.2 0zM14.15 13.2a.65.65 0 1 0 1.3 0a.65.65 0 1 0-1.3 0z" />
-      <ellipse cx="12" cy="16.4" rx="1.3" ry="0.95" fill="currentColor" stroke="none" />
     </>
   ),
   koala: (
@@ -268,32 +236,13 @@ const ICON_PATHS = {
   ),
   sheep: (
     <>
-      {/* The sheep: a woolly crown of five bumps over the face, and two small
-          ears out at the sides */}
+      {/* The sheep: a woolly crown of five bumps over the face, and two
+          lobed ears sticking out from under the wool */}
       <path d="M4.99 11.4C4.6 9.6 5.6 8 7.2 8.4C7.2 6.4 9 5.3 10.3 6.5C11 4.6 13 4.6 13.7 6.5C15 5.3 16.8 6.4 16.8 8.4C18.4 8 19.4 9.6 19.01 11.4A7.5 7 0 1 1 4.99 11.4z" />
-      <path d="M4.99 11.4c-1.6-.4-2.6.6-2.3 2M19.01 11.4c1.6-.4 2.6.6 2.3 2" />
+      <path d="M5.1 11.2C3 10.6 1.3 12.2 1.6 14.3C1.8 15.7 3.2 16 4.2 15.1C5 14.3 5.4 12.8 5.1 11.2zM18.9 11.2C21 10.6 22.7 12.2 22.4 14.3C22.2 15.7 20.8 16 19.8 15.1C19 14.3 18.6 12.8 18.9 11.2z" />
       <ellipse cx="9.3" cy="13.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
       <ellipse cx="14.7" cy="13.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="12" cy="16.2" rx="1" ry="0.8" fill="currentColor" stroke="none" />
-    </>
-  ),
-  chick: (
-    <>
-      {/* The chick: three feathers fanning from the crown, and a small beak */}
-      <ellipse cx="12" cy="13.9" rx="7.5" ry="7" />
-      <path d="M12 6.9C11 5.6 10.4 4.6 10.3 3.3M12 6.9C12 5.4 12 4.4 12 3M12 6.9C13 5.6 13.6 4.6 13.7 3.3" />
-      <ellipse cx="9.3" cy="13.2" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="14.7" cy="13.2" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <path d="M10.6 15.2Q12 14.6 13.4 15.2L12 17.4z" fill="currentColor" stroke="none" />
-    </>
-  ),
-  raccoon: (
-    <>
-      {/* The raccoon: the kitty's ears and a filled eye mask the eyes show
-          through, no whiskers */}
-      <path d="M4.99 11.4L5 6.3Q5.1 3.9 6.66 5.73L8.6 8A8 6 0 0 1 15.4 8L17.34 5.73Q18.9 3.9 19 6.3L19.01 11.4A7.5 7 0 1 1 4.99 11.4z" />
-      <path fillRule="evenodd" fill="currentColor" stroke="none" d="M5.6 12.6a6.4 2.3 0 1 0 12.8 0a6.4 2.3 0 1 0-12.8 0zM8.6 12.6a.7.7 0 1 0 1.4 0a.7.7 0 1 0-1.4 0zM14 12.6a.7.7 0 1 0 1.4 0a.7.7 0 1 0-1.4 0z" />
-      <ellipse cx="12" cy="16" rx="1.2" ry="0.9" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="16.2" rx="1" ry=".8" fill="currentColor" stroke="none" />
     </>
   ),
   ghost: (
@@ -461,14 +410,9 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "glasses",
   "cat",
   "hare",
-  "bear",
   "mouse",
-  "pig",
-  "panda",
   "koala",
   "sheep",
-  "chick",
-  "raccoon",
   "paw",
   "frog",
   "octopus",
