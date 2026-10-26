@@ -237,9 +237,9 @@ const ICON_PATHS = {
   sheep: (
     <>
       {/* The sheep: a woolly crown of five bumps over the face, and two
-          lobed ears sticking out from under the wool */}
+          lobed ears behind the head: drawn only where they show past it */}
       <path d="M4.99 11.4C4.6 9.6 5.6 8 7.2 8.4C7.2 6.4 9 5.3 10.3 6.5C11 4.6 13 4.6 13.7 6.5C15 5.3 16.8 6.4 16.8 8.4C18.4 8 19.4 9.6 19.01 11.4A7.5 7 0 1 1 4.99 11.4z" />
-      <path d="M5.1 11.2C3 10.6 1.3 12.2 1.6 14.3C1.8 15.7 3.2 16 4.2 15.1C5 14.3 5.4 12.8 5.1 11.2zM18.9 11.2C21 10.6 22.7 12.2 22.4 14.3C22.2 15.7 20.8 16 19.8 15.1C19 14.3 18.6 12.8 18.9 11.2z" />
+      <path d="M5.08 11.2C3 10.6 1.3 12.2 1.6 14.3C1.8 15.8 3.4 16.3 4.72 15.6M18.92 11.2C21 10.6 22.7 12.2 22.4 14.3C22.2 15.8 20.6 16.3 19.28 15.6" />
       <ellipse cx="9.3" cy="13.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
       <ellipse cx="14.7" cy="13.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
       <ellipse cx="12" cy="16.2" rx="1" ry=".8" fill="currentColor" stroke="none" />
