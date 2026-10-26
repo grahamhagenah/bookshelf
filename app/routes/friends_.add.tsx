@@ -6,8 +6,8 @@ import { useEffect, useState } from "react";
 import Avatar from "~/components/avatar";
 import { SearchIcon } from "~/components/icons";
 import InviteMessage, { mailtoInvite } from "~/components/invite-message";
+import Layout from "~/components/layout";
 import { primaryButton, quietButton, textField } from "~/components/ui";
-import Layout from "~/components / Layout/Layout";
 import { EMAILS_AT_ONCE, emailsIn } from "~/find-friends";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import { getFriendInvite, getIncomingFriendRequests } from "~/models/friend.server";
@@ -22,7 +22,7 @@ import {
 import { publicOrigin } from "~/origin.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
-import { isDemoEmail } from "~/utils";
+import { agoInWords, isDemoEmail } from "~/utils";
 
 // Finding people to borrow from: anyone already on Stacks, by name or a
 // pasted list of addresses, and a ready-made invite for everyone else.
@@ -127,17 +127,6 @@ interface SearchUser {
   email: string;
 }
 
-
-function ago(date: string) {
-  const days = Math.floor((Date.now() - new Date(date).getTime()) / 86_400_000);
-  if (days < 1) return "today";
-  if (days < 2) return "yesterday";
-  if (days < 14) return `${days} days ago`;
-  if (days < 60) return `${Math.floor(days / 7)} weeks ago`;
-  if (days < 730) return `${Math.floor(days / 30)} months ago`;
-  return `${Math.floor(days / 365)} years ago`;
-}
-
 export default function AddFriends() {
   const data = useLoaderData<typeof loader>();
   const searchFetcher = useFetcher<SearchUser[]>();
@@ -240,7 +229,7 @@ export default function AddFriends() {
                   key={user.id}
                   firstname={user.firstname}
                   surname={user.surname}
-                  detail={`Joined ${ago(user.createdAt)}`}
+                  detail={`Joined ${agoInWords(user.createdAt)}`}
                   status="none"
                   busy={requestFetcher.state !== "idle"}
                   onAdd={() => sendRequest(user.id)}

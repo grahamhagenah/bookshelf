@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from "react";
 
 import BookCover from "~/components/book-cover";
 import { HeartIcon, InfoIcon, ReadIcon } from "~/components/icons";
+import Layout from "~/components/layout";
 import ShelfTabs from "~/components/shelf-tabs";
-import Layout from "~/components / Layout/Layout";
 import { getShelfCounts } from "~/models/history.server";
 import { listMyWorkNotes } from "~/models/work-note.server";
 import { seo } from "~/seo";

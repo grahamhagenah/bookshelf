@@ -20,8 +20,8 @@ import {
   LinkIcon,
   UserIcon,
 } from "~/components/icons";
+import Layout from "~/components/layout";
 import { primaryButton, sectionHeading } from "~/components/ui";
-import Layout from "~/components / Layout/Layout";
 import { sendAnnouncementEmail } from "~/email.server";
 import {
   getAdminUsers,

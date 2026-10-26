@@ -4,8 +4,8 @@ import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-
 
 import Faces from "~/components/faces";
 import FriendsTabs from "~/components/friends-tabs";
+import Layout from "~/components/layout";
 import { primaryButton, sectionHeading } from "~/components/ui";
-import Layout from "~/components / Layout/Layout";
 import { getFriendsTabCounts } from "~/friends-tabs.server";
 import { groupPath } from "~/group-links";
 import {

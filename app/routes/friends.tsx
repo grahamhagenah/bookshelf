@@ -20,9 +20,9 @@ import {
   FeedIcon,
   LentIcon,
 } from "~/components/icons";
+import Layout from "~/components/layout";
 import { RailGroups } from "~/components/side-rail";
 import { primaryButton, quietButton, sectionHeading } from "~/components/ui";
-import Layout from "~/components / Layout/Layout";
 import { getFriendsTabCounts } from "~/friends-tabs.server";
 import { groupPath } from "~/group-links";
 import {
@@ -36,6 +36,7 @@ import { getMyGroups } from "~/models/group.server";
 import { getPendingFriendRequests } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+import { agoInWords } from "~/utils";
 
 export const meta: MetaFunction = () =>
   seo({ title: "Friends", noindex: true });
@@ -95,17 +96,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 type Friend = SerializeFrom<typeof loader>["friends"][number];
 
-
-function ago(date: string) {
-  const days = Math.floor((Date.now() - new Date(date).getTime()) / 86_400_000);
-  if (days < 1) return "today";
-  if (days < 2) return "yesterday";
-  if (days < 14) return `${days} days ago`;
-  if (days < 60) return `${Math.floor(days / 7)} weeks ago`;
-  if (days < 730) return `${Math.floor(days / 30)} months ago`;
-  return `${Math.floor(days / 365)} years ago`;
-}
-
 function monthYear(date: string) {
   return new Date(date).toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
@@ -163,7 +153,7 @@ export default function Friends() {
                         {request.receiver.firstname} {request.receiver.surname}
                       </span>
                       <span className="block text-xs text-stone-500 dark:text-stone-400">
-                        Asked {ago(request.createdAt)}
+                        Asked {agoInWords(request.createdAt)}
                       </span>
                     </span>
                   </li>
@@ -248,7 +238,7 @@ export default function Friends() {
                     size="sm"
                   />
                   {request.receiver.firstname} {request.receiver.surname}
-                  <span className="text-stone-400 dark:text-stone-500">· sent {ago(request.createdAt)}</span>
+                  <span className="text-stone-400 dark:text-stone-500">· sent {agoInWords(request.createdAt)}</span>
                 </li>
               ))}
             </ul>
@@ -316,7 +306,7 @@ function FriendCard({ friend }: { friend: Friend }) {
           {covers.map((book) => (
             <li key={book.id}>
               <Link to={`/books/${book.id}`} title={book.title} className="block hover:opacity-90 transition-opacity">
-                <MiniCover cover={book.cover} title={book.title} author={book.author} />
+                <BookCover cover={book.cover} title={book.title} author={book.author} alt={book.title} className="aspect-[2/3]" />
               </Link>
             </li>
           ))}
@@ -378,7 +368,7 @@ function FriendCard({ friend }: { friend: Friend }) {
         {friend.lastAddedAt ? (
           <li className="flex items-center gap-2">
             <ClockIcon size={14} />
-            Last added a book {ago(friend.lastAddedAt)}
+            Last added a book {agoInWords(friend.lastAddedAt)}
           </li>
         ) : null}
       </ul>
@@ -431,9 +421,6 @@ function FriendCard({ friend }: { friend: Friend }) {
   );
 }
 
-function MiniCover({ cover, title, author }: { cover: string; title: string; author: string }) {
-  return <BookCover cover={cover} title={title} author={author} alt={title} className="aspect-[2/3]" />;
-}
 
 function IncomingRequest({
   request,
@@ -462,7 +449,7 @@ function IncomingRequest({
             <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
               {request.sender.firstname} {request.sender.surname}
             </p>
-            <p className="text-xs text-stone-500 dark:text-stone-400">Asked {ago(request.createdAt)}</p>
+            <p className="text-xs text-stone-500 dark:text-stone-400">Asked {agoInWords(request.createdAt)}</p>
           </div>
         </div>
         <fetcher.Form method="post" className="mt-3 flex gap-2">
@@ -500,7 +487,7 @@ function IncomingRequest({
         <p className="truncate font-medium text-stone-900 dark:text-stone-100">
           {request.sender.firstname} {request.sender.surname}
         </p>
-        <p className="text-sm text-stone-500 dark:text-stone-400">Asked {ago(request.createdAt)}</p>
+        <p className="text-sm text-stone-500 dark:text-stone-400">Asked {agoInWords(request.createdAt)}</p>
       </div>
       <fetcher.Form method="post" className="flex flex-shrink-0 gap-2">
         <input type="hidden" name="notificationId" value={request.id} />

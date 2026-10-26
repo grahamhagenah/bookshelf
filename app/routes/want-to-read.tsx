@@ -15,9 +15,9 @@ import {
 
 import BookCover from "~/components/book-cover";
 import { BookmarkIcon } from "~/components/icons";
+import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
-import Layout from "~/components / Layout/Layout";
 import { getShelfCounts } from "~/models/history.server";
 import { getUserById } from "~/models/user.server";
 import {

@@ -5,9 +5,9 @@ import { useState } from "react";
 
 import BookCover from "~/components/book-cover";
 import { BorrowedIcon, HeartIcon, HistoryIcon, LentIcon } from "~/components/icons";
+import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
-import Layout from "~/components / Layout/Layout";
 import { getHistory, getShelfCounts } from "~/models/history.server";
 import { getUserById } from "~/models/user.server";
 import { seo } from "~/seo";
@@ -48,9 +48,6 @@ const monthDay = (date: string) => {
   });
 };
 
-function Cover({ cover, title, author }: { cover: string; title: string; author: string }) {
-  return <BookCover cover={cover} title={title} author={author} className="h-full w-full" />;
-}
 
 const noteLink =
   "font-medium text-stone-800 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:decoration-stone-500";
@@ -73,7 +70,7 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
         aria-hidden="true"
         className="block w-16 flex-shrink-0 self-stretch"
       >
-        <Cover cover={entry.book.cover} title={entry.book.title} author={entry.book.author} />
+        <BookCover cover={entry.book.cover} title={entry.book.title} author={entry.book.author} className="h-full w-full" />
       </Link>
       <div className="min-w-0 flex-1">
         <Link

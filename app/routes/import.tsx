@@ -12,8 +12,8 @@ import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-
 import { useState } from "react";
 
 import InviteMessage from "~/components/invite-message";
+import Layout from "~/components/layout";
 import { primaryButton, quietButton, sectionHeading } from "~/components/ui";
-import Layout from "~/components / Layout/Layout";
 import type { ImportSource, ShelfChoice } from "~/import-books";
 import { defaultChoice, readExport, summarize } from "~/import-books";
 import { getFriendInvite } from "~/models/friend.server";

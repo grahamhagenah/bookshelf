@@ -1,17 +1,21 @@
 import Avatar from "~/components/avatar";
 
-// A few people side by side, each overlapping the last, for a group
+// Each face overlaps the last by about a quarter
+const OVERLAP = { xs: "-space-x-1.5", sm: "-space-x-2", md: "-space-x-2.5" } as const;
+
+// A few people side by side, each overlapping the last: a group, a shared
+// shelf. Decorative, since a name or count always sits beside it.
 export default function Faces({
   people,
   size = "sm",
   max = 5,
 }: {
   people: { id: string; firstname: string; surname: string; profileEmoji: string | null }[];
-  size?: "sm" | "md";
+  size?: keyof typeof OVERLAP;
   max?: number;
 }) {
   return (
-    <span className="flex -space-x-2">
+    <span aria-hidden="true" className={`flex flex-shrink-0 ${OVERLAP[size]}`}>
       {people.slice(0, max).map((person) => (
         // On a solid circle the page's color: the pictures' tints are
         // see-through, and would show the face behind through the overlap.

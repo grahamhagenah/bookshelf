@@ -417,3 +417,14 @@ export function isLibraryView(value: unknown): value is LibraryView {
 export function isCoverSize(value: unknown): value is CoverSize {
   return COVER_SIZES.includes(value as CoverSize);
 }
+
+// How long ago, in words: "today", "yesterday", "3 days ago", "2 months ago"
+export function agoInWords(date: string | Date) {
+  const days = Math.floor((Date.now() - new Date(date).getTime()) / 86_400_000);
+  if (days < 1) return "today";
+  if (days < 2) return "yesterday";
+  if (days < 14) return `${days} days ago`;
+  if (days < 60) return `${Math.floor(days / 7)} weeks ago`;
+  if (days < 730) return `${Math.floor(days / 30)} months ago`;
+  return `${Math.floor(days / 365)} years ago`;
+}

@@ -1,6 +1,6 @@
 import { Link } from "@remix-run/react";
 
-import Avatar from "./avatar";
+import Faces from "./faces";
 
 export interface Member {
   id: string;
@@ -38,18 +38,7 @@ export default function SharedWith({
         compact ? "px-0.5" : "px-1.5 hover:bg-stone-100 dark:hover:bg-stone-800"
       }`}
     >
-      <span aria-hidden="true" className="flex -space-x-1.5">
-        {members.map((member) => (
-          // Solid and positioned, like the group faces: the pictures' tints
-          // are see-through, and initials would draw over the face after
-          <span
-            key={member.id}
-            className="relative rounded-full bg-white ring-2 ring-white dark:bg-stone-950 dark:ring-stone-950"
-          >
-            <Avatar firstname={member.firstname} surname={member.surname} icon={member.profileEmoji} size="xs" />
-          </span>
-        ))}
-      </span>
+      <Faces people={members} size="xs" max={members.length} />
       {compact ? null : <span className="whitespace-nowrap">{label}</span>}
     </Link>
   );

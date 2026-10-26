@@ -3,8 +3,8 @@ import { json, redirect } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
+import Layout from "~/components/layout";
 import { sectionHeading } from "~/components/ui";
-import Layout from "~/components / Layout/Layout";
 import { joinHousehold } from "~/models/household.server";
 import { seo } from "~/seo";
 import { getUserId } from "~/session.server";

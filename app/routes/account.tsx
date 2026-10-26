@@ -30,6 +30,7 @@ import Avatar, {
 import type { PlateColor } from "~/components/avatar";
 import BookCover from "~/components/book-cover";
 import CopyButton from "~/components/copy-button";
+import Faces from "~/components/faces";
 import {
   BookIcon,
   BorrowedIcon,
@@ -41,9 +42,9 @@ import {
   LentIcon,
   ListViewIcon,
 } from "~/components/icons";
+import Layout from "~/components/layout";
 import { joinNames } from "~/components/shared-with";
 import { primaryButton, quietButton, textField } from "~/components/ui";
-import Layout from "~/components / Layout/Layout";
 import { getBookStats } from "~/models/book.server";
 import { getDemoGroup } from "~/models/demo.server";
 import {
@@ -1219,23 +1220,7 @@ function HouseholdPanel({
   return (
     <div className="rounded-xl border border-stone-200 dark:border-stone-800 text-sm">
       <div className="flex items-center gap-3 p-4">
-        <ul aria-hidden="true" className="flex flex-shrink-0 -space-x-2.5">
-          {household.members.map((member) => (
-            // Solid and positioned, like the group faces: the pictures'
-            // tints are see-through, and initials would draw over the face
-            // after
-            <li
-              key={member.id}
-              className="relative rounded-full bg-white ring-2 ring-white dark:bg-stone-950 dark:ring-stone-950"
-            >
-              <Avatar
-                firstname={member.firstname}
-                surname={member.surname}
-                icon={member.profileEmoji}
-              />
-            </li>
-          ))}
-        </ul>
+        <Faces people={household.members} size="md" max={household.members.length} />
         <div className="min-w-0">
           <p className="text-base text-stone-900 dark:text-stone-100">
             <span className="font-semibold">
