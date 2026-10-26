@@ -120,7 +120,7 @@ test("isbnCoverParts reads Open Library ISBN covers only", () => {
 
 test("an empty file left in the cache is fetched again, not served", async () => {
   const id = String(Math.random()).slice(2, 10);
-  const dir = path.join(os.tmpdir(), "stacks-covers");
+  const dir = process.env.COVER_CACHE_DIR ?? path.join(os.tmpdir(), "stacks-covers");
   const file = path.join(dir, `b_id_${id}-M.jpg`);
   await mkdir(dir, { recursive: true });
   await writeFile(file, "");
