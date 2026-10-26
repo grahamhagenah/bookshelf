@@ -139,9 +139,9 @@ export default function FriendActivityItem({
           firstname={item.friend.firstname}
           surname={item.friend.surname}
           icon={item.friend.profileEmoji}
-          size="compact"
+          size="md"
         />
-        <div className="min-w-0 flex-1 pt-1">
+        <div className="min-w-0 flex-1 pt-2">
           <p className="text-stone-800 dark:text-stone-200 leading-snug">
             {name} wrote about{" "}
             <Link
@@ -208,9 +208,9 @@ export default function FriendActivityItem({
         firstname={item.friend.firstname}
         surname={item.friend.surname}
         icon={item.friend.profileEmoji}
-        size="compact"
+        size="md"
       />
-      <div className="min-w-0 flex-1 pt-1">
+      <div className="min-w-0 flex-1 pt-2">
         <p className="text-stone-800 dark:text-stone-200 leading-snug">
           {text}
         </p>
