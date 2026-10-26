@@ -120,14 +120,15 @@ const ICON_PATHS = {
   ),
   dog: (
     <>
-      {/* The third of the family: the same eyes, a bigger nose, and floppy
-          ears drawn as lobes over the head's sides, so they read as ears */}
-      <path d="M7 8.56A6.6 6.8 0 0 1 17 8.56M17.47 16.8A6.6 6.8 0 0 1 6.53 16.8" />
-      <path d="M7 8.56C5.6 7.9 4.1 9 3.6 11.2C3.1 13.6 3.1 16 4.3 17.6C5.2 18.7 6.4 18.2 6.53 16.8A6.6 6.8 0 0 1 7 8.56z" />
-      <path d="M17 8.56C18.4 7.9 19.9 9 20.4 11.2C20.9 13.6 20.9 16 19.7 17.6C18.8 18.7 17.6 18.2 17.47 16.8A6.6 6.8 0 0 0 17 8.56z" />
-      <ellipse cx="9.4" cy="13.2" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="14.6" cy="13.2" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="12" cy="15.9" rx="1.5" ry="1.1" fill="currentColor" stroke="none" />
+      {/* The third of the family: the same eyes, a bigger nose, and ears
+          hanging from the top corners as teardrops over the cheeks, widest
+          near the jaw. The face outline stops where the ears cover it */}
+      <path d="M7.6 8.48A6.3 6.6 0 0 1 16.4 8.48M16.32 18A6.3 6.6 0 0 1 7.68 18" />
+      <path d="M7.6 8.48C6.4 8.3 4.9 9.6 4 11.9C3.1 14.3 3.3 17.3 4.9 18.7C6.1 19.7 7.6 18.9 8.1 17.1C8.5 15.7 8.2 12.4 7.6 8.48z" />
+      <path d="M16.4 8.48C17.6 8.3 19.1 9.6 20 11.9C20.9 14.3 20.7 17.3 19.1 18.7C17.9 19.7 16.4 18.9 15.9 17.1C15.5 15.7 15.8 12.4 16.4 8.48z" />
+      <ellipse cx="10.1" cy="12.5" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="13.9" cy="12.5" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="15.4" rx="1.5" ry="1.1" fill="currentColor" stroke="none" />
     </>
   ),
   paw: (
