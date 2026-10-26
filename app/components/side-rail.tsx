@@ -4,12 +4,9 @@ import { groupPath } from "~/group-links";
 
 import Avatar from "./avatar";
 import Faces from "./faces";
-import { LoanList } from "./home";
-import type { HomeBook, Person } from "./home";
 
 // Beside a page's main column on wide screens: who you're following, then
-// your loans both ways. The same shape as the home page, mirrored. Hidden
-// on phones, where the column has the whole width.
+// your groups. Hidden on phones, where the column has the whole width.
 
 export interface Friend {
   id: string;
@@ -18,11 +15,7 @@ export interface Friend {
   profileEmoji: string | null;
 }
 
-type Loan = HomeBook & { owner?: Person | null; borrower?: Person | null };
-
 export interface SideRailProps {
-  // Left out on pages where the loans would be noise
-  loans?: { borrowed: Loan[]; lent: Loan[] };
   friends: Friend[];
   // The groups you're in, on pages about the people you know
   groups?: {
@@ -31,24 +24,17 @@ export interface SideRailProps {
     memberCount: number;
     faces: Friend[];
   }[];
-  // A page's own section, after the loans
+  // A page's own section, last
   children?: React.ReactNode;
 }
 
-// A glance, not the whole ledger: the home page has every loan
-const FEW = 4;
-
-export default function SideRail({ loans, friends, groups, children }: SideRailProps) {
+export default function SideRail({ friends, groups, children }: SideRailProps) {
   const heading = "text-lg font-semibold text-stone-900 dark:text-stone-100";
   const link =
     "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
-  const anyLoans = loans ? loans.borrowed.length + loans.lent.length > 0 : false;
-  const more = loans
-    ? Math.max(0, loans.borrowed.length - FEW) + Math.max(0, loans.lent.length - FEW)
-    : 0;
 
   return (
-    <aside className="hidden space-y-10 self-start lg:block">
+    <aside className="hidden space-y-10 self-start lg:sticky lg:top-24 lg:block">
       <section aria-labelledby="rail-friends">
         <div className="mb-3 flex items-baseline justify-between gap-3">
           <h2 id="rail-friends" className={heading}>
@@ -92,42 +78,6 @@ export default function SideRail({ loans, friends, groups, children }: SideRailP
 
       {groups ? <RailGroups groups={groups} /> : null}
 
-      {loans && anyLoans ? (
-        <section aria-labelledby="rail-loans">
-          <h2 id="rail-loans" className={`${heading} mb-3`}>
-            Loans
-          </h2>
-          <div className="space-y-6">
-            {loans.borrowed.length > 0 ? (
-              <LoanList
-                id="rail-borrowing"
-                title="Borrowing"
-                books={loans.borrowed
-                  .slice(0, FEW)
-                  .map((book) => ({ book, person: book.owner ?? null }))}
-                personLabel="From"
-                empty=""
-              />
-            ) : null}
-            {loans.lent.length > 0 ? (
-              <LoanList
-                id="rail-lent"
-                title="Lent out"
-                books={loans.lent
-                  .slice(0, FEW)
-                  .map((book) => ({ book, person: book.borrower ?? null }))}
-                personLabel="To"
-                empty=""
-              />
-            ) : null}
-          </div>
-          {more > 0 ? (
-            <Link to="/#loans" className={`mt-3 inline-block ${link}`}>
-              {more} more on your home page
-            </Link>
-          ) : null}
-        </section>
-      ) : null}
       {children}
     </aside>
   );
