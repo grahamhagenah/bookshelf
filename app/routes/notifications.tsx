@@ -278,7 +278,7 @@ interface ActivityNotification {
 // What someone wrote with a request or an answer, under the line about it
 function Quote({ text }: { text: string }) {
   return (
-    <span className="mt-1 block border-l-2 border-stone-200 dark:border-stone-700 pl-2.5 text-sm italic text-stone-600 dark:text-stone-300">
+    <span className="mt-1 block text-sm italic text-stone-600 dark:text-stone-300">
       “{text}”
     </span>
   );

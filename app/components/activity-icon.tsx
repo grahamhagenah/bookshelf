@@ -112,7 +112,9 @@ export default function ActivityIcon({
       className={`${box} flex-shrink-0 rounded-full flex items-center justify-center ${
         urgent
           ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900"
-          : "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400"
+          : // An edge of its own, so it holds up on a white card as well
+            // as over a picture's corner
+            "bg-stone-100 text-stone-600 ring-1 ring-inset ring-stone-300 dark:bg-stone-800 dark:text-stone-300 dark:ring-stone-600"
       }`}
     >
       <svg
