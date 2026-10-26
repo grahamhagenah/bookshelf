@@ -140,19 +140,6 @@ const ICON_PATHS = {
       </g>
     </>
   ),
-  owl: (
-    <>
-      {/* On the kitty's face, the same size: short tufts leaning out, big
-          ringed eyes with pupils, and a beak below them, each clear of the
-          others */}
-      <path d="M4.99 11.4L4.7 7.6Q4.5 5.6 6.2 6.7L8.6 8.3A8 6 0 0 1 15.4 8.3L17.8 6.7Q19.5 5.6 19.3 7.6L19.01 11.4A7.5 7 0 1 1 4.99 11.4z" />
-      <circle cx="8.9" cy="12.2" r="2" />
-      <circle cx="15.1" cy="12.2" r="2" />
-      <circle cx="8.9" cy="12.2" r=".9" fill="currentColor" stroke="none" />
-      <circle cx="15.1" cy="12.2" r=".9" fill="currentColor" stroke="none" />
-      <path d="M10.6 15.5Q12 14.9 13.4 15.5L12 18.2z" fill="currentColor" stroke="none" />
-    </>
-  ),
   fox: (
     <>
       {/* On the kitty's face: big pointed ears, oval eyes, a pointed chin and
@@ -387,7 +374,6 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "cat",
   "hare",
   "paw",
-  "owl",
   "frog",
   "octopus",
   "ghost",

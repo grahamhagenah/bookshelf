@@ -46,7 +46,7 @@ const VISITOR = {
 // to choose from. The visitor keeps the plain initials their name gives,
 // so choosing a picture is theirs to try.
 const PERSONAS = {
-  maya: { firstname: "Maya", surname: "Chen", profileEmoji: "owl:plum" },
+  maya: { firstname: "Maya", surname: "Chen", profileEmoji: "hare:plum" },
   sam: { firstname: "Sam", surname: "Okafor", profileEmoji: "planet:navy" },
   anika: { firstname: "Anika", surname: "Rao", profileEmoji: "star:oxblood" },
   // Theo has sent the visitor a friend request; Lena shows up as a suggestion
