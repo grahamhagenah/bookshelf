@@ -418,6 +418,8 @@ export const iconTone = (color: PlateColor | null) =>
 const SIZES = {
   xs: { box: "w-6 h-6 text-[10px]", icon: 15 },
   sm: { box: "w-8 h-8 text-xs", icon: 20 },
+  // A list beside other things, like the home page's friend activity
+  list: { box: "w-9 h-9 text-xs", icon: 23 },
   md: { box: "w-10 h-10 text-sm", icon: 25 },
   lg: { box: "w-16 h-16 text-xl", icon: 38 },
 };
