@@ -81,6 +81,19 @@ const ICON_PATHS = {
       <path d="M10 14c1.2-1 2.8-1 4 0M3 14l1-6M21 14l-1-6" />
     </>
   ),
+  watch: (
+    <>
+      {/* A retro digital watch: narrow straps, a wide case with buttons at
+          the sides, the strip above the screen and the time's colon */}
+      <path d="M8 6.5v-4h8v4M8 17.5v4h8v-4" />
+      <rect x="4.5" y="6.5" width="15" height="11" rx="2" />
+      <rect x="7.5" y="11" width="9" height="4" rx=".6" />
+      <path d="M9.5 8.8h5" />
+      <path d="M4.5 9.5h-1M4.5 14.5h-1M19.5 12h1" />
+      <circle cx="12" cy="12.4" r=".45" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="13.6" r=".45" fill="currentColor" stroke="none" />
+    </>
+  ),
   guy: (
     <>
       {/* Head and shoulders: short hair, swept across the forehead */}
