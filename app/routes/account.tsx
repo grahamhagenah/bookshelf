@@ -961,12 +961,14 @@ function IconPicker({
     icon ? (tone ? `${icon}:${tone}` : icon) : tone ? `${PLATE}${tone}` : "";
   return (
     <>
+      {/* On phones the six colors take the icon grid's six columns, so the
+          two line up; the label sits above them. From there, one row. */}
       <div
-        className="flex flex-wrap items-center gap-2.5 pt-1"
+        className="grid grid-cols-6 justify-items-center gap-y-2 pt-1 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5"
         role="group"
         aria-label="Color"
       >
-        <span className="mr-1 text-sm text-stone-500 dark:text-stone-400">
+        <span className="col-span-6 justify-self-start text-sm text-stone-500 dark:text-stone-400 sm:col-span-1 sm:mr-1">
           Color
         </span>
         {choices.map((choice) => (
