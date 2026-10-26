@@ -2092,7 +2092,10 @@ export default function BookDetailsPage() {
                       box.style.height = `${box.scrollHeight + box.offsetHeight - box.clientHeight}px`;
                     }}
                     maxLength={REQUEST_NOTE_MAX}
-                    placeholder={`A note for ${data.book.user?.firstname ?? "the owner"}: when, and for how long?`}
+                    // No name in the hint, so it stays on one line in the
+                    // narrow column whatever the owner is called; the label
+                    // names them
+                    placeholder="A note: when, and for how long?"
                     className="block max-h-40 w-full resize-none overflow-y-auto rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
                   />
                 </>
