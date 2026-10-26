@@ -390,7 +390,7 @@ const MEMBERS = {
   sam: "planet:navy",
   anika: "cat:oxblood",
   theo: "discoball:ochre",
-  noah: "cat:ink",
+  noah: "diamond:ink",
   lena: "frog:forest",
 } as const;
 

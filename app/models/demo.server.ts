@@ -123,7 +123,7 @@ const PERSONAS = {
   theo: { firstname: "Theo", surname: "Martin", profileEmoji: "discoball:ochre" },
   lena: { firstname: "Lena", surname: "Fischer", profileEmoji: "frog:forest" },
   // The visitor's housemate: one shared shelf, their own notes and friends
-  noah: { firstname: "Noah", surname: "Brennan", profileEmoji: "cat:ink" },
+  noah: { firstname: "Noah", surname: "Brennan", profileEmoji: "diamond:ink" },
 } as const;
 
 type PersonaKey = keyof typeof PERSONAS;
