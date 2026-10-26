@@ -5,19 +5,12 @@
 // picked earlier, falls back to initials.
 
 const ICON_PATHS = {
-  book: (
-    <>
-      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v14H6.5A2.5 2.5 0 0 0 4 19.5z" />
-      <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" />
-    </>
-  ),
   leaf: (
     <>
       <path d="M5 19c0-8.5 5.5-14 15-14 0 9.5-5.5 15-15 14z" />
       <path d="M5 19 14 10" />
     </>
   ),
-  bookmark: <path d="M7 3.5h10v17l-5-3.5-5 3.5z" />,
   moon: <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5z" />,
   sun: (
     <>
@@ -234,17 +227,6 @@ const ICON_PATHS = {
       <ellipse cx="12" cy="16" rx="1.5" ry="2" fill="currentColor" stroke="none" />
     </>
   ),
-  sheep: (
-    <>
-      {/* The sheep: a woolly crown of five bumps over the face, and two
-          lobed ears behind the head: drawn only where they show past it */}
-      <path d="M4.99 11.4C4.6 9.6 5.6 8 7.2 8.4C7.2 6.4 9 5.3 10.3 6.5C11 4.6 13 4.6 13.7 6.5C15 5.3 16.8 6.4 16.8 8.4C18.4 8 19.4 9.6 19.01 11.4A7.5 7 0 1 1 4.99 11.4z" />
-      <path d="M5.08 11.2C3 10.6 1.3 12.2 1.6 14.3C1.8 15.8 3.4 16.3 4.72 15.6M18.92 11.2C21 10.6 22.7 12.2 22.4 14.3C22.2 15.8 20.6 16.3 19.28 15.6" />
-      <ellipse cx="9.3" cy="13.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="14.7" cy="13.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="12" cy="16.2" rx="1" ry=".8" fill="currentColor" stroke="none" />
-    </>
-  ),
   ghost: (
     <>
       {/* At the family's size: a sheet as wide as the kitty's face, rounded
@@ -399,8 +381,6 @@ export type AvatarIcon = keyof typeof ICON_PATHS;
 // What the picker offers, in its order. The rest of ICON_PATHS is retired
 // for now: still drawn for anyone who chose one, no longer on offer.
 export const AVATAR_ICONS: AvatarIcon[] = [
-  "book",
-  "bookmark",
   "leaf",
   "flower",
   "moon",
@@ -412,7 +392,6 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "hare",
   "mouse",
   "koala",
-  "sheep",
   "paw",
   "frog",
   "octopus",
@@ -566,13 +545,15 @@ export const iconTone = (color: PlateColor | null) =>
     ? PLATE_COLORS[color]
     : "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200";
 
+// The picture fills about three quarters of its circle: the drawings are
+// round-ish and keep clear of the box's corners, so they can run big
 const SIZES = {
-  xs: { box: "w-6 h-6 text-[10px]", icon: 15 },
-  sm: { box: "w-8 h-8 text-xs", icon: 20 },
+  xs: { box: "w-6 h-6 text-[10px]", icon: 19 },
+  sm: { box: "w-8 h-8 text-xs", icon: 25 },
   // A list beside other things, like the home page's friend activity
-  list: { box: "w-9 h-9 text-xs", icon: 23 },
-  md: { box: "w-10 h-10 text-sm", icon: 25 },
-  lg: { box: "w-16 h-16 text-xl", icon: 38 },
+  list: { box: "w-9 h-9 text-xs", icon: 28 },
+  md: { box: "w-10 h-10 text-sm", icon: 31 },
+  lg: { box: "w-16 h-16 text-xl", icon: 50 },
 };
 
 export default function Avatar({
