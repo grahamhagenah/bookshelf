@@ -267,6 +267,47 @@ const ICON_PATHS = {
       <path d="M12 12v6.5a2 2 0 0 1-4 0M12 3v0" />
     </>
   ),
+  discoball: (
+    <>
+      {/* A disco ball: a ball on a thread, with a sparse grid of facets */}
+      <circle cx="12" cy="13.2" r="8" />
+      <path d="M12 5.2V2" />
+      <path d="M4.81 9.7h14.39M4.81 16.7h14.39M8.5 6.01v14.39M15.5 6.01v14.39" />
+    </>
+  ),
+  skull: (
+    <>
+      {/* A skull: the cranium narrowing to a jaw, two sockets, a nose and
+          two teeth */}
+      <path d="M4.5 11.5C4.5 6.5 7.9 3.5 12 3.5s7.5 3 7.5 8c0 3-1.3 4.9-3 5.8V21h-9v-3.7c-1.7-.9-3-2.8-3-5.8z" />
+      <ellipse cx="9" cy="11.6" rx="2" ry="2.2" fill="currentColor" stroke="none" />
+      <ellipse cx="15" cy="11.6" rx="2" ry="2.2" fill="currentColor" stroke="none" />
+      <path d="M11 15.6h2L12 14z" fill="currentColor" stroke="none" />
+      <path d="M10.5 18v3M13.5 18v3" />
+    </>
+  ),
+  eye: (
+    <>
+      {/* An eye: the almond, the iris and the pupil */}
+      <path d="M2.5 12C5 7 8.5 5 12 5s7 2 9.5 7c-2.5 5-6 7-9.5 7S5 17 2.5 12z" />
+      <circle cx="12" cy="12" r="3.5" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    </>
+  ),
+  pyramid: (
+    <>
+      {/* A pyramid: a triangle with one edge drawn, so it has two faces */}
+      <path d="M12 3.5L21.5 19.5H2.5z" />
+      <path d="M12 3.5L15.6 19.5" />
+    </>
+  ),
+  wine: (
+    <>
+      {/* A wine glass: a bowl with a flat rim, on a stem and a foot */}
+      <path d="M6.5 3h11v5c0 3.7-2.5 6.6-5.5 6.6S6.5 11.7 6.5 8z" />
+      <path d="M12 14.6V21M8 21h8" />
+    </>
+  ),
   anchor: (
     <>
       <circle cx="12" cy="5.5" r="2" />
@@ -405,6 +446,12 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "headphones",
   "bicycle",
   "umbrella",
+  "chef",
+  "wine",
+  "discoball",
+  "skull",
+  "eye",
+  "pyramid",
 ];
 
 export function isAvatarIcon(value: unknown): value is AvatarIcon {
