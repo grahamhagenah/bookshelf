@@ -199,7 +199,7 @@ function Welcome({
   const steps = [
     {
       title: `Start with ${BOOK_GOAL} books`,
-      text: "Take them from the nearest shelf: scan the barcodes with your phone, search by title, or import from Goodreads or StoryGraph.",
+      text: "Scan the barcodes on your nearest shelf, search by title, or import from Goodreads or StoryGraph.",
       done: bookCount >= BOOK_GOAL,
       doneText: `${bookCount} books on your shelf`,
       progress: bookCount > 0 && bookCount < BOOK_GOAL ? bookCount : null,

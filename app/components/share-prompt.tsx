@@ -22,7 +22,9 @@ export default function SharePrompt({ show }: { show: boolean }) {
   if (dismissing || fetcher.data?.dismissed || (!show && !url)) return null;
 
   return (
-    <div className="w-full bg-stone-50 dark:bg-stone-950/40 border-b border-stone-200 dark:border-stone-900 py-2 text-sm">
+    // A shade of its own in dark mode, so it doesn't run together with the
+    // confirm-email bar above it (bg-stone-50 turns stone-900 in dark mode)
+    <div className="w-full bg-[var(--color-stone-50)] dark:bg-stone-900/50 border-b border-stone-200 dark:border-stone-900 py-2 text-sm">
       <fetcher.Form
         method="post"
         action="/share-link"
