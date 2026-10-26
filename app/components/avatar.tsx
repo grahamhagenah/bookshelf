@@ -414,6 +414,71 @@ const ICON_PATHS = {
       <circle cx="12" cy="9.5" r="1.5" />
     </>
   ),
+  pumpkin: (
+    <>
+      {/* A jack-o'-lantern: a round pumpkin with a stem, two triangle eyes and
+          a grin */}
+      <path d="M12 7C8.4 5.8 4 8.2 4 13.8 4 18.3 7.4 21 12 21s8-2.7 8-7.2C20 8.2 15.6 5.8 12 7z" />
+      <path d="M12 7c0-1.6.5-2.8 1.8-3.6" />
+      <path d="M7.8 12.6 9.6 10l1.6 2.6zM12.8 12.6l1.6-2.6 1.8 2.6z" fill="currentColor" stroke="none" />
+      <path d="M7.6 15.2h8.8c-.7 2.1-2.4 3.3-4.4 3.3s-3.7-1.2-4.4-3.3z" fill="currentColor" stroke="none" />
+    </>
+  ),
+  alien: (
+    <>
+      {/* An alien: a head narrowing to the chin, two big slanted eyes, a
+          small mouth */}
+      <path d="M12 3.5c-4.4 0-7.5 3-7.5 7.2 0 4.6 3.8 9.8 7.5 9.8s7.5-5.2 7.5-9.8C19.5 6.5 16.4 3.5 12 3.5z" />
+      <ellipse cx="8.9" cy="11.4" rx="2.5" ry="1.45" transform="rotate(32 8.9 11.4)" fill="currentColor" stroke="none" />
+      <ellipse cx="15.1" cy="11.4" rx="2.5" ry="1.45" transform="rotate(-32 15.1 11.4)" fill="currentColor" stroke="none" />
+      <path d="M11 16.8h2" />
+    </>
+  ),
+  icecream: (
+    <>
+      {/* An ice cream cone: a scoop with a dripping edge on a waffle cone */}
+      <path d="M6.2 11C5.8 7 8.6 4 12 4s6.2 3 5.8 7c-1 .6-1.9.6-2.9 0s-1.9-.6-2.9 0-1.9.6-2.9 0-1.9-.6-2.9 0z" />
+      <path d="M7.4 12.4 12 21l4.6-8.6M9.4 14.4l4.4-2M10.8 17.3l3.2-1.5" />
+    </>
+  ),
+  vinyl: (
+    <>
+      {/* A vinyl record: the disc, its label and hole, and a shine */}
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="3" />
+      <circle cx="12" cy="12" r=".9" fill="currentColor" stroke="none" />
+      <path d="M12 5.8a6.2 6.2 0 0 1 6.2 6.2" />
+    </>
+  ),
+  rainbow: (
+    <>
+      {/* A rainbow: three arcs */}
+      <path d="M3 17.5a9 9 0 0 1 18 0M6 17.5a6 6 0 0 1 12 0M9 17.5a3 3 0 0 1 6 0" />
+    </>
+  ),
+  bolt: (
+    <>
+      {/* A lightning bolt */}
+      <path d="M13.5 2.5 5 13.5h6l-1.5 8 8.5-11h-6z" />
+    </>
+  ),
+  butterfly: (
+    <>
+      {/* A butterfly from above: two wings a side, a body and feelers */}
+      <path d="M12 11C10 6.5 6.5 4 4.3 4.8 2.6 5.4 3.2 9.6 6.5 11.3 8.3 12.2 10.4 12 12 11zM12 11c2-4.5 5.5-7 7.7-6.2 1.7.6 1.1 4.8-2.2 6.5-1.8.9-3.9.7-5.5-.3z" />
+      <path d="M12 12.4c-1.8.4-4.3 1.2-5.3 3.3-.9 1.9.6 3.6 2.4 3 1.7-.6 2.6-3.3 2.9-6.3zM12 12.4c1.8.4 4.3 1.2 5.3 3.3.9 1.9-.6 3.6-2.4 3-1.7-.6-2.6-3.3-2.9-6.3z" />
+      <path d="M12 8.6v10M12 8.6 10.6 5.8M12 8.6l1.4-2.8" />
+    </>
+  ),
+  controller: (
+    <>
+      {/* A game controller: the pad, a cross of buttons and two round ones */}
+      <path d="M7.5 8h9c2.6 0 4 2.2 4.4 5.2l.6 4c.3 2.2-1.9 3.4-3.4 1.8L16 16.8H8L5.9 19c-1.5 1.6-3.7.4-3.4-1.8l.6-4C3.5 10.2 4.9 8 7.5 8z" />
+      <path d="M7.5 11.2v3M6 12.7h3" />
+      <circle cx="15.7" cy="11.6" r=".85" fill="currentColor" stroke="none" />
+      <circle cx="17.4" cy="13.6" r=".85" fill="currentColor" stroke="none" />
+    </>
+  ),
   bicycle: (
     <>
       <circle cx="6" cy="16" r="3.5" />
@@ -519,6 +584,8 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "moon",
   "star",
   "snowflake",
+  "rainbow",
+  "bolt",
   "planet",
   // Creatures
   "cat",
@@ -528,12 +595,16 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "frog",
   "octopus",
   "bee",
+  "butterfly",
   "paw",
   // Spooky, and characters
   "ghost",
   "skull",
   "mask",
+  "pumpkin",
   "robot",
+  "alien",
+  "rocket",
   // To wear and to use
   "glasses",
   "crown",
@@ -544,11 +615,14 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   // Food and drink
   "wine",
   "cutlery",
+  "icecream",
   // Music and fun
   "music",
+  "vinyl",
   "headphones",
   "discoball",
   "cassette",
+  "controller",
   // Shapes and symbols
   "hearts",
   "diamond",
