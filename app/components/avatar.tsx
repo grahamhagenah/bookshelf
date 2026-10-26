@@ -115,7 +115,7 @@ const ICON_PATHS = {
       <ellipse cx="9.3" cy="13.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
       <ellipse cx="14.7" cy="13.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
       <ellipse cx="12" cy="15.7" rx="1.15" ry=".85" fill="currentColor" stroke="none" />
-      <path d="M6.51 15.57l-4.12-1.23M7.09 16.23l-4.12 1.23M17.49 15.57l4.12-1.23M16.91 16.23l4.12 1.23" />
+      <path d="M6.57 15.31l-4.25-0.67M7.13 16.38l-4.21 0.89M17.43 15.31l4.25-0.67M16.87 16.38l4.21 0.89" />
     </>
   ),
   paw: (
