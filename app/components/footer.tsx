@@ -51,6 +51,7 @@ export default function Footer() {
             <li><Link to="/pricing" className={linkClass}>Pricing</Link></li>
             <li><Link to="/lend-books-to-friends" className={linkClass}>Lending books</Link></li>
             <li><Link to="/goodreads-alternative" className={linkClass}>vs Goodreads</Link></li>
+            <li><Link to="/for-storygraph-readers" className={linkClass}>With StoryGraph</Link></li>
             <li>
               <Link to={`/feedback?from=${encodeURIComponent(pathname)}`} className={linkClass}>
                 Send feedback
