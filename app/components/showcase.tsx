@@ -386,10 +386,10 @@ export function ShowcaseFriends() {
 // that brings the next person in. Its people wear the icons the demo's
 // friends have picked, so they read as different people.
 const MEMBERS = {
-  maya: "hare:plum",
+  maya: "flower:plum",
   sam: "planet:navy",
-  anika: "star:oxblood",
-  theo: "mountain:ochre",
+  anika: "koala:oxblood",
+  theo: "discoball:ochre",
   noah: "cat:ink",
   lena: "frog:forest",
 } as const;

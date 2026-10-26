@@ -362,6 +362,17 @@ const ICON_PATHS = {
       <path d="M5.5 16.2h13" />
     </>
   ),
+  cassette: (
+    <>
+      {/* A cassette tape: two reels joined by the tape, and the notch for
+          the tape head along the bottom */}
+      <rect x="2.5" y="5" width="19" height="14" rx="1.8" />
+      <circle cx="8.5" cy="10.5" r="2.2" />
+      <circle cx="15.5" cy="10.5" r="2.2" />
+      <path d="M8.5 8.3h7M8.5 12.7h7" />
+      <path d="M7 19l1.4-3h7.2l1.4 3" />
+    </>
+  ),
   diamond: (
     <>
       {/* A cut diamond: the crown over the girdle, facets down to the point */}
@@ -524,7 +535,7 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "music",
   "headphones",
   "discoball",
-  "vhs",
+  "cassette",
   // Shapes and symbols
   "hearts",
   "diamond",
