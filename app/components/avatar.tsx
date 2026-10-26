@@ -133,9 +133,15 @@ const ICON_PATHS = {
   ),
   fish: (
     <>
-      <path d="M3 12c3-4.5 9-5.5 13 0-4 5.5-10 4.5-13 0z" />
-      <path d="M16 12l5-3.5v7z" />
-      <path d="M7.5 11h.01" />
+      {/* A salmon leaping up out of the water: a full body, forked tail,
+          a fin on its back, the gill and an eye, over a ripple */}
+      <g transform="translate(0 -1) rotate(-30 12 12)">
+        <path d="M6.5 11C9.5 7.6 15.5 6.8 19.4 9.4c.9.6 1.6 1.4 1.9 2.3-.9.8-2.3 1.4-3.9 1.6C13.5 14.6 9.5 14.2 6.5 13z" />
+        <path d="M6.5 11 2.6 7.6c-.2 1.8 0 3.3.9 4.4-.9 1.1-1.1 2.6-.9 4.4L6.5 13" />
+        <path d="M9.9 8.66C10.6 7 11.8 5.8 13.4 5.5c.1 1-.2 1.8-.8 2.45M16.6 8.7c.7 1.2.8 2.9.2 4.3" />
+        <circle cx="18.7" cy="10.6" r=".65" fill="currentColor" stroke="none" />
+      </g>
+      <path d="M13.5 21c1.1-.8 2.3-.8 3.4 0s2.3.8 3.4 0" />
     </>
   ),
   owl: (
