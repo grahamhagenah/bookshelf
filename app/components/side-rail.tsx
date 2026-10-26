@@ -24,17 +24,26 @@ export interface SideRailProps {
     memberCount: number;
     faces: Friend[];
   }[];
-  // A page's own section, last
+  // A page's own sections, last
   children?: React.ReactNode;
+  // Stays in view as the page scrolls; off for a rail taller than the
+  // screen, whose bottom would otherwise stay out of reach
+  sticky?: boolean;
 }
 
-export default function SideRail({ friends, groups, children }: SideRailProps) {
-  const heading = "text-lg font-semibold text-stone-900 dark:text-stone-100";
-  const link =
-    "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
+// A section's heading, and the link across from it
+export const railHeading = "text-lg font-semibold text-stone-900 dark:text-stone-100";
+export const railLink =
+  "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
+
+export default function SideRail({ friends, groups, children, sticky = true }: SideRailProps) {
+  const heading = railHeading;
+  const link = railLink;
 
   return (
-    <aside className="hidden space-y-10 self-start lg:sticky lg:top-24 lg:block">
+    <aside
+      className={`hidden space-y-10 self-start lg:block ${sticky ? "lg:sticky lg:top-24" : ""}`}
+    >
       <section aria-labelledby="rail-friends">
         <div className="mb-3 flex items-baseline justify-between gap-3">
           <h2 id="rail-friends" className={heading}>
@@ -88,9 +97,8 @@ type RailGroup = NonNullable<SideRailProps["groups"]>[number];
 // The groups you're in, each straight to its page: beside the feed, and
 // beside your friends on the Friends page. With none, what they're for.
 export function RailGroups({ groups, limit = 5 }: { groups: RailGroup[]; limit?: number }) {
-  const heading = "text-lg font-semibold text-stone-900 dark:text-stone-100";
-  const link =
-    "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
+  const heading = railHeading;
+  const link = railLink;
   return (
     <section aria-labelledby="rail-groups">
       <div className="mb-3 flex items-baseline justify-between gap-3">

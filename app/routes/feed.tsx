@@ -6,6 +6,7 @@ import type {
 import { json } from "@remix-run/node";
 import { Link, useLoaderData, useNavigation } from "@remix-run/react";
 
+import { RailLoved, RailPeople, RailWanted } from "~/components/feed-rail";
 import { FeedPost, NotePrompt } from "~/components/friend-activity";
 import SideRail from "~/components/side-rail";
 import { sendBookRequestEmail } from "~/email.server";
@@ -16,6 +17,11 @@ import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import { getMyGroups } from "~/models/group.server";
 import { leaveHold, placeHold } from "~/models/hold.server";
 import { canLeaveNote, saveReaderNote } from "~/models/note.server";
+import {
+  getFriendsOfFriends,
+  getLovedByFriends,
+  getWantedAtFriends,
+} from "~/models/rail.server";
 import {
   createBookRequestNotification,
   createReaderNoteNotification,
@@ -51,7 +57,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     MOST,
     Math.max(PAGE, Number.isFinite(asked) ? Math.floor(asked) : PAGE),
   );
-  const [user, activity, prompts, groups] = await Promise.all([
+  const [user, activity, prompts, groups, wanted, loved, people] = await Promise.all([
     getUserById(userId),
     // One more than shown, to know whether there's anything older
     getFriendActivity(userId, {
@@ -60,8 +66,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       withOwnNotes: true,
     }),
     getNotePrompts(userId),
-    // For the rail beside the feed: the groups you're in
+    // For the rail beside the feed: the groups you're in, books you want
+    // that a friend has, what friends have loved, and their friends
     getMyGroups(userId),
+    getWantedAtFriends(userId),
+    getLovedByFriends(userId),
+    getFriendsOfFriends(userId),
   ]);
   const friends =
     user?.following.map(({ id, firstname, surname, profileEmoji }) => ({
@@ -79,6 +89,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     friends,
     groups,
     prompts,
+    wanted,
+    loved,
+    people,
   });
 };
 
@@ -209,6 +222,9 @@ export default function Feed() {
     friends,
     groups,
     prompts,
+    wanted,
+    loved,
+    people,
   } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const loadingOlder =
@@ -273,7 +289,11 @@ export default function Feed() {
           </div>
         )}
       </div>
-      <SideRail friends={friends} groups={groups} />
+      <SideRail friends={friends} groups={groups} sticky={false}>
+        <RailWanted books={wanted} />
+        <RailLoved books={loved} />
+        <RailPeople people={people} />
+      </SideRail>
     </main>
   );
 }

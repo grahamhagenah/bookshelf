@@ -846,6 +846,14 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       borrowedAt: ago(70 * day),
       returnedAt: ago(48 * day),
     },
+    // Lena isn't the visitor's friend, so Anika's note on this shows a
+    // lender they can ask to be friends with
+    {
+      title: "Persuasion",
+      borrower: "anika",
+      borrowedAt: ago(40 * day),
+      returnedAt: ago(12 * day),
+    },
     {
       title: "Circe",
       borrower: "maya",
@@ -1199,6 +1207,13 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       loved: true,
       body: "Bleak and beautiful. I read it in one sitting and then sat there for a while.",
       at: ago(9 * day),
+    },
+    {
+      title: "Persuasion",
+      by: "anika",
+      loved: true,
+      body: "Lena said it was the one Austen to start with. She was right.",
+      at: ago(10.5 * day),
     },
     {
       title: "Parable of the Talents",

@@ -329,3 +329,38 @@ test("a friend hidden from your feed drops out of it, and comes back when shown"
   await setHiddenFromFeed(me.id, loud.id, false);
   expect((await getFriendActivity(me.id)).map((item) => item.friend.id).sort()).toEqual([loud.id, quiet.id].sort());
 });
+
+test("a note on a borrowed book says whose copy it was", async () => {
+  const { me, friend, stranger } = await setup();
+  const hers = await makeBook(friend.id, "Circe");
+  const mine = await makeBook(me.id, "Dune");
+  const theirs = await makeBook(stranger.id, "Persuasion");
+  await saveReaderNote(friend.id, hers.id, { body: "Mine." });
+  await saveReaderNote(friend.id, mine.id, { body: "Yours." });
+  await saveReaderNote(friend.id, theirs.id, { body: "Theirs." });
+
+  const from = Object.fromEntries(
+    (await getFriendActivity(me.id)).flatMap((item) =>
+      item.kind === "note" ? [[item.book.title, item.from]] : [],
+    ),
+  );
+  expect(from.Circe).toBeNull();
+  expect(from.Dune).toMatchObject({ id: me.id, relation: "you", canAsk: false });
+  expect(from.Persuasion).toMatchObject({
+    id: stranger.id,
+    name: "Stranger Reader",
+    relation: "other",
+    canAsk: true,
+    asked: false,
+  });
+});
+
+test("a lender who can't be found is named by first name and can't be asked", async () => {
+  const { me, friend, stranger } = await setup();
+  await prisma.user.update({ where: { id: stranger.id }, data: { discoverable: false } });
+  const theirs = await makeBook(stranger.id, "Persuasion");
+  await saveReaderNote(friend.id, theirs.id, { loved: true });
+
+  const [item] = await getFriendActivity(me.id);
+  expect(item.kind === "loved" && item.from).toMatchObject({ name: "Stranger", canAsk: false });
+});

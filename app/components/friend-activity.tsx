@@ -2,7 +2,7 @@ import type { SerializeFrom } from "@remix-run/node";
 import { Link, useFetcher } from "@remix-run/react";
 import { useState } from "react";
 
-import type { FriendActivity, getNotePrompts } from "~/models/activity.server";
+import type { FriendActivity, getNotePrompts, Lender } from "~/models/activity.server";
 
 import Avatar from "./avatar";
 import BookCover from "./book-cover";
@@ -278,48 +278,60 @@ function BookTile({ book }: { book: FeedBook }) {
 }
 
 // One book beside its details. Says whose copy it is when it isn't the
-// friend's own.
+// friend's own, and who lent it to them when they borrowed it. The title's
+// link covers the card, with the lender's name over it as its own link.
 function BookCard({
   book,
   friendId,
   userId,
+  from = null,
 }: {
   book: FeedBook;
   friendId: string;
   userId: string;
+  from?: SerializeFrom<Lender> | null;
 }) {
-  const whose =
-    book.owner.id === friendId
-      ? null
-      : book.owner.id === userId
-        ? "Your copy · "
-        : `${book.owner.firstname}'s copy · `;
+  const [asking, setAsking] = useState(false);
+  const whose = from ? (
+    <>
+      Borrowed from{" "}
+      <LenderName from={from} asking={asking} onAsk={() => setAsking((was) => !was)} />
+      {" · "}
+    </>
+  ) : book.owner.id === friendId ? null : book.owner.id === userId ? (
+    "Your copy · "
+  ) : (
+    `${book.owner.firstname}'s copy · `
+  );
   return (
-    <Link
-      to={`/books/${book.id}`}
-      className="group -mx-2 flex items-center gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
-    >
-      <FeedCover
-        book={book}
-        className="h-[102px] w-[68px] transition-opacity group-hover:opacity-90"
-      />
-      <span className="min-w-0">
-        <span className="block font-medium leading-snug text-stone-900 dark:text-stone-100">
-          {book.title}
+    <div className="group relative -mx-2 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors">
+      <div className="flex items-center gap-3">
+        <FeedCover
+          book={book}
+          className="h-[102px] w-[68px] transition-opacity group-hover:opacity-90"
+        />
+        <span className="min-w-0">
+          <Link
+            to={`/books/${book.id}`}
+            className="block font-medium leading-snug text-stone-900 dark:text-stone-100 after:absolute after:inset-0 after:content-['']"
+          >
+            {book.title}
+          </Link>
+          <span className="mt-0.5 block text-sm text-stone-500 dark:text-stone-400">
+            {book.author}
+          </span>
+          <span className="mt-2 block text-sm text-stone-500 dark:text-stone-400">
+            {whose}
+            {book.available
+              ? "Available"
+              : book.notLending
+                ? "Not lending"
+                : "Lent out"}
+          </span>
         </span>
-        <span className="mt-0.5 block text-sm text-stone-500 dark:text-stone-400">
-          {book.author}
-        </span>
-        <span className="mt-2 block text-sm text-stone-500 dark:text-stone-400">
-          {whose}
-          {book.available
-            ? "Available"
-            : book.notLending
-              ? "Not lending"
-              : "Lent out"}
-        </span>
-      </span>
-    </Link>
+      </div>
+      {asking && from ? <FriendPrompt from={from} /> : null}
+    </div>
   );
 }
 
@@ -613,26 +625,28 @@ export function FeedPost({
           icon={item.friend.profileEmoji}
           size="md"
         />
-        <p className="min-w-0 leading-snug text-stone-600 dark:text-stone-300">
-          {name}{" "}
-          <KeepWithLast
-            text={did}
-            after={
-              (item.kind === "note" || item.kind === "elsewhere") &&
-              item.loved ? (
-                <SmallHeart size={13} />
-              ) : null
-            }
-          />
-          <span className="text-stone-400 dark:text-stone-500"> · </span>
-          <time
-            dateTime={item.at}
-            title={new Date(item.at).toLocaleString()}
-            className="text-sm text-stone-400 dark:text-stone-500"
-          >
-            {ago(item.at)}
-          </time>
-        </p>
+        <div className="min-w-0 flex-1">
+          <p className="leading-snug text-stone-600 dark:text-stone-300">
+            {name}{" "}
+            <KeepWithLast
+              text={did}
+              after={
+                (item.kind === "note" || item.kind === "elsewhere") &&
+                item.loved ? (
+                  <SmallHeart size={13} />
+                ) : null
+              }
+            />
+            <span className="text-stone-400 dark:text-stone-500"> · </span>
+            <time
+              dateTime={item.at}
+              title={new Date(item.at).toLocaleString()}
+              className="text-sm text-stone-400 dark:text-stone-500"
+            >
+              {ago(item.at)}
+            </time>
+          </p>
+        </div>
       </header>
 
       {(item.kind === "note" || item.kind === "elsewhere") && item.body ? (
@@ -666,6 +680,7 @@ export function FeedPost({
               book={books[0]}
               friendId={item.friend.id}
               userId={userId}
+              from={item.kind === "loved" || item.kind === "note" ? item.from : null}
             />
           </div>
           <Actions
@@ -676,6 +691,67 @@ export function FeedPost({
         </>
       )}
     </article>
+  );
+}
+
+// Whose copy a friend borrowed. A friend's name opens their shelf. Anyone
+// else's shelf is closed to you, so their name offers a friend request
+// instead, when they can be found. Over the card's own link.
+function LenderName({
+  from,
+  asking,
+  onAsk,
+}: {
+  from: SerializeFrom<Lender>;
+  asking: boolean;
+  onAsk: () => void;
+}) {
+  const nameClass =
+    "relative z-10 font-medium text-stone-700 dark:text-stone-200 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline";
+  if (from.relation === "you") return <>you</>;
+  if (from.relation === "friend") {
+    return (
+      <Link to={`/friend/${from.id}`} className={nameClass}>
+        {from.name}
+      </Link>
+    );
+  }
+  if (!from.canAsk) return <>{from.name}</>;
+  return (
+    <button type="button" aria-expanded={asking} onClick={onAsk} className={nameClass}>
+      {from.name}
+    </button>
+  );
+}
+
+// Asking a lender you don't know yet to be friends, under their book
+function FriendPrompt({ from }: { from: SerializeFrom<Lender> }) {
+  const fetcher = useFetcher();
+  const first = from.name.split(" ")[0];
+  const sent = from.asked || fetcher.state !== "idle" || fetcher.data !== undefined;
+  // Once they're a friend, their name is a link to their shelf instead
+  if (from.relation !== "other") return null;
+  return (
+    <div className="relative z-10 mt-2 flex items-center gap-3 rounded-md bg-stone-100 dark:bg-stone-800 px-3 py-2 text-sm text-stone-600 dark:text-stone-300">
+      <p className="min-w-0 flex-1 text-pretty">
+        {from.asked && fetcher.data === undefined
+          ? `There's a friend request waiting between you and ${first}.`
+          : sent
+            ? `Friend request sent. Once ${first} says yes, you'll see their shelf.`
+            : `You and ${first} aren't friends yet. Add them to see their shelf.`}
+      </p>
+      {!sent ? (
+        <button
+          type="button"
+          onClick={() =>
+            fetcher.submit({ friendId: from.id }, { method: "post", action: "/friends/add" })
+          }
+          className="flex-shrink-0 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-950 px-2.5 py-1 text-xs text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors"
+        >
+          Add friend
+        </button>
+      ) : null}
+    </div>
   );
 }
 

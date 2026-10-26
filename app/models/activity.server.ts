@@ -62,6 +62,8 @@ export type FriendActivity =
       book: FeedBook;
       loved: boolean;
       body: string | null;
+      // Whose copy they read, when they borrowed it
+      from: Lender | null;
     }
   | {
       // A note on a book read somewhere else: no copy to borrow from
@@ -85,6 +87,18 @@ export type FriendActivity =
         }[];
       };
     };
+
+// The owner of a book a friend borrowed, as the person looking knows them:
+// you, a friend of yours, or someone else. Someone else is named in full,
+// and can be asked to be friends, only if they've chosen to be findable.
+export interface Lender {
+  id: string;
+  name: string;
+  relation: "you" | "friend" | "other";
+  canAsk: boolean;
+  // A friend request between you is already waiting
+  asked: boolean;
+}
 
 const person = {
   select: { id: true, firstname: true, surname: true, profileEmoji: true },
@@ -364,6 +378,7 @@ export async function getFriendActivity(
     book: feedBook(note.book),
     loved: note.loved,
     body: note.body,
+    from: null,
   }));
 
   const readElsewhere: FriendActivity[] = elsewhere.map((note) => ({
@@ -386,7 +401,66 @@ export async function getFriendActivity(
     .sort((a, b) => b.at.getTime() - a.at.getTime())
     .slice(0, limit);
   await enrich(feed, userId, friendIds);
+  await addLenders(feed, userId, friendIds);
   return feed;
+}
+
+// Who lent each book a friend loved or wrote about: its owner, when that's
+// neither them nor someone they share a shelf with
+async function addLenders(
+  items: FriendActivity[],
+  userId: User["id"],
+  friendIds: string[],
+) {
+  const reactions = items.filter(
+    (item): item is Extract<FriendActivity, { kind: "loved" | "note" }> =>
+      item.kind === "loved" || item.kind === "note",
+  );
+  if (reactions.length === 0) return;
+  const ids = [...new Set(reactions.flatMap((item) => [item.friend.id, item.book.owner.id]))];
+  const [people, me, requests] = await Promise.all([
+    prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        firstname: true,
+        surname: true,
+        householdId: true,
+        discoverable: true,
+        demoGroup: true,
+      },
+    }),
+    prisma.user.findUnique({ where: { id: userId }, select: { demoGroup: true } }),
+    prisma.notification.findMany({
+      where: {
+        type: "FRIEND_REQUEST",
+        actionTaken: null,
+        OR: [
+          { senderId: userId, receiverId: { in: ids } },
+          { receiverId: userId, senderId: { in: ids } },
+        ],
+      },
+      select: { senderId: true, receiverId: true },
+    }),
+  ]);
+  const byId = new Map(people.map((p) => [p.id, p]));
+  const asked = new Set(requests.flatMap((r) => [r.senderId, r.receiverId]));
+  for (const item of reactions) {
+    const owner = byId.get(item.book.owner.id);
+    const reader = byId.get(item.friend.id);
+    if (!owner || !reader || owner.id === reader.id) continue;
+    if (owner.householdId && owner.householdId === reader.householdId) continue;
+    const relation =
+      owner.id === userId ? "you" : friendIds.includes(owner.id) ? "friend" : "other";
+    const known = relation !== "other" || owner.discoverable;
+    item.from = {
+      id: owner.id,
+      name: known ? `${owner.firstname} ${owner.surname}` : owner.firstname,
+      relation,
+      canAsk: relation === "other" && owner.discoverable && owner.demoGroup === me?.demoGroup,
+      asked: asked.has(owner.id),
+    };
+  }
 }
 
 // Books you've borrowed, now or lately, that you haven't written about:
