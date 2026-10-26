@@ -46,14 +46,20 @@ export default function BookCover({
   // Small corners: scans often carry a thin border, and tight corners keep
   // it reading as part of the cover rather than a clipped edge
   return (
-    <span className={`relative block overflow-hidden rounded-xs ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}>
+    // The name is on the box, not the picture: a picture with alt text that
+    // fails shows that text and a "?" until the failure is noticed, where
+    // one with an empty alt shows nothing over the placeholder
+    <span
+      className={`relative block overflow-hidden rounded-xs ring-1 ring-stone-900/5 dark:ring-white/10 ${className}`}
+      {...(alt ? { role: "img", "aria-label": alt } : {})}
+    >
       {state !== "shown" ? <CoverPlaceholder title={title} author={author} compact={compact} className="absolute inset-0" /> : null}
       {source && state !== "failed" ? (
         <img
           src={source}
           srcSet={srcSet}
           sizes={srcSet ? sizes : undefined}
-          alt={alt}
+          alt=""
           loading={eager ? "eager" : "lazy"}
           decoding="async"
           // Visible from the first paint, over the placeholder
