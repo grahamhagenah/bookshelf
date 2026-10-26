@@ -314,19 +314,6 @@ const ICON_PATHS = {
       <path d="M9 16.6h6" />
     </>
   ),
-  knife: (
-    <>
-      {/* A kitchen knife, the horror kind: a big curved blade with a bevel
-          line, a short handle with two rivets, set on a diagonal */}
-      <g transform="rotate(-40 12 12)">
-        <path d="M9 15V5.5C9 4 9.5 3 10.3 2.3C14 4.8 16 8.5 16 12.5V15z" />
-        <path d="M10.5 4.6C12.4 6.8 13.2 9.3 13.2 12.4" />
-        <path d="M9.7 15v5.3a1.2 1.2 0 0 0 1.2 1.2h2.2a1.2 1.2 0 0 0 1.2-1.2V15" />
-        <circle cx="12" cy="17.3" r=".6" fill="currentColor" stroke="none" />
-        <circle cx="12" cy="19.5" r=".6" fill="currentColor" stroke="none" />
-      </g>
-    </>
-  ),
   mask: (
     <>
       {/* A hockey mask: a tall oval with two eye slits and four vent holes */}
@@ -345,40 +332,12 @@ const ICON_PATHS = {
       <circle cx="12" cy="18" r=".65" fill="currentColor" stroke="none" />
     </>
   ),
-  swords: (
-    <>
-      {/* Two swords crossed: each a single-line blade, a crossguard, a grip
-          and a pommel, on the two diagonals */}
-      <g transform="rotate(45 12 12)">
-        <path d="M12 2.4V14.2M8.4 14.9h7.2M12 14.9v4.8" />
-        <circle cx="12" cy="20.9" r="1" fill="currentColor" stroke="none" />
-      </g>
-      <g transform="rotate(-45 12 12)">
-        <path d="M12 2.4V14.2M8.4 14.9h7.2M12 14.9v4.8" />
-        <circle cx="12" cy="20.9" r="1" fill="currentColor" stroke="none" />
-      </g>
-    </>
-  ),
   hearts: (
     <>
       {/* Two hearts of one size, one upper left behind one lower right: the
           back one is drawn only where the front one doesn't cover it */}
       <path d="M15.4 19.97C11.9 17.17 9.45 14.93 9.45 12.06C9.45 10.1 10.92 8.63 12.74 8.63C13.86 8.63 14.84 9.19 15.4 10.03C15.96 9.19 16.94 8.63 18.06 8.63C19.88 8.63 21.35 10.1 21.35 12.06C21.35 14.93 18.9 17.17 15.4 19.97z" />
       <path d="M8.97 15.07L8.6 15.37L8.23 15.07L7.87 14.78L7.51 14.49L7.17 14.2L6.83 13.92L6.51 13.64L6.19 13.36L5.89 13.08L5.6 12.8L5.32 12.53L5.05 12.26L4.79 11.98L4.54 11.71L4.31 11.44L4.09 11.17L3.89 10.9L3.7 10.62L3.52 10.35L3.36 10.07L3.22 9.79L3.09 9.51L2.97 9.23L2.88 8.94L2.8 8.65L2.73 8.36L2.69 8.07L2.66 7.77L2.65 7.46L2.66 7.25L2.67 7.05L2.7 6.85L2.74 6.65L2.78 6.46L2.84 6.28L2.91 6.1L2.98 5.92L3.07 5.75L3.16 5.59L3.26 5.44L3.37 5.29L3.49 5.14L3.61 5.01L3.74 4.88L3.88 4.76L4.02 4.65L4.17 4.55L4.33 4.45L4.49 4.37L4.66 4.29L4.83 4.22L5 4.17L5.18 4.12L5.37 4.08L5.56 4.05L5.75 4.04L5.94 4.03L6.06 4.03L6.18 4.04L6.29 4.05L6.41 4.06L6.53 4.08L6.64 4.1L6.75 4.13L6.86 4.16L6.97 4.19L7.07 4.23L7.18 4.27L7.28 4.32L7.38 4.36L7.48 4.41L7.58 4.47L7.67 4.53L7.76 4.59L7.85 4.65L7.94 4.72L8.02 4.79L8.11 4.86L8.18 4.93L8.26 5.01L8.34 5.09L8.41 5.17L8.47 5.25L8.54 5.34L8.6 5.43L8.66 5.34L8.73 5.25L8.79 5.17L8.86 5.09L8.94 5.01L9.02 4.93L9.09 4.86L9.18 4.79L9.26 4.72L9.35 4.65L9.44 4.59L9.53 4.53L9.62 4.47L9.72 4.41L9.82 4.36L9.92 4.32L10.02 4.27L10.13 4.23L10.23 4.19L10.34 4.16L10.45 4.13L10.56 4.1L10.67 4.08L10.79 4.06L10.91 4.05L11.02 4.04L11.14 4.03L11.26 4.03L11.45 4.04L11.64 4.05L11.83 4.08L12.02 4.12L12.2 4.17L12.37 4.22L12.54 4.29L12.71 4.37L12.87 4.45L13.03 4.55L13.18 4.65L13.32 4.76L13.46 4.88L13.59 5.01L13.71 5.14L13.83 5.29L13.94 5.44L14.04 5.59L14.13 5.75L14.22 5.92L14.29 6.1L14.36 6.28L14.42 6.46L14.46 6.65L14.5 6.85L14.53 7.05L14.54 7.25L14.55 7.46L14.54 7.77L14.51 8.07" />
-    </>
-  ),
-  dice: (
-    <>
-      {/* A die in three dimensions: a cube seen from a corner, with one pip
-          on top, two on the left face and three on the right */}
-      <path d="M12 3.5L20 8v9l-8 4.5L4 17V8z" />
-      <path d="M4 8l8 4.5 8-4.5M12 12.5v9" />
-      <circle cx="12" cy="8" r="1.05" fill="currentColor" stroke="none" />
-      <circle cx="6" cy="11.4" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="10" cy="18.1" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="13.6" cy="13.4" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="16" cy="14.75" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="18.4" cy="16.1" r="0.9" fill="currentColor" stroke="none" />
     </>
   ),
   cutlery: (
@@ -397,6 +356,23 @@ const ICON_PATHS = {
       <circle cx="16" cy="11" r="2.2" />
       <path d="M8 8.8h8M8 13.2h8" />
       <path d="M5.5 16.2h13" />
+    </>
+  ),
+  duck: (
+    <>
+      {/* A rubber duck, side on: a round head with an eye and a beak, a plump
+          body, and a tail flicking up */}
+      <circle cx="8.6" cy="8.4" r="3.6" />
+      <path d="M5.3 9.3L2.5 10.4l2.8 1.1" />
+      <circle cx="9.7" cy="7.6" r=".8" fill="currentColor" stroke="none" />
+      <path d="M6.4 11.4C4.6 12.4 4 14.3 4 16.2c0 2.6 3.7 4.3 8.5 4.3 4.6 0 8.5-1.7 8.5-4.3 0-1.4-1-2.5-2.5-3.1L21.6 9.5c-2.4 1-5.6 1.7-9.7 1.6" />
+    </>
+  ),
+  diamond: (
+    <>
+      {/* A cut diamond: the crown over the girdle, facets down to the point */}
+      <path d="M6 4h12l4.5 5.5L12 21L1.5 9.5z" />
+      <path d="M1.5 9.5h21M6 4l3.2 5.5L12 4l2.8 5.5L18 4M9.2 9.5L12 21l2.8-11.5" />
     </>
   ),
   wine: (
@@ -545,13 +521,14 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "eye",
   "pyramid",
   "robot",
-  "knife",
   "mask",
-  "swords",
   "hearts",
-  "dice",
   "cutlery",
   "vhs",
+  "duck",
+  "diamond",
+  "bee",
+  "snowflake",
 ];
 
 export function isAvatarIcon(value: unknown): value is AvatarIcon {
