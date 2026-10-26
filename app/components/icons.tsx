@@ -103,6 +103,16 @@ export function GroupsIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
+// Two overlapping circles: what two people have in common
+export function CommonIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="12" r="6"/>
+      <circle cx="15" cy="12" r="6"/>
+    </svg>
+  );
+}
+
 // A speech bubble with a line or two in it: the feed, which is mostly
 // what friends have said about books. Lucide's bubble, so it sits evenly
 // beside search and notifications (2px there); 1.5px beside the book

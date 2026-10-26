@@ -123,3 +123,24 @@ test("invite links don't work on yourself, across the demo boundary, or once mad
   expect(await acceptFriendInvite(demo.id, token)).toEqual({ ok: false, reason: "demo-boundary" });
   expect(await acceptFriendInvite(me.id, "not-a-token")).toEqual({ ok: false, reason: "no-such-invite" });
 });
+
+test("a friend's card names the books you both have, any edition, once each", async () => {
+  const me = await makeUser("Me");
+  const maya = await makeUser("Maya");
+  await createFriendship(me.id, maya.id);
+  // My paperback and their two copies, matched by work
+  const mine = await makeBook(me.id, "Piranesi");
+  await prisma.book.update({ where: { id: mine.id }, data: { openLibraryKey: "/works/OL1W" } });
+  for (const title of ["Piranesi (Hardcover)", "Piranesi"]) {
+    const theirs = await makeBook(maya.id, title);
+    await prisma.book.update({ where: { id: theirs.id }, data: { openLibraryKey: "/works/OL1W" } });
+  }
+  // Same title, no keys: still the same book
+  await makeBook(me.id, "Middlemarch");
+  await makeBook(maya.id, "middlemarch");
+  // Only theirs
+  await makeBook(maya.id, "Dune");
+
+  const [card] = await getFriendCards(me.id);
+  expect(card.inCommon.map((book) => book.title).sort()).toEqual(["Piranesi", "middlemarch"].sort());
+});

@@ -15,6 +15,7 @@ import {
   BookmarkIcon,
   BorrowedIcon,
   ClockIcon,
+  CommonIcon,
   LentIcon,
   SearchIcon,
 } from "~/components/icons";
@@ -437,6 +438,14 @@ function FindByEmail({ inviteUrl }: { inviteUrl: string }) {
 }
 
 // One friend: who they are, a peek at their shelf, what's between you
+// "Piranesi", "Piranesi and Dune", "Piranesi, Dune and Middlemarch",
+// "Piranesi, Dune and 3 more"
+function listTitles(titles: string[]) {
+  if (titles.length <= 1) return titles[0] ?? "";
+  if (titles.length <= 3) return `${titles.slice(0, -1).join(", ")} and ${titles[titles.length - 1]}`;
+  return `${titles.slice(0, 2).join(", ")} and ${titles.length - 2} more`;
+}
+
 function FriendCard({ friend }: { friend: Friend }) {
   const fetcher = useFetcher();
   const removing = fetcher.state !== "idle";
@@ -505,6 +514,14 @@ function FriendCard({ friend }: { friend: Friend }) {
             ? `${plural(friend.bookCount, "book")}, ${friend.availableCount} on the shelf now`
             : "No books on their shelf yet"}
         </li>
+        {friend.inCommon.length ? (
+          <li className="flex items-center gap-2 min-w-0">
+            <CommonIcon size={14} />
+            <span className="truncate" title={friend.inCommon.map((book) => book.title).join(", ")}>
+              {friend.inCommon.length} in common: {listTitles(friend.inCommon.map((book) => book.title))}
+            </span>
+          </li>
+        ) : null}
         {friend.hasOfMine ? (
           <li className="flex items-center gap-2">
             <LentIcon size={14} />
