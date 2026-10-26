@@ -118,6 +118,18 @@ const ICON_PATHS = {
       <path d="M6.51 14.9l-4.25-0.67M7.53 17.1l-4.21 0.89M17.49 14.9l4.25-0.67M16.47 17.1l4.21 0.89" />
     </>
   ),
+  dog: (
+    <>
+      {/* The third of the family: the same eyes, a bigger nose, and floppy
+          ears drawn as lobes over the head's sides, so they read as ears */}
+      <path d="M7 8.56A6.6 6.8 0 0 1 17 8.56M17.47 16.8A6.6 6.8 0 0 1 6.53 16.8" />
+      <path d="M7 8.56C5.6 7.9 4.1 9 3.6 11.2C3.1 13.6 3.1 16 4.3 17.6C5.2 18.7 6.4 18.2 6.53 16.8A6.6 6.8 0 0 1 7 8.56z" />
+      <path d="M17 8.56C18.4 7.9 19.9 9 20.4 11.2C20.9 13.6 20.9 16 19.7 17.6C18.8 18.7 17.6 18.2 17.47 16.8A6.6 6.8 0 0 0 17 8.56z" />
+      <ellipse cx="9.4" cy="13.2" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="14.6" cy="13.2" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="15.9" rx="1.5" ry="1.1" fill="currentColor" stroke="none" />
+    </>
+  ),
   paw: (
     <>
       {/* Four toes on an even arc over the pad, the outer two turned out */}
@@ -213,13 +225,13 @@ const ICON_PATHS = {
   ),
   hare: (
     <>
-      {/* The kitty's cousin, on the same face: oval eyes, a button nose and
-          whiskers, with two tall ears drawn into the outline */}
-      <path d="M7.6 9.19C6.9 6.4 7.2 2.2 9.1 1.9 10.8 1.6 11.2 5.3 10.6 8.29A8 6 0 0 1 13.4 8.29C12.8 5.3 13.2 1.6 14.9 1.9 16.8 2.2 17.1 6.4 16.4 9.19A8 6 0 1 1 7.6 9.19z" />
-      <ellipse cx="9" cy="13.9" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
-      <ellipse cx="15" cy="13.9" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
-      <ellipse cx="12" cy="16" rx=".95" ry=".7" fill="currentColor" stroke="none" />
-      <path d="M6.3 14.2 1.8 13.5M6.3 16.2 2 17.1M17.7 14.2l4.5-.7M17.7 16.2l4.3.9" />
+      {/* The kitty's cousin on the very same face: her eyes, nose and
+          whiskers, with two tall rounded ears reaching the top of the box */}
+      <path d="M7.3 9.65C6.5 7.4 5.9 4.2 6.8 2.3Q8 .3 9.6 1.9C10.5 3.2 10.8 6.2 10.6 8.22A7.5 7 0 0 1 13.4 8.22C13.2 6.2 13.5 3.2 14.4 1.9Q16 .3 17.2 2.3C18.1 4.2 17.5 7.4 16.7 9.65A7.5 7 0 1 1 7.3 9.65z" />
+      <ellipse cx="9.3" cy="14.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="14.7" cy="14.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="16.9" rx="1.15" ry=".85" fill="currentColor" stroke="none" />
+      <path d="M6.51 16.1l-4.25-0.67M7.53 18.3l-4.21 0.89M17.49 16.1l4.25-0.67M16.47 18.3l4.21 0.89" />
     </>
   ),
   ghost: (
@@ -384,6 +396,7 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "mountain",
   "glasses",
   "cat",
+  "dog",
   "hare",
   "paw",
   "owl",
