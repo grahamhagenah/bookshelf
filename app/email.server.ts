@@ -312,6 +312,76 @@ export async function sendRequestAnswerEmail({
   });
 }
 
+// ---- Someone lent you a book, and you're not on Stacks yet ----
+
+// "May 3", for a due date
+const longDay = (date: Date) =>
+  date.toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "UTC" });
+
+export function renderLoanInvite({
+  toName,
+  token,
+  loans,
+}: {
+  toName: string;
+  token: string;
+  // What they have, newest first; the first is the one this email is about
+  loans: {
+    title: string;
+    author: string;
+    cover?: string | null;
+    lenderName: string;
+    dueDate: Date | null;
+  }[];
+}) {
+  const [loan, ...others] = loans;
+  const lender = loan.lenderName;
+  const link = `${APP_URL}/lent/${encodeURIComponent(token)}`;
+  const subject = `${lender} lent you ${loan.title}`;
+  const due = loan.dueDate ? ` It's due back on ${longDay(loan.dueDate)}.` : "";
+  const html = layout({
+    preheader: `${lender} keeps track of their books on Stacks.${due}`,
+    content: `
+        ${paragraph(`Hi ${esc(toName)}, <strong style="color: ${ink};">${esc(lender)}</strong> lent you a book.${esc(due)}`)}
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 8px 0 16px; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 0 16px 0 0; vertical-align: top;">${cover(loan.cover, 64)}</td>
+            <td style="vertical-align: middle;">
+              <p style="margin: 0; font-size: 18px; font-weight: 600; line-height: 1.3; color: ${ink};">${esc(loan.title)}</p>
+              <p style="margin: 4px 0 0; font-size: 15px; color: ${muted};">${esc(loan.author)}</p>
+            </td>
+          </tr>
+        </table>
+        ${others.length > 0 ? paragraph(`You also have ${others.map((other) => `${bookBold(other.title)} from ${esc(other.lenderName)}`).join(", ")}.`) : ""}
+        ${paragraph(`${esc(lender)} keeps track of their books on Stacks. Set up a free account to see when it's due, ask for more time, and borrow from ${esc(lender)}'s shelf.`)}
+        ${button(link, "See the loan")}`,
+    footer: `If you don't know ${esc(lender)}, ignore this email. Stacks won't email you again unless someone lends you another book.`,
+  });
+  const text = `Hi ${toName},
+
+${lender} lent you ${loan.title} by ${loan.author}.${due}
+${others.length > 0 ? `\nYou also have ${others.map((other) => `${other.title} from ${other.lenderName}`).join(", ")}.\n` : ""}
+${lender} keeps track of their books on Stacks. Set up a free account to see when it's due, ask for more time, and borrow from ${lender}'s shelf:
+
+${link}
+
+If you don't know ${lender}, ignore this email. Stacks won't email you again unless someone lends you another book.`;
+  return { subject, html, text };
+}
+
+export async function sendLoanInviteEmail({
+  toEmail,
+  ...details
+}: Parameters<typeof renderLoanInvite>[0] & { toEmail: string }) {
+  if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
+  if (!resend)
+    console.log(
+      "Loan invite link (email not configured):",
+      `${APP_URL}/lent/${encodeURIComponent(details.token)}`,
+    );
+  return send({ to: toEmail, ...renderLoanInvite(details) });
+}
+
 // ---- A link to choose a new password ----
 
 export function renderPasswordReset({
@@ -703,11 +773,14 @@ export function renderNewSignup({
   name,
   email,
   invitedBy,
+  lentBy = null,
   total,
 }: {
   name: string;
   email: string;
   invitedBy: string | null;
+  // Who lent them a book before they had an account
+  lentBy?: string | null;
   total: number;
 }) {
   const count = `That makes ${total.toLocaleString("en-US")} ${total === 1 ? "account" : "accounts"}.`;
@@ -716,6 +789,7 @@ export function renderNewSignup({
     content: `
         ${paragraph(`<strong style="color: ${ink};">${esc(name)}</strong> just created an account with ${esc(email)}.`)}
         ${invitedBy ? paragraph(`They joined from ${esc(invitedBy)}'s shared shelf.`) : ""}
+        ${lentBy ? paragraph(`They joined from a book ${esc(lentBy)} lent them.`) : ""}
         <p style="margin: 0; font-size: 14px; color: ${muted};">${count}</p>
         ${button(`${APP_URL}/dashboard`, "Open the dashboard")}`,
     footer: ADMIN_FOOTER,
@@ -723,6 +797,7 @@ export function renderNewSignup({
   const text = [
     `${name} just created an account with ${email}.`,
     invitedBy ? `They joined from ${invitedBy}'s shared shelf.` : null,
+    lentBy ? `They joined from a book ${lentBy} lent them.` : null,
     count,
     `${APP_URL}/dashboard`,
   ]

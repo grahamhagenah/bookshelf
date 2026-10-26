@@ -7,7 +7,8 @@ import { sendNewSignupEmail, sendSignupSummaryEmail } from "~/email.server";
 // every number: only real accounts (demoGroup null) count.
 
 const DAY = 24 * 60 * 60 * 1000;
-const real = { demoGroup: null } as const;
+// Accounts still waiting to be claimed from a loan email aren't anyone's yet
+const real = { demoGroup: null, invitedAt: null } as const;
 const daysAgo = (days: number) => new Date(Date.now() - days * DAY);
 
 // "2026-10-21" for a date, in UTC, to bucket things by day
@@ -349,8 +350,9 @@ export async function getRevenue() {
 // total. Demo accounts never get here, and demo admins aren't written to.
 export async function notifyAdminsOfSignup(
   newUser: { id: string; firstname: string; surname: string; email: string },
-  { invitedBy = null, send = sendNewSignupEmail }: {
+  { invitedBy = null, lentBy = null, send = sendNewSignupEmail }: {
     invitedBy?: string | null;
+    lentBy?: string | null;
     send?: (message: Parameters<typeof sendNewSignupEmail>[0]) => Promise<unknown>;
   } = {},
 ) {
@@ -365,7 +367,7 @@ export async function notifyAdminsOfSignup(
   // One admin's failed email shouldn't stop the others
   await Promise.all(
     admins.map((admin) =>
-      send({ toEmail: admin.email, name, email: newUser.email, invitedBy, total }).catch(() => null),
+      send({ toEmail: admin.email, name, email: newUser.email, invitedBy, lentBy, total }).catch(() => null),
     ),
   );
   return admins.length;

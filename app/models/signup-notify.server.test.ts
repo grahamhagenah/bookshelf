@@ -30,7 +30,7 @@ test("every real admin hears about a new sign-up, with the new total", async () 
   expect(recipients).toContain(admin.email);
   expect(recipients).not.toContain(demoAdmin.email);
   expect(sent[0]).toMatchObject({ name: "Newcomer Reader", invitedBy: "Maya Chen" });
-  expect(sent[0].total).toBe(await prisma.user.count({ where: { demoGroup: null } }));
+  expect(sent[0].total).toBe(await prisma.user.count({ where: { demoGroup: null, invitedAt: null } }));
 });
 
 test("one failed email doesn't stop the rest", async () => {

@@ -56,6 +56,7 @@ import {
   placeHold,
 } from "~/models/hold.server";
 import { shelfIds } from "~/models/household.server";
+import { lendByEmail } from "~/models/loan-invite.server";
 import {
   NOTE_MAX_LENGTH,
   canLeaveNote,
@@ -723,6 +724,21 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       throw new Response("Book is already lent out", { status: 400 });
     }
     const friendId = formData.get("friendId");
+    const weeks = loanWeeks(formData.get("weeks"));
+    // Someone who isn't a friend on Stacks, by email
+    if (friendId === "new") {
+      const name = formData.get("name");
+      const email = formData.get("email");
+      const result = await lendByEmail(userId, book, {
+        name: typeof name === "string" ? name : "",
+        email: typeof email === "string" ? email : "",
+        weeks,
+      });
+      if (!result.ok) {
+        return json({ lendError: result.error }, { status: 400 });
+      }
+      return json({ lentTo: result.borrowerId, invited: result.invited });
+    }
     const owner = await getUserById(userId);
     const isFriend =
       typeof friendId === "string" &&
@@ -731,12 +747,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       throw new Response("Not a friend", { status: 400 });
     }
 
-    await lendToFriend(
-      book.id,
-      userId,
-      friendId,
-      loanWeeks(formData.get("weeks")),
-    );
+    await lendToFriend(book.id, userId, friendId, weeks);
     await createBookApprovedNotification(
       userId,
       friendId,
@@ -1124,18 +1135,30 @@ function NotLendingControl({ until }: { until: string | null }) {
 function LendToFriend({
   friends,
   loanChoices,
+  byEmail,
 }: {
   friends: { id: string; firstname: string; surname: string }[];
   loanChoices: { weeks: readonly number[]; defaultWeeks: number };
+  // Lending to someone not on Stacks: open, waiting on a confirmed
+  // email, or not in the demo
+  byEmail: "ok" | "confirm-email" | "off";
 }) {
   const [open, setOpen] = useState(false);
   const navigation = useNavigation();
+  const actionData = useActionData<{ lendError?: string }>();
   const lending = navigation.formData?.get("intent") === "lendTo";
   const sorted = [...friends].sort((a, b) =>
     `${a.firstname} ${a.surname}`.localeCompare(`${b.firstname} ${b.surname}`),
   );
+  // With no friends yet, someone new is the only choice
+  const [choice, setChoice] = useState(
+    sorted.length === 0 && byEmail !== "off" ? "new" : "",
+  );
   const field =
     "h-9 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-800 dark:text-stone-200 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10";
+  const label =
+    "block text-xs font-medium text-stone-500 dark:text-stone-400";
+  const someoneNew = choice === "new";
 
   if (!open) {
     return (
@@ -1144,12 +1167,12 @@ function LendToFriend({
         onClick={() => setOpen(true)}
         className={`w-full ${secondaryButton}`}
       >
-        Lend to a friend
+        Lend this book
       </button>
     );
   }
 
-  if (sorted.length === 0) {
+  if (sorted.length === 0 && byEmail === "off") {
     return (
       <p className="text-sm text-stone-500 dark:text-stone-400">
         Add friends to lend them books.{" "}
@@ -1166,25 +1189,71 @@ function LendToFriend({
   return (
     <Form method="post" className="space-y-2">
       <input type="hidden" name="intent" value="lendTo" />
-      <label className="block text-xs font-medium text-stone-500 dark:text-stone-400">
-        Lend to
-        <select
-          name="friendId"
-          required
-          className={`mt-1 ${field}`}
-          defaultValue=""
-        >
-          <option value="" disabled>
-            Choose a friend
-          </option>
-          {sorted.map((friend) => (
-            <option key={friend.id} value={friend.id}>
-              {friend.firstname} {friend.surname}
+      {sorted.length > 0 ? (
+        <label className={label}>
+          Lend to
+          <select
+            name="friendId"
+            required
+            className={`mt-1 ${field}`}
+            value={choice}
+            onChange={(event) => setChoice(event.target.value)}
+          >
+            <option value="" disabled>
+              Choose a friend
             </option>
-          ))}
-        </select>
-      </label>
-      <label className="block text-xs font-medium text-stone-500 dark:text-stone-400">
+            {sorted.map((friend) => (
+              <option key={friend.id} value={friend.id}>
+                {friend.firstname} {friend.surname}
+              </option>
+            ))}
+            {byEmail !== "off" ? (
+              <option value="new">Someone else, by email…</option>
+            ) : null}
+          </select>
+        </label>
+      ) : (
+        <input type="hidden" name="friendId" value="new" />
+      )}
+      {someoneNew && byEmail === "confirm-email" ? (
+        <p className="text-sm text-stone-600 dark:text-stone-300">
+          Confirm your email first, then you can lend to anyone by email.{" "}
+          <Link
+            to="/account#emails"
+            className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+          >
+            Settings
+          </Link>
+        </p>
+      ) : null}
+      {someoneNew && byEmail === "ok" ? (
+        <>
+          <label className={label}>
+            Their name
+            <input
+              name="name"
+              required
+              autoComplete="off"
+              className={`mt-1 ${field}`}
+            />
+          </label>
+          <label className={label}>
+            Their email
+            <input
+              name="email"
+              type="email"
+              required
+              autoComplete="off"
+              className={`mt-1 ${field}`}
+            />
+          </label>
+          <p className="text-xs text-stone-500 dark:text-stone-400">
+            We&apos;ll email them that you lent it, with a link to see the loan
+            and join if they like.
+          </p>
+        </>
+      ) : null}
+      <label className={label}>
         For
         <select
           name="weeks"
@@ -1198,11 +1267,16 @@ function LendToFriend({
           ))}
         </select>
       </label>
+      {actionData?.lendError ? (
+        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+          {actionData.lendError}
+        </p>
+      ) : null}
       <div className="flex gap-2 pt-1">
         <button
           type="submit"
-          disabled={lending}
-          className={`flex-1 ${primaryButton} ${lending ? "opacity-60 cursor-wait" : ""}`}
+          disabled={lending || (someoneNew && byEmail !== "ok")}
+          className={`flex-1 ${primaryButton} ${lending ? "opacity-60 cursor-wait" : ""} disabled:opacity-60`}
         >
           {lending ? "Lending…" : "Lend it"}
         </button>
@@ -1214,6 +1288,18 @@ function LendToFriend({
           Cancel
         </button>
       </div>
+      {sorted.length === 0 ? (
+        <p className="text-xs text-stone-500 dark:text-stone-400">
+          Or{" "}
+          <Link
+            to="/friends"
+            className="underline underline-offset-2"
+          >
+            find friends on Stacks
+          </Link>{" "}
+          to lend to them in one tap.
+        </p>
+      ) : null}
     </Form>
   );
 }
@@ -1880,7 +1966,7 @@ export default function BookDetailsPage() {
             ) : null}
           </div>
           {/* Your own copy while it's out: who has it, taking you down to the
-              loan in the lending history. On your shelf, Lend to a friend
+              loan in the lending history. On your shelf, Lend this book
               says enough. */}
           {data.isOwner && !isEditing && data.book.borrower ? (
             <a
@@ -1894,10 +1980,23 @@ export default function BookDetailsPage() {
               Lent to {data.book.borrower.firstname}
             </a>
           ) : null}
+          {/* Lent by email to someone who hasn't joined */}
+          {data.isOwner && !isEditing && data.book.borrower?.invitedAt ? (
+            <p className="text-center text-xs text-stone-500 dark:text-stone-400">
+              Not on Stacks yet. We emailed them.
+            </p>
+          ) : null}
           {data.isOwner && !isEditing && !data.book.borrower ? (
             <LendToFriend
               friends={data.currentUser?.following ?? []}
               loanChoices={data.loanChoices}
+              byEmail={
+                data.currentUser?.demoGroup
+                  ? "off"
+                  : data.currentUser?.emailVerifiedAt
+                    ? "ok"
+                    : "confirm-email"
+              }
             />
           ) : null}
           {data.isOwner && !isEditing ? (

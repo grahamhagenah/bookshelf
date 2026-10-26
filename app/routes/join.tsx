@@ -16,6 +16,7 @@ import { useEffect, useRef } from "react";
 import { notifyAdminsOfSignup } from "~/models/admin.server";
 import { getInviter } from "~/models/friend.server";
 import { getHouseholdByInvite } from "~/models/household.server";
+import { sendLoanInvite } from "~/models/loan-invite.server";
 import {
   createNotification,
   createUser,
@@ -151,6 +152,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const existingUser = await getUserByEmail(email);
+  // Someone lent them a book before they joined: the account is waiting,
+  // and the link that claims it goes to their inbox, which proves it's them
+  if (existingUser?.invitedAt) {
+    await sendLoanInvite(existingUser.id);
+    return json(
+      {
+        errors: {
+          firstname: null,
+          surname: null,
+          email:
+            "Someone lent you a book at this address, so your account is waiting. We've emailed you a link to finish setting it up.",
+          password: null,
+        },
+      },
+      { status: 400 },
+    );
+  }
   if (existingUser) {
     return json(
       {

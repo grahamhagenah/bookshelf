@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 
 import { prisma } from "~/db.server";
 import { sendPasswordResetEmail } from "~/email.server";
+import { sendLoanInvite } from "~/models/loan-invite.server";
 import { makeResetToken, readResetToken, stampMatches } from "~/reset-password";
 import { normalizeEmail } from "~/utils";
 import { canResend } from "~/verify-email";
@@ -20,9 +21,15 @@ export async function requestPasswordReset(email: string) {
       firstname: true,
       demoGroup: true,
       passwordResetSentAt: true,
+      invitedAt: true,
       password: { select: { hash: true } },
     },
   });
+  // Lent a book before they joined: the loan email's link sets a password
+  if (user?.invitedAt) {
+    await sendLoanInvite(user.id);
+    return;
+  }
   if (!user?.password || user.demoGroup) return;
   if (!canResend(user.passwordResetSentAt)) return;
   await prisma.user.update({ where: { id: user.id }, data: { passwordResetSentAt: new Date() } });

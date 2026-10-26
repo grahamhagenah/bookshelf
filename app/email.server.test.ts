@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { renderAnnouncement, renderBookRequest, renderRequestAnswer, renderVerification } from "~/email.server";
+import { renderAnnouncement, renderBookRequest, renderLoanInvite, renderRequestAnswer, renderVerification } from "~/email.server";
 
 test("a borrow request names the person and book, with its cover", () => {
   const { subject, html, text } = renderBookRequest({
@@ -99,4 +99,20 @@ test("a declined request says so, and points at Activity", () => {
   expect(subject).toBe("Maya Chen can't lend Piranesi right now");
   expect(html).toContain("/notifications");
   expect(html).not.toContain("<blockquote");
+});
+
+test("a loan to someone not on Stacks says whose book, when it's due, and links to the loan", () => {
+  const { subject, html, text } = renderLoanInvite({
+    toName: "Maya",
+    token: "abc.def",
+    loans: [
+      { title: "Piranesi", author: "Susanna Clarke", lenderName: "Jordan Lee", dueDate: new Date("2026-11-15T12:00:00Z") },
+      { title: "Tom & Jerry", author: "Someone", lenderName: "Sam Okafor", dueDate: null },
+    ],
+  });
+  expect(subject).toBe("Jordan Lee lent you Piranesi");
+  expect(text).toContain("due back on November 15");
+  expect(text).toContain("/lent/abc.def");
+  expect(html).toContain("Tom &amp; Jerry");
+  expect(html).toContain("know Jordan Lee, ignore this email");
 });

@@ -38,8 +38,8 @@ model User {
   // Whether other people can find them: in search and among new people.
   // Off, they're reached by invite link only.
   discoverable         Boolean    @default(true)
-  // "free" or "plus". Plus lifts the book and friend limits for everyone
-  // on the shelf; set by a subscription, or by an admin as a gift
+  // "free" or "plus". Plus lifts the book limit for everyone on the
+  // shelf; set by a subscription, or by an admin as a gift
   plan                 String     @default("free")
   // The Stripe subscription behind Plus, kept in step by its webhook:
   // Stripe's status (active, past_due, canceled...), when the paid period
@@ -63,6 +63,10 @@ model User {
   // The last password-reset email, so the form can't be used to flood an
   // inbox
   passwordResetSentAt  DateTime?
+  // When someone lent them a book before they had an account: the account
+  // waits, with no password and out of search, until they claim it from
+  // the email. Cleared once they do.
+  invitedAt            DateTime?
   // Set on throwaway demo accounts; everyone in one demo sandbox shares it
   demoGroup            String?
   // People who share one shelf: each other's books count as their own

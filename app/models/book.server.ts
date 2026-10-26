@@ -59,6 +59,7 @@ export function getBookById(id: Book["id"]) {
           firstname: true,
           surname: true,
           profileEmoji: true,
+          invitedAt: true,
         },
       },
       user: {

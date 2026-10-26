@@ -68,7 +68,7 @@ export async function getUserById(id: User["id"]) {
 export async function getUserByEmail(email: User["email"]) {
   return prisma.user.findUnique({
     where: { email: normalizeEmail(email) },
-    select: { id: true, demoGroup: true },
+    select: { id: true, demoGroup: true, invitedAt: true },
   });
 }
 
@@ -198,7 +198,7 @@ export async function getNotificationHistory(userId: string, limit = 10) {
 // each. Demo sandboxes are left out; they reset anyway.
 export async function createAnnouncement(senderId: User["id"], message: string) {
   const people = await prisma.user.findMany({
-    where: { demoGroup: null },
+    where: { demoGroup: null, invitedAt: null },
     select: { id: true },
   });
   await prisma.$transaction(

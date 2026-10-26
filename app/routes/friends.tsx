@@ -112,7 +112,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json<ActionData>({ errors: { email: "Enter an email address" }, success: false }, { status: 400 });
   }
   const receiver = await getUserByEmail(email.trim());
-  if (!receiver || receiver.id === userId || receiver.demoGroup !== user.demoGroup) {
+  // An account still waiting on a loan email isn't on Stacks yet
+  if (!receiver || receiver.invitedAt || receiver.id === userId || receiver.demoGroup !== user.demoGroup) {
     return json<ActionData>(
       { errors: { email: "Nobody on Stacks has that email address" }, success: false },
       { status: 404 },
