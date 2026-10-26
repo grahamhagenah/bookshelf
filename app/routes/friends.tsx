@@ -20,6 +20,7 @@ import {
   FeedIcon,
   LentIcon,
 } from "~/components/icons";
+import { RailGroups } from "~/components/side-rail";
 import Layout from "~/components / Layout/Layout";
 import { getFriendsTabCounts } from "~/friends-tabs.server";
 import { groupPath } from "~/group-links";
@@ -57,7 +58,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     incoming,
     pendingRequests,
     // A way straight to each group, without the Groups tab in between
-    groups: groups.map(({ id, name, faces }) => ({ id, name, faces, path: groupPath({ id, name }) })),
+    groups,
   });
 };
 
@@ -123,16 +124,23 @@ export default function Friends() {
   return (
     <Layout
       title="Friends"
+      // Beside your friends on wide screens, the groups you're in
+      aside={
+        <aside className="hidden self-start lg:block">
+          <RailGroups groups={data.groups} limit={10} />
+        </aside>
+      }
       header={
         <>
           <FriendsTabs counts={data.counts} />
-          {/* Straight to each of your groups, without the Groups tab between */}
+          {/* On phones, where there's no room beside them: straight to each
+              of your groups, without the Groups tab between */}
           {data.groups.length > 0 ? (
-            <nav aria-label="Your groups" className="-mt-1 mb-8 flex flex-wrap items-center gap-2">
+            <nav aria-label="Your groups" className="-mt-1 mb-8 flex flex-wrap items-center gap-2 lg:hidden">
               {data.groups.map((group) => (
                 <Link
                   key={group.id}
-                  to={group.path}
+                  to={groupPath(group)}
                   className="inline-flex h-10 items-center gap-2 rounded-full border border-stone-200 dark:border-stone-800 py-1 pl-1 pr-4 text-sm font-medium text-stone-800 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-600 transition-colors"
                 >
                   <Faces people={group.faces} max={3} />
