@@ -1,6 +1,6 @@
 import { coverSrc } from "~/utils";
 
-import { Bookplate } from "./avatar";
+import Avatar, { Bookplate } from "./avatar";
 import { BorrowedIcon, HeartIcon, LentIcon, SearchIcon } from "./icons";
 
 // Staged glimpses of the app for the landing page: cards styled like the
@@ -383,16 +383,36 @@ export function ShowcaseFriends() {
 }
 
 // A group: everyone's shelves as one, who has each book, and the link
-// that brings the next person in
-const GROUP_BOOKS: [string, string][] = [
-  [COVERS.circe, "MC"],
-  [COVERS.piranesi, "SO"],
-  [COVERS.seaOfTranquility, "AR"],
-  [COVERS.dune, "TB"],
-  [COVERS.gilead, "MC"],
-  [COVERS.overstory, "PS"],
-  [COVERS.hailMary, "SO"],
-  [COVERS.klara, "AR"],
+// that brings the next person in. Its people wear the icons the demo's
+// friends have picked, so they read as different people.
+const MEMBERS = {
+  maya: "owl:plum",
+  sam: "planet:navy",
+  anika: "teapot:oxblood",
+  theo: "fox:ochre",
+  noah: "cat:ink",
+  lena: "frog:forest",
+} as const;
+
+// On a solid circle: the icons' tints are see-through, and these sit on
+// covers and a dark pill
+function Member({ who }: { who: keyof typeof MEMBERS }) {
+  return (
+    <span className="block rounded-full bg-white ring-2 ring-white dark:bg-stone-900 dark:ring-stone-900">
+      <Avatar icon={MEMBERS[who]} size="xs" />
+    </span>
+  );
+}
+
+const GROUP_BOOKS: [string, keyof typeof MEMBERS][] = [
+  [COVERS.circe, "maya"],
+  [COVERS.piranesi, "sam"],
+  [COVERS.seaOfTranquility, "anika"],
+  [COVERS.dune, "theo"],
+  [COVERS.gilead, "maya"],
+  [COVERS.overstory, "noah"],
+  [COVERS.hailMary, "sam"],
+  [COVERS.klara, "anika"],
 ];
 
 export function ShowcaseGroups() {
@@ -409,18 +429,18 @@ export function ShowcaseGroups() {
             </p>
           </div>
           <div className="flex -space-x-2">
-            {["MC", "SO", "AR", "TB"].map((initials) => (
-              <Initials key={initials} text={initials} small />
+            {(["maya", "sam", "anika", "theo"] as const).map((who) => (
+              <Member key={who} who={who} />
             ))}
           </div>
         </div>
         <div className="mt-3 grid grid-cols-4 gap-x-2.5 gap-y-3">
-          {GROUP_BOOKS.map(([src, initials]) => (
+          {GROUP_BOOKS.map(([src, who]) => (
             <div key={src} className="relative">
               <Cover src={src} className="w-full" sizes="(min-width: 640px) 90px, 20vw" />
               {/* Whose copy it is */}
               <span className="absolute -bottom-1.5 -right-1.5">
-                <Initials text={initials} small />
+                <Member who={who} />
               </span>
             </div>
           ))}
@@ -443,9 +463,9 @@ export function ShowcaseGroups() {
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-[2%] z-30 flex -rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
-        <Check />
-        Priya joined Thursday book club
+      <div className="absolute bottom-0 left-[2%] z-30 flex -rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 py-1.5 pl-1.5 pr-3.5 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
+        <Member who="lena" />
+        Lena joined Thursday book club
       </div>
     </Stage>
   );
