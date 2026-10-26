@@ -961,12 +961,15 @@ function IconPicker({
     icon ? (tone ? `${icon}:${tone}` : icon) : tone ? `${PLATE}${tone}` : "";
   return (
     <>
+      {/* On phones the six colors take the icon grid's six columns, so the
+          two line up, and the word goes unsaid (the group is still labeled).
+          From there, one row with the word in front. */}
       <div
-        className="flex flex-wrap items-center gap-2.5 pt-1"
+        className="grid grid-cols-6 justify-items-center pt-1 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5"
         role="group"
         aria-label="Color"
       >
-        <span className="mr-1 text-sm text-stone-500 dark:text-stone-400">
+        <span className="sr-only text-sm text-stone-500 dark:text-stone-400 sm:not-sr-only sm:mr-1">
           Color
         </span>
         {choices.map((choice) => (
@@ -988,9 +991,9 @@ function IconPicker({
           </button>
         ))}
       </div>
-      <div className="!mt-6 grid w-fit grid-cols-5 gap-3 sm:grid-cols-9">
-        {/* Your initials first, then the icons: 45 in all, so five or
-            nine across leaves no stragglers */}
+      <div className="!mt-6 grid grid-cols-6 justify-items-center gap-y-3 sm:w-fit sm:grid-cols-9 sm:gap-3">
+        {/* Your initials first, then the icons: six across on phones, the
+            width of the screen; nine across from there, packed */}
         <button
           type="submit"
           name="emoji"
