@@ -68,8 +68,12 @@ const ICON_PATHS = {
   ),
   cat: (
     <>
-      <path d="M12 20c-4.4 0-7.5-2.7-7.5-6.5V4.5l4 3.5h7l4-3.5v9c0 3.8-3.1 6.5-7.5 6.5z" />
-      <path d="M9 12.5h.01M15 12.5h.01M11 15.5h2" />
+      {/* A kitty: a wide round face, oval eyes, a button nose, whiskers */}
+      <path d="M5.07 10.6 5.2 4.6l3.42 3.56a8 6 0 0 1 6.76 0L18.8 4.6l.13 6A8 6 0 1 1 5.07 10.6z" />
+      <ellipse cx="9" cy="13.3" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
+      <ellipse cx="15" cy="13.3" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="15.4" rx=".95" ry=".7" fill="currentColor" stroke="none" />
+      <path d="M6.3 13.6 1.8 12.9M6.3 15.6 2 16.5M17.7 13.6l4.5-.7M17.7 15.6l4.3.9" />
     </>
   ),
   paw: (
