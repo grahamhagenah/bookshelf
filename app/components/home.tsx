@@ -6,8 +6,8 @@ import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
 
 import BookCover from "./book-cover";
-import CopyButton from "./copy-button";
 import FriendActivityItem from "./friend-activity";
+import { InviteButtons } from "./invite-message";
 
 // The signed-in home page: a row of your newest books, a row from your
 // want-to-read list, then your loans both ways side by side, with what
@@ -174,78 +174,71 @@ function StepMark({ number, done }: { number: number; done: boolean }) {
   );
 }
 
+// A first goal: enough books that a friend browsing finds something
+export const BOOK_GOAL = 10;
+
 // For a new account: three steps to a working shelf, each ticked off as
-// it's done. Shown until you have books and a friend (or have asked one),
-// or until you skip it.
+// it's done. Shown until you have ten books and a friend (or have asked
+// one), or until you skip it.
 function Welcome({
   bookCount,
   friendCount,
   requestsSent,
-  shareUrl,
+  inviteUrl,
   divided,
 }: {
   bookCount: number;
   friendCount: number;
   requestsSent: number;
-  shareUrl: string | null;
+  inviteUrl: string;
   // A rule underneath only when something follows
   divided: boolean;
 }) {
-  // Same key as the header's share prompt, so either one sees the new link
-  const shareFetcher = useFetcher<{ url?: string }>({ key: "share-link" });
-  const url = shareFetcher.data?.url ?? shareUrl;
-  const creating = shareFetcher.state !== "idle";
   const welcomeFetcher = useFetcher({ key: "welcome" });
 
   const steps = [
     {
-      title: "Add your books",
-      text: "Search by title or author, or bring your books over from Goodreads or StoryGraph in one go.",
-      done: bookCount > 0,
-      doneText: `${bookCount} ${bookCount === 1 ? "book" : "books"} added`,
+      title: `Start with ${BOOK_GOAL} books`,
+      text: "Take them from the nearest shelf: scan the barcodes with your phone, search by title, or import from Goodreads or StoryGraph.",
+      done: bookCount >= BOOK_GOAL,
+      doneText: `${bookCount} books on your shelf`,
+      progress: bookCount > 0 && bookCount < BOOK_GOAL ? bookCount : null,
       action: (
         <span className="flex flex-wrap items-center gap-2">
+          <Link to="/search?scan=1" className={`${actionClass} sm:hidden`}>
+            Scan barcodes
+          </Link>
           <Link to="/search" className={actionClass}>
             Add books
           </Link>
           <Link to="/import" className={actionClass}>
-            Import from Goodreads
+            Import
           </Link>
         </span>
       ),
     },
     {
-      title: "Find friends",
-      text: "See what's on their shelves and borrow from each other.",
+      title: "Find your friends",
+      text: "Paste the email addresses of people you lend to, and see who's already here.",
       // Asking counts: accepting is up to them
       done: friendCount + requestsSent > 0,
       doneText: friendCount
         ? `${friendCount} ${friendCount === 1 ? "friend" : "friends"}`
         : `${requestsSent === 1 ? "Request" : `${requestsSent} requests`} sent`,
+      progress: null,
       action: (
-        <Link to="/friends" className={actionClass}>
+        <Link to="/friends#by-email" className={actionClass}>
           Find friends
         </Link>
       ),
     },
     {
-      title: "Share your shelf",
-      text: "Make a link anyone can open to browse your books.",
-      done: Boolean(url),
+      title: "Invite the rest",
+      text: "Send a ready-made message with your invite link. Whoever joins from it is your friend straight away.",
+      done: false,
       doneText: null,
-      action: (
-        <shareFetcher.Form method="post" action="/share-link">
-          <button
-            type="submit"
-            name="intent"
-            value="create"
-            disabled={creating}
-            className={`${actionClass} ${creating ? "opacity-60 cursor-wait" : ""}`}
-          >
-            {creating ? "Creating…" : "Create link"}
-          </button>
-        </shareFetcher.Form>
-      ),
+      progress: null,
+      action: <InviteButtons url={inviteUrl} />,
     },
   ];
 
@@ -295,19 +288,33 @@ function Welcome({
             <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
               {step.text}
             </p>
+            {step.progress !== null ? (
+              <div className="mt-3 flex items-center gap-3">
+                <div
+                  className="h-1.5 flex-1 rounded-full bg-stone-100 dark:bg-stone-800"
+                  role="progressbar"
+                  aria-label="Books on your shelf"
+                  aria-valuenow={step.progress}
+                  aria-valuemin={0}
+                  aria-valuemax={BOOK_GOAL}
+                >
+                  <div
+                    className="h-full rounded-full bg-forest-600 dark:bg-forest-400"
+                    style={{ width: `${(step.progress / BOOK_GOAL) * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm tabular-nums text-stone-500 dark:text-stone-400">
+                  {step.progress} of {BOOK_GOAL}
+                </span>
+              </div>
+            ) : null}
             <div className="mt-3">
               {!step.done ? (
                 step.action
-              ) : step.doneText ? (
+              ) : (
                 <p className="text-sm text-stone-500 dark:text-stone-400">
                   {step.doneText}
                 </p>
-              ) : (
-                <CopyButton
-                  value={url ?? ""}
-                  label="Copy link"
-                  className={actionClass}
-                />
               )}
             </div>
           </li>
@@ -377,7 +384,7 @@ export default function Home({
   activity,
   friendIds,
   requestsSent,
-  shareUrl,
+  inviteUrl,
   welcomeDismissed,
 }: {
   books: HomeBooks;
@@ -385,7 +392,7 @@ export default function Home({
   activity: SerializeFrom<FriendActivity>[];
   friendIds: string[];
   requestsSent: number;
-  shareUrl: string | null;
+  inviteUrl: string;
   welcomeDismissed: boolean;
 }) {
   const ownCount = books.lent.length + books.shelf.length;
@@ -398,7 +405,7 @@ export default function Home({
   const setupDone =
     welcomeDismissed ||
     skipping ||
-    (ownCount > 0 && friendIds.length + requestsSent > 0);
+    (ownCount >= BOOK_GOAL && friendIds.length + requestsSent > 0);
   const showLoans = setupDone || books.borrowed.length + books.lent.length > 0;
   const showRecent = setupDone || ownCount > 0;
   const showWanted = setupDone || wanted.length > 0;
@@ -420,7 +427,7 @@ export default function Home({
           bookCount={ownCount}
           friendCount={friendIds.length}
           requestsSent={requestsSent}
-          shareUrl={shareUrl}
+          inviteUrl={inviteUrl}
           divided={showMain || showFeed}
         />
       )}

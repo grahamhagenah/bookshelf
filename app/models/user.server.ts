@@ -68,7 +68,7 @@ export async function getUserById(id: User["id"]) {
 export async function getUserByEmail(email: User["email"]) {
   return prisma.user.findUnique({
     where: { email: normalizeEmail(email) },
-    select: { id: true, demoGroup: true, invitedAt: true },
+    select: { id: true, firstname: true, surname: true, demoGroup: true, invitedAt: true },
   });
 }
 

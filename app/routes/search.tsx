@@ -503,7 +503,8 @@ export default function Search() {
   const retryResults = () => {
     if (resultsUrl) loadResults(resultsUrl);
   };
-  const [scanning, setScanning] = useState(false);
+  // Opened from the welcome steps, the scanner starts straight away
+  const [scanning, setScanning] = useState(searchParams.get("scan") === "1");
 
   const isSearching =
     navigation.state === "loading" &&

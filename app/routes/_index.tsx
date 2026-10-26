@@ -10,11 +10,11 @@ import Home from "~/components/home";
 import Landing from "~/components/landing";
 import { getFriendActivity } from "~/models/activity.server";
 import { getHomeBooks } from "~/models/book.server";
+import { getFriendInvite } from "~/models/friend.server";
 import { shelfIds } from "~/models/household.server";
 import { getPendingFriendRequests, getUserById } from "~/models/user.server";
 import { getWantToRead } from "~/models/wish.server";
 import { publicOrigin } from "~/origin.server";
-import { shelfPath } from "~/profile";
 import { ABOUT_STACKS, seo, structuredData } from "~/seo";
 import { getUserId, requireUserId } from "~/session.server";
 import {
@@ -50,11 +50,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   }
 
-  const [books, activity, sentRequests, wanted] = await Promise.all([
+  const [books, activity, sentRequests, wanted, invite] = await Promise.all([
     getHomeBooks(user.id, await shelfIds(user.id)),
     getFriendActivity(user.id, { limit: 6 }),
     getPendingFriendRequests(user.id),
     getWantToRead(user.id),
+    getFriendInvite(user.id),
   ]);
   return json({
     home: {
@@ -89,10 +90,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       friendIds: user.following.map((friend) => friend.id),
       requestsSent: sentRequests.length,
       welcomeDismissed: welcomeDismissed(request),
-      // For the "Share your shelf" step on a new account's welcome
-      shareUrl: shelfPath(user)
-        ? `${publicOrigin(request)}${shelfPath(user)}`
-        : null,
+      // For the "Invite friends" step on a new account's welcome
+      inviteUrl: `${publicOrigin(request)}/invite/${invite}`,
     },
   });
 };

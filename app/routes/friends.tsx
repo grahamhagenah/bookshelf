@@ -5,12 +5,11 @@ import type {
   SerializeFrom,
 } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, useFetcher, Link, Form, useActionData } from "@remix-run/react";
-import { useEffect, useRef, useState } from "react";
+import { useLoaderData, useFetcher, Link } from "@remix-run/react";
+import { useEffect, useState } from "react";
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
-import CopyButton from "~/components/copy-button";
 import {
   BookIcon,
   BookmarkIcon,
@@ -19,7 +18,9 @@ import {
   LentIcon,
   SearchIcon,
 } from "~/components/icons";
+import InviteMessage, { mailtoInvite } from "~/components/invite-message";
 import Layout from "~/components / Layout/Layout";
+import { EMAILS_AT_ONCE, emailsIn } from "~/find-friends";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import {
   answerFriendRequest,
@@ -32,6 +33,7 @@ import {
   getUserById,
   createNotification,
   getUserByEmail,
+  getFriendStatus,
   getSuggestedFriends,
   getPendingFriendRequests,
 } from "~/models/user.server";
@@ -69,8 +71,10 @@ interface ActionData {
   errors: { email?: string } | null;
   success: boolean;
   friendId?: string;
-  // A friendship the free plan's limit stopped
-  limit?: string;
+  // From a list of email addresses: who's on Stacks (and what happened),
+  // and the addresses that aren't yet, to invite
+  found?: { name: string; status: "sent" | "friends" | "asked" }[];
+  missing?: string[];
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -106,22 +110,40 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json<ActionData>({ success: true, friendId, errors: null });
   }
 
-  // A request to an exact email address
-  const email = formData.get("email");
-  if (typeof email !== "string" || email.trim().length === 0) {
+  // Requests to the people behind a list of email addresses
+  const pasted = formData.get("email");
+  const addresses = typeof pasted === "string" ? emailsIn(pasted) : [];
+  if (addresses.length === 0) {
     return json<ActionData>({ errors: { email: "Enter an email address" }, success: false }, { status: 400 });
   }
-  const receiver = await getUserByEmail(email.trim());
-  // An account still waiting on a loan email isn't on Stacks yet
-  if (!receiver || receiver.invitedAt || receiver.id === userId || receiver.demoGroup !== user.demoGroup) {
+  if (addresses.length > EMAILS_AT_ONCE) {
     return json<ActionData>(
-      { errors: { email: "Nobody on Stacks has that email address" }, success: false },
-      { status: 404 },
+      { errors: { email: `Up to ${EMAILS_AT_ONCE} addresses at a time, please` }, success: false },
+      { status: 400 },
     );
   }
-  const friendRequest = await createNotification(userId, receiver.id, senderName);
-  await respondAsDemoPersona(friendRequest.id);
-  return json<ActionData>({ success: true, friendId: receiver.id, errors: null });
+  const found: NonNullable<ActionData["found"]> = [];
+  const missing: string[] = [];
+  for (const address of addresses) {
+    const receiver = await getUserByEmail(address);
+    // An account still waiting on a loan email isn't on Stacks yet
+    if (!receiver || receiver.invitedAt || receiver.demoGroup !== user.demoGroup) {
+      missing.push(address);
+      continue;
+    }
+    if (receiver.id === userId) continue;
+    const name = `${receiver.firstname} ${receiver.surname}`.trim();
+    const status = await getFriendStatus(userId, receiver.id);
+    if (status === "friends") found.push({ name, status: "friends" });
+    else if (status === "requested") found.push({ name, status: "sent" });
+    else if (status === "invited") found.push({ name, status: "asked" });
+    else {
+      const friendRequest = await createNotification(userId, receiver.id, senderName);
+      await respondAsDemoPersona(friendRequest.id);
+      found.push({ name, status: "sent" });
+    }
+  }
+  return json<ActionData>({ errors: null, success: true, found, missing });
 };
 
 type Friend = SerializeFrom<typeof loader>["friends"][number];
@@ -161,14 +183,8 @@ export default function Friends() {
   const searchFetcher = useFetcher<SearchUser[]>();
   const loadUsers = searchFetcher.load;
   const requestFetcher = useFetcher<ActionData>();
-  const actionData = useActionData<typeof action>();
-  const emailRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (actionData?.errors?.email) emailRef.current?.focus();
-  }, [actionData]);
 
   // Look people up once typing pauses
   useEffect(() => {
@@ -267,9 +283,7 @@ export default function Friends() {
       <section id="find">
         <h2 className="text-lg font-semibold">Find friends</h2>
 
-        <InviteLink url={data.inviteUrl} />
-
-        <h3 className="mt-8 font-medium text-stone-900 dark:text-stone-100">
+        <h3 className="mt-4 font-medium text-stone-900 dark:text-stone-100">
           Already on Stacks?
         </h3>
         <p className="mt-1 text-stone-500 dark:text-stone-400">
@@ -344,71 +358,80 @@ export default function Friends() {
           </div>
         ) : null}
 
-        <details className="mt-8 max-w-xl" open={Boolean(actionData?.errors?.email)}>
-          <summary className="cursor-pointer text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100">
-            Know their exact email address?
-          </summary>
-          <Form method="post" className="mt-3 flex gap-2">
-            <input
-              ref={emailRef}
-              name="email"
-              type="email"
-              autoComplete="off"
-              placeholder="friend@example.com"
-              aria-label="Email address"
-              aria-invalid={actionData?.errors?.email ? true : undefined}
-              aria-describedby="email-error"
-              className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
-            />
-            <button type="submit" className={`flex-shrink-0 ${primaryButton} px-4 py-2`}>
-              Send request
-            </button>
-          </Form>
-          {actionData?.errors?.email ? (
-            <p id="email-error" className="mt-1 text-sm text-rose-700 dark:text-rose-400">
-              {actionData.errors.email}
-            </p>
-          ) : actionData?.success && actionData.friendId ? (
-            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">Request sent.</p>
-          ) : null}
-        </details>
+        <FindByEmail inviteUrl={data.inviteUrl} />
+
+        <InviteMessage
+          url={data.inviteUrl}
+          title="Invite someone new"
+          intro="Send this to friends who aren't on Stacks. When they open the link and sign up, you're friends straight away."
+          className="mt-10"
+        />
       </section>
     </Layout>
   );
 }
 
-// Your personal invite: whoever opens it becomes your friend, signing up
-// first if they need to
-function InviteLink({ url }: { url: string }) {
-  const [canShare, setCanShare] = useState(false);
-  useEffect(() => setCanShare(typeof navigator.share === "function"), []);
-  const share = () =>
-    navigator.share({ title: "Join me on Stacks", text: "Borrow books from my shelf on Stacks", url }).catch(() => {
-      // Closing the share sheet isn't an error worth showing
-    });
+// Paste the addresses of people you lend to: anyone already on Stacks gets
+// a friend request, and the rest are a ready-made invite away
+function FindByEmail({ inviteUrl }: { inviteUrl: string }) {
+  const fetcher = useFetcher<ActionData>();
+  const busy = fetcher.state !== "idle";
+  const result = fetcher.state === "idle" ? fetcher.data : undefined;
+  const sent = result?.found?.filter((person) => person.status === "sent") ?? [];
+  const already = result?.found?.filter((person) => person.status !== "sent") ?? [];
+  const missing = result?.missing ?? [];
+  const names = (people: { name: string }[]) => people.map((person) => person.name).join(", ");
+
   return (
-    <div className="mt-4 max-w-xl rounded-xl border border-stone-200 dark:border-stone-800 p-4">
-      <h3 className="font-medium text-stone-900 dark:text-stone-100">Invite someone new</h3>
-      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-        Send this link to a friend. When they open it and sign up, you&apos;re friends
-        straight away, no request needed.
+    <div id="by-email" className="mt-8 max-w-xl scroll-mt-24">
+      <h3 className="font-medium text-stone-900 dark:text-stone-100">Find friends by email</h3>
+      <p className="mt-1 text-stone-500 dark:text-stone-400">
+        Paste the email addresses of people you lend to. Anyone already here gets a friend
+        request, and you can invite the rest.
       </p>
-      <div className="mt-3 flex gap-2">
-        <input
-          type="text"
-          readOnly
-          value={url}
-          aria-label="Your invite link"
-          onFocus={(event) => event.currentTarget.select()}
-          className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-300"
+      <fetcher.Form method="post" action="/friends" className="mt-3 space-y-2">
+        <textarea
+          name="email"
+          rows={3}
+          autoComplete="off"
+          placeholder="maya@example.com, sam@example.com"
+          aria-label="Email addresses"
+          aria-invalid={result?.errors?.email ? true : undefined}
+          aria-describedby="email-error"
+          className="block w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
         />
-        <CopyButton value={url} className={`flex-shrink-0 ${quietButton}`} />
-        {canShare ? (
-          <button type="button" onClick={share} className={`flex-shrink-0 ${primaryButton}`}>
-            Share
-          </button>
-        ) : null}
-      </div>
+        <button type="submit" disabled={busy} className={`${primaryButton} px-4 py-2`}>
+          {busy ? "Looking…" : "Find friends"}
+        </button>
+      </fetcher.Form>
+      {result?.errors?.email ? (
+        <p id="email-error" className="mt-2 text-sm text-rose-700 dark:text-rose-400">
+          {result.errors.email}
+        </p>
+      ) : null}
+      {result?.success ? (
+        <div role="status" className="mt-3 space-y-2 text-sm text-stone-600 dark:text-stone-300">
+          {sent.length > 0 ? <p>Friend request sent to {names(sent)}.</p> : null}
+          {already.length > 0 ? (
+            <p className="text-stone-500 dark:text-stone-400">
+              Already connected: {names(already)}.
+            </p>
+          ) : null}
+          {missing.length > 0 ? (
+            <div className="rounded-lg bg-stone-50 dark:bg-stone-900 px-3 py-2.5">
+              <p>
+                Not on Stacks yet: <span className="break-words">{missing.join(", ")}</span>
+              </p>
+              <a
+                href={mailtoInvite(inviteUrl, missing)}
+                className="mt-2 inline-flex h-8 items-center rounded-md bg-forest-600 px-3 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
+              >
+                Email them an invite
+              </a>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

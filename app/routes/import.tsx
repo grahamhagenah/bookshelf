@@ -8,14 +8,17 @@ import {
   unstable_createMemoryUploadHandler,
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
-import { Form, Link, useActionData, useNavigation } from "@remix-run/react";
+import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 import { useState } from "react";
 
+import InviteMessage from "~/components/invite-message";
 import Layout from "~/components / Layout/Layout";
 import type { ImportSource, ShelfChoice } from "~/import-books";
 import { defaultChoice, readExport, summarize } from "~/import-books";
+import { getFriendInvite } from "~/models/friend.server";
 import { importBooks } from "~/models/import.server";
 import { fillInBooks } from "~/models/openlibrary.server";
+import { publicOrigin } from "~/origin.server";
 import { UPGRADE_PATH } from "~/plan";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
@@ -31,8 +34,11 @@ export const handle = {
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUserId(request);
-  return json({});
+  const userId = await requireUserId(request);
+  // Once the books are in, a message to bring friends over
+  return json({
+    inviteUrl: `${publicOrigin(request)}/invite/${await getFriendInvite(userId)}`,
+  });
 };
 
 const SHELF_CHOICES: ShelfChoice[] = ["owned", "read", "all"];
@@ -92,6 +98,7 @@ const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}
 
 export default function Import() {
   const result = useActionData<typeof action>();
+  const { inviteUrl } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const importing = navigation.state !== "idle" && navigation.formMethod === "POST";
 
@@ -211,6 +218,14 @@ export default function Import() {
                 </Link>
               ) : null}
             </div>
+            {result.added > 0 ? (
+              <InviteMessage
+                url={inviteUrl}
+                title="Now tell your friends"
+                intro="Your shelf is ready to borrow from. Send this, and whoever joins from it is your friend straight away."
+                className="mt-8"
+              />
+            ) : null}
           </div>
         ) : (
           <Form method="post" encType="multipart/form-data" className="max-w-xl">
