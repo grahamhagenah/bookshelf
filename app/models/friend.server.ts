@@ -15,6 +15,13 @@ import { createFriendship } from "./user.server";
 
 const RECENT_COVERS = 5;
 
+// One of each book, for a shelf with two copies or editions of it
+function uniqueWorks<T extends { title: string; openLibraryKey: string | null; isbn: string | null }>(
+  books: T[],
+) {
+  return books.filter((book, index) => books.findIndex((other) => sameWork(other, book)) === index);
+}
+
 export async function getFriendCards(userId: User["id"]) {
   const me = await prisma.user.findUnique({
     where: { id: userId },
@@ -56,7 +63,7 @@ export async function getFriendCards(userId: User["id"]) {
     }),
   ]);
 
-  const [theirBooks, lentToThem] = await Promise.all([
+  const [theirBooks, lentToThem, myBooks] = await Promise.all([
     prisma.book.findMany({
       where: { userId: { in: theirShelves } },
       select: {
@@ -76,6 +83,11 @@ export async function getFriendCards(userId: User["id"]) {
     prisma.book.findMany({
       where: { userId: { in: myShelf }, borrowerId: { in: friendIds } },
       select: { borrowerId: true },
+    }),
+    // For the books you both have
+    prisma.book.findMany({
+      where: { userId: { in: myShelf } },
+      select: { title: true, openLibraryKey: true, isbn: true },
     }),
   ]);
 
@@ -119,6 +131,10 @@ export async function getFriendCards(userId: User["id"]) {
         wanted: wishes.filter((wish) =>
           books.some((book) => sameWork(wish, book)),
         ).length,
+        // Books on both your shelves, any edition, theirs newest first
+        inCommon: uniqueWorks(
+          books.filter((book) => myBooks.some((mine) => sameWork(mine, book))),
+        ).map(({ id, title }) => ({ id, title })),
       };
     })
     .sort((a, b) => a.firstname.localeCompare(b.firstname));
