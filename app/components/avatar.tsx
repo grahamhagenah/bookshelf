@@ -107,12 +107,13 @@ const ICON_PATHS = {
   ),
   cat: (
     <>
-      {/* A kitty: a wide round face, oval eyes, a button nose, whiskers */}
-      <path d="M5.07 10.6 5.2 4.6l3.42 3.56a8 6 0 0 1 6.76 0L18.8 4.6l.13 6A8 6 0 1 1 5.07 10.6z" />
-      <ellipse cx="9" cy="13.3" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
-      <ellipse cx="15" cy="13.3" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
-      <ellipse cx="12" cy="15.4" rx=".95" ry=".7" fill="currentColor" stroke="none" />
-      <path d="M6.3 13.6 1.8 12.9M6.3 15.6 2 16.5M17.7 13.6l4.5-.7M17.7 15.6l4.3.9" />
+      {/* A kitty: a wide round face, oval eyes, a button nose, whiskers. It
+          fills the box, centered, so it reads as big as its neighbors */}
+      <path d="M3.55 12L3.7 4.68L7.88 9.02A9.76 7.32 0 0 1 16.12 9.02L20.3 4.68L20.45 12A9.76 7.32 0 1 1 3.55 12z" />
+      <ellipse cx="8.34" cy="15.29" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="15.66" cy="15.29" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="17.86" rx="1.15" ry=".85" fill="currentColor" stroke="none" />
+      <path d="M5.05 15.66L2.2 14.81M5.05 18.1L2.2 19.2M18.95 15.66L21.8 14.81M18.95 18.1L21.8 19.2" />
     </>
   ),
   paw: (
