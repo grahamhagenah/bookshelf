@@ -2,13 +2,75 @@ import type { MetaDescriptor } from "@remix-run/node";
 
 export const SITE_URL = "https://bookstacks.app";
 // Where the site used to live, and its www twins: sent on to SITE_URL
-export const OLD_HOSTS = ["bookstacks.site", "www.bookstacks.site", "www.bookstacks.app"];
+export const OLD_HOSTS = [
+  "bookstacks.site",
+  "www.bookstacks.site",
+  "www.bookstacks.app",
+];
 const SITE_NAME = "Stacks";
 // Worded the way people search: lending books to friends, keeping track of
 // a home library, an alternative to Goodreads for the physical books
-const DEFAULT_TITLE = "Stacks · Lend books to friends and track your home library";
+const DEFAULT_TITLE =
+  "Stacks · Lend books to friends and track your home library";
 const DEFAULT_DESCRIPTION =
   "Don't let your books collect dust. Stacks is a free book lending app: catalog the books you own, lend them to friends with due-date reminders so they come back, and borrow theirs.";
+
+// The pages search engines may crawl and index, in the order the sitemap
+// lists them. robots.txt and sitemap.xml are both made from this list, so
+// a public page added here is allowed and listed at once. Everything else
+// (libraries, friends, accounts) stays private.
+export const PUBLIC_PAGES = [
+  "/",
+  "/join",
+  "/login",
+  "/faq",
+  "/pricing",
+  "/terms",
+  "/privacy",
+  "/lend-books-to-friends",
+  "/goodreads-alternative",
+  "/for-storygraph-readers",
+];
+
+// What a public page needs to render for a crawler: the built scripts,
+// styles and fonts, the covers it shows, and the icons and preview image
+const PUBLIC_ASSETS = [
+  "/build/",
+  "/covers/",
+  "/og-image.png",
+  "/favicon",
+  "/icon-",
+  "/apple-touch-icon.png",
+  "/site.webmanifest",
+];
+
+export function robotsTxt() {
+  const allow = [
+    // The home page alone, not everything under it
+    "/$",
+    ...PUBLIC_PAGES.filter((page) => page !== "/").map((page) => `${page}$`),
+    ...PUBLIC_ASSETS,
+  ];
+  return [
+    "# Only the public pages are worth indexing; libraries are private",
+    "User-agent: *",
+    ...allow.map((path) => `Allow: ${path}`),
+    "Disallow: /",
+    "",
+    `Sitemap: ${SITE_URL}/sitemap.xml`,
+    "",
+  ].join("\n");
+}
+
+export function sitemapXml() {
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...PUBLIC_PAGES.map((page) => `  <url><loc>${SITE_URL}${page}</loc></url>`),
+    "</urlset>",
+    "",
+  ].join("\n");
+}
 
 // Title, description, canonical link and social card for one page.
 // Private pages pass noindex so search engines leave them out.
@@ -77,7 +139,13 @@ export const ABOUT_STACKS = {
       browserRequirements: "Requires a modern web browser",
       offers: [
         { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
-        { "@type": "Offer", name: "Stacks Plus", price: "3", priceCurrency: "USD", url: `${SITE_URL}/pricing` },
+        {
+          "@type": "Offer",
+          name: "Stacks Plus",
+          price: "3",
+          priceCurrency: "USD",
+          url: `${SITE_URL}/pricing`,
+        },
       ],
       featureList: [
         "Catalog the books you own by search, barcode scan or import from Goodreads and StoryGraph",
@@ -87,7 +155,11 @@ export const ABOUT_STACKS = {
         "Notes and hearts that stay with each copy",
         "Share one shelf with the people you live with",
       ],
-      author: { "@type": "Person", name: "Graham Hagenah", url: "https://grahamhagenah.com" },
+      author: {
+        "@type": "Person",
+        name: "Graham Hagenah",
+        url: "https://grahamhagenah.com",
+      },
     },
   ],
 };
