@@ -313,8 +313,8 @@ function BookCover({
         <CoverPlaceholder
           title={title}
           author={author}
-          large
           className={`absolute inset-0 ${waiting ? "animate-pulse" : ""}`}
+          roomBelow={fetching || Boolean(error && onAddCover)}
         />
       ) : null}
       {fetching ? (

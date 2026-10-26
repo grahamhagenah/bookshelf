@@ -16,7 +16,7 @@
 - Without `RESEND_API_KEY`, emails aren't sent; confirmation and password-reset links are logged to the server console instead.
 
 ## Style
-- Tailwind `stone` grays, plus one accent: forest green (`forest-600`), for the main action on a page. Nothing else gets color.
+- Tailwind `stone` grays, plus one accent: forest green (`forest-600`), for the main action on a page. Nothing else gets color, except the soft, muted tints of the placeholder covers in `app/components/cover-placeholder.tsx`.
 - Profile pictures are line icons from `app/components/avatar.tsx` or initials, never emoji.
 - Content sits in one centered `max-w-5xl` column. Breadcrumbs live in the header.
 - The sticky header stays opaque: Safari 26 takes the status bar color from it, and shows white for a see-through one.
