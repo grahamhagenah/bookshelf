@@ -6,7 +6,6 @@ import invariant from "tiny-invariant";
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
 import { acceptFriendInvite, getInviter } from "~/models/friend.server";
-import { friendLimitMessage } from "~/plan";
 import { seo } from "~/seo";
 import { getUserId } from "~/session.server";
 
@@ -47,17 +46,13 @@ export default function Invite() {
         ? "This is your own invite link. Send it to someone you'd like to borrow books with."
         : reason === "demo-boundary"
           ? "Demo accounts and real ones can't be friends with each other."
-          : reason === "full" || reason === "they-are-full"
-            ? friendLimitMessage(reason)
-            : "That invite link doesn't work any more. Ask for a fresh one.";
+          : "That invite link doesn't work any more. Ask for a fresh one.";
     return (
       <main className="mx-auto w-full max-w-md px-4 py-16 text-center">
         <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-50">
           {reason === "own-invite"
             ? "That's your link"
-            : reason === "full" || reason === "they-are-full"
-              ? "Not just yet"
-              : "Invite not found"}
+            : "Invite not found"}
         </h1>
         <p className="mt-3 text-stone-600 dark:text-stone-300">{message}</p>
         <Link

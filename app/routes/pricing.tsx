@@ -15,7 +15,7 @@ import { getUserId } from "~/session.server";
 export const meta: MetaFunction = () =>
   seo({
     title: "Pricing",
-    description: `Stacks is free for up to ${FREE_LIMITS.books} books and ${FREE_LIMITS.friends} friends. Stacks Plus lifts both limits for $${PLUS_PRICES.monthly} a month or $${PLUS_PRICES.yearly} a year.`,
+    description: `Stacks is free for up to ${FREE_LIMITS.books} books, with as many friends as you like. Stacks Plus lifts the book limit for $${PLUS_PRICES.monthly} a month or $${PLUS_PRICES.yearly} a year.`,
     path: "/pricing",
   });
 
@@ -29,7 +29,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 const FREE_FEATURES = [
   `Up to ${FREE_LIMITS.books} books on your shelf`,
-  `Up to ${FREE_LIMITS.friends} friends`,
+  "As many friends as you like",
   "Lending with due dates and reminders",
   "A want-to-read list, with no limit",
   "Reader notes and hearts",
@@ -40,7 +40,6 @@ const FREE_FEATURES = [
 
 const PLUS_FEATURES = [
   "Unlimited books",
-  "Unlimited friends",
   "Everything in Free",
   "One subscription covers everyone on a shared shelf",
 ];
@@ -75,10 +74,9 @@ export default function Pricing() {
       title="Free to start. A few dollars for the whole library."
       intro={
         <>
-          Stacks is free for up to {FREE_LIMITS.books} books and{" "}
-          {FREE_LIMITS.friends} friends, enough to start with the shelf you lend
-          from most. When you want the whole library on it, Stacks Plus lifts
-          both limits.
+          Stacks is free for up to {FREE_LIMITS.books} books, enough to start
+          with the shelf you lend from most, and as many friends as you like.
+          When you want the whole library on it, Stacks Plus lifts the limit.
         </>
       }
       cta={false}
@@ -153,7 +151,7 @@ export default function Pricing() {
         </div>
       ) : null}
 
-      <GuideSection title="What counts toward the limits?">
+      <GuideSection title="What counts toward the limit?">
         <p>
           <strong className="font-semibold text-stone-900 dark:text-stone-100">
             Books
@@ -163,19 +161,14 @@ export default function Pricing() {
           you live with, your books count together.
         </p>
         <p>
-          <strong className="font-semibold text-stone-900 dark:text-stone-100">
-            Friends
-          </strong>{" "}
-          are people you&apos;ve become friends with on Stacks. The limit is
-          each person&apos;s own, so a friend who already has{" "}
-          {FREE_LIMITS.friends} would need room too.
+          Friends don&apos;t count at all. Add everyone you might lend to.
         </p>
       </GuideSection>
 
-      <GuideSection title="What if I reach a limit, or stop paying?">
+      <GuideSection title="What if I reach the limit, or stop paying?">
         <p>
           Nothing is ever deleted or hidden. You just can&apos;t add more books
-          or friends until you&apos;re back under the limit or on Plus again.
+          until you&apos;re back under the limit or on Plus again.
           Lending, notes and everything else keep working.
         </p>
       </GuideSection>

@@ -18,17 +18,16 @@ import {
   getPlanUsage,
   hasPlus,
   roomForBooks,
-  roomForFriend,
 } from "./plan.server";
 
 const fillShelf = async (userId: string, count: number) => {
   for (let i = 0; i < count; i++) await makeBook(userId, `Book ${i}`);
 };
 
-// Someone with every free friend slot taken
+// Someone with plenty of friends already, more than the old free limit
 async function popular(name: string) {
   const person = await makeUser(name);
-  for (let i = 0; i < FREE_LIMITS.friends; i++) {
+  for (let i = 0; i < 12; i++) {
     await createFriendship(person.id, (await makeUser(`Friend${i}`)).id);
   }
   return person;
@@ -113,40 +112,17 @@ test("an import fills the free shelf and says how many didn't fit", async () => 
   expect(await roomForBooks(me.id)).toBe(0);
 });
 
-test("a request neither side has room for stays waiting", async () => {
-  const full = await popular("Full");
+test("friends are never limited, on either side", async () => {
+  const popularOne = await popular("Popular");
   const asker = await makeUser("Asker");
-  const request = await createNotification(asker.id, full.id, "Asker Reader");
-  expect(await answerFriendRequest(full.id, request.id, true)).toBe("full");
+  const request = await createNotification(asker.id, popularOne.id, "Asker Reader");
+  expect(await answerFriendRequest(popularOne.id, request.id, true)).toBe("done");
 
-  const other = await makeUser("Other");
-  const theirs = await createNotification(full.id, other.id, "Full Reader");
-  expect(await answerFriendRequest(other.id, theirs.id, true)).toBe(
-    "they-are-full",
-  );
+  const other = await popular("Other");
+  const theirs = await createNotification(popularOne.id, other.id, "Popular Reader");
+  expect(await answerFriendRequest(other.id, theirs.id, true)).toBe("done");
 
-  const pending = await prisma.notification.findMany({
-    where: { id: { in: [request.id, theirs.id] } },
-    select: { actionTaken: true },
-  });
-  expect(pending.map((n) => n.actionTaken)).toEqual([null, null]);
-
-  // Declining is always allowed, and Plus lifts the limit
-  await plus(full.id);
-  expect(await roomForFriend(full.id)).toBe(true);
-  expect(await answerFriendRequest(full.id, request.id, true)).toBe("done");
-});
-
-test("an invite link waits while either side is full", async () => {
-  const full = await popular("Inviter");
-  const token = await getFriendInvite(full.id);
+  const token = await getFriendInvite(popularOne.id);
   const newcomer = await makeUser("Newcomer");
-  expect(await acceptFriendInvite(newcomer.id, token)).toEqual({
-    ok: false,
-    reason: "they-are-full",
-  });
-  await plus(full.id);
-  expect(await acceptFriendInvite(newcomer.id, token)).toMatchObject({
-    ok: true,
-  });
+  expect(await acceptFriendInvite(newcomer.id, token)).toMatchObject({ ok: true });
 });

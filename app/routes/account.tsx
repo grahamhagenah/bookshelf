@@ -612,7 +612,7 @@ export default function Account() {
       <Section
         id="plan"
         title="Plan"
-        description={`Free holds ${FREE_LIMITS.books} books and ${FREE_LIMITS.friends} friends. Stacks Plus has no limits.`}
+        description={`Free holds ${FREE_LIMITS.books} books, with as many friends as you like. Stacks Plus has no limits.`}
       >
         {data.billingFailed ? (
           <p
@@ -1301,9 +1301,7 @@ function PlanPanel({
   billing: boolean;
   upgraded: boolean;
 }) {
-  const usage = `${plan.books} ${plan.books === 1 ? "book" : "books"} · ${plan.friends} ${
-    plan.friends === 1 ? "friend" : "friends"
-  }`;
+  const usage = `${plan.books} ${plan.books === 1 ? "book" : "books"}`;
 
   if (plan.plus) {
     const own = plan.own;
@@ -1347,24 +1345,17 @@ function PlanPanel({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Meter
-          label={plan.shared ? "Books on your shared shelf" : "Books"}
-          used={plan.books}
-          limit={FREE_LIMITS.books}
-        />
-        <Meter
-          label="Friends"
-          used={plan.friends}
-          limit={FREE_LIMITS.friends}
-        />
-      </div>
+      <Meter
+        label={plan.shared ? "Books on your shared shelf" : "Books"}
+        used={plan.books}
+        limit={FREE_LIMITS.books}
+      />
       <div className="rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3">
         <p className="font-medium text-stone-900 dark:text-stone-100">
           Stacks Plus
         </p>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
-          Unlimited books and friends, for everyone on your shelf. Cancel any
+          Unlimited books, for everyone on your shelf. Cancel any
           time.
         </p>
         {demo ? (

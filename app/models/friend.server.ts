@@ -2,7 +2,6 @@ import type { User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 import { isNotLending } from "~/lending";
-import { friendLimitBetween } from "~/plan.server";
 import { isDemoEmail } from "~/utils";
 import { sameWork } from "~/works";
 
@@ -159,8 +158,6 @@ export async function answerFriendRequest(
   });
   if (!request) return "not-found" as const;
   if (accept) {
-    const limit = await friendLimitBetween(userId, request.senderId);
-    if (limit) return limit;
     await createFriendship(userId, request.senderId);
   }
   await prisma.notification.update({
@@ -264,9 +261,6 @@ export async function acceptFriendInvite(
     where: { id: userId, following: { some: { id: inviter.id } } },
   });
   if (already) return { ok: true, inviterId: inviter.id };
-
-  const limit = await friendLimitBetween(userId, inviter.id);
-  if (limit) return { ok: false, reason: limit };
 
   await createFriendship(userId, inviter.id);
   await prisma.notification.updateMany({

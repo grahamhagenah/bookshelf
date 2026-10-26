@@ -5,8 +5,6 @@ import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import { shelfIds } from "~/models/household.server";
 import { createNotification, getFriendStatus, getUserById } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
-import { LIMIT_MESSAGES } from "~/plan";
-import { roomForFriend } from "~/plan.server";
 import { getShelfProfile } from "~/profile.server";
 import { getUserId, requireUserId } from "~/session.server";
 
@@ -57,10 +55,6 @@ export async function askToBeFriends(request: Request, ownerId: string) {
 
   const viewer = await getUserById(viewerId);
   if (!viewer) throw new Response("Not Found", { status: 404 });
-  // No new requests once the free plan's friends are all taken
-  if (!(await roomForFriend(viewerId))) {
-    return json({ ok: false, limit: LIMIT_MESSAGES.friends }, { status: 403 });
-  }
   const friendRequest = await createNotification(viewerId, ownerId, `${viewer.firstname} ${viewer.surname}`);
   await respondAsDemoPersona(friendRequest.id);
   return json({ ok: true });

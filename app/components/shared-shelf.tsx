@@ -6,7 +6,6 @@ import BookCover from "~/components/book-cover";
 import { HeartIcon, StacksLogo } from "~/components/icons";
 import Library from "~/components/library";
 import type { FriendStatus } from "~/models/user.server";
-import { UPGRADE_PATH } from "~/plan";
 import type { loadSharedShelf } from "~/share.server";
 
 // A shared shelf's page, whichever address it's reached by: who it
@@ -196,11 +195,9 @@ function Invite({ data }: { data: SharedShelfData }) {
     signedIn,
   } = data;
   const friendStatus = data.friendStatus as FriendStatus | null;
-  const fetcher = useFetcher<{ ok: boolean; limit?: string }>();
+  const fetcher = useFetcher<{ ok: boolean }>();
   // Back to this page, whichever address it was
   const here = useLocation().pathname;
-  // The free plan's friends are all taken
-  const limitMessage = fetcher.data?.limit;
   // Show the request as sent straight away
   const status =
     fetcher.state !== "idle" && friendStatus === "none"
@@ -242,18 +239,6 @@ function Invite({ data }: { data: SharedShelfData }) {
           className={secondaryButton}
         >
           Sign in
-        </Link>
-      </>
-    );
-  } else if (status === "none" && limitMessage) {
-    text = (
-      <>
-        {limitMessage}{" "}
-        <Link
-          to={UPGRADE_PATH}
-          className="font-medium underline underline-offset-2"
-        >
-          See Stacks Plus
         </Link>
       </>
     );

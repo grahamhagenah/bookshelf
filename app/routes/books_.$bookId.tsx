@@ -82,8 +82,6 @@ import {
   getLoanReply,
 } from "~/models/user.server";
 import { getFriendsWorkNotes } from "~/models/work-note.server";
-import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
-import { roomForFriend } from "~/plan.server";
 import {
   getPin,
   pinBook,
@@ -788,14 +786,6 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     if (!(await canInteract(userId, targetId))) {
       throw new Response("Not Found", { status: 404 });
     }
-    // No new requests once the free plan's friends are all taken
-    if (!(await roomForFriend(userId))) {
-      return json(
-        { friendRequestSent: false, friendLimit: LIMIT_MESSAGES.friends },
-        { status: 403 },
-      );
-    }
-
     const currentUser = await getUserById(userId);
     if (!currentUser) {
       throw new Response("User not found", { status: 404 });
@@ -1726,7 +1716,6 @@ export default function BookDetailsPage() {
     success?: boolean;
     refreshed?: boolean;
     friendRequestSent?: boolean;
-    friendLimit?: string;
     reminderSent?: boolean;
     // The pasted cover link couldn't be fetched
     coverError?: string;
@@ -1991,17 +1980,6 @@ export default function BookDetailsPage() {
                       : "Add friend"}
                 </button>
               </Form>
-              {actionData?.friendLimit ? (
-                <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
-                  {actionData.friendLimit}{" "}
-                  <Link
-                    to={UPGRADE_PATH}
-                    className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2"
-                  >
-                    See Stacks Plus
-                  </Link>
-                </p>
-              ) : null}
             </div>
           ) : null}
           {/* What the lender said when they agreed: where, when */}
