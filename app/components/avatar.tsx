@@ -481,47 +481,55 @@ const ICON_PATHS = {
 
 export type AvatarIcon = keyof typeof ICON_PATHS;
 
-// What the picker offers, in its order. The rest of ICON_PATHS is retired
-// for now: still drawn for anyone who chose one, no longer on offer.
+// What the picker offers, grouped so like pictures sit together. The rest of
+// ICON_PATHS is retired for now: still drawn for anyone who chose one, no
+// longer on offer.
 export const AVATAR_ICONS: AvatarIcon[] = [
+  // Nature and sky
   "leaf",
   "flower",
-  "moon",
-  "sun",
-  "star",
+  "tree",
+  "cactus",
   "mountain",
-  "glasses",
+  "sun",
+  "moon",
+  "star",
+  "snowflake",
+  "planet",
+  // Creatures
   "cat",
   "hare",
   "mouse",
   "koala",
-  "paw",
   "frog",
   "octopus",
+  "bee",
+  "paw",
+  // Spooky, and characters
   "ghost",
-  "tree",
-  "cactus",
-  "planet",
+  "skull",
+  "mask",
+  "robot",
+  // To wear and to use
+  "glasses",
   "crown",
+  "chef",
+  "umbrella",
   "anchor",
+  "bicycle",
+  // Food and drink
+  "wine",
+  "cutlery",
+  // Music and fun
   "music",
   "headphones",
-  "bicycle",
-  "umbrella",
-  "chef",
-  "wine",
   "discoball",
-  "skull",
-  "eye",
-  "pyramid",
-  "robot",
-  "mask",
-  "hearts",
-  "cutlery",
   "vhs",
+  // Shapes and symbols
+  "hearts",
   "diamond",
-  "bee",
-  "snowflake",
+  "pyramid",
+  "eye",
 ];
 
 export function isAvatarIcon(value: unknown): value is AvatarIcon {
