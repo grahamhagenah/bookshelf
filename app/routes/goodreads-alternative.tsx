@@ -86,7 +86,12 @@ export default function GoodreadsAlternative() {
         </div>
         <p>
           They aren&apos;t rivals so much as different tools. Plenty of people keep a reading
-          log on one of the others and use Stacks for the books they actually own.
+          log on one of the others and use Stacks for the books they actually own. On
+          StoryGraph?{" "}
+          <Link to="/for-storygraph-readers" className={proseLink}>
+            Here&apos;s how the two fit together
+          </Link>
+          .
         </p>
       </GuideSection>
 
