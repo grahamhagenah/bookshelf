@@ -36,9 +36,11 @@ export async function getFriendCards(userId: User["id"]) {
           household: { select: { members: { select: { id: true } } } },
         },
       },
+      feedMutes: { select: { mutedId: true } },
     },
   });
   const friends = me?.following ?? [];
+  const hidden = new Set(me?.feedMutes.map((mute) => mute.mutedId));
   if (friends.length === 0) return [];
 
   const friendIds = friends.map((friend) => friend.id);
@@ -127,6 +129,8 @@ export async function getFriendCards(userId: User["id"]) {
           .length,
         iHaveOfTheirs: books.filter((book) => book.borrowerId === userId)
           .length,
+        // Kept out of your feed, home page and weekly email
+        hiddenFromFeed: hidden.has(friend.id),
         // Books on your want-to-read list that they own
         wanted: wishes.filter((wish) =>
           books.some((book) => sameWork(wish, book)),
@@ -138,6 +142,21 @@ export async function getFriendCards(userId: User["id"]) {
       };
     })
     .sort((a, b) => a.firstname.localeCompare(b.firstname));
+}
+
+// Keeps a friend out of your feed (and the home page's activity and the
+// weekly email), or lets them back in. Nothing else changes: still
+// friends, still there to borrow from.
+export async function setHiddenFromFeed(userId: User["id"], friendId: User["id"], hidden: boolean) {
+  if (hidden) {
+    await prisma.feedMute.upsert({
+      where: { userId_mutedId: { userId, mutedId: friendId } },
+      create: { userId, mutedId: friendId },
+      update: {},
+    });
+  } else {
+    await prisma.feedMute.deleteMany({ where: { userId, mutedId: friendId } });
+  }
 }
 
 // Requests other people have sent you that you haven't answered yet

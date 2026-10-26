@@ -265,11 +265,18 @@ export async function getFriendActivity(
 ): Promise<FriendActivity[]> {
   const me = await prisma.user.findUnique({
     where: { id: userId },
-    select: { following: { select: { id: true } } },
+    select: {
+      following: { select: { id: true } },
+      feedMutes: { select: { mutedId: true } },
+    },
   });
   const friendIds = me?.following.map((friend) => friend.id) ?? [];
-  // Whose activity this is; who's a friend still decides what you can ask for
-  const sourceIds = among ? friendIds.filter((id) => among.includes(id)) : friendIds;
+  // Whose activity this is, less anyone you've hidden from your feed;
+  // who's a friend still decides what you can ask for
+  const hidden = new Set(me?.feedMutes.map((mute) => mute.mutedId));
+  const sourceIds = (among ? friendIds.filter((id) => among.includes(id)) : friendIds).filter(
+    (id) => !hidden.has(id),
+  );
   if (sourceIds.length === 0) return [];
 
   const since = new Date(Date.now() - days * DAY);

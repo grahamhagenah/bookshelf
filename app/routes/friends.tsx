@@ -16,6 +16,7 @@ import {
   BorrowedIcon,
   ClockIcon,
   CommonIcon,
+  FeedIcon,
   LentIcon,
 } from "~/components/icons";
 import Layout from "~/components / Layout/Layout";
@@ -24,6 +25,7 @@ import {
   getFriendCards,
   getIncomingFriendRequests,
   removeFriend,
+  setHiddenFromFeed,
 } from "~/models/friend.server";
 import { countPoolBooks } from "~/models/pool.server";
 import { getPendingFriendRequests } from "~/models/user.server";
@@ -63,6 +65,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
   const friendId = formData.get("friendId");
+
+  if ((intent === "hide" || intent === "show") && typeof friendId === "string") {
+    await setHiddenFromFeed(userId, friendId, intent === "hide");
+    return json<ActionData>({ errors: null, success: true });
+  }
 
   if (intent === "remove" && typeof friendId === "string") {
     await removeFriend(userId, friendId);
@@ -191,6 +198,10 @@ function listTitles(titles: string[]) {
 function FriendCard({ friend }: { friend: Friend }) {
   const fetcher = useFetcher();
   const removing = fetcher.state !== "idle";
+  // Hidden from your feed, shown as changed the moment it's clicked
+  const feedFetcher = useFetcher();
+  const asked = feedFetcher.formData?.get("intent");
+  const hidden = asked ? asked === "hide" : friend.hiddenFromFeed;
   const shelf = `/friend/${friend.id}`;
   const name = `${friend.firstname} ${friend.surname}`;
   const loans = friend.hasOfMine + friend.iHaveOfTheirs;
@@ -284,6 +295,12 @@ function FriendCard({ friend }: { friend: Friend }) {
             </Link>
           </li>
         ) : null}
+        {hidden ? (
+          <li className="flex items-center gap-2">
+            <FeedIcon size={14} strokeWidth={1.5} />
+            Hidden from your feed
+          </li>
+        ) : null}
         {friend.lastAddedAt ? (
           <li className="flex items-center gap-2">
             <ClockIcon size={14} />
@@ -299,25 +316,42 @@ function FriendCard({ friend }: { friend: Friend }) {
         >
           See their shelf →
         </Link>
-        <fetcher.Form
-          method="post"
-          onSubmit={(event) => {
-            const message =
-              `Remove ${friend.firstname} as a friend? You won't see each other's shelves any more.` +
-              (loans ? " Books already lent between you stay lent until they're returned." : "");
-            if (!confirm(message)) event.preventDefault();
-          }}
-        >
-          <input type="hidden" name="intent" value="remove" />
-          <input type="hidden" name="friendId" value={friend.id} />
-          <button
-            type="submit"
-            disabled={removing}
-            className="text-sm text-stone-400 dark:text-stone-500 hover:text-rose-700 dark:hover:text-rose-400 transition-colors"
+        <span className="flex items-center gap-4">
+          <feedFetcher.Form method="post">
+            <input type="hidden" name="intent" value={hidden ? "show" : "hide"} />
+            <input type="hidden" name="friendId" value={friend.id} />
+            <button
+              type="submit"
+              title={
+                hidden
+                  ? `Show what ${friend.firstname} adds and writes in your feed again`
+                  : `Stop seeing what ${friend.firstname} adds and writes in your feed. You stay friends.`
+              }
+              className="text-sm text-stone-400 dark:text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-colors"
+            >
+              {hidden ? "Show in feed" : "Hide from feed"}
+            </button>
+          </feedFetcher.Form>
+          <fetcher.Form
+            method="post"
+            onSubmit={(event) => {
+              const message =
+                `Remove ${friend.firstname} as a friend? You won't see each other's shelves any more.` +
+                (loans ? " Books already lent between you stay lent until they're returned." : "");
+              if (!confirm(message)) event.preventDefault();
+            }}
           >
-            {removing ? "Removing…" : "Remove"}
-          </button>
-        </fetcher.Form>
+            <input type="hidden" name="intent" value="remove" />
+            <input type="hidden" name="friendId" value={friend.id} />
+            <button
+              type="submit"
+              disabled={removing}
+              className="text-sm text-stone-400 dark:text-stone-500 hover:text-rose-700 dark:hover:text-rose-400 transition-colors"
+            >
+              {removing ? "Removing…" : "Remove"}
+            </button>
+          </fetcher.Form>
+        </span>
       </div>
     </li>
   );

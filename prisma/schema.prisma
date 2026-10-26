@@ -93,6 +93,10 @@ model User {
   followedBy User[]        @relation("UserFollows")
   following  User[]        @relation("UserFollows")
   pins       Pin[]
+  // Friends you've kept out of your feed, and people who've kept you out
+  // of theirs
+  feedMutes  FeedMute[]    @relation("feedMutes")
+  mutedBy    FeedMute[]    @relation("mutedBy")
   groups     GroupMember[]
 
   @@index([demoGroup], name: "demo_group_index")
@@ -359,4 +363,17 @@ model GroupMember {
 
   @@id([groupId, userId])
   @@index([userId])
+}
+
+// A friend kept out of someone's feed: still a friend, still there to
+// borrow from, just quiet in the feed, on the home page and in the
+// weekly email
+model FeedMute {
+  user      User     @relation("feedMutes", fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  muted     User     @relation("mutedBy", fields: [mutedId], references: [id], onDelete: Cascade)
+  mutedId   String
+  createdAt DateTime @default(now())
+
+  @@id([userId, mutedId])
 }

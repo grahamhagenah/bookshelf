@@ -3,6 +3,7 @@ import { makeBook, makeUser, prisma } from "../../test/db";
 
 import { getFriendActivity, getNotePrompts } from "./activity.server";
 import { lendBook } from "./book.server";
+import { getFriendCards, setHiddenFromFeed } from "./friend.server";
 import { saveReaderNote } from "./note.server";
 import { createFriendship } from "./user.server";
 import { addWantToRead } from "./wish.server";
@@ -305,4 +306,26 @@ test("a group's activity is only from the friends in it", async () => {
   expect(group.map((item) => item.friend.id)).toEqual([inGroup.id]);
   // Nobody in common, nothing to show
   expect(await getFriendActivity(me.id, { among: [] })).toEqual([]);
+});
+
+test("a friend hidden from your feed drops out of it, and comes back when shown", async () => {
+  const me = await makeUser("Me");
+  const loud = await makeUser("Loud");
+  const quiet = await makeUser("Quiet");
+  await createFriendship(me.id, loud.id);
+  await createFriendship(me.id, quiet.id);
+  await makeBook(loud.id, "Another one");
+  await makeBook(quiet.id, "Just one");
+
+  await setHiddenFromFeed(me.id, loud.id, true);
+  expect((await getFriendActivity(me.id)).map((item) => item.friend.id)).toEqual([quiet.id]);
+  // Still a friend, shown as hidden on their card
+  const cards = await getFriendCards(me.id);
+  expect(cards.find((card) => card.id === loud.id)?.hiddenFromFeed).toBe(true);
+  // Hiding is one way: they still see you
+  await makeBook(me.id, "Mine");
+  expect((await getFriendActivity(loud.id)).map((item) => item.friend.id)).toEqual([me.id]);
+
+  await setHiddenFromFeed(me.id, loud.id, false);
+  expect((await getFriendActivity(me.id)).map((item) => item.friend.id).sort()).toEqual([loud.id, quiet.id].sort());
 });
