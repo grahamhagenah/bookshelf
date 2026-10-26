@@ -186,7 +186,8 @@ function GroupName({ name, path }: { name: string; path: string }) {
     );
   }
   return (
-    <fetcher.Form method="post" action={path} className="flex flex-wrap items-center gap-2">
+    // The same height as the name and its pencil, so nothing below moves
+    <fetcher.Form method="post" action={path} className="relative flex items-center gap-2">
       <input type="hidden" name="intent" value="rename" />
       <input
         name="name"
@@ -200,24 +201,24 @@ function GroupName({ name, path }: { name: string; path: string }) {
         onKeyDown={(event) => {
           if (event.key === "Escape") setEditing(false);
         }}
-        className="min-w-0 flex-1 rounded-md border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 px-2 py-0.5 text-xl font-semibold text-stone-900 dark:text-stone-100 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10 sm:text-2xl"
+        className="h-8 min-w-0 flex-1 rounded-md border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 px-1.5 py-0 text-xl font-semibold leading-none text-stone-900 dark:text-stone-100 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10 sm:text-2xl"
       />
       <button
         type="submit"
         disabled={saving}
-        className="rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-60"
+        className="inline-flex h-8 flex-shrink-0 items-center rounded-md bg-forest-600 px-3 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-60"
       >
         {saving ? "Saving…" : "Save"}
       </button>
       <button
         type="button"
         onClick={() => setEditing(false)}
-        className="px-1 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
+        className="inline-flex h-8 flex-shrink-0 items-center px-1 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
       >
         Cancel
       </button>
       {fetcher.data?.error ? (
-        <p className="w-full text-sm text-rose-700 dark:text-rose-400">{fetcher.data.error}</p>
+        <p className="absolute left-0 top-full mt-1 text-sm text-rose-700 dark:text-rose-400">{fetcher.data.error}</p>
       ) : null}
     </fetcher.Form>
   );
