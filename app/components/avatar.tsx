@@ -64,12 +64,12 @@ const ICON_PATHS = {
   ),
   flower: (
     <>
-      {/* Five petals in one outline over a solid center, a short stem and one
-          leaf. The head takes most of the room so the petals still read small */}
-      <path d="M8.77 10.25A2.7 2.7 0 1 1 10 6.45A2.7 2.7 0 1 1 14 6.45A2.7 2.7 0 1 1 15.23 10.25A2.7 2.7 0 1 1 12 12.6A2.7 2.7 0 1 1 8.77 10.25z" />
-      <circle cx="12" cy="9.2" r="1.3" fill="currentColor" stroke="none" />
-      <path d="M12 15.3V21" />
-      <path d="M12 19c.3-2 1.9-3 3.9-2.8-.3 2-1.9 3.1-3.9 2.8z" />
+      {/* Five petals in one outline over a solid center, a stem and one
+          leaf, with room between the leaf and the petals */}
+      <path d="M9.05 9.06A2.5 2.5 0 1 1 10.18 5.59A2.5 2.5 0 1 1 13.82 5.59A2.5 2.5 0 1 1 14.95 9.06A2.5 2.5 0 1 1 12 11.2A2.5 2.5 0 1 1 9.05 9.06z" />
+      <circle cx="12" cy="8.1" r="1.2" fill="currentColor" stroke="none" />
+      <path d="M12 13.7v7.9" />
+      <path d="M12 19.2c.2-3 2.4-4.6 5.4-4.4-.2 3-2.4 4.7-5.4 4.4z" />
     </>
   ),
   glasses: (
@@ -337,10 +337,10 @@ const ICON_PATHS = {
   ),
   chef: (
     <>
-      {/* A chef's hat: a puffed top of three rounds over a band */}
-      <path d="M7 15C4.5 14.5 3.5 11.7 5.2 10 6.3 8.9 7.9 8.8 9 9.4 9.4 6.9 10.6 5.2 12 5.2s2.6 1.7 3 4.2c1.1-.6 2.7-.5 3.8.6 1.7 1.7.7 4.5-1.8 5" />
-      <path d="M7 15v4.5h10V15z" />
-      <path d="M10 15v-2.6M14 15v-2.6" />
+      {/* A toque: three tall puffs overhanging a narrow band. No pleats,
+          and the puffs wider than the band, or it reads as a muffin */}
+      <path d="M8.5 15.5C4.6 15.8 2.8 11.2 5.6 9.2c.9-.6 2-.8 2.9-.6C8.9 5.9 10.3 4 12 4s3.1 1.9 3.5 4.6c.9-.2 2 0 2.9.6 2.8 2 1 6.6-2.9 6.3" />
+      <path d="M8.5 15.5v4h7v-4" />
     </>
   ),
   teapot: (
