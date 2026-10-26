@@ -417,7 +417,7 @@ export default function WorkPage() {
           <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
             About this book
           </h2>
-          <p className="summary max-w-prose leading-relaxed text-stone-700 dark:text-stone-300">
+          <p className="max-w-prose whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
             {work.description
               ? stripMarkdown(work.description)
               : data.offline
@@ -431,7 +431,7 @@ export default function WorkPage() {
             <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
               About the author
             </h2>
-            <p className="summary max-w-prose leading-relaxed text-stone-700 dark:text-stone-300">
+            <p className="max-w-prose whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
               {work.authorDetails.bio}
             </p>
             <p className="mt-2 flex gap-4 text-sm">

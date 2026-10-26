@@ -282,7 +282,7 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
           ) : null}
         </p>
         {phase !== "nocamera" ? (
-          <p className="mt-1 min-h-8 text-center text-xs text-stone-500">
+          <p className="mt-1 min-h-8 text-center text-xs text-stone-500 dark:text-stone-400">
             Fill the frame with the black stripes (not the printed number), about a hand&apos;s width away, and hold still.
           </p>
         ) : null}

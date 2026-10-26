@@ -287,7 +287,7 @@ export default function Join() {
           <div>
             <label
               htmlFor="firstname"
-              className="block text-sm font-medium text-stone-700"
+              className="block text-sm font-medium text-stone-700 dark:text-stone-200"
             >
               First Name
             </label>
@@ -317,7 +317,7 @@ export default function Join() {
           <div>
             <label
               htmlFor="surname"
-              className="block text-sm font-medium text-stone-700"
+              className="block text-sm font-medium text-stone-700 dark:text-stone-200"
             >
               Last Name
             </label>
@@ -348,7 +348,7 @@ export default function Join() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-stone-700"
+              className="block text-sm font-medium text-stone-700 dark:text-stone-200"
             >
               Email address
             </label>
@@ -380,7 +380,7 @@ export default function Join() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-stone-700"
+              className="block text-sm font-medium text-stone-700 dark:text-stone-200"
             >
               Password
             </label>
@@ -433,7 +433,7 @@ export default function Join() {
             <Link to="/privacy" className="underline underline-offset-2">privacy policy</Link>.
           </p>
           <div className="flex items-center justify-center">
-            <div className="text-center text-sm text-stone-500">
+            <div className="text-center text-sm text-stone-500 dark:text-stone-400">
               Already have an account?{" "}
               <Link
                 className="text-stone-900 dark:text-stone-100 underline"

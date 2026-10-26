@@ -14,7 +14,6 @@
 
   /* The one shadow for floating things: menus, cards */
   --shadow-soft: 0 4px 12px -2px rgb(28 25 23 / 0.06);
-  --font-family-sans: 'Source Sans 3', system-ui, sans-serif;
   --font-sans: 'Source Sans 3', system-ui, sans-serif;
   /* Georgia is close in size, so the swap barely moves anything */
   --font-serif: 'Source Serif 4', Georgia, serif;
@@ -53,163 +52,15 @@
   }
 }
 
-body {
-  font-family: var(--font-family-sans);
-}
-
-/* Dark mode overrides for common elements */
-.dark input, .dark textarea, .dark select {
-  background-color: var(--color-stone-900);
-  border-color: var(--color-stone-700);
-  color: var(--color-stone-100);
-}
-
-.dark input::placeholder, .dark textarea::placeholder {
-  color: var(--color-stone-500);
-}
-
-.dark .bg-stone-50 { background-color: var(--color-stone-900); }
-.dark .bg-stone-100 { background-color: var(--color-stone-800); }
-
-.dark .text-stone-500 { color: var(--color-stone-400); }
-.dark .text-stone-600 { color: var(--color-stone-300); }
-.dark .text-stone-700 { color: var(--color-stone-200); }
-.dark .text-stone-800 { color: var(--color-stone-100); }
-.dark .text-stone-900 { color: var(--color-stone-50); }
-
-.dark hr {
-  border-color: var(--color-stone-800);
-}
-
-h1, h2, h3 {
-  font-family: var(--font-family-sans);
-}
-
-.search-container {
-  position: relative;
-  width: 300px;
-}
-
-#search-input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid var(--color-stone-300);
-  border-radius: 10px;
-}
-
-#suggestions-container {
-  position: absolute;
-  width: 100%;
-  overflow-y: auto;
-  border-top: none;
-  border-radius: 0 0 5px 5px;
-  background-color: #fff;
-}
-
-.dark #suggestions-container {
-  background-color: var(--color-stone-950);
-  border-color: var(--color-stone-800);
-}
-
-#search-results li {
-  padding: 2rem;
-}
-
-.primary-search > svg {
-  height: 100%;
-  margin: auto 10px;
-  position: absolute;
-}
-
-#search-results h3 {
-  font-size: 22px;
-}
-
-button#demo-customized-button {
-  height: 100%;
-}
-
-#logo:hover {
-  cursor: pointer;
-}
-
-#logo h1 {
-  display: inline-block;
-}
-
-#logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.stretched-link::after {
-  content: "";
-  z-index: 10;
-  position: absolute;
-  inset: 0;
-  background: transparent;
-  pointer-events: auto;
-}
-
-.cover-wrapper img {
-  width: 100%;
-  object-fit: cover;
-}
-
-#intro {
-  text-align: center;
-  margin-top: 4rem;
-}
-
-.intro-wrapper {
-  margin: 0 auto;
-}
-
-.primary-search {
-  display: flex;
-  position: relative;
-}
-
-.primary-search input {
-  background: transparent;
-}
-
-.primary-search button {
-  padding: 0 15px;
-}
-
-.no-cover h3 {
-  font-size: 25px;
-}
-
-.search-results {
-  margin-bottom: 3rem;
-}
-
-.button-group {
-  margin-top: 2rem;
-  padding: 0 1rem;
-}
-
-.search-results li {
-  margin: 3rem 0;
-}
-
-#search-container {
-  position: relative;
-  padding-bottom: 6rem;
-}
-
-#book-details {
-  position: relative;
-}
-
-#book-details .book-cover {
-  position: sticky;
-  top: 4rem;
-}
-
-.summary {
-  white-space: pre-wrap;
+/* Form fields default to the page's dark colors; a field's own dark:
+   classes win over these */
+@layer base {
+  .dark input, .dark textarea, .dark select {
+    background-color: var(--color-stone-900);
+    border-color: var(--color-stone-700);
+    color: var(--color-stone-100);
+  }
+  .dark input::placeholder, .dark textarea::placeholder {
+    color: var(--color-stone-500);
+  }
 }

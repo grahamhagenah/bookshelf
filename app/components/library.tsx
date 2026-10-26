@@ -201,10 +201,10 @@ export default function Library({
           <section className="flex flex-col items-center justify-center min-h-[calc(100vh-60px)] px-4 py-12">
             <div className="text-center">
               <BookIcon size={64} className="mx-auto text-stone-300 mb-6" />
-              <h1 className="text-2xl md:text-3xl font-semibold text-stone-700 mb-2">
+              <h1 className="text-2xl md:text-3xl font-semibold text-stone-700 dark:text-stone-200 mb-2">
                 No books yet
               </h1>
-              <p className="text-stone-500">
+              <p className="text-stone-500 dark:text-stone-400">
                 {ownerName} hasn&apos;t added any books to their library.
               </p>
             </div>
@@ -336,7 +336,7 @@ export default function Library({
           {viewMode === "cover" ? (
             <ol className={`grid gap-3 sm:gap-4 ${grid.columns}`}>
               {shelfBooks.map((book, index) => (
-                <li key={book.id} className="cover-wrapper">
+                <li key={book.id}>
                   <NavLink to={`/books/${book.id}`} className="group block">
                     <div className="relative">
                       <GridCover

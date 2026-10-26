@@ -7,18 +7,6 @@ import { sameWork } from "~/works";
 
 import { shelfIdsFor } from "./household.server";
 
-export function getBook({
-  id,
-  userId,
-}: Pick<Book, "id"> & {
-  userId: User["id"];
-}) {
-  return prisma.book.findFirst({
-    select: { id: true, body: true, author: true, title: true, cover: true },
-    where: { id, userId },
-  });
-}
-
 // Stops lending a book until a moment (far off means until they say),
 // or, given null, starts again
 export function setNotLending(bookId: Book["id"], until: Date | null) {
@@ -154,21 +142,6 @@ export function getPublicBookListItems(ownerIds: User["id"][]) {
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
   });
 }
-
-// export function getBooksByUserId(userId) {
-//   try {
-//     const books = await prisma.book.findMany({
-//       where: {
-//         userId: userId, // Replace with the actual variable holding the userId you want to search for
-//       },
-//     });
-//     return books;
-//   } catch (error) {
-//     throw error;
-//   } finally {
-//     await prisma.$disconnect();
-//   }
-// }
 
 export type BookInput = Pick<Book, "title" | "author" | "body" | "cover"> & {
   datePublished?: string | null;

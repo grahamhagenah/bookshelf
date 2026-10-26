@@ -2505,7 +2505,7 @@ export default function BookDetailsPage() {
               {!data.book.body && lookingUp ? (
                 <Placeholder lines={4} className="max-w-prose" />
               ) : (
-                <p className="summary text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
+                <p className="whitespace-pre-wrap text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
                   {data.book.body ? (
                     stripMarkdown(data.book.body)
                   ) : data.isOwner ? (

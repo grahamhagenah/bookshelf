@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
       <div className="mx-auto w-full max-w-md px-8">
         {actionData?.success ? (
           <div className="space-y-6">
-            <div className="rounded-lg bg-stone-100 p-6 text-center">
+            <div className="rounded-lg bg-stone-100 dark:bg-stone-800 p-6 text-center">
               <h2 className="text-xl font-semibold text-stone-900 dark:text-stone-100 mb-2">
                 Check your email
               </h2>
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
               <h1 className="text-2xl font-semibold mb-2">
                 Forgot your password?
               </h1>
-              <p className="text-stone-600">
+              <p className="text-stone-600 dark:text-stone-300">
                 Enter your email address and we&apos;ll send you a link to
                 choose a new one.
               </p>
@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-stone-700"
+                className="block text-sm font-medium text-stone-700 dark:text-stone-200"
               >
                 Email address
               </label>
@@ -114,7 +114,7 @@ export default function ForgotPasswordPage() {
               Send reset link
             </button>
 
-            <div className="text-center text-sm text-stone-500">
+            <div className="text-center text-sm text-stone-500 dark:text-stone-400">
               Remember your password?{" "}
               <Link
                 className="text-stone-900 dark:text-stone-100 underline"

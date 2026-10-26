@@ -371,7 +371,7 @@ function Shelf({
       {works.map((work, index) => {
         const tag = standing(work);
         return (
-          <li key={work.key} className="cover-wrapper">
+          <li key={work.key}>
             <NavLink to={`/books/${work.copies[0].bookId}`} className="group block">
               <div className="relative">
                 <GridCover

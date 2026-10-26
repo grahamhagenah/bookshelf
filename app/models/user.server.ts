@@ -118,48 +118,6 @@ export async function updateUser(
   return { ...user, emailChanged };
 }
 
-export function generateUserSlug(firstname: string, surname: string): string {
-  return `${firstname}-${surname}`.toLowerCase().replace(/\s+/g, "-");
-}
-
-export async function getUserBySlug(slug: string) {
-  // Fetch all users and find the one whose generated slug matches
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      email: true,
-      firstname: true,
-      surname: true,
-      following: {
-        select: {
-          id: true,
-          email: true,
-          firstname: true,
-          surname: true,
-        },
-      },
-    },
-  });
-
-  // Find user by comparing generated slugs
-  const matchingUser = users.find((user) => {
-    const userSlug = `${user.firstname}-${user.surname}`
-      .toLowerCase()
-      .replace(/\s+/g, "-");
-    return userSlug === slug.toLowerCase();
-  });
-
-  return matchingUser || null;
-}
-
-export async function deleteNotification(notificationId: Notification["id"]) {
-  return prisma.notification.delete({
-    where: {
-      id: notificationId,
-    },
-  });
-}
-
 export async function markNotificationAsRead(
   notificationId: Notification["id"],
   actionTaken: string,

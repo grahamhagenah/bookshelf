@@ -35,8 +35,3 @@ export function lendingAgainOn(until: Date | string | null | undefined) {
   const date = new Date(until);
   return date.getUTCFullYear() >= 9999 ? null : date;
 }
-
-// For a database query: only books that can be lent right now
-export const lendingNow = (now = new Date()) => ({
-  OR: [{ notLendingUntil: null }, { notLendingUntil: { lte: now } }],
-});

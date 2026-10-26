@@ -42,7 +42,6 @@ export default function Header() {
       <div className="mx-auto max-w-[var(--page-max,64rem)] flex items-center justify-between px-4 md:px-8 py-1.5">
         <div className="flex items-center gap-2 min-w-0">
           <Link
-            id="logo"
             to="/"
             className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0"
           >

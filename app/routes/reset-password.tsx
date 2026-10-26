@@ -58,7 +58,7 @@ export default function ResetPassword() {
             </div>
             <input type="hidden" name="token" value={token} />
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-stone-700">
+              <label htmlFor="password" className="block text-sm font-medium text-stone-700 dark:text-stone-200">
                 New password
               </label>
               <input
@@ -75,7 +75,7 @@ export default function ResetPassword() {
               />
             </div>
             <div>
-              <label htmlFor="confirm" className="block text-sm font-medium text-stone-700">
+              <label htmlFor="confirm" className="block text-sm font-medium text-stone-700 dark:text-stone-200">
                 Type it again
               </label>
               <input
