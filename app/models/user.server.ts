@@ -524,6 +524,8 @@ export async function deleteUsers(ids: User["id"][]) {
     data: { borrowerId: null, borrowedAt: null, dueDate: null },
   });
   await prisma.user.deleteMany({ where: { id: { in: ids } } });
+  // A group with nobody left in it goes too
+  await prisma.group.deleteMany({ where: { members: { none: {} } } });
 }
 
 // Real users only see real users; demo users only see their own sandbox

@@ -722,6 +722,28 @@ export async function createDemoSandbox(): Promise<User["id"]> {
   await createFriendship(ids.noah, ids.maya);
   await createFriendship(ids.noah, ids.anika);
 
+  // A book club the visitor started: everyone in it is friends with
+  // everyone else, so Maya and Anika are too. Lena (a suggestion) and Theo
+  // (a friend request) stay out of it.
+  await createFriendship(ids.maya, ids.anika);
+  await prisma.group.create({
+    data: {
+      name: "Thursday book club",
+      inviteToken: crypto.randomUUID().replace(/-/g, "").slice(0, 16),
+      createdAt: ago(45 * day),
+      members: {
+        create: (
+          [
+            ["you", 45],
+            ["maya", 44],
+            ["sam", 30],
+            ["anika", 12],
+          ] as const
+        ).map(([key, days]) => ({ userId: ids[key], joinedAt: ago(days * day) })),
+      },
+    },
+  });
+
   // The visitor and Noah share one shelf: his books show on theirs as
   // "Noah's", and either can lend them
   await prisma.household.create({

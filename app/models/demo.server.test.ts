@@ -8,6 +8,7 @@ import {
   deleteDemoGroup,
   respondAsDemoPersona,
 } from "./demo.server";
+import { getGroup, getMyGroups } from "./group.server";
 import { shelfIds } from "./household.server";
 import { createNotification } from "./user.server";
 
@@ -37,6 +38,12 @@ describe("createDemoSandbox", () => {
         "Maya",
         "Sam",
       ]);
+
+      // A book club, with everyone in it friends with everyone else
+      const [club] = await getMyGroups(visitorId);
+      expect(club).toMatchObject({ name: "Thursday book club", memberCount: 4 });
+      const page = await getGroup(club.id, visitorId);
+      expect(page?.members.every((member) => member.isMe || member.isFriend)).toBe(true);
 
       const own = await prisma.book.count({ where: { userId: visitorId } });
       const lentOut = await prisma.book.count({
@@ -89,6 +96,8 @@ describe("createDemoSandbox", () => {
       expect(await prisma.book.count({ where: { user: { demoGroup } } })).toBe(
         0,
       );
+      // Its book club too, with nobody left in it
+      expect(await prisma.group.count({ where: { members: { none: {} } } })).toBe(0);
     },
     SANDBOX_TIMEOUT,
   );
