@@ -293,12 +293,12 @@ const ICON_PATHS = {
   ),
   skull: (
     <>
-      {/* A skull: the cranium narrowing to a jaw, two sockets, the nasal
-          cavity and two teeth */}
+      {/* A skull: the cranium narrowing to a jaw, two sockets, a soft
+          point-down nose and two teeth */}
       <path d="M4.5 11.5C4.5 6.5 7.9 3.5 12 3.5s7.5 3 7.5 8c0 3-1.3 4.9-3 5.8V21h-9v-3.7c-1.7-.9-3-2.8-3-5.8z" />
       <ellipse cx="9" cy="11.6" rx="2" ry="2.2" fill="currentColor" stroke="none" />
       <ellipse cx="15" cy="11.6" rx="2" ry="2.2" fill="currentColor" stroke="none" />
-      <path d="M11 15.6h2L12 14z" fill="currentColor" stroke="none" />
+      <path d="M11.1 14.3h1.8L12 15.9z" fill="currentColor" />
       <path d="M10.5 18v3M13.5 18v3" />
     </>
   ),
@@ -417,11 +417,12 @@ const ICON_PATHS = {
   pumpkin: (
     <>
       {/* A jack-o'-lantern: a round pumpkin with a stem, two triangle eyes and
-          a grin */}
+          a grin. The filled shapes keep the outline's rounded stroke, so
+          their corners are soft like the rest of the set */}
       <path d="M12 7C8.4 5.8 4 8.2 4 13.8 4 18.3 7.4 21 12 21s8-2.7 8-7.2C20 8.2 15.6 5.8 12 7z" />
       <path d="M12 7c0-1.6.5-2.8 1.8-3.6" />
-      <path d="M7.8 12.6 9.6 10l1.6 2.6zM12.8 12.6l1.6-2.6 1.8 2.6z" fill="currentColor" stroke="none" />
-      <path d="M7.6 15.2h8.8c-.7 2.1-2.4 3.3-4.4 3.3s-3.7-1.2-4.4-3.3z" fill="currentColor" stroke="none" />
+      <path d="M8.23 12.38 9.58 10.43l1.21 1.95zM13.22 12.38l1.2-1.95 1.36 1.95z" fill="currentColor" />
+      <path d="M8.3 15.6h7.4c-.7 1.7-2 2.6-3.7 2.6s-3-.9-3.7-2.6z" fill="currentColor" />
     </>
   ),
   alien: (
