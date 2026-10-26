@@ -367,6 +367,12 @@ function Actions({
           <button
             type="submit"
             aria-pressed={loved}
+            // Under a note it's the book being loved, not the note; the
+            // label says so without lengthening the row
+            title={underNote ? "Love the book" : undefined}
+            aria-label={`${loved ? "Loved" : "Love"}${underNote ? " the book" : ""}${
+              lovesText ? `, ${lovesText}` : ""
+            }`}
             className={`${actionClass} ${loved ? "text-rose-600 dark:text-rose-400" : ""}`}
           >
             <HeartIcon
@@ -374,9 +380,11 @@ function Actions({
               filled={loved}
               className={loved ? "text-rose-500" : ""}
             />
-            {`${loved ? "Loved" : "Love"}${underNote ? " the book" : ""}`}
+            {loved ? "Loved" : "Love"}
             {lovesText ? (
-              <span className="tabular-nums">{lovesText}</span>
+              <span className="min-w-[1.25rem] rounded-full bg-stone-100 dark:bg-stone-800 px-1.5 text-center text-xs font-medium leading-5 tabular-nums text-stone-500 dark:text-stone-400">
+                {lovesText}
+              </span>
             ) : null}
           </button>
         </love.Form>
@@ -461,9 +469,13 @@ function Actions({
         </borrow.Form>
       ) : null}
 
-      <Link to={`/books/${book.id}`} className={`${actionClass} ml-auto`}>
-        View book
-      </Link>
+      {/* The cover and title open the book too; on phones that's enough,
+          and the row stays on one line */}
+      <span className="ml-auto hidden sm:block">
+        <Link to={`/books/${book.id}`} className={actionClass}>
+          View book
+        </Link>
+      </span>
     </div>
   );
 }
@@ -540,9 +552,11 @@ function ElsewhereCard({ item, mine }: { item: ElsewhereItem; mine: boolean }) {
             ) : null}
           </>
         )}
-        <Link to={item.work.key} className={`${actionClass} ml-auto`}>
-          View book
-        </Link>
+        <span className="ml-auto hidden sm:block">
+          <Link to={item.work.key} className={actionClass}>
+            View book
+          </Link>
+        </span>
       </div>
     </>
   );
