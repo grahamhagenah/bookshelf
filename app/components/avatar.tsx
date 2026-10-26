@@ -91,13 +91,14 @@ const ICON_PATHS = {
   ),
   owl: (
     <>
-      {/* A round face, its tufts part of the outline */}
-      <path d="M5.76 9.2 5 5.4l3.96.87a7.2 7.2 0 0 1 6.08 0L19 5.4l-.76 3.8A7.2 7.2 0 1 1 5.76 9.2z" />
-      <circle cx="9.2" cy="11.8" r="2.3" />
-      <circle cx="14.8" cy="11.8" r="2.3" />
-      <circle cx="9.2" cy="11.8" r="0.95" fill="currentColor" stroke="none" />
-      <circle cx="14.8" cy="11.8" r="0.95" fill="currentColor" stroke="none" />
-      <path d="M11.3 15 12 16.2l.7-1.2" />
+      {/* A round face, its tufts part of the outline, as big as the box
+          allows so the eyes still read at small sizes */}
+      <path d="M4.64 8.55 3.74 4.07l4.67 1.02a8.5 8.5 0 0 1 7.18 0l4.67-1.02-.9 4.48A8.5 8.5 0 1 1 4.64 8.55z" />
+      <circle cx="8.7" cy="11.6" r="2.7" />
+      <circle cx="15.3" cy="11.6" r="2.7" />
+      <circle cx="8.7" cy="11.6" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="15.3" cy="11.6" r="1.2" fill="currentColor" stroke="none" />
+      <path d="M11.2 15.4 12 16.8l.8-1.4" />
     </>
   ),
   fox: (
