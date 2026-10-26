@@ -416,11 +416,11 @@ const ICON_PATHS = {
   ),
   pumpkin: (
     <>
-      {/* A jack-o'-lantern: a round pumpkin with a stem, two triangle eyes and
-          a grin. The filled shapes keep the outline's rounded stroke, so
+      {/* A jack-o'-lantern: a round pumpkin with an outlined stem (the pumpkin's
+          top closes it), two triangle eyes and a grin. The filled shapes keep the outline's rounded stroke, so
           their corners are soft like the rest of the set */}
       <path d="M12 7C8.4 5.8 4 8.2 4 13.8 4 18.3 7.4 21 12 21s8-2.7 8-7.2C20 8.2 15.6 5.8 12 7z" />
-      <path d="M11.3 6.3c0-1.4.4-2.5 1.5-3.3l1 .9c-.8.6-1.2 1.4-1.2 2.4z" fill="currentColor" />
+      <path d="M10.6 6.6c-.1-1.9.5-3.4 1.9-4.3.5-.3 1.2-.1 1.5.4.3.5.2 1.1-.2 1.4-.8.6-1.2 1.5-1.2 2.7" />
       <path d="M8.23 12.38 9.58 10.43l1.21 1.95zM13.22 12.38l1.2-1.95 1.36 1.95z" fill="currentColor" />
       <path d="M8.3 15.6h7.4c-.7 1.7-2 2.6-3.7 2.6s-3-.9-3.7-2.6z" fill="currentColor" />
     </>
