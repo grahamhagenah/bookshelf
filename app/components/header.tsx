@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation, useMatches } from "@remix-run/react";
 
-import { BookIcon, FeedIcon, GroupsIcon } from "./icons";
+import { BookIcon, FeedIcon, GroupIcon, GroupsIcon } from "./icons";
 import PositionedMenu from "./menu";
 import Notifications from "./notifications";
 import Search from "./search";
@@ -11,6 +11,9 @@ interface RootLoaderData {
     id: string;
   } | null;
 }
+
+// A nav link's name: read out always, shown once the header has room
+const label = "sr-only lg:not-sr-only";
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   `inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-[15px] transition-colors ${
@@ -56,27 +59,49 @@ export default function Header() {
               back for, so on wider screens they get labeled links of their
               own; phones keep the icons */}
           {user ? (
-            <nav aria-label="Main" className="hidden md:flex items-center gap-1">
+            // Icons alone until there's room for the names beside them
+            <nav
+              aria-label="Main"
+              className="hidden md:flex items-center gap-1"
+            >
               {/* Your want-to-read list and history are tabs of your library */}
               <NavLink
+                title="My shelf"
                 to="/books"
                 end
                 className={({ isActive }) =>
                   navClass({
-                    isActive: isActive || pathname === "/want-to-read" || pathname === "/history",
+                    isActive:
+                      isActive ||
+                      ["/want-to-read", "/read-elsewhere", "/history"].includes(
+                        pathname,
+                      ),
                   })
                 }
               >
                 <BookIcon size={16} />
-                My shelf
+                <span className={label}>My shelf</span>
               </NavLink>
-              <NavLink to="/feed" className={navClass}>
+              <NavLink title="Feed" to="/feed" className={navClass}>
                 <FeedIcon size={16} strokeWidth={1.5} />
-                Feed
+                <span className={label}>Feed</span>
               </NavLink>
-              <NavLink to="/groups" className={navClass}>
+              {/* Their shelves and the books on them, and a friend's own page */}
+              <NavLink
+                title="Friends"
+                to="/friends"
+                className={({ isActive }) =>
+                  navClass({
+                    isActive: isActive || pathname.startsWith("/friend/"),
+                  })
+                }
+              >
+                <GroupIcon size={16} />
+                <span className={label}>Friends</span>
+              </NavLink>
+              <NavLink title="Groups" to="/groups" className={navClass}>
                 <GroupsIcon size={17} />
-                Groups
+                <span className={label}>Groups</span>
               </NavLink>
             </nav>
           ) : null}

@@ -102,7 +102,7 @@ export default function PositionedMenu() {
             <BookIcon size={18} />
             <span>My shelf</span>
           </Link>
-          <Link to="/friends" onClick={() => setOpen(false)} className={item}>
+          <Link to="/friends" onClick={() => setOpen(false)} className={`md:hidden ${item}`}>
             <GroupIcon size={18} />
             <span>Friends</span>
           </Link>
