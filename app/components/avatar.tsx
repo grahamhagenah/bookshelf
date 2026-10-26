@@ -118,20 +118,6 @@ const ICON_PATHS = {
       <path d="M6.51 14.9l-4.25-0.67M7.53 17.1l-4.21 0.89M17.49 14.9l4.25-0.67M16.47 17.1l4.21 0.89" />
     </>
   ),
-  dog: (
-    <>
-      {/* The third of the family: the same eyes, a bigger nose, and ears
-          hanging from the top corners as teardrops, widest near the jaw.
-          They sit out at the sides so the face has room between them, and
-          the face outline stops where they cover it */}
-      <path d="M6.8 8.95A6.8 6.6 0 0 1 17.2 8.95M17.07 17.6A6.8 6.6 0 0 1 6.93 17.6" />
-      <path d="M6.8 8.95C5.5 8.7 3.8 10 3 12.5C2.3 14.9 2.5 17.7 4.2 18.9C5.4 19.8 6.7 19 6.9 17.4C7.1 15.6 6.7 12.1 6.8 8.95z" />
-      <path d="M17.2 8.95C18.5 8.7 20.2 10 21 12.5C21.7 14.9 21.5 17.7 19.8 18.9C18.6 19.8 17.3 19 17.1 17.4C16.9 15.6 17.3 12.1 17.2 8.95z" />
-      <ellipse cx="9.7" cy="12.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="14.3" cy="12.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="12" cy="15.6" rx="1.5" ry="1.1" fill="currentColor" stroke="none" />
-    </>
-  ),
   paw: (
     <>
       {/* Four toes on an even arc over the pad, the outer two turned out */}
@@ -398,7 +384,6 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "mountain",
   "glasses",
   "cat",
-  "dog",
   "hare",
   "paw",
   "owl",
