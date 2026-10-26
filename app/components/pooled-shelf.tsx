@@ -102,16 +102,21 @@ export default function PooledShelf({
     ] as const
   ).filter(([value, , n]) => value === "all" || value === search.status || (n > 0 && n < results.counts.all));
 
+  // Whose books is only offered when there's a choice to make
+  const pickWho = lenders.length > 1 || groups.length > 0;
+
   return (
     <>
       {/* As My shelf's filter bar: find, narrow and order, in one line on
-          wider screens; the pills drop to a line of their own on phones */}
+          wider screens. On phones the search takes the top line (beside
+          the sort menu when it's the only one), the two menus split the
+          next line evenly, and the pills get a line of their own. */}
       <div className="mb-6 flex flex-wrap md:flex-nowrap items-center gap-2">
         <Form
           ref={formRef}
           method="get"
           role="search"
-          className="relative w-full min-w-0 md:w-56 md:flex-none"
+          className={`relative min-w-0 md:w-56 md:flex-none ${pickWho ? "w-full" : "flex-1"}`}
           onChange={() => {
             clearTimeout(timer.current);
             timer.current = setTimeout(
@@ -163,9 +168,14 @@ export default function PooledShelf({
             ))}
           </div>
         ) : null}
-        <div className="ml-auto flex flex-shrink-0 items-center gap-2">
-          {lenders.length > 1 || groups.length > 0 ? (
+        <div
+          className={`flex items-center gap-2 md:ml-auto md:w-auto md:flex-shrink-0 ${
+            pickWho ? "w-full" : "flex-shrink-0"
+          }`}
+        >
+          {pickWho ? (
             <Select
+              grow
               label="Whose books"
               value={search.who ?? ""}
               onChange={(value) => go({ who: value || null })}
@@ -186,6 +196,7 @@ export default function PooledShelf({
             />
           ) : null}
           <Select
+            grow={pickWho}
             label="Sort"
             value={search.sort}
             onChange={(value) => go({ sort: value === "newest" ? null : value })}
@@ -262,8 +273,11 @@ function Select({
   value,
   onChange,
   options,
+  grow = false,
 }: {
   label: string;
+  // On phones, take an even share of the line
+  grow?: boolean;
   value: string;
   onChange: (value: string) => void;
   // Choices, some of them under a heading of their own
@@ -278,12 +292,12 @@ function Select({
     </option>
   );
   return (
-    <span className="relative">
+    <span className={`relative ${grow ? "min-w-0 flex-1 md:flex-none" : ""}`}>
       <select
         aria-label={label}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className={`${control} appearance-none max-w-[11rem] truncate`}
+        className={`${control} appearance-none truncate ${grow ? "w-full md:w-auto" : ""} md:max-w-[11rem]`}
       >
         {options.map((entry) =>
           "section" in entry ? (
