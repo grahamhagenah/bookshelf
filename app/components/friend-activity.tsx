@@ -256,7 +256,8 @@ const stateClass =
   "inline-flex items-center gap-1.5 py-1 text-sm text-stone-400 dark:text-stone-500";
 
 // A cover with the title and author under it, as in the library grid. It
-// fills its column, at a book's 2:3 shape.
+// fills its column, at a book's 2:3 shape. Whether it's in goes unsaid
+// here: that's for the book page, and the title gets the room instead.
 function BookTile({ book }: { book: FeedBook }) {
   return (
     <li className="min-w-0">
@@ -265,18 +266,11 @@ function BookTile({ book }: { book: FeedBook }) {
           book={book}
           className="aspect-[2/3] w-full transition-opacity group-hover:opacity-90"
         />
-        <span className="mt-1.5 block truncate text-sm font-medium text-stone-900 dark:text-stone-100">
+        <span className="mt-1.5 line-clamp-2 text-sm font-medium leading-snug text-stone-900 dark:text-stone-100">
           {book.title}
         </span>
-        <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
+        <span className="mt-0.5 block truncate text-xs text-stone-500 dark:text-stone-400">
           {book.author}
-        </span>
-        <span className="block truncate text-xs text-stone-400 dark:text-stone-500">
-          {book.available
-            ? "Available"
-            : book.notLending
-              ? "Not lending"
-              : "Lent out"}
         </span>
       </Link>
     </li>
