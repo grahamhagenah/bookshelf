@@ -110,18 +110,14 @@ export default function Landing() {
             >
               Create an account
             </Link>
-            <Link
-              to="/login"
-              className="inline-flex items-center justify-center rounded-md ring-1 ring-inset ring-stone-300 dark:ring-stone-700 px-6 py-3 text-lg font-medium text-stone-800 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
-            >
-              Sign in
-            </Link>
-          </div>
-          <div className="mt-6 text-base text-stone-500 dark:text-stone-400">
-            <DemoButton className="text-stone-700 dark:text-stone-200 font-medium underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline">
-              Or look around a demo library first →
+            {/* Signing in lives in the header; here, the way to look first */}
+            <DemoButton className="inline-flex w-full items-center justify-center rounded-md ring-1 ring-inset ring-stone-300 dark:ring-stone-700 px-6 py-3 text-lg font-medium text-stone-800 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors">
+              Try the demo
             </DemoButton>
           </div>
+          <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
+            No account needed. See a full library, friends and all.
+          </p>
         </div>
 
         <Showcase />
@@ -223,8 +219,8 @@ export default function Landing() {
             >
               Create an account
             </Link>
-            <DemoButton className="px-4 py-3 text-lg font-medium text-stone-700 dark:text-stone-200 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline">
-              Try the demo →
+            <DemoButton className="inline-flex w-full items-center justify-center rounded-md ring-1 ring-inset ring-stone-300 dark:ring-stone-700 px-6 py-3 text-lg font-medium text-stone-800 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors">
+              Try the demo
             </DemoButton>
           </div>
         </section>
