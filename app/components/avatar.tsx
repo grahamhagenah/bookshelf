@@ -304,11 +304,11 @@ const ICON_PATHS = {
   ),
   robot: (
     <>
-      {/* A robot, kept simple: a rounded square head with an antenna,
-          two square eyes and a straight mouth */}
+      {/* A robot, kept simple: a rounded square head, an antenna with a ball
+          on top, two square eyes and a straight mouth */}
       <rect x="4.5" y="6.5" width="15" height="13.5" rx="3" />
-      <path d="M12 6.5V3.9" />
-      <circle cx="12" cy="2.8" r="1.1" fill="currentColor" stroke="none" />
+      <path d="M12 6.5V4.3" />
+      <circle cx="12" cy="2.9" r="1.4" />
       <rect x="7.4" y="10.9" width="3" height="3" rx=".7" fill="currentColor" stroke="none" />
       <rect x="13.6" y="10.9" width="3" height="3" rx=".7" fill="currentColor" stroke="none" />
       <path d="M9 16.6h6" />
@@ -316,11 +316,14 @@ const ICON_PATHS = {
   ),
   knife: (
     <>
-      {/* A kitchen knife, the horror kind: a big curved blade and a short
-          handle, set on a diagonal */}
+      {/* A kitchen knife, the horror kind: a big curved blade with a bevel
+          line, a short handle with two rivets, set on a diagonal */}
       <g transform="rotate(-40 12 12)">
         <path d="M9 15V5.5C9 4 9.5 3 10.3 2.3C14 4.8 16 8.5 16 12.5V15z" />
+        <path d="M10.5 4.6C12.4 6.8 13.2 9.3 13.2 12.4" />
         <path d="M9.7 15v5.3a1.2 1.2 0 0 0 1.2 1.2h2.2a1.2 1.2 0 0 0 1.2-1.2V15" />
+        <circle cx="12" cy="17.3" r=".6" fill="currentColor" stroke="none" />
+        <circle cx="12" cy="19.5" r=".6" fill="currentColor" stroke="none" />
       </g>
     </>
   ),
@@ -342,15 +345,17 @@ const ICON_PATHS = {
       <circle cx="12" cy="18" r=".65" fill="currentColor" stroke="none" />
     </>
   ),
-  sword: (
+  swords: (
     <>
-      {/* A sword: a tapered blade, a crossguard, a grip and a pommel, set
-          on a diagonal */}
-      <g transform="rotate(-40 12 12)">
-        <path d="M12 2L14.2 5.2V15.3H9.8V5.2z" />
-        <path d="M6 16.6v-1.3h12v1.3" />
-        <path d="M10.7 16.6v3.6h2.6v-3.6" />
-        <circle cx="12" cy="21.3" r="1.1" fill="currentColor" stroke="none" />
+      {/* Two swords crossed: each a single-line blade, a crossguard, a grip
+          and a pommel, on the two diagonals */}
+      <g transform="rotate(45 12 12)">
+        <path d="M12 2.4V14.2M8.4 14.9h7.2M12 14.9v4.8" />
+        <circle cx="12" cy="20.9" r="1" fill="currentColor" stroke="none" />
+      </g>
+      <g transform="rotate(-45 12 12)">
+        <path d="M12 2.4V14.2M8.4 14.9h7.2M12 14.9v4.8" />
+        <circle cx="12" cy="20.9" r="1" fill="currentColor" stroke="none" />
       </g>
     </>
   ),
@@ -512,7 +517,7 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "robot",
   "knife",
   "mask",
-  "sword",
+  "swords",
 ];
 
 export function isAvatarIcon(value: unknown): value is AvatarIcon {
