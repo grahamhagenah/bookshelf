@@ -8,6 +8,7 @@ import {
   getHealth,
   getLending,
   getRevenue,
+  summarizeGroups,
 } from "./admin.server";
 import { lendBook } from "./book.server";
 import { createFriendship, deleteUsers } from "./user.server";
@@ -151,4 +152,33 @@ test("revenue counts paying subscribers, a yearly plan as a twelfth a month", as
   expect(after.pastDue - before.pastDue).toBe(1);
   expect(after.ended - before.ended).toBe(1);
   expect(after.subscribers.find((user) => user.name.startsWith("Gift"))).toMatchObject({ gift: true });
+});
+
+test("group numbers: groups, people, who came by a link, and who was new", () => {
+  const day = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const at = (daysBack: number) => new Date(now - daysBack * day);
+  const member = (userId: string, joinedDaysBack: number, accountDaysBack: number) => ({
+    userId,
+    joinedAt: at(joinedDaysBack),
+    user: { createdAt: at(accountDaysBack) },
+  });
+  const stats = summarizeGroups(
+    [
+      // Ana started it; Ben joined with an account he'd had a while; Cal
+      // signed up to join
+      { createdAt: at(40), members: [member("ana", 40, 100), member("ben", 30, 90), member("cal", 10, 10.01)] },
+      // Ben started a second one this month; Ana is in both
+      { createdAt: at(5), members: [member("ben", 5, 90), member("ana", 4, 100)] },
+    ],
+    at(30),
+  );
+  expect(stats).toEqual({
+    groups: 2,
+    newGroups30: 1,
+    people: 3,
+    joinedByLink: 3,
+    newToStacks: 1,
+    averageSize: 2.5,
+  });
 });

@@ -140,6 +140,49 @@ export async function getLending() {
   return { overdue, mostLent, topLenders };
 }
 
+// Whether groups are catching on: how many there are, how many people
+// are in them, how many came in by a group's link (everyone but whoever
+// started each), and how many of those were new to Stacks, counted as an
+// account made within the hour before joining. Real accounts only.
+export async function getGroupStats() {
+  const groups = await prisma.group.findMany({
+    where: { members: { some: { user: real } } },
+    select: {
+      createdAt: true,
+      members: {
+        where: { user: real },
+        orderBy: { joinedAt: "asc" },
+        select: { userId: true, joinedAt: true, user: { select: { createdAt: true } } },
+      },
+    },
+  });
+  return summarizeGroups(groups, daysAgo(30));
+}
+
+interface GroupForStats {
+  createdAt: Date;
+  // Oldest first
+  members: { userId: string; joinedAt: Date; user: { createdAt: Date } }[];
+}
+
+// The dashboard's group numbers, from the groups themselves
+export function summarizeGroups(groups: GroupForStats[], monthAgo: Date) {
+  const memberships = groups.flatMap((group) => group.members);
+  // Everyone after the first in each group came in by its link
+  const joined = groups.flatMap((group) => group.members.slice(1));
+  const newToStacks = joined.filter(
+    (member) => member.joinedAt.getTime() - member.user.createdAt.getTime() < 60 * 60 * 1000,
+  );
+  return {
+    groups: groups.length,
+    newGroups30: groups.filter((group) => group.createdAt >= monthAgo).length,
+    people: new Set(memberships.map((member) => member.userId)).size,
+    joinedByLink: joined.length,
+    newToStacks: newToStacks.length,
+    averageSize: groups.length ? Math.round((memberships.length / groups.length) * 10) / 10 : 0,
+  };
+}
+
 // Every real account with what they've been doing, newest first
 export async function getAdminUsers() {
   const users = await prisma.user.findMany({

@@ -14,8 +14,10 @@ import {
   ClockIcon,
   DashboardIcon,
   GroupIcon,
+  GroupsIcon,
   HeartIcon,
   LentIcon,
+  LinkIcon,
   UserIcon,
 } from "~/components/icons";
 import Layout from "~/components / Layout/Layout";
@@ -24,6 +26,7 @@ import {
   getAdminUsers,
   getDataQuality,
   getFunnel,
+  getGroupStats,
   getHealth,
   getLending,
   getRevenue,
@@ -85,7 +88,7 @@ async function requireAdmin(request: Request) {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireAdmin(request);
-  const [health, revenue, funnel, feedback, lending, users, quality, emailChoices] =
+  const [health, revenue, funnel, feedback, lending, users, quality, emailChoices, groups] =
     await Promise.all([
       getHealth(),
       getRevenue(),
@@ -95,6 +98,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getAdminUsers(),
       getDataQuality(),
       getAdminEmailChoices(userId),
+      getGroupStats(),
     ]);
   return json({
     userId,
@@ -106,6 +110,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     lending,
     users,
     quality,
+    groups,
   });
 };
 
@@ -576,6 +581,35 @@ function Health({ health }: { health: Data["health"] }) {
           tone="forest"
         />
       </div>
+    </section>
+  );
+}
+
+// Whether groups are catching on
+function Groups({ groups }: { groups: Data["groups"] }) {
+  return (
+    <section aria-labelledby="groups">
+      <h2 id="groups" className={headingClass}>
+        Groups
+      </h2>
+      <dl className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Stat
+          label="Groups"
+          value={groups.groups}
+          note={`+${groups.newGroups30} this month`}
+          icon={GroupsIcon}
+          tone="violet"
+        />
+        <Stat label="People in groups" value={groups.people} icon={UserIcon} tone="sky" />
+        <Stat
+          label="Joined by a link"
+          value={groups.joinedByLink}
+          note={`${groups.newToStacks} new to Stacks`}
+          icon={LinkIcon}
+          tone="forest"
+        />
+        <Stat label="Average size" value={groups.averageSize} note="people" icon={GroupIcon} tone="amber" />
+      </dl>
     </section>
   );
 }
@@ -1510,10 +1544,12 @@ export default function Dashboard() {
     users,
     quality,
     emailChoices,
+    groups,
   } = useLoaderData<typeof loader>();
   return (
     <Layout title="Admin Dashboard">
       <Health health={health} />
+      <Groups groups={groups} />
       <Plus revenue={revenue} />
       <Funnel funnel={funnel} />
       <Feedback feedback={feedback} />
