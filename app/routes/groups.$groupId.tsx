@@ -470,8 +470,8 @@ function GroupInvite({ name, url, alone }: { name: string; url: string; alone: b
   const primary =
     "flex-shrink-0 rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors";
   return (
-    <div className="max-w-xl">
-      <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+    <div className="max-w-xl rounded-xl border border-stone-200 dark:border-stone-800 p-4">
+      <h2 className="font-medium text-stone-900 dark:text-stone-100">
         {alone ? "Invite people" : "Invite more people"}
       </h2>
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
@@ -503,7 +503,7 @@ function GroupInvite({ name, url, alone }: { name: string; url: string; alone: b
       </div>
       <Form
         method="post"
-        className="mt-2"
+        className="mt-3"
         onSubmit={(event) => {
           if (!confirm("Reset the invite link? The current one will stop working, so only people you send the new one to can join.")) {
             event.preventDefault();
