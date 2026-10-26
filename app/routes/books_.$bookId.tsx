@@ -1982,17 +1982,6 @@ export default function BookDetailsPage() {
       ) : lookingUp ? (
         <Placeholder className="mt-3 md:mt-4 w-48 max-w-full text-sm" />
       ) : null}
-      {!data.isOwner && data.book.user ? (
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-          From{" "}
-          <PersonLink
-            id={data.book.user.id}
-            name={`${data.book.user.firstname} ${data.book.user.surname}`}
-            friendIds={data.friendIds}
-          />
-          &apos;s shelf
-        </p>
-      ) : null}
     </>
   );
 
