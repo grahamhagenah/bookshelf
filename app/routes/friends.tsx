@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
+import FriendsTabs from "~/components/friends-tabs";
 import {
   BookIcon,
   BookmarkIcon,
@@ -30,6 +31,7 @@ import {
   getIncomingFriendRequests,
   removeFriend,
 } from "~/models/friend.server";
+import { countPoolBooks } from "~/models/pool.server";
 import {
   getUserById,
   createNotification,
@@ -60,6 +62,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getFriendInvite(userId),
   ]);
   return json({
+    // For the tab across the top: every book they have between them
+    bookCount: await countPoolBooks(friends.map((friend) => friend.id)),
     friends,
     incoming,
     suggestedFriends,
@@ -217,7 +221,7 @@ export default function Friends() {
   const isSearching = searchFetcher.state === "loading";
 
   return (
-    <Layout title="Friends">
+    <Layout title="Friends" header={<FriendsTabs counts={{ friends: friends.length, books: data.bookCount }} />}>
       {incoming.length > 0 ? (
         <section>
           <h2 className="text-lg font-semibold">Friend requests</h2>

@@ -8,13 +8,12 @@ import {
   createGroup,
   getGroup,
   getGroupByToken,
-  getGroupHighlights,
   getMyGroups,
   joinGroup,
   leaveGroup,
   resetGroupLink,
-  searchGroupBooks,
 } from "./group.server";
+import { getPoolWanted, searchPool } from "./pool.server";
 import { createNotification, getFriendStatus } from "./user.server";
 
 const tokenOf = async (groupId: string) =>
@@ -73,14 +72,14 @@ test("the group's shelf is everyone else's books, only for the people in it", as
   expect(page.members.find((member) => member.id === ben.id)).toMatchObject({ isFriend: true, bookCount: 2 });
   expect(await getGroup(group.id, outsider.id)).toBe(null);
 
-  const titles = async (search: Parameters<typeof searchGroupBooks>[1]) =>
-    (await searchGroupBooks(page.openIds, search)).works.map((work) => work.title).sort();
+  const titles = async (search: Parameters<typeof searchPool>[1]) =>
+    (await searchPool(page.openIds, search)).works.map((work) => work.title).sort();
   expect(await titles({ q: "dune" })).toEqual(["Dune", "Dune Messiah"]);
   expect(await titles({ q: "dune", status: "available" })).toEqual(["Dune"]);
   expect(await titles({ status: "lent" })).toEqual(["Dune Messiah"]);
-  expect((await searchGroupBooks(page.openIds, {})).counts).toEqual({ all: 3, available: 2, lent: 1 });
+  expect((await searchPool(page.openIds, {})).counts).toEqual({ all: 3, available: 2, lent: 1 });
   expect(await titles({ who: ben.id })).toEqual(["Dune Messiah", "Middlemarch"]);
-  expect((await searchGroupBooks(page.openIds, { shown: 1 })).total).toBe(3);
+  expect((await searchPool(page.openIds, { shown: 1 })).total).toBe(3);
 
   // Someone you've unfriended keeps their shelf closed to you
   await removeFriend(ana.id, ben.id);
@@ -101,7 +100,7 @@ test("the top of a group's shelf: your wishes someone has, one entry each", asyn
   await prisma.wantToRead.create({ data: { userId: ana.id, title: "Piranesi", author: "Susanna Clarke", cover: "" } });
 
   const page = await getGroup(group.id, ana.id);
-  const { wanted } = await getGroupHighlights(ana.id, page?.openIds ?? []);
+  const { wanted } = await getPoolWanted(ana.id, page?.openIds ?? []);
   // Both copies of Piranesi, as one entry
   expect(wanted.map((work) => [work.title.toLowerCase(), work.copies.length])).toEqual([["piranesi", 2]]);
 });
@@ -169,7 +168,7 @@ test("a big group's shelf: one entry per book, sorted as asked", async () => {
 
   const page = await getGroup(group.id, ana.id);
   const openIds = page?.openIds ?? [];
-  const { works, total } = await searchGroupBooks(openIds, { q: "dune" });
+  const { works, total } = await searchPool(openIds, { q: "dune" });
   expect(total).toBe(1);
   // Both copies, the one you could borrow first
   expect(works[0].copies.map((copy) => [copy.owner.firstname, copy.available])).toEqual([
@@ -177,7 +176,7 @@ test("a big group's shelf: one entry per book, sorted as asked", async () => {
     ["Cal", false],
   ]);
 
-  const byTitle = await searchGroupBooks(openIds, { sort: "title" });
+  const byTitle = await searchPool(openIds, { sort: "title" });
   expect(byTitle.works.map((work) => work.title)).toEqual([
     "Atlas",
     "Beloved",
