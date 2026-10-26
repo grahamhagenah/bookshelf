@@ -81,30 +81,28 @@ const ICON_PATHS = {
   ),
   watch: (
     <>
-      {/* A retro digital watch, kept plain: straps, a wide case, and a
-          screen showing the time's colon */}
-      <path d="M8 7V2.5h8V7M8 17v4.5h8V17" />
-      <rect x="4.5" y="7" width="15" height="10" rx="2.2" />
-      <rect x="7.5" y="9.6" width="9" height="4.8" rx=".8" />
-      <circle cx="12" cy="11.4" r=".5" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="12.6" r=".5" fill="currentColor" stroke="none" />
+      {/* A digital watch, kept plain: straps, a rounded case, one line for
+          the screen */}
+      <path d="M8.5 6.5V2.5h7v4M8.5 17.5v4h7v-4" />
+      <rect x="5" y="6.5" width="14" height="11" rx="2.5" />
+      <path d="M9 12h6" />
     </>
   ),
   guy: (
     <>
-      {/* Head and shoulders: short hair, swept across the forehead */}
-      <circle cx="12" cy="8.6" r="4" />
-      <path d="M8.1 7.6c1.9.3 3.7-.4 4.9-1.9.6 1 1.6 1.8 2.8 2" />
-      <path d="M4.5 21c.6-3.6 3.7-5.6 7.5-5.6s6.9 2 7.5 5.6" />
+      {/* Head and shoulders, the hair a solid cap so it holds up small */}
+      <circle cx="12" cy="8.5" r="4.5" />
+      <path d="M7.77 6.96A4.5 4.5 0 0 1 16.23 6.96Q12 5.4 7.77 6.96z" fill="currentColor" stroke="none" />
+      <path d="M3.5 21c.8-4 4.3-6.3 8.5-6.3s7.7 2.3 8.5 6.3" />
     </>
   ),
   girl: (
     <>
-      {/* Head and shoulders: a side fringe and her hair up in a bun */}
-      <circle cx="12" cy="9.4" r="3.8" />
-      <circle cx="12" cy="3.6" r="1.5" />
-      <path d="M8.2 9c1.9-.1 3.7-1 4.9-2.6.6.9 1.6 1.6 2.7 1.8" />
-      <path d="M4.5 21c.6-3.6 3.7-5.6 7.5-5.6s6.9 2 7.5 5.6" />
+      {/* Head and shoulders, solid hair framing the face, up in a bun */}
+      <circle cx="12" cy="8.5" r="4.5" />
+      <path d="M7.5 9.6C7.5 5.6 9.5 4 12 4s4.5 1.6 4.5 5.6c-1-1.6-2.5-2.3-4.5-2.3S8.5 8 7.5 9.6z" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="3" r="1.4" fill="currentColor" stroke="none" />
+      <path d="M3.5 21c.8-4 4.3-6.3 8.5-6.3s7.7 2.3 8.5 6.3" />
     </>
   ),
   cat: (
@@ -129,15 +127,14 @@ const ICON_PATHS = {
   ),
   fish: (
     <>
-      {/* A salmon leaping up out of the water: a full body, forked tail, a fin
-          on its back and an eye, over a ripple */}
-      <g transform="translate(0 -1) rotate(-30 12 12)">
+      {/* A salmon on the rise: a full body, forked tail, a fin on its back and
+          an eye. Nothing more, so it still reads small */}
+      <g transform="rotate(-18 12 12)">
         <path d="M6.5 11C9.5 7.6 15.5 6.8 19.4 9.4c.9.6 1.6 1.4 1.9 2.3-.9.8-2.3 1.4-3.9 1.6C13.5 14.6 9.5 14.2 6.5 13z" />
         <path d="M6.5 11 2.6 7.6c-.2 1.8 0 3.3.9 4.4-.9 1.1-1.1 2.6-.9 4.4L6.5 13" />
-        <path d="M9.9 8.66C10.6 7 11.8 5.8 13.4 5.5c.1 1-.2 1.8-.8 2.45" />
-        <circle cx="18.7" cy="10.6" r=".65" fill="currentColor" stroke="none" />
+        <path d="M10.2 8.6c.8-1.6 2-2.7 3.5-3 .1 1-.2 1.9-.9 2.5" />
+        <circle cx="18.7" cy="10.6" r=".7" fill="currentColor" stroke="none" />
       </g>
-      <path d="M13.5 21c1.1-.8 2.3-.8 3.4 0s2.3.8 3.4 0" />
     </>
   ),
   owl: (
@@ -154,10 +151,12 @@ const ICON_PATHS = {
   ),
   fox: (
     <>
-      <path d="M4 4.5l3 6.5-1 3 6 6 6-6-1-3 3-6.5-5 3.5h-6z" />
-      <circle cx="9.5" cy="12.5" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="14.5" cy="12.5" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="16.8" r="0.9" fill="currentColor" stroke="none" />
+      {/* On the kitty's face: big pointed ears, oval eyes, a pointed chin and
+          a solid nose. No whiskers, which are the cat's */}
+      <path d="M5.07 10.6 4.3 3.8l4.3 3.7a8 6 0 0 1 6.8 0l4.3-3.7-.77 6.8C18.9 15.4 15.5 18.2 12 19.6 8.5 18.2 5.1 15.4 5.07 10.6z" />
+      <ellipse cx="9.2" cy="11.3" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
+      <ellipse cx="14.8" cy="11.3" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
+      <path d="M10.9 15.6h2.2L12 16.9z" fill="currentColor" stroke="none" />
     </>
   ),
   frog: (
