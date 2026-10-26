@@ -74,11 +74,12 @@ const ICON_PATHS = {
   ),
   paw: (
     <>
-      <circle cx="8.5" cy="6.5" r="1.75" />
-      <circle cx="15.5" cy="6.5" r="1.75" />
-      <circle cx="5" cy="11" r="1.75" />
-      <circle cx="19" cy="11" r="1.75" />
-      <path d="M12 11.5c-2.5 0-5 3-5 5.5 0 1.5 1.2 2.5 2.5 2.5 1 0 1.6-.5 2.5-.5s1.5.5 2.5.5c1.3 0 2.5-1 2.5-2.5 0-2.5-2.5-5.5-5-5.5z" />
+      {/* Four toes on an even arc over the pad, the outer two turned out */}
+      <ellipse cx="5.7" cy="10.9" rx="1.5" ry="1.85" transform="rotate(-28 5.7 10.9)" />
+      <ellipse cx="9.3" cy="6.9" rx="1.55" ry="2" transform="rotate(-10 9.3 6.9)" />
+      <ellipse cx="14.7" cy="6.9" rx="1.55" ry="2" transform="rotate(10 14.7 6.9)" />
+      <ellipse cx="18.3" cy="10.9" rx="1.5" ry="1.85" transform="rotate(28 18.3 10.9)" />
+      <path d="M12 11.8c-2.5 0-5 2.9-5 5.4 0 1.5 1.2 2.5 2.5 2.5 1 0 1.6-.6 2.5-.6s1.5.6 2.5.6c1.3 0 2.5-1 2.5-2.5 0-2.5-2.5-5.4-5-5.4z" />
     </>
   ),
   fish: (
@@ -90,13 +91,13 @@ const ICON_PATHS = {
   ),
   owl: (
     <>
-      <path d="M6 9.5C6 6.5 8.5 4.5 12 4.5s6 2 6 5V15a6 6 0 0 1-12 0z" />
-      <path d="M7 6.5 6 3.5l3.5 1.6M17 6.5l1-3-3.5 1.6" />
-      <circle cx="9.5" cy="10.5" r="2" />
-      <circle cx="14.5" cy="10.5" r="2" />
-      <circle cx="9.5" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="14.5" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
-      <path d="M11.3 13.5 12 14.7l.7-1.2" />
+      {/* A round face, its tufts part of the outline */}
+      <path d="M5.76 9.2 5 5.4l3.96.87a7.2 7.2 0 0 1 6.08 0L19 5.4l-.76 3.8A7.2 7.2 0 1 1 5.76 9.2z" />
+      <circle cx="9.2" cy="11.8" r="2.3" />
+      <circle cx="14.8" cy="11.8" r="2.3" />
+      <circle cx="9.2" cy="11.8" r="0.95" fill="currentColor" stroke="none" />
+      <circle cx="14.8" cy="11.8" r="0.95" fill="currentColor" stroke="none" />
+      <path d="M11.3 15 12 16.2l.7-1.2" />
     </>
   ),
   fox: (
@@ -109,19 +110,23 @@ const ICON_PATHS = {
   ),
   frog: (
     <>
-      <path d="M4 14.5c0-3.5 3.6-5.5 8-5.5s8 2 8 5.5-3.6 5-8 5-8-1.5-8-5z" />
-      <circle cx="8" cy="8.5" r="2.4" />
-      <circle cx="16" cy="8.5" r="2.4" />
-      <circle cx="8" cy="8.5" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="16" cy="8.5" r="0.9" fill="currentColor" stroke="none" />
-      <path d="M9 15c1.8 1.2 4.2 1.2 6 0" />
+      {/* The head stops at the eyes rather than running through them */}
+      <path d="M5.75 9.1C4.4 10.2 3.5 12 3.5 14c0 3.3 3.8 5.5 8.5 5.5s8.5-2.2 8.5-5.5c0-2-.9-3.8-2.25-4.9M9.7 10q2.3-.6 4.6 0" />
+      <circle cx="8" cy="8.3" r="2.4" />
+      <circle cx="16" cy="8.3" r="2.4" />
+      <circle cx="8" cy="8.3" r="1" fill="currentColor" stroke="none" />
+      <circle cx="16" cy="8.3" r="1" fill="currentColor" stroke="none" />
+      <path d="M8.5 14.5q3.5 2.3 7 0" />
     </>
   ),
   bee: (
     <>
-      <path d="M12 9c2.8 0 4.5 2.4 4.5 5.5S14.8 20.5 12 20.5s-4.5-2.9-4.5-6S9.2 9 12 9z" />
-      <path d="M7.7 13h8.6M7.9 16.5h8.2" />
-      <path d="M10.6 9.3C8.3 8.8 5.6 7.2 6.6 5.3s4 .9 4.6 3.9M13.4 9.3c2.3-.5 5-2.1 4-4s-4 .9-4.6 3.9" />
+      {/* From above: head and feelers, a striped body, a wing to each side */}
+      <ellipse cx="12" cy="14.5" rx="3.8" ry="5.2" />
+      <circle cx="12" cy="7.3" r="2" />
+      <path d="M8.35 13h7.3M8.5 16.3h7" />
+      <path d="M8.6 12.2C6 13.6 2.9 12.2 3.4 9.9 3.9 7.8 7.2 8.2 9.4 10.4M15.4 12.2c2.6 1.4 5.7 0 5.2-2.3-.5-2.1-3.8-1.7-6 .5" />
+      <path d="M11 5.6 9.9 3.8M13 5.6l1.1-1.8" />
     </>
   ),
   octopus: (
@@ -207,8 +212,10 @@ const ICON_PATHS = {
   ),
   planet: (
     <>
+      {/* The ring goes behind the planet: the part that would show through
+          it is left out */}
       <circle cx="12" cy="12" r="5.5" />
-      <ellipse cx="12" cy="12" rx="10" ry="3.2" transform="rotate(-20 12 12)" />
+      <path d="M15.47 7.73A10 3.2-20 1 1 6.6 10.96" />
     </>
   ),
   music: (
