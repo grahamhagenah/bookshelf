@@ -414,6 +414,68 @@ const ICON_PATHS = {
       <circle cx="12" cy="9.5" r="1.5" />
     </>
   ),
+  clover: (
+    <>
+      {/* A four-leaf clover: four small hearts meeting at their points, and a
+          stem down between the lower two */}
+      <path d="M10.85 10.25C8.11 10.55 6.07 10.64 4.83 9.4C3.97 8.54 3.97 7.27 4.77 6.48C5.25 5.99 5.92 5.81 6.53 5.93C6.41 5.32 6.59 4.65 7.08 4.17C7.87 3.37 9.14 3.37 10 4.23C11.24 5.47 11.15 7.51 10.85 10.25zM11.55 10.25C11.25 7.51 11.16 5.47 12.4 4.23C13.26 3.37 14.53 3.37 15.32 4.17C15.81 4.65 15.99 5.32 15.87 5.93C16.48 5.81 17.15 5.99 17.63 6.48C18.43 7.27 18.43 8.54 17.57 9.4C16.33 10.64 14.29 10.55 11.55 10.25zM11.55 10.95C14.29 10.65 16.33 10.56 17.57 11.8C18.43 12.66 18.43 13.93 17.63 14.72C17.15 15.21 16.48 15.39 15.87 15.27C15.99 15.88 15.81 16.55 15.32 17.03C14.53 17.83 13.26 17.83 12.4 16.97C11.16 15.73 11.25 13.69 11.55 10.95zM10.85 10.95C11.15 13.69 11.24 15.73 10 16.97C9.14 17.83 7.87 17.83 7.08 17.03C6.59 16.55 6.41 15.88 6.53 15.27C5.92 15.39 5.25 15.21 4.77 14.72C3.97 13.93 3.97 12.66 4.83 11.8C6.07 10.56 8.11 10.65 10.85 10.95z" />
+      <path d="M11.2 11.7v5c0 1.9.8 3.4 2.4 4.6" />
+    </>
+  ),
+  crystal: (
+    <>
+      {/* A crystal ball on its stand, with a glint */}
+      <circle cx="12" cy="9.8" r="6.6" />
+      <path d="M8.6 7.9a4 4 0 0 1 2.6-2.7" />
+      <path d="M6.8 20.4l1.4-3h7.6l1.4 3z" />
+    </>
+  ),
+  plane: (
+    <>
+      {/* A paper plane */}
+      <path d="M21.5 2.5 2.5 10.2l7.2 2.9 2.9 7.4z" />
+      <path d="M21.5 2.5 9.7 13.1" />
+    </>
+  ),
+  hourglass: (
+    <>
+      {/* An hourglass with sand settled in the bottom */}
+      <path d="M6.5 3h11M6.5 21h11M7.6 3c0 5.2 4.4 6.2 4.4 9s-4.4 3.8-4.4 9M16.4 3c0 5.2-4.4 6.2-4.4 9s4.4 3.8 4.4 9" />
+      <path d="M9.4 19.6c.6-1.7 1.6-2.5 2.6-2.5s2 .8 2.6 2.5z" fill="currentColor" />
+    </>
+  ),
+  sparkles: (
+    <>
+      {/* Sparkles: a big four-point star and a small one */}
+      <path d="M10 3.5c.6 3.9 2.6 5.9 6.5 6.5-3.9.6-5.9 2.6-6.5 6.5-.6-3.9-2.6-5.9-6.5-6.5 3.9-.6 5.9-2.6 6.5-6.5z" />
+      <path d="M17.5 14c.3 1.9 1.3 2.9 3.2 3.2-1.9.3-2.9 1.3-3.2 3.2-.3-1.9-1.3-2.9-3.2-3.2 1.9-.3 2.9-1.3 3.2-3.2z" />
+    </>
+  ),
+  peace: (
+    <>
+      {/* A peace sign */}
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 3.5v17M12 12l-6 6M12 12l6 6" />
+    </>
+  ),
+  yinyang: (
+    <>
+      {/* Yin and yang: one half filled, a dot of each in the other
+          (the filled half has a hole, by fill-rule) */}
+      <circle cx="12" cy="12" r="8.5" />
+      <path fillRule="evenodd" d="M12 3.5a8.5 8.5 0 0 1 0 17a4.25 4.25 0 0 1 0-8.5a4.25 4.25 0 0 0 0-8.5zM10.9 16.25a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0-2.2 0z" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="7.75" r="1.1" fill="currentColor" stroke="none" />
+    </>
+  ),
+  smiley: (
+    <>
+      {/* A smiley face */}
+      <circle cx="12" cy="12" r="8.5" />
+      <ellipse cx="9.2" cy="10.2" rx="1" ry="1.35" fill="currentColor" stroke="none" />
+      <ellipse cx="14.8" cy="10.2" rx="1" ry="1.35" fill="currentColor" stroke="none" />
+      <path d="M8.4 14.2q3.6 3.6 7.2 0" />
+    </>
+  ),
   pumpkin: (
     <>
       {/* A jack-o'-lantern: a round pumpkin with an outlined stem (the pumpkin's
@@ -576,6 +638,7 @@ export type AvatarIcon = keyof typeof ICON_PATHS;
 export const AVATAR_ICONS: AvatarIcon[] = [
   // Nature and sky
   "leaf",
+  "clover",
   "flower",
   "bloom",
   "tree",
@@ -603,6 +666,7 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "skull",
   "mask",
   "pumpkin",
+  "crystal",
   "robot",
   "alien",
   "rocket",
@@ -613,6 +677,8 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "umbrella",
   "anchor",
   "bicycle",
+  "plane",
+  "hourglass",
   // Food and drink
   "wine",
   "cutlery",
@@ -629,6 +695,10 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "diamond",
   "pyramid",
   "eye",
+  "sparkles",
+  "peace",
+  "yinyang",
+  "smiley",
 ];
 
 export function isAvatarIcon(value: unknown): value is AvatarIcon {
