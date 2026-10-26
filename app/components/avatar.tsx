@@ -49,13 +49,11 @@ const ICON_PATHS = {
   ),
   moka: (
     <>
-      {/* A stovetop espresso pot: two chambers pinched at the seam, a
-          pouring lip, a handle and a knob on the lid */}
-      <path d="M7.5 5.5h9L15 12.5l2 8H7l2-8z" />
-      <path d="M9 12.5h6" />
-      <path d="M7.5 5.5 5 4.3l2.3 3" />
-      <path d="M16.29 6.5H19l-1.6 5h-2.19" />
-      <circle cx="12" cy="4" r="1" fill="currentColor" stroke="none" />
+      {/* A stovetop espresso pot: two chambers pinched at the seam, and a
+          handle. The lip and lid knob went: too much at small sizes */}
+      <path d="M7.5 4.5h9L15 12l2 8.5H7l2-8.5z" />
+      <path d="M9 12h6" />
+      <path d="M16.3 6.2h2.7l-1.5 4.5h-2.2" />
     </>
   ),
   compass: (
@@ -66,12 +64,12 @@ const ICON_PATHS = {
   ),
   flower: (
     <>
-      {/* Five petals in one outline, none crossing, on a stem with a leaf
-          to each side */}
-      <path d="M9.34 9.07A2.15 2.15 0 1 1 10.35 5.93A2.15 2.15 0 1 1 13.65 5.93A2.15 2.15 0 1 1 14.66 9.07A2.15 2.15 0 1 1 12 11A2.15 2.15 0 1 1 9.34 9.07z" />
-      <circle cx="12" cy="8.2" r="1.1" fill="currentColor" stroke="none" />
-      <path d="M12 11V21" />
-      <path d="M12 17.5c.4-2.6 2.5-3.8 5-3.6-.3 2.5-2.3 3.9-5 3.6zM12 19c-.4-2.2-2.2-3.2-4.3-3 .3 2.1 2 3.3 4.3 3z" />
+      {/* Five petals in one outline over a solid center, a short stem and one
+          leaf. The head takes most of the room so the petals still read small */}
+      <path d="M8.77 10.25A2.7 2.7 0 1 1 10 6.45A2.7 2.7 0 1 1 14 6.45A2.7 2.7 0 1 1 15.23 10.25A2.7 2.7 0 1 1 12 12.6A2.7 2.7 0 1 1 8.77 10.25z" />
+      <circle cx="12" cy="9.2" r="1.3" fill="currentColor" stroke="none" />
+      <path d="M12 15.3V21" />
+      <path d="M12 19c.3-2 1.9-3 3.9-2.8-.3 2-1.9 3.1-3.9 2.8z" />
     </>
   ),
   glasses: (
@@ -131,12 +129,12 @@ const ICON_PATHS = {
   ),
   fish: (
     <>
-      {/* A salmon leaping up out of the water: a full body, forked tail,
-          a fin on its back, the gill and an eye, over a ripple */}
+      {/* A salmon leaping up out of the water: a full body, forked tail, a fin
+          on its back and an eye, over a ripple */}
       <g transform="translate(0 -1) rotate(-30 12 12)">
         <path d="M6.5 11C9.5 7.6 15.5 6.8 19.4 9.4c.9.6 1.6 1.4 1.9 2.3-.9.8-2.3 1.4-3.9 1.6C13.5 14.6 9.5 14.2 6.5 13z" />
         <path d="M6.5 11 2.6 7.6c-.2 1.8 0 3.3.9 4.4-.9 1.1-1.1 2.6-.9 4.4L6.5 13" />
-        <path d="M9.9 8.66C10.6 7 11.8 5.8 13.4 5.5c.1 1-.2 1.8-.8 2.45M16.6 8.7c.7 1.2.8 2.9.2 4.3" />
+        <path d="M9.9 8.66C10.6 7 11.8 5.8 13.4 5.5c.1 1-.2 1.8-.8 2.45" />
         <circle cx="18.7" cy="10.6" r=".65" fill="currentColor" stroke="none" />
       </g>
       <path d="M13.5 21c1.1-.8 2.3-.8 3.4 0s2.3.8 3.4 0" />
@@ -175,12 +173,12 @@ const ICON_PATHS = {
   ),
   bee: (
     <>
-      {/* From above: head and feelers, a striped body, a wing to each side */}
+      {/* From above: a head, a striped body, a wing to each side. No feelers:
+          they turned to fuzz at small sizes */}
       <ellipse cx="12" cy="14.5" rx="3.8" ry="5.2" />
       <circle cx="12" cy="7.3" r="2" />
-      <path d="M8.35 13h7.3M8.5 16.3h7" />
+      <path d="M8.3 12.8h7.4M8.45 16.6h7.1" />
       <path d="M8.6 12.2C6 13.6 2.9 12.2 3.4 9.9 3.9 7.8 7.2 8.2 9.4 10.4M15.4 12.2c2.6 1.4 5.7 0 5.2-2.3-.5-2.1-3.8-1.7-6 .5" />
-      <path d="M11 5.6 9.9 3.8M13 5.6l1.1-1.8" />
     </>
   ),
   octopus: (
@@ -193,24 +191,22 @@ const ICON_PATHS = {
   ),
   snail: (
     <>
-      {/* The shell sits right on the foot, its spiral opening out; the head
-          has a front and a back, and its feelers end in dots */}
+      {/* The shell sits right on the foot; one open curl stands for the spiral,
+          since a full one filled in at small sizes */}
       <path d="M2.5 18.5h14.5a2.5 2.5 0 0 0 2.5-2.5v-4.5a1.5 1.5 0 0 0-3 0V14" />
       <path d="M18 10 17.2 7M18 10l1.6-2.6" />
-      <circle cx="17.2" cy="7" r=".7" fill="currentColor" stroke="none" />
-      <circle cx="19.6" cy="7.4" r=".7" fill="currentColor" stroke="none" />
       <circle cx="9.5" cy="12.7" r="5.8" />
-      <path d="M8.3 12.7a1.2 1.2 0 0 1 2.4 0 2.4 2.4 0 0 1-4.8 0 3.6 3.6 0 0 1 7.2 0" />
+      <path d="M12.3 12.7a2.8 2.8 0 1 0-2.8 2.8" />
     </>
   ),
   tortoise: (
     <>
-      {/* Side on, heading right: a domed shell with one plate drawn on
-          it, a head, two legs and a little tail */}
-      <path d="M4 15.5a8 6.8 0 0 1 16 0z" />
-      <path d="M8.2 15.5 9.6 11h4.8l1.4 4.5" />
-      <path d="M19.63 13.4h1.2a1.7 1.7 0 0 1 0 3.4h-1.6" />
-      <path d="M6.5 15.5v2.6M16.5 15.5v2.6M4 15.5l-1.6 1" />
+      {/* Side on, heading right: a tall domed shell, a head with an eye, two
+          legs. No pattern on the shell: it filled in at small sizes */}
+      <path d="M2.5 15.5a8 7 0 0 1 16 0z" />
+      <path d="M18.3 11.6h2.5a1.8 1.8 0 0 1 0 3.6h-1.6" />
+      <circle cx="20.8" cy="13.1" r=".55" fill="currentColor" stroke="none" />
+      <path d="M7 15.5v2.6M14 15.5v2.6" />
     </>
   ),
   hare: (
