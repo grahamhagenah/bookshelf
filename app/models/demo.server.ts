@@ -1214,13 +1214,14 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       body: "Trees as the main characters, and it works. Happy to lend it.",
       at: ago(2 * day),
     },
-    // New on friends' shelves
+    // New on friends' shelves. The newest notes take turns between
+    // friends, so the top of the feed isn't one person twice in a row
     {
       title: "Hamnet",
       by: "maya",
       loved: true,
       body: "The chapter about the fleas and the plague is one of the best things I've read.",
-      at: ago(4 * day),
+      at: ago(2.7 * day),
     },
     {
       title: "The Song of Achilles",
@@ -1242,7 +1243,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       body: "The parrot story made me cry on a bus. Start with that one.",
       at: ago(36 * day),
     },
-    { title: "Exhalation", by: "sam", loved: true, at: ago(6 * day) },
+    { title: "Exhalation", by: "sam", loved: true, at: ago(2.4 * day) },
     { title: "Hyperion", by: "you", loved: true, at: ago(150 * day) },
     { title: "Hyperion", by: "sam", loved: true, at: ago(500 * day) },
     {
@@ -1250,7 +1251,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       by: "anika",
       loved: true,
       body: "Starts at a school and ends somewhere much darker. Brace yourself for part three.",
-      at: ago(3 * day),
+      at: ago(1.5 * day),
     },
     {
       title: "The Night Circus",
