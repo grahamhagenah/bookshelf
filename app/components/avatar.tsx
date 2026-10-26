@@ -107,13 +107,14 @@ const ICON_PATHS = {
   ),
   cat: (
     <>
-      {/* A kitty: a wide round face, oval eyes, a button nose, whiskers. It
-          fills the box, centered, so it reads as big as its neighbors */}
-      <path d="M3.55 12L3.7 4.68L7.88 9.02A9.76 7.32 0 0 1 16.12 9.02L20.3 4.68L20.45 12A9.76 7.32 0 1 1 3.55 12z" />
-      <ellipse cx="8.34" cy="15.29" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="15.66" cy="15.29" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
-      <ellipse cx="12" cy="17.86" rx="1.15" ry=".85" fill="currentColor" stroke="none" />
-      <path d="M5.05 15.66L2.2 14.81M5.05 18.1L2.2 19.2M18.95 15.66L21.8 14.81M18.95 18.1L21.8 19.2" />
+      {/* A kitty: a wide round face with soft-tipped ears, oval eyes, a
+          button nose, and whiskers of one length that start on the cheek
+          and reach well out. The face is 16 wide so the whiskers have room */}
+      <path d="M4.53 11.4L4.6 6.3Q4.7 3.9 6.35 5.64L8.6 8A8 6 0 0 1 15.4 8L17.65 5.64Q19.3 3.9 19.4 6.3L19.47 11.4A8 7 0 1 1 4.53 11.4z" />
+      <ellipse cx="9.3" cy="13.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="14.7" cy="13.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="15.7" rx="1.15" ry=".85" fill="currentColor" stroke="none" />
+      <path d="M4.1 15l-3.07-0.92M4.72 16.8l-3.07 0.92M19.9 15l3.07-0.92M19.28 16.8l3.07 0.92" />
     </>
   ),
   paw: (
