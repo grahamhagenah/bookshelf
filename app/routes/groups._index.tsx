@@ -3,7 +3,9 @@ import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 
 import Faces from "~/components/faces";
+import FriendsTabs from "~/components/friends-tabs";
 import Layout from "~/components / Layout/Layout";
+import { getFriendsTabCounts } from "~/friends-tabs.server";
 import { groupPath } from "~/group-links";
 import {
   GROUP_MAX_MEMBERS,
@@ -16,17 +18,15 @@ import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
 // Every group you're in, and where to start one: a book club, an office,
-// a family, where everyone can borrow from everyone
+// a family, where everyone can borrow from everyone. A tab of Friends,
+// since a group is a way of being friends with a bunch of people at once.
 
 export const meta: MetaFunction = () => seo({ title: "Groups", noindex: true });
 
-export const handle = {
-  breadcrumbs: () => [{ label: "Groups" }],
-};
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  return json({ groups: await getMyGroups(userId), nameMax: GROUP_NAME_MAX, maxMembers: GROUP_MAX_MEMBERS });
+  const [groups, counts] = await Promise.all([getMyGroups(userId), getFriendsTabCounts(userId)]);
+  return json({ groups, counts, nameMax: GROUP_NAME_MAX, maxMembers: GROUP_MAX_MEMBERS });
 };
 
 // A new group, and straight to it to invite people
@@ -41,12 +41,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 export default function Groups() {
-  const { groups, nameMax, maxMembers } = useLoaderData<typeof loader>();
+  const { groups, counts, nameMax, maxMembers } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const creating = useNavigation().formMethod === "POST";
 
   return (
-    <Layout title="Groups">
+    <Layout title="Groups" header={<FriendsTabs counts={counts} />}>
       <section>
         <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
           Your groups

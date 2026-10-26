@@ -1,11 +1,16 @@
 import { Link, NavLink } from "@remix-run/react";
 
-import { BookIcon, GroupIcon } from "./icons";
+import { BookIcon, GroupIcon, GroupsIcon } from "./icons";
 
-// The Friends page's two views, side by side as My shelf's tabs are: the
-// people, and every book they have between them. Across from them, where
-// My shelf has its share button, the way to add more.
-export default function FriendsTabs({ counts }: { counts: { friends: number; books: number } }) {
+// The Friends page's views, side by side as My shelf's tabs are: the
+// people, every book they have between them, and the groups you're in.
+// Across from them, where My shelf has its share button, the way to add
+// more.
+export default function FriendsTabs({
+  counts,
+}: {
+  counts: { friends: number; books: number; groups: number };
+}) {
   // The same weight either way, so switching tabs never nudges the other
   const tab = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-1.5 whitespace-nowrap border-b-2 px-1 pb-2.5 font-medium transition-colors ${
@@ -26,6 +31,11 @@ export default function FriendsTabs({ counts }: { counts: { friends: number; boo
           <BookIcon size={16} className="hidden sm:block" />
           Their books
           <span className={count}>{counts.books}</span>
+        </NavLink>
+        <NavLink to="/groups" className={tab}>
+          <GroupsIcon size={17} className="hidden sm:block" />
+          Groups
+          {counts.groups > 0 ? <span className={count}>{counts.groups}</span> : null}
         </NavLink>
       </nav>
       <Link

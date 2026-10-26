@@ -1,5 +1,6 @@
 import type { User } from "@prisma/client";
 
+import { groupPath } from "~/group-links";
 import { POOL_PAGE, POOL_SORTS, POOL_STATUSES, getPoolWanted, searchPool } from "~/models/pool.server";
 
 // What a pooled shelf page loads, a group's or all your friends': the
@@ -13,29 +14,44 @@ export async function loadPooledShelf(
   request: Request,
   userId: User["id"],
   openIds: string[],
-  // Whose books can be picked out, in the Anyone menu
-  lenders: { id: string; firstname: string; surname: string }[],
+  {
+    lenders,
+    groups = [],
+  }: {
+    // Whose books can be picked out, in the Anyone menu
+    lenders: { id: string; firstname: string; surname: string }[];
+    // Groups to narrow it to, the same menu: everyone in one of them
+    groups?: { id: string; name: string; memberIds: string[] }[];
+  },
 ) {
   const url = new URL(request.url);
   const q = (url.searchParams.get("q") ?? "").slice(0, 100);
-  const whoParam = url.searchParams.get("who");
-  const who = whoParam && openIds.includes(whoParam) ? whoParam : null;
+  // One person (their id) or one group ("g:" and its id)
+  const whoParam = url.searchParams.get("who") ?? "";
+  const group = whoParam.startsWith("g:") ? groups.find((g) => g.id === whoParam.slice(2)) ?? null : null;
+  const who = !group && openIds.includes(whoParam) ? whoParam : null;
+  const scope = group ? openIds.filter((id) => group.memberIds.includes(id)) : openIds;
   const statusParam = url.searchParams.get("status");
   const status = POOL_STATUSES.find((option) => option === statusParam) ?? "all";
   const sortParam = url.searchParams.get("sort");
   const sort = POOL_SORTS.find((option) => option === sortParam) ?? "newest";
   const asked = Number(url.searchParams.get("shown"));
   const shown = Math.min(POOL_MOST, Math.max(POOL_PAGE, Number.isFinite(asked) ? Math.floor(asked) : POOL_PAGE));
+  // A group narrows the shelf rather than filtering it: its want-to-read
+  // row still shows
   const filtered = Boolean(q.trim() || who || status !== "all");
   const [results, highlights] = await Promise.all([
-    searchPool(openIds, { q, who, status, sort, shown }),
-    filtered ? null : getPoolWanted(userId, openIds),
+    searchPool(scope, { q, who, status, sort, shown }),
+    filtered ? null : getPoolWanted(userId, scope),
   ]);
   return {
-    search: { q, who, status, sort, shown, filtered },
+    search: { q, who: group ? `g:${group.id}` : who, status, sort, shown, filtered },
     results,
     wanted: highlights?.wanted ?? [],
     lenders: lenders.map(({ id, firstname, surname }) => ({ id, firstname, surname })),
+    groups: groups.map(({ id, name }) => ({ id, name, path: groupPath({ id, name }) })),
+    // The group it's narrowed to, if it is
+    group: group ? { id: group.id, name: group.name, path: groupPath(group) } : null,
     pageSize: POOL_PAGE,
   };
 }

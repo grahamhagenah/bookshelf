@@ -36,7 +36,7 @@ export async function createGroup(userId: User["id"], name: string) {
 const person = { id: true, firstname: true, surname: true, profileEmoji: true } as const;
 
 // The groups someone is in, with a few faces from each and how many
-// books they have between them
+// books the others have between them
 export async function getMyGroups(userId: User["id"]) {
   const groups = await prisma.group.findMany({
     where: { members: { some: { userId } } },
@@ -52,9 +52,11 @@ export async function getMyGroups(userId: User["id"]) {
       id: group.id,
       name: group.name,
       memberCount: group.members.length,
-      bookCount: await prisma.book.count({
-        where: { userId: { in: group.members.map((member) => member.user.id) } },
-      }),
+      memberIds: group.members.map((member) => member.user.id),
+      // As the group's page counts them: books, not copies, and not yours
+      bookCount: await countPoolBooks(
+        group.members.map((member) => member.user.id).filter((id) => id !== userId),
+      ),
       faces: group.members.slice(0, 5).map((member) => member.user),
     })),
   );

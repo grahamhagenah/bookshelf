@@ -45,7 +45,7 @@ const control =
 export type PooledShelfData = SerializeFrom<Awaited<ReturnType<typeof loadPooledShelf>>>;
 
 export default function PooledShelf({
-  data: { search, results, wanted, lenders, pageSize },
+  data: { search, results, wanted, lenders, groups, group, pageSize },
   empty,
 }: {
   data: PooledShelfData;
@@ -164,12 +164,25 @@ export default function PooledShelf({
           </div>
         ) : null}
         <div className="ml-auto flex flex-shrink-0 items-center gap-2">
-          {lenders.length > 1 ? (
+          {lenders.length > 1 || groups.length > 0 ? (
             <Select
               label="Whose books"
               value={search.who ?? ""}
               onChange={(value) => go({ who: value || null })}
-              options={[["", "Anyone"], ...lenders.map((m) => [m.id, `${m.firstname} ${m.surname}`] as const)]}
+              options={[
+                ["", "Everyone"],
+                ...(groups.length > 0
+                  ? [{ section: "Groups", options: groups.map((g) => [`g:${g.id}`, g.name] as const) }]
+                  : []),
+                ...(lenders.length > 1
+                  ? [
+                      {
+                        section: "People",
+                        options: lenders.map((m) => [m.id, `${m.firstname} ${m.surname}`] as const),
+                      },
+                    ]
+                  : []),
+              ]}
             />
           ) : null}
           <Select
@@ -184,6 +197,19 @@ export default function PooledShelf({
           />
         </div>
       </div>
+
+      {/* Narrowed to a group: say so, with the way to its page */}
+      {group ? (
+        <p className="-mt-2 mb-6 text-sm text-stone-500 dark:text-stone-400">
+          Just {group.name}.{" "}
+          <Link
+            to={group.path}
+            className="text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-white"
+          >
+            Go to the group
+          </Link>
+        </p>
+      ) : null}
 
       {wanted.length > 0 ? (
         <section aria-labelledby="wanted" className="mb-8">
@@ -240,8 +266,17 @@ function Select({
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: readonly (readonly [string, string])[];
+  // Choices, some of them under a heading of their own
+  options: readonly (
+    | readonly [string, string]
+    | { section: string; options: readonly (readonly [string, string])[] }
+  )[];
 }) {
+  const option = ([optionValue, optionLabel]: readonly [string, string]) => (
+    <option key={optionValue} value={optionValue}>
+      {optionLabel}
+    </option>
+  );
   return (
     <span className="relative">
       <select
@@ -250,11 +285,15 @@ function Select({
         onChange={(event) => onChange(event.target.value)}
         className={`${control} appearance-none max-w-[11rem] truncate`}
       >
-        {options.map(([optionValue, optionLabel]) => (
-          <option key={optionValue} value={optionValue}>
-            {optionLabel}
-          </option>
-        ))}
+        {options.map((entry) =>
+          "section" in entry ? (
+            <optgroup key={entry.section} label={entry.section}>
+              {entry.options.map(option)}
+            </optgroup>
+          ) : (
+            option(entry)
+          ),
+        )}
       </select>
       <svg
         width="12"

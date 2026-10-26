@@ -20,6 +20,7 @@ import {
   LentIcon,
 } from "~/components/icons";
 import Layout from "~/components / Layout/Layout";
+import { getFriendsTabCounts } from "~/friends-tabs.server";
 import {
   answerFriendRequest,
   getFriendCards,
@@ -27,7 +28,6 @@ import {
   removeFriend,
   setHiddenFromFeed,
 } from "~/models/friend.server";
-import { countPoolBooks } from "~/models/pool.server";
 import { getPendingFriendRequests } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
@@ -47,8 +47,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getPendingFriendRequests(userId),
   ]);
   return json({
-    // For the tab across the top: every book they have between them
-    bookCount: await countPoolBooks(friends.map((friend) => friend.id)),
+    // For the tabs across the top
+    counts: await getFriendsTabCounts(userId),
     friends,
     incoming,
     pendingRequests,
@@ -115,7 +115,7 @@ export default function Friends() {
   const { friends, incoming, pendingRequests } = data;
 
   return (
-    <Layout title="Friends" header={<FriendsTabs counts={{ friends: friends.length, books: data.bookCount }} />}>
+    <Layout title="Friends" header={<FriendsTabs counts={data.counts} />}>
       {incoming.length > 0 ? (
         <section>
           <h2 className="text-lg font-semibold">Friend requests</h2>

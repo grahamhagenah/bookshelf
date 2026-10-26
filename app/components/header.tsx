@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation, useMatches } from "@remix-run/react";
 
-import { BookIcon, FeedIcon, GroupIcon, GroupsIcon } from "./icons";
+import { BookIcon, FeedIcon, GroupIcon } from "./icons";
 import PositionedMenu from "./menu";
 import Notifications from "./notifications";
 import Search from "./search";
@@ -86,22 +86,19 @@ export default function Header() {
                 <FeedIcon size={16} strokeWidth={1.5} />
                 <span className={label}>Feed</span>
               </NavLink>
-              {/* Their shelves and the books on them, and a friend's own page */}
+              {/* Friends, their books and your groups, and a friend's own page */}
               <NavLink
                 title="Friends"
                 to="/friends"
                 className={({ isActive }) =>
                   navClass({
-                    isActive: isActive || pathname.startsWith("/friend/"),
+                    isActive:
+                      isActive || pathname.startsWith("/friend/") || pathname.startsWith("/groups"),
                   })
                 }
               >
                 <GroupIcon size={16} />
                 <span className={label}>Friends</span>
-              </NavLink>
-              <NavLink title="Groups" to="/groups" className={navClass}>
-                <GroupsIcon size={17} />
-                <span className={label}>Groups</span>
               </NavLink>
             </nav>
           ) : null}
