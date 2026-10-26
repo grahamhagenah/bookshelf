@@ -5,6 +5,7 @@ import invariant from "tiny-invariant";
 
 import BookCover from "~/components/book-cover";
 import Faces from "~/components/faces";
+import { codeFromLink } from "~/group-links";
 import { getGroupByToken, joinGroup } from "~/models/group.server";
 import { seo } from "~/seo";
 import { getUserId } from "~/session.server";
@@ -22,17 +23,20 @@ export const meta: MetaFunction<typeof loader> = ({ data }) =>
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.token, "token not found");
+  // The group's name may be ahead of the code; only the code counts
+  const token = codeFromLink(params.token);
   const userId = await getUserId(request);
   if (userId) {
-    const result = await joinGroup(userId, params.token);
+    const result = await joinGroup(userId, token);
     if (result.ok) return redirect(`/groups/${result.groupId}?joined=1`);
-    return json({ group: null, reason: result.reason, token: params.token });
+    return json({ group: null, reason: result.reason, token, here: `/g/${params.token}` });
   }
-  const group = await getGroupByToken(params.token);
+  const group = await getGroupByToken(token);
   return json({
     group,
     reason: group ? null : ("no-such-group" as const),
-    token: params.token,
+    token,
+    here: `/g/${params.token}`,
   });
 };
 
@@ -45,8 +49,7 @@ function whoIsIn(names: string[]) {
 }
 
 export default function JoinGroup() {
-  const { group, reason, token } = useLoaderData<typeof loader>();
-  const here = `/g/${token}`;
+  const { group, reason, token, here } = useLoaderData<typeof loader>();
 
   if (!group) {
     const [title, message] =

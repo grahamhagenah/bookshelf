@@ -10,6 +10,7 @@ import FriendActivityItem from "~/components/friend-activity";
 import { SearchIcon } from "~/components/icons";
 import InviteMessage from "~/components/invite-message";
 import Layout from "~/components / Layout/Layout";
+import { codeFromLink, groupInvitePath, groupPath } from "~/group-links";
 import { isNotLending } from "~/lending";
 import { getFriendActivity } from "~/models/activity.server";
 import {
@@ -44,13 +45,18 @@ export const handle = {
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.groupId, "groupId not found");
-  const group = await getGroup(params.groupId, userId);
+  const group = await getGroup(codeFromLink(params.groupId), userId);
   if (!group) throw new Response("Not Found", { status: 404 });
   const { inviteToken, openIds, ...rest } = group;
 
+  // The address carries the group's name as it is now, for a link from
+  // before a rename or one with just the id
+  const url = new URL(request.url);
+  const canonical = groupPath(group);
+  if (url.pathname !== canonical) return redirect(`${canonical}${url.search}`);
+
   // Searching or filtering shows matching books; otherwise the page opens
   // on a couple of short rows
-  const url = new URL(request.url);
   const q = (url.searchParams.get("q") ?? "").slice(0, 100);
   const whoParam = url.searchParams.get("who");
   const who = whoParam && openIds.includes(whoParam) ? whoParam : null;
@@ -74,7 +80,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     results,
     activity,
     friendIds: openIds,
-    inviteUrl: `${publicOrigin(request)}/g/${inviteToken}`,
+    inviteUrl: `${publicOrigin(request)}${groupInvitePath(group.name, inviteToken)}`,
     maxMembers: GROUP_MAX_MEMBERS,
     nameMax: GROUP_NAME_MAX,
   });
@@ -86,17 +92,17 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
   if (intent === "leave") {
-    await leaveGroup(userId, params.groupId);
+    await leaveGroup(userId, codeFromLink(params.groupId));
     return redirect("/groups");
   }
   if (intent === "rename") {
     const name = cleanGroupName(formData.get("name"));
     if (!name) return json({ error: "Give the group a name." }, { status: 400 });
-    await renameGroup(userId, params.groupId, name);
+    await renameGroup(userId, codeFromLink(params.groupId), name);
     return json({ ok: true });
   }
   if (intent === "resetLink") {
-    await resetGroupLink(userId, params.groupId);
+    await resetGroupLink(userId, codeFromLink(params.groupId));
     return json({ ok: true });
   }
   return json({ error: "Unknown request" }, { status: 400 });

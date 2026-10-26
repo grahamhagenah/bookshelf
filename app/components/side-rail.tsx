@@ -1,5 +1,7 @@
 import { Link } from "@remix-run/react";
 
+import { groupPath } from "~/group-links";
+
 import Avatar from "./avatar";
 import Faces from "./faces";
 import { LoanList } from "./home";
@@ -108,7 +110,7 @@ export default function SideRail({ loans, friends, groups, children }: SideRailP
               {groups.slice(0, 5).map((group) => (
                 <li key={group.id}>
                   <Link
-                    to={`/groups/${group.id}`}
+                    to={groupPath(group)}
                     className="flex items-center gap-3 rounded-md hover:opacity-80 transition-opacity"
                   >
                     <Faces people={group.faces} max={3} />

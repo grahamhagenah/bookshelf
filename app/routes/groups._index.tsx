@@ -4,6 +4,7 @@ import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-
 
 import Faces from "~/components/faces";
 import Layout from "~/components / Layout/Layout";
+import { groupPath } from "~/group-links";
 import {
   GROUP_MAX_MEMBERS,
   GROUP_NAME_MAX,
@@ -34,7 +35,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const name = cleanGroupName((await request.formData()).get("name"));
   if (!name) return json({ error: "Give the group a name." }, { status: 400 });
   const group = await createGroup(userId, name);
-  return redirect(`/groups/${group.id}`);
+  return redirect(groupPath({ id: group.id, name }));
 };
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -58,7 +59,7 @@ export default function Groups() {
             {groups.map((group) => (
               <li key={group.id}>
                 <Link
-                  to={`/groups/${group.id}`}
+                  to={groupPath(group)}
                   className="flex items-center gap-4 rounded-xl border border-stone-200 dark:border-stone-800 p-4 hover:border-stone-400 dark:hover:border-stone-600 transition-colors"
                 >
                   <Faces people={group.faces} max={3} />

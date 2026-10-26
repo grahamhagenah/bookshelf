@@ -14,6 +14,7 @@ import SideRail from "~/components/side-rail";
 import Layout from "~/components / Layout/Layout";
 import { prisma } from "~/db.server";
 import { sendRequestAnswerEmail } from "~/email.server";
+import { groupPath } from "~/group-links";
 import {
   DEFAULT_LOAN_WEEKS,
   LOAN_WEEKS,
@@ -491,7 +492,10 @@ function ActivityItem({
         </>
       );
       actions = notification.groupId ? (
-        <a href={`/groups/${notification.groupId}`} className={secondaryButton}>
+        <a
+          href={groupPath({ id: notification.groupId, name: notification.message ?? "" })}
+          className={secondaryButton}
+        >
           See the group
         </a>
       ) : null;
