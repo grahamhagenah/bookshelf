@@ -252,26 +252,30 @@ async function enrichElsewhere(
 }
 
 // withOwnNotes adds the viewer's own written notes (not bare hearts), so
-// a note posted from the feed shows up there as friends will see it
+// a note posted from the feed shows up there as friends will see it.
+// among narrows it to some of your friends, such as the people in a group.
 export async function getFriendActivity(
   userId: User["id"],
   {
     days = 60,
     limit = 20,
     withOwnNotes = false,
-  }: { days?: number; limit?: number; withOwnNotes?: boolean } = {},
+    among,
+  }: { days?: number; limit?: number; withOwnNotes?: boolean; among?: string[] } = {},
 ): Promise<FriendActivity[]> {
   const me = await prisma.user.findUnique({
     where: { id: userId },
     select: { following: { select: { id: true } } },
   });
   const friendIds = me?.following.map((friend) => friend.id) ?? [];
-  if (friendIds.length === 0) return [];
+  // Whose activity this is; who's a friend still decides what you can ask for
+  const sourceIds = among ? friendIds.filter((id) => among.includes(id)) : friendIds;
+  if (sourceIds.length === 0) return [];
 
   const since = new Date(Date.now() - days * DAY);
   const [books, notes, elsewhere] = await Promise.all([
     prisma.book.findMany({
-      where: { userId: { in: friendIds }, createdAt: { gte: since } },
+      where: { userId: { in: sourceIds }, createdAt: { gte: since } },
       select: { ...bookFields, createdAt: true, user: person },
       orderBy: { createdAt: "desc" },
       // Several books can share one post, so look a good way back
@@ -282,7 +286,7 @@ export async function getFriendActivity(
         updatedAt: { gte: since },
         OR: [
           {
-            userId: { in: friendIds },
+            userId: { in: sourceIds },
             OR: [{ loved: true }, { body: { not: null } }],
           },
           ...(withOwnNotes ? [{ userId, body: { not: null } }] : []),
@@ -305,7 +309,7 @@ export async function getFriendActivity(
       where: {
         updatedAt: { gte: since },
         body: { not: null },
-        userId: { in: withOwnNotes ? [...friendIds, userId] : friendIds },
+        userId: { in: withOwnNotes ? [...sourceIds, userId] : sourceIds },
       },
       select: {
         id: true,

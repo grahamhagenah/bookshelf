@@ -288,3 +288,21 @@ test("a friend's note on a book read elsewhere is in the feed; bare hearts and r
     throw new Error("Expected a note from elsewhere");
   expect(again.viewer).toMatchObject({ ownCopyId: mine.id, wanted: true });
 });
+
+test("a group's activity is only from the friends in it", async () => {
+  const me = await makeUser("Me");
+  const inGroup = await makeUser("Clubber");
+  const elsewhere = await makeUser("Neighbor");
+  await createFriendship(me.id, inGroup.id);
+  await createFriendship(me.id, elsewhere.id);
+  await makeBook(inGroup.id, "Club pick");
+  await makeBook(elsewhere.id, "Not the club's");
+
+  const all = await getFriendActivity(me.id);
+  expect(all.map((item) => item.friend.id).sort()).toEqual([inGroup.id, elsewhere.id].sort());
+
+  const group = await getFriendActivity(me.id, { among: [inGroup.id, me.id] });
+  expect(group.map((item) => item.friend.id)).toEqual([inGroup.id]);
+  // Nobody in common, nothing to show
+  expect(await getFriendActivity(me.id, { among: [] })).toEqual([]);
+});

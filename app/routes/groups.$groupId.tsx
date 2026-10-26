@@ -6,8 +6,10 @@ import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
+import FriendActivityItem from "~/components/friend-activity";
 import InviteMessage from "~/components/invite-message";
 import Layout from "~/components / Layout/Layout";
+import { getFriendActivity } from "~/models/activity.server";
 import {
   GROUP_MAX_MEMBERS,
   GROUP_NAME_MAX,
@@ -40,8 +42,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const group = await getGroup(params.groupId, userId);
   if (!group) throw new Response("Not Found", { status: 404 });
   const { inviteToken, ...rest } = group;
+  const friendIds = rest.members.filter((member) => member.isFriend).map((member) => member.id);
   return json({
     group: rest,
+    // What the people in it have been up to, as the feed shows it
+    activity: await getFriendActivity(userId, { among: friendIds, limit: 8 }),
+    friendIds,
     inviteUrl: `${publicOrigin(request)}/g/${inviteToken}`,
     maxMembers: GROUP_MAX_MEMBERS,
     nameMax: GROUP_NAME_MAX,
@@ -75,7 +81,7 @@ const quietButton =
 const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
 
 export default function GroupPage() {
-  const { group, inviteUrl, maxMembers, nameMax } = useLoaderData<typeof loader>();
+  const { group, activity, friendIds, inviteUrl, maxMembers, nameMax } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const justJoined = searchParams.get("joined") === "1";
   const others = group.members.filter((member) => !member.isMe);
@@ -214,6 +220,21 @@ export default function GroupPage() {
           </p>
         )}
       </section>
+
+      {activity.length > 0 ? (
+        <section aria-labelledby="lately">
+          <h2 id="lately" className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+            Lately in {group.name}
+          </h2>
+          <ul className="mt-2 max-w-2xl divide-y divide-stone-100 dark:divide-stone-800">
+            {activity.map((item) => (
+              <li key={item.id}>
+                <FriendActivityItem item={item} friendIds={friendIds} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section>
         <InviteMessage
