@@ -140,10 +140,14 @@ const ICON_PATHS = {
   ),
   snail: (
     <>
-      <path d="M3 19h13.5a3.5 3.5 0 0 0 3.5-3.5V9.5" />
-      <path d="M20 9.5 18.8 6M20 9.5l1.6-3" />
-      <circle cx="11" cy="13" r="5" />
-      <path d="M11 13a1.6 1.6 0 1 1 1.6-1.6 3 3 0 0 1-3 3" />
+      {/* The shell sits right on the foot, its spiral opening out; the head
+          has a front and a back, and its feelers end in dots */}
+      <path d="M2.5 18.5h14.5a2.5 2.5 0 0 0 2.5-2.5v-4.5a1.5 1.5 0 0 0-3 0V14" />
+      <path d="M18 10 17.2 7M18 10l1.6-2.6" />
+      <circle cx="17.2" cy="7" r=".7" fill="currentColor" stroke="none" />
+      <circle cx="19.6" cy="7.4" r=".7" fill="currentColor" stroke="none" />
+      <circle cx="9.5" cy="12.7" r="5.8" />
+      <path d="M8.3 12.7a1.2 1.2 0 0 1 2.4 0 2.4 2.4 0 0 1-4.8 0 3.6 3.6 0 0 1 7.2 0" />
     </>
   ),
   ghost: (
@@ -264,9 +268,13 @@ const ICON_PATHS = {
   ),
   teapot: (
     <>
-      <path d="M5.5 9h13c.3 0 .5.2.5.5C19 15 16 18.5 12 18.5S5 15 5 9.5c0-.3.2-.5.5-.5z" />
-      <path d="M10 9V7.5h4V9M12 7.5V5.5" />
-      <path d="M5.3 11.5 2.5 9M19 11h1a2 2 0 0 1 0 4h-1.5M8 21h8" />
+      {/* Side on: a round body, a lid with a knob, a spout up to the left
+          and a handle to the right, none of them crossing */}
+      <path d="M5.5 10.5h13c0 4.7-2.7 8.5-6.5 8.5s-6.5-3.8-6.5-8.5z" />
+      <path d="M8 10.5a4 2.6 0 0 1 8 0" />
+      <circle cx="12" cy="6.9" r="1.1" fill="currentColor" stroke="none" />
+      <path d="M5.7 12.5 2.8 9.8c.4 2.7 1.8 5.2 4.25 6.2" />
+      <path d="M18.4 12h.8a2.3 2.3 0 0 1 0 4.6h-2.7" />
     </>
   ),
   dice: (
