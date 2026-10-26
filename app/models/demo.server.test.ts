@@ -56,6 +56,16 @@ describe("createDemoSandbox", () => {
       expect(lentOut).toBe(5);
       expect(borrowed).toBe(4);
 
+      // Every cover by Open Library cover ID, which isn't rate limited the
+      // way covers by ISBN are
+      const inDemo = { user: { demoGroup: visitor.demoGroup } };
+      const covers = [
+        ...(await prisma.book.findMany({ where: inDemo, select: { cover: true } })),
+        ...(await prisma.wantToRead.findMany({ where: inDemo, select: { cover: true } })),
+      ].map((book) => book.cover);
+      expect(covers.length).toBeGreaterThan(40);
+      expect(covers.filter((cover) => !/\/b\/id\/\d+-L\.jpg$/.test(cover))).toEqual([]);
+
       const loved = await prisma.readerNote.count({
         where: { userId: visitorId, loved: true },
       });
