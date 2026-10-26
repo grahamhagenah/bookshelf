@@ -1,0 +1,22 @@
+# Temporary: removed before this branch is merged
+name: Check covers in production
+on:
+  push:
+    branches: [claude/eager-allen-361gc2]
+    paths: [.github/workflows/check-demo-covers.yml]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for id in 8793546 8594920 12065533 12063911 14818095 369091 283860; do
+            for size in M L; do
+              echo "== $id-$size"
+              curl -s -o /dev/null -w "prod  %{http_code} %{size_download}B %{time_total}s\n" --max-time 40 "https://bookstacks.app/covers/b/id/$id-$size.jpg"
+              curl -s -L -o /dev/null -w "olib  %{http_code} %{size_download}B %{time_total}s %{num_redirects} redirects -> %{url_effective}\n" --max-time 40 "https://covers.openlibrary.org/b/id/$id-$size.jpg"
+            done
+          done
+          echo "== headers from Open Library"
+          curl -s -I --max-time 30 "https://covers.openlibrary.org/b/id/8793546-M.jpg" | head -20
+          echo "== production health"
+          curl -s -o /dev/null -w "home %{http_code} %{time_total}s\n" --max-time 30 https://bookstacks.app/
