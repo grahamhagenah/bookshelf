@@ -57,16 +57,10 @@ const ICON_PATHS = {
   ),
   flower: (
     <>
-      {/* Five petals in one outline over a solid center, on a short stem
-          that ends where its two leaves meet, the leaves a clear gap below
-          the petals, all centered in the box */}
-      <g transform="translate(0 2.0)">
-        <path d="M9.24 8.3A2.3 2.3 0 1 1 10.3 5.05A2.3 2.3 0 1 1 13.7 5.05A2.3 2.3 0 1 1 14.76 8.3A2.3 2.3 0 1 1 12 10.3A2.3 2.3 0 1 1 9.24 8.3z" />
-        <circle cx="12" cy="7.4" r="1.15" fill="currentColor" stroke="none" />
-        <path d="M12 12.9V18.7" />
-        <path d="M12 18.7Q10.84 14.83 6.8 14.7Q7.96 18.57 12 18.7z" />
-        <path d="M12 18.7Q16.04 18.57 17.2 14.7Q13.16 14.83 12 18.7z" />
-      </g>
+      {/* A bloom seen from above: five round petals in one outline around a
+          solid center, filling the box, no stem */}
+      <path d="M8.39 13.17A3.0 3.0 0 1 1 9.77 8.93A3.0 3.0 0 1 1 14.23 8.93A3.0 3.0 0 1 1 15.61 13.17A3.0 3.0 0 1 1 12 15.8A3.0 3.0 0 1 1 8.39 13.17z" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
     </>
   ),
   glasses: (
