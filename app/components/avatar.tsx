@@ -367,6 +367,38 @@ const ICON_PATHS = {
       <path d="M15.4 19.97C11.9 17.17 9.45 14.93 9.45 12.06C9.45 10.1 10.92 8.63 12.74 8.63C13.86 8.63 14.84 9.19 15.4 10.03C15.96 9.19 16.94 8.63 18.06 8.63C19.88 8.63 21.35 10.1 21.35 12.06C21.35 14.93 18.9 17.17 15.4 19.97z" />
     </>
   ),
+  dice: (
+    <>
+      {/* A die in three dimensions: a cube seen from a corner, with one pip
+          on top, two on the left face and three on the right */}
+      <path d="M12 3.5L20 8v9l-8 4.5L4 17V8z" />
+      <path d="M4 8l8 4.5 8-4.5M12 12.5v9" />
+      <circle cx="12" cy="8" r="1.05" fill="currentColor" stroke="none" />
+      <circle cx="5.8" cy="16" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="10.2" cy="13.5" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="13.6" cy="13.4" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="16" cy="14.75" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="18.4" cy="16.1" r="0.9" fill="currentColor" stroke="none" />
+    </>
+  ),
+  cutlery: (
+    <>
+      {/* A fork and a table knife, side by side */}
+      <path d="M5 3v5.2a3 3 0 0 0 6 0V3M8 3v5.2M8 11.2V21" />
+      <path d="M15.5 13.6V3C18 4.6 18.8 8.4 18.7 11.4c0 1.3-1.3 2.2-3.2 2.2M15.5 13.6V21" />
+    </>
+  ),
+  vhs: (
+    <>
+      {/* A VHS tape: the cassette, two reels joined by the tape window, and
+          the label strip */}
+      <rect x="2.5" y="5.5" width="19" height="13" rx="1.6" />
+      <circle cx="8" cy="11" r="2.2" />
+      <circle cx="16" cy="11" r="2.2" />
+      <path d="M8 8.8h8M8 13.2h8" />
+      <path d="M5.5 16.2h13" />
+    </>
+  ),
   wine: (
     <>
       {/* A wine glass: a bowl with a flat rim on a stem and a foot, with wine
@@ -475,16 +507,6 @@ const ICON_PATHS = {
       <path d="M18.4 12h.8a2.3 2.3 0 0 1 0 4.6h-2.7" />
     </>
   ),
-  dice: (
-    <>
-      <path d="M5 6.5A1.5 1.5 0 0 1 6.5 5h11A1.5 1.5 0 0 1 19 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 17.5z" />
-      <circle cx="9" cy="9" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="15" cy="9" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="12" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="9" cy="15" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="15" cy="15" r="0.9" fill="currentColor" stroke="none" />
-    </>
-  ),
 };
 
 export type AvatarIcon = keyof typeof ICON_PATHS;
@@ -527,6 +549,9 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "mask",
   "swords",
   "hearts",
+  "dice",
+  "cutlery",
+  "vhs",
 ];
 
 export function isAvatarIcon(value: unknown): value is AvatarIcon {
