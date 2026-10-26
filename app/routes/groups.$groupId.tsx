@@ -10,6 +10,7 @@ import { GROUP_NAME_MAX, codeFromLink, groupInvitePath, groupPath } from "~/grou
 import { loadGroup } from "~/group-page.server";
 import {
   cleanGroupName,
+  deleteGroup,
   leaveGroup,
   removeFromGroup,
   renameGroup,
@@ -67,6 +68,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     if (!name) return json({ error: "Give the group a name." }, { status: 400 });
     await renameGroup(userId, groupId, name);
     return json({ ok: true });
+  }
+  if (intent === "delete") {
+    await deleteGroup(userId, groupId);
+    return redirect("/groups");
   }
   if (intent === "remove") {
     const memberId = formData.get("memberId");

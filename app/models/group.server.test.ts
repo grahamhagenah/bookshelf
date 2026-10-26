@@ -6,6 +6,7 @@ import {
   GROUP_MAX_MEMBERS,
   cleanGroupName,
   createGroup,
+  deleteGroup,
   getGroup,
   getGroupByToken,
   getMyGroups,
@@ -214,4 +215,28 @@ test("whoever started the group can take people out; nobody else can", async () 
   // When Ana leaves, Ben has been in longest and runs it
   await leaveGroup(ana.id, group.id);
   expect((await getGroup(group.id, ben.id))?.members.find((member) => member.isMe)?.isOwner).toBe(true);
+});
+
+test("whoever runs a group can delete it: friendships stay, its notices go", async () => {
+  const ana = await makeUser("Ana");
+  const ben = await makeUser("Ben");
+  const group = await createGroup(ana.id, "Club");
+  await joinGroup(ben.id, await tokenOf(group.id));
+  expect(await prisma.notification.count({ where: { groupId: group.id } })).toBe(1);
+
+  expect(await deleteGroup(ben.id, group.id)).toBe(false);
+  expect(await deleteGroup(ana.id, group.id)).toBe(true);
+  expect(await prisma.group.count({ where: { id: group.id } })).toBe(0);
+  expect(await prisma.notification.count({ where: { groupId: group.id } })).toBe(0);
+  expect(await getFriendStatus(ana.id, ben.id)).toBe("friends");
+});
+
+test("the last one out takes the group's notices with it", async () => {
+  const ana = await makeUser("Ana");
+  const ben = await makeUser("Ben");
+  const group = await createGroup(ana.id, "Pair");
+  await joinGroup(ben.id, await tokenOf(group.id));
+  await leaveGroup(ana.id, group.id);
+  await leaveGroup(ben.id, group.id);
+  expect(await prisma.notification.count({ where: { groupId: group.id } })).toBe(0);
 });

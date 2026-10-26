@@ -205,20 +205,39 @@ export async function joinGroup(userId: User["id"], token: string): Promise<Join
 export async function leaveGroup(userId: User["id"], groupId: Group["id"]) {
   await prisma.groupMember.deleteMany({ where: { groupId, userId } });
   if ((await prisma.groupMember.count({ where: { groupId } })) === 0) {
-    await prisma.group.deleteMany({ where: { id: groupId } });
+    await removeGroups([groupId]);
   }
 }
 
-// The person who runs the group can take someone out of it. Like leaving,
-// it keeps their friendships; it only stops them seeing the group.
-export async function removeFromGroup(userId: User["id"], groupId: Group["id"], memberId: User["id"]) {
-  if (userId === memberId) return false;
+// Groups gone for good, with the "joined" notices that pointed at them,
+// so no notification leads to a missing page. Friendships stay.
+export async function removeGroups(groupIds: Group["id"][]) {
+  if (groupIds.length === 0) return;
+  await prisma.notification.deleteMany({ where: { groupId: { in: groupIds } } });
+  await prisma.group.deleteMany({ where: { id: { in: groupIds } } });
+}
+
+// Whoever runs the group can end it for everyone
+export async function deleteGroup(userId: User["id"], groupId: Group["id"]) {
+  if (!(await runsGroup(userId, groupId))) return false;
+  await removeGroups([groupId]);
+  return true;
+}
+
+// Whoever's been in the group longest
+async function runsGroup(userId: User["id"], groupId: Group["id"]) {
   const first = await prisma.groupMember.findFirst({
     where: { groupId },
     orderBy: { joinedAt: "asc" },
     select: { userId: true },
   });
-  if (first?.userId !== userId) return false;
+  return first?.userId === userId;
+}
+
+// The person who runs the group can take someone out of it. Like leaving,
+// it keeps their friendships; it only stops them seeing the group.
+export async function removeFromGroup(userId: User["id"], groupId: Group["id"], memberId: User["id"]) {
+  if (userId === memberId || !(await runsGroup(userId, groupId))) return false;
   await prisma.groupMember.deleteMany({ where: { groupId, userId: memberId } });
   return true;
 }

@@ -56,8 +56,9 @@ export default function GroupPeople() {
 type Member = NonNullable<SerializeFrom<GroupLayoutData>>["group"]["members"][number];
 
 // One person: who they are and how many books they bring, opening their
-// shelf. On your own card, the way out; on others', for whoever runs the
-// group, the way to take them out. Both ask first.
+// shelf. On your own card, the way out (and, for whoever runs the group,
+// the way to end it); on others', for whoever runs it, the way to take
+// them out. Each asks first.
 function PersonCard({
   member,
   groupName,
@@ -86,19 +87,37 @@ function PersonCard({
       </span>
     </>
   );
-  const action = member.isMe
-    ? {
-        label: "Leave",
-        intent: "leave",
-        ask: `Leave ${groupName}? You'll stay friends with the people you met here, and can remove friends on the Friends page.`,
-      }
-    : canRemove
-      ? {
-          label: "Remove",
-          intent: "remove",
-          ask: `Remove ${member.firstname} from ${groupName}? You'll stay friends. They can rejoin if they still have the invite link, so reset it if you need to.`,
-        }
-      : null;
+  // What this card lets you do: leave (and, if you run it, end the group)
+  // on your own; take someone out on theirs, if you run it
+  const actions = [
+    ...(member.isMe
+      ? [
+          {
+            label: "Leave",
+            intent: "leave",
+            ask: `Leave ${groupName}? You'll stay friends with the people you met here, and can remove friends on the Friends page.`,
+          },
+        ]
+      : []),
+    ...(member.isMe && member.isOwner
+      ? [
+          {
+            label: "Delete group",
+            intent: "delete",
+            ask: `Delete ${groupName} for everyone? Everyone stays friends and keeps their books; the group's page and invite link stop working.`,
+          },
+        ]
+      : []),
+    ...(canRemove
+      ? [
+          {
+            label: "Remove",
+            intent: "remove",
+            ask: `Remove ${member.firstname} from ${groupName}? You'll stay friends. They can rejoin if they still have the invite link, so reset it if you need to.`,
+          },
+        ]
+      : []),
+  ];
 
   return (
     <li
@@ -113,24 +132,29 @@ function PersonCard({
       ) : (
         <span className="flex min-w-0 flex-1 items-center gap-3">{who}</span>
       )}
-      {action ? (
-        <fetcher.Form
-          method="post"
-          action={path}
-          onSubmit={(event) => {
-            if (!confirm(action.ask)) event.preventDefault();
-          }}
-        >
-          <input type="hidden" name="intent" value={action.intent} />
-          <input type="hidden" name="memberId" value={member.id} />
-          <button
-            type="submit"
-            disabled={busy}
-            className="flex-shrink-0 rounded-md px-2 py-1 text-sm text-stone-500 dark:text-stone-400 hover:bg-stone-100 hover:text-rose-700 dark:hover:bg-stone-800 dark:hover:text-rose-400 transition-colors"
-          >
-            {action.label}
-          </button>
-        </fetcher.Form>
+      {actions.length > 0 ? (
+        <div className="flex flex-shrink-0 items-center">
+          {actions.map((action) => (
+            <fetcher.Form
+              key={action.intent}
+              method="post"
+              action={path}
+              onSubmit={(event) => {
+                if (!confirm(action.ask)) event.preventDefault();
+              }}
+            >
+              <input type="hidden" name="intent" value={action.intent} />
+              <input type="hidden" name="memberId" value={member.id} />
+              <button
+                type="submit"
+                disabled={busy}
+                className="whitespace-nowrap rounded-md px-2 py-1 text-sm text-stone-500 dark:text-stone-400 hover:bg-stone-100 hover:text-rose-700 dark:hover:bg-stone-800 dark:hover:text-rose-400 transition-colors"
+              >
+                {action.label}
+              </button>
+            </fetcher.Form>
+          ))}
+        </div>
       ) : null}
     </li>
   );
