@@ -129,6 +129,21 @@ export default function Friends() {
       // requests you're waiting on
       aside={
         <aside className="hidden space-y-10 self-start lg:sticky lg:top-24 lg:block">
+          {data.incoming.length > 0 ? (
+            <section aria-labelledby="rail-requests">
+              <h2 id="rail-requests" className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100">
+                Friend requests
+                <span className="ml-1.5 text-sm font-normal text-stone-400 dark:text-stone-500">
+                  {data.incoming.length}
+                </span>
+              </h2>
+              <ul className="space-y-4">
+                {data.incoming.map((request) => (
+                  <IncomingRequest key={request.id} request={request} compact />
+                ))}
+              </ul>
+            </section>
+          ) : null}
           <RailGroups groups={data.groups} limit={10} />
           {data.pendingRequests.length > 0 ? (
             <section aria-labelledby="rail-waiting">
@@ -184,18 +199,19 @@ export default function Friends() {
       }
     >
 
-      {incoming.length > 0 ? (
-        <section>
-          <h2 className="text-lg font-semibold">Friend requests</h2>
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-            {incoming.map((request) => (
-              <IncomingRequest key={request.id} request={request} />
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
       <section>
+        {/* On phones, above your friends; wider screens have them at the
+            top of the side column */}
+        {incoming.length > 0 ? (
+          <div className="mb-8 border-b border-stone-100 pb-8 dark:border-stone-800 lg:hidden">
+            <h2 className="text-lg font-semibold">Friend requests</h2>
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+              {incoming.map((request) => (
+                <IncomingRequest key={request.id} request={request} />
+              ))}
+            </ul>
+          </div>
+        ) : null}
         {/* The tab above already says how many */}
         <h2 className="sr-only">Your friends</h2>
 
@@ -424,11 +440,41 @@ function MiniCover({ cover, title, author }: { cover: string; title: string; aut
 
 function IncomingRequest({
   request,
+  compact = false,
 }: {
   request: SerializeFrom<typeof loader>["incoming"][number];
+  // In the side column: smaller, with the buttons under the name
+  compact?: boolean;
 }) {
   const fetcher = useFetcher<ActionData>();
   const answering = fetcher.formData?.get("intent");
+  if (compact) {
+    return (
+      <li className="flex items-start gap-3">
+        <Avatar
+          firstname={request.sender.firstname}
+          surname={request.sender.surname}
+          icon={request.sender.profileEmoji}
+          size="list"
+        />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
+            {request.sender.firstname} {request.sender.surname}
+          </p>
+          <p className="text-xs text-stone-500 dark:text-stone-400">Asked {ago(request.createdAt)}</p>
+          <fetcher.Form method="post" className="mt-2 flex gap-2">
+            <input type="hidden" name="notificationId" value={request.id} />
+            <button type="submit" name="intent" value="accept" disabled={Boolean(answering)} className={primaryButton}>
+              {answering === "accept" ? "Adding…" : "Accept"}
+            </button>
+            <button type="submit" name="intent" value="decline" disabled={Boolean(answering)} className={quietButton}>
+              Not now
+            </button>
+          </fetcher.Form>
+        </div>
+      </li>
+    );
+  }
   return (
     <li className="flex items-center gap-3 rounded-xl border border-stone-200 dark:border-stone-800 p-4">
       <Avatar
