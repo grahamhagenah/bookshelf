@@ -1,6 +1,6 @@
 import type { SerializeFrom } from "@remix-run/node";
 import { Link, useFetcher } from "@remix-run/react";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
@@ -324,6 +324,18 @@ function Welcome({
   );
 }
 
+// The way from the home page's few posts to the whole feed
+function SeeMore({ className = "" }: { className?: string }) {
+  return (
+    <Link
+      to="/feed"
+      className={`inline-flex h-8 items-center rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-950 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors ${className}`}
+    >
+      See more
+    </Link>
+  );
+}
+
 interface Wanted {
   id: string;
   title: string;
@@ -415,6 +427,21 @@ export default function Home({
   const divided = "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6";
   // Loans, three each way unless asked for all
   const [allLoans, setAllLoans] = useState(false);
+  // Whether the side column's activity runs past the main column, so it's
+  // cut there with a fade
+  const railRef = useRef<HTMLDivElement>(null);
+  const [railCut, setRailCut] = useState(false);
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const check = () => setRailCut(rail.scrollHeight > rail.clientHeight + 1);
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(rail);
+    // Its contents too, as posts come and go
+    for (const child of Array.from(rail.children)) observer.observe(child);
+    return () => observer.disconnect();
+  }, []);
   const hiddenLoans =
     Math.max(0, books.borrowed.length - LOANS_SHOWN) +
     Math.max(0, books.lent.length - LOANS_SHOWN);
@@ -664,10 +691,16 @@ export default function Home({
             aria-labelledby="friend-activity"
             className={
               showMain
-                ? "border-t border-stone-200 dark:border-stone-800 pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8"
+                ? "border-t border-stone-200 dark:border-stone-800 pt-8 lg:relative lg:min-h-[30rem] lg:border-t-0 lg:border-l lg:pt-0"
                 : undefined
             }
           >
+            {/* Beside the main column, no taller than it: what doesn't fit
+                fades out, with the way to the rest */}
+            <div
+              ref={railRef}
+              className={showMain ? "lg:absolute lg:inset-0 lg:overflow-hidden lg:pl-8" : undefined}
+            >
             <div className="mb-2 flex items-center justify-between gap-3">
               <h2 id="friend-activity" className={headingClass}>
                 Friend activity
@@ -701,6 +734,14 @@ export default function Home({
                 Nothing new from your friends lately.
               </p>
             )}
+            {/* After the last post when they all fit; on the fade when not */}
+            {activity.length > 0 && !railCut ? <SeeMore className="mt-3" /> : null}
+            </div>
+            {showMain && railCut ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-28 items-end bg-gradient-to-t from-white from-45% to-transparent pl-8 dark:from-stone-950 lg:flex">
+                <SeeMore className="pointer-events-auto" />
+              </div>
+            ) : null}
           </aside>
         ) : null}
       </div>

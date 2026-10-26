@@ -186,7 +186,8 @@ export default function FriendActivityItem({
           {name} added {item.books.length} books
         </>
       );
-    books = item.books.slice(0, 6);
+    // One row of covers in a side column, then how many more
+    books = item.books.slice(0, 5);
   } else {
     text = (
       <>
