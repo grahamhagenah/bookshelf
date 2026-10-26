@@ -385,6 +385,8 @@ export async function createBookReturnedNotification(
   receiverId: User["id"],
   senderName: string,
   bookTitle: string,
+  // So the owner can say it never actually came back
+  bookId?: string,
 ) {
   return prisma.notification.create({
     data: {
@@ -397,6 +399,7 @@ export async function createBookReturnedNotification(
       },
       senderName: senderName,
       bookTitle: bookTitle,
+      ...(bookId ? { book: { connect: { id: bookId } } } : {}),
     },
     select: {
       id: true,

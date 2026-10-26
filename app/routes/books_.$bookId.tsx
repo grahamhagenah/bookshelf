@@ -44,6 +44,8 @@ import {
   lendToFriend,
   loanWeeks,
   returnBook,
+  undoableReturn,
+  undoReturn,
   updateBookMetadata,
   getLendingHistory,
   tidySubjects,
@@ -495,6 +497,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     linePosition: holdIndex === -1 ? null : holdIndex + 1,
     author,
     friendIds: followingIds,
+    // The latest return, while the owner can still say it never came back
+    undoableReturnId: isOwner
+      ? ((await undoableReturn(book.id))?.id ?? null)
+      : null,
     // What the lender said when they said yes, for the one borrowing it
     loanReply: isBorrower ? await getLoanReply(book.id, userId) : null,
     fillingIn,
@@ -775,11 +781,27 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       book.userId,
       senderName,
       book.title,
+      book.id,
     );
 
     await returnBook(book.id);
     await handOn(book.id, userId);
     return redirect("/books");
+  }
+
+  // It was marked returned, but it never actually came back
+  if (intent === "undoReturn") {
+    if (!managerIds.includes(book.userId)) {
+      throw new Response("Unauthorized", { status: 403 });
+    }
+    const owner = await getUserById(userId);
+    const undone = owner
+      ? await undoReturn(book.id, {
+          id: userId,
+          name: `${owner.firstname} ${owner.surname}`,
+        })
+      : null;
+    return json({ returnUndone: Boolean(undone) });
   }
 
   if (intent === "friendRequest") {
@@ -1662,6 +1684,31 @@ function CurrentLoan({ data }: { data: BookData }) {
   return late ? <>has it now</> : <>due back {monthDay(due)}</>;
 }
 
+// For the owner, on the latest return: it was marked returned (by them or
+// the borrower) but never actually came back, so the loan carries on
+function NotBack({ title, name }: { title: string; name: string }) {
+  const undo = useFetcher();
+  return (
+    <undo.Form
+      method="post"
+      className="inline"
+      onSubmit={(event) => {
+        if (!confirm(`${title} isn't back yet? It goes back on ${name}'s loans, due when it was.`))
+          event.preventDefault();
+      }}
+    >
+      <input type="hidden" name="intent" value="undoReturn" />
+      <button
+        type="submit"
+        disabled={undo.state !== "idle"}
+        className="underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200 hover:decoration-stone-500 disabled:opacity-60"
+      >
+        Not back yet?
+      </button>
+    </undo.Form>
+  );
+}
+
 // Everyone who has had this copy, newest first, down to the day it
 // joined the owner's shelf
 function LendingHistory({ data }: { data: BookData }) {
@@ -1754,7 +1801,18 @@ function LendingHistory({ data }: { data: BookData }) {
                 </p>
                 <p className="text-sm text-stone-500 dark:text-stone-400">
                   {entry.returnedAt ? (
-                    `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
+                    <>
+                      {monthDay(entry.borrowedAt)} – {monthDay(entry.returnedAt)}
+                      {entry.id === data.undoableReturnId ? (
+                        <>
+                          {" · "}
+                          <NotBack
+                            title={book.title}
+                            name={entry.borrower.firstname}
+                          />
+                        </>
+                      ) : null}
+                    </>
                   ) : (
                     <>
                       Since {monthDay(entry.borrowedAt)} ·{" "}

@@ -374,7 +374,7 @@ export async function extendLoan(bookId: Book["id"], weeks: number) {
 export async function returnBook(bookId: Book["id"]) {
   const current = await prisma.book.findUnique({
     where: { id: bookId },
-    select: { borrowerId: true },
+    select: { borrowerId: true, dueDate: true },
   });
   if (current?.borrowerId) await clearDueReminders(bookId, current.borrowerId);
 
@@ -387,7 +387,7 @@ export async function returnBook(bookId: Book["id"]) {
   if (latestLending) {
     await prisma.lendingHistory.update({
       where: { id: latestLending.id },
-      data: { returnedAt: new Date() },
+      data: { returnedAt: new Date(), dueDate: current?.dueDate ?? null },
     });
   }
 
@@ -395,6 +395,113 @@ export async function returnBook(bookId: Book["id"]) {
     where: { id: bookId },
     data: { borrowerId: null, borrowedAt: null, dueDate: null },
   });
+}
+
+// How long an owner has to say a returned book never actually came back
+export const UNDO_RETURN_DAYS = 14;
+
+// The latest return of a book, if the owner can still take it back: it's
+// recent, and nobody has borrowed the book since
+export async function undoableReturn(bookId: Book["id"], now = new Date()) {
+  const book = await prisma.book.findUnique({
+    where: { id: bookId },
+    select: { borrowerId: true },
+  });
+  if (!book || book.borrowerId) return null;
+  const last = await prisma.lendingHistory.findFirst({
+    where: { bookId },
+    orderBy: { borrowedAt: "desc" },
+  });
+  if (!last?.returnedAt) return null;
+  if (now.getTime() - last.returnedAt.getTime() > UNDO_RETURN_DAYS * DAY) {
+    return null;
+  }
+  return last;
+}
+
+// The owner says a book marked returned never came back: the loan picks up
+// where it left off, due when it was due, and the borrower hears so. If the
+// book went to whoever was first in line, and they haven't been answered
+// yet, they're back at the front of the line.
+export async function undoReturn(
+  bookId: Book["id"],
+  owner: { id: User["id"]; name: string },
+) {
+  const last = await undoableReturn(bookId);
+  if (!last?.returnedAt) return null;
+  const since = last.returnedAt;
+
+  const handedOn = await prisma.notification.findMany({
+    where: { type: "HOLD_READY", bookId, createdAt: { gte: since } },
+    select: { id: true, receiverId: true },
+  });
+  for (const notice of handedOn) {
+    const request = await prisma.notification.findFirst({
+      where: {
+        type: "BOOK_REQUEST",
+        bookId,
+        senderId: notice.receiverId,
+        actionTaken: null,
+        createdAt: { gte: since },
+      },
+      select: { id: true },
+    });
+    if (!request) continue;
+    const first = await prisma.hold.findFirst({
+      where: { bookId },
+      orderBy: { createdAt: "asc" },
+      select: { createdAt: true },
+    });
+    await prisma.$transaction([
+      prisma.notification.deleteMany({
+        where: { id: { in: [request.id, notice.id] } },
+      }),
+      prisma.hold.upsert({
+        where: { bookId_userId: { bookId, userId: notice.receiverId } },
+        create: {
+          bookId,
+          userId: notice.receiverId,
+          createdAt: new Date((first?.createdAt ?? new Date()).getTime() - 1000),
+        },
+        update: {},
+      }),
+    ]);
+  }
+
+  const book = await prisma.book.update({
+    where: { id: bookId },
+    data: {
+      borrowerId: last.borrowerId,
+      borrowedAt: last.borrowedAt,
+      // Returned before due dates were kept: a usual loan from when it went
+      dueDate:
+        last.dueDate ??
+        new Date(last.borrowedAt.getTime() + DEFAULT_LOAN_WEEKS * 7 * DAY),
+    },
+    select: { id: true, title: true },
+  });
+  await prisma.lendingHistory.update({
+    where: { id: last.id },
+    data: { returnedAt: null, dueDate: null },
+  });
+  // The "returned" notice has had its answer
+  await prisma.notification.updateMany({
+    where: { type: "BOOK_RETURNED", bookId, createdAt: { gte: since } },
+    data: { read: true, actionTaken: "undone" },
+  });
+  if (last.borrowerId !== owner.id) {
+    await prisma.notification.create({
+      data: {
+        type: "RETURN_UNDONE",
+        senderId: owner.id,
+        receiverId: last.borrowerId,
+        senderName: owner.name,
+        bookId: book.id,
+        bookTitle: book.title,
+      },
+    });
+  }
+  return { borrowerId: last.borrowerId };
 }
 
 export function updateBookMetadata(

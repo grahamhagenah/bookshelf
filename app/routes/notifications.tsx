@@ -20,6 +20,8 @@ import {
   LOAN_WEEKS,
   lendBook,
   loanWeeks,
+  undoableReturn,
+  undoReturn,
 } from "~/models/book.server";
 import { answerFriendRequest } from "~/models/friend.server";
 import { shelfIds } from "~/models/household.server";
@@ -59,10 +61,24 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       surname,
       profileEmoji,
     })) ?? [];
+  // Returns the owner can still say never came back: the latest one for
+  // the book, and nobody has borrowed it since
+  const undoableReturns: string[] = [];
+  for (const notification of user?.notificationsReceived ?? []) {
+    if (notification.type !== "BOOK_RETURNED" || !notification.bookId) continue;
+    const last = await undoableReturn(notification.bookId);
+    if (
+      last?.returnedAt &&
+      notification.createdAt.getTime() >= last.returnedAt.getTime() - 60_000
+    ) {
+      undoableReturns.push(notification.id);
+    }
+  }
   return json({
     user,
     history,
     pendingBookRequests,
+    undoableReturns,
     friendIds: friends.map((friend) => friend.id),
     friends,
     loanChoices: { weeks: LOAN_WEEKS, defaultWeeks: DEFAULT_LOAN_WEEKS },
@@ -156,6 +172,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
       await markNotificationAsRead(notification.id, "declined");
       await tell(false);
+    }
+    return null;
+  }
+
+  // The book was marked returned, but it never actually came back
+  if (
+    type === "BOOK_RETURNED" &&
+    formData.get("returned") === "undo" &&
+    notification.bookId
+  ) {
+    const book = await prisma.book.findUnique({
+      where: { id: notification.bookId },
+      select: { userId: true },
+    });
+    if (!book || !(await shelfIds(userId)).includes(book.userId)) return null;
+    const owner = await getUserById(userId);
+    if (owner) {
+      await undoReturn(notification.bookId, {
+        id: userId,
+        name: `${owner.firstname} ${owner.surname}`,
+      });
     }
     return null;
   }
@@ -340,10 +377,13 @@ function ActivityItem({
   notification,
   friendIds,
   loanChoices,
+  canUndoReturn = false,
 }: {
   notification: ActivityNotification;
   friendIds: string[];
   loanChoices: LoanChoices;
+  // A return the owner can still say never happened
+  canUndoReturn?: boolean;
 }) {
   const type = notification.type || "FRIEND_REQUEST";
   const name = (
@@ -531,6 +571,38 @@ function ActivityItem({
           {name} returned {book}
         </>
       );
+      // A tap too soon, or it never turned up: the loan carries on
+      actions = canUndoReturn ? (
+        <button
+          className={secondaryButton}
+          type="submit"
+          name="returned"
+          value="undo"
+          onClick={(event) => {
+            if (
+              !confirm(
+                `${notification.bookTitle ?? "The book"} isn't back yet? It goes back on ${notification.senderName.split(" ")[0]}'s loans, due when it was.`,
+              )
+            )
+              event.preventDefault();
+          }}
+        >
+          Not back yet
+        </button>
+      ) : null;
+      break;
+    case "RETURN_UNDONE":
+      text = (
+        <>
+          {name} says {book} hasn&apos;t come back yet, so it&apos;s still on
+          loan to you
+        </>
+      );
+      actions = (
+        <a href={`/books/${notification.bookId}`} className={secondaryButton}>
+          View book
+        </a>
+      );
       break;
     case "ANNOUNCEMENT":
       text = (
@@ -662,9 +734,19 @@ const getHistoryText = (
         </>
       );
     case "BOOK_RETURNED":
-      return (
+      return notification.actionTaken === "undone" ? (
+        <>
+          {name} marked {book} returned, but it hadn&apos;t come back
+        </>
+      ) : (
         <>
           {name} returned {book}
+        </>
+      );
+    case "RETURN_UNDONE":
+      return (
+        <>
+          {name} said {book} hadn&apos;t come back
         </>
       );
     case "READER_NOTE":
@@ -770,6 +852,7 @@ export default function Activity() {
                   notification={notification}
                   friendIds={data.friendIds}
                   loanChoices={data.loanChoices}
+                  canUndoReturn={data.undoableReturns.includes(notification.id)}
                 />
               </li>
             ))}
@@ -801,6 +884,7 @@ export default function Activity() {
                   notification={notification}
                   friendIds={data.friendIds}
                   loanChoices={data.loanChoices}
+                  canUndoReturn={data.undoableReturns.includes(notification.id)}
                 />
               </li>
             ))}

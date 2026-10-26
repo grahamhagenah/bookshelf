@@ -41,6 +41,13 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M4 9h10.5a5.5 5.5 0 010 11H11" />
     </>
   ),
+  // The same arrow, turned back around: it's still out
+  RETURN_UNDONE: (
+    <>
+      <path d="M15 14l5-5-5-5" />
+      <path d="M20 9H9.5a5.5 5.5 0 000 11H13" />
+    </>
+  ),
   // Clock with a plus
   LOAN_EXTENDED: (
     <>

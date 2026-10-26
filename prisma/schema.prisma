@@ -179,6 +179,9 @@ model LendingHistory {
 
   borrowedAt DateTime
   returnedAt DateTime?
+  // When it was due at the time it came back, so an owner who says it
+  // never did can put the loan back as it was
+  dueDate    DateTime?
 
   createdAt DateTime @default(now())
 
