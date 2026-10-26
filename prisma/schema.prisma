@@ -90,9 +90,10 @@ model User {
   notificationsSent     Notification[] @relation("sender")
   notificationsReceived Notification[] @relation("receiver")
 
-  followedBy User[] @relation("UserFollows")
-  following  User[] @relation("UserFollows")
+  followedBy User[]        @relation("UserFollows")
+  following  User[]        @relation("UserFollows")
   pins       Pin[]
+  groups     GroupMember[]
 
   @@index([demoGroup], name: "demo_group_index")
 }
@@ -197,8 +198,10 @@ model Notification {
   bookId    String?
   bookTitle String?
   // What an announcement from Stacks says, or the note a borrower sent
-  // with their request
+  // with their request; for someone joining a group, the group's name
   message   String?
+  // The group someone joined, for a GROUP_JOINED notice
+  groupId   String?
 
   read        Boolean  @default(false)
   actionTaken String?
@@ -331,4 +334,29 @@ model WorkNote {
 
   @@unique([userId, workKey])
   @@index([workKey])
+}
+
+// People who lend to each other as a bunch: a book club, an office, a
+// family. Joining makes you friends with everyone in it, and with whoever
+// joins after, so every shelf in the group is open to you at once.
+model Group {
+  id          String        @id @default(cuid())
+  name        String
+  // The link that lets anyone who has it join
+  inviteToken String        @unique
+  members     GroupMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GroupMember {
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId  String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  joinedAt DateTime @default(now())
+
+  @@id([groupId, userId])
+  @@index([userId])
 }

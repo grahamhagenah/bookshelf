@@ -15,6 +15,7 @@ import { useEffect, useRef } from "react";
 
 import { notifyAdminsOfSignup } from "~/models/admin.server";
 import { getInviter } from "~/models/friend.server";
+import { getGroupByToken } from "~/models/group.server";
 import { getHouseholdByInvite } from "~/models/household.server";
 import { sendLoanInvite } from "~/models/loan-invite.server";
 import {
@@ -46,10 +47,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Or from someone's personal invite link: you'll be friends once you're in
   const friend = url.searchParams.get("friend");
   const friendInviter = friend ? await getInviter(friend) : null;
+  // Or from a group's link: you'll be in it once you're in
+  const groupToken = url.searchParams.get("group");
+  const group = groupToken ? await getGroupByToken(groupToken) : null;
   return json({
     inviterName: inviter ? `${inviter.firstname} ${inviter.surname}` : null,
     shelfNames: shelf ? shelf.members.map((m) => m.firstname) : null,
     friendName: friendInviter ? friendInviter.firstname : null,
+    groupName: group ? group.name : null,
     renderedAt: Date.now(),
   });
 };
@@ -223,7 +228,7 @@ export default function Join() {
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? undefined;
   const invite = searchParams.get("invite") ?? undefined;
-  const { inviterName, shelfNames, friendName, renderedAt } =
+  const { inviterName, shelfNames, friendName, groupName, renderedAt } =
     useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const emailRef = useRef<HTMLInputElement>(null);
@@ -258,6 +263,15 @@ export default function Join() {
               {friendName}
             </strong>{" "}
             straight away, free to borrow from their shelf.
+          </p>
+        ) : null}
+        {groupName ? (
+          <p className="mb-8 text-stone-600 dark:text-stone-300">
+            Create an account to join{" "}
+            <strong className="font-semibold text-stone-900 dark:text-stone-100">
+              {groupName}
+            </strong>
+            . You&apos;ll be friends with everyone in it straight away.
           </p>
         ) : null}
         {inviterName ? (

@@ -4,12 +4,13 @@ import type {
   MetaFunction,
   SerializeFrom,
 } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useFetcher, Link } from "@remix-run/react";
 import { useEffect, useState } from "react";
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
+import Faces from "~/components/faces";
 import {
   BookIcon,
   BookmarkIcon,
@@ -29,6 +30,7 @@ import {
   getIncomingFriendRequests,
   removeFriend,
 } from "~/models/friend.server";
+import { cleanGroupName, createGroup, getMyGroups, GROUP_NAME_MAX } from "~/models/group.server";
 import {
   getUserById,
   createNotification,
@@ -51,15 +53,17 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [friends, incoming, suggestedFriends, pendingRequests, invite] = await Promise.all([
+  const [friends, incoming, suggestedFriends, pendingRequests, invite, groups] = await Promise.all([
     getFriendCards(userId),
     getIncomingFriendRequests(userId),
     getSuggestedFriends(userId, 5),
     getPendingFriendRequests(userId),
     getFriendInvite(userId),
+    getMyGroups(userId),
   ]);
   return json({
     friends,
+    groups,
     incoming,
     suggestedFriends,
     pendingRequests,
@@ -68,7 +72,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 interface ActionData {
-  errors: { email?: string } | null;
+  errors: { email?: string; group?: string } | null;
   success: boolean;
   friendId?: string;
   // From a list of email addresses: who's on Stacks (and what happened),
@@ -82,6 +86,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
   const friendId = formData.get("friendId");
+
+  // A new group, and straight to it to invite people
+  if (intent === "createGroup") {
+    const name = cleanGroupName(formData.get("name"));
+    if (!name) {
+      return json<ActionData>({ errors: { group: "Give the group a name" }, success: false }, { status: 400 });
+    }
+    const group = await createGroup(userId, name);
+    return redirect(`/groups/${group.id}`);
+  }
 
   if (intent === "remove" && typeof friendId === "string") {
     await removeFriend(userId, friendId);
@@ -280,6 +294,8 @@ export default function Friends() {
         ) : null}
       </section>
 
+      <Groups groups={data.groups} />
+
       <section id="find">
         <h2 className="text-lg font-semibold">Find friends</h2>
 
@@ -368,6 +384,77 @@ export default function Friends() {
         />
       </section>
     </Layout>
+  );
+}
+
+// Groups you're in, and a way to start one: a book club, an office, a
+// family, where everyone can borrow from everyone
+function Groups({ groups }: { groups: SerializeFrom<typeof loader>["groups"] }) {
+  const fetcher = useFetcher<ActionData>();
+  const [starting, setStarting] = useState(false);
+  const creating = fetcher.state !== "idle";
+  return (
+    <section id="groups" className="scroll-mt-24">
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 className="text-lg font-semibold">Groups</h2>
+        {groups.length > 0 && !starting ? (
+          <button
+            type="button"
+            onClick={() => setStarting(true)}
+            className="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
+          >
+            + Start a group
+          </button>
+        ) : null}
+      </div>
+      {groups.length > 0 ? (
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+          {groups.map((group) => (
+            <li key={group.id}>
+              <Link
+                to={`/groups/${group.id}`}
+                className="flex items-center gap-4 rounded-xl border border-stone-200 dark:border-stone-800 p-4 hover:border-stone-400 dark:hover:border-stone-600 transition-colors"
+              >
+                <Faces people={group.faces} max={3} />
+                <span className="min-w-0">
+                  <span className="block truncate font-medium text-stone-900 dark:text-stone-100">
+                    {group.name}
+                  </span>
+                  <span className="block text-sm text-stone-500 dark:text-stone-400">
+                    {group.memberCount} {group.memberCount === 1 ? "person" : "people"}
+                  </span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-1 max-w-xl text-stone-500 dark:text-stone-400">
+          Start one for a book club, an office or a family. Everyone who joins from its link
+          becomes friends with everyone else, so all their shelves open up at once.
+        </p>
+      )}
+      {groups.length === 0 || starting ? (
+        <fetcher.Form method="post" action="/friends" className="mt-4 flex max-w-xl gap-2">
+          <input type="hidden" name="intent" value="createGroup" />
+          <input
+            name="name"
+            required
+            maxLength={GROUP_NAME_MAX}
+            autoComplete="off"
+            placeholder="Thursday book club"
+            aria-label="Group name"
+            className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+          />
+          <button type="submit" disabled={creating} className={`flex-shrink-0 ${primaryButton} px-4 py-2`}>
+            {creating ? "Starting…" : "Start a group"}
+          </button>
+        </fetcher.Form>
+      ) : null}
+      {fetcher.data?.errors?.group ? (
+        <p className="mt-2 text-sm text-rose-700 dark:text-rose-400">{fetcher.data.errors.group}</p>
+      ) : null}
+    </section>
   );
 }
 

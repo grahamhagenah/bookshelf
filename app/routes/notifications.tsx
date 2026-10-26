@@ -228,8 +228,9 @@ interface ActivityNotification {
   senderName: string;
   bookId?: string | null;
   bookTitle?: string | null;
-  // What an announcement from Stacks says
+  // What an announcement from Stacks says; a group's name
   message?: string | null;
+  groupId?: string | null;
   createdAt: string;
   sender?: { profileEmoji: string | null } | null;
 }
@@ -482,6 +483,19 @@ function ActivityItem({
         </a>
       );
       break;
+    case "GROUP_JOINED":
+      // Someone joined a group you're in
+      text = (
+        <>
+          {name} joined {notification.message}. You&apos;re friends now.
+        </>
+      );
+      actions = notification.groupId ? (
+        <a href={`/groups/${notification.groupId}`} className={secondaryButton}>
+          See the group
+        </a>
+      ) : null;
+      break;
     case "BOOK_APPROVED":
       text = (
         <>
@@ -617,6 +631,12 @@ const getHistoryText = (
       );
     case "FRIEND_JOINED":
       return <>{name} joined from your invite</>;
+    case "GROUP_JOINED":
+      return (
+        <>
+          {name} joined {notification.message}
+        </>
+      );
     case "BOOK_APPROVED":
       return (
         <>
