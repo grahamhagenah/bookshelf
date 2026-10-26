@@ -137,7 +137,7 @@ export default function Friends() {
                   {data.incoming.length}
                 </span>
               </h2>
-              <ul className="space-y-4">
+              <ul className="space-y-3">
                 {data.incoming.map((request) => (
                   <IncomingRequest key={request.id} request={request} compact />
                 ))}
@@ -449,29 +449,46 @@ function IncomingRequest({
   const fetcher = useFetcher<ActionData>();
   const answering = fetcher.formData?.get("intent");
   if (compact) {
+    // A small card: who, then the two answers side by side across it
+    const answer =
+      "inline-flex h-8 flex-1 items-center justify-center rounded-md text-sm transition-colors disabled:opacity-50";
     return (
-      <li className="flex items-start gap-3">
-        <Avatar
-          firstname={request.sender.firstname}
-          surname={request.sender.surname}
-          icon={request.sender.profileEmoji}
-          size="list"
-        />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
-            {request.sender.firstname} {request.sender.surname}
-          </p>
-          <p className="text-xs text-stone-500 dark:text-stone-400">Asked {ago(request.createdAt)}</p>
-          <fetcher.Form method="post" className="mt-2 flex gap-2">
-            <input type="hidden" name="notificationId" value={request.id} />
-            <button type="submit" name="intent" value="accept" disabled={Boolean(answering)} className={primaryButton}>
-              {answering === "accept" ? "Adding…" : "Accept"}
-            </button>
-            <button type="submit" name="intent" value="decline" disabled={Boolean(answering)} className={quietButton}>
-              Not now
-            </button>
-          </fetcher.Form>
+      <li className="rounded-xl border border-stone-200 dark:border-stone-800 p-3">
+        <div className="flex items-center gap-3">
+          <Avatar
+            firstname={request.sender.firstname}
+            surname={request.sender.surname}
+            icon={request.sender.profileEmoji}
+            size="list"
+          />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
+              {request.sender.firstname} {request.sender.surname}
+            </p>
+            <p className="text-xs text-stone-500 dark:text-stone-400">Asked {ago(request.createdAt)}</p>
+          </div>
         </div>
+        <fetcher.Form method="post" className="mt-3 flex gap-2">
+          <input type="hidden" name="notificationId" value={request.id} />
+          <button
+            type="submit"
+            name="intent"
+            value="accept"
+            disabled={Boolean(answering)}
+            className={`${answer} bg-forest-600 font-medium text-white hover:bg-forest-700`}
+          >
+            {answering === "accept" ? "Adding…" : "Accept"}
+          </button>
+          <button
+            type="submit"
+            name="intent"
+            value="decline"
+            disabled={Boolean(answering)}
+            className={`${answer} border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500`}
+          >
+            Not now
+          </button>
+        </fetcher.Form>
       </li>
     );
   }
