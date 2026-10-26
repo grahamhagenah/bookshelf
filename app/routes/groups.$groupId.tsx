@@ -1,17 +1,22 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form, Link, useLoaderData, useNavigation, useSearchParams } from "@remix-run/react";
-import { useState } from "react";
+import { Form, Link, useLoaderData, useNavigation, useSearchParams, useSubmit } from "@remix-run/react";
+import { useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
 import FriendActivityItem from "~/components/friend-activity";
+import { SearchIcon } from "~/components/icons";
 import InviteMessage from "~/components/invite-message";
 import Layout from "~/components / Layout/Layout";
+import { isNotLending } from "~/lending";
 import { getFriendActivity } from "~/models/activity.server";
 import {
   GROUP_MAX_MEMBERS,
+  GROUP_PAGE,
+  getGroupHighlights,
+  searchGroupBooks,
   GROUP_NAME_MAX,
   cleanGroupName,
   getGroup,
@@ -41,13 +46,34 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.groupId, "groupId not found");
   const group = await getGroup(params.groupId, userId);
   if (!group) throw new Response("Not Found", { status: 404 });
-  const { inviteToken, ...rest } = group;
-  const friendIds = rest.members.filter((member) => member.isFriend).map((member) => member.id);
+  const { inviteToken, openIds, ...rest } = group;
+
+  // Searching or filtering shows matching books; otherwise the page opens
+  // on a couple of short rows
+  const url = new URL(request.url);
+  const q = (url.searchParams.get("q") ?? "").slice(0, 100);
+  const whoParam = url.searchParams.get("who");
+  const who = whoParam && openIds.includes(whoParam) ? whoParam : null;
+  const available = url.searchParams.get("available") === "1";
+  const browsing = url.searchParams.get("all") === "1" || Boolean(q.trim() || who || available);
+  const asked = Number(url.searchParams.get("shown"));
+  const shown = Math.min(
+    GROUP_MOST,
+    Math.max(GROUP_PAGE, Number.isFinite(asked) ? Math.floor(asked) : GROUP_PAGE),
+  );
+  const [activity, highlights, results] = await Promise.all([
+    // What the people in it have been up to, as the feed shows it
+    getFriendActivity(userId, { among: openIds, limit: 8 }),
+    browsing ? null : getGroupHighlights(userId, openIds),
+    browsing ? searchGroupBooks(openIds, { q, who, available, shown }) : null,
+  ]);
   return json({
     group: rest,
-    // What the people in it have been up to, as the feed shows it
-    activity: await getFriendActivity(userId, { among: friendIds, limit: 8 }),
-    friendIds,
+    search: { q, who, available, shown, browsing },
+    highlights,
+    results,
+    activity,
+    friendIds: openIds,
     inviteUrl: `${publicOrigin(request)}/g/${inviteToken}`,
     maxMembers: GROUP_MAX_MEMBERS,
     nameMax: GROUP_NAME_MAX,
@@ -79,12 +105,17 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 const quietButton =
   "rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors disabled:opacity-50";
 const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
+const people = (n: number) => `${n} ${n === 1 ? "person" : "people"}`;
+// The most a search shows, however many times Show more is pressed
+const GROUP_MOST = 1000;
 
 export default function GroupPage() {
-  const { group, activity, friendIds, inviteUrl, maxMembers, nameMax } = useLoaderData<typeof loader>();
+  const { group, search, highlights, results, activity, friendIds, inviteUrl, maxMembers, nameMax } =
+    useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const justJoined = searchParams.get("joined") === "1";
   const others = group.members.filter((member) => !member.isMe);
+  const lenders = others.filter((member) => member.isFriend);
   const [renaming, setRenaming] = useState(false);
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
@@ -174,7 +205,10 @@ export default function GroupPage() {
             <div>
               <p className="text-2xl font-semibold text-stone-900 dark:text-stone-100">{group.name}</p>
               <p className="mt-1 text-stone-500 dark:text-stone-400">
-                {plural(group.bookCount, "book")} on {group.members.length === 1 ? "your shelf" : "everyone's shelves"}
+                {lenders.length > 0
+                  ? `${plural(group.bookCount, "book")} to borrow from ${people(lenders.length)}. `
+                  : "Once people join, their books show up here. "}
+                Your {plural(group.myBookCount, "book")} {group.myBookCount === 1 ? "is" : "are"} in it too.
               </p>
             </div>
           )}
@@ -185,40 +219,16 @@ export default function GroupPage() {
           ) : null}
         </div>
 
-        {group.books.length > 0 ? (
-          <>
-            <ul className="mt-6 grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
-              {group.books.map((book) => (
-                <li key={book.id}>
-                  <Link to={`/books/${book.id}`} title={book.title} className="block hover:opacity-90 transition-opacity">
-                    <BookCover
-                      cover={book.cover}
-                      title={book.title}
-                      author={book.author}
-                      className="w-full aspect-[2/3]"
-                    />
-                    <span className="mt-1.5 block truncate text-xs text-stone-700 dark:text-stone-300">
-                      {book.title}
-                    </span>
-                    <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
-                      {book.user.firstname}
-                      {book.borrowerId ? " · lent out" : ""}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            {group.bookCount > group.books.length ? (
-              <p className="mt-4 text-sm text-stone-500 dark:text-stone-400">
-                The newest {group.books.length}. Open someone&apos;s shelf to see all of theirs.
-              </p>
-            ) : null}
-          </>
-        ) : (
-          <p className="mt-6 text-stone-500 dark:text-stone-400">
-            No books here yet. Once people join and add theirs, they&apos;ll show up here.
-          </p>
-        )}
+        {lenders.length > 0 ? (
+          <GroupShelf
+            groupName={group.name}
+            lenders={lenders}
+            bookCount={group.bookCount}
+            search={search}
+            highlights={highlights}
+            results={results}
+          />
+        ) : null}
       </section>
 
       {activity.length > 0 ? (
@@ -256,6 +266,209 @@ export default function GroupPage() {
         </Form>
       </section>
     </Layout>
+  );
+}
+
+interface ShelfBook {
+  id: string;
+  title: string;
+  author: string;
+  cover: string;
+  borrowerId: string | null;
+  notLendingUntil: string | null;
+  user: { id: string; firstname: string };
+}
+
+// Covers with whose they are and whether they're in
+function ShelfGrid({ books }: { books: ShelfBook[] }) {
+  return (
+    <ul className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
+      {books.map((book) => (
+        <li key={book.id}>
+          <Link to={`/books/${book.id}`} title={book.title} className="block hover:opacity-90 transition-opacity">
+            <BookCover cover={book.cover} title={book.title} author={book.author} className="w-full aspect-[2/3]" />
+            <span className="mt-1.5 block truncate text-xs text-stone-700 dark:text-stone-300">{book.title}</span>
+            <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
+              {book.user.firstname}
+              {book.borrowerId ? " · Lent out" : isNotLending(book.notLendingUntil) ? " · Not lending" : ""}
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const chip = (on: boolean) =>
+  `inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-sm transition-colors ${
+    on
+      ? "border-stone-900 bg-stone-900 text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
+      : "border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500"
+  }`;
+
+// Everyone else's books: a search and a couple of filters, and until you
+// use them, what's on your want-to-read list and what's new. Your own
+// books stay out; you don't come here for them.
+function GroupShelf({
+  groupName,
+  lenders,
+  bookCount,
+  search,
+  highlights,
+  results,
+}: {
+  groupName: string;
+  lenders: { id: string; firstname: string; surname: string; profileEmoji: string | null }[];
+  bookCount: number;
+  search: { q: string; who: string | null; available: boolean; shown: number; browsing: boolean };
+  highlights: { wanted: ShelfBook[]; newest: ShelfBook[] } | null;
+  results: { books: ShelfBook[]; total: number } | null;
+}) {
+  const [searchParams] = useSearchParams();
+  const submit = useSubmit();
+  const formRef = useRef<HTMLFormElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const searching = useNavigation().state === "loading";
+  // The box keeps what's typed; Clear, or going back, puts the address's in
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [text, setText] = useState(search.q);
+  useEffect(() => {
+    if (document.activeElement !== inputRef.current) setText(search.q);
+  }, [search.q]);
+
+  // The page's address with some filters changed; any Show more starts over
+  const hrefWith = (changes: Record<string, string | null>) => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("shown");
+    next.delete("joined");
+    for (const [key, value] of Object.entries(changes)) {
+      if (value === null) next.delete(key);
+      else next.set(key, value);
+    }
+    const query = next.toString();
+    return query ? `?${query}` : "?";
+  };
+  const heading = "text-sm font-medium text-stone-500 dark:text-stone-400";
+
+  return (
+    <div className="mt-6">
+      <Form
+        ref={formRef}
+        method="get"
+        role="search"
+        className="relative max-w-xl"
+        onChange={() => {
+          // Search as they type, once typing pauses
+          clearTimeout(timer.current);
+          timer.current = setTimeout(() => submit(formRef.current, { replace: true, preventScrollReset: true }), 300);
+        }}
+      >
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">
+          <SearchIcon size={16} />
+        </span>
+        <input
+          type="search"
+          name="q"
+          ref={inputRef}
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          placeholder={`Search ${groupName}'s shelves`}
+          aria-label={`Search ${groupName}'s shelves by title or author`}
+          autoComplete="off"
+          className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 py-2 pl-9 pr-3 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors"
+        />
+        {search.who ? <input type="hidden" name="who" value={search.who} /> : null}
+        {search.available ? <input type="hidden" name="available" value="1" /> : null}
+      </Form>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Link
+          to={hrefWith({ available: search.available ? null : "1" })}
+          preventScrollReset
+          replace
+          aria-pressed={search.available}
+          className={chip(search.available)}
+        >
+          Available now
+        </Link>
+        {lenders.length > 1 ? (
+          <>
+            <span className="mx-1 h-5 w-px bg-stone-200 dark:bg-stone-700" aria-hidden="true" />
+            {lenders.map((member) => {
+              const on = search.who === member.id;
+              return (
+                <Link
+                  key={member.id}
+                  to={hrefWith({ who: on ? null : member.id })}
+                  preventScrollReset
+                  replace
+                  aria-pressed={on}
+                  className={`${chip(on)} pl-1`}
+                >
+                  <Avatar firstname={member.firstname} surname={member.surname} icon={member.profileEmoji} size="xs" />
+                  {member.firstname}
+                </Link>
+              );
+            })}
+          </>
+        ) : null}
+      </div>
+
+      {results ? (
+        <div className={`mt-6 transition-opacity ${searching ? "opacity-60" : ""}`}>
+          <div className="mb-4 flex items-baseline justify-between gap-3">
+            <p className={heading} aria-live="polite">
+              {results.total === 0
+                ? "No books match"
+                : results.total === bookCount
+                  ? `All ${plural(bookCount, "book")}`
+                  : plural(results.total, "book")}
+            </p>
+            <Link to="?" preventScrollReset replace className="text-sm text-stone-500 dark:text-stone-400 underline-offset-4 hover:underline">
+              Clear
+            </Link>
+          </div>
+          {results.books.length > 0 ? <ShelfGrid books={results.books} /> : null}
+          {results.total > results.books.length ? (
+            <div className="mt-6 text-center">
+              <Link
+                to={hrefWith({ shown: String(search.shown + 48) })}
+                preventScrollReset
+                replace
+                className={quietButton}
+              >
+                Show more
+              </Link>
+            </div>
+          ) : null}
+        </div>
+      ) : highlights ? (
+        <div className="mt-6 space-y-8">
+          {highlights.wanted.length > 0 ? (
+            <div>
+              <h3 className={`mb-3 ${heading}`}>From your want-to-read list</h3>
+              <ShelfGrid books={highlights.wanted} />
+            </div>
+          ) : null}
+          {highlights.newest.length > 0 ? (
+            <div>
+              <h3 className={`mb-3 ${heading}`}>New in the group</h3>
+              <ShelfGrid books={highlights.newest} />
+            </div>
+          ) : null}
+          {bookCount > highlights.newest.length ? (
+            <Link
+              to={hrefWith({ all: "1" })}
+              preventScrollReset
+              className="inline-block text-sm font-medium text-stone-800 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white"
+            >
+              Browse all {plural(bookCount, "book")} →
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

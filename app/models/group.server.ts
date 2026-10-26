@@ -1,6 +1,8 @@
 import type { Group, User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
+import { lendingNow } from "~/lending";
+import { sameWork } from "~/works";
 
 import { canInteract } from "./demo.server";
 import { createFriendship } from "./user.server";
@@ -58,10 +60,10 @@ export async function getMyGroups(userId: User["id"]) {
   );
 }
 
-// Everything the group's page shows, for someone in it: who's in it and
-// the books on their shelves, newest first. Shelves of anyone you've since
-// unfriended stay closed, as they would anywhere else.
-export async function getGroup(groupId: Group["id"], userId: User["id"], { shelfSize = 60 } = {}) {
+// Everything the group's page shows about the people in it, for someone
+// in it. Whose books you can see is your friends among them: anyone
+// you've since unfriended keeps their shelf closed, as anywhere else.
+export async function getGroup(groupId: Group["id"], userId: User["id"]) {
   if (!(await isMember(groupId, userId))) return null;
   const [group, me] = await Promise.all([
     prisma.group.findUnique({
@@ -86,40 +88,106 @@ export async function getGroup(groupId: Group["id"], userId: User["id"], { shelf
   ]);
   if (!group) return null;
   const friendIds = new Set(me.following.map((friend) => friend.id));
-  const open = group.members
-    .map((member) => member.user.id)
-    .filter((id) => id === userId || friendIds.has(id));
-  const where = { userId: { in: open } };
-  const [books, bookCount] = await Promise.all([
-    prisma.book.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: shelfSize,
-      select: {
-        id: true,
-        title: true,
-        author: true,
-        cover: true,
-        borrowerId: true,
-        user: { select: { id: true, firstname: true } },
-      },
-    }),
-    prisma.book.count({ where }),
-  ]);
+  const members = group.members.map(({ joinedAt, user: { _count, ...user } }) => ({
+    ...user,
+    joinedAt,
+    bookCount: _count.books,
+    isMe: user.id === userId,
+    isFriend: friendIds.has(user.id),
+  }));
+  // Your own books are in the group too, but you don't come here for them
+  const openIds = members.filter((member) => member.isFriend).map((member) => member.id);
   return {
     id: group.id,
     name: group.name,
     inviteToken: group.inviteToken,
-    members: group.members.map(({ joinedAt, user: { _count, ...user } }) => ({
-      ...user,
-      joinedAt,
-      bookCount: _count.books,
-      isMe: user.id === userId,
-      isFriend: friendIds.has(user.id),
-    })),
-    books,
-    bookCount,
+    members,
+    openIds,
+    myBookCount: members.find((member) => member.isMe)?.bookCount ?? 0,
+    bookCount: await prisma.book.count({ where: { userId: { in: openIds } } }),
   };
+}
+
+const shelfBook = {
+  id: true,
+  title: true,
+  author: true,
+  cover: true,
+  borrowerId: true,
+  notLendingUntil: true,
+  user: { select: { id: true, firstname: true } },
+} as const;
+
+export const GROUP_PAGE = 48;
+export const GROUP_ROW = 12;
+
+export interface GroupSearch {
+  q?: string;
+  // One person's books
+  who?: string | null;
+  // Only what could be borrowed now
+  available?: boolean;
+  shown?: number;
+}
+
+// Searching the group's shelves, newest first. Done here rather than in
+// the browser: fifty people's shelves can run to thousands of books.
+export async function searchGroupBooks(
+  openIds: string[],
+  { q = "", who = null, available = false, shown = GROUP_PAGE }: GroupSearch,
+) {
+  const ids = who ? openIds.filter((id) => id === who) : openIds;
+  const term = q.trim();
+  // Each condition on its own, since the search and "not lending" both
+  // need an OR of their own
+  const where = {
+    userId: { in: ids },
+    AND: [
+      ...(term ? [{ OR: [{ title: { contains: term } }, { author: { contains: term } }] }] : []),
+      ...(available ? [{ borrowerId: null }, lendingNow()] : []),
+    ],
+  };
+  const [books, total] = await Promise.all([
+    prisma.book.findMany({ where, select: shelfBook, orderBy: { createdAt: "desc" }, take: shown }),
+    prisma.book.count({ where }),
+  ]);
+  return { books, total };
+}
+
+// The top of the group's page: what's on your want-to-read list that
+// someone here owns, and what's new
+export async function getGroupHighlights(userId: User["id"], openIds: string[]) {
+  const [wishes, candidates, newest] = await Promise.all([
+    prisma.wantToRead.findMany({
+      where: { userId },
+      select: { title: true, openLibraryKey: true, isbn: true },
+    }),
+    prisma.book.findMany({
+      where: { userId: { in: openIds } },
+      select: { id: true, title: true, openLibraryKey: true, isbn: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.book.findMany({
+      where: { userId: { in: openIds } },
+      select: shelfBook,
+      orderBy: { createdAt: "desc" },
+      take: GROUP_ROW,
+    }),
+  ]);
+  const wantedIds = candidates
+    .filter((book) => wishes.some((wish) => sameWork(wish, book)))
+    .map((book) => book.id);
+  const wanted = await prisma.book.findMany({
+    where: { id: { in: wantedIds } },
+    select: shelfBook,
+    orderBy: { createdAt: "desc" },
+  });
+  // One copy of each book, the one you could borrow soonest
+  const unique = wanted
+    .sort((a, b) => Number(Boolean(a.borrowerId)) - Number(Boolean(b.borrowerId)))
+    .filter((book, index, all) => all.findIndex((other) => sameWork(other, book)) === index)
+    .slice(0, GROUP_ROW);
+  return { wanted: unique, newest };
 }
 
 // What the join page shows someone holding the link: the group's name,

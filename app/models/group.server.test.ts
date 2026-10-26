@@ -8,10 +8,12 @@ import {
   createGroup,
   getGroup,
   getGroupByToken,
+  getGroupHighlights,
   getMyGroups,
   joinGroup,
   leaveGroup,
   resetGroupLink,
+  searchGroupBooks,
 } from "./group.server";
 import { createNotification, getFriendStatus } from "./user.server";
 
@@ -49,26 +51,58 @@ test("joining makes you friends with everyone already in the group", async () =>
   expect((await getMyGroups(ben.id)).map((g) => g.memberCount)).toEqual([3]);
 });
 
-test("the group's shelf is everyone's books, but only to the people in it", async () => {
+test("the group's shelf is everyone else's books, only for the people in it", async () => {
   const ana = await makeUser("Ana");
   const ben = await makeUser("Ben");
+  const cal = await makeUser("Cal");
   const outsider = await makeUser("Outsider");
   const group = await createGroup(ana.id, "Office");
   await makeBook(ana.id, "Piranesi");
   await makeBook(ben.id, "Middlemarch");
+  const lent = await makeBook(ben.id, "Dune Messiah");
+  await prisma.book.update({ where: { id: lent.id }, data: { borrowerId: cal.id } });
+  await makeBook(cal.id, "Dune");
   await joinGroup(ben.id, await tokenOf(group.id));
+  await joinGroup(cal.id, await tokenOf(group.id));
 
   const page = await getGroup(group.id, ana.id);
-  expect(page?.books.map((book) => book.title).sort()).toEqual(["Middlemarch", "Piranesi"]);
-  expect(page?.members.find((member) => member.id === ben.id)).toMatchObject({ isFriend: true, bookCount: 1 });
+  if (!page) throw new Error("no group");
+  // Ana's own book stays out of what she browses
+  expect(page.openIds.sort()).toEqual([ben.id, cal.id].sort());
+  expect(page).toMatchObject({ myBookCount: 1, bookCount: 3 });
+  expect(page.members.find((member) => member.id === ben.id)).toMatchObject({ isFriend: true, bookCount: 2 });
   expect(await getGroup(group.id, outsider.id)).toBe(null);
+
+  const titles = async (search: Parameters<typeof searchGroupBooks>[1]) =>
+    (await searchGroupBooks(page.openIds, search)).books.map((book) => book.title).sort();
+  expect(await titles({ q: "dune" })).toEqual(["Dune", "Dune Messiah"]);
+  expect(await titles({ q: "dune", available: true })).toEqual(["Dune"]);
+  expect(await titles({ who: ben.id })).toEqual(["Dune Messiah", "Middlemarch"]);
+  expect((await searchGroupBooks(page.openIds, { shown: 1 })).total).toBe(3);
 
   // Someone you've unfriended keeps their shelf closed to you
   await removeFriend(ana.id, ben.id);
-  expect((await getGroup(group.id, ana.id))?.books.map((book) => book.title)).toEqual(["Piranesi"]);
+  expect((await getGroup(group.id, ana.id))?.openIds).toEqual([cal.id]);
 
   // The link's page shows a glimpse to anyone holding it
-  expect(await getGroupByToken(await tokenOf(group.id))).toMatchObject({ name: "Office", bookCount: 2 });
+  expect(await getGroupByToken(await tokenOf(group.id))).toMatchObject({ name: "Office", bookCount: 4 });
+});
+
+test("the top of a group's page: your wishes someone has, then what's new", async () => {
+  const ana = await makeUser("Ana");
+  const ben = await makeUser("Ben");
+  const group = await createGroup(ana.id, "Club");
+  await joinGroup(ben.id, await tokenOf(group.id));
+  await makeBook(ben.id, "Piranesi");
+  await makeBook(ben.id, "piranesi");
+  await makeBook(ben.id, "Middlemarch");
+  await prisma.wantToRead.create({ data: { userId: ana.id, title: "Piranesi", author: "Susanna Clarke", cover: "" } });
+
+  const page = await getGroup(group.id, ana.id);
+  const { wanted, newest } = await getGroupHighlights(ana.id, page?.openIds ?? []);
+  // One copy of each book you want
+  expect(wanted.map((book) => book.title.toLowerCase())).toEqual(["piranesi"]);
+  expect(newest).toHaveLength(3);
 });
 
 test("leaving keeps friendships, and the last one out ends the group", async () => {
