@@ -108,13 +108,13 @@ const ICON_PATHS = {
   cat: (
     <>
       {/* A kitty: a wide round face with soft-tipped ears, oval eyes, a
-          button nose, and whiskers of one length that start on the cheek
-          and reach well out. The face is 16 wide so the whiskers have room */}
-      <path d="M4.53 11.4L4.6 6.3Q4.7 3.9 6.35 5.64L8.6 8A8 6 0 0 1 15.4 8L17.65 5.64Q19.3 3.9 19.4 6.3L19.47 11.4A8 7 0 1 1 4.53 11.4z" />
+          button nose, and whiskers of one length that start touching the
+          cheek and reach out. The face is 15 wide so they have room */}
+      <path d="M4.99 11.4L5 6.3Q5.1 3.9 6.66 5.73L8.6 8A8 6 0 0 1 15.4 8L17.34 5.73Q18.9 3.9 19 6.3L19.01 11.4A7.5 7 0 1 1 4.99 11.4z" />
       <ellipse cx="9.3" cy="13.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
       <ellipse cx="14.7" cy="13.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
       <ellipse cx="12" cy="15.7" rx="1.15" ry=".85" fill="currentColor" stroke="none" />
-      <path d="M4.1 15l-3.07-0.92M4.72 16.8l-3.07 0.92M19.9 15l3.07-0.92M19.28 16.8l3.07 0.92" />
+      <path d="M3.11 14.56l-2.2-0.66M3.69 17.24l-2.2 0.66M20.89 14.56l2.2-0.66M20.31 17.24l2.2 0.66" />
     </>
   ),
   paw: (
