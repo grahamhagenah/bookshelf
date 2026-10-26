@@ -128,25 +128,17 @@ export default function Friends() {
       ) : null}
 
       <section>
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 className="text-lg font-semibold">
-            Your friends
-            {friends.length ? (
-              <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">
-                {friends.length}
-              </span>
-            ) : null}
-          </h2>
-        </div>
+        {/* The tab above already says how many */}
+        <h2 className="sr-only">Your friends</h2>
 
         {friends.length > 0 ? (
-          <ul className="mt-4 grid gap-4 sm:grid-cols-2">
+          <ul className="grid gap-4 sm:grid-cols-2">
             {friends.map((friend) => (
               <FriendCard key={friend.id} friend={friend} />
             ))}
           </ul>
         ) : (
-          <div className="mt-4 rounded-xl border border-dashed border-stone-300 dark:border-stone-700 px-6 py-10 text-center">
+          <div className="rounded-xl border border-dashed border-stone-300 dark:border-stone-700 px-6 py-10 text-center">
             <p className="font-medium text-stone-900 dark:text-stone-100">No friends yet</p>
             <p className="mt-1 text-stone-500 dark:text-stone-400">
               Stacks is better with people to borrow from.

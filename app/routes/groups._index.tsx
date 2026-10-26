@@ -48,14 +48,10 @@ export default function Groups() {
   return (
     <Layout title="Groups" header={<FriendsTabs counts={counts} />}>
       <section>
-        <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
-          Your groups
-          {groups.length ? (
-            <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">{groups.length}</span>
-          ) : null}
-        </h2>
+        {/* The tab above already says how many */}
+        <h2 className="sr-only">Your groups</h2>
         {groups.length > 0 ? (
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+          <ul className="grid gap-3 sm:grid-cols-2">
             {groups.map((group) => (
               <li key={group.id}>
                 <Link
@@ -77,7 +73,7 @@ export default function Groups() {
             ))}
           </ul>
         ) : (
-          <div className="mt-4 rounded-xl border border-dashed border-stone-300 dark:border-stone-700 px-6 py-10 text-center">
+          <div className="rounded-xl border border-dashed border-stone-300 dark:border-stone-700 px-6 py-10 text-center">
             <p className="font-medium text-stone-900 dark:text-stone-100">No groups yet</p>
             <p className="mx-auto mt-1 max-w-md text-stone-500 dark:text-stone-400">
               Start one for a book club, an office or a family, or ask someone in a group for its
