@@ -668,7 +668,7 @@ export function AvatarGlyph({
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="1.3"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -683,7 +683,7 @@ export function AvatarGlyph({
 export const iconTone = (color: PlateColor | null) =>
   color
     ? PLATE_COLORS[color]
-    : "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200";
+    : "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300";
 
 // The picture fills about three quarters of its circle: the drawings are
 // round-ish and keep clear of the box's corners, so they can run big
