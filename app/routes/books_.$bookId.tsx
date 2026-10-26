@@ -1177,7 +1177,7 @@ function LendToFriend({
       <p className="text-sm text-stone-500 dark:text-stone-400">
         Add friends to lend them books.{" "}
         <Link
-          to="/friends"
+          to="/friends/add"
           className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
         >
           Find friends
@@ -1292,7 +1292,7 @@ function LendToFriend({
         <p className="text-xs text-stone-500 dark:text-stone-400">
           Or{" "}
           <Link
-            to="/friends"
+            to="/friends/add"
             className="underline underline-offset-2"
           >
             find friends on Stacks

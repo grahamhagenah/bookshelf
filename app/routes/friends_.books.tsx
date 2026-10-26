@@ -49,7 +49,7 @@ export default function FriendsBooks() {
             </p>
             {counts.friends === 0 ? (
               <Link
-                to="/friends#find"
+                to="/friends/add"
                 className="mt-5 inline-flex h-9 items-center rounded-md bg-forest-600 px-4 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
               >
                 Find friends

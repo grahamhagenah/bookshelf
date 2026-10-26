@@ -264,7 +264,7 @@ export default function Feed() {
               <>
                 <p>Add friends to see the books they add and love.</p>
                 <Link
-                  to="/friends"
+                  to="/friends/add"
                   className="mt-2 inline-block text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
                 >
                   Find friends

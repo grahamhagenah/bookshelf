@@ -57,7 +57,7 @@ export default function SideRail({ loans, friends, groups, children }: SideRailP
               {friends.length}
             </span>
           </h2>
-          <Link to="/friends" className={link}>
+          <Link to={friends.length > 0 ? "/friends" : "/friends/add"} className={link}>
             {friends.length > 0 ? "See all" : "Find friends"}
           </Link>
         </div>

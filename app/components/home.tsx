@@ -227,7 +227,7 @@ function Welcome({
         : `${requestsSent === 1 ? "Request" : `${requestsSent} requests`} sent`,
       progress: null,
       action: (
-        <Link to="/friends#by-email" className={actionClass}>
+        <Link to="/friends/add#by-email" className={actionClass}>
           Find friends
         </Link>
       ),
@@ -690,7 +690,7 @@ export default function Home({
               <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
                 Add friends to see the books they add and love.{" "}
                 <Link
-                  to="/friends"
+                  to="/friends/add"
                   className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
                 >
                   Find friends
