@@ -4,8 +4,8 @@ import { makeBook, makeUser, prisma } from "../../test/db";
 import { fillInBook } from "./openlibrary.server";
 
 // A stand-in for Open Library: a search hit for Piranesi, a description
-// for its work, an author, and a cover server that has no ISBN cover
-function stubOpenLibrary() {
+// for its work, an author, and an edition record with the given covers
+function stubOpenLibrary(editionCovers: number[] = []) {
   const calls: string[] = [];
   vi.stubGlobal("fetch", async (input: string | URL, init?: RequestInit) => {
     const url = String(input);
@@ -37,10 +37,10 @@ function stubOpenLibrary() {
     if (url.startsWith("https://openlibrary.org/authors/")) {
       return reply({ name: "Susanna Clarke" });
     }
-    if (url.startsWith("https://covers.openlibrary.org/") && init?.method === "HEAD") {
-      return new Response(null, { status: 404 });
+    if (url.startsWith("https://openlibrary.org/isbn/")) {
+      return reply({ covers: editionCovers });
     }
-    throw new Error(`Unexpected fetch: ${url}`);
+    throw new Error(`Unexpected fetch: ${url} ${init?.method ?? ""}`);
   });
   return calls;
 }
@@ -82,6 +82,24 @@ test("fills in what an imported book is missing and keeps what it has", async ()
   expect(filled.detailsFetchedAt).not.toBeNull();
   // Looked up by ISBN, since it had one
   expect(calls[0]).toContain("isbn%3A9781635575637");
+});
+
+test("an ISBN cover is kept by its edition's cover ID", async () => {
+  // A fresh ISBN: what's found for one is remembered
+  const isbn = `978${String(Math.random()).slice(2, 12)}`;
+  stubOpenLibrary([-1, 555]);
+  const owner = await makeUser("Olive");
+  const book = await makeBook(owner.id, "Piranesi");
+  await prisma.book.update({
+    where: { id: book.id },
+    data: { cover: `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`, isbn, body: "" },
+  });
+
+  await fillInBook(book.id);
+
+  const filled = await prisma.book.findUniqueOrThrow({ where: { id: book.id } });
+  // The edition's own picture, not the work's
+  expect(filled.cover).toBe("https://covers.openlibrary.org/b/id/555-L.jpg");
 });
 
 test("a book Open Library doesn't know is still marked as looked up", async () => {

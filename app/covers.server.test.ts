@@ -3,6 +3,7 @@ import {
   COVER_PATH,
   coverHostAllowed,
   customCoverPath,
+  isbnCoverParts,
   loadCover,
 } from "./covers.server";
 
@@ -56,4 +57,59 @@ test("a pasted cover's path is a hash of its link, and the proxy knows it", () =
   expect(COVER_PATH.test(path)).toBe(true);
   expect(COVER_PATH.test("custom/../b/id/1-L.jpg")).toBe(false);
   expect(COVER_PATH.test("b/isbn/9780547928227-M.jpg")).toBe(true);
+});
+
+test("an ISBN cover is fetched by its edition's cover ID, which isn't rate limited", async () => {
+  const isbn = `978${String(Math.random()).slice(2, 12)}`;
+  const calls: string[] = [];
+  vi.stubGlobal("fetch", async (input: string | URL) => {
+    const url = String(input);
+    calls.push(url);
+    if (url === `https://openlibrary.org/isbn/${isbn}.json`) {
+      return new Response(JSON.stringify({ covers: [4321] }), { status: 200 });
+    }
+    if (url.startsWith("https://covers.openlibrary.org/b/id/4321-")) {
+      return new Response(new Uint8Array(500), { status: 200 });
+    }
+    throw new Error(`Unexpected fetch: ${url}`);
+  });
+
+  expect((await loadCover(`b/isbn/${isbn}-M.jpg`))?.length).toBe(500);
+  expect((await loadCover(`b/isbn/${isbn}-L.jpg`))?.length).toBe(500);
+  // The edition is asked once; neither picture is asked for by ISBN
+  expect(calls).toEqual([
+    `https://openlibrary.org/isbn/${isbn}.json`,
+    "https://covers.openlibrary.org/b/id/4321-M.jpg",
+    "https://covers.openlibrary.org/b/id/4321-L.jpg",
+  ]);
+  vi.unstubAllGlobals();
+});
+
+test("an edition without a picture isn't asked for one", async () => {
+  const isbn = `978${String(Math.random()).slice(2, 12)}`;
+  const calls: string[] = [];
+  vi.stubGlobal("fetch", async (input: string | URL) => {
+    calls.push(String(input));
+    return new Response(JSON.stringify({ covers: [] }), { status: 200 });
+  });
+  expect(await loadCover(`b/isbn/${isbn}-M.jpg`)).toBeNull();
+  expect(calls).toEqual([`https://openlibrary.org/isbn/${isbn}.json`]);
+  vi.unstubAllGlobals();
+});
+
+test("isbnCoverParts reads Open Library ISBN covers only", () => {
+  expect(
+    isbnCoverParts("https://covers.openlibrary.org/b/isbn/9780547928227-L.jpg"),
+  ).toEqual({
+    isbn: "9780547928227",
+    size: "L",
+  });
+  expect(isbnCoverParts("b/isbn/014044913X-M.jpg")).toEqual({
+    isbn: "014044913X",
+    size: "M",
+  });
+  expect(
+    isbnCoverParts("https://covers.openlibrary.org/b/id/12345-L.jpg"),
+  ).toBeNull();
+  expect(isbnCoverParts("/covers/custom/abc.jpg")).toBeNull();
 });
