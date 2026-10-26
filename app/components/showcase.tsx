@@ -16,7 +16,7 @@ const COVERS = {
   demonCopperhead: cover("9780063251922"),
   seaOfTranquility: cover("9780593321447"),
   gentlemanInMoscow: cover("9780670026197"),
-  gilead: cover("9780312424404"),
+  cityWalls: cover("9780593801970"),
   klara: cover("9780593318171"),
   neverLetMeGo: cover("9781400078776"),
   jonathanStrange: cover("9780765356154"),
@@ -409,7 +409,7 @@ const GROUP_BOOKS: [string, keyof typeof MEMBERS][] = [
   [COVERS.piranesi, "sam"],
   [COVERS.seaOfTranquility, "anika"],
   [COVERS.dune, "theo"],
-  [COVERS.gilead, "maya"],
+  [COVERS.cityWalls, "maya"],
   [COVERS.overstory, "noah"],
   [COVERS.hailMary, "sam"],
   [COVERS.klara, "anika"],
@@ -645,7 +645,7 @@ export function ShowcasePage() {
               COVERS.dune,
               COVERS.stationEleven,
               COVERS.overstory,
-              COVERS.gilead,
+              COVERS.cityWalls,
               COVERS.neverLetMeGo,
             ].map((src) => (
               <Cover key={src} src={src} className="w-full" />
