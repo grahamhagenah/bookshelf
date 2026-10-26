@@ -277,8 +277,8 @@ const ICON_PATHS = {
   ),
   skull: (
     <>
-      {/* A skull: the cranium narrowing to a jaw, two sockets, a nose and
-          two teeth */}
+      {/* A skull: the cranium narrowing to a jaw, two sockets, the nasal
+          cavity and two teeth */}
       <path d="M4.5 11.5C4.5 6.5 7.9 3.5 12 3.5s7.5 3 7.5 8c0 3-1.3 4.9-3 5.8V21h-9v-3.7c-1.7-.9-3-2.8-3-5.8z" />
       <ellipse cx="9" cy="11.6" rx="2" ry="2.2" fill="currentColor" stroke="none" />
       <ellipse cx="15" cy="11.6" rx="2" ry="2.2" fill="currentColor" stroke="none" />
@@ -296,16 +296,19 @@ const ICON_PATHS = {
   ),
   pyramid: (
     <>
-      {/* A pyramid: a triangle with one edge drawn, so it has two faces */}
-      <path d="M12 3.5L21.5 19.5H2.5z" />
-      <path d="M12 3.5L15.6 19.5" />
+      {/* A pyramid seen from a corner: two faces meeting at an edge, over a
+          base in perspective */}
+      <path d="M12 3L2.8 16.8L12.8 21L21.2 14.8z" />
+      <path d="M12 3L12.8 21" />
     </>
   ),
   wine: (
     <>
-      {/* A wine glass: a bowl with a flat rim, on a stem and a foot */}
+      {/* A wine glass: a bowl with a flat rim on a stem and a foot, with wine
+          in it */}
       <path d="M6.5 3h11v5c0 3.7-2.5 6.6-5.5 6.6S6.5 11.7 6.5 8z" />
       <path d="M12 14.6V21M8 21h8" />
+      <path d="M6.9 9.8h10.2c-.5 2.9-2.6 4.8-5.1 4.8S7.4 12.7 6.9 9.8z" fill="currentColor" stroke="none" />
     </>
   ),
   anchor: (
@@ -388,10 +391,11 @@ const ICON_PATHS = {
   ),
   chef: (
     <>
-      {/* A toque: three tall puffs overhanging a narrow band. No pleats,
-          and the puffs wider than the band, or it reads as a muffin */}
+      {/* A toque: three tall puffs overhanging a narrow band, with two folds
+          in the puff. The puffs wider than the band, or it reads as a muffin */}
       <path d="M8.5 15.5C4.6 15.8 2.8 11.2 5.6 9.2c.9-.6 2-.8 2.9-.6C8.9 5.9 10.3 4 12 4s3.1 1.9 3.5 4.6c.9-.2 2 0 2.9.6 2.8 2 1 6.6-2.9 6.3" />
       <path d="M8.5 15.5v4h7v-4" />
+      <path d="M10.4 15.3V11.6M13.6 15.3V11.6" />
     </>
   ),
   teapot: (
