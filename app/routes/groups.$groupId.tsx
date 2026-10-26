@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Link, NavLink, Outlet, useFetcher, useLoaderData, useSearchParams } from "@remix-run/react";
+import { NavLink, Outlet, useFetcher, useLoaderData, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
@@ -21,8 +21,9 @@ import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
 // A group's page, laid out like My shelf: the group across the top, tabs
-// for what's been happening and who's in it, and beside them the way to
-// its books (the Friends page's Books, narrowed to the group) and the invite
+// for its books (the Friends page's Books shelf, narrowed to the group),
+// what's been happening and who's in it, and the invite where My shelf
+// has its share button
 
 export const meta: MetaFunction<typeof loader> = ({ data }) =>
   seo({ title: data?.group.name ?? "Group", noindex: true });
@@ -139,6 +140,11 @@ export default function GroupLayout() {
           className="-mb-px flex min-w-0 flex-1 gap-5 sm:gap-6 overflow-x-auto [scrollbar-width:none]"
         >
           <NavLink to={path} end className={tab}>
+            <BookIcon size={16} className="hidden sm:block" />
+            Books
+            <span className={count}>{group.bookCount}</span>
+          </NavLink>
+          <NavLink to={`${path}/lately`} className={tab}>
             <FeedIcon size={16} strokeWidth={1.5} className="hidden sm:block" />
             Lately
           </NavLink>
@@ -148,18 +154,7 @@ export default function GroupLayout() {
             <span className={count}>{group.members.length}</span>
           </NavLink>
         </nav>
-        <div className="-mt-1.5 flex items-center gap-2">
-          {/* Its books are on Friends' Books tab, narrowed to the group */}
-          {group.bookCount > 0 ? (
-            <Link
-              to={`/friends/books?${new URLSearchParams({ who: `g:${group.id}` })}`}
-              className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-2.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-            >
-              <BookIcon size={16} />
-              <span className="hidden sm:inline">Browse {group.bookCount} books</span>
-              <span className="sm:hidden">Books</span>
-            </Link>
-          ) : null}
+        <div className="-mt-1.5">
           <InviteButton name={group.name} url={inviteUrl} />
         </div>
       </div>

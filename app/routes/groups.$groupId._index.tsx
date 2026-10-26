@@ -1,38 +1,38 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useRouteLoaderData } from "@remix-run/react";
 
-import FriendActivityItem from "~/components/friend-activity";
+import PooledShelf from "~/components/pooled-shelf";
 import { loadGroup } from "~/group-page.server";
-import { getFriendActivity } from "~/models/activity.server";
+import { loadPooledShelf } from "~/pooled-shelf.server";
 
-// A group's page opens on what its people have been up to, as the feed
-// shows it. Their books are on Friends' Books tab, narrowed to the group.
+import type { GroupLayoutData } from "./groups.$groupId";
+
+// A group's page opens on its books: the same shelf as the Friends page's
+// Books tab, narrowed to the people in the group, so you can browse them
+// without leaving it
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { userId, group } = await loadGroup(request, params);
-  return json({
-    activity: await getFriendActivity(userId, { among: group.openIds, days: 365, limit: 30 }),
-    friendIds: group.openIds,
-  });
+  const lenders = group.members.filter((member) => member.isFriend);
+  return json(await loadPooledShelf(request, userId, group.openIds, { lenders }));
 };
 
-export default function GroupLately() {
-  const { activity, friendIds } = useLoaderData<typeof loader>();
-  if (activity.length === 0) {
-    return (
-      <p className="py-16 text-center text-stone-500 dark:text-stone-400">
-        Nothing yet. Books people add, love or write about show up here.
-      </p>
-    );
-  }
+export default function GroupBooks() {
+  const data = useLoaderData<typeof loader>();
+  const layout = useRouteLoaderData<GroupLayoutData>("routes/groups.$groupId");
   return (
-    <ul className="max-w-2xl divide-y divide-stone-100 dark:divide-stone-800">
-      {activity.map((item) => (
-        <li key={item.id}>
-          <FriendActivityItem item={item} friendIds={friendIds} />
-        </li>
-      ))}
-    </ul>
+    <PooledShelf
+      data={data}
+      empty={
+        <>
+          <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">No books to borrow yet</h2>
+          <p className="mx-auto mt-1 max-w-sm text-stone-500 dark:text-stone-400">
+            Once people join {layout?.group.name ?? "the group"}, their books show up here. Invite
+            them with the button above.
+          </p>
+        </>
+      }
+    />
   );
 }
