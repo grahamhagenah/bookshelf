@@ -118,7 +118,7 @@ const VISITOR = {
 const PERSONAS = {
   maya: { firstname: "Maya", surname: "Chen", profileEmoji: "flower:plum" },
   sam: { firstname: "Sam", surname: "Okafor", profileEmoji: "planet:navy" },
-  anika: { firstname: "Anika", surname: "Rao", profileEmoji: "koala:oxblood" },
+  anika: { firstname: "Anika", surname: "Rao", profileEmoji: "cat:oxblood" },
   // Theo has sent the visitor a friend request; Lena shows up as a suggestion
   theo: { firstname: "Theo", surname: "Martin", profileEmoji: "discoball:ochre" },
   lena: { firstname: "Lena", surname: "Fischer", profileEmoji: "frog:forest" },

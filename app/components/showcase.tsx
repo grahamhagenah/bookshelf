@@ -388,7 +388,7 @@ export function ShowcaseFriends() {
 const MEMBERS = {
   maya: "flower:plum",
   sam: "planet:navy",
-  anika: "koala:oxblood",
+  anika: "cat:oxblood",
   theo: "discoball:ochre",
   noah: "cat:ink",
   lena: "frog:forest",
