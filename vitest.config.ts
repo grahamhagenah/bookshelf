@@ -27,6 +27,6 @@ export default defineConfig({
       COVER_CACHE_DIR: TEST_COVER_CACHE_DIR,
     },
     // One SQLite file, so test files take turns
-    singleThread: true,
+    fileParallelism: false,
   },
 });
