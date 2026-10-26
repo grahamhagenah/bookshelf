@@ -590,7 +590,7 @@ export function FeedPost({
 
   const books =
     item.kind === "added"
-      ? item.books.slice(0, 8)
+      ? item.books.slice(0, 6)
       : item.kind === "elsewhere"
         ? []
         : [item.book];
@@ -637,8 +637,9 @@ export function FeedPost({
         <ElsewhereCard item={item} mine={item.friend.id === userId} />
       ) : item.kind === "added" && item.books.length > 1 ? (
         <>
-          {/* Even columns: three across on phones, four on wider screens */}
-          <ul className="mt-3 grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-4">
+          {/* Even columns: three across on phones, six on wider screens,
+              so a batch of new books is a row of small covers */}
+          <ul className="mt-3 grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-6">
             {books.map((book) => (
               <BookTile key={book.id} book={book} />
             ))}
