@@ -174,10 +174,12 @@ const ICON_PATHS = {
   ),
   octopus: (
     <>
-      <path d="M6 11.5a6 6 0 0 1 12 0v2H6z" />
-      <path d="M7 13.5c0 3-2 4-2 6M10 13.5c0 3-1 5-.5 7M14 13.5c0 3 1 5 .5 7M17 13.5c0 3 2 4 2 6" />
-      <circle cx="9.5" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="14.5" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
+      {/* A jellyfish at the family's size: a bell as wide as the kitty's
+          face with a scalloped hem, her oval eyes, and four tentacles */}
+      <path d="M4.5 13.2C4.5 8.4 7.9 4.6 12 4.6s7.5 3.8 7.5 8.6Q16.3 14.6 12 14.6T4.5 13.2z" />
+      <ellipse cx="9.3" cy="10.2" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="14.7" cy="10.2" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <path d="M7.2 14.5c-.9 2.1.7 3.6-.2 5.8M10.4 14.6c-.7 2.2.9 3.7.1 6.1M13.6 14.6c.7 2.2-.9 3.7-.1 6.1M16.8 14.5c.9 2.1-.7 3.6.2 5.8" />
     </>
   ),
   snail: (
