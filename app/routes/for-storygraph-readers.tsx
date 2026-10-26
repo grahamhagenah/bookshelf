@@ -55,12 +55,12 @@ export default function ForStoryGraphReaders() {
   return (
     <GuidePage
       eyebrow="For StoryGraph readers"
-      title="Keep StoryGraph for your reading. Use Stacks for your shelf."
+      title="StoryGraph tracks what you read. Stacks tracks who has your books."
       intro={
         <>
-          StoryGraph is great at tracking what you read. Stacks is for the
-          physical books you own: who has them, when they&apos;re due back, and
-          which friends own the book you want next.
+          Stacks is for the physical books you own: who has them, when
+          they&apos;re due back, and which friends own the book you want next.
+          Keep logging your reading on StoryGraph, and use both.
         </>
       }
     >
