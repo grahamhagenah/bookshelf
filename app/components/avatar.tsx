@@ -81,6 +81,23 @@ const ICON_PATHS = {
       <path d="M10 14c1.2-1 2.8-1 4 0M3 14l1-6M21 14l-1-6" />
     </>
   ),
+  guy: (
+    <>
+      {/* Head and shoulders: short hair, swept across the forehead */}
+      <circle cx="12" cy="8.6" r="4" />
+      <path d="M8.1 7.6c1.9.3 3.7-.4 4.9-1.9.6 1 1.6 1.8 2.8 2" />
+      <path d="M4.5 21c.6-3.6 3.7-5.6 7.5-5.6s6.9 2 7.5 5.6" />
+    </>
+  ),
+  girl: (
+    <>
+      {/* Head and shoulders: a side fringe and her hair up in a bun */}
+      <circle cx="12" cy="9.4" r="3.8" />
+      <circle cx="12" cy="3.6" r="1.5" />
+      <path d="M8.2 9c1.9-.1 3.7-1 4.9-2.6.6.9 1.6 1.6 2.7 1.8" />
+      <path d="M4.5 21c.6-3.6 3.7-5.6 7.5-5.6s6.9 2 7.5 5.6" />
+    </>
+  ),
   cat: (
     <>
       {/* A kitty: a wide round face, oval eyes, a button nose, whiskers */}
@@ -167,6 +184,28 @@ const ICON_PATHS = {
       <circle cx="19.6" cy="7.4" r=".7" fill="currentColor" stroke="none" />
       <circle cx="9.5" cy="12.7" r="5.8" />
       <path d="M8.3 12.7a1.2 1.2 0 0 1 2.4 0 2.4 2.4 0 0 1-4.8 0 3.6 3.6 0 0 1 7.2 0" />
+    </>
+  ),
+  tortoise: (
+    <>
+      {/* Side on, heading right: a domed shell with one plate drawn on
+          it, a head, two legs and a little tail */}
+      <path d="M4 15.5a8 6.8 0 0 1 16 0z" />
+      <path d="M8.2 15.5 9.6 11h4.8l1.4 4.5" />
+      <path d="M19.63 13.4h1.2a1.7 1.7 0 0 1 0 3.4h-1.6" />
+      <path d="M6.5 15.5v2.6M16.5 15.5v2.6M4 15.5l-1.6 1" />
+    </>
+  ),
+  hare: (
+    <>
+      {/* Sitting, heading right: a round back, a head with an eye, two
+          long ears and a tail */}
+      <path d="M4.6 19.5c-1.3-4 1.2-8.2 5.9-8.2 1.9 0 3.3.6 4.3 1.6" />
+      <circle cx="17" cy="11.6" r="2.5" />
+      <circle cx="18" cy="11.3" r=".6" fill="currentColor" stroke="none" />
+      <path d="M15.3 9.8C13.6 8 12.4 5.6 12.6 3.8c.1-1 1.1-1.3 1.8-.5 1.3 1.6 2.3 3.6 2.6 5.6M17.6 9.1c-.3-2.2 0-4.6.8-6.3.4-.9 1.5-.8 1.7.2.4 2 .2 4.4-.6 6.4" />
+      <path d="M15.4 13.7c.5 1.9.4 3.9-.3 5.8M4.6 19.5h11.3" />
+      <circle cx="4.2" cy="15.2" r="1.1" fill="currentColor" stroke="none" />
     </>
   ),
   ghost: (
