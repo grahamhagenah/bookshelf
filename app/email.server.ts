@@ -753,10 +753,10 @@ export function renderFeedback({
         <p style="margin: 0 0 12px; font-size: 14px; color: ${muted};">${esc(from)} wrote:</p>
         <p style="margin: 0; white-space: pre-wrap; font-size: 16px; line-height: 1.55; color: ${ink};">${esc(message)}</p>
         ${sentFrom ? `<p style="margin: 16px 0 0; font-size: 13px; color: ${muted};">Sent from ${esc(sentFrom)}</p>` : ""}
-        ${button(`${APP_URL}/dashboard#feedback`, "See all feedback")}`,
+        ${button(`${APP_URL}/dashboard?tab=messages#feedback`, "See all feedback")}`,
     footer: ADMIN_FOOTER,
   });
-  const text = `${from} wrote:\n\n${message}\n\n${sentFrom ? `Sent from ${sentFrom}\n` : ""}${APP_URL}/dashboard#feedback`;
+  const text = `${from} wrote:\n\n${message}\n\n${sentFrom ? `Sent from ${sentFrom}\n` : ""}${APP_URL}/dashboard?tab=messages#feedback`;
   return { subject, html, text };
 }
 

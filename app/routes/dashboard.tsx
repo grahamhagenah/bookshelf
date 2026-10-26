@@ -5,7 +5,7 @@ import type {
   SerializeFrom,
 } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
+import { Link, useFetcher, useLoaderData, useLocation, useSearchParams } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -1546,18 +1546,124 @@ export default function Dashboard() {
     emailChoices,
     groups,
   } = useLoaderData<typeof loader>();
+  const tab = useDashboardTab();
+  const openFeedback = feedback.filter((item) => !item.done).length;
   return (
-    <Layout title="Admin Dashboard">
-      <Health health={health} />
-      <Groups groups={groups} />
-      <Plus revenue={revenue} />
-      <Funnel funnel={funnel} />
-      <Feedback feedback={feedback} />
-      <Announce people={users.length} />
-      <Lending lending={lending} />
-      <People users={users} userId={userId} />
-      <DataQuality quality={quality} />
-      <AdminEmails choices={emailChoices} />
+    <Layout
+      title="Admin Dashboard"
+      header={
+        <DashboardTabs
+          current={tab}
+          counts={{ people: users.length, messages: openFeedback }}
+        />
+      }
+    >
+      {tab === "overview" ? (
+        <>
+          <Health health={health} />
+          <Funnel funnel={funnel} />
+          <Groups groups={groups} />
+        </>
+      ) : tab === "people" ? (
+        <People users={users} userId={userId} />
+      ) : tab === "books" ? (
+        <>
+          <Lending lending={lending} />
+          <DataQuality quality={quality} />
+        </>
+      ) : tab === "plus" ? (
+        <Plus revenue={revenue} />
+      ) : (
+        <>
+          <Feedback feedback={feedback} />
+          <Announce people={users.length} />
+          <AdminEmails choices={emailChoices} />
+        </>
+      )}
     </Layout>
+  );
+}
+
+// The dashboard's parts, a tab each
+const TABS = [
+  ["overview", "Overview"],
+  ["people", "People"],
+  ["books", "Books"],
+  ["plus", "Plus"],
+  ["messages", "Messages"],
+] as const;
+type Tab = (typeof TABS)[number][0];
+
+// Which tab a section's old #link belongs to, so links from before the
+// tabs (the feedback email's /dashboard#feedback) still land in place
+const TAB_OF_SECTION: Record<string, Tab> = {
+  health: "overview",
+  funnel: "overview",
+  groups: "overview",
+  people: "people",
+  lending: "books",
+  "data-quality": "books",
+  plus: "plus",
+  feedback: "messages",
+  announce: "messages",
+  emails: "messages",
+};
+
+// The tab in the address (?tab=messages), or the one an old #link
+// points into, or Overview
+function useDashboardTab(): Tab {
+  const [searchParams] = useSearchParams();
+  const { hash } = useLocation();
+  const asked = searchParams.get("tab");
+  const named = TABS.find(([value]) => value === asked)?.[0];
+  return named ?? TAB_OF_SECTION[hash.slice(1)] ?? "overview";
+}
+
+// As My shelf's tabs, along the top
+function DashboardTabs({
+  current,
+  counts,
+}: {
+  current: Tab;
+  counts: { people: number; messages: number };
+}) {
+  const count = (value: Tab) =>
+    value === "people" ? counts.people : value === "messages" && counts.messages ? counts.messages : null;
+  return (
+    <nav
+      aria-label="Dashboard"
+      className="mb-6 -mt-2 flex gap-5 overflow-x-auto border-b border-stone-200 dark:border-stone-800 [scrollbar-width:none] sm:gap-6"
+    >
+      {TABS.map(([value, label]) => {
+        const on = value === current;
+        const n = count(value);
+        return (
+          <Link
+            key={value}
+            to={value === "overview" ? "?" : `?tab=${value}`}
+            preventScrollReset
+            aria-current={on ? "page" : undefined}
+            className={`-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-1 pb-2.5 font-medium transition-colors ${
+              on
+                ? "border-stone-900 dark:border-stone-100 text-stone-900 dark:text-stone-100"
+                : "border-transparent text-stone-500 dark:text-stone-400 hover:border-stone-300 dark:hover:border-stone-600 hover:text-stone-800 dark:hover:text-stone-200"
+            }`}
+          >
+            {label}
+            {n !== null ? (
+              <span
+                className={
+                  value === "messages"
+                    ? "rounded-full bg-amber-100 px-1.5 text-xs font-medium text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                    : "font-normal text-stone-400 dark:text-stone-500"
+                }
+              >
+                {n}
+              </span>
+            ) : null}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
