@@ -1,8 +1,8 @@
 import type { Group, User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
-import { lendingNow } from "~/lending";
-import { sameWork } from "~/works";
+import { isNotLending, lendingNow } from "~/lending";
+import { normalizeTitle, sameWork } from "~/works";
 
 import { canInteract } from "./demo.server";
 import { createFriendship } from "./user.server";
@@ -104,7 +104,15 @@ export async function getGroup(groupId: Group["id"], userId: User["id"]) {
     members,
     openIds,
     myBookCount: members.find((member) => member.isMe)?.bookCount ?? 0,
-    bookCount: await prisma.book.count({ where: { userId: { in: openIds } } }),
+    // Books, not copies: five people's Dune is one
+    bookCount: new Set(
+      (
+        await prisma.book.findMany({
+          where: { userId: { in: openIds } },
+          select: { title: true, author: true },
+        })
+      ).map(workKey),
+    ).size,
   };
 }
 
@@ -115,11 +123,93 @@ const shelfBook = {
   cover: true,
   borrowerId: true,
   notLendingUntil: true,
+  createdAt: true,
   user: { select: { id: true, firstname: true } },
 } as const;
 
+interface ShelfRow {
+  id: string;
+  title: string;
+  author: string;
+  cover: string;
+  borrowerId: string | null;
+  notLendingUntil: Date | null;
+  createdAt: Date;
+  user: { id: string; firstname: string };
+}
+
 export const GROUP_PAGE = 48;
 export const GROUP_ROW = 12;
+// How many of one person's books the New row shows, so one big import
+// can't fill it
+const NEW_PER_PERSON = 3;
+// The most books one search gathers before putting copies together
+const SEARCH_LIMIT = 5000;
+
+export const GROUP_SORTS = ["newest", "title", "author"] as const;
+export type GroupSort = (typeof GROUP_SORTS)[number];
+
+// Two copies are the same book when title and author's surname match:
+// "Dune" by Frank Herbert on two shelves is one entry, two "Emma"s by
+// different authors are two
+function workKey(book: { title: string; author: string }) {
+  const surname = book.author.split(/,|&| and /)[0].trim().split(/\s+/).pop() ?? "";
+  return `${normalizeTitle(book.title)}|${surname.toLowerCase().replace(/[^a-z]/g, "")}`;
+}
+
+// The same book on several shelves, as one entry with every copy, the
+// ones you could borrow now first. Kept in the order they came in.
+function asWorks(books: ShelfRow[], now = new Date()) {
+  const works = new Map<
+    string,
+    {
+      key: string;
+      title: string;
+      author: string;
+      cover: string;
+      addedAt: Date;
+      // Whose copy came in last
+      addedBy: string;
+      copies: { bookId: string; owner: { id: string; firstname: string }; available: boolean; lent: boolean }[];
+    }
+  >();
+  for (const book of books) {
+    const key = workKey(book);
+    const copy = {
+      bookId: book.id,
+      owner: book.user,
+      lent: Boolean(book.borrowerId),
+      available: !book.borrowerId && !isNotLending(book.notLendingUntil, now),
+    };
+    const work = works.get(key);
+    if (work) {
+      work.copies.push(copy);
+      if (!work.cover && book.cover) work.cover = book.cover;
+      if (book.createdAt > work.addedAt) {
+        work.addedAt = book.createdAt;
+        work.addedBy = book.user.id;
+      }
+    } else {
+      works.set(key, {
+        key,
+        title: book.title,
+        author: book.author,
+        cover: book.cover,
+        addedAt: book.createdAt,
+        addedBy: book.user.id,
+        copies: [copy],
+      });
+    }
+  }
+  return [...works.values()].map((work) => ({
+    ...work,
+    copies: [...work.copies].sort((a, b) => Number(b.available) - Number(a.available)),
+  }));
+}
+export type GroupWork = ReturnType<typeof asWorks>[number];
+
+const byTitle = (title: string) => title.replace(/^(the|a|an)\s+/i, "");
+const surnameOf = (author: string) => author.split(/,|&| and /)[0].trim().split(/\s+/).pop() ?? author;
 
 export interface GroupSearch {
   q?: string;
@@ -127,14 +217,15 @@ export interface GroupSearch {
   who?: string | null;
   // Only what could be borrowed now
   available?: boolean;
+  sort?: GroupSort;
   shown?: number;
 }
 
-// Searching the group's shelves, newest first. Done here rather than in
-// the browser: fifty people's shelves can run to thousands of books.
+// Searching the group's shelves, one entry per book. Done here rather
+// than in the browser: fifty people's shelves can run to thousands.
 export async function searchGroupBooks(
   openIds: string[],
-  { q = "", who = null, available = false, shown = GROUP_PAGE }: GroupSearch,
+  { q = "", who = null, available = false, sort = "newest", shown = GROUP_PAGE }: GroupSearch,
 ) {
   const ids = who ? openIds.filter((id) => id === who) : openIds;
   const term = q.trim();
@@ -147,17 +238,29 @@ export async function searchGroupBooks(
       ...(available ? [{ borrowerId: null }, lendingNow()] : []),
     ],
   };
-  const [books, total] = await Promise.all([
-    prisma.book.findMany({ where, select: shelfBook, orderBy: { createdAt: "desc" }, take: shown }),
-    prisma.book.count({ where }),
-  ]);
-  return { books, total };
+  const books = await prisma.book.findMany({
+    where,
+    select: shelfBook,
+    orderBy: { createdAt: "desc" },
+    take: SEARCH_LIMIT,
+  });
+  const works = asWorks(books);
+  if (sort === "title") {
+    works.sort((a, b) => byTitle(a.title).localeCompare(byTitle(b.title)));
+  } else if (sort === "author") {
+    works.sort(
+      (a, b) =>
+        surnameOf(a.author).localeCompare(surnameOf(b.author)) ||
+        byTitle(a.title).localeCompare(byTitle(b.title)),
+    );
+  }
+  return { works: works.slice(0, shown), total: works.length };
 }
 
 // The top of the group's page: what's on your want-to-read list that
-// someone here owns, and what's new
+// someone here owns, and what's new, a few books per person at most
 export async function getGroupHighlights(userId: User["id"], openIds: string[]) {
-  const [wishes, candidates, newest] = await Promise.all([
+  const [wishes, candidates, recent] = await Promise.all([
     prisma.wantToRead.findMany({
       where: { userId },
       select: { title: true, openLibraryKey: true, isbn: true },
@@ -165,29 +268,36 @@ export async function getGroupHighlights(userId: User["id"], openIds: string[]) 
     prisma.book.findMany({
       where: { userId: { in: openIds } },
       select: { id: true, title: true, openLibraryKey: true, isbn: true },
-      orderBy: { createdAt: "desc" },
     }),
     prisma.book.findMany({
       where: { userId: { in: openIds } },
       select: shelfBook,
       orderBy: { createdAt: "desc" },
-      take: GROUP_ROW,
+      take: 400,
     }),
   ]);
   const wantedIds = candidates
     .filter((book) => wishes.some((wish) => sameWork(wish, book)))
     .map((book) => book.id);
-  const wanted = await prisma.book.findMany({
-    where: { id: { in: wantedIds } },
-    select: shelfBook,
-    orderBy: { createdAt: "desc" },
-  });
-  // One copy of each book, the one you could borrow soonest
-  const unique = wanted
-    .sort((a, b) => Number(Boolean(a.borrowerId)) - Number(Boolean(b.borrowerId)))
-    .filter((book, index, all) => all.findIndex((other) => sameWork(other, book)) === index)
+  const wanted = asWorks(
+    await prisma.book.findMany({
+      where: { id: { in: wantedIds } },
+      select: shelfBook,
+      orderBy: { createdAt: "desc" },
+    }),
+  )
+    // The ones you could borrow now first
+    .sort((a, b) => Number(b.copies[0].available) - Number(a.copies[0].available))
     .slice(0, GROUP_ROW);
-  return { wanted: unique, newest };
+
+  const perPerson = new Map<string, number>();
+  const newest = asWorks(recent).filter((work) => {
+    const count = perPerson.get(work.addedBy) ?? 0;
+    if (count >= NEW_PER_PERSON) return false;
+    perPerson.set(work.addedBy, count + 1);
+    return true;
+  });
+  return { wanted, newest: newest.slice(0, GROUP_ROW) };
 }
 
 // What the join page shows someone holding the link: the group's name,

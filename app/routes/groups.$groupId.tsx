@@ -1,6 +1,14 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, SerializeFrom } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form, Link, useLoaderData, useNavigation, useSearchParams, useSubmit } from "@remix-run/react";
+import {
+  Form,
+  Link,
+  useLoaderData,
+  useNavigate,
+  useNavigation,
+  useSearchParams,
+  useSubmit,
+} from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
@@ -12,10 +20,11 @@ import { SearchIcon } from "~/components/icons";
 import { mailtoInvite } from "~/components/invite-message";
 import Layout from "~/components / Layout/Layout";
 import { codeFromLink, groupInvitePath, groupPath } from "~/group-links";
-import { isNotLending } from "~/lending";
 import { getFriendActivity } from "~/models/activity.server";
+import type { GroupWork } from "~/models/group.server";
 import {
   GROUP_PAGE,
+  GROUP_SORTS,
   getGroupHighlights,
   searchGroupBooks,
   GROUP_NAME_MAX,
@@ -62,6 +71,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const who = whoParam && openIds.includes(whoParam) ? whoParam : null;
   const available = url.searchParams.get("available") === "1";
   const browsing = url.searchParams.get("all") === "1" || Boolean(q.trim() || who || available);
+  const sortParam = url.searchParams.get("sort");
+  const sort = GROUP_SORTS.find((option) => option === sortParam) ?? "newest";
   const asked = Number(url.searchParams.get("shown"));
   const shown = Math.min(
     GROUP_MOST,
@@ -71,11 +82,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     // What the people in it have been up to, as the feed shows it
     getFriendActivity(userId, { among: openIds, limit: 8 }),
     browsing ? null : getGroupHighlights(userId, openIds),
-    browsing ? searchGroupBooks(openIds, { q, who, available, shown }) : null,
+    browsing ? searchGroupBooks(openIds, { q, who, available, sort, shown }) : null,
   ]);
   return json({
     group: rest,
-    search: { q, who, available, shown, browsing },
+    search: { q, who, available, sort, shown, browsing },
     highlights,
     results,
     activity,
@@ -111,6 +122,8 @@ const quietButton =
   "rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors disabled:opacity-50";
 const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
 const people = (n: number) => `${n} ${n === 1 ? "person" : "people"}`;
+// The members listed before Show all
+const MEMBERS_SHOWN = 10;
 // The most a search shows, however many times Show more is pressed
 const GROUP_MOST = 1000;
 
@@ -122,6 +135,7 @@ export default function GroupPage() {
   const others = group.members.filter((member) => !member.isMe);
   const lenders = others.filter((member) => member.isFriend);
   const [renaming, setRenaming] = useState(false);
+  const [allMembers, setAllMembers] = useState(false);
 
   return (
     <Layout
@@ -132,7 +146,7 @@ export default function GroupPage() {
             {group.members.length} {group.members.length === 1 ? "person" : "people"}
           </h2>
           <ul className="mt-3 space-y-3">
-            {group.members.map((member) => {
+            {(allMembers ? group.members : group.members.slice(0, MEMBERS_SHOWN)).map((member) => {
               const inner = (
                 <>
                   <Avatar
@@ -170,6 +184,15 @@ export default function GroupPage() {
               );
             })}
           </ul>
+          {group.members.length > MEMBERS_SHOWN ? (
+            <button
+              type="button"
+              onClick={() => setAllMembers(!allMembers)}
+              className="mt-3 text-sm text-stone-500 dark:text-stone-400 underline-offset-4 hover:underline hover:text-stone-800 dark:hover:text-stone-200"
+            >
+              {allMembers ? "Show fewer" : `Show all ${group.members.length}`}
+            </button>
+          ) : null}
           <Form method="post" className="mt-8">
             <LeaveButton />
           </Form>
@@ -256,35 +279,58 @@ export default function GroupPage() {
   );
 }
 
-interface ShelfBook {
-  id: string;
-  title: string;
-  author: string;
-  cover: string;
-  borrowerId: string | null;
-  notLendingUntil: string | null;
-  user: { id: string; firstname: string };
+type ShelfWork = SerializeFrom<GroupWork>;
+
+// "Maya", "Maya and Sam", "Maya, Sam and 4 others"
+function whoHasIt(names: string[]) {
+  if (names.length <= 1) return names[0] ?? "";
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  const others = names.length - 2;
+  return `${names[0]}, ${names[1]} and ${others} ${others === 1 ? "other" : "others"}`;
 }
 
-// Covers with whose they are and whether they're in
-function ShelfGrid({ books }: { books: ShelfBook[] }) {
+// One cover per book, with everyone who has a copy and whether one's
+// free. It opens the copy you could borrow soonest.
+function ShelfGrid({ works }: { works: ShelfWork[] }) {
   return (
     <ul className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
-      {books.map((book) => (
-        <li key={book.id}>
-          <Link to={`/books/${book.id}`} title={book.title} className="block hover:opacity-90 transition-opacity">
-            <BookCover cover={book.cover} title={book.title} author={book.author} className="w-full aspect-[2/3]" />
-            <span className="mt-1.5 block truncate text-xs text-stone-700 dark:text-stone-300">{book.title}</span>
-            <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
-              {book.user.firstname}
-              {book.borrowerId ? " · Lent out" : isNotLending(book.notLendingUntil) ? " · Not lending" : ""}
-            </span>
-          </Link>
-        </li>
-      ))}
+      {works.map((work) => {
+        const free = work.copies.filter((copy) => copy.available).length;
+        const status =
+          work.copies.length > 1
+            ? free > 0
+              ? `${free} available`
+              : "All lent out"
+            : work.copies[0].lent
+              ? "Lent out"
+              : work.copies[0].available
+                ? null
+                : "Not lending";
+        return (
+          <li key={work.key}>
+            <Link
+              to={`/books/${work.copies[0].bookId}`}
+              title={work.title}
+              className="block hover:opacity-90 transition-opacity"
+            >
+              <BookCover cover={work.cover} title={work.title} author={work.author} className="w-full aspect-[2/3]" />
+              <span className="mt-1.5 block truncate text-xs text-stone-700 dark:text-stone-300">{work.title}</span>
+              <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
+                {whoHasIt([...new Set(work.copies.map((copy) => copy.owner.firstname))])}
+              </span>
+              {status ? (
+                <span className="block truncate text-xs text-stone-400 dark:text-stone-500">{status}</span>
+              ) : null}
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }
+
+// More people than this, and the person filter is a menu instead of chips
+const PEOPLE_AS_CHIPS = 6;
 
 const chip = (on: boolean) =>
   `inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-sm transition-colors ${
@@ -307,12 +353,13 @@ function GroupShelf({
   groupName: string;
   lenders: { id: string; firstname: string; surname: string; profileEmoji: string | null }[];
   bookCount: number;
-  search: { q: string; who: string | null; available: boolean; shown: number; browsing: boolean };
-  highlights: { wanted: ShelfBook[]; newest: ShelfBook[] } | null;
-  results: { books: ShelfBook[]; total: number } | null;
+  search: { q: string; who: string | null; available: boolean; sort: string; shown: number; browsing: boolean };
+  highlights: { wanted: ShelfWork[]; newest: ShelfWork[] } | null;
+  results: { works: ShelfWork[]; total: number } | null;
 }) {
   const [searchParams] = useSearchParams();
   const submit = useSubmit();
+  const navigate = useNavigate();
   const formRef = useRef<HTMLFormElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -379,7 +426,41 @@ function GroupShelf({
         >
           Available now
         </Link>
-        {lenders.length > 1 ? (
+        {lenders.length > PEOPLE_AS_CHIPS ? (
+          // Too many people for a row of chips
+          <span className="relative">
+            <select
+              value={search.who ?? ""}
+              onChange={(event) =>
+                navigate(hrefWith({ who: event.target.value || null }), { replace: true, preventScrollReset: true })
+              }
+              aria-label="Whose books"
+              className={`${chip(Boolean(search.who))} appearance-none pr-8`}
+            >
+              <option value="">Anyone</option>
+              {lenders.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.firstname} {member.surname}
+                </option>
+              ))}
+            </select>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              aria-hidden="true"
+              className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${
+                search.who ? "text-white dark:text-stone-900" : "text-stone-500 dark:text-stone-400"
+              }`}
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </span>
+        ) : lenders.length > 1 ? (
           <>
             <span className="mx-1 h-5 w-px bg-stone-200 dark:bg-stone-700" aria-hidden="true" />
             {lenders.map((member) => {
@@ -408,16 +489,35 @@ function GroupShelf({
             <p className={heading} aria-live="polite">
               {results.total === 0
                 ? "No books match"
-                : results.total === bookCount
-                  ? `All ${plural(bookCount, "book")}`
-                  : plural(results.total, "book")}
+                : search.q || search.who || search.available
+                  ? plural(results.total, "book")
+                  : `All ${plural(results.total, "book")}`}
             </p>
-            <Link to="?" preventScrollReset replace className="text-sm text-stone-500 dark:text-stone-400 underline-offset-4 hover:underline">
-              Clear
-            </Link>
+            <span className="flex items-center gap-3">
+              <label className="flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
+                Sort
+                <select
+                  value={search.sort}
+                  onChange={(event) =>
+                    navigate(hrefWith({ sort: event.target.value === "newest" ? null : event.target.value }), {
+                      replace: true,
+                      preventScrollReset: true,
+                    })
+                  }
+                  className="rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 py-1 pl-2 pr-7 text-sm text-stone-800 dark:text-stone-200"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="title">Title</option>
+                  <option value="author">Author</option>
+                </select>
+              </label>
+              <Link to="?" preventScrollReset replace className="text-sm text-stone-500 dark:text-stone-400 underline-offset-4 hover:underline">
+                Clear
+              </Link>
+            </span>
           </div>
-          {results.books.length > 0 ? <ShelfGrid books={results.books} /> : null}
-          {results.total > results.books.length ? (
+          {results.works.length > 0 ? <ShelfGrid works={results.works} /> : null}
+          {results.total > results.works.length ? (
             <div className="mt-6 text-center">
               <Link
                 to={hrefWith({ shown: String(search.shown + 48) })}
@@ -435,13 +535,13 @@ function GroupShelf({
           {highlights.wanted.length > 0 ? (
             <div>
               <h3 className={`mb-3 ${heading}`}>From your want-to-read list</h3>
-              <ShelfGrid books={highlights.wanted} />
+              <ShelfGrid works={highlights.wanted} />
             </div>
           ) : null}
           {highlights.newest.length > 0 ? (
             <div>
               <h3 className={`mb-3 ${heading}`}>New in the group</h3>
-              <ShelfGrid books={highlights.newest} />
+              <ShelfGrid works={highlights.newest} />
             </div>
           ) : null}
           {bookCount > highlights.newest.length ? (
