@@ -337,8 +337,14 @@ function BookCover({
       {!error && src ? (
         <img
           src={coverSrc(src)}
-          alt={title}
-          loading="lazy"
+          // The title is the heading beside it. An empty alt also means a
+          // cover that fails shows nothing at all, where Safari would draw
+          // the title and a "?" over the placeholder until the page's
+          // script noticed the failure
+          alt=""
+          // At the top of the page, so there's nothing to wait for; Safari
+          // can also miss a lazy image's failure
+          loading="eager"
           decoding="async"
           // Visible from the first paint; it fills the 2:3 box until its
           // own size is known, then keeps its proportions
