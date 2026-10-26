@@ -76,7 +76,9 @@ test("the group's shelf is everyone else's books, only for the people in it", as
   const titles = async (search: Parameters<typeof searchGroupBooks>[1]) =>
     (await searchGroupBooks(page.openIds, search)).works.map((work) => work.title).sort();
   expect(await titles({ q: "dune" })).toEqual(["Dune", "Dune Messiah"]);
-  expect(await titles({ q: "dune", available: true })).toEqual(["Dune"]);
+  expect(await titles({ q: "dune", status: "available" })).toEqual(["Dune"]);
+  expect(await titles({ status: "lent" })).toEqual(["Dune Messiah"]);
+  expect((await searchGroupBooks(page.openIds, {})).counts).toEqual({ all: 3, available: 2, lent: 1 });
   expect(await titles({ who: ben.id })).toEqual(["Dune Messiah", "Middlemarch"]);
   expect((await searchGroupBooks(page.openIds, { shown: 1 })).total).toBe(3);
 
@@ -88,7 +90,7 @@ test("the group's shelf is everyone else's books, only for the people in it", as
   expect(await getGroupByToken(await tokenOf(group.id))).toMatchObject({ name: "Office", bookCount: 4 });
 });
 
-test("the top of a group's page: your wishes someone has, then what's new", async () => {
+test("the top of a group's shelf: your wishes someone has, one entry each", async () => {
   const ana = await makeUser("Ana");
   const ben = await makeUser("Ben");
   const group = await createGroup(ana.id, "Club");
@@ -99,11 +101,9 @@ test("the top of a group's page: your wishes someone has, then what's new", asyn
   await prisma.wantToRead.create({ data: { userId: ana.id, title: "Piranesi", author: "Susanna Clarke", cover: "" } });
 
   const page = await getGroup(group.id, ana.id);
-  const { wanted, newest } = await getGroupHighlights(ana.id, page?.openIds ?? []);
-  // One copy of each book you want
-  expect(wanted.map((book) => book.title.toLowerCase())).toEqual(["piranesi"]);
-  // Two copies of Piranesi make one entry
-  expect(newest.map((work) => work.copies.length).sort()).toEqual([1, 2]);
+  const { wanted } = await getGroupHighlights(ana.id, page?.openIds ?? []);
+  // Both copies of Piranesi, as one entry
+  expect(wanted.map((work) => [work.title.toLowerCase(), work.copies.length])).toEqual([["piranesi", 2]]);
 });
 
 test("leaving keeps friendships, and the last one out ends the group", async () => {
@@ -150,7 +150,7 @@ test("group names are tidied and kept short", () => {
   expect(cleanGroupName(null)).toBe("");
 });
 
-test("a big group's shelf: one entry per book, sorted as asked, and New shared out", async () => {
+test("a big group's shelf: one entry per book, sorted as asked", async () => {
   const ana = await makeUser("Ana");
   const group = await createGroup(ana.id, "Big club");
   const token = await tokenOf(group.id);
@@ -188,8 +188,4 @@ test("a big group's shelf: one entry per book, sorted as asked, and New shared o
     "Zorba",
   ]);
 
-  // Cal's pile can't fill the New row: three of theirs, then Ben's
-  const { newest } = await getGroupHighlights(ana.id, openIds);
-  expect(newest.filter((work) => work.addedBy === cal.id)).toHaveLength(3);
-  expect(newest.some((work) => work.title === "Piranesi")).toBe(true);
 });

@@ -32,7 +32,7 @@ function getCoverSources(original: string) {
 
 // The grid for each cover size in the account settings, and how wide a
 // cover is in it, so the browser picks the right image
-const GRIDS = {
+export const GRIDS = {
   large: {
     columns: "grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6",
     sizes: "(min-width: 768px) 170px, (min-width: 640px) 22vw, 31vw",
@@ -119,7 +119,7 @@ interface LibraryProps {
 }
 
 // The grid's cover, with a 2x candidate for sharp screens
-function GridCover({
+export function GridCover({
   cover,
   title,
   author,
