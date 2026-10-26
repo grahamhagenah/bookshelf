@@ -55,7 +55,7 @@ export function customCoverPath(url: string) {
 }
 
 // Production keeps its data on the Fly volume mounted at /data
-export const CACHE_DIR =
+const CACHE_DIR =
   process.env.COVER_CACHE_DIR ??
   (process.env.NODE_ENV === "production"
     ? "/data/covers"

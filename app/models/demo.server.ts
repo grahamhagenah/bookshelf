@@ -2,7 +2,6 @@ import type { User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 import { lendBook } from "~/models/book.server";
-import { demoCover, resolveDemoCovers } from "~/models/demo-covers.server";
 import {
   createBookApprovedNotification,
   createFriendship,
@@ -27,6 +26,79 @@ interface DemoBook {
   body: string;
 }
 
+
+// Each demo book's Open Library cover, by cover ID: the picture its ISBN
+// leads to, checked to be a real one. Covers asked for by ISBN count
+// against Open Library's rate limit (about 100 every five minutes), and a
+// demo shelf asks for dozens at once, so the overflow came back as
+// placeholders. Asked for by ID, they aren't limited.
+const COVER_IDS: Record<string, number> = {
+  "9780593135204": 12455001,
+  "9781635575637": 10226290,
+  "9780441172719": 15166231,
+  "9780316556347": 8283869,
+  "9780345404473": 208553,
+  "9780804172448": 7369961,
+  "9781571313560": 12836879,
+  "9780143110439": 12064129,
+  "9780374104092": 10520611,
+  "9781455563920": 8755926,
+  "9780063021426": 14573249,
+  "9780547928227": 12003329,
+  "9780593318171": 10673548,
+  "9780399590504": 14832082,
+  "9780525657606": 10306590,
+  "9780593321201": 12816990,
+  "9780393635522": 8758252,
+  "9781984822178": 15228808,
+  "9780312424404": 181906,
+  "9780756404741": 8259445,
+  "9781400033416": 15248310,
+  "9780062060624": 15160443,
+  "9781982168438": 13253465,
+  "9780385534635": 8750523,
+  "9781101947883": 8793546,
+  "9780062316097": 8594920,
+  "9780553418026": 12065533,
+  "9780399588198": 12063911,
+  "9780735211292": 12886417,
+  "9780307387899": 14818095,
+  "9780553283686": 369091,
+  "9780441569595": 283860,
+  "9781250186430": 8802134,
+  "9780062662569": 15247652,
+  "9780316421997": 8753949,
+  "9780525559474": 15164860,
+  "9781400078776": 13160732,
+  "9781501160837": 10087939,
+  "9780735219090": 13011470,
+  "9781501161933": 15255141,
+  "9780525620785": 10239163,
+  "9781250789068": 12166131,
+  "9781250313188": 10139515,
+  "9780765382030": 8478888,
+  "9780765326355": 7429768,
+  "9780316229296": 14614853,
+  "9780141439686": 9279141,
+  "9780156628709": 6929140,
+  "9780141439549": 109037,
+  "9780141441146": 109090,
+  "9780380730407": 8765889,
+  "9780593321447": 11642160,
+  "9780547572291": 14814765,
+  "9780812995343": 7909378,
+  "9781534430990": 10304444,
+  "9780307352156": 8142530,
+  "9780671683900": 8376342,
+  "9780063251922": 14817076,
+};
+
+function cover(isbn: string) {
+  const id = COVER_IDS[isbn];
+  return id
+    ? `https://covers.openlibrary.org/b/id/${id}-L.jpg`
+    : `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
+}
 
 const day = 24 * 60 * 60 * 1000;
 const hour = 60 * 60 * 1000;
@@ -700,7 +772,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       const created = await prisma.book.create({
         data: {
           ...book,
-          cover: await demoCover(isbn),
+          cover: cover(isbn),
           userId: ids[owner],
           // Spread the "added" dates out so the shelf has a natural order
           createdAt: ago((i + 1) * 3 * day),
@@ -1267,20 +1339,12 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       isbn: "9780063251922",
     },
   ];
-  // Swap blank covers for working ones, for this sandbox and the next
-  if (process.env.NODE_ENV !== "test") {
-    void resolveDemoCovers([
-      ...Object.values(LIBRARIES).flat(),
-      ...wanted,
-    ]);
-  }
-
   for (const [i, { isbn, ...book }] of wanted.entries()) {
     await prisma.wantToRead.create({
       data: {
         ...book,
         isbn,
-        cover: await demoCover(isbn),
+        cover: cover(isbn),
         userId: ids.you,
         createdAt: ago((i + 2) * 9 * day),
       },
