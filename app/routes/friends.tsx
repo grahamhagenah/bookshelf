@@ -9,6 +9,7 @@ import { useLoaderData, useFetcher, Link } from "@remix-run/react";
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
+import Faces from "~/components/faces";
 import FriendsTabs from "~/components/friends-tabs";
 import {
   BookIcon,
@@ -21,6 +22,7 @@ import {
 } from "~/components/icons";
 import Layout from "~/components / Layout/Layout";
 import { getFriendsTabCounts } from "~/friends-tabs.server";
+import { groupPath } from "~/group-links";
 import {
   answerFriendRequest,
   getFriendCards,
@@ -28,6 +30,7 @@ import {
   removeFriend,
   setHiddenFromFeed,
 } from "~/models/friend.server";
+import { getMyGroups } from "~/models/group.server";
 import { getPendingFriendRequests } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
@@ -41,10 +44,11 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [friends, incoming, pendingRequests] = await Promise.all([
+  const [friends, incoming, pendingRequests, groups] = await Promise.all([
     getFriendCards(userId),
     getIncomingFriendRequests(userId),
     getPendingFriendRequests(userId),
+    getMyGroups(userId),
   ]);
   return json({
     // For the tabs across the top
@@ -52,6 +56,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     friends,
     incoming,
     pendingRequests,
+    // A way straight to each group, without the Groups tab in between
+    groups: groups.map(({ id, name, faces }) => ({ id, name, faces, path: groupPath({ id, name }) })),
   });
 };
 
@@ -115,7 +121,30 @@ export default function Friends() {
   const { friends, incoming, pendingRequests } = data;
 
   return (
-    <Layout title="Friends" header={<FriendsTabs counts={data.counts} />}>
+    <Layout
+      title="Friends"
+      header={
+        <>
+          <FriendsTabs counts={data.counts} />
+          {/* Straight to each of your groups, without the Groups tab between */}
+          {data.groups.length > 0 ? (
+            <nav aria-label="Your groups" className="-mt-1 mb-8 flex flex-wrap items-center gap-2">
+              {data.groups.map((group) => (
+                <Link
+                  key={group.id}
+                  to={group.path}
+                  className="inline-flex h-10 items-center gap-2 rounded-full border border-stone-200 dark:border-stone-800 py-1 pl-1 pr-4 text-sm font-medium text-stone-800 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-600 transition-colors"
+                >
+                  <Faces people={group.faces} max={3} />
+                  {group.name}
+                </Link>
+              ))}
+            </nav>
+          ) : null}
+        </>
+      }
+    >
+
       {incoming.length > 0 ? (
         <section>
           <h2 className="text-lg font-semibold">Friend requests</h2>
