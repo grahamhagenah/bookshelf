@@ -29,7 +29,7 @@ export default function FriendsTabs({
         </NavLink>
         <NavLink to="/friends/books" className={tab}>
           <BookIcon size={16} className="hidden sm:block" />
-          Their books
+          Books
           <span className={count}>{counts.books}</span>
         </NavLink>
         <NavLink to="/groups" className={tab}>

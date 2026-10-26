@@ -7,7 +7,7 @@ import { loadGroup } from "~/group-page.server";
 import { getFriendActivity } from "~/models/activity.server";
 
 // A group's page opens on what its people have been up to, as the feed
-// shows it. Their books are on Their books, narrowed to the group.
+// shows it. Their books are on Friends' Books tab, narrowed to the group.
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { userId, group } = await loadGroup(request, params);

@@ -22,7 +22,7 @@ import { requireUserId } from "~/session.server";
 
 // A group's page, laid out like My shelf: the group across the top, tabs
 // for what's been happening and who's in it, and beside them the way to
-// its books (Their books, narrowed to the group) and the invite
+// its books (the Friends page's Books, narrowed to the group) and the invite
 
 export const meta: MetaFunction<typeof loader> = ({ data }) =>
   seo({ title: data?.group.name ?? "Group", noindex: true });
@@ -147,7 +147,7 @@ export default function GroupLayout() {
           </NavLink>
         </nav>
         <div className="-mt-1.5 flex items-center gap-2">
-          {/* Its books are on Their books, narrowed to the group */}
+          {/* Its books are on Friends' Books tab, narrowed to the group */}
           {group.bookCount > 0 ? (
             <Link
               to={`/friends/books?${new URLSearchParams({ who: `g:${group.id}` })}`}

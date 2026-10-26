@@ -7,7 +7,7 @@ import { createGroup, getMyGroups, joinGroup } from "./models/group.server";
 import { createFriendship } from "./models/user.server";
 import { loadPooledShelf } from "./pooled-shelf.server";
 
-test("Their books narrows to one group, or one person, from the address", async () => {
+test("Friends' Books tab narrows to one group, or one person, from the address", async () => {
   const me = await makeUser("Me");
   const clubber = await makeUser("Clubber");
   const neighbor = await makeUser("Neighbor");
