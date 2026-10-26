@@ -1022,7 +1022,7 @@ function IconPicker({
               aria-pressed={chosen}
               className={`flex h-11 w-11 items-center justify-center rounded-full ${iconTone(color)} ${ring(chosen)}`}
             >
-              <AvatarGlyph icon={icon} size={27} />
+              <AvatarGlyph icon={icon} size={34} />
             </button>
           );
         })}

@@ -5,19 +5,12 @@
 // picked earlier, falls back to initials.
 
 const ICON_PATHS = {
-  book: (
-    <>
-      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v14H6.5A2.5 2.5 0 0 0 4 19.5z" />
-      <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" />
-    </>
-  ),
   leaf: (
     <>
       <path d="M5 19c0-8.5 5.5-14 15-14 0 9.5-5.5 15-15 14z" />
       <path d="M5 19 14 10" />
     </>
   ),
-  bookmark: <path d="M7 3.5h10v17l-5-3.5-5 3.5z" />,
   moon: <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5z" />,
   sun: (
     <>
@@ -107,12 +100,15 @@ const ICON_PATHS = {
   ),
   cat: (
     <>
-      {/* A kitty: a wide round face, oval eyes, a button nose, whiskers */}
-      <path d="M5.07 10.6 5.2 4.6l3.42 3.56a8 6 0 0 1 6.76 0L18.8 4.6l.13 6A8 6 0 1 1 5.07 10.6z" />
-      <ellipse cx="9" cy="13.3" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
-      <ellipse cx="15" cy="13.3" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
-      <ellipse cx="12" cy="15.4" rx=".95" ry=".7" fill="currentColor" stroke="none" />
-      <path d="M6.3 13.6 1.8 12.9M6.3 15.6 2 16.5M17.7 13.6l4.5-.7M17.7 15.6l4.3.9" />
+      {/* A kitty: a wide round face with soft-tipped ears, oval eyes, a
+          button nose, and whiskers of one length that lie over the cheek and
+          reach out past it, as the bunny's do. The face is 15 wide so
+          they have room */}
+      <path d="M4.99 11.4L5 6.3Q5.1 3.9 6.66 5.73L8.6 8A8 6 0 0 1 15.4 8L17.34 5.73Q18.9 3.9 19 6.3L19.01 11.4A7.5 7 0 1 1 4.99 11.4z" />
+      <ellipse cx="9.3" cy="13.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="14.7" cy="13.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="15.7" rx="1.15" ry=".85" fill="currentColor" stroke="none" />
+      <path d="M6.51 14.9l-4.25-0.67M7.53 17.1l-4.21 0.89M17.49 14.9l4.25-0.67M16.47 17.1l4.21 0.89" />
     </>
   ),
   paw: (
@@ -137,18 +133,6 @@ const ICON_PATHS = {
       </g>
     </>
   ),
-  owl: (
-    <>
-      {/* A round face, its tufts part of the outline, as big as the box
-          allows so the eyes still read at small sizes */}
-      <path d="M4.64 8.55 3.74 4.07l4.67 1.02a8.5 8.5 0 0 1 7.18 0l4.67-1.02-.9 4.48A8.5 8.5 0 1 1 4.64 8.55z" />
-      <circle cx="8.7" cy="11.6" r="2.7" />
-      <circle cx="15.3" cy="11.6" r="2.7" />
-      <circle cx="8.7" cy="11.6" r="1.2" fill="currentColor" stroke="none" />
-      <circle cx="15.3" cy="11.6" r="1.2" fill="currentColor" stroke="none" />
-      <path d="M11.2 15.4 12 16.8l.8-1.4" />
-    </>
-  ),
   fox: (
     <>
       {/* On the kitty's face: big pointed ears, oval eyes, a pointed chin and
@@ -161,13 +145,14 @@ const ICON_PATHS = {
   ),
   frog: (
     <>
-      {/* The head stops at the eyes rather than running through them */}
-      <path d="M5.75 9.1C4.4 10.2 3.5 12 3.5 14c0 3.3 3.8 5.5 8.5 5.5s8.5-2.2 8.5-5.5c0-2-.9-3.8-2.25-4.9M9.7 10q2.3-.6 4.6 0" />
-      <circle cx="8" cy="8.3" r="2.4" />
-      <circle cx="16" cy="8.3" r="2.4" />
-      <circle cx="8" cy="8.3" r="1" fill="currentColor" stroke="none" />
-      <circle cx="16" cy="8.3" r="1" fill="currentColor" stroke="none" />
-      <path d="M8.5 14.5q3.5 2.3 7 0" />
+      {/* On the kitty's face, the same size: two eye bumps rising out of
+          the top of the head (the outline stops where they sit), pupils
+          under them, and a wide smile */}
+      <path d="M6.45 9.19A7.5 7 0 1 0 17.55 9.19M12.71 6.93A7.5 7 0 0 0 11.29 6.93" />
+      <path d="M6.45 9.19A2.7 2.7 0 1 1 11.29 6.93M12.71 6.93A2.7 2.7 0 1 1 17.55 9.19" />
+      <circle cx="8.7" cy="7.9" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15.3" cy="7.9" r="1" fill="currentColor" stroke="none" />
+      <path d="M8 15.8Q12 19 16 15.8" />
     </>
   ),
   bee: (
@@ -182,10 +167,12 @@ const ICON_PATHS = {
   ),
   octopus: (
     <>
-      <path d="M6 11.5a6 6 0 0 1 12 0v2H6z" />
-      <path d="M7 13.5c0 3-2 4-2 6M10 13.5c0 3-1 5-.5 7M14 13.5c0 3 1 5 .5 7M17 13.5c0 3 2 4 2 6" />
-      <circle cx="9.5" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="14.5" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
+      {/* A jellyfish at the family's size: a bell as wide as the kitty's
+          face with a scalloped hem, her oval eyes, and four tentacles */}
+      <path d="M4.5 13.2C4.5 8.4 7.9 4.6 12 4.6s7.5 3.8 7.5 8.6Q16.3 14.6 12 14.6T4.5 13.2z" />
+      <ellipse cx="9.3" cy="10.2" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="14.7" cy="10.2" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <path d="M7.2 14.5c-.9 2.1.7 3.6-.2 5.8M10.4 14.6c-.7 2.2.9 3.7.1 6.1M13.6 14.6c.7 2.2-.9 3.7-.1 6.1M16.8 14.5c.9 2.1-.7 3.6.2 5.8" />
     </>
   ),
   snail: (
@@ -210,21 +197,44 @@ const ICON_PATHS = {
   ),
   hare: (
     <>
-      {/* The kitty's cousin, on the same face: oval eyes, a button nose and
-          whiskers, with two tall ears drawn into the outline */}
-      <path d="M7.6 9.19C6.9 6.4 7.2 2.2 9.1 1.9 10.8 1.6 11.2 5.3 10.6 8.29A8 6 0 0 1 13.4 8.29C12.8 5.3 13.2 1.6 14.9 1.9 16.8 2.2 17.1 6.4 16.4 9.19A8 6 0 1 1 7.6 9.19z" />
-      <ellipse cx="9" cy="13.9" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
-      <ellipse cx="15" cy="13.9" rx=".85" ry="1.15" fill="currentColor" stroke="none" />
-      <ellipse cx="12" cy="16" rx=".95" ry=".7" fill="currentColor" stroke="none" />
-      <path d="M6.3 14.2 1.8 13.5M6.3 16.2 2 17.1M17.7 14.2l4.5-.7M17.7 16.2l4.3.9" />
+      {/* The kitty's cousin on the very same face: her eyes, nose and
+          whiskers, with two tall rounded ears reaching the top of the box */}
+      <path d="M7.3 9.65C6.5 7.4 5.9 4.2 6.8 2.3Q8 .3 9.6 1.9C10.5 3.2 10.8 6.2 10.6 8.22A7.5 7 0 0 1 13.4 8.22C13.2 6.2 13.5 3.2 14.4 1.9Q16 .3 17.2 2.3C18.1 4.2 17.5 7.4 16.7 9.65A7.5 7 0 1 1 7.3 9.65z" />
+      <ellipse cx="9.3" cy="14.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="14.7" cy="14.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="16.9" rx="1.15" ry=".85" fill="currentColor" stroke="none" />
+      <path d="M6.51 16.1l-4.25-0.67M7.53 18.3l-4.21 0.89M17.49 16.1l4.25-0.67M16.47 18.3l4.21 0.89" />
+    </>
+  ),
+  mouse: (
+    <>
+      {/* The mouse: bigger round ears up top, the kitty's whiskers, a small nose */}
+      <ellipse cx="12" cy="13.9" rx="7.5" ry="7" />
+      <path d="M6 9.7A3 3 0 1 1 9.4 7.33M14.6 7.33A3 3 0 1 1 18 9.7" />
+      <ellipse cx="9.3" cy="13.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="14.7" cy="13.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="15.7" rx="1.15" ry="0.85" fill="currentColor" stroke="none" />
+      <path d="M6.51 14.9l-4.25-0.67M7.53 17.1l-4.21 0.89M17.49 14.9l4.25-0.67M16.47 17.1l4.21 0.89" />
+    </>
+  ),
+  koala: (
+    <>
+      {/* The koala: big round ears out at the sides, and a tall oval nose */}
+      <ellipse cx="12" cy="13.9" rx="7.5" ry="7" />
+      <path d="M5 11.4A3.2 3.2 0 1 1 8.2 7.87M15.8 7.87A3.2 3.2 0 1 1 19 11.4" />
+      <ellipse cx="9.3" cy="12.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="14.7" cy="12.6" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="16" rx="1.5" ry="2" fill="currentColor" stroke="none" />
     </>
   ),
   ghost: (
     <>
-      <path d="M6 20.5V11a6 6 0 0 1 12 0v9.5l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5z" />
-      <circle cx="10" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="14" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
-      <path d="M10.6 14c.8.6 2 .6 2.8 0" />
+      {/* At the family's size: a sheet as wide as the kitty's face, rounded
+          on top with three scallops below, her oval eyes, and an "oh" */}
+      <path d="M4.5 11.9C4.5 7.4 7.9 3.9 12 3.9s7.5 3.5 7.5 8v8.4c-1.25-1.15-2.5-1.15-3.75 0s-2.5 1.15-3.75 0-2.5-1.15-3.75 0-2.5 1.15-3.75 0z" />
+      <ellipse cx="9.3" cy="11.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="14.7" cy="11.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="15.2" rx=".9" ry="1.2" fill="currentColor" stroke="none" />
     </>
   ),
   tree: (
@@ -255,6 +265,50 @@ const ICON_PATHS = {
     <>
       <path d="M3 12a9 9 0 0 1 18 0z" />
       <path d="M12 12v6.5a2 2 0 0 1-4 0M12 3v0" />
+    </>
+  ),
+  discoball: (
+    <>
+      {/* A disco ball: a ball on a thread, with a sparse grid of facets */}
+      <circle cx="12" cy="13.2" r="8" />
+      <path d="M12 5.2V2" />
+      <path d="M4.81 9.7h14.39M4.81 16.7h14.39M8.5 6.01v14.39M15.5 6.01v14.39" />
+    </>
+  ),
+  skull: (
+    <>
+      {/* A skull: the cranium narrowing to a jaw, two sockets, the nasal
+          cavity and two teeth */}
+      <path d="M4.5 11.5C4.5 6.5 7.9 3.5 12 3.5s7.5 3 7.5 8c0 3-1.3 4.9-3 5.8V21h-9v-3.7c-1.7-.9-3-2.8-3-5.8z" />
+      <ellipse cx="9" cy="11.6" rx="2" ry="2.2" fill="currentColor" stroke="none" />
+      <ellipse cx="15" cy="11.6" rx="2" ry="2.2" fill="currentColor" stroke="none" />
+      <path d="M11 15.6h2L12 14z" fill="currentColor" stroke="none" />
+      <path d="M10.5 18v3M13.5 18v3" />
+    </>
+  ),
+  eye: (
+    <>
+      {/* An eye: the almond, the iris and the pupil */}
+      <path d="M2.5 12C5 7 8.5 5 12 5s7 2 9.5 7c-2.5 5-6 7-9.5 7S5 17 2.5 12z" />
+      <circle cx="12" cy="12" r="3.5" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    </>
+  ),
+  pyramid: (
+    <>
+      {/* A pyramid seen from a corner: two faces meeting at an edge, over a
+          base in perspective */}
+      <path d="M12 3L2.8 16.8L12.8 21L21.2 14.8z" />
+      <path d="M12 3L12.8 21" />
+    </>
+  ),
+  wine: (
+    <>
+      {/* A wine glass: a bowl with a flat rim on a stem and a foot, with wine
+          in it */}
+      <path d="M6.5 3h11v5c0 3.7-2.5 6.6-5.5 6.6S6.5 11.7 6.5 8z" />
+      <path d="M12 14.6V21M8 21h8" />
+      <path d="M6.9 9.8h10.2c-.5 2.9-2.6 4.8-5.1 4.8S7.4 12.7 6.9 9.8z" fill="currentColor" stroke="none" />
     </>
   ),
   anchor: (
@@ -337,10 +391,11 @@ const ICON_PATHS = {
   ),
   chef: (
     <>
-      {/* A toque: three tall puffs overhanging a narrow band. No pleats,
-          and the puffs wider than the band, or it reads as a muffin */}
+      {/* A toque: three tall puffs overhanging a narrow band, with two folds
+          in the puff. The puffs wider than the band, or it reads as a muffin */}
       <path d="M8.5 15.5C4.6 15.8 2.8 11.2 5.6 9.2c.9-.6 2-.8 2.9-.6C8.9 5.9 10.3 4 12 4s3.1 1.9 3.5 4.6c.9-.2 2 0 2.9.6 2.8 2 1 6.6-2.9 6.3" />
       <path d="M8.5 15.5v4h7v-4" />
+      <path d="M10.4 15.3V11.6M13.6 15.3V11.6" />
     </>
   ),
   teapot: (
@@ -368,7 +423,40 @@ const ICON_PATHS = {
 
 export type AvatarIcon = keyof typeof ICON_PATHS;
 
-export const AVATAR_ICONS = Object.keys(ICON_PATHS) as AvatarIcon[];
+// What the picker offers, in its order. The rest of ICON_PATHS is retired
+// for now: still drawn for anyone who chose one, no longer on offer.
+export const AVATAR_ICONS: AvatarIcon[] = [
+  "leaf",
+  "flower",
+  "moon",
+  "sun",
+  "star",
+  "mountain",
+  "glasses",
+  "cat",
+  "hare",
+  "mouse",
+  "koala",
+  "paw",
+  "frog",
+  "octopus",
+  "ghost",
+  "tree",
+  "cactus",
+  "planet",
+  "crown",
+  "anchor",
+  "music",
+  "headphones",
+  "bicycle",
+  "umbrella",
+  "chef",
+  "wine",
+  "discoball",
+  "skull",
+  "eye",
+  "pyramid",
+];
 
 export function isAvatarIcon(value: unknown): value is AvatarIcon {
   return typeof value === "string" && value in ICON_PATHS;
@@ -508,13 +596,15 @@ export const iconTone = (color: PlateColor | null) =>
     ? PLATE_COLORS[color]
     : "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200";
 
+// The picture fills about three quarters of its circle: the drawings are
+// round-ish and keep clear of the box's corners, so they can run big
 const SIZES = {
-  xs: { box: "w-6 h-6 text-[10px]", icon: 15 },
-  sm: { box: "w-8 h-8 text-xs", icon: 20 },
+  xs: { box: "w-6 h-6 text-[10px]", icon: 19 },
+  sm: { box: "w-8 h-8 text-xs", icon: 25 },
   // A list beside other things, like the home page's friend activity
-  list: { box: "w-9 h-9 text-xs", icon: 23 },
-  md: { box: "w-10 h-10 text-sm", icon: 25 },
-  lg: { box: "w-16 h-16 text-xl", icon: 38 },
+  list: { box: "w-9 h-9 text-xs", icon: 28 },
+  md: { box: "w-10 h-10 text-sm", icon: 31 },
+  lg: { box: "w-16 h-16 text-xl", icon: 50 },
 };
 
 export default function Avatar({
