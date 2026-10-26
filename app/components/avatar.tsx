@@ -47,6 +47,17 @@ const ICON_PATHS = {
       <path d="M8 3.5v2.5M12 3.5v2.5" />
     </>
   ),
+  moka: (
+    <>
+      {/* A stovetop espresso pot: two chambers pinched at the seam, a
+          pouring lip, a handle and a knob on the lid */}
+      <path d="M7.5 5.5h9L15 12.5l2 8H7l2-8z" />
+      <path d="M9 12.5h6" />
+      <path d="M7.5 5.5 5 4.3l2.3 3" />
+      <path d="M16.29 6.5H19l-1.6 5h-2.19" />
+      <circle cx="12" cy="4" r="1" fill="currentColor" stroke="none" />
+    </>
+  ),
   compass: (
     <>
       <circle cx="12" cy="12" r="9" />
@@ -55,8 +66,12 @@ const ICON_PATHS = {
   ),
   flower: (
     <>
-      <circle cx="12" cy="12" r="2.5" />
-      <path d="M12 9.5a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM14.5 12a3 3 0 1 1 6 0 3 3 0 0 1-6 0zM12 14.5a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM9.5 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+      {/* Five petals in one outline, none crossing, on a stem with a leaf
+          to each side */}
+      <path d="M9.34 9.07A2.15 2.15 0 1 1 10.35 5.93A2.15 2.15 0 1 1 13.65 5.93A2.15 2.15 0 1 1 14.66 9.07A2.15 2.15 0 1 1 12 11A2.15 2.15 0 1 1 9.34 9.07z" />
+      <circle cx="12" cy="8.2" r="1.1" fill="currentColor" stroke="none" />
+      <path d="M12 11V21" />
+      <path d="M12 17.5c.4-2.6 2.5-3.8 5-3.6-.3 2.5-2.3 3.9-5 3.6zM12 19c-.4-2.2-2.2-3.2-4.3-3 .3 2.1 2 3.3 4.3 3z" />
     </>
   ),
   glasses: (
@@ -268,6 +283,14 @@ const ICON_PATHS = {
     <>
       <path d="M4 17.5 3 7.5l5 4 4-6.5 4 6.5 5-4-1 10z" />
       <path d="M4.5 20.5h15" />
+    </>
+  ),
+  chef: (
+    <>
+      {/* A chef's hat: a puffed top of three rounds over a band */}
+      <path d="M7 15C4.5 14.5 3.5 11.7 5.2 10 6.3 8.9 7.9 8.8 9 9.4 9.4 6.9 10.6 5.2 12 5.2s2.6 1.7 3 4.2c1.1-.6 2.7-.5 3.8.6 1.7 1.7.7 4.5-1.8 5" />
+      <path d="M7 15v4.5h10V15z" />
+      <path d="M10 15v-2.6M14 15v-2.6" />
     </>
   ),
   teapot: (
