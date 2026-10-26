@@ -962,13 +962,14 @@ function IconPicker({
   return (
     <>
       {/* On phones the six colors take the icon grid's six columns, so the
-          two line up; the label sits above them. From there, one row. */}
+          two line up, and the word goes unsaid (the group is still labeled).
+          From there, one row with the word in front. */}
       <div
-        className="grid grid-cols-6 justify-items-center gap-y-2 pt-1 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5"
+        className="grid grid-cols-6 justify-items-center pt-1 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5"
         role="group"
         aria-label="Color"
       >
-        <span className="col-span-6 justify-self-start text-sm text-stone-500 dark:text-stone-400 sm:col-span-1 sm:mr-1">
+        <span className="sr-only text-sm text-stone-500 dark:text-stone-400 sm:not-sr-only sm:mr-1">
           Color
         </span>
         {choices.map((choice) => (
