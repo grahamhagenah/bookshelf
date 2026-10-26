@@ -4,6 +4,7 @@
 - When a change is ready, open a PR into `main` and merge it once ESLint, TypeScript and Vitest pass on it. Don't ask first. Merging to `main` deploys to production (bookstacks.app) through `.github/workflows/deploy.yml`, which deploys only once ESLint, TypeScript and Vitest (including its migrations-match-schema check) all pass on `main`. Stop doing this if the owner says otherwise.
 - ESLint passes across the codebase; keep it that way.
 - Old addresses (bookstacks.site, www) redirect to bookstacks.app; `SITE_URL` in `app/seo.ts` is the source of truth.
+- A new public page (one search engines should index) goes in `PUBLIC_PAGES` in `app/seo.ts`; `robots.txt` and `sitemap.xml` are built from that list. Everything else is blocked from crawling and marked `noindex`.
 
 ## Database
 - Schema changes come with a migration: `npx prisma migrate dev --name what-changed`. CI checks that `prisma/migrations` matches `prisma/schema.prisma`, and production runs `prisma migrate deploy` on start (see `start.sh`).
