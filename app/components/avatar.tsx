@@ -816,6 +816,9 @@ export function AvatarGlyph({
       fill="none"
       stroke="currentColor"
       strokeWidth="1.3"
+      // The drawing a shade lighter than its circle's color, so the line
+      // reads light; the circle itself keeps the color
+      opacity={0.7}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
