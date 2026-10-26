@@ -69,7 +69,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const last = await undoableReturn(notification.bookId);
     if (
       last?.returnedAt &&
-      notification.createdAt.getTime() >= last.returnedAt.getTime() - 60_000
+      notification.createdAt.getTime() >= last.borrowedAt.getTime()
     ) {
       undoableReturns.push(notification.id);
     }

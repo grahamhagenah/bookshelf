@@ -484,9 +484,14 @@ export async function undoReturn(
     where: { id: last.id },
     data: { returnedAt: null, dueDate: null },
   });
-  // The "returned" notice has had its answer
+  // The "returned" notice has had its answer. It's sent a moment before
+  // the return is recorded, so anything since the loan began
   await prisma.notification.updateMany({
-    where: { type: "BOOK_RETURNED", bookId, createdAt: { gte: since } },
+    where: {
+      type: "BOOK_RETURNED",
+      bookId,
+      createdAt: { gte: last.borrowedAt },
+    },
     data: { read: true, actionTaken: "undone" },
   });
   if (last.borrowerId !== owner.id) {
