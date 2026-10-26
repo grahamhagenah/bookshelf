@@ -28,7 +28,9 @@ export const meta: MetaFunction<typeof loader> = ({ data }) =>
   seo({ title: data?.group.name ?? "Group", noindex: true });
 
 export const handle = {
+  // Groups are a tab of Friends, so a group sits under both
   breadcrumbs: (data: { group?: { name: string } } | undefined) => [
+    { label: "Friends", href: "/friends" },
     { label: "Groups", href: "/groups" },
     { label: data?.group?.name ?? "Group" },
   ],
