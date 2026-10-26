@@ -1,4 +1,8 @@
 // @vitest-environment node
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+
 import {
   COVER_PATH,
   coverHostAllowed,
@@ -112,4 +116,21 @@ test("isbnCoverParts reads Open Library ISBN covers only", () => {
     isbnCoverParts("https://covers.openlibrary.org/b/id/12345-L.jpg"),
   ).toBeNull();
   expect(isbnCoverParts("/covers/custom/abc.jpg")).toBeNull();
+});
+
+test("an empty file left in the cache is fetched again, not served", async () => {
+  const id = String(Math.random()).slice(2, 10);
+  const dir = path.join(os.tmpdir(), "stacks-covers");
+  const file = path.join(dir, `b_id_${id}-M.jpg`);
+  await mkdir(dir, { recursive: true });
+  await writeFile(file, "");
+  vi.stubGlobal(
+    "fetch",
+    async () => new Response(new Uint8Array(800), { status: 200 }),
+  );
+
+  expect((await loadCover(`b/id/${id}-M.jpg`))?.length).toBe(800);
+  // And put right on disk
+  expect((await readFile(file)).length).toBe(800);
+  vi.unstubAllGlobals();
 });

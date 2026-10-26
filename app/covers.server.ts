@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, open, readFile, rename, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -145,11 +145,26 @@ const fileFor = (coverPath: string) =>
   path.join(CACHE_DIR, coverPath.replace(/\//g, "_"));
 
 async function store(file: string, bytes: Buffer) {
-  // Write then rename, so a half-written file is never served
+  // Write then rename, so a half-written file is never served. The bytes
+  // are flushed to disk before the rename: otherwise a machine stopped
+  // soon after (a deploy) can come back with the file there but empty.
   await mkdir(CACHE_DIR, { recursive: true });
   const temp = `${file}.${process.pid}.tmp`;
-  await writeFile(temp, bytes);
+  const handle = await open(temp, "w");
+  try {
+    await handle.writeFile(bytes);
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
   await rename(temp, file);
+}
+
+// A kept cover, unless what's on disk is empty or too small to be one
+// (left by an earlier machine stop), in which case it's as good as gone
+async function readCached(file: string) {
+  const bytes = await readFile(file).catch(() => null);
+  return bytes && bytes.length >= NO_COVER_BYTES ? bytes : null;
 }
 
 // Fetches a pasted cover link once and keeps it, giving back the path to
@@ -159,13 +174,7 @@ export async function importCover(url: string): Promise<string | null> {
   if (!coverHostAllowed(url)) return null;
   const coverPath = customCoverPath(url);
   const file = fileFor(coverPath);
-  if (
-    await readFile(file).then(
-      () => true,
-      () => false,
-    )
-  )
-    return `/covers/${coverPath}`;
+  if (await readCached(file)) return `/covers/${coverPath}`;
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(15000),
@@ -190,7 +199,7 @@ export async function loadCover(coverPath: string) {
   if (!COVER_PATH.test(coverPath)) return null;
 
   const file = fileFor(coverPath);
-  const cached = await readFile(file).catch(() => null);
+  const cached = await readCached(file);
   if (cached) return cached;
   // A pasted cover is only ever on disk; there's nowhere else to ask
   if (coverPath.startsWith("custom/")) return null;
