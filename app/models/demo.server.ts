@@ -2,6 +2,7 @@ import type { User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 import { lendBook } from "~/models/book.server";
+import { demoCover, resolveDemoCovers } from "~/models/demo-covers.server";
 import {
   createBookApprovedNotification,
   createFriendship,
@@ -26,9 +27,6 @@ interface DemoBook {
   body: string;
 }
 
-function cover(isbn: string) {
-  return `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
-}
 
 const day = 24 * 60 * 60 * 1000;
 const hour = 60 * 60 * 1000;
@@ -702,7 +700,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       const created = await prisma.book.create({
         data: {
           ...book,
-          cover: cover(isbn),
+          cover: await demoCover(isbn),
           userId: ids[owner],
           // Spread the "added" dates out so the shelf has a natural order
           createdAt: ago((i + 1) * 3 * day),
@@ -1269,12 +1267,20 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       isbn: "9780063251922",
     },
   ];
+  // Swap blank covers for working ones, for this sandbox and the next
+  if (process.env.NODE_ENV !== "test") {
+    void resolveDemoCovers([
+      ...Object.values(LIBRARIES).flat(),
+      ...wanted,
+    ]);
+  }
+
   for (const [i, { isbn, ...book }] of wanted.entries()) {
     await prisma.wantToRead.create({
       data: {
         ...book,
         isbn,
-        cover: cover(isbn),
+        cover: await demoCover(isbn),
         userId: ids.you,
         createdAt: ago((i + 2) * 9 * day),
       },
