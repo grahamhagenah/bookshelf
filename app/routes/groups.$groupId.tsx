@@ -6,15 +6,15 @@ import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
+import CopyButton from "~/components/copy-button";
 import FriendActivityItem from "~/components/friend-activity";
 import { SearchIcon } from "~/components/icons";
-import InviteMessage from "~/components/invite-message";
+import { mailtoInvite } from "~/components/invite-message";
 import Layout from "~/components / Layout/Layout";
 import { codeFromLink, groupInvitePath, groupPath } from "~/group-links";
 import { isNotLending } from "~/lending";
 import { getFriendActivity } from "~/models/activity.server";
 import {
-  GROUP_MAX_MEMBERS,
   GROUP_PAGE,
   getGroupHighlights,
   searchGroupBooks,
@@ -81,7 +81,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     activity,
     friendIds: openIds,
     inviteUrl: `${publicOrigin(request)}${groupInvitePath(group.name, inviteToken)}`,
-    maxMembers: GROUP_MAX_MEMBERS,
     nameMax: GROUP_NAME_MAX,
   });
 };
@@ -116,15 +115,13 @@ const people = (n: number) => `${n} ${n === 1 ? "person" : "people"}`;
 const GROUP_MOST = 1000;
 
 export default function GroupPage() {
-  const { group, search, highlights, results, activity, friendIds, inviteUrl, maxMembers, nameMax } =
+  const { group, search, highlights, results, activity, friendIds, inviteUrl, nameMax } =
     useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const justJoined = searchParams.get("joined") === "1";
   const others = group.members.filter((member) => !member.isMe);
   const lenders = others.filter((member) => member.isFriend);
   const [renaming, setRenaming] = useState(false);
-  const navigation = useNavigation();
-  const busy = navigation.state !== "idle";
 
   return (
     <Layout
@@ -253,23 +250,7 @@ export default function GroupPage() {
       ) : null}
 
       <section>
-        <InviteMessage
-          url={inviteUrl}
-          title={others.length === 0 ? "Invite people to the group" : "Invite more people"}
-          intro={`Anyone with this link can join, up to ${maxMembers} people. They'll be friends with everyone in the group straight away.`}
-          text={`Join ${group.name} on Stacks, so we can borrow each other's books: ${inviteUrl}`}
-          subject={`Join ${group.name} on Stacks`}
-        />
-        <Form method="post" className="mt-3">
-          <input type="hidden" name="intent" value="resetLink" />
-          <button
-            type="submit"
-            disabled={busy}
-            className="text-sm text-stone-500 dark:text-stone-400 underline-offset-4 hover:underline hover:text-stone-800 dark:hover:text-stone-200"
-          >
-            Make a new link (the old one stops working)
-          </button>
-        </Form>
+        <GroupInvite name={group.name} url={inviteUrl} alone={others.length === 0} />
       </section>
     </Layout>
   );
@@ -474,6 +455,70 @@ function GroupShelf({
           ) : null}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+// The link that brings people in: copy it, or send it from your phone or
+// email. Resetting it is for a link that's gone further than it should,
+// so it asks first.
+function GroupInvite({ name, url, alone }: { name: string; url: string; alone: boolean }) {
+  const [canShare, setCanShare] = useState(false);
+  useEffect(() => setCanShare(typeof navigator.share === "function"), []);
+  const subject = `Join ${name} on Stacks`;
+  const text = `Join ${name} on Stacks, so we can borrow each other's books: ${url}`;
+  const primary =
+    "flex-shrink-0 rounded-md bg-forest-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-forest-700 transition-colors";
+  return (
+    <div className="max-w-xl">
+      <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+        {alone ? "Invite people" : "Invite more people"}
+      </h2>
+      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+        Anyone with the link can join, and becomes friends with everyone here.
+      </p>
+      <div className="mt-3 flex gap-2">
+        <input
+          type="text"
+          readOnly
+          value={url.replace(/^https?:\/\//, "")}
+          aria-label="Invite link"
+          onFocus={(event) => event.currentTarget.select()}
+          className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-3 py-1.5 text-sm text-stone-600 dark:text-stone-300"
+        />
+        <CopyButton value={url} label="Copy link" className={`flex-shrink-0 ${quietButton}`} />
+        {canShare ? (
+          <button
+            type="button"
+            onClick={() => navigator.share({ title: subject, text }).catch(() => undefined)}
+            className={primary}
+          >
+            Share
+          </button>
+        ) : (
+          <a href={mailtoInvite(url, [], text, subject)} className={primary}>
+            Email
+          </a>
+        )}
+      </div>
+      <Form
+        method="post"
+        className="mt-2"
+        onSubmit={(event) => {
+          if (!confirm("Reset the invite link? The current one will stop working, so only people you send the new one to can join.")) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <button
+          type="submit"
+          name="intent"
+          value="resetLink"
+          className="text-xs text-stone-500 dark:text-stone-400 underline-offset-4 hover:underline hover:text-stone-800 dark:hover:text-stone-200"
+        >
+          Reset link
+        </button>
+      </Form>
     </div>
   );
 }
