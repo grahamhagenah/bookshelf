@@ -9,14 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          for id in 8793546 8594920 12065533 12063911 14818095 369091 283860; do
-            for size in M L; do
-              echo "== $id-$size"
-              curl -s -o /dev/null -w "prod  %{http_code} %{size_download}B %{time_total}s\n" --max-time 40 "https://bookstacks.app/covers/b/id/$id-$size.jpg"
-              curl -s -L -o /dev/null -w "olib  %{http_code} %{size_download}B %{time_total}s %{num_redirects} redirects -> %{url_effective}\n" --max-time 40 "https://covers.openlibrary.org/b/id/$id-$size.jpg"
-            done
+          for path in b/id/8793546-L.jpg b/id/8793546-M.jpg b/id/14818095-M.jpg b/id/99999999-M.jpg b/isbn/9780441172719-M.jpg; do
+            echo "===== GET $path"
+            curl -s -D - -o body.bin --max-time 40 "https://bookstacks.app/covers/$path" | tr -d '\r'
+            echo "body bytes: $(wc -c < body.bin)"; head -c 200 body.bin | od -c | head -3
           done
-          echo "== headers from Open Library"
-          curl -s -I --max-time 30 "https://covers.openlibrary.org/b/id/8793546-M.jpg" | head -20
-          echo "== production health"
-          curl -s -o /dev/null -w "home %{http_code} %{time_total}s\n" --max-time 30 https://bookstacks.app/
+          echo "===== HEAD"
+          curl -s -I --max-time 40 "https://bookstacks.app/covers/b/id/8793546-L.jpg" | tr -d '\r'
