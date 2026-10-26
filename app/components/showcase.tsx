@@ -16,11 +16,11 @@ const COVERS = {
   demonCopperhead: cover("9780063251922"),
   seaOfTranquility: cover("9780593321447"),
   gentlemanInMoscow: cover("9780670026197"),
-  cityWalls: cover("9780593801970"),
+  cityWalls: cover("9781787304475"),
   klara: cover("9780593318171"),
   neverLetMeGo: cover("9781400078776"),
   jonathanStrange: cover("9780765356154"),
-  midnightLibrary: cover("9780525559474"),
+  parableTalents: cover("9781538732199"),
   anxiousPeople: cover("9781501160837"),
   hailMary: cover("9780593135204"),
   piranesi: cover("9781635575637"),
@@ -365,7 +365,7 @@ export function ShowcaseFriends() {
         <div className="mt-3 grid grid-cols-4 gap-2">
           {[
             COVERS.jonathanStrange,
-            COVERS.midnightLibrary,
+            COVERS.parableTalents,
             COVERS.neverLetMeGo,
             COVERS.anxiousPeople,
           ].map((src) => (
