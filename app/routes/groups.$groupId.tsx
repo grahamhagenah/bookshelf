@@ -29,7 +29,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) =>
 
 export const handle = {
   breadcrumbs: (data: { group?: { name: string } } | undefined) => [
-    { label: "Friends", href: "/friends" },
+    { label: "Groups", href: "/groups" },
     { label: data?.group?.name ?? "Group" },
   ],
 };
@@ -55,7 +55,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
   if (intent === "leave") {
     await leaveGroup(userId, params.groupId);
-    return redirect("/friends#groups");
+    return redirect("/groups");
   }
   if (intent === "rename") {
     const name = cleanGroupName(formData.get("name"));

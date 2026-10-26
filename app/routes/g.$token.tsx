@@ -60,10 +60,10 @@ export default function JoinGroup() {
         <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-50">{title}</h1>
         <p className="mt-3 text-stone-600 dark:text-stone-300">{message}</p>
         <Link
-          to="/friends"
+          to="/groups"
           className="mt-6 inline-block text-stone-700 dark:text-stone-200 underline underline-offset-2"
         >
-          Go to Friends
+          Go to Groups
         </Link>
       </main>
     );

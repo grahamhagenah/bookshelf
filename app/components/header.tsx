@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation, useMatches } from "@remix-run/react";
 
-import { BookIcon, FeedIcon } from "./icons";
+import { BookIcon, FeedIcon, GroupsIcon } from "./icons";
 import PositionedMenu from "./menu";
 import Notifications from "./notifications";
 import Search from "./search";
@@ -73,6 +73,10 @@ export default function Header() {
               <NavLink to="/feed" className={navClass}>
                 <FeedIcon size={16} strokeWidth={1.5} />
                 Feed
+              </NavLink>
+              <NavLink to="/groups" className={navClass}>
+                <GroupsIcon size={17} />
+                Groups
               </NavLink>
             </nav>
           ) : null}

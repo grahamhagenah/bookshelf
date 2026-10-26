@@ -7,6 +7,7 @@ import {
   UserIcon,
   SettingsIcon,
   GroupIcon,
+  GroupsIcon,
   LogoutIcon,
   DashboardIcon,
   BookmarkIcon,
@@ -104,6 +105,10 @@ export default function PositionedMenu() {
           <Link to="/friends" onClick={() => setOpen(false)} className={item}>
             <GroupIcon size={18} />
             <span>Friends</span>
+          </Link>
+          <Link to="/groups" onClick={() => setOpen(false)} className={`md:hidden ${item}`}>
+            <GroupsIcon size={18} />
+            <span>Groups</span>
           </Link>
           <Link to="/want-to-read" onClick={() => setOpen(false)} className={item}>
             <BookmarkIcon size={18} />

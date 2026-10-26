@@ -33,7 +33,8 @@ export async function createGroup(userId: User["id"], name: string) {
 
 const person = { id: true, firstname: true, surname: true, profileEmoji: true } as const;
 
-// The groups someone is in, with a few faces from each
+// The groups someone is in, with a few faces from each and how many
+// books they have between them
 export async function getMyGroups(userId: User["id"]) {
   const groups = await prisma.group.findMany({
     where: { members: { some: { userId } } },
@@ -41,16 +42,20 @@ export async function getMyGroups(userId: User["id"]) {
     select: {
       id: true,
       name: true,
-      _count: { select: { members: true } },
-      members: { orderBy: { joinedAt: "asc" }, take: 5, select: { user: { select: person } } },
+      members: { orderBy: { joinedAt: "asc" }, select: { user: { select: person } } },
     },
   });
-  return groups.map((group) => ({
-    id: group.id,
-    name: group.name,
-    memberCount: group._count.members,
-    faces: group.members.map((member) => member.user),
-  }));
+  return Promise.all(
+    groups.map(async (group) => ({
+      id: group.id,
+      name: group.name,
+      memberCount: group.members.length,
+      bookCount: await prisma.book.count({
+        where: { userId: { in: group.members.map((member) => member.user.id) } },
+      }),
+      faces: group.members.slice(0, 5).map((member) => member.user),
+    })),
+  );
 }
 
 // Everything the group's page shows, for someone in it: who's in it and

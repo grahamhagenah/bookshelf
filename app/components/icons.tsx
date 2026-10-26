@@ -88,6 +88,21 @@ export function GroupIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
+// Three people side by side, the middle one in front: a group, as
+// against the two of Friends
+export function GroupsIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="3"/>
+      <path d="M6.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5"/>
+      <circle cx="5" cy="9.5" r="2"/>
+      <path d="M1.5 18c0-2.2 1.5-4 3.5-4 .7 0 1.3.2 1.9.5"/>
+      <circle cx="19" cy="9.5" r="2"/>
+      <path d="M22.5 18c0-2.2-1.5-4-3.5-4-.7 0-1.3.2-1.9.5"/>
+    </svg>
+  );
+}
+
 // A speech bubble with a line or two in it: the feed, which is mostly
 // what friends have said about books. Lucide's bubble, so it sits evenly
 // beside search and notifications (2px there); 1.5px beside the book
