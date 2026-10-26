@@ -1,22 +1,22 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, Link, useActionData, useLoaderData, useRouteLoaderData } from "@remix-run/react";
+import { Form, Link, useFetcher, useRouteLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 
 import Avatar from "~/components/avatar";
 import CopyButton from "~/components/copy-button";
 import { mailtoInvite } from "~/components/invite-message";
 import { loadGroup } from "~/group-page.server";
-import { GROUP_NAME_MAX } from "~/models/group.server";
 
 import type { GroupLayoutData } from "./groups.$groupId";
 
-// Who's in the group, the link that brings more people in, and the
-// group's name and the way out
+// Who's in the group, each with the way out (your own) or, for whoever
+// runs the group, the way to take them out, and the link that brings
+// more people in. Renaming is beside the name at the top.
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await loadGroup(request, params);
-  return json({ nameMax: GROUP_NAME_MAX });
+  return json({});
 };
 
 const quietButton =
@@ -25,72 +25,114 @@ const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}
 
 export default function GroupPeople() {
   const layout = useRouteLoaderData<GroupLayoutData>("routes/groups.$groupId");
-  const { nameMax } = useLoaderData<typeof loader>();
-  const renamed = useActionData<{ ok?: boolean; error?: string }>();
   if (!layout) return null;
   const { group, path, inviteUrl } = layout;
-  const alone = group.members.length === 1;
+  const iRunIt = group.members.some((member) => member.isMe && member.isOwner);
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-14">
       <section aria-labelledby="people">
         <h2 id="people" className="sr-only">People</h2>
         <ul className="grid gap-3 sm:grid-cols-2">
-          {group.members.map((member) => {
-            const inner = (
-              <>
-                <Avatar firstname={member.firstname} surname={member.surname} icon={member.profileEmoji} />
-                <span className="min-w-0">
-                  <span className="block truncate font-medium text-stone-900 dark:text-stone-100">
-                    {member.firstname} {member.surname}
-                    {member.isMe ? <span className="font-normal text-stone-500 dark:text-stone-400"> (you)</span> : null}
-                  </span>
-                  <span className="block text-sm text-stone-500 dark:text-stone-400">{plural(member.bookCount, "book")}</span>
-                </span>
-              </>
-            );
-            const box = "flex items-center gap-3 rounded-xl border border-stone-200 dark:border-stone-800 p-3";
-            return (
-              <li key={member.id}>
-                {member.isFriend ? (
-                  <Link to={`/friend/${member.id}`} className={`${box} hover:border-stone-400 dark:hover:border-stone-600 transition-colors`}>
-                    {inner}
-                  </Link>
-                ) : (
-                  <span className={box}>{inner}</span>
-                )}
-              </li>
-            );
-          })}
+          {group.members.map((member) => (
+            <PersonCard
+              key={member.id}
+              member={member}
+              groupName={group.name}
+              path={path}
+              canRemove={iRunIt ? !member.isMe : false}
+            />
+          ))}
         </ul>
       </section>
 
-      <div className="space-y-8">
-        <GroupInvite name={group.name} url={inviteUrl} alone={alone} path={path} />
-        <section aria-labelledby="settings" className="space-y-4">
-          <h2 id="settings" className="font-medium text-stone-900 dark:text-stone-100">The group</h2>
-          <Form method="post" action={path} className="flex gap-2">
-            <input type="hidden" name="intent" value="rename" />
-            <input
-              name="name"
-              defaultValue={group.name}
-              key={group.name}
-              maxLength={nameMax}
-              required
-              aria-label="Group name"
-              className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-1.5 text-sm text-stone-900 dark:text-stone-100 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10"
-            />
-            <button type="submit" className={quietButton}>
-              Rename
-            </button>
-          </Form>
-          {renamed?.error ? <p className="text-sm text-rose-700 dark:text-rose-400">{renamed.error}</p> : null}
-          <Form method="post" action={path}>
-            <LeaveButton />
-          </Form>
-        </section>
+      <div>
+        <GroupInvite name={group.name} url={inviteUrl} alone={group.members.length === 1} path={path} />
       </div>
     </div>
+  );
+}
+
+type Member = NonNullable<SerializeFrom<GroupLayoutData>>["group"]["members"][number];
+
+// One person: who they are and how many books they bring, opening their
+// shelf. On your own card, the way out; on others', for whoever runs the
+// group, the way to take them out. Both ask first.
+function PersonCard({
+  member,
+  groupName,
+  path,
+  canRemove,
+}: {
+  member: Member;
+  groupName: string;
+  path: string;
+  canRemove: boolean;
+}) {
+  const fetcher = useFetcher();
+  const busy = fetcher.state !== "idle";
+  const who = (
+    <>
+      <Avatar firstname={member.firstname} surname={member.surname} icon={member.profileEmoji} />
+      <span className="min-w-0">
+        <span className="block truncate font-medium text-stone-900 dark:text-stone-100">
+          {member.firstname} {member.surname}
+          {member.isMe ? <span className="font-normal text-stone-500 dark:text-stone-400"> (you)</span> : null}
+        </span>
+        <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
+          {plural(member.bookCount, "book")}
+          {member.isOwner ? " · started the group" : ""}
+        </span>
+      </span>
+    </>
+  );
+  const action = member.isMe
+    ? {
+        label: "Leave",
+        intent: "leave",
+        ask: `Leave ${groupName}? You'll stay friends with the people you met here, and can remove friends on the Friends page.`,
+      }
+    : canRemove
+      ? {
+          label: "Remove",
+          intent: "remove",
+          ask: `Remove ${member.firstname} from ${groupName}? You'll stay friends. They can rejoin if they still have the invite link, so reset it if you need to.`,
+        }
+      : null;
+
+  return (
+    <li
+      className={`flex items-center gap-3 rounded-xl border border-stone-200 dark:border-stone-800 p-3 transition-opacity ${
+        busy ? "opacity-40" : ""
+      }`}
+    >
+      {member.isFriend ? (
+        <Link to={`/friend/${member.id}`} className="flex min-w-0 flex-1 items-center gap-3 hover:opacity-80 transition-opacity">
+          {who}
+        </Link>
+      ) : (
+        <span className="flex min-w-0 flex-1 items-center gap-3">{who}</span>
+      )}
+      {action ? (
+        <fetcher.Form
+          method="post"
+          action={path}
+          onSubmit={(event) => {
+            if (!confirm(action.ask)) event.preventDefault();
+          }}
+        >
+          <input type="hidden" name="intent" value={action.intent} />
+          <input type="hidden" name="memberId" value={member.id} />
+          <button
+            type="submit"
+            disabled={busy}
+            className="flex-shrink-0 rounded-md px-2 py-1 text-sm text-stone-500 dark:text-stone-400 hover:bg-stone-100 hover:text-rose-700 dark:hover:bg-stone-800 dark:hover:text-rose-400 transition-colors"
+          >
+            {action.label}
+          </button>
+        </fetcher.Form>
+      ) : null}
+    </li>
   );
 }
 
@@ -155,38 +197,6 @@ function GroupInvite({ name, url, alone, path }: { name: string; url: string; al
           Reset link
         </button>
       </Form>
-    </div>
-  );
-}
-
-// Two clicks: the first says what leaving means, the second leaves
-function LeaveButton() {
-  const [armed, setArmed] = useState(false);
-  if (!armed) {
-    return (
-      <button type="button" onClick={() => setArmed(true)} className={quietButton}>
-        Leave group
-      </button>
-    );
-  }
-  return (
-    <div className="space-y-2">
-      <p className="text-sm text-stone-600 dark:text-stone-300">
-        You&apos;ll stay friends with the people you met here. You can remove friends on the
-        Friends page.
-      </p>
-      <div className="flex gap-2">
-        <button type="submit" name="intent" value="leave" className={quietButton}>
-          Leave
-        </button>
-        <button
-          type="button"
-          onClick={() => setArmed(false)}
-          className="px-2 text-sm text-stone-500 dark:text-stone-400"
-        >
-          Cancel
-        </button>
-      </div>
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
   getMyGroups,
   joinGroup,
   leaveGroup,
+  removeFromGroup,
   resetGroupLink,
 } from "./group.server";
 import { getPoolWanted, searchPool } from "./pool.server";
@@ -187,4 +188,30 @@ test("a big group's shelf: one entry per book, sorted as asked", async () => {
     "Zorba",
   ]);
 
+});
+
+test("whoever started the group can take people out; nobody else can", async () => {
+  const ana = await makeUser("Ana");
+  const ben = await makeUser("Ben");
+  const cal = await makeUser("Cal");
+  const group = await createGroup(ana.id, "Club");
+  const token = await tokenOf(group.id);
+  await joinGroup(ben.id, token);
+  await joinGroup(cal.id, token);
+
+  const page = await getGroup(group.id, ben.id);
+  expect(page?.members.filter((member) => member.isOwner).map((member) => member.id)).toEqual([ana.id]);
+
+  // Ben can't, and nobody removes themselves this way
+  expect(await removeFromGroup(ben.id, group.id, cal.id)).toBe(false);
+  expect(await removeFromGroup(ana.id, group.id, ana.id)).toBe(false);
+
+  expect(await removeFromGroup(ana.id, group.id, cal.id)).toBe(true);
+  expect(await getGroup(group.id, cal.id)).toBe(null);
+  // Still friends, as after leaving
+  expect(await getFriendStatus(cal.id, ana.id)).toBe("friends");
+
+  // When Ana leaves, Ben has been in longest and runs it
+  await leaveGroup(ana.id, group.id);
+  expect((await getGroup(group.id, ben.id))?.members.find((member) => member.isMe)?.isOwner).toBe(true);
 });

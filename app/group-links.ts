@@ -2,6 +2,9 @@
 // id or invite code that does the work: /g/thursday-book-club-7afb82a3…
 // The name is never looked up, so renaming a group breaks no link.
 
+// The longest a group's name can be
+export const GROUP_NAME_MAX = 60;
+
 // "Thursday Book Club!" -> "thursday-book-club"; "Café Lecture" -> "cafe-lecture"
 export function slugify(name: string) {
   return name

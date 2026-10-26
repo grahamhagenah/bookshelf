@@ -1,6 +1,7 @@
 import type { Group, User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
+import { GROUP_NAME_MAX } from "~/group-links";
 
 import { canInteract } from "./demo.server";
 import { countPoolBooks } from "./pool.server";
@@ -11,7 +12,7 @@ import { createFriendship } from "./user.server";
 // whoever joins later becomes your friend too. Leaving keeps the
 // friendships you made; those are between people, not the group.
 
-export const GROUP_NAME_MAX = 60;
+export { GROUP_NAME_MAX };
 // Big enough for a club or an office, small enough that joining one
 // doesn't fill your friends list with strangers
 export const GROUP_MAX_MEMBERS = 50;
@@ -87,12 +88,16 @@ export async function getGroup(groupId: Group["id"], userId: User["id"]) {
   ]);
   if (!group) return null;
   const friendIds = new Set(me.following.map((friend) => friend.id));
+  // Whoever's been in longest runs it: the person who started it, until
+  // they leave
+  const ownerId = group.members[0]?.user.id;
   const members = group.members.map(({ joinedAt, user: { _count, ...user } }) => ({
     ...user,
     joinedAt,
     bookCount: _count.books,
     isMe: user.id === userId,
     isFriend: friendIds.has(user.id),
+    isOwner: user.id === ownerId,
   }));
   // Your own books are in the group too, but you don't come here for them
   const openIds = members.filter((member) => member.isFriend).map((member) => member.id);
@@ -202,6 +207,20 @@ export async function leaveGroup(userId: User["id"], groupId: Group["id"]) {
   if ((await prisma.groupMember.count({ where: { groupId } })) === 0) {
     await prisma.group.deleteMany({ where: { id: groupId } });
   }
+}
+
+// The person who runs the group can take someone out of it. Like leaving,
+// it keeps their friendships; it only stops them seeing the group.
+export async function removeFromGroup(userId: User["id"], groupId: Group["id"], memberId: User["id"]) {
+  if (userId === memberId) return false;
+  const first = await prisma.groupMember.findFirst({
+    where: { groupId },
+    orderBy: { joinedAt: "asc" },
+    select: { userId: true },
+  });
+  if (first?.userId !== userId) return false;
+  await prisma.groupMember.deleteMany({ where: { groupId, userId: memberId } });
+  return true;
 }
 
 // Anyone in the group can rename it
