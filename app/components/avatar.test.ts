@@ -33,14 +33,14 @@ test("everyone gets a real color by default, never grey ink, and keeps it", () =
 });
 
 test("an icon can carry a color; the page takes its color from either", () => {
-  expect(pictureOf("owl")).toEqual({ icon: "owl", color: null });
-  expect(pictureOf("owl:plum")).toEqual({ icon: "owl", color: "plum" });
+  expect(pictureOf("cat")).toEqual({ icon: "cat", color: null });
+  expect(pictureOf("cat:plum")).toEqual({ icon: "cat", color: "plum" });
   expect(pictureOf("plate:navy")).toEqual({ icon: null, color: "navy" });
   // An unknown color leaves the icon grey; an unknown icon is nothing
-  expect(pictureOf("owl:neon")).toEqual({ icon: "owl", color: null });
+  expect(pictureOf("cat:neon")).toEqual({ icon: "cat", color: null });
   expect(pictureOf("dragon:plum")).toEqual({ icon: null, color: null });
-  expect(plateColorOf("owl:plum")).toBe("plum");
-  expect(isPicture("owl:plum")).toBe(true);
+  expect(plateColorOf("cat:plum")).toBe("plum");
+  expect(isPicture("cat:plum")).toBe(true);
   expect(isPicture("plate:plum")).toBe(true);
   expect(isPicture("dragon")).toBe(false);
   expect(isPicture(null)).toBe(false);

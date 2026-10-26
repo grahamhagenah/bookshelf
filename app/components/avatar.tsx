@@ -152,13 +152,14 @@ const ICON_PATHS = {
   ),
   frog: (
     <>
-      {/* The head stops at the eyes rather than running through them */}
-      <path d="M5.75 9.1C4.4 10.2 3.5 12 3.5 14c0 3.3 3.8 5.5 8.5 5.5s8.5-2.2 8.5-5.5c0-2-.9-3.8-2.25-4.9M9.7 10q2.3-.6 4.6 0" />
-      <circle cx="8" cy="8.3" r="2.4" />
-      <circle cx="16" cy="8.3" r="2.4" />
-      <circle cx="8" cy="8.3" r="1" fill="currentColor" stroke="none" />
-      <circle cx="16" cy="8.3" r="1" fill="currentColor" stroke="none" />
-      <path d="M8.5 14.5q3.5 2.3 7 0" />
+      {/* On the kitty's face, the same size: two eye bumps rising out of
+          the top of the head (the outline stops where they sit), pupils
+          under them, and a wide smile */}
+      <path d="M6.45 9.19A7.5 7 0 1 0 17.55 9.19M12.71 6.93A7.5 7 0 0 0 11.29 6.93" />
+      <path d="M6.45 9.19A2.7 2.7 0 1 1 11.29 6.93M12.71 6.93A2.7 2.7 0 1 1 17.55 9.19" />
+      <circle cx="8.7" cy="7.9" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15.3" cy="7.9" r="1" fill="currentColor" stroke="none" />
+      <path d="M8 15.8Q12 19 16 15.8" />
     </>
   ),
   bee: (
