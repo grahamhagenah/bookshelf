@@ -13,6 +13,7 @@ import { isNotLending } from "~/lending";
 import { getFriendActivity, getNotePrompts } from "~/models/activity.server";
 import { getBookById, getHomeBooks } from "~/models/book.server";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
+import { getMyGroups } from "~/models/group.server";
 import { leaveHold, placeHold } from "~/models/hold.server";
 import { shelfIds } from "~/models/household.server";
 import { canLeaveNote, saveReaderNote } from "~/models/note.server";
@@ -51,7 +52,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     MOST,
     Math.max(PAGE, Number.isFinite(asked) ? Math.floor(asked) : PAGE),
   );
-  const [user, activity, prompts, books] = await Promise.all([
+  const [user, activity, prompts, books, groups] = await Promise.all([
     getUserById(userId),
     // One more than shown, to know whether there's anything older
     getFriendActivity(userId, {
@@ -62,6 +63,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getNotePrompts(userId),
     // For the rail beside the feed: what's out on loan, both ways
     getHomeBooks(userId, await shelfIds(userId)),
+    // And the groups you're in
+    getMyGroups(userId),
   ]);
   const friends =
     user?.following.map(({ id, firstname, surname, profileEmoji }) => ({
@@ -77,6 +80,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     shown,
     friendIds: friends.map((friend) => friend.id),
     friends,
+    groups,
     prompts,
     loans: { borrowed: books.borrowed, lent: books.lent },
   });
@@ -207,6 +211,7 @@ export default function Feed() {
     shown,
     friendIds,
     friends,
+    groups,
     prompts,
     loans,
   } = useLoaderData<typeof loader>();
@@ -271,7 +276,7 @@ export default function Feed() {
           </div>
         )}
       </div>
-      <SideRail loans={loans} friends={friends} />
+      <SideRail loans={loans} friends={friends} groups={groups} />
     </main>
   );
 }
