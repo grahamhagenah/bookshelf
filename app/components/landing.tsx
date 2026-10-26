@@ -127,12 +127,12 @@ export default function Landing() {
 
       <div className="mt-20 space-y-20 md:mt-28 md:space-y-28">
         <Feature
-          title="Every shelf you know, one search."
+          title="Want a book? See which friend has it."
           visual={<ShowcaseFriends />}
         >
-          Search once and see which friends have a book, then ask to borrow it
-          with a tap. Not on anyone&apos;s shelf yet? Add it to your
-          want-to-read list and you&apos;ll hear the moment a friend does.
+          One search covers every friend&apos;s shelf. Ask to borrow with a
+          tap, and if nobody has it yet, add it to your want-to-read list:
+          you&apos;ll hear the moment a friend does.
         </Feature>
 
         <Feature
