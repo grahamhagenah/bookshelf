@@ -40,7 +40,12 @@ export default function SharedWith({
     >
       <span aria-hidden="true" className="flex -space-x-1.5">
         {members.map((member) => (
-          <span key={member.id} className="rounded-full ring-2 ring-white dark:ring-stone-950">
+          // Solid and positioned, like the group faces: the pictures' tints
+          // are see-through, and initials would draw over the face after
+          <span
+            key={member.id}
+            className="relative rounded-full bg-white ring-2 ring-white dark:bg-stone-950 dark:ring-stone-950"
+          >
             <Avatar firstname={member.firstname} surname={member.surname} icon={member.profileEmoji} size="xs" />
           </span>
         ))}

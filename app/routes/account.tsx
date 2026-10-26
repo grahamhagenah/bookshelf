@@ -1226,9 +1226,12 @@ function HouseholdPanel({
       <div className="flex items-center gap-3 p-4">
         <ul aria-hidden="true" className="flex flex-shrink-0 -space-x-2.5">
           {household.members.map((member) => (
+            // Solid and positioned, like the group faces: the pictures'
+            // tints are see-through, and initials would draw over the face
+            // after
             <li
               key={member.id}
-              className="rounded-full ring-2 ring-white dark:ring-stone-950"
+              className="relative rounded-full bg-white ring-2 ring-white dark:bg-stone-950 dark:ring-stone-950"
             >
               <Avatar
                 firstname={member.firstname}
