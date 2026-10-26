@@ -127,12 +127,12 @@ export default function Landing() {
 
       <div className="mt-20 space-y-20 md:mt-28 md:space-y-28">
         <Feature
-          title="Every shelf you know, one search."
+          title="Want a book? See which friend has it."
           visual={<ShowcaseFriends />}
         >
-          Search once and see which friends have a book, then ask to borrow it
-          with a tap. Not on anyone&apos;s shelf yet? Add it to your
-          want-to-read list and you&apos;ll hear the moment a friend does.
+          One search covers every friend&apos;s shelf. Ask to borrow with a
+          tap, and if nobody has it yet, add it to your want-to-read list:
+          you&apos;ll hear the moment a friend does.
         </Feature>
 
         <Feature
@@ -193,14 +193,16 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* One last nudge */}
+        {/* One last nudge: the point of it all */}
         <section className="border-t border-stone-200 dark:border-stone-800 pt-16 text-center md:pt-20">
-          <h2 className="text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-4xl">
-            Start your shelf
+          <h2 className="text-balance text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-4xl">
+            Don&apos;t let your books collect dust
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-balance text-lg text-stone-600 dark:text-stone-300">
-            Scan your shelf with your phone&apos;s camera or bring your
-            Goodreads list over. Free for your first {FREE_LIMITS.books} books.
+          <p className="mx-auto mt-3 max-w-lg text-balance text-lg text-stone-600 dark:text-stone-300">
+            Most books get read once, then sit on a shelf for years. Put yours
+            where friends can borrow them: scan your shelf with your phone or
+            bring your Goodreads list over. Free for your first{" "}
+            {FREE_LIMITS.books} books.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
