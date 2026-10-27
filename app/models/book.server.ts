@@ -4,7 +4,7 @@ import { cleanSubjects, hasTranslationSubjects } from "~/utils";
 import type { Work } from "~/works";
 import { sameWork } from "~/works";
 
-import { shelfIdsFor } from "./household.server";
+import { shelfIds, shelfIdsFor } from "./household.server";
 import { adoptWorkNotes } from "./work-note.server";
 
 // Stops lending a book until a moment (far off means until they say),
@@ -733,4 +733,13 @@ export async function tidySubjects(book: Pick<Book, "id" | "subjects">) {
   const subjects = cleanSubjects(book.subjects).join(", ") || null;
   await prisma.book.update({ where: { id: book.id }, data: { subjects } });
   return subjects;
+}
+
+// Whether there's anything on their shelf (theirs or a housemate's)
+export async function hasBooks(userId: User["id"]) {
+  const book = await prisma.book.findFirst({
+    where: { userId: { in: await shelfIds(userId) } },
+    select: { id: true },
+  });
+  return book !== null;
 }

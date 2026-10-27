@@ -12,6 +12,7 @@ import PersonLink from "~/components/person-link";
 import ReaderNotes, { HideToggle, PinToggle } from "~/components/reader-notes";
 import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
 import { importCover, isOpenLibraryCover } from "~/covers.server";
+import { daysUntil, dueText } from "~/due";
 import { sendBookRequestEmail } from "~/email.server";
 import { isNotLending, lendingAgainOn, NOT_LENDING_CHOICES, notLendingEnd, REQUEST_NOTE_MAX } from "~/lending";
 import {
@@ -1401,7 +1402,10 @@ function BookFacts({ data }: { data: BookData }) {
   // Where it is shows in the label under the cover for the owner, and
   // "Available" goes without saying beside Ask to borrow
   if (!data.isOwner && !data.isBorrower && book.borrower) {
-    rows.push(["Status", "Out on loan"]);
+    // When to expect it back, while that's still ahead: a late one is
+    // between its owner and borrower
+    const due = book.dueDate && daysUntil(book.dueDate) >= 0 ? dueText(book.dueDate) : null;
+    rows.push(["Status", due ? `Out on loan, ${due}` : "Out on loan"]);
   }
   if (rows.length === 0 && data.waiting.length === 0) return null;
 

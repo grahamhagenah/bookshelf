@@ -1,10 +1,11 @@
 import { prisma } from "~/db.server";
 import type { User } from "~/generated/prisma/client";
 import { shelfIds } from "~/models/household.server";
-import { FREE_LIMITS } from "~/plan";
+import { FREE_LIMITS, freeBookLimit } from "~/plan";
 
-// The free plan holds 100 books, with as many friends as you like; Stacks
-// Plus lifts the book limit.
+// The free plan holds 100 books (200 on a shelf shared with someone you
+// live with), with as many friends as you like; Stacks Plus lifts the
+// book limit.
 // One subscription covers everyone on a shared shelf, and the demo sandbox
 // is never limited.
 
@@ -44,6 +45,8 @@ export async function getPlanUsage(userId: User["id"]) {
     books,
     shared: ids.length > 1,
     limits: FREE_LIMITS,
+    // What their shelf holds on the free plan
+    bookLimit: freeBookLimit(ids.length > 1),
     // Their own Plus: paid through Stripe, or given by an admin
     own: me?.plan === "plus" ? { paid: Boolean(me.stripeSubscriptionId), pastDue: me.subscriptionStatus === "past_due", renewsAt: me.planRenewsAt, endsAt: me.planEndsAt } : null,
     // Someone on the shared shelf whose Plus covers them
@@ -56,6 +59,7 @@ export async function getPlanUsage(userId: User["id"]) {
 // How many more books fit on the shelf: all of them on Plus
 export async function roomForBooks(userId: User["id"]) {
   if (await hasPlus(userId)) return Infinity;
-  const count = await prisma.book.count({ where: { userId: { in: await shelfIds(userId) } } });
-  return Math.max(0, FREE_LIMITS.books - count);
+  const ids = await shelfIds(userId);
+  const count = await prisma.book.count({ where: { userId: { in: ids } } });
+  return Math.max(0, freeBookLimit(ids.length > 1) - count);
 }

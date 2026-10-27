@@ -51,27 +51,31 @@ test("Plus covers its subscriber, their shared shelf, and every demo", async () 
   expect(await hasPlus(demo.id)).toBe(true);
 });
 
-test("the free shelf holds its limit of books, shared shelves together", async () => {
+test("the free shelf holds its limit of books; a shared shelf holds two people's", async () => {
   const me = await makeUser("Me");
   await fillShelf(me.id, FREE_LIMITS.books - 1);
   expect(await roomForBooks(me.id)).toBe(1);
 
-  // A housemate's books share the space
+  // Sharing with a housemate makes room for theirs, and their books share it
   const housemate = await makeUser("Housemate");
   await joinHousehold(housemate.id, await createHouseholdInvite(me.id));
-  await makeBook(housemate.id, "Theirs");
+  const room = FREE_LIMITS.sharedBooks - FREE_LIMITS.books + 1;
+  expect(await roomForBooks(me.id)).toBe(room);
+  await fillShelf(housemate.id, room);
   expect(await roomForBooks(me.id)).toBe(0);
+  expect(await roomForBooks(housemate.id)).toBe(0);
   expect(await getPlanUsage(me.id)).toMatchObject({
     plus: false,
-    books: FREE_LIMITS.books,
+    books: FREE_LIMITS.sharedBooks,
     shared: true,
+    bookLimit: FREE_LIMITS.sharedBooks,
   });
 
   // Over the limit (from when it was higher): no room, and nothing taken away
   await makeBook(housemate.id, "From before");
   expect(await roomForBooks(me.id)).toBe(0);
   expect(await getPlanUsage(me.id)).toMatchObject({
-    books: FREE_LIMITS.books + 1,
+    books: FREE_LIMITS.sharedBooks + 1,
   });
 
   await plus(housemate.id);

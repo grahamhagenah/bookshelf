@@ -110,7 +110,8 @@ const sections: {
         q: "Does it cost anything?",
         a: (
           <>
-            It&apos;s free for up to {FREE_LIMITS.books} books, enough to
+            It&apos;s free for up to {FREE_LIMITS.books} books (
+            {FREE_LIMITS.sharedBooks} on a shelf you share at home), enough to
             start with the shelf you lend from most, and as many friends as you
             like. Stacks Plus lifts the book limit for $
             {PLUS_PRICES.monthly} a month or ${PLUS_PRICES.yearly} a year;{" "}

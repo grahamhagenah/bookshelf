@@ -232,8 +232,8 @@ function GroupName({ name, path }: { name: string; path: string }) {
   );
 }
 
-// As Share my shelf: copies the invite link, or on a phone opens the
-// share sheet with a line to send with it. The People tab has the rest.
+// Copies the invite link and says so, or on a phone opens the share sheet
+// with a line to send with it. The People tab shows the link itself.
 function InviteButton({ name, url }: { name: string; url: string }) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -249,7 +249,7 @@ function InviteButton({ name, url }: { name: string; url: string }) {
       await navigator.clipboard.writeText(url);
       setCopied(true);
       clearTimeout(timer.current);
-      timer.current = setTimeout(() => setCopied(false), 2000);
+      timer.current = setTimeout(() => setCopied(false), 3000);
     } catch {
       // Clipboard can be blocked; the People tab shows the link to select
     }
@@ -262,10 +262,14 @@ function InviteButton({ name, url }: { name: string; url: string }) {
       className="inline-flex h-8 flex-shrink-0 items-center justify-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-2.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
     >
       <LinkIcon size={16} />
-      {/* Both labels share one cell, so the button keeps its width */}
+      {/* Both labels share one cell, so the button keeps its width. With
+          a mouse it says what it does: copies the link */}
       <span className="grid" aria-live="polite">
-        <span className={`col-start-1 row-start-1 ${copied ? "invisible" : ""}`}>Invite</span>
-        <span className={`col-start-1 row-start-1 ${copied ? "" : "invisible"}`}>Copied</span>
+        <span className={`col-start-1 row-start-1 ${copied ? "invisible" : ""}`}>
+          <span className="pointer-coarse:hidden">Copy invite link</span>
+          <span className="hidden pointer-coarse:inline">Invite</span>
+        </span>
+        <span className={`col-start-1 row-start-1 ${copied ? "" : "invisible"}`}>Link copied</span>
       </span>
     </button>
   );

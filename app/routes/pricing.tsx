@@ -35,7 +35,7 @@ const FREE_FEATURES = [
   "A want-to-read list, with no limit",
   "Reader notes and hearts",
   "Import from Goodreads or StoryGraph",
-  "A shared shelf for your household",
+  `A shared shelf for your household, holding ${FREE_LIMITS.sharedBooks} books`,
   "A public link to your shelf",
 ];
 
@@ -159,7 +159,8 @@ export default function Pricing() {
           </strong>{" "}
           are the ones on your shelf. Books you&apos;ve borrowed and your
           want-to-read list don&apos;t count. If you share a shelf with someone
-          you live with, your books count together.
+          you live with, your books count together, and a shared shelf holds{" "}
+          {FREE_LIMITS.sharedBooks}.
         </p>
         <p>
           Friends don&apos;t count at all. Add everyone you might lend to.

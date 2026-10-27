@@ -1,5 +1,5 @@
 
-import { data, useLoaderData, useRouteLoaderData } from "react-router";
+import { data, Link, useLoaderData, useRouteLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 
 import PooledShelf from "~/components/pooled-shelf";
@@ -26,13 +26,30 @@ export default function GroupBooks() {
     <PooledShelf
       data={data}
       empty={
-        <>
-          <h2 className={sectionHeading}>No books to borrow yet</h2>
-          <p className="mx-auto mt-1 max-w-sm text-stone-500 dark:text-stone-400">
-            Once people join {layout?.group.name ?? "the group"}, their books show up here. Invite
-            them with the button above.
-          </p>
-        </>
+        // Before anyone's joined, ask for people; after, for books
+        (layout?.group.members.length ?? 0) > 1 ? (
+          <>
+            <h2 className={sectionHeading}>No one&apos;s added books yet</h2>
+            <p className="mx-auto mt-1 max-w-sm text-stone-500 dark:text-stone-400">
+              Add yours, and everyone in {layout?.group.name ?? "the group"} can borrow them.
+              Their books show up here as they add them.
+            </p>
+            <Link
+              to="/search"
+              className="mt-4 inline-flex h-8 items-center rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
+            >
+              Add books
+            </Link>
+          </>
+        ) : (
+          <>
+            <h2 className={sectionHeading}>No books to borrow yet</h2>
+            <p className="mx-auto mt-1 max-w-sm text-stone-500 dark:text-stone-400">
+              Once people join {layout?.group.name ?? "the group"}, their books show up here. Invite
+              them with the button above.
+            </p>
+          </>
+        )
       }
     />
   );
