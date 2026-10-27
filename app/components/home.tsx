@@ -337,8 +337,9 @@ function SeeMore({ className = "" }: { className?: string }) {
   );
 }
 
-// Popular with friends as a chart: numbered rows of text, the most lent
-// first, each with how many times and who has it
+// Popular with friends as a chart, the most lent first: ranked rows built
+// like the rest of the home page's lists (a small cover, the title, who
+// has it), with how many times on the right
 function PopularChart({
   popular,
   className = "",
@@ -359,7 +360,7 @@ function PopularChart({
           Friends&apos; books
         </Link>
       </div>
-      <ol>
+      <ol className="divide-y divide-stone-100 dark:divide-stone-900">
         {popular.map((book, index) => {
           const said =
             book.loans === 1 ? "Lent once" : `Lent ${book.loans} times`;
@@ -371,12 +372,17 @@ function PopularChart({
               >
                 <span
                   aria-hidden="true"
-                  className="w-5 flex-shrink-0 text-right text-lg font-semibold tabular-nums text-stone-300 dark:text-stone-600"
+                  className="w-3.5 flex-shrink-0 text-right text-sm font-semibold tabular-nums text-stone-500 dark:text-stone-400"
                 >
                   {index + 1}
                 </span>
+                <BookCover
+                  cover={book.cover}
+                  title={book.title}
+                  className="w-8 h-12 flex-shrink-0"
+                />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-stone-900 dark:text-stone-100">
+                  <span className="block truncate text-sm font-medium leading-snug text-stone-900 dark:text-stone-100">
                     {book.title}
                   </span>
                   <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
