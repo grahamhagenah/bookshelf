@@ -28,7 +28,7 @@ const COVERS = {
   dune: cover("9780441172719"),
   overstory: cover("9780393635522"),
   brightCreatures: cover("9780063204157"),
-  thursdayMurderClub: cover("9781984880963"),
+  pachinko: cover("9781455563920"),
   crawdads: cover("9780735219090"),
 };
 
@@ -511,7 +511,7 @@ export function ShowcaseDesk() {
         <ul className="mt-2 space-y-2">
           {(
             [
-              [COVERS.thursdayMurderClub, "The Thursday Murder Club", "Bob next door", "due Friday", false],
+              [COVERS.pachinko, "Pachinko", "Bob next door", "due Friday", false],
               [COVERS.crawdads, "Where the Crawdads Sing", "Aunt June", "2 days late", true],
             ] as const
           ).map(([src, title, who, due, late]) => (
