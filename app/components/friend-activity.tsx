@@ -774,9 +774,9 @@ const questionFor = (id: string) =>
       QUESTIONS.length
   ];
 
-// A book you borrowed and haven't written about, with a place to do it.
-// Saving or skipping moves on to the next one.
-export function NotePrompt({ books }: { books: PromptBook[] }) {
+// A book you borrowed or marked read and haven't written about, with a
+// place to do it. Saving or skipping moves on to the next one.
+export function NotePrompt({ books, userId }: { books: PromptBook[]; userId: string }) {
   const [skipped, setSkipped] = useState<string[]>([]);
   const fetcher = useFetcher({ key: "note-prompt" });
   const [body, setBody] = useState("");
@@ -809,9 +809,11 @@ export function NotePrompt({ books }: { books: PromptBook[] }) {
             ?
           </p>
           <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
-            {book.returned ? "You borrowed it" : "You're borrowing it"} from{" "}
-            {book.owner.firstname}. Your note stays with the book for the next
-            reader.
+            {book.read
+              ? book.owner.id === userId
+                ? "You marked it read. Friends who borrow it will see your note."
+                : `You marked it read. Your note stays with ${book.owner.firstname}'s copy.`
+              : `${book.returned ? "You borrowed it" : "You're borrowing it"} from ${book.owner.firstname}. Your note stays with the book for the next reader.`}
           </p>
         </div>
       </div>

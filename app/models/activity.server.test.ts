@@ -2,7 +2,7 @@
 import { makeBook, makeUser, prisma } from "../../test/db";
 
 import { getFriendActivity, getNotePrompts } from "./activity.server";
-import { lendBook } from "./book.server";
+import { lendBook, setRead } from "./book.server";
 import { getFriendCards, setHiddenFromFeed } from "./friend.server";
 import { saveReaderNote } from "./note.server";
 import { createFriendship } from "./user.server";
@@ -163,6 +163,22 @@ test("note prompts are the books you've borrowed and not written about", async (
     ["Circe", true],
   ]);
   expect(prompts[0].owner.firstname).toBe("Maya");
+});
+
+test("a book of your own you mark read asks what you thought, until you say", async () => {
+  const me = await makeUser("Reader");
+  const mine = await makeBook(me.id, "Middlemarch");
+  expect(await getNotePrompts(me.id)).toEqual([]);
+
+  await setRead(mine.id, me.id, true);
+  const [prompt] = await getNotePrompts(me.id);
+  expect(prompt).toMatchObject({ title: "Middlemarch", read: true, owner: { id: me.id } });
+
+  // A heart isn't saying anything; a note is
+  await saveReaderNote(me.id, mine.id, { loved: true });
+  expect(await getNotePrompts(me.id)).toHaveLength(1);
+  await saveReaderNote(me.id, mine.id, { body: "Slow, then wonderful." });
+  expect(await getNotePrompts(me.id)).toEqual([]);
 });
 
 test("a longer page of the feed starts with the shorter one, so showing older adds below", async () => {

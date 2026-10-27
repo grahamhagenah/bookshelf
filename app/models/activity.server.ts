@@ -463,8 +463,8 @@ async function addLenders(
   }
 }
 
-// Books you've borrowed, now or lately, that you haven't written about:
-// something to say to the next reader
+// Books you've borrowed, now or lately, or marked read, that you haven't
+// written about: something to say to the next reader
 export async function getNotePrompts(
   userId: User["id"],
   { days = 90, limit = 3 } = {},
@@ -477,7 +477,7 @@ export async function getNotePrompts(
     cover: true,
     user: { select: { id: true, firstname: true } },
   } as const;
-  const [current, past, written] = await Promise.all([
+  const [current, past, finished, written] = await Promise.all([
     prisma.book.findMany({
       where: { borrowerId: userId },
       select: { ...fields, borrowedAt: true },
@@ -487,6 +487,12 @@ export async function getNotePrompts(
       where: { borrowerId: userId, returnedAt: { gte: since } },
       select: { returnedAt: true, book: { select: fields } },
       orderBy: { returnedAt: "desc" },
+    }),
+    // Marked read lately, on your shelf or a friend's copy read elsewhere
+    prisma.readerNote.findMany({
+      where: { userId, readAt: { gte: since } },
+      select: { readAt: true, book: { select: fields } },
+      orderBy: { readAt: "desc" },
     }),
     prisma.readerNote.findMany({
       where: { userId, body: { not: null } },
@@ -500,13 +506,22 @@ export async function getNotePrompts(
       ...book,
       owner: user,
       returned: false,
+      read: false,
       at: borrowedAt ?? new Date(0),
     })),
     ...past.map(({ returnedAt, book: { user, ...book } }) => ({
       ...book,
       owner: user,
       returned: true,
+      read: false,
       at: returnedAt ?? new Date(0),
+    })),
+    ...finished.map(({ readAt, book: { user, ...book } }) => ({
+      ...book,
+      owner: user,
+      returned: false,
+      read: true,
+      at: readAt ?? new Date(0),
     })),
   ]
     .filter(
