@@ -16,7 +16,7 @@ export default function ShareShelfButton({ iconOnly = false }: { iconOnly?: bool
   const [copied, setCopied] = useState(false);
   // Whether this button asked for the link, since others share the fetcher
   const asked = useRef(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
 
   const path = user ? shelfPath(user) : null;

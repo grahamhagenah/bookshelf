@@ -235,7 +235,7 @@ function GroupName({ name, path }: { name: string; path: string }) {
 // share sheet with a line to send with it. The People tab has the rest.
 function InviteButton({ name, url }: { name: string; url: string }) {
   const [copied, setCopied] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   const onClick = async () => {
     if (typeof navigator.share === "function" && matchMedia("(pointer: coarse)").matches) {

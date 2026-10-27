@@ -55,7 +55,7 @@ export default function PooledShelf({
   // back, puts the address's in
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   const [text, setText] = useState(search.q);
   useEffect(() => {
