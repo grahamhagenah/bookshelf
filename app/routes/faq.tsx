@@ -376,19 +376,29 @@ export default function Faq() {
         What Stacks is, what it isn&apos;t, and how the lending works.
       </p>
 
-      <nav
-        aria-label="Sections"
-        className="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-sm"
-      >
-        {sections.map((section) => (
-          <a
-            key={section.heading}
-            href={`#${section.heading.toLowerCase().replace(/[^a-z]+/g, "-")}`}
-            className="text-stone-500 dark:text-stone-400 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline"
-          >
-            {section.heading}
-          </a>
-        ))}
+      {/* Jump links to each section: chips with a downward arrow, so
+          they read as "take me down there" */}
+      <nav aria-label="Jump to a section" className="mt-6">
+        <ul className="flex flex-wrap gap-2">
+          {sections.map((section) => (
+            <li key={section.heading}>
+              {/* The router's link, so it scrolls to the section rather
+                  than resetting to the top as a bare hash link does here */}
+              <Link
+                to={`#${section.heading.toLowerCase().replace(/[^a-z]+/g, "-")}`}
+                className="group inline-flex items-center gap-1.5 rounded-full border border-stone-200 dark:border-stone-700 px-3 py-1 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-950 dark:hover:text-white transition-colors"
+              >
+                {section.heading}
+                <span
+                  aria-hidden="true"
+                  className="text-stone-400 dark:text-stone-500 transition-transform group-hover:translate-y-0.5"
+                >
+                  ↓
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </nav>
 
       {sections.map((section, sectionIndex) => (
@@ -396,7 +406,7 @@ export default function Faq() {
           key={section.heading}
           id={section.heading.toLowerCase().replace(/[^a-z]+/g, "-")}
           // Set apart by space and a bolder heading, rather than a rule
-          className="mt-14 scroll-mt-20"
+          className="mt-14"
         >
           <h2 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
             {section.heading}
