@@ -81,11 +81,11 @@ export default function Header() {
                   })
                 }
               >
-                <BookIcon size={16} />
+                <BookIcon size={18} />
                 <span className={label}>My shelf</span>
               </NavLink>
               <NavLink title="Feed" to="/feed" className={navClass}>
-                <FeedIcon size={16} strokeWidth={1.5} />
+                <FeedIcon size={18} strokeWidth={1.5} />
                 <span className={label}>Feed</span>
               </NavLink>
               {/* Friends, their books and your groups, and a friend's own page */}
@@ -101,7 +101,7 @@ export default function Header() {
                   })
                 }
               >
-                <GroupIcon size={16} />
+                <GroupIcon size={18} />
                 <span className={label}>Friends</span>
               </NavLink>
             </nav>

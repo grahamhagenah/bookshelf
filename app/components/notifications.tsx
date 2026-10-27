@@ -29,10 +29,10 @@ export default function Notifications() {
       <span className="relative inline-flex">
         {/* A size up on phones, where it's a thumb target. On wider
             screens, drawn like the page links beside it: their color and
-            1px lines (1.2 of 24 at 20px, then 1.5 at 16px beside the name) */}
+            thin lines (1.2 of 24 at 20px, then 1.5 at 18px beside the name) */}
         <BellIcon
           size={24}
-          className="md:h-5 md:w-5 md:[stroke-width:1.2] lg:h-4 lg:w-4 lg:[stroke-width:1.5]"
+          className="md:h-5 md:w-5 md:[stroke-width:1.2] lg:size-[18px] lg:[stroke-width:1.5]"
         />
         {notificationCount > 0 ? (
           <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-4 h-4 md:min-w-3.5 md:h-3.5 px-0.5 text-[10px] md:text-[9px] leading-none font-semibold ring-2 ring-white dark:ring-stone-950 text-white dark:text-stone-900 bg-stone-900 dark:bg-stone-100 rounded-full">
