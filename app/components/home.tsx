@@ -72,6 +72,8 @@ function dueLabel(dueDate: string | Date) {
 const linkClass =
   "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
 
+// The most pressing few loans each way (late and due soon come first); the
+// headings link to the rest on your shelf
 const LOANS_SHOWN = 3;
 
 // A compact list for one direction of lending (the feed's rail shows it too)
@@ -82,9 +84,12 @@ export function LoanList({
   total,
   personLabel,
   empty,
+  to,
 }: {
   id: string;
   title: string;
+  // Where all of them are, which the heading links to
+  to?: string;
   books: { book: HomeBook; person: Person | null }[];
   // "From" or "To", so the name doesn't read as the author's
   personLabel: string;
@@ -98,7 +103,16 @@ export function LoanList({
         id={id}
         className={`${sectionHeading} mb-2 flex items-baseline gap-2`}
       >
-        {title}
+        {to && books.length > 0 ? (
+          <Link
+            to={to}
+            className="underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+          >
+            {title}
+          </Link>
+        ) : (
+          title
+        )}
         <span className="text-base font-normal text-stone-400 dark:text-stone-500">
           {total ?? books.length}
         </span>
@@ -514,8 +528,6 @@ export default function Home({
   const showMain = showLoans || showRecent || showWanted;
   // Every section after the first is set off by a rule
   const divided = "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6";
-  // Loans, three each way unless asked for all
-  const [allLoans, setAllLoans] = useState(false);
   // Whether the side column's activity runs past the main column, so it's
   // cut there with a fade
   const railRef = useRef<HTMLDivElement>(null);
@@ -531,9 +543,6 @@ export default function Home({
     for (const child of Array.from(rail.children)) observer.observe(child);
     return () => observer.disconnect();
   }, []);
-  const hiddenLoans =
-    Math.max(0, books.borrowed.length - LOANS_SHOWN) +
-    Math.max(0, books.lent.length - LOANS_SHOWN);
 
   return (
     <main className="px-4 md:px-8 pt-4 md:pt-8 pb-8 md:pb-10">
@@ -576,8 +585,9 @@ export default function Home({
                       <LoanList
                         id="borrowing"
                         title="Borrowing"
+                        to="/books?status=borrowed"
                         books={books.borrowed
-                          .slice(0, allLoans ? undefined : LOANS_SHOWN)
+                          .slice(0, LOANS_SHOWN)
                           .map((book) => ({ book, person: book.owner }))}
                         total={books.borrowed.length}
                         personLabel="From"
@@ -586,28 +596,15 @@ export default function Home({
                       <LoanList
                         id="lent-out"
                         title="Lent out"
+                        to="/books?status=lent"
                         books={books.lent
-                          .slice(0, allLoans ? undefined : LOANS_SHOWN)
+                          .slice(0, LOANS_SHOWN)
                           .map((book) => ({ book, person: book.borrower }))}
                         total={books.lent.length}
                         personLabel="To"
                         empty="Everything's on your shelf."
                       />
                     </div>
-                    {/* The most pressing few each way show (late and due
-                        soon come first); the rest on request */}
-                    {hiddenLoans > 0 || allLoans ? (
-                      <button
-                        type="button"
-                        onClick={() => setAllLoans((all) => !all)}
-                        aria-expanded={allLoans}
-                        className={`mt-3 whitespace-nowrap ${linkClass}`}
-                      >
-                        {allLoans
-                          ? "Show fewer loans"
-                          : `Show all ${books.borrowed.length + books.lent.length} loans`}
-                      </button>
-                    ) : null}
                   </section>
                 ),
               },
