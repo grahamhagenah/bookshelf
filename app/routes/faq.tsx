@@ -395,9 +395,10 @@ export default function Faq() {
         <section
           key={section.heading}
           id={section.heading.toLowerCase().replace(/[^a-z]+/g, "-")}
-          className="mt-12 border-t border-stone-200 dark:border-stone-800 pt-8"
+          // Set apart by space and a bolder heading, rather than a rule
+          className="mt-14 scroll-mt-20"
         >
-          <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400">
+          <h2 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
             {section.heading}
           </h2>
           {/* Questions to scan, each opening on its answer; the page's
