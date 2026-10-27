@@ -3,13 +3,19 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
+import sharp from "sharp";
+
+import { routeArgs } from "../test/route";
+
 import {
   COVER_PATH,
   coverHostAllowed,
   customCoverPath,
   isbnCoverParts,
   loadCover,
+  loadCoverWebp,
 } from "./covers.server";
+import { loader as coverRoute } from "./routes/covers.$";
 
 test("COVER_PATH allows only Open Library cover paths and the app's own", () => {
   expect(COVER_PATH.test("b/isbn/9780547928227-M.jpg")).toBe(true);
@@ -133,4 +139,54 @@ test("an empty file left in the cache is fetched again, not served", async () =>
   // And put right on disk
   expect((await readFile(file)).length).toBe(800);
   vi.unstubAllGlobals();
+});
+
+// A kept cover by ID, as if fetched earlier: a real JPEG with some detail
+async function keptCover(bytes?: Buffer) {
+  const id = String(Math.random()).slice(2, 10);
+  const dir = process.env.COVER_CACHE_DIR ?? path.join(os.tmpdir(), "stacks-covers");
+  await mkdir(dir, { recursive: true });
+  const jpeg =
+    bytes ??
+    (await sharp(Buffer.from(Array.from({ length: 180 * 270 * 3 }, (_, i) => (i * 37) % 251)), {
+      raw: { width: 180, height: 270, channels: 3 },
+    })
+      .jpeg({ quality: 90 })
+      .toBuffer());
+  await writeFile(path.join(dir, `b_id_${id}-M.jpg`), jpeg);
+  return { coverPath: `b/id/${id}-M.jpg`, file: path.join(dir, `b_id_${id}-M.jpg`), jpeg };
+}
+
+test("a cover as WebP is smaller than the JPEG, made once and kept beside it", async () => {
+  const { coverPath, file, jpeg } = await keptCover();
+  const webp = await loadCoverWebp(coverPath);
+  expect(webp?.subarray(8, 12).toString("ascii")).toBe("WEBP");
+  expect(webp!.length).toBeLessThan(jpeg.length);
+  expect(await readFile(`${file}.webp`)).toEqual(webp);
+  // The JPEG stays as it was, for browsers that don't take WebP
+  expect(await loadCover(coverPath)).toEqual(jpeg);
+});
+
+test("a picture that can't be made into WebP is served as it was", async () => {
+  // Not an image sharp can read, but big enough to be kept
+  const { coverPath } = await keptCover(Buffer.alloc(600, 7));
+  expect(await loadCoverWebp(coverPath)).toEqual(Buffer.alloc(600, 7));
+});
+
+test("the cover route gives WebP to browsers that take it, and JPEG to the rest", async () => {
+  const { coverPath } = await keptCover();
+  const get = (accept: string) =>
+    coverRoute(
+      routeArgs(new Request(`http://localhost/covers/${coverPath}`, { headers: { Accept: accept } }), {
+        "*": coverPath,
+      }),
+    );
+
+  const webp = await get("image/avif,image/webp,*/*");
+  expect(webp.headers.get("Content-Type")).toBe("image/webp");
+  expect(webp.headers.get("Vary")).toBe("Accept");
+
+  const jpeg = await get("image/png,image/*;q=0.8");
+  expect(jpeg.headers.get("Content-Type")).toBe("image/jpeg");
+  expect(jpeg.headers.get("Vary")).toBe("Accept");
 });

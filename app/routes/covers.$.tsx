@@ -1,24 +1,31 @@
 
 import type { LoaderFunctionArgs } from "react-router";
 
-import { COVER_PATH, loadCover } from "~/covers.server";
+import { COVER_PATH, loadCover, loadCoverWebp } from "~/covers.server";
 
 // Serves Open Library covers from this app's own disk cache, with long
-// caching, so pages don't wait on Open Library
+// caching, so pages don't wait on Open Library. A browser that takes WebP
+// gets the cover as WebP, about half the weight, at the same address.
 
 function contentType(bytes: Buffer) {
+  if (
+    bytes.subarray(0, 4).toString("ascii") === "RIFF" &&
+    bytes.subarray(8, 12).toString("ascii") === "WEBP"
+  )
+    return "image/webp";
   if (bytes.subarray(0, 3).toString("ascii") === "GIF") return "image/gif";
   if (bytes.subarray(1, 4).toString("ascii") === "PNG") return "image/png";
   return "image/jpeg";
 }
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const coverPath = params["*"] ?? "";
   if (!COVER_PATH.test(coverPath)) {
     return new Response("Not found", { status: 404 });
   }
 
-  const bytes = await loadCover(coverPath);
+  const webp = request.headers.get("Accept")?.includes("image/webp") ?? false;
+  const bytes = await (webp ? loadCoverWebp : loadCover)(coverPath);
   if (!bytes) {
     // No picture: the browser fires the image's error, the page shows its
     // placeholder, and nothing is remembered, so next time asks again
@@ -32,6 +39,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     headers: {
       "Content-Type": contentType(bytes),
       "Content-Length": String(bytes.length),
+      // Which one depends on what the browser said it takes, so a cache
+      // keeps the two apart
+      Vary: "Accept",
       // A cover at a given path never changes
       "Cache-Control": "public, max-age=31536000, immutable",
     },
