@@ -2387,25 +2387,7 @@ export default function BookDetailsPage() {
           ) : (
             /* View Mode */
             <>
-              {/* Room on the right for "Edit details or cover", so a long
-                  title wraps before it reaches the button */}
-              <div
-                className={`hidden md:block ${data.isOwner ? "md:pr-40" : ""}`}
-              >
-                {heading}
-              </div>
-
-              {/* Rarely needed, so it sits quietly in the top corner on
-                  wider screens, and under the details on phones */}
-              {data.isOwner ? (
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(true)}
-                  className="mt-3 md:absolute md:right-0 md:top-1 md:mt-0 text-sm text-stone-400 dark:text-stone-500 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
-                >
-                  Edit details or cover
-                </button>
-              ) : null}
+              <div className="hidden md:block">{heading}</div>
             </>
           )}
 
@@ -2484,6 +2466,21 @@ export default function BookDetailsPage() {
             <div id="lending" className="mt-10">
               <LendingHistory data={data} />
             </div>
+          ) : null}
+
+          {/* Rarely needed, so it waits at the very bottom. The form opens
+              at the top, so the page goes back up to it. */}
+          {data.isOwner && !isEditing ? (
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditing(true);
+                window.scrollTo({ top: 0 });
+              }}
+              className="mt-12 text-sm text-stone-400 dark:text-stone-500 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+            >
+              Edit details or cover
+            </button>
           ) : null}
         </section>
       </main>
