@@ -89,6 +89,8 @@ function AddButton({ to, children }: { to: string; children: string }) {
 // The most pressing few loans each way (late and due soon come first); the
 // headings link to the rest on your shelf
 const LOANS_SHOWN = 3;
+// And as many of friends' latest posts beside them
+export const POSTS_SHOWN = 3;
 
 // One row of a loan list: the book, who it's from or to, and when it's
 // due, with a note when something needs doing (someone's waiting for it).
@@ -901,80 +903,41 @@ export default function Home({
             aria-labelledby="friend-activity"
             className={
               showMain
-                ? "border-t border-stone-200 dark:border-stone-800 pt-8 lg:flex lg:min-h-[30rem] lg:flex-col lg:border-t-0 lg:border-l lg:pt-0"
+                ? "border-t border-stone-200 dark:border-stone-800 pt-8 lg:border-t-0 lg:border-l lg:pt-0"
                 : undefined
             }
           >
-            {/* Beside the main column, no taller than it, sharing it with
-                the chart below: what doesn't fit fades out, with the way to
-                the rest */}
-            <div
-              className={
-                showMain ? "lg:relative lg:min-h-[16rem] lg:flex-1" : undefined
-              }
-            >
-              <div
-                className={
-                  showMain
-                    ? "lg:absolute lg:inset-0 lg:overflow-hidden lg:pl-8"
-                    : undefined
-                }
-              >
-                <h2 id="friend-activity" className={`${sectionHeading} mb-2`}>
-                  <Link to="/feed" className={headingLink}>
-                    Friend activity
-                  </Link>
-                </h2>
-                {activity.length > 0 ? (
-                  <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-                    {activity.map((item, index) => (
-                      <li
-                        key={item.id}
-                        // On phones the column sits below the rest, so it
-                        // keeps to six; beside it, as many as fit
-                        className={
-                          index >= 6 ? "hidden lg:list-item" : undefined
-                        }
-                      >
-                        <FriendActivityItem item={item} friendIds={friendIds} />
-                      </li>
-                    ))}
-                  </ul>
-                ) : friendIds.length === 0 ? (
-                  <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
-                    Add friends to see the books they add and love.{" "}
-                    <Link
-                      to="/friends/add"
-                      className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-                    >
-                      Find friends
-                    </Link>
-                  </p>
-                ) : (
-                  <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
-                    Nothing new from your friends lately.
-                  </p>
-                )}
-                {/* After the last post; beside the main column, it sticks to
-                    the column's foot when the posts run past it, so it's on
-                    the fade. Done in CSS, so it's right from the first paint. */}
-                {activity.length > 0 ? (
-                  <div
-                    className={`mt-3 ${showMain ? "lg:sticky lg:bottom-0 lg:z-10" : ""}`}
+            {/* The latest few, like the loans beside them, and the way to the rest */}
+            <div className={showMain ? "lg:pl-8" : undefined}>
+              <h2 id="friend-activity" className={`${sectionHeading} mb-2`}>
+                <Link to="/feed" className={headingLink}>
+                  Friend activity
+                </Link>
+              </h2>
+              {activity.length > 0 ? (
+                <ul className="divide-y divide-stone-100 dark:divide-stone-800">
+                  {activity.map((item) => (
+                    <li key={item.id}>
+                      <FriendActivityItem item={item} friendIds={friendIds} />
+                    </li>
+                  ))}
+                </ul>
+              ) : friendIds.length === 0 ? (
+                <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
+                  Add friends to see the books they add and love.{" "}
+                  <Link
+                    to="/friends/add"
+                    className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
                   >
-                    <SeeMore />
-                  </div>
-                ) : null}
-              </div>
-              {/* The fade at the column's foot. Over posts that run past it,
-                  it fades them out; over the blank below a short list, it
-                  doesn't show. */}
-              {showMain ? (
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-28 bg-gradient-to-t from-white from-45% to-transparent dark:from-stone-950 lg:block"
-                />
-              ) : null}
+                    Find friends
+                  </Link>
+                </p>
+              ) : (
+                <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
+                  Nothing new from your friends lately.
+                </p>
+              )}
+              {activity.length > 0 ? <SeeMore className="mt-3" /> : null}
             </div>
             {popular.length > 0 ? (
               <PopularChart
