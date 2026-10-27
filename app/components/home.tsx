@@ -787,16 +787,10 @@ export default function Home({
                     : undefined
                 }
               >
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <h2 id="friend-activity" className={sectionHeading}>
-                    Friend activity
-                  </h2>
-                  {activity.length > 0 ? (
-                    <Link to="/feed" className={linkClass}>
-                      See all
-                    </Link>
-                  ) : null}
-                </div>
+                {/* "See more" under the posts goes to the whole feed */}
+                <h2 id="friend-activity" className={`${sectionHeading} mb-2`}>
+                  Friend activity
+                </h2>
                 {activity.length > 0 ? (
                   <ul className="divide-y divide-stone-100 dark:divide-stone-800">
                     {activity.map((item, index) => (
