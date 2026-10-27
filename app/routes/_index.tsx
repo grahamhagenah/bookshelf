@@ -11,6 +11,7 @@ import { shelfIds } from "~/models/household.server";
 import { getPendingFriendRequests, getUserById } from "~/models/user.server";
 import { getWantToRead } from "~/models/wish.server";
 import { publicOrigin } from "~/origin.server";
+import { pageUrl } from "~/page-url";
 import { ABOUT_STACKS, seo, structuredData } from "~/seo";
 import { getUserId, requireUserId } from "~/session.server";
 import {
@@ -20,8 +21,8 @@ import {
 } from "~/share-prompt.server";
 import { workPath } from "~/utils";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) =>
-  data?.home
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
+  loaderData?.home
     ? seo({ title: "Home", noindex: true })
     : [...seo({ path: "/" }), structuredData(ABOUT_STACKS)];
 
@@ -42,7 +43,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // Just deleted their account from Settings
     return data({
       home: null,
-      deleted: new URL(request.url).searchParams.has("deleted"),
+      deleted: pageUrl(request).searchParams.has("deleted"),
     });
   }
 

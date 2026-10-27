@@ -4,6 +4,7 @@ import type { LoaderFunctionArgs } from "react-router";
 
 import { prisma } from "~/db.server";
 import { fillInBookOnce } from "~/models/openlibrary.server";
+import { pageUrl } from "~/page-url";
 import { requireUserId } from "~/session.server";
 
 // Finishes a book's first look-up on Open Library. The book page asks
@@ -11,7 +12,7 @@ import { requireUserId } from "~/session.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireUserId(request);
-  const bookId = new URL(request.url).searchParams.get("bookId");
+  const bookId = pageUrl(request).searchParams.get("bookId");
   const book = bookId
     ? await prisma.book.findUnique({ where: { id: bookId }, select: { id: true, detailsFetchedAt: true } })
     : null;

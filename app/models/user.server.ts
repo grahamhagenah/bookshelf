@@ -1,14 +1,14 @@
-import type { Password, User, Notification } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import { compare, hash } from "bcryptjs";
 
 import { cancelBilling } from "~/billing.server";
 import { prisma } from "~/db.server";
+import type { Password, User, Notification } from "~/generated/prisma/client";
 import { REQUEST_NOTE_MAX } from "~/lending";
 import { shelfIds } from "~/models/household.server";
 import type { CoverSize, LibraryView, Theme } from "~/utils";
 import { normalizeEmail } from "~/utils";
 
-export type { User } from "@prisma/client";
+export type { User } from "~/generated/prisma/client";
 
 export async function getUserById(id: User["id"]) {
   return prisma.user.findUnique({
@@ -442,7 +442,7 @@ export async function createUser(
   firstname: string,
   surname: string,
 ) {
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await hash(password, 10);
 
   return prisma.user.create({
     data: {
@@ -602,7 +602,7 @@ export async function changePassword(
     return { success: false, error: "User not found" };
   }
 
-  const isValid = await bcrypt.compare(
+  const isValid = await compare(
     currentPassword,
     userWithPassword.password.hash,
   );
@@ -610,7 +610,7 @@ export async function changePassword(
     return { success: false, error: "Current password is incorrect" };
   }
 
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  const hashedPassword = await hash(newPassword, 10);
   await prisma.password.update({
     where: { userId },
     data: { hash: hashedPassword },
@@ -742,7 +742,7 @@ export async function verifyLogin(
     return null;
   }
 
-  const isValid = await bcrypt.compare(
+  const isValid = await compare(
     password,
     userWithPassword.password.hash,
   );

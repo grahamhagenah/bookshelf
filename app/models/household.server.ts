@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 
-import type { User } from "@prisma/client";
-
 import { prisma } from "~/db.server";
+import type { User } from "~/generated/prisma/client";
+
 
 // A household is people who share one shelf: a couple, a family, a flat.
 // Each person keeps their own login, notes, hearts, want-to-read list and

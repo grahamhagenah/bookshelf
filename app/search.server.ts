@@ -82,7 +82,7 @@ export async function searchOpenLibrary({
 
   // Open Library uses "language:code" syntax within the query
   const fullQuery = language ? `${query} language:${language}` : query;
-  let searchQuery = "";
+  let searchQuery: string;
   switch (searchType) {
     case "title":
       searchQuery = `title=${encodeURIComponent(fullQuery)}`;

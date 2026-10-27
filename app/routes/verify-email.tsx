@@ -2,6 +2,7 @@
 import { data, Link, redirect, useActionData, useLoaderData } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
+import { pageUrl } from "~/page-url";
 import { seo } from "~/seo";
 import { getUserId, requireUserId } from "~/session.server";
 import { confirmEmail, sendVerification } from "~/verify-email.server";
@@ -13,7 +14,7 @@ export const meta: MetaFunction = () =>
 // confirmed, since the banner is read alongside this loader and would
 // still show on the same request.
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const url = new URL(request.url);
+  const url = pageUrl(request);
   const token = url.searchParams.get("token");
   if (token) {
     const confirmed = await confirmEmail(token);

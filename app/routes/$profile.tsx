@@ -10,14 +10,14 @@ import { loadSharedShelf } from "~/share.server";
 // A shelf at its own address, bookstacks.app/@handle. Only addresses that
 // start with @ land here, and only while the owner's sharing is on.
 
-export const meta: MetaFunction<typeof loader> = ({ data, params }) =>
+export const meta: MetaFunction<typeof loader> = ({ loaderData, params }) =>
   seo({
-    title: data?.ownerName ? `${data.ownerName}'s bookshelf` : "Bookshelf",
-    description: data
-      ? (data.profile.bio ?? shelfSummary(data.ownerName, data.bookCount, data.sampleTitles))
+    title: loaderData?.ownerName ? `${loaderData.ownerName}'s bookshelf` : "Bookshelf",
+    description: loaderData
+      ? (loaderData.profile.bio ?? shelfSummary(loaderData.ownerName, loaderData.bookCount, loaderData.sampleTitles))
       : undefined,
     path: `/${params.profile}`,
-    image: data ? `${data.origin}/share/${data.shareToken}/preview.png` : undefined,
+    image: loaderData ? `${loaderData.origin}/share/${loaderData.shareToken}/preview.png` : undefined,
     noindex: true,
   });
 

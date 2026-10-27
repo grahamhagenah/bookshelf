@@ -50,9 +50,9 @@ const OLID = /^OL\d+W$/;
 const quietLink =
   "text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) =>
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
   seo({
-    title: data?.work ? `${data.work.title} by ${data.work.author}` : "Book",
+    title: loaderData?.work ? `${loaderData.work.title} by ${loaderData.work.author}` : "Book",
     noindex: true,
   });
 

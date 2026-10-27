@@ -1,6 +1,6 @@
-import type { User } from "@prisma/client";
-
 import { prisma } from "~/db.server";
+import type { User } from "~/generated/prisma/client";
+
 
 import type { FriendActivity } from "./activity.server";
 import { getFriendActivity } from "./activity.server";

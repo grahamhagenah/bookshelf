@@ -1,6 +1,5 @@
-import type { User } from "@prisma/client";
-
 import { prisma } from "~/db.server";
+import type { User } from "~/generated/prisma/client";
 import { lendBook } from "~/models/book.server";
 import {
   createBookApprovedNotification,

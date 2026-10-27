@@ -50,7 +50,7 @@ function login({
 } = {}) {
   cy.then(() => ({ email })).as("user");
   cy.exec(
-    `npx ts-node -r tsconfig-paths/register ./cypress/support/create-user.ts "${email}"`,
+    `npx tsx ./cypress/support/create-user.ts "${email}"`,
   ).then(({ stdout }) => {
     const cookieValue = stdout
       .replace(/.*<cookie>(?<cookieValue>.*)<\/cookie>.*/s, "$<cookieValue>")
@@ -76,7 +76,7 @@ function cleanupUser({ email }: { email?: string } = {}) {
 
 function deleteUserByEmail(email: string) {
   cy.exec(
-    `npx ts-node -r tsconfig-paths/register ./cypress/support/delete-user.ts "${email}"`,
+    `npx tsx ./cypress/support/delete-user.ts "${email}"`,
   );
   cy.clearCookie("__session");
 }
@@ -88,6 +88,7 @@ function deleteUserByEmail(email: string) {
 // ===========================================================
 function visitAndCheck(url: string, waitTime = 1000) {
   cy.visit(url);
+  // eslint-disable-next-line cypress/no-unnecessary-waiting -- the issue above
   cy.location("pathname").should("contain", url).wait(waitTime);
 }
 

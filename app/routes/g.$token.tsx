@@ -13,9 +13,9 @@ import { getUserId } from "~/session.server";
 // you friends with everyone there. Signed out, it says who's in it and
 // what they have, and sends you to sign up (or in) and straight back here.
 
-export const meta: MetaFunction<typeof loader> = ({ data }) =>
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
   seo({
-    title: data?.group ? `Join ${data.group.name} on Stacks` : "Group",
+    title: loaderData?.group ? `Join ${loaderData.group.name} on Stacks` : "Group",
     description: "Borrow and lend books with the people you know.",
     noindex: true,
   });

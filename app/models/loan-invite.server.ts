@@ -1,8 +1,8 @@
-import type { Book, User } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import { hash } from "bcryptjs";
 
 import { prisma } from "~/db.server";
 import { sendLoanInviteEmail } from "~/email.server";
+import type { Book, User } from "~/generated/prisma/client";
 import { INVITES_PER_DAY, makeInviteToken, readInviteToken, splitName } from "~/loan-invite";
 import { normalizeEmail, validateEmail } from "~/utils";
 import { canResend } from "~/verify-email";
@@ -196,7 +196,7 @@ export async function claimInvite(
     data: {
       firstname,
       surname,
-      password: { create: { hash: await bcrypt.hash(password, 10) } },
+      password: { create: { hash: await hash(password, 10) } },
       invitedAt: null,
       emailVerifiedAt: now,
       discoverable: true,

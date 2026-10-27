@@ -54,6 +54,7 @@ import {
   setDiscoverable,
 } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
+import { pageUrl } from "~/page-url";
 import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
 import { getPlanUsage } from "~/plan.server";
 import { BIO_MAX, HANDLE_MAX, PIN_MAX } from "~/profile";
@@ -73,7 +74,7 @@ export const handle = {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   // Back from Stripe's checkout: confirm the upgrade now, then tidy the URL
-  const checkout = new URL(request.url).searchParams.get("checkout");
+  const checkout = pageUrl(request).searchParams.get("checkout");
   if (checkout && billingEnabled()) {
     try {
       await confirmCheckout(userId, checkout);
@@ -95,9 +96,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     pins,
     plan,
     billing: billingEnabled(),
-    upgraded: new URL(request.url).searchParams.has("upgraded"),
+    upgraded: pageUrl(request).searchParams.has("upgraded"),
     billingFailed:
-      new URL(request.url).searchParams.get("billing") === "failed",
+      pageUrl(request).searchParams.get("billing") === "failed",
     origin: publicOrigin(request),
     bookStats,
     household: household

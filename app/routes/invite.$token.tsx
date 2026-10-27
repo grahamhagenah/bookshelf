@@ -12,9 +12,9 @@ import { getUserId } from "~/session.server";
 // spot. Signed out, it says who's asking and what's on their shelf, and
 // sends you to sign up (or in) and straight back here.
 
-export const meta: MetaFunction<typeof loader> = ({ data }) =>
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
   seo({
-    title: data?.inviter ? `${data.inviter.firstname} invited you to Stacks` : "Invite",
+    title: loaderData?.inviter ? `${loaderData.inviter.firstname} invited you to Stacks` : "Invite",
     description: "Borrow and lend books with friends.",
     noindex: true,
   });

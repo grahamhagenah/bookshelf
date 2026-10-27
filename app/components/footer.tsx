@@ -12,7 +12,7 @@ const linkClass = "hover:text-stone-900 dark:hover:text-stone-100 transition-col
 
 export default function Footer() {
   const matches = useMatches();
-  const rootData = matches.find((m) => m.id === "root")?.data as RootLoaderData | undefined;
+  const rootData = matches.find((m) => m.id === "root")?.loaderData as RootLoaderData | undefined;
   const user = rootData?.user;
   const { pathname } = useLocation();
 

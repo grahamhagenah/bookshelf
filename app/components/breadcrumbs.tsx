@@ -12,7 +12,7 @@ interface BreadcrumbMatch {
     breadcrumb?: (data: unknown) => React.ReactNode;
     breadcrumbs?: (data: unknown) => BreadcrumbItem[];
   };
-  data: unknown;
+  loaderData: unknown;
 }
 
 function useBreadcrumbs() {
@@ -22,13 +22,13 @@ function useBreadcrumbs() {
   matches.forEach((match) => {
     // Support array of breadcrumbs
     if (match.handle?.breadcrumbs) {
-      match.handle.breadcrumbs(match.data).forEach((crumb, index) => {
+      match.handle.breadcrumbs(match.loaderData).forEach((crumb, index) => {
         crumbs.push({ id: `${match.id}-${index}`, label: crumb.label, href: crumb.href });
       });
     }
     // Support single breadcrumb
     else if (match.handle?.breadcrumb) {
-      crumbs.push({ id: match.id, label: match.handle.breadcrumb(match.data) });
+      crumbs.push({ id: match.id, label: match.handle.breadcrumb(match.loaderData) });
     }
   });
 

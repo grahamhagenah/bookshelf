@@ -16,6 +16,7 @@ import {
 import { shelfIds } from "~/models/household.server";
 import { fetchDescription } from "~/models/openlibrary.server";
 import { addWantToRead, notifyWanters } from "~/models/wish.server";
+import { pageUrl } from "~/page-url";
 import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
 import { roomForBooks } from "~/plan.server";
 import type { OpenLibraryBook, OpenLibraryResults } from "~/search.server";
@@ -51,7 +52,7 @@ const LANGUAGES = [
 // Make GET request to Open Library API
 export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await getUserId(request);
-  const url = new URL(request.url);
+  const url = pageUrl(request);
   const query = url.searchParams.get("q") || "";
   const searchType = url.searchParams.get("type") || "all";
   const language = url.searchParams.get("lang") || "";

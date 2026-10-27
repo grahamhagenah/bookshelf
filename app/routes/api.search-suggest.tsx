@@ -6,6 +6,7 @@ import { isNotLending } from "~/lending";
 import { getUserLibraryKeys, searchFriendsBooks } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
 import { inEnglish } from "~/models/openlibrary.server";
+import { pageUrl } from "~/page-url";
 import { requireUserId } from "~/session.server";
 import {
   cleanSubjects,
@@ -49,7 +50,7 @@ export interface SuggestResponse {
 // Library is asked separately (?source=openLibrary) since it can be slow.
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const params = new URL(request.url).searchParams;
+  const params = pageUrl(request).searchParams;
   const query = params.get("q")?.trim() ?? "";
   const source = params.get("source");
 

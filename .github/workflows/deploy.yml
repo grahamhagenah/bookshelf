@@ -30,7 +30,7 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       # Reuse node_modules while package-lock.json is unchanged; npm ci only
       # runs on a cache miss
@@ -39,7 +39,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          key: node-modules-${{ runner.os }}-node24-${{ hashFiles('package-lock.json') }}
 
       - name: 📥 Install deps
         if: steps.node-modules.outputs.cache-hit != 'true'
@@ -62,7 +62,7 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       # Reuse node_modules while package-lock.json is unchanged; npm ci only
       # runs on a cache miss
@@ -71,7 +71,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          key: node-modules-${{ runner.os }}-node24-${{ hashFiles('package-lock.json') }}
 
       - name: 📥 Install deps
         if: steps.node-modules.outputs.cache-hit != 'true'
@@ -94,7 +94,7 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       # Reuse node_modules while package-lock.json is unchanged; npm ci only
       # runs on a cache miss
@@ -103,7 +103,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          key: node-modules-${{ runner.os }}-node24-${{ hashFiles('package-lock.json') }}
 
       - name: 📥 Install deps
         if: steps.node-modules.outputs.cache-hit != 'true'
@@ -119,8 +119,7 @@ jobs:
         run: >
           npx prisma migrate diff
           --from-migrations prisma/migrations
-          --to-schema-datamodel prisma/schema.prisma
-          --shadow-database-url file:./shadow.db
+          --to-schema prisma/schema.prisma
           --exit-code
 
       - name: ⚡ Run vitest

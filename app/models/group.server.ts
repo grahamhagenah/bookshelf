@@ -1,6 +1,5 @@
-import type { Group, User } from "@prisma/client";
-
 import { prisma } from "~/db.server";
+import type { Group, User } from "~/generated/prisma/client";
 import { GROUP_NAME_MAX } from "~/group-links";
 
 import { canInteract } from "./demo.server";

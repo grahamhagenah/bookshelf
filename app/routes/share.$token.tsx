@@ -11,12 +11,12 @@ import { askToBeFriends, loadSharedShelf } from "~/share.server";
 // to the shelf's own address, bookstacks.app/@handle.
 
 // What iMessage, Slack and friends show when the link is pasted
-export const meta: MetaFunction<typeof loader> = ({ data, params }) =>
+export const meta: MetaFunction<typeof loader> = ({ loaderData, params }) =>
   seo({
-    title: data?.ownerName ? `${data.ownerName}'s bookshelf` : "Bookshelf",
-    description: data ? shelfSummary(data.ownerName, data.bookCount, data.sampleTitles) : undefined,
+    title: loaderData?.ownerName ? `${loaderData.ownerName}'s bookshelf` : "Bookshelf",
+    description: loaderData ? shelfSummary(loaderData.ownerName, loaderData.bookCount, loaderData.sampleTitles) : undefined,
     path: `/share/${params.token}`,
-    image: data ? `${data.origin}/share/${params.token}/preview.png` : undefined,
+    image: loaderData ? `${loaderData.origin}/share/${params.token}/preview.png` : undefined,
     noindex: true,
   });
 

@@ -1,3 +1,4 @@
+import { pageUrl } from "~/page-url";
 import { SITE_URL } from "~/seo";
 
 // The address to put in links people share. Behind Fly's proxy requests
@@ -5,5 +6,5 @@ import { SITE_URL } from "~/seo";
 export function publicOrigin(request: Request) {
   return process.env.NODE_ENV === "production"
     ? SITE_URL
-    : new URL(request.url).origin;
+    : pageUrl(request).origin;
 }

@@ -299,7 +299,7 @@ function Stat({
   value: number | string;
   note?: string;
   noteClass?: string;
-  icon?: (props: { size?: number }) => JSX.Element;
+  icon?: (props: { size?: number }) => React.JSX.Element;
   tone?: Tone;
   className?: string;
 }) {

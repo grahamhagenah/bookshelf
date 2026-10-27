@@ -3,6 +3,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 
 import { getWantToReadWorks } from "~/models/wish.server";
+import { pageUrl } from "~/page-url";
 import { NO_RESULTS, searchOpenLibrary } from "~/search.server";
 import { getUserId } from "~/session.server";
 
@@ -10,7 +11,7 @@ import { getUserId } from "~/session.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
-  const url = new URL(request.url);
+  const url = pageUrl(request);
   const query = url.searchParams.get("q") || "";
   const searchType = url.searchParams.get("type") || "all";
   const language = url.searchParams.get("lang") || "";

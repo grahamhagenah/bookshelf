@@ -5,6 +5,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import { prisma } from "~/db.server";
 import type { EmailKind } from "~/models/user.server";
 import { setEmailSetting } from "~/models/user.server";
+import { pageUrl } from "~/page-url";
 import { seo } from "~/seo";
 import { getUserId } from "~/session.server";
 import { readUnsubscribe } from "~/unsubscribe.server";
@@ -30,7 +31,7 @@ async function isOn(userId: string, kind: EmailKind) {
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const link = readUnsubscribe(new URL(request.url).searchParams);
+  const link = readUnsubscribe(pageUrl(request).searchParams);
   const on = link ? await isOn(link.userId, link.kind) : null;
   const loggedIn = Boolean(await getUserId(request));
   if (!link || on === null) return data({ valid: false as const, loggedIn });
@@ -38,7 +39,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const link = readUnsubscribe(new URL(request.url).searchParams);
+  const link = readUnsubscribe(pageUrl(request).searchParams);
   if (!link || (await isOn(link.userId, link.kind)) === null) {
     return data({ error: "That link didn't work" }, { status: 400 });
   }

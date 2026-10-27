@@ -6,6 +6,7 @@ import { primaryButton } from "~/components/ui";
 import { FEEDBACK_MAX_LENGTH } from "~/feedback";
 import { MIN_SECONDS, clientIp, formAge, formToken, looksLikeSpam, tooMany } from "~/feedback-guard.server";
 import { saveFeedback } from "~/models/feedback.server";
+import { pageUrl } from "~/page-url";
 import { seo } from "~/seo";
 import { getUserId } from "~/session.server";
 import { safeRedirect, validateEmail } from "~/utils";
@@ -20,7 +21,7 @@ export const meta: MetaFunction = () =>
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
   // The page they came from, to go back to and to say where it was about
-  const from = safeRedirect(new URL(request.url).searchParams.get("from"), "/");
+  const from = safeRedirect(pageUrl(request).searchParams.get("from"), "/");
   return data({ signedIn: Boolean(userId), from, token: formToken() });
 };
 

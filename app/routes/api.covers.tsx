@@ -5,6 +5,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { prisma } from "~/db.server";
 import { shelfIds } from "~/models/household.server";
 import { findCovers } from "~/models/openlibrary.server";
+import { pageUrl } from "~/page-url";
 import { requireUserId } from "~/session.server";
 
 // Covers Open Library has for one of your books, for the picker on the
@@ -12,7 +13,7 @@ import { requireUserId } from "~/session.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const bookId = new URL(request.url).searchParams.get("bookId");
+  const bookId = pageUrl(request).searchParams.get("bookId");
   // Anyone sharing the shelf the book is on can pick its cover
   const book = bookId
     ? await prisma.book.findFirst({

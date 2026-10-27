@@ -1,7 +1,7 @@
-import type { User } from "@prisma/client";
 
 import { plateColorFor, plateColorOf } from "~/components/avatar";
 import { prisma } from "~/db.server";
+import type { User } from "~/generated/prisma/client";
 import { shelfIds } from "~/models/household.server";
 import { BIO_MAX, PIN_MAX, handleProblem, normalizeHandle } from "~/profile";
 

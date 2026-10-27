@@ -7,13 +7,14 @@ import {
   getUserById,
   searchUsers,
 } from "~/models/user.server";
+import { pageUrl } from "~/page-url";
 import { requireUserId } from "~/session.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const user = await getUserById(userId);
 
-  const url = new URL(request.url);
+  const url = pageUrl(request);
   const query = url.searchParams.get("q") || "";
 
   if (query.length < 2) {
