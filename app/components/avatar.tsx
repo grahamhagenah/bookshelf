@@ -23,8 +23,9 @@ const ICON_PATHS = {
   ),
   mountain: (
     <>
-      <path d="M2.5 20 9 8.5l4 7 2.5-4L21.5 20z" />
-      <path d="M7.3 11.5 9 12.5l1.6-1" />
+      {/* Two peaks, the taller one capped in snow */}
+      <path d="M2.5 19.5 9.5 7l4.1 7.3 2.4-3.8 5.5 8.8z" />
+      <path d="M9.5 7 7.26 11 8.4 12.3l1.1-1.1 1.1 1.1 1.15-1.3z" fill="currentColor" />
     </>
   ),
   wave: (
@@ -125,12 +126,12 @@ const ICON_PATHS = {
   ),
   paw: (
     <>
-      {/* Four toes on an even arc over the pad, the outer two turned out */}
-      <ellipse cx="5.7" cy="10.9" rx="1.5" ry="1.85" transform="rotate(-28 5.7 10.9)" />
-      <ellipse cx="9.3" cy="6.9" rx="1.55" ry="2" transform="rotate(-10 9.3 6.9)" />
-      <ellipse cx="14.7" cy="6.9" rx="1.55" ry="2" transform="rotate(10 14.7 6.9)" />
-      <ellipse cx="18.3" cy="10.9" rx="1.5" ry="1.85" transform="rotate(28 18.3 10.9)" />
-      <path d="M12 11.8c-2.5 0-5 2.9-5 5.4 0 1.5 1.2 2.5 2.5 2.5 1 0 1.6-.6 2.5-.6s1.5.6 2.5.6c1.3 0 2.5-1 2.5-2.5 0-2.5-2.5-5.4-5-5.4z" />
+      {/* Four solid toes close over an open pad, the outer two turned out */}
+      <ellipse cx="6.4" cy="11.3" rx="1.7" ry="2.15" transform="rotate(-25 6.4 11.3)" fill="currentColor" stroke="none" />
+      <ellipse cx="9.6" cy="7.4" rx="1.7" ry="2.15" transform="rotate(-8 9.6 7.4)" fill="currentColor" stroke="none" />
+      <ellipse cx="14.4" cy="7.4" rx="1.7" ry="2.15" transform="rotate(8 14.4 7.4)" fill="currentColor" stroke="none" />
+      <ellipse cx="17.6" cy="11.3" rx="1.7" ry="2.15" transform="rotate(25 17.6 11.3)" fill="currentColor" stroke="none" />
+      <path d="M12 12.3c-2.7 0-5.3 3-5.3 5.4 0 1.5 1.2 2.6 2.7 2.6 1.1 0 1.6-.6 2.6-.6s1.5.6 2.6.6c1.5 0 2.7-1.1 2.7-2.6 0-2.4-2.6-5.4-5.3-5.4z" />
     </>
   ),
   fish: (
@@ -510,8 +511,11 @@ const ICON_PATHS = {
   ),
   rainbow: (
     <>
-      {/* A rainbow: three arcs */}
-      <path d="M3 17.5a9 9 0 0 1 18 0M6 17.5a6 6 0 0 1 12 0M9 17.5a3 3 0 0 1 6 0" />
+      {/* A rainbow: two arcs, each end resting on a cloud. A third arc
+          blurred together at small sizes */}
+      <path d="M3.5 14.9a8.5 8.5 0 0 1 17 0M6.75 13.06a5.6 5.6 0 0 1 10.5 0" />
+      <path d="M3.5 18.3a1.7 1.7 0 0 1 .43-3.35 2.3 2.3 0 0 1 4.57.2 1.6 1.6 0 0 1 .4 3.15z" />
+      <path d="M20.5 18.3a1.7 1.7 0 0 0-.43-3.35 2.3 2.3 0 0 0-4.57.2 1.6 1.6 0 0 0-.4 3.15z" />
     </>
   ),
   bolt: (
