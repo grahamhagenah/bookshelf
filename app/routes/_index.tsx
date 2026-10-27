@@ -8,6 +8,7 @@ import { getFriendActivity } from "~/models/activity.server";
 import { getHomeBooks } from "~/models/book.server";
 import { getFriendInvite } from "~/models/friend.server";
 import { shelfIds } from "~/models/household.server";
+import { getPopularWithFriends } from "~/models/popular.server";
 import { getPendingFriendRequests, getUserById } from "~/models/user.server";
 import { getWantToRead } from "~/models/wish.server";
 import { publicOrigin } from "~/origin.server";
@@ -47,13 +48,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   }
 
-  const [books, activity, sentRequests, wanted, invite] = await Promise.all([
-    getHomeBooks(user.id, await shelfIds(user.id)),
-    getFriendActivity(user.id, { limit: 6 }),
-    getPendingFriendRequests(user.id),
-    getWantToRead(user.id),
-    getFriendInvite(user.id),
-  ]);
+  const [books, activity, sentRequests, wanted, invite, popular] =
+    await Promise.all([
+      getHomeBooks(user.id, await shelfIds(user.id)),
+      getFriendActivity(user.id, { limit: 6 }),
+      getPendingFriendRequests(user.id),
+      getWantToRead(user.id),
+      getFriendInvite(user.id),
+      getPopularWithFriends(user.id),
+    ]);
   return data({
     home: {
       books,
@@ -82,6 +85,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
               : (workPath(openLibraryKey) ?? `/want-to-read/${id}`);
           return { id, title, author, cover, owners: haveIt(owners), to };
         }),
+      // The books passed around most among friends, new to you
+      popular: popular.map(({ owners, ...book }) => ({
+        ...book,
+        owners: haveIt(owners),
+      })),
       friendIds: user.following.map((friend) => friend.id),
       requestsSent: sentRequests.length,
       welcomeDismissed: welcomeDismissed(request),

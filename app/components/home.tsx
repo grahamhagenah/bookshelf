@@ -347,6 +347,20 @@ interface Wanted {
   to: string;
 }
 
+// One of the books passed around most among friends
+interface Popular {
+  id: string;
+  title: string;
+  author: string;
+  cover: string;
+  // How many times friends' copies of it have been lent
+  loans: number;
+  // "Maya and Sam have it"
+  owners: string | null;
+  // A friend's copy, one free to ask for first
+  to: string;
+}
+
 // One row of covers: four on phones, six on wider screens
 function CoverRow({
   items,
@@ -393,6 +407,7 @@ function CoverRow({
 export default function Home({
   books,
   wanted,
+  popular,
   activity,
   friendIds,
   requestsSent,
@@ -401,6 +416,7 @@ export default function Home({
 }: {
   books: HomeBooks;
   wanted: Wanted[];
+  popular: Popular[];
   activity: FriendActivity[];
   friendIds: string[];
   requestsSent: number;
@@ -422,7 +438,9 @@ export default function Home({
   const showRecent = setupDone || ownCount > 0;
   const showWanted = setupDone || wanted.length > 0;
   const showFeed = setupDone || friendIds.length > 0;
-  const showMain = showLoans || showRecent || showWanted;
+  // Only with something to show: it's for finding books, not setting up
+  const showPopular = popular.length > 0;
+  const showMain = showLoans || showRecent || showWanted || showPopular;
   // Every section after the first is set off by a rule
   const divided = "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6";
   // Loans, three each way unless asked for all
@@ -576,6 +594,49 @@ export default function Home({
                         </Link>
                       </p>
                     )}
+                  </section>
+                ),
+              },
+              {
+                key: "popular",
+                show: showPopular,
+                // Something new to borrow, above your own books
+                rank: 1.5,
+                render: (first: boolean) => (
+                  <section
+                    aria-labelledby="popular"
+                    className={first ? undefined : divided}
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h2
+                        id="popular"
+                        className={`${sectionHeading} whitespace-nowrap`}
+                      >
+                        Popular with friends
+                      </h2>
+                      <Link
+                        to="/friends/books"
+                        className={`whitespace-nowrap ${linkClass}`}
+                      >
+                        Friends&apos; books
+                      </Link>
+                    </div>
+                    <CoverRow
+                      items={popular}
+                      caption={(index) => (
+                        <span className="line-clamp-2 text-xs text-stone-400 dark:text-stone-500">
+                          {popular[index].loans === 1
+                            ? "Lent once"
+                            : `Lent ${popular[index].loans} times`}
+                          {popular[index].owners ? (
+                            <>
+                              <br />
+                              {popular[index].owners}
+                            </>
+                          ) : null}
+                        </span>
+                      )}
+                    />
                   </section>
                 ),
               },
