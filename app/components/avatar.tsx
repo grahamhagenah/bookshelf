@@ -511,11 +511,11 @@ const ICON_PATHS = {
   ),
   rainbow: (
     <>
-      {/* A rainbow: three arcs, each end on a big puff of cloud. The arcs
-          stop at the cloud's line, so none shows through it */}
-      <path d="M3.06 12.93a9.3 9.3 0 0 1 17.88 0M6.5 12.22a6.4 6.4 0 0 1 11 0M8.71 14.31a3.5 3.5 0 0 1 6.58 0" />
-      <path d="M2.4 18.8a1.5 1.5 0 1 1 .11-3 2.9 2.9 0 1 1 5.78.06 1.5 1.5 0 1 1 .41 2.94z" />
-      <path d="M21.6 18.8a1.5 1.5 0 1 0-.11-3 2.9 2.9 0 1 0-5.78.06 1.5 1.5 0 1 0-.41 2.94z" />
+      {/* A rainbow: three arcs rising from the left and setting into one
+          big cloud. The arcs stop at the cloud's line, so none shows
+          through it */}
+      <path d="M1.5 15.8a8.5 8.5 0 0 1 13.67-6.75M4.2 15.8a5.8 5.8 0 0 1 8.92-4.89M6.9 15.8a3.1 3.1 0 0 1 4.1-2.93" />
+      <path d="M12.4 16.9a1.9 1.9 0 1 1 .95-3.55 3.4 3.4 0 1 1 6.73-.14 1.9 1.9 0 1 1 .62 3.69z" />
     </>
   ),
   bolt: (
