@@ -1992,7 +1992,7 @@ export default function BookDetailsPage() {
 
   return (
     <>
-      <main className="flex flex-col md:flex-row gap-6 md:gap-12 md:gap-12 px-4 md:px-8 py-8 md:py-12 w-full">
+      <main className="flex flex-col md:flex-row gap-6 md:gap-12 lg:gap-16 xl:gap-20 px-4 md:px-8 py-8 md:py-12 w-full">
         {/* The cover stays in view while the page scrolls, on screens tall
             enough to hold it with the lending form open below the header */}
         <section className="flex-shrink-0 md:w-[200px] lg:w-[240px] space-y-4 md:self-start md:[@media(min-height:45rem)]:sticky md:[@media(min-height:45rem)]:top-20">
