@@ -447,10 +447,32 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const workKey = workPath(book.openLibraryKey) ? book.openLibraryKey : null;
   const elsewhere = !canNote && workKey !== null;
   const myWorkNote = elsewhere ? await getMyWorkNote(userId, workKey) : null;
+  // How each writer knows the book, shown under their name: this copy
+  // (theirs, or borrowed, and when), or another one somewhere else
+  const copyTie = (writerId: string) => {
+    if (ownerShelf.includes(writerId)) {
+      return writerId === userId ? "Your copy" : "Owns this copy";
+    }
+    // The lending history is newest first
+    const loan = lendingHistory.find((entry) => entry.borrower.id === writerId);
+    if (!loan) return null;
+    if (!loan.returnedAt) return "Borrowing this copy now";
+    const when = new Date(loan.borrowedAt);
+    return `Borrowed this copy in ${when.toLocaleDateString("en-US", {
+      month: "long",
+      ...(when.getFullYear() !== new Date().getFullYear()
+        ? { year: "numeric" }
+        : {}),
+    })}`;
+  };
   const notes = [
-    ...readerNotes,
-    ...readElsewhere,
-    ...(myWorkNote && (myWorkNote.loved || myWorkNote.body) ? [myWorkNote] : []),
+    ...readerNotes.map((note) => ({ ...note, context: copyTie(note.user.id) })),
+    ...[
+      ...readElsewhere,
+      ...(myWorkNote && (myWorkNote.loved || myWorkNote.body)
+        ? [myWorkNote]
+        : []),
+    ].map((note) => ({ ...note, context: "Read it elsewhere" })),
   ].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
   // Where you are in line for this book, counting from 1
   const holdIndex = holds.findIndex((hold) => hold.user.id === userId);
