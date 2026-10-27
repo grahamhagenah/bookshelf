@@ -1,4 +1,3 @@
-import { BookIcon, BookmarkIcon, HistoryIcon, ReadIcon } from "./icons";
 import ShareShelfButton from "./share-shelf-button";
 import SharedWith from "./shared-with";
 import type { Member } from "./shared-with";
@@ -23,25 +22,21 @@ export default function ShelfTabs({
           to: "/books",
           end: true,
           label: "Shelf",
-          icon: <BookIcon size={16} className="hidden sm:block" />,
           count: counts.library,
         },
         {
           to: "/want-to-read",
           label: "To read",
-          icon: <BookmarkIcon size={16} className="hidden sm:block" />,
           count: counts.want,
         },
         {
           to: "/read-elsewhere",
           label: "Also read",
-          icon: <ReadIcon size={16} className="hidden sm:block" />,
           count: counts.elsewhere,
         },
         {
           to: "/history",
           label: "History",
-          icon: <HistoryIcon size={16} className="hidden sm:block" />,
           count: counts.history,
         },
       ]}

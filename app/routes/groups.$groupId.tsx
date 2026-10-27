@@ -4,16 +4,12 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import invariant from "tiny-invariant";
 
 import Faces from "~/components/faces";
-import GroupPick from "~/components/group-pick";
-import { BookIcon, FeedIcon, GroupsIcon, LinkIcon, PencilIcon } from "~/components/icons";
+import { LinkIcon, PencilIcon } from "~/components/icons";
 import { GROUP_NAME_MAX, codeFromLink, groupInvitePath, groupPath } from "~/group-links";
 import { loadGroup } from "~/group-page.server";
 import {
   cleanGroupName,
-  clearGroupPick,
   deleteGroup,
-  getGroupPick,
-  setGroupPick,
   leaveGroup,
   removeFromGroup,
   renameGroup,
@@ -42,7 +38,7 @@ export const handle = {
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const { userId, group } = await loadGroup(request, params);
+  const { group } = await loadGroup(request, params);
   // The address carries the group's name as it is now, for a link from
   // before a rename or one with just the id
   const url = pageUrl(request);
@@ -52,7 +48,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { inviteToken, openIds, ...rest } = group;
   return data({
     group: { ...rest, lenderCount: openIds.length },
-    pick: await getGroupPick(group.id, userId, openIds),
     path,
     inviteUrl: `${publicOrigin(request)}${groupInvitePath(group.name, inviteToken)}`,
   });
@@ -60,8 +55,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export type GroupLayoutData = typeof loader;
 
-// Renaming, leaving and a fresh invite link, from the People tab; what
-// the group's reading, from the top of the page
+// Renaming, leaving and a fresh invite link, from the People tab
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.groupId, "groupId not found");
@@ -91,36 +85,13 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     await resetGroupLink(userId, groupId);
     return data({ ok: true });
   }
-  if (intent === "setPick") {
-    const field = (name: string) => {
-      const value = formData.get(name);
-      return typeof value === "string" && value.trim() ? value.trim() : null;
-    };
-    const key = field("key");
-    const title = field("title");
-    if (!key?.startsWith("/works/") || !title) {
-      return data({ error: "Choose a book from the list." }, { status: 400 });
-    }
-    await setGroupPick(userId, groupId, {
-      key,
-      title,
-      author: field("author"),
-      cover: field("cover"),
-      note: field("note"),
-    });
-    return data({ ok: true });
-  }
-  if (intent === "clearPick") {
-    await clearGroupPick(userId, groupId);
-    return data({ ok: true });
-  }
   return data({ error: "Unknown request" }, { status: 400 });
 };
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 export default function GroupLayout() {
-  const { group, pick, path, inviteUrl } = useLoaderData<typeof loader>();
+  const { group, path, inviteUrl } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const justJoined = searchParams.get("joined") === "1";
 
@@ -157,13 +128,16 @@ export default function GroupLayout() {
           <GroupName key={group.name} name={group.name} path={path} />
           <p className="text-sm text-stone-500 dark:text-stone-400">
             {group.lenderCount > 0
-              ? `${plural(group.members.length, "person", "people")} · ${plural(group.bookCount, "book")} to borrow. Your ${plural(group.myBookCount, "book")} ${group.myBookCount === 1 ? "is" : "are"} in it too.`
+              ? `${plural(group.members.length, "person", "people")} · ${plural(group.bookCount, "book")} to borrow.${
+                  // Only when there's something of yours to mention
+                  group.myBookCount > 0
+                    ? ` Your ${plural(group.myBookCount, "book")} ${group.myBookCount === 1 ? "is" : "are"} in it too.`
+                    : ""
+                }`
               : "Just you so far. Invite people and their books show up here."}
           </p>
         </div>
       </div>
-
-      <GroupPick pick={pick} groupName={group.name} path={path} />
 
       <div className="mb-6 flex items-start gap-3 border-b border-stone-200 dark:border-stone-800">
         <nav
@@ -171,16 +145,13 @@ export default function GroupLayout() {
           className="-mb-px flex min-w-0 flex-1 gap-5 sm:gap-6 overflow-x-auto [scrollbar-width:none]"
         >
           <NavLink to={path} end className={tab}>
-            <BookIcon size={16} className="hidden sm:block" />
             Books
             <span className={count}>{group.bookCount}</span>
           </NavLink>
           <NavLink to={`${path}/lately`} className={tab}>
-            <FeedIcon size={16} strokeWidth={1.5} className="hidden sm:block" />
-            Lately
+            Updates
           </NavLink>
           <NavLink to={`${path}/people`} className={tab}>
-            <GroupsIcon size={17} className="hidden sm:block" />
             People
             <span className={count}>{group.members.length}</span>
           </NavLink>
