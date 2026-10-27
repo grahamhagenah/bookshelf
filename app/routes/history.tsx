@@ -175,8 +175,7 @@ export default function History() {
       <section>
         <ShelfTabs counts={{ ...counts, history: entries.length }} />
         <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
-          Every book that&apos;s passed between you and a friend, newest first. Read
-          something a while back? Leave a note for the next reader.
+          Every book that&apos;s passed between you and a friend.
         </p>
 
         {entries.length === 0 ? (
