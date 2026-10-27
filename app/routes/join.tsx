@@ -14,6 +14,7 @@ import {
   getUserByEmail,
   getUserByShareToken,
 } from "~/models/user.server";
+import { pageUrl } from "~/page-url";
 import { seo } from "~/seo";
 import { createUserSession, getUserId } from "~/session.server";
 import {
@@ -28,7 +29,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
   if (userId) return redirect("/");
   // Arriving from someone's shared shelf: say whose, so the form has a point
-  const url = new URL(request.url);
+  const url = pageUrl(request);
   const invite = url.searchParams.get("invite");
   const inviter = invite ? await getUserByShareToken(invite) : null;
   // Or from a shared-shelf invite: name the people on it

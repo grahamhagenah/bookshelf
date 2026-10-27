@@ -16,6 +16,7 @@ import {
   resetGroupLink,
 } from "~/models/group.server";
 import { publicOrigin } from "~/origin.server";
+import { pageUrl } from "~/page-url";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -24,8 +25,8 @@ import { requireUserId } from "~/session.server";
 // what's been happening and who's in it, and the invite where My shelf
 // has its share button
 
-export const meta: MetaFunction<typeof loader> = ({ data }) =>
-  seo({ title: data?.group.name ?? "Group", noindex: true });
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
+  seo({ title: loaderData?.group.name ?? "Group", noindex: true });
 
 export const handle = {
   // Groups are a tab of Friends, so a group sits under both
@@ -40,7 +41,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { group } = await loadGroup(request, params);
   // The address carries the group's name as it is now, for a link from
   // before a rename or one with just the id
-  const url = new URL(request.url);
+  const url = pageUrl(request);
   const here = `/groups/${params.groupId}`;
   const path = groupPath(group);
   if (here !== path) return redirect(`${path}${url.pathname.slice(here.length)}${url.search}`);

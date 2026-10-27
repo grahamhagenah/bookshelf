@@ -6,6 +6,7 @@ import { cronAuthorized } from "~/cron.server";
 import { renderDigest, sendDigestEmail } from "~/email.server";
 import { buildDigest, digestIsEmpty, getDigestRecipients } from "~/models/digest.server";
 import { getUserById, isUserAdmin } from "~/models/user.server";
+import { pageUrl } from "~/page-url";
 import { getUserId } from "~/session.server";
 
 // Sends the weekly email to everyone with something to hear about. Run
@@ -13,7 +14,7 @@ import { getUserId } from "~/session.server";
 // open ?preview=1 to see their own digest as it would be sent.
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const url = new URL(request.url);
+  const url = pageUrl(request);
 
   if (url.searchParams.get("preview")) {
     const userId = await getUserId(request);

@@ -3,6 +3,7 @@ import invariant from "tiny-invariant";
 
 import type { User } from "~/models/user.server";
 import { getUserById } from "~/models/user.server";
+import { pageUrl } from "~/page-url";
 
 invariant(process.env.SESSION_SECRET, "SESSION_SECRET must be set");
 
@@ -44,7 +45,7 @@ export async function getUser(request: Request) {
 
 export async function requireUserId(
   request: Request,
-  redirectTo: string = new URL(request.url).pathname,
+  redirectTo: string = pageUrl(request).pathname,
 ) {
   const userId = await getUserId(request);
   if (!userId) {

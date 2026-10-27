@@ -13,9 +13,9 @@ import { createUserSession, getUserId } from "~/session.server";
 // they have and whose it is, and a form to make the waiting account
 // theirs. The link came to their inbox, so that's proof enough.
 
-export const meta: MetaFunction<typeof loader> = ({ data }) =>
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
   seo({
-    title: data?.loan ? `${data.loan.lender} lent you ${data.loan.title}` : "Your loan",
+    title: loaderData?.loan ? `${loaderData.loan.lender} lent you ${loaderData.loan.title}` : "Your loan",
     description: "Borrow and lend books with friends.",
     noindex: true,
   });

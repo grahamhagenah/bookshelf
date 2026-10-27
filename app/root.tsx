@@ -5,6 +5,7 @@ import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "react-rout
 import sansFont from "~/fonts/source-sans-3-latin-normal.woff2?url";
 import serifFont from "~/fonts/source-serif-4-latin-600-normal.woff2?url";
 import { markDemoExplored } from "~/models/demo.server";
+import { pageUrl } from "~/page-url";
 import { OLD_HOSTS, SITE_URL, seo } from "~/seo";
 import { getUser } from "~/session.server";
 import { sharePromptDismissed } from "~/share-prompt.server";
@@ -60,13 +61,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // good, path and all, so shared and invite links keep working
   const host = request.headers.get("host")?.split(":")[0];
   if (host && OLD_HOSTS.includes(host)) {
-    const url = new URL(request.url);
+    const url = pageUrl(request);
     throw redirect(`${SITE_URL}${url.pathname}${url.search}`, 301);
   }
   const user = await getUser(request);
   // A demo's visitor opening anything past the page they landed on is a
   // person looking around, not a bot that pressed the button
-  if (user?.demoGroup && !user.demoExploredAt && new URL(request.url).pathname !== "/") {
+  if (user?.demoGroup && !user.demoExploredAt && pageUrl(request).pathname !== "/") {
     await markDemoExplored(user.id);
   }
   return data({

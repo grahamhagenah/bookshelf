@@ -1,6 +1,7 @@
 import type { User } from "~/generated/prisma/client";
 import { groupPath } from "~/group-links";
 import { POOL_PAGE, POOL_SORTS, POOL_STATUSES, getPoolWanted, searchPool } from "~/models/pool.server";
+import { pageUrl } from "~/page-url";
 
 // What a pooled shelf page loads, a group's or all your friends': the
 // filters from the address, the matching books, and, until you filter,
@@ -25,7 +26,7 @@ export async function loadPooledShelf(
     groups?: { id: string; name: string; memberIds: string[] }[];
   },
 ) {
-  const url = new URL(request.url);
+  const url = pageUrl(request);
   const q = (url.searchParams.get("q") ?? "").slice(0, 100);
   // One person (their id) or one group ("g:" and its id)
   const whoParam = url.searchParams.get("who") ?? "";

@@ -14,9 +14,9 @@ interface LoaderData {
   friendName: string;
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) =>
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
   seo({
-    title: data?.friendName ? `${data.friendName}'s shelf` : "Shelf",
+    title: loaderData?.friendName ? `${loaderData.friendName}'s shelf` : "Shelf",
     noindex: true,
   });
 

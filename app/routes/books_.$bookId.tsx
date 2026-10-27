@@ -347,9 +347,9 @@ interface BreadcrumbData {
   isOwner: boolean;
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) =>
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
   seo({
-    title: data?.book ? `${data.book.title} by ${data.book.author}` : "Book",
+    title: loaderData?.book ? `${loaderData.book.title} by ${loaderData.book.author}` : "Book",
     noindex: true,
   });
 

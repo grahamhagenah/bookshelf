@@ -27,6 +27,7 @@ import {
 } from "~/models/user.server";
 import { addWantToRead } from "~/models/wish.server";
 import { getWorkSnapshot } from "~/models/work-note.server";
+import { pageUrl } from "~/page-url";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -48,7 +49,7 @@ const MOST = 300;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const asked = Number(new URL(request.url).searchParams.get("shown"));
+  const asked = Number(pageUrl(request).searchParams.get("shown"));
   const shown = Math.min(
     MOST,
     Math.max(PAGE, Number.isFinite(asked) ? Math.floor(asked) : PAGE),

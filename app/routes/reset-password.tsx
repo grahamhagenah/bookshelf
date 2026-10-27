@@ -3,6 +3,7 @@ import { data, Form, Link, useActionData, useLoaderData } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { primaryButton, textField } from "~/components/ui";
+import { pageUrl } from "~/page-url";
 import { checkResetToken, resetPasswordWithToken } from "~/reset-password.server";
 import { seo } from "~/seo";
 import { createUserSession } from "~/session.server";
@@ -12,7 +13,7 @@ export const meta: MetaFunction = () =>
 
 // The link from the reset email lands here
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const token = new URL(request.url).searchParams.get("token") ?? "";
+  const token = pageUrl(request).searchParams.get("token") ?? "";
   return data({ token, valid: token ? Boolean(await checkResetToken(token)) : false });
 };
 
