@@ -159,8 +159,8 @@ const actionClass =
 
 function StepMark({ number, done }: { number: number; done: boolean }) {
   return done ? (
-    // Ticked off quietly, so the steps still to do draw the eye
-    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-stone-500 dark:bg-stone-800 dark:text-stone-400">
+    // Ticked off in green: something done, worth a small cheer
+    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-forest-600 text-white dark:bg-forest-400 dark:text-stone-950">
       <svg
         width="14"
         height="14"
@@ -289,32 +289,22 @@ function Welcome({
         </welcomeFetcher.Form>
       </div>
       {/* Each step in a quiet box of its own, ruled like the lines between
-          the page's sections; a finished one sits back, filled and faded */}
+          the page's sections; a finished one has a touch of green */}
       <ol className="mt-6 grid gap-3 sm:grid-cols-3 sm:gap-4">
         {steps.map((step, index) => (
           <li
             key={step.title}
             className={`rounded-lg border border-stone-200 dark:border-stone-800 p-4 sm:p-5 ${
-              step.done ? "bg-stone-50 dark:bg-stone-900/50" : ""
+              step.done ? "bg-forest-600/[0.06] dark:bg-forest-400/10" : ""
             }`}
           >
             <StepMark number={index + 1} done={step.done} />
             <h3
-              className={`mt-3 font-semibold ${
-                step.done
-                  ? "text-stone-400 dark:text-stone-500"
-                  : "text-stone-900 dark:text-stone-100"
-              }`}
+              className="mt-3 font-semibold text-stone-900 dark:text-stone-100"
             >
               {step.title}
             </h3>
-            <p
-              className={`mt-1 text-sm ${
-                step.done
-                  ? "text-stone-400 dark:text-stone-500"
-                  : "text-stone-500 dark:text-stone-400"
-              }`}
-            >
+            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
               {step.text}
             </p>
             {step.progress !== null ? (
@@ -341,7 +331,7 @@ function Welcome({
               {!step.done ? (
                 step.action
               ) : (
-                <p className="text-sm text-stone-500 dark:text-stone-400">
+                <p className="text-sm font-medium text-forest-700 dark:text-forest-400">
                   {step.doneText}
                 </p>
               )}
