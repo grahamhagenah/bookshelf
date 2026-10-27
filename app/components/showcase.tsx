@@ -27,9 +27,9 @@ const COVERS = {
   circe: cover("9780316556347"),
   dune: cover("9780441172719"),
   overstory: cover("9780393635522"),
-  wonder: cover("9780375869020"),
-  holes: cover("9780440414803"),
-  matilda: cover("9780142410370"),
+  hobbit: cover("9780547928227"),
+  midnightLibrary: cover("9780525559474"),
+  lessonsInChemistry: cover("9780385547345"),
 };
 
 const skin =
@@ -55,17 +55,14 @@ function Stage({
   );
 }
 
-function Initials({ text, small = false }: { text: string; small?: boolean }) {
+// Someone's picture, with the icon they chose, as the app shows it
+function Face({ who, small = false }: { who: keyof typeof MEMBERS; small?: boolean }) {
   return (
-    <span
-      className={`flex flex-shrink-0 items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 font-semibold text-stone-700 dark:text-stone-200 ${
-        small
-          ? "h-7 w-7 text-[10px] ring-2 ring-white dark:ring-stone-900"
-          : "h-8 w-8 text-xs"
-      }`}
-    >
-      {text}
-    </span>
+    <Avatar
+      icon={MEMBERS[who]}
+      size={small ? "rail" : "sm"}
+      className={small ? "ring-2 ring-white dark:ring-stone-900" : ""}
+    />
   );
 }
 
@@ -356,7 +353,7 @@ export function ShowcaseFriends() {
         className={`${panel} left-0 right-[7%] top-[46%] z-20 -rotate-2 p-3.5`}
       >
         <div className="flex items-center gap-2.5">
-          <Initials text="AR" />
+          <Face who="anika" />
           <p className="text-sm text-stone-800 dark:text-stone-200">
             <span className="font-semibold">Anika Rao&apos;s shelf</span>
             <span className="text-stone-500 dark:text-stone-400">
@@ -474,17 +471,18 @@ export function ShowcaseGroups() {
   );
 }
 
-// The check-out desk: a class set scanned, a name tapped, and what's out
+// The check-out desk: a book scanned, a name tapped, and what's out, to a
+// class, a neighbor and family alike
 export function ShowcaseDesk() {
-  const names = ["Ava C.", "Liam P.", "Sofia G.", "Noah K.", "Mia D.", "Ethan W."];
+  const names = ["Ava C.", "Bob next door", "Liam P.", "Aunt June", "Sofia G.", "Mia D."];
   return (
     <Stage height="h-[350px] sm:h-[360px]">
       <div className={`${panel} left-0 right-[6%] top-0 z-20 -rotate-1 p-3.5`}>
         <div className="flex gap-3">
-          <Cover src={COVERS.wonder} className="w-14 flex-shrink-0" />
+          <Cover src={COVERS.hobbit} className="w-14 flex-shrink-0" />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">Wonder</p>
-            <p className="text-xs text-stone-500 dark:text-stone-400">R. J. Palacio · 4 of 5 copies here</p>
+            <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">The Hobbit</p>
+            <p className="text-xs text-stone-500 dark:text-stone-400">J. R. R. Tolkien · 2 of 3 copies here</p>
             <p className="mt-2 text-xs font-medium text-stone-700 dark:text-stone-300">Who&apos;s taking it?</p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {names.map((name, index) => (
@@ -509,8 +507,8 @@ export function ShowcaseDesk() {
         <ul className="mt-2 space-y-2">
           {(
             [
-              [COVERS.holes, "Holes", "Liam P.", "due Friday", false],
-              [COVERS.matilda, "Matilda", "Sofia G.", "2 days late", true],
+              [COVERS.midnightLibrary, "The Midnight Library", "Bob next door", "due Friday", false],
+              [COVERS.lessonsInChemistry, "Lessons in Chemistry", "Aunt June", "2 days late", true],
             ] as const
           ).map(([src, title, who, due, late]) => (
             <li key={title} className="flex items-center gap-2.5">
@@ -531,7 +529,7 @@ export function ShowcaseDesk() {
 
       <div className="absolute bottom-0 left-[2%] z-30 flex -rotate-2 items-center gap-1.5 rounded-full bg-stone-900 dark:bg-stone-100 py-1.5 pl-2.5 pr-3.5 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
         <Check />
-        Wonder is out to Ava, due in 2 weeks
+        The Hobbit is out to Ava, due in 2 weeks
       </div>
     </Stage>
   );
@@ -559,7 +557,7 @@ export function ShowcaseNotes() {
 
       <div className={`${panel} right-0 top-[10%] w-[58%] z-20 rotate-2 p-3.5`}>
         <div className="flex items-start gap-2.5">
-          <Initials text="SO" />
+          <Face who="sam" />
           <div className="min-w-0">
             <p className="text-xs text-stone-500 dark:text-stone-400">
               <span className="font-semibold text-stone-900 dark:text-stone-100">
@@ -579,7 +577,7 @@ export function ShowcaseNotes() {
         className={`${panel} right-[4%] top-[40%] w-[60%] z-20 -rotate-2 p-3.5`}
       >
         <div className="flex items-start gap-2.5">
-          <Initials text="AR" />
+          <Face who="anika" />
           <div className="min-w-0">
             <p className="text-xs text-stone-500 dark:text-stone-400">
               <span className="font-semibold text-stone-900 dark:text-stone-100">
@@ -602,17 +600,19 @@ export function ShowcaseNotes() {
           This copy has been to
         </p>
         <div className="mt-2 flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300">
-          {[
-            ["SO", "Sam"],
-            ["MC", "Maya"],
-            ["AR", "Anika"],
-          ].map(([initials, name], index) => (
-            <span key={initials} className="flex items-center gap-2">
+          {(
+            [
+              ["sam", "Sam"],
+              ["maya", "Maya"],
+              ["anika", "Anika"],
+            ] as const
+          ).map(([who, name], index) => (
+            <span key={who} className="flex items-center gap-2">
               {index > 0 ? (
                 <span className="text-stone-300 dark:text-stone-600">→</span>
               ) : null}
               <span className="flex items-center gap-1.5">
-                <Initials text={initials} small />
+                <Face who={who} small />
                 {name}
               </span>
             </span>
