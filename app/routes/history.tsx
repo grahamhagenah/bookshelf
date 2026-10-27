@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { data, Link, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
@@ -38,7 +37,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 type Entry = LoaderData<typeof loader>["entries"][number];
-type Show = "all" | "borrowed" | "lent";
 
 const monthDay = (date: string | Date) => {
   const d = new Date(date);
@@ -92,15 +90,15 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
   const body = entry.note?.body?.trim();
 
   return (
-    // The cover stretches to the height of the row beside it
-    <li className="flex gap-4 py-4">
+    // A cover the size of To read's and Also read's
+    <li className="flex gap-4 border-b border-stone-100 dark:border-stone-800 py-4">
       <Link
         to={`/books/${entry.book.id}`}
         tabIndex={-1}
         aria-hidden="true"
-        className="block w-16 flex-shrink-0 self-stretch"
+        className="block flex-shrink-0"
       >
-        <BookCover cover={entry.book.cover} title={entry.book.title} author={entry.book.author} className="h-full w-full" />
+        <BookCover cover={entry.book.cover} title={entry.book.title} author={entry.book.author} className="h-24 w-16" />
       </Link>
       <div className="min-w-0 flex-1">
         <Link
@@ -162,14 +160,6 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
 
 export default function History() {
   const { entries, counts, friendIds } = useLoaderData<typeof loader>();
-  const [show, setShow] = useState<Show>("all");
-  const borrowedCount = entries.filter((entry) => entry.kind === "borrowed").length;
-  const filters: [Show, string, number][] = [
-    ["all", "All", entries.length],
-    ["borrowed", "Borrowed", borrowedCount],
-    ["lent", "Lent", entries.length - borrowedCount],
-  ];
-  const visible = show === "all" ? entries : entries.filter((entry) => entry.kind === show);
 
   return (
     <Layout title="History">
@@ -183,30 +173,11 @@ export default function History() {
           </EmptyList>
         ) : (
           <>
-            {/* What the list is for, above it; while it's empty, in its place */}
-            <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
-              Every book that&apos;s passed between you and a friend.
-            </p>
-            <div className="mt-4 flex gap-1.5" role="group" aria-label="Show">
-              {filters.map(([value, label, count]) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={show === value}
-                  onClick={() => setShow(value)}
-                  className={`whitespace-nowrap rounded-full px-2.5 py-1 text-sm transition-colors ${
-                    show === value
-                      ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
-                      : "text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-900 hover:text-stone-800 dark:hover:text-stone-200"
-                  }`}
-                >
-                  {label}
-                  <span className="ml-1.5 text-stone-400 dark:text-stone-500">{count}</span>
-                </button>
-              ))}
-            </div>
-            <ul className="mt-2 divide-y divide-stone-100 dark:divide-stone-800">
-              {visible.map((entry) => (
+            {/* Every loan both ways, newest first: each row says which way
+                it went, so there's nothing to filter. Two columns where
+                there's room, as To read and Also read */}
+            <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
+              {entries.map((entry) => (
                 <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />
               ))}
             </ul>

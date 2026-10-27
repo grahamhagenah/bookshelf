@@ -5,7 +5,7 @@ import BookCover from "~/components/book-cover";
 import EmptyList from "~/components/empty-list";
 import { HeartIcon, ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
-import ShelfTabs from "~/components/shelf-tabs";
+import ShelfTabs, { AddLink } from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
 import { findImportedWorks } from "~/models/import.server";
 import { listMyWorkNotes } from "~/models/work-note.server";
@@ -42,27 +42,13 @@ export default function ReadElsewhere() {
   return (
     <Layout title="Also read">
       <section>
-        <ShelfTabs counts={{ ...counts, elsewhere: items.length }} />
-        {/* What the list is for: in a line above it, or, while it's empty,
-            in its place */}
+        <ShelfTabs counts={{ ...counts, elsewhere: items.length }} add={items.length > 0 ? { to: "/search", label: "Find a book" } : undefined} />
+        {/* What the list is for is said only while it's empty, in its place.
+            Phones have no room beside the tabs, so the way to add is here */}
         {items.length > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
-            Books you&apos;ve read that aren&apos;t on your shelf.
-          </p>
-          <Link
-            to="/search"
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-          >
-            <span
-              aria-hidden="true"
-              className="text-base leading-none text-stone-400 dark:text-stone-500"
-            >
-              +
-            </span>
-            Find a book
-          </Link>
-        </div>
+          <div className="-mt-2 flex justify-end sm:hidden">
+            <AddLink to="/search">Find a book</AddLink>
+          </div>
         ) : null}
 
         {items.length === 0 ? (
@@ -76,9 +62,10 @@ export default function ReadElsewhere() {
             a note on its page.
           </EmptyList>
         ) : (
-          <ul className="mt-4 divide-y divide-stone-100 dark:divide-stone-800">
+          // Two columns where there's room, as To read has
+          <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
             {items.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} className="border-b border-stone-100 dark:border-stone-800">
                 <Link
                   // One still being looked up opens a search for it
                   to={
@@ -92,7 +79,7 @@ export default function ReadElsewhere() {
                     cover={item.cover}
                     title={item.title}
                     author={item.author}
-                    className="h-[72px] w-12 flex-shrink-0"
+                    className="h-24 w-16 flex-shrink-0"
                   />
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-stone-900 dark:text-stone-100">

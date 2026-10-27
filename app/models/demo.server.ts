@@ -1435,6 +1435,63 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     });
   }
 
+  // ...and books they read without owning a copy: from the library, an
+  // audiobook, a holiday rental's shelf. Their Also read list, with what
+  // they thought of most, dated when they read them.
+  const readElsewhere = [
+    {
+      workKey: "/works/OL20743965W",
+      title: "Hamnet",
+      author: "Maggie O'Farrell",
+      isbn: "9780525657606",
+      loved: true,
+      body: "Library copy, renewed it twice. The chapter that follows the plague to Stratford is unforgettable.",
+      days: 40,
+    },
+    {
+      workKey: "/works/OL22448002W",
+      title: "Crying in H Mart",
+      author: "Michelle Zauner",
+      isbn: "9781984898951",
+      loved: true,
+      body: "Read it in one go at the library, at a table by the window. Then went out for dumplings.",
+      days: 75,
+    },
+    {
+      workKey: "/works/OL18139176W",
+      title: "Educated",
+      author: "Tara Westover",
+      isbn: "9780399590504",
+      loved: false,
+      body: "The library's audiobook. Hard to stop listening, harder to forget.",
+      days: 130,
+    },
+    {
+      workKey: "/works/OL20799434W",
+      title: "The Vanishing Half",
+      author: "Brit Bennett",
+      isbn: "9780525536291",
+      loved: false,
+      body: null,
+      days: 190,
+    },
+    {
+      workKey: "/works/OL59048W",
+      title: "The Remains of the Day",
+      author: "Kazuo Ishiguro",
+      isbn: "9780679731726",
+      loved: true,
+      body: "Found on the shelf of a holiday rental. Quietly devastating. I left it there for the next guest.",
+      days: 300,
+    },
+  ];
+  for (const { isbn, days, ...note } of readElsewhere) {
+    const at = ago(days * day);
+    await prisma.workNote.create({
+      data: { ...note, cover: cover(isbn), userId: ids.you, readAt: at, createdAt: at, updatedAt: at },
+    });
+  }
+
   const notifications: {
     type: string;
     from: OwnerKey;

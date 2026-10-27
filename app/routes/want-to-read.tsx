@@ -7,7 +7,7 @@ import EmptyList from "~/components/empty-list";
 import { BookmarkIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
-import ShelfTabs from "~/components/shelf-tabs";
+import ShelfTabs, { AddLink } from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
 import { getUserById } from "~/models/user.server";
 import {
@@ -82,7 +82,8 @@ function Cover({
       cover={cover}
       title={title}
       author={author}
-      className="h-[72px] w-12 flex-shrink-0"
+      // The same size as Also read's and History's covers
+      className="h-24 w-16 flex-shrink-0"
     />
   );
 }
@@ -116,7 +117,7 @@ function WantRow({
     <li
       id={`wish-${item.id}`}
       // The tint reaches past the row's edges with a shadow, so nothing moves
-      className={`flex scroll-mt-24 items-start gap-4 rounded-lg py-4 transition-colors ${
+      className={`flex scroll-mt-24 items-start gap-4 border-b border-stone-100 dark:border-stone-800 py-4 transition-colors ${
         picked
           ? "bg-forest-600/[0.06] shadow-[0_0_0_10px_rgb(31_107_78/0.06)] dark:bg-forest-400/10 dark:shadow-[0_0_0_10px_rgb(58_154_116/0.1)]"
           : ""
@@ -216,29 +217,13 @@ export default function WantToRead() {
   return (
     <Layout title="Want to read">
       <section>
-        <ShelfTabs counts={{ ...counts, want: items.length }} />
-        {/* What the list is for: in a line above it, or, while it's empty,
-            in its place */}
+        <ShelfTabs counts={{ ...counts, want: items.length }} add={items.length > 0 ? { to: "/search?for=want", label: "Add a book" } : undefined} />
+        {/* What the list is for is said only while it's empty, in its place.
+            Phones have no room beside the tabs, so the way to add is here */}
         {items.length > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
-            {/* Each row says which friend has it */}
-            Books you&apos;d like to read. You&apos;ll hear when a friend adds
-            one.
-          </p>
-          <Link
-            to="/search?for=want"
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-          >
-            <span
-              aria-hidden="true"
-              className="text-base leading-none text-stone-400 dark:text-stone-500"
-            >
-              +
-            </span>
-            Add a book
-          </Link>
-        </div>
+          <div className="-mt-2 flex justify-end sm:hidden">
+            <AddLink to="/search?for=want">Add a book</AddLink>
+          </div>
         ) : null}
 
         {limit ? (
@@ -270,7 +255,9 @@ export default function WantToRead() {
             from Goodreads.
           </EmptyList>
         ) : (
-          <ul className="mt-4 divide-y divide-stone-100 dark:divide-stone-800">
+          // Two columns where there's room; each row ruled underneath, so
+          // the rules line up across both
+          <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
             {items.map((item) => (
               <WantRow key={item.id} item={item} friendIds={friendIds} />
             ))}
