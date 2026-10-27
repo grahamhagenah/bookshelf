@@ -205,7 +205,6 @@ function WantRow({
 
 export default function WantToRead() {
   const { items, friendIds, counts } = useLoaderData<typeof loader>();
-  const matched = items.filter((item) => item.copies.length > 0).length;
   // "Got a copy" with a full shelf on the free plan
   const actionData = useActionData<typeof action>();
   const limit =
@@ -217,13 +216,11 @@ export default function WantToRead() {
     <Layout title="Want to read">
       <section>
         <ShelfTabs counts={{ ...counts, want: items.length }} />
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
-            Books you don&apos;t own but would like to read. When a friend has
-            one, it shows up here, and you&apos;ll hear when they add one.
-            {matched
-              ? ` ${matched} of these ${matched === 1 ? "is" : "are"} on a friend's shelf.`
-              : ""}
+            {/* Each row says which friend has it */}
+            Books you&apos;d like to read. You&apos;ll hear when a friend adds
+            one.
           </p>
           <Link
             to="/search?for=want"
