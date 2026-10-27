@@ -14,6 +14,7 @@ import {
 import {
   getHolds,
   leaveHold,
+  passStraightOn,
   passToNextInLine,
   placeHold,
 } from "./hold.server";
@@ -181,4 +182,48 @@ describe("undoReturn", () => {
     await lendBook(book.id, maya.id);
     expect(await undoReturn(book.id, { id: owner.id, name: "Olive" })).toBeNull();
   });
+});
+
+test("a borrower can pass the book straight to whoever's next in line", async () => {
+  const { owner, borrower, book } = await lentBook();
+  const next = await makeUser("Kofi");
+  const after = await makeUser("Lee");
+  await placeHold(book.id, next.id);
+  await placeHold(book.id, after.id);
+
+  // Only the one who has it
+  expect(await passStraightOn(book.id, next.id)).toBeNull();
+
+  expect(await passStraightOn(book.id, borrower.id)).toMatchObject({ to: { id: next.id } });
+  const now = await prisma.book.findUniqueOrThrow({ where: { id: book.id } });
+  expect(now.borrowerId).toBe(next.id);
+  expect(now.dueDate).not.toBeNull();
+  // Sam's loan ended, Kofi's began, and Lee is now first in line
+  const history = await prisma.lendingHistory.findMany({ where: { bookId: book.id }, orderBy: { borrowedAt: "asc" } });
+  expect(history.map((loan) => [loan.borrowerId, loan.returnedAt === null])).toEqual([
+    [borrower.id, false],
+    [next.id, true],
+  ]);
+  expect((await getHolds(book.id)).map((hold) => hold.user.id)).toEqual([after.id]);
+  // Kofi hears who passed it and whose it is; the owner hears where it went
+  const told = await prisma.notification.findMany({
+    where: { bookId: book.id, type: { in: ["BOOK_PASSED", "BOOK_PASSED_ON"] } },
+    select: { type: true, receiverId: true, senderName: true, message: true },
+    orderBy: { type: "asc" },
+  });
+  expect(told).toEqual([
+    { type: "BOOK_PASSED", receiverId: next.id, senderName: "Sam Reader", message: "Olive" },
+    { type: "BOOK_PASSED_ON", receiverId: owner.id, senderName: "Sam Reader", message: "Kofi Reader" },
+  ]);
+});
+
+test("nothing to pass on with no one waiting, or while its owner isn't lending", async () => {
+  const { borrower, book } = await lentBook();
+  expect(await passStraightOn(book.id, borrower.id)).toBeNull();
+
+  const next = await makeUser("Kofi");
+  await placeHold(book.id, next.id);
+  await setNotLending(book.id, NOT_LENDING_FOREVER);
+  expect(await passStraightOn(book.id, borrower.id)).toBeNull();
+  expect((await prisma.book.findUniqueOrThrow({ where: { id: book.id } })).borrowerId).toBe(borrower.id);
 });

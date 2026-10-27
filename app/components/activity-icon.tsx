@@ -49,6 +49,13 @@ const PATHS: Record<string, React.ReactNode> = {
     </>
   ),
   // Clock with a plus
+  // A book handed from one reader to the next: two arrows, one onward
+  BOOK_PASSED: (
+    <path d="M4 9h12l-3-3M20 15H8l3 3" />
+  ),
+  BOOK_PASSED_ON: (
+    <path d="M4 9h12l-3-3M20 15H8l3 3" />
+  ),
   LOAN_EXTENDED: (
     <>
       <circle cx="11" cy="12" r="7.5" />
@@ -64,6 +71,19 @@ const PATHS: Record<string, React.ReactNode> = {
   ),
   // Circle with an exclamation mark
   OVERDUE_REMINDER: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5v5.5M12 16.5h.01" />
+    </>
+  ),
+  // A book lent by name only: the same clock and warning, for its owner
+  LOAN_DUE_SOON: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </>
+  ),
+  LOAN_OVERDUE: (
     <>
       <circle cx="12" cy="12" r="8.5" />
       <path d="M12 7.5v5.5M12 16.5h.01" />

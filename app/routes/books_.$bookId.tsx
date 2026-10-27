@@ -12,6 +12,7 @@ import PersonLink from "~/components/person-link";
 import ReaderNotes, { HideToggle, PinToggle } from "~/components/reader-notes";
 import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
 import { importCover, isOpenLibraryCover } from "~/covers.server";
+import { daysUntil, dueText } from "~/due";
 import { sendBookRequestEmail } from "~/email.server";
 import { isNotLending, lendingAgainOn, NOT_LENDING_CHOICES, notLendingEnd, REQUEST_NOTE_MAX } from "~/lending";
 import {
@@ -37,11 +38,12 @@ import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import {
   getHolds,
   leaveHold,
+  passStraightOn,
   passToNextInLine,
   placeHold,
 } from "~/models/hold.server";
 import { shelfIds } from "~/models/household.server";
-import { lendByEmail } from "~/models/loan-invite.server";
+import { lendByEmail, lendByName, nameOnlyBorrowers } from "~/models/loan-invite.server";
 import {
   NOTE_MAX_LENGTH,
   canLeaveNote,
@@ -507,6 +509,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     noteMaxLength: NOTE_MAX_LENGTH,
     extendWeeks: EXTEND_WEEKS,
     loanChoices: { weeks: LOAN_WEEKS, defaultWeeks: DEFAULT_LOAN_WEEKS },
+    // People the owner lent to by name before, to pick again
+    lentByName: isOwner ? await nameOnlyBorrowers(userId) : [],
     // Who's waiting is shown to the owner and the borrower; others just
     // see their own place
     waiting:
@@ -785,21 +789,30 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
     const friendId = formData.get("friendId");
     const weeks = loanWeeks(formData.get("weeks"));
-    // Someone who isn't a friend on Stacks, by email
+    // Someone who isn't a friend on Stacks: by email, or by name alone
     if (friendId === "new") {
       const name = formData.get("name");
       const email = formData.get("email");
-      const result = await lendByEmail(userId, book, {
-        name: typeof name === "string" ? name : "",
-        email: typeof email === "string" ? email : "",
-        weeks,
-      });
+      const typedName = typeof name === "string" ? name : "";
+      const typedEmail = typeof email === "string" ? email.trim() : "";
+      const result = typedEmail
+        ? await lendByEmail(userId, book, { name: typedName, email: typedEmail, weeks })
+        : await lendByName(userId, book, { name: typedName, weeks });
       if (!result.ok) {
         return data({ lendError: result.error }, { status: 400 });
       }
       return data({ lentTo: result.borrowerId, invited: result.invited });
     }
     const owner = await getUserById(userId);
+    // Someone this shelf lent to by name before, again
+    if (
+      owner &&
+      typeof friendId === "string" &&
+      (await nameOnlyBorrowers(userId)).some((person) => person.id === friendId)
+    ) {
+      await lendToFriend(book.id, userId, friendId, weeks);
+      return data({ lentTo: friendId });
+    }
     const isFriend =
       typeof friendId === "string" &&
       (owner?.following.some((friend) => friend.id === friendId) ?? false);
@@ -840,6 +853,18 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
     await returnBook(book.id);
     await handOn(book.id, userId);
+    return redirect("/books");
+  }
+
+  // Handed straight to whoever's next in line, as a book club does
+  if (intent === "passOn") {
+    if (book.borrowerId !== userId) {
+      throw new Response("Unauthorized", { status: 403 });
+    }
+    const passed = await passStraightOn(book.id, userId);
+    if (!passed) {
+      return data({ passError: "No one's waiting for it now. Return it instead." }, { status: 400 });
+    }
     return redirect("/books");
   }
 
@@ -1226,8 +1251,8 @@ function LendToFriend({
 }: {
   friends: { id: string; firstname: string; surname: string }[];
   loanChoices: { weeks: readonly number[]; defaultWeeks: number };
-  // Lending to someone not on Stacks: open, waiting on a confirmed
-  // email, or not in the demo
+  // Telling someone not on Stacks by email: open, waiting on a confirmed
+  // email, or not in the demo. Lending to them by name is always open.
   byEmail: "ok" | "confirm-email" | "off";
   // Kept by the page, so the bar on phones can open it too
   open: boolean;
@@ -1241,9 +1266,7 @@ function LendToFriend({
     `${a.firstname} ${a.surname}`.localeCompare(`${b.firstname} ${b.surname}`),
   );
   // With no friends yet, someone new is the only choice
-  const [choice, setChoice] = useState(
-    sorted.length === 0 && byEmail !== "off" ? "new" : "",
-  );
+  const [choice, setChoice] = useState(sorted.length === 0 ? "new" : "");
   const field =
     "h-9 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-800 dark:text-stone-200 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10";
   const label = "block text-xs font-medium text-stone-500 dark:text-stone-400";
@@ -1261,20 +1284,6 @@ function LendToFriend({
     );
   }
 
-  if (sorted.length === 0 && byEmail === "off") {
-    return (
-      <p className="text-sm text-stone-500 dark:text-stone-400">
-        Add friends to lend them books.{" "}
-        <Link
-          to="/friends/add"
-          className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-        >
-          Find friends
-        </Link>
-      </p>
-    );
-  }
-
   return (
     <Form method="post" className="space-y-2">
       <input type="hidden" name="intent" value="lendTo" />
@@ -1289,33 +1298,20 @@ function LendToFriend({
             onChange={(event) => setChoice(event.target.value)}
           >
             <option value="" disabled>
-              Choose a friend
+              Choose someone
             </option>
             {sorted.map((friend) => (
               <option key={friend.id} value={friend.id}>
                 {friend.firstname} {friend.surname}
               </option>
             ))}
-            {byEmail !== "off" ? (
-              <option value="new">Someone else, by email…</option>
-            ) : null}
+            <option value="new">Someone else…</option>
           </select>
         </label>
       ) : (
         <input type="hidden" name="friendId" value="new" />
       )}
-      {someoneNew && byEmail === "confirm-email" ? (
-        <p className="text-sm text-stone-600 dark:text-stone-300">
-          Confirm your email first, then you can lend to anyone by email.{" "}
-          <Link
-            to="/account#emails"
-            className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-          >
-            Settings
-          </Link>
-        </p>
-      ) : null}
-      {someoneNew && byEmail === "ok" ? (
+      {someoneNew ? (
         <>
           <label className={label}>
             Their name
@@ -1326,19 +1322,34 @@ function LendToFriend({
               className={`mt-1 ${field}`}
             />
           </label>
-          <label className={label}>
-            Their email
-            <input
-              name="email"
-              type="email"
-              required
-              autoComplete="off"
-              className={`mt-1 ${field}`}
-            />
-          </label>
+          {byEmail === "off" ? null : (
+            <label className={label}>
+              Their email <span className="font-normal">(optional)</span>
+              <input
+                name="email"
+                type="email"
+                autoComplete="off"
+                className={`mt-1 ${field}`}
+              />
+            </label>
+          )}
           <p className="text-xs text-stone-500 dark:text-stone-400">
-            We&apos;ll email them that you lent it, with a link to see the loan
-            and join if they like.
+            {byEmail === "off"
+              ? "It goes down under their name, and reminders come to you."
+              : "With an email, we tell them you lent it, with a link to see the loan and join if they like. Without one, it goes down under their name, and reminders come to you."}
+            {byEmail === "confirm-email" ? (
+              <>
+                {" "}
+                To email them,{" "}
+                <Link
+                  to="/account#emails"
+                  className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                >
+                  confirm your email
+                </Link>{" "}
+                first.
+              </>
+            ) : null}
           </p>
         </>
       ) : null}
@@ -1364,7 +1375,7 @@ function LendToFriend({
       <div className="flex gap-2 pt-1">
         <button
           type="submit"
-          disabled={lending || (someoneNew && byEmail !== "ok")}
+          disabled={lending}
           className={`flex-1 ${primaryButton("lg")} ${lending ? "opacity-60 cursor-wait" : ""} disabled:opacity-60`}
         >
           {lending ? "Lending…" : "Lend it"}
@@ -1401,7 +1412,10 @@ function BookFacts({ data }: { data: BookData }) {
   // Where it is shows in the label under the cover for the owner, and
   // "Available" goes without saying beside Ask to borrow
   if (!data.isOwner && !data.isBorrower && book.borrower) {
-    rows.push(["Status", "Out on loan"]);
+    // When to expect it back, while that's still ahead: a late one is
+    // between its owner and borrower
+    const due = book.dueDate && daysUntil(book.dueDate) >= 0 ? dueText(book.dueDate) : null;
+    rows.push(["Status", due ? `Out on loan, ${due}` : "Out on loan"]);
   }
   if (rows.length === 0 && data.waiting.length === 0) return null;
 
@@ -1676,32 +1690,44 @@ function LoanCard({ data }: { data: BookData }) {
             className="mt-2 min-h-4 text-xs text-stone-500 dark:text-stone-400"
           >
             {extended && due
-              ? `Now due ${monthDay(due)}. ${name} has been told.`
+              ? `Now due ${monthDay(due)}.${borrower.nameOnly ? "" : ` ${name} has been told.`}`
               : ""}
           </p>
         </div>
-        <div className="sm:pl-5">
-          <p className={label}>
-            {overdue
-              ? `Ask ${name} to bring it back`
-              : `Remind ${name} it's due`}
-          </p>
-          <reminder.Form method="post" className="mt-2">
-            <input type="hidden" name="intent" value="sendReminder" />
-            <button
-              type="submit"
-              disabled={sendingReminder || reminderSent}
-              // The one thing to do on a loan, so it's the green button
-              className={`w-full ${reminderSent ? quietLabel : primaryButton("lg")} py-1.5 disabled:cursor-default`}
-            >
-              {reminderSent
-                ? "Reminder sent"
-                : sendingReminder
-                  ? "Sending…"
-                  : "Send a reminder"}
-            </button>
-          </reminder.Form>
-        </div>
+        {/* Someone lent to by name can't be reached here; their reminders
+            come to the owner instead */}
+        {borrower.nameOnly ? (
+          <div className="sm:pl-5">
+            <p className={label}>Lent by name</p>
+            <p className="mt-2 text-stone-500 dark:text-stone-400">
+              {name} isn&apos;t on Stacks, so reminders come to you when
+              it&apos;s nearly due and if it&apos;s late.
+            </p>
+          </div>
+        ) : (
+          <div className="sm:pl-5">
+            <p className={label}>
+              {overdue
+                ? `Ask ${name} to bring it back`
+                : `Remind ${name} it's due`}
+            </p>
+            <reminder.Form method="post" className="mt-2">
+              <input type="hidden" name="intent" value="sendReminder" />
+              <button
+                type="submit"
+                disabled={sendingReminder || reminderSent}
+                // The one thing to do on a loan, so it's the green button
+                className={`w-full ${reminderSent ? quietLabel : primaryButton("lg")} py-1.5 disabled:cursor-default`}
+              >
+                {reminderSent
+                  ? "Reminder sent"
+                  : sendingReminder
+                    ? "Sending…"
+                    : "Send a reminder"}
+              </button>
+            </reminder.Form>
+          </div>
+        )}
       </div>
 
       <div
@@ -2126,16 +2152,21 @@ export default function BookDetailsPage() {
               Lent to {data.book.borrower.firstname}
             </a>
           ) : null}
-          {/* Lent by email to someone who hasn't joined */}
+          {/* Lent by email to someone who hasn't joined, or by name only */}
           {data.isOwner && !isEditing && data.book.borrower?.invitedAt ? (
             <p className="text-center text-xs text-stone-500 dark:text-stone-400">
               Not on Stacks yet. We emailed them.
             </p>
           ) : null}
+          {data.isOwner && !isEditing && data.book.borrower?.nameOnly ? (
+            <p className="text-center text-xs text-stone-500 dark:text-stone-400">
+              Lent by name. Reminders come to you.
+            </p>
+          ) : null}
           {data.isOwner && !isEditing && !data.book.borrower ? (
             <div ref={actionRef}>
               <LendToFriend
-                friends={data.currentUser?.following ?? []}
+                friends={[...(data.currentUser?.following ?? []), ...data.lentByName]}
                 loanChoices={data.loanChoices}
                 byEmail={
                   data.currentUser?.demoGroup
@@ -2264,6 +2295,23 @@ export default function BookDetailsPage() {
                   ? `Return book to ${data.book.user.firstname}`
                   : "Return book"}
               </button>
+            </Form>
+          ) : null}
+          {/* Someone's waiting: hand it straight on, as a book club does */}
+          {data.isBorrower &&
+          data.waiting.length > 0 &&
+          !isNotLending(data.book.notLendingUntil) ? (
+            <Form method="post">
+              <input type="hidden" name="intent" value="passOn" />
+              <button type="submit" className={`w-full ${quietButton("lg")}`}>
+                Pass it to {data.waiting[0].firstname}
+              </button>
+              <p className="mt-1.5 text-xs text-stone-500 dark:text-stone-400">
+                {data.waiting[0].firstname} is next in line. Hand it over and
+                it&apos;s theirs for {data.loanChoices.defaultWeeks} weeks;
+                {data.book.user ? ` ${data.book.user.firstname}` : " its owner"}{" "}
+                hears where it went.
+              </p>
             </Form>
           ) : null}
           {!isEditing ? <BookFacts data={data} /> : null}

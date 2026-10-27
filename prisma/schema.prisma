@@ -69,6 +69,10 @@ model User {
   // waits, with no password and out of search, until they claim it from
   // the email. Cleared once they do.
   invitedAt            DateTime?
+  // Someone lent a book by name only, with no email: a name in the
+  // lender's records, not a person who can sign in or be emailed. Their
+  // address is a stand-in at stacks.invalid, which never delivers.
+  nameOnly             Boolean    @default(false)
   // Set on throwaway demo accounts; everyone in one demo sandbox shares it
   demoGroup            String?
   // When a demo's visitor first went past the page they landed on: a person
@@ -387,6 +391,16 @@ model Group {
   // The link that lets anyone who has it join
   inviteToken String        @unique
   members     GroupMember[]
+
+  // What the group's reading now, for a book club: the Open Library work,
+  // as it was when picked, and a line about it ("We meet on the 12th").
+  // Anyone in the group can set or clear it.
+  pickKey    String?
+  pickTitle  String?
+  pickAuthor String?
+  pickCover  String?
+  pickNote   String?
+  pickedAt   DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

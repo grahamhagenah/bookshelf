@@ -589,7 +589,7 @@ export default function Account() {
       <Section
         id="plan"
         title="Plan"
-        description={`Free holds ${FREE_LIMITS.books} books, with as many friends as you like. Stacks Plus has no limits.`}
+        description={`Free holds ${FREE_LIMITS.books} books (${FREE_LIMITS.sharedBooks} on a shared shelf), with as many friends as you like. Stacks Plus has no limits.`}
       >
         {data.billingFailed ? (
           <p
@@ -1315,7 +1315,7 @@ function PlanPanel({
       <Meter
         label={plan.shared ? "Books on your shared shelf" : "Books"}
         used={plan.books}
-        limit={FREE_LIMITS.books}
+        limit={plan.bookLimit}
       />
       <div className="rounded-lg border border-stone-200 dark:border-stone-800 px-4 py-3">
         <p className="font-medium text-stone-900 dark:text-stone-100">

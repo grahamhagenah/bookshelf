@@ -4,6 +4,7 @@ import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "react-rout
 
 import sansFont from "~/fonts/source-sans-3-latin-normal.woff2?url";
 import serifFont from "~/fonts/source-serif-4-latin-600-normal.woff2?url";
+import { hasBooks } from "~/models/book.server";
 import { markDemoExplored } from "~/models/demo.server";
 import { pageUrl } from "~/page-url";
 import { OLD_HOSTS, SITE_URL, seo } from "~/seo";
@@ -72,9 +73,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
   return data({
     user,
-    // Invite people without a public link yet, until they say no thanks
+    // Invite people without a public link yet, until they say no thanks,
+    // once there's something on the shelf to show
     sharePrompt: Boolean(
-      user && !user.shareToken && !sharePromptDismissed(request),
+      user &&
+        !user.shareToken &&
+        !sharePromptDismissed(request) &&
+        (await hasBooks(user.id)),
     ),
   });
 };

@@ -63,7 +63,8 @@ export default function Terms() {
 
       <GuideSection title="The free plan and Stacks Plus">
         <p>
-          The free plan holds {FREE_LIMITS.books} books, with no limit on friends. Stacks
+          The free plan holds {FREE_LIMITS.books} books ({FREE_LIMITS.sharedBooks} on a shelf shared
+          with someone you live with), with no limit on friends. Stacks
           Plus lifts the book limit for ${PLUS_PRICES.monthly} a month or ${PLUS_PRICES.yearly} a
           year, in US dollars, plus any sales tax or VAT that applies. One subscription covers
           everyone on a shared shelf.

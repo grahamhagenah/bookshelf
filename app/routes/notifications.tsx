@@ -210,6 +210,8 @@ const NEEDS_ACTION = new Set([
   "BOOK_REQUEST",
   "OVERDUE_REMINDER",
   "DUE_SOON_REMINDER",
+  "LOAN_OVERDUE",
+  "LOAN_DUE_SOON",
 ]);
 
 
@@ -313,7 +315,7 @@ function Card({
         <span className="absolute -bottom-1 -right-1 rounded-full ring-2 ring-white dark:ring-stone-950">
           <ActivityIcon
             type={type}
-            urgent={type === "OVERDUE_REMINDER"}
+            urgent={type === "OVERDUE_REMINDER" || type === "LOAN_OVERDUE"}
             size="xs"
           />
         </span>
@@ -495,6 +497,25 @@ function ActivityItem({
         </a>
       );
       break;
+    // A book lent by name only: the reminder is the owner's to pass on
+    case "LOAN_OVERDUE":
+    case "LOAN_DUE_SOON":
+      text =
+        type === "LOAN_OVERDUE" ? (
+          <>
+            {book} is late back from {name}. Time to ask for it.
+          </>
+        ) : (
+          <>
+            {book} is due back from {name} soon
+          </>
+        );
+      actions = (
+        <a href={`/books/${notification.bookId}`} className={quietAction}>
+          View book
+        </a>
+      );
+      break;
     case "WANT_MATCH":
       // A friend added a book from your want-to-read list
       text = (
@@ -605,6 +626,33 @@ function ActivityItem({
         <>
           <strong className="font-semibold">From Stacks:</strong> {notification.message}
         </>
+      );
+      break;
+    // Handed straight on by the last borrower, as a book club does
+    case "BOOK_PASSED":
+      text = (
+        <>
+          {name} passed you {book}
+          {notification.message ? `, ${notification.message}'s copy` : ""}.
+          It&apos;s yours to read now.
+        </>
+      );
+      actions = (
+        <a href={`/books/${notification.bookId}`} className={quietAction}>
+          View book
+        </a>
+      );
+      break;
+    case "BOOK_PASSED_ON":
+      text = (
+        <>
+          {name} passed your {book} on to {notification.message ?? "the next in line"}
+        </>
+      );
+      actions = (
+        <a href={`/books/${notification.bookId}`} className={quietAction}>
+          View book
+        </a>
       );
       break;
     case "LOAN_EXTENDED":
@@ -761,6 +809,22 @@ const getHistoryText = (
       return <>{book} was overdue</>;
     case "DUE_SOON_REMINDER":
       return <>{book} was due soon</>;
+    case "BOOK_PASSED":
+      return (
+        <>
+          {name} passed you {book}
+        </>
+      );
+    case "BOOK_PASSED_ON":
+      return (
+        <>
+          {name} passed your {book} on to {notification.message ?? "the next in line"}
+        </>
+      );
+    case "LOAN_OVERDUE":
+      return <>{book} was late back from {name}</>;
+    case "LOAN_DUE_SOON":
+      return <>{book} was due back from {name}</>;
     case "ANNOUNCEMENT":
       return <>From Stacks: {notification.message}</>;
     default:

@@ -14,7 +14,7 @@ import {
   searchFriendsBooks,
 } from "~/models/book.server";
 import { shelfIds } from "~/models/household.server";
-import { fetchDescription } from "~/models/openlibrary.server";
+import { fillInBookOnce } from "~/models/openlibrary.server";
 import { addWantToRead, notifyWanters } from "~/models/wish.server";
 import { pageUrl } from "~/page-url";
 import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
@@ -133,15 +133,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const description =
-    typeof openLibraryKey === "string" && openLibraryKey.length > 0
-      ? await fetchDescription(openLibraryKey)
-      : "";
-
+  // Saved at once; its description (which the search results don't carry)
+  // comes from Open Library behind it, so adding never waits on it
   const book = await createBook({
     title: typeof title === "string" ? title : "",
     author: typeof author === "string" ? author : "",
-    body: description,
+    body: "",
     cover,
     datePublished:
       typeof datePublished === "string" && datePublished.length > 0
@@ -161,6 +158,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         : null,
     userId,
   });
+  void fillInBookOnce(book.id);
   // Friends who wanted this one hear about it
   await notifyWanters(userId, [book]);
 

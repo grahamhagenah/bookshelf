@@ -147,6 +147,11 @@ async function send(message: {
   text: string;
   headers?: Record<string, string>;
 }) {
+  // Someone lent to by name only has a stand-in address that can't
+  // receive anything; whatever would have gone to them doesn't go
+  if (message.to.endsWith("@stacks.invalid")) {
+    return { success: false, error: "No email address for this person" };
+  }
   if (!resend) {
     console.log("Email not sent (RESEND_API_KEY not configured):", {
       to: message.to,

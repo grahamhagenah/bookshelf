@@ -7,6 +7,8 @@ import {
   claimInvite,
   getInvite,
   lendByEmail,
+  lendByName,
+  nameOnlyBorrowers,
 } from "./loan-invite.server";
 import { getFriendStatus, searchUsers, verifyLogin } from "./user.server";
 
@@ -126,4 +128,52 @@ test("a password reset for a waiting account sends the loan link instead", async
   const maya = await prisma.user.findUniqueOrThrow({ where: { id: result.borrowerId } });
   expect(maya.verificationSentAt).not.toBe(null);
   expect(maya.passwordResetSentAt).toBe(null);
+});
+
+test("lending by name only needs no email from anyone, and sends none", async () => {
+  // Not even a confirmed address of their own
+  const walt = await makeUser("Walt", { emailVerifiedAt: null });
+  const book = await makeBook(walt.id, "Lonesome Dove");
+
+  const result = await lendByName(walt.id, book, { name: "Bob Next Door", weeks: 4 });
+  expect(result).toMatchObject({ ok: true, invited: false });
+  if (!result.ok) throw new Error("not lent");
+
+  const bob = await prisma.user.findUniqueOrThrow({ where: { id: result.borrowerId }, include: { password: true } });
+  expect(bob).toMatchObject({
+    firstname: "Bob",
+    surname: "Next Door",
+    nameOnly: true,
+    discoverable: false,
+    emailNotifications: false,
+    weeklyDigest: false,
+    password: null,
+    invitedAt: null,
+  });
+  // An address that can never receive anything
+  expect(bob.email).toMatch(/@stacks\.invalid$/);
+  const lent = await prisma.book.findUniqueOrThrow({ where: { id: book.id } });
+  expect(lent.borrowerId).toBe(bob.id);
+  expect(lent.dueDate).not.toBe(null);
+  // Out of search, and no one's friend
+  expect((await searchUsers("Bob", walt.id)).map((user) => user.id)).not.toContain(bob.id);
+  expect(await getFriendStatus(walt.id, bob.id)).toBe("none");
+
+  // Lending to the same name again is the same person, and they're
+  // offered to lend to next time
+  await prisma.book.update({ where: { id: book.id }, data: { borrowerId: null, borrowedAt: null, dueDate: null } });
+  const another = await makeBook(walt.id, "Blood Meridian");
+  expect(await lendByName(walt.id, another, { name: "bob next door", weeks: 2 })).toMatchObject({
+    borrowerId: bob.id,
+  });
+  expect((await nameOnlyBorrowers(walt.id)).map((person) => person.id)).toEqual([bob.id]);
+
+  // Someone else's Bob is their own
+  const priya = await makeUser("Priya");
+  const theirs = await makeBook(priya.id, "Circe");
+  const other = await lendByName(priya.id, theirs, { name: "Bob Next Door", weeks: 2 });
+  expect(other.ok && other.borrowerId).not.toBe(bob.id);
+  expect(await nameOnlyBorrowers(priya.id)).toHaveLength(1);
+
+  expect(await lendByName(walt.id, theirs, { name: "  ", weeks: 2 })).toMatchObject({ ok: false });
 });

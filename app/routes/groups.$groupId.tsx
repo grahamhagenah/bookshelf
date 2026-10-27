@@ -4,12 +4,16 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import invariant from "tiny-invariant";
 
 import Faces from "~/components/faces";
+import GroupPick from "~/components/group-pick";
 import { BookIcon, FeedIcon, GroupsIcon, LinkIcon, PencilIcon } from "~/components/icons";
 import { GROUP_NAME_MAX, codeFromLink, groupInvitePath, groupPath } from "~/group-links";
 import { loadGroup } from "~/group-page.server";
 import {
   cleanGroupName,
+  clearGroupPick,
   deleteGroup,
+  getGroupPick,
+  setGroupPick,
   leaveGroup,
   removeFromGroup,
   renameGroup,
@@ -38,7 +42,7 @@ export const handle = {
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const { group } = await loadGroup(request, params);
+  const { userId, group } = await loadGroup(request, params);
   // The address carries the group's name as it is now, for a link from
   // before a rename or one with just the id
   const url = pageUrl(request);
@@ -48,6 +52,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { inviteToken, openIds, ...rest } = group;
   return data({
     group: { ...rest, lenderCount: openIds.length },
+    pick: await getGroupPick(group.id, userId, openIds),
     path,
     inviteUrl: `${publicOrigin(request)}${groupInvitePath(group.name, inviteToken)}`,
   });
@@ -55,7 +60,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export type GroupLayoutData = typeof loader;
 
-// Renaming, leaving and a fresh invite link, from the People tab
+// Renaming, leaving and a fresh invite link, from the People tab; what
+// the group's reading, from the top of the page
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.groupId, "groupId not found");
@@ -85,13 +91,36 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     await resetGroupLink(userId, groupId);
     return data({ ok: true });
   }
+  if (intent === "setPick") {
+    const field = (name: string) => {
+      const value = formData.get(name);
+      return typeof value === "string" && value.trim() ? value.trim() : null;
+    };
+    const key = field("key");
+    const title = field("title");
+    if (!key?.startsWith("/works/") || !title) {
+      return data({ error: "Choose a book from the list." }, { status: 400 });
+    }
+    await setGroupPick(userId, groupId, {
+      key,
+      title,
+      author: field("author"),
+      cover: field("cover"),
+      note: field("note"),
+    });
+    return data({ ok: true });
+  }
+  if (intent === "clearPick") {
+    await clearGroupPick(userId, groupId);
+    return data({ ok: true });
+  }
   return data({ error: "Unknown request" }, { status: 400 });
 };
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 export default function GroupLayout() {
-  const { group, path, inviteUrl } = useLoaderData<typeof loader>();
+  const { group, pick, path, inviteUrl } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const justJoined = searchParams.get("joined") === "1";
 
@@ -133,6 +162,8 @@ export default function GroupLayout() {
           </p>
         </div>
       </div>
+
+      <GroupPick pick={pick} groupName={group.name} path={path} />
 
       <div className="mb-6 flex items-start gap-3 border-b border-stone-200 dark:border-stone-800">
         <nav
@@ -232,8 +263,8 @@ function GroupName({ name, path }: { name: string; path: string }) {
   );
 }
 
-// As Share my shelf: copies the invite link, or on a phone opens the
-// share sheet with a line to send with it. The People tab has the rest.
+// Copies the invite link and says so, or on a phone opens the share sheet
+// with a line to send with it. The People tab shows the link itself.
 function InviteButton({ name, url }: { name: string; url: string }) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -249,7 +280,7 @@ function InviteButton({ name, url }: { name: string; url: string }) {
       await navigator.clipboard.writeText(url);
       setCopied(true);
       clearTimeout(timer.current);
-      timer.current = setTimeout(() => setCopied(false), 2000);
+      timer.current = setTimeout(() => setCopied(false), 3000);
     } catch {
       // Clipboard can be blocked; the People tab shows the link to select
     }
@@ -262,10 +293,14 @@ function InviteButton({ name, url }: { name: string; url: string }) {
       className="inline-flex h-8 flex-shrink-0 items-center justify-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-2.5 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
     >
       <LinkIcon size={16} />
-      {/* Both labels share one cell, so the button keeps its width */}
+      {/* Both labels share one cell, so the button keeps its width. With
+          a mouse it says what it does: copies the link */}
       <span className="grid" aria-live="polite">
-        <span className={`col-start-1 row-start-1 ${copied ? "invisible" : ""}`}>Invite</span>
-        <span className={`col-start-1 row-start-1 ${copied ? "" : "invisible"}`}>Copied</span>
+        <span className={`col-start-1 row-start-1 ${copied ? "invisible" : ""}`}>
+          <span className="pointer-coarse:hidden">Copy invite link</span>
+          <span className="hidden pointer-coarse:inline">Invite</span>
+        </span>
+        <span className={`col-start-1 row-start-1 ${copied ? "" : "invisible"}`}>Link copied</span>
       </span>
     </button>
   );

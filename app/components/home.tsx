@@ -242,11 +242,18 @@ function Welcome({
     },
     {
       title: "Invite the rest",
-      text: "Send a ready-made message with your invite link. Whoever joins from it is your friend straight away.",
+      text: "Send a ready-made message with your invite link: whoever joins from it is your friend straight away. For a book club or an office, start a group, and everyone who joins can borrow from everyone.",
       done: false,
       doneText: null,
       progress: null,
-      action: <InviteButtons url={inviteUrl} />,
+      action: (
+        <span className="flex flex-wrap items-center gap-2">
+          <InviteButtons url={inviteUrl} />
+          <Link to="/groups" className={actionClass}>
+            Start a group
+          </Link>
+        </span>
+      ),
     },
   ];
 

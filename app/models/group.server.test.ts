@@ -12,8 +12,11 @@ import {
   getMyGroups,
   joinGroup,
   leaveGroup,
+  clearGroupPick,
+  getGroupPick,
   removeFromGroup,
   resetGroupLink,
+  setGroupPick,
 } from "./group.server";
 import { getPoolWanted, searchPool } from "./pool.server";
 import { createNotification, getFriendStatus } from "./user.server";
@@ -239,4 +242,43 @@ test("the last one out takes the group's notices with it", async () => {
   await leaveGroup(ana.id, group.id);
   await leaveGroup(ben.id, group.id);
   expect(await prisma.notification.count({ where: { groupId: group.id } })).toBe(0);
+});
+
+test("a group's pick shows every copy in it, and where each one is", async () => {
+  const priya = await makeUser("Priya");
+  const ruth = await makeUser("Ruth");
+  const kofi = await makeUser("Kofi");
+  const outsider = await makeUser("Outsider");
+  const group = await createGroup(priya.id, "Second Tuesday");
+  const token = await tokenOf(group.id);
+  await joinGroup(ruth.id, token);
+  await joinGroup(kofi.id, token);
+  const key = `/works/OL${crypto.randomUUID().slice(0, 8)}W`;
+
+  const lent = await makeBook(priya.id, "Demon Copperhead");
+  const free = await makeBook(kofi.id, "Demon Copperhead");
+  await prisma.book.updateMany({ where: { id: { in: [lent.id, free.id] } }, data: { openLibraryKey: key } });
+  await prisma.book.update({
+    where: { id: lent.id },
+    data: { borrowerId: ruth.id, borrowedAt: new Date(), dueDate: new Date(Date.now() + 14 * 86_400_000) },
+  });
+  // Someone else's copy, outside the group, doesn't count
+  const theirs = await makeBook(outsider.id, "Demon Copperhead");
+  await prisma.book.update({ where: { id: theirs.id }, data: { openLibraryKey: key } });
+
+  // Only people in the group can pick
+  const choice = { key, title: "Demon Copperhead", author: "Barbara Kingsolver", cover: null, note: "We meet on the 12th" };
+  expect(await setGroupPick(outsider.id, group.id, choice)).toBe(false);
+  expect(await setGroupPick(ruth.id, group.id, choice)).toBe(true);
+
+  const openIds = (await getGroup(group.id, ruth.id))!.openIds;
+  const pick = await getGroupPick(group.id, ruth.id, openIds);
+  expect(pick).toMatchObject({ title: "Demon Copperhead", note: "We meet on the 12th" });
+  expect(pick!.copies.map((copy) => [copy.owner, copy.borrower, copy.borrowedByMe, copy.mine])).toEqual([
+    ["Priya", "Ruth", true, false],
+    ["Kofi", null, false, false],
+  ]);
+
+  expect(await clearGroupPick(kofi.id, group.id)).toBe(true);
+  expect(await getGroupPick(group.id, ruth.id, openIds)).toBeNull();
 });
