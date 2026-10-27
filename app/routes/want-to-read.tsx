@@ -3,6 +3,7 @@ import { data, Form, Link, redirect, useActionData, useFetcher, useLoaderData, u
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import BookCover from "~/components/book-cover";
+import EmptyList from "~/components/empty-list";
 import { BookmarkIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
@@ -216,6 +217,9 @@ export default function WantToRead() {
     <Layout title="Want to read">
       <section>
         <ShelfTabs counts={{ ...counts, want: items.length }} />
+        {/* What the list is for: in a line above it, or, while it's empty,
+            in its place */}
+        {items.length > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
             {/* Each row says which friend has it */}
@@ -235,6 +239,7 @@ export default function WantToRead() {
             Add a book
           </Link>
         </div>
+        ) : null}
 
         {limit ? (
           <p
@@ -252,23 +257,18 @@ export default function WantToRead() {
         ) : null}
 
         {items.length === 0 ? (
-          <div className="mt-10 flex flex-col items-center py-10 text-center">
-            <BookmarkIcon
-              size={28}
-              className="text-stone-300 dark:text-stone-600"
-            />
-            <p className="mt-3 text-stone-700 dark:text-stone-300">
-              Nothing here yet.
-            </p>
-            <p className="mt-1 max-w-xs text-sm text-stone-500 dark:text-stone-400">
-              Search for a book and choose{" "}
-              <strong className="font-medium">Want to read</strong>, or{" "}
-              <Link to="/import" className="underline underline-offset-2">
-                import your to-read shelf
-              </Link>{" "}
-              from Goodreads.
-            </p>
-          </div>
+          <EmptyList
+            icon={<BookmarkIcon size={28} />}
+            title="Books you'd like to read"
+            action={{ to: "/search?for=want", label: "Add a book" }}
+          >
+            Keep the ones you don&apos;t own here, and you&apos;ll hear when a
+            friend has a copy to lend. Or{" "}
+            <Link to="/import" className="underline underline-offset-2">
+              import your to-read shelf
+            </Link>{" "}
+            from Goodreads.
+          </EmptyList>
         ) : (
           <ul className="mt-4 divide-y divide-stone-100 dark:divide-stone-800">
             {items.map((item) => (

@@ -3,6 +3,7 @@ import { data, Link, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import BookCover from "~/components/book-cover";
+import EmptyList from "~/components/empty-list";
 import { BorrowedIcon, HeartIcon, HistoryIcon, LentIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
@@ -174,20 +175,18 @@ export default function History() {
     <Layout title="History">
       <section>
         <ShelfTabs counts={{ ...counts, history: entries.length }} />
-        <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
-          Every book that&apos;s passed between you and a friend.
-        </p>
 
         {entries.length === 0 ? (
-          <div className="mt-10 flex flex-col items-center py-10 text-center">
-            <HistoryIcon size={28} className="text-stone-300 dark:text-stone-600" />
-            <p className="mt-3 text-stone-700 dark:text-stone-300">Nothing here yet.</p>
-            <p className="mt-1 max-w-xs text-sm text-stone-500 dark:text-stone-400">
-              Books you borrow from friends, and lend to them, show up here.
-            </p>
-          </div>
+          <EmptyList icon={<HistoryIcon size={28} />} title="Your lending history">
+            Every book that passes between you and a friend shows up here: what
+            you&apos;ve borrowed, and what you&apos;ve lent.
+          </EmptyList>
         ) : (
           <>
+            {/* What the list is for, above it; while it's empty, in its place */}
+            <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
+              Every book that&apos;s passed between you and a friend.
+            </p>
             <div className="mt-4 flex gap-1.5" role="group" aria-label="Show">
               {filters.map(([value, label, count]) => (
                 <button
