@@ -126,12 +126,12 @@ const ICON_PATHS = {
   ),
   paw: (
     <>
-      {/* Four solid toes close over an open pad, the outer two turned out */}
-      <ellipse cx="6.4" cy="11.3" rx="1.7" ry="2.15" transform="rotate(-25 6.4 11.3)" fill="currentColor" stroke="none" />
-      <ellipse cx="9.6" cy="7.4" rx="1.7" ry="2.15" transform="rotate(-8 9.6 7.4)" fill="currentColor" stroke="none" />
-      <ellipse cx="14.4" cy="7.4" rx="1.7" ry="2.15" transform="rotate(8 14.4 7.4)" fill="currentColor" stroke="none" />
-      <ellipse cx="17.6" cy="11.3" rx="1.7" ry="2.15" transform="rotate(25 17.6 11.3)" fill="currentColor" stroke="none" />
-      <path d="M12 12.3c-2.7 0-5.3 3-5.3 5.4 0 1.5 1.2 2.6 2.7 2.6 1.1 0 1.6-.6 2.6-.6s1.5.6 2.6.6c1.5 0 2.7-1.1 2.7-2.6 0-2.4-2.6-5.4-5.3-5.4z" />
+      {/* A solid paw: four toes close over the pad, the outer two turned out */}
+      <ellipse cx="6.4" cy="11.3" rx="1.75" ry="2.2" transform="rotate(-25 6.4 11.3)" fill="currentColor" stroke="none" />
+      <ellipse cx="9.6" cy="8.1" rx="1.75" ry="2.2" transform="rotate(-8 9.6 8.1)" fill="currentColor" stroke="none" />
+      <ellipse cx="14.4" cy="8.1" rx="1.75" ry="2.2" transform="rotate(8 14.4 8.1)" fill="currentColor" stroke="none" />
+      <ellipse cx="17.6" cy="11.3" rx="1.75" ry="2.2" transform="rotate(25 17.6 11.3)" fill="currentColor" stroke="none" />
+      <path d="M12 12.3c-2.7 0-5.3 3-5.3 5.4 0 1.5 1.2 2.6 2.7 2.6 1.1 0 1.6-.6 2.6-.6s1.5.6 2.6.6c1.5 0 2.7-1.1 2.7-2.6 0-2.4-2.6-5.4-5.3-5.4z" fill="currentColor" stroke="none" />
     </>
   ),
   fish: (
