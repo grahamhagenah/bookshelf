@@ -2433,10 +2433,10 @@ export default function BookDetailsPage() {
                     className={textField}
                   />
                   <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
-                    An image link from Open Library, Amazon, Goodreads, Google
-                    Books, Bookshop.org, Wikipedia or the Internet Archive,
-                    under 5 MB. It&apos;s copied here when you save, and the
-                    preview on the left updates then.
+                    {/* The full list of sites is in the message if one is
+                        turned down */}
+                    An image link from Open Library, Amazon, Goodreads or
+                    another book site, under 5 MB.
                   </p>
                   {actionData?.coverError ? (
                     <p
