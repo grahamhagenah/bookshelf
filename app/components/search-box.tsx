@@ -266,10 +266,10 @@ export default function SearchBox({
           id={listId}
           role="listbox"
           aria-label="Suggestions"
-          // In the header the box is narrow, so the list is wider than it
+          // In the header the box is narrow, so the list can be wider than it
           className={`absolute top-full z-30 mt-1 overflow-hidden ${
             inHeader
-              ? "right-0 w-[min(26rem,calc(100vw-2rem))]"
+              ? "left-0 min-w-full w-[min(26rem,calc(100vw-2rem))]"
               : "left-0 right-0"
           } rounded-lg border border-stone-200/80 dark:border-stone-800 bg-white dark:bg-stone-900 py-1 shadow-soft text-left`}
           // Keep focus in the input so a click registers before blur closes it
