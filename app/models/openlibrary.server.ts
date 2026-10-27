@@ -13,6 +13,12 @@ import {
 } from "~/utils";
 import type { WithEnglishEdition } from "~/utils";
 
+import { rememberSearchResults } from "./catalog.server";
+import {
+  openLibraryJson,
+  RECORD_MAX_AGE_MS,
+  SEARCH_MAX_AGE_MS,
+} from "./openlibrary-cache.server";
 import { adoptWorkNotes } from "./work-note.server";
 
 // Open Library can be slow; never hold a page up for long. A lookup
@@ -24,10 +30,14 @@ export const PATIENT_MS = 12000;
 // Refresh an author's bio after a month
 const AUTHOR_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
-async function getJson(url: string, timeoutMs = TIMEOUT_MS) {
-  const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
-  if (!res.ok) throw new Error(`Open Library answered ${res.status}`);
-  return res.json();
+// Through the cache: searches count as fresh for a day, records a week
+function getJson(url: string, timeoutMs = TIMEOUT_MS) {
+  return openLibraryJson(url, {
+    timeoutMs,
+    maxAgeMs: url.includes("/search.json")
+      ? SEARCH_MAX_AGE_MS
+      : RECORD_MAX_AGE_MS,
+  });
 }
 
 function textValue(value: unknown): string | null {
@@ -189,7 +199,7 @@ export async function inEnglish<
 }
 
 const SEARCH_FIELDS =
-  `key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,first_sentence,author_key,isbn,${ENGLISH_EDITION_FIELDS}`;
+  `key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,first_sentence,author_key,isbn,edition_count,${ENGLISH_EDITION_FIELDS}`;
 
 interface Found {
   title: string | null;
@@ -228,9 +238,12 @@ export async function lookupWork(
   const doc = data.docs?.[0];
   if (!doc) return null;
   const name = doc.author_name?.[0];
+  const title = typeof doc.title === "string" ? englishTitle(doc.title, doc.editions?.docs?.[0]) : null;
+  const author = name ? await englishAuthorName(doc.author_key?.[0], name) : null;
+  await rememberSearchResults([{ ...doc, title, author_name: author ? [author] : [] }]);
   return {
-    title: typeof doc.title === "string" ? englishTitle(doc.title, doc.editions?.docs?.[0]) : null,
-    author: name ? await englishAuthorName(doc.author_key?.[0], name) : null,
+    title,
+    author,
     key: typeof doc.key === "string" ? doc.key : null,
     cover: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : null,
     datePublished: doc.first_publish_year ? String(doc.first_publish_year) : null,

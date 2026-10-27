@@ -150,10 +150,17 @@ export default function SearchBox({
   // Only show suggestions that belong to what's in the box now
   const friends =
     friendsFetcher.data?.query === query ? friendsFetcher.data.friends : null;
-  const openLibrary =
+  // Open Library's answer once it's in; until then, the books Stacks has
+  // already come across, which lead its answer too, so the list only grows
+  const fromOpenLibrary =
     openLibraryFetcher.data?.query === query
       ? openLibraryFetcher.data.openLibrary
       : null;
+  const openLibrary =
+    fromOpenLibrary ??
+    (friendsFetcher.data?.query === query
+      ? friendsFetcher.data.openLibrary
+      : null);
   const options: Option[] = [
     ...(friends ?? []).map((book) => ({
       kind: "friend" as const,
@@ -210,7 +217,7 @@ export default function SearchBox({
   const optionId = (index: number) => `${listId}-option-${index}`;
   const firstOpenLibrary = options.findIndex((o) => o.kind === "openLibrary");
   // Open Library is the slow one; say so while it's still on its way
-  const isLoading = !openLibrary && openLibraryFetcher.state === "loading";
+  const isLoading = !fromOpenLibrary && openLibraryFetcher.state === "loading";
 
   return (
     <div className="relative flex-1">

@@ -48,11 +48,13 @@ import {
   getReaderNotes,
   saveReaderNote,
 } from "~/models/note.server";
+import { openLibraryJson } from "~/models/openlibrary-cache.server";
 import {
   ensureBookDetails,
   fillInBookOnce,
   getAuthor,
   tidyAuthor,
+  PATIENT_MS,
 } from "~/models/openlibrary.server";
 import {
   getUserById,
@@ -968,10 +970,11 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       ENGLISH_EDITION_FIELDS,
     ].join(",");
 
-    const res = await fetch(
+    // Asked for, so straight to Open Library, falling back on what's kept
+    const data = await openLibraryJson(
       `https://openlibrary.org/search.json?q=${searchQuery}&limit=1&${ENGLISH_EDITION_PARAMS}&fields=${fields}`,
-    );
-    const data = await res.json();
+      { timeoutMs: PATIENT_MS, fresh: true },
+    ).catch(() => ({ docs: [] }));
 
     if (data.docs && data.docs.length > 0) {
       const bookData = data.docs[0];
@@ -980,16 +983,14 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       let description = book.body;
       if (bookData.key) {
         try {
-          const workRes = await fetch(
+          const workData = await openLibraryJson(
             `https://openlibrary.org${bookData.key}.json`,
+            { timeoutMs: PATIENT_MS, fresh: true },
           );
-          if (workRes.ok) {
-            const workData = await workRes.json();
-            if (typeof workData.description === "string") {
-              description = workData.description;
-            } else if (workData.description?.value) {
-              description = workData.description.value;
-            }
+          if (typeof workData.description === "string") {
+            description = workData.description;
+          } else if (workData.description?.value) {
+            description = workData.description.value;
           }
         } catch {
           // Keep existing description if fetch fails

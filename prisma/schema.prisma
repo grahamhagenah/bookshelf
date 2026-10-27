@@ -245,6 +245,36 @@ model ReaderNote {
 }
 
 // Open Library author details, shared by every copy of their books
+// Open Library's answers, kept so a repeat question doesn't wait on it
+// and a slow or down Open Library still has something to show. Keyed by
+// the request's address; old ones are cleared out now and then.
+model OpenLibraryResponse {
+  url       String   @id
+  body      String
+  fetchedAt DateTime
+
+  @@index([fetchedAt])
+}
+
+// Every book Stacks has come across: on a shelf, wanted, or in Open
+// Library's search results. Suggestions come from here at once, while
+// Open Library is asked.
+model CatalogBook {
+  // The Open Library work, /works/OL…W
+  key       String   @id
+  title     String
+  author    String?
+  coverId   Int?
+  year      Int?
+  pages     Int?
+  subjects  String?
+  publisher String?
+  // How many editions Open Library lists: how widely read it is, which
+  // ranks suggestions
+  editions  Int?
+  updatedAt DateTime @updatedAt
+}
+
 model Author {
   key       String   @id
   name      String

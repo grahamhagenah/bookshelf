@@ -1,3 +1,8 @@
+import { rememberSearchResults } from "~/models/catalog.server";
+import {
+  openLibraryJson,
+  SEARCH_MAX_AGE_MS,
+} from "~/models/openlibrary-cache.server";
 import { inEnglish } from "~/models/openlibrary.server";
 import type { getWantToReadWorks } from "~/models/wish.server";
 import { ENGLISH_EDITION_FIELDS, ENGLISH_EDITION_PARAMS, tidySearchResults } from "~/utils";
@@ -100,13 +105,13 @@ export async function searchOpenLibrary({
 
   let data: OpenLibraryResponse;
   try {
-    const res = await fetch(
+    const body = await openLibraryJson(
       `https://openlibrary.org/search.json?${searchQuery}&limit=${RESULTS_PER_PAGE}&offset=${offset}&${ENGLISH_EDITION_PARAMS}&fields=${fields}`,
-      { signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS) },
+      { timeoutMs: SEARCH_TIMEOUT_MS, maxAgeMs: SEARCH_MAX_AGE_MS },
     );
-    const body = await res.json();
-    if (!res.ok || !Array.isArray(body.docs)) throw new Error(`Open Library answered ${res.status}`);
+    if (!Array.isArray(body.docs)) throw new Error("Open Library answered without results");
     data = { ...body, docs: tidySearchResults(await inEnglish(body.docs)) };
+    await rememberSearchResults(data.docs);
   } catch {
     // Slow, down, or a query it rejects ("the"): say so
     return { ...NO_RESULTS, failed: true };
