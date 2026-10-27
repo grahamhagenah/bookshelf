@@ -4,7 +4,7 @@ import { Link, useFetcher } from "react-router";
 import { PIN_MAX } from "~/profile";
 
 import Avatar from "./avatar";
-import { HeartIcon, HiddenIcon, PencilIcon, PinIcon, ReadIcon } from "./icons";
+import { HeartIcon, HiddenIcon, PinIcon, ReadIcon } from "./icons";
 import PersonLink from "./person-link";
 import { sectionHeading } from "./ui";
 
@@ -28,8 +28,8 @@ const formatDate = (date: string | Date) =>
     year: "numeric",
   });
 
-// Your own marks on a book (a heart, having read it, a note) share one
-// look: a small rounded toggle, tinted once it's on
+// Your own marks on a book (a heart, having read it) share one look: a
+// small rounded toggle, tinted once it's on
 const chip = (on: string | false) =>
   `inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
     on ||
@@ -173,10 +173,10 @@ function FullNote({
   );
 }
 
-// Pinning it to the favorites at the top of your public page, beside the
-// heart and the read mark, since it's another thing you say about it.
-// Your note on it is what shows there with it.
-function PinToggle({ page }: { page: PageStanding }) {
+// Pinning it to the favorites at the top of your public page. Your note
+// on it is what shows there with it. Rarely needed, so the book page keeps
+// it at the bottom, a quiet link beside Edit details.
+export function PinToggle({ page }: { page: PageStanding }) {
   const { fetcher, pinned, hidden, full } = usePageStanding(page);
   // A book kept off the page can't be at the top of it
   const off = !pinned && hidden;
@@ -185,7 +185,6 @@ function PinToggle({ page }: { page: PageStanding }) {
       <input type="hidden" name="intent" value={pinned ? "unpin" : "pin"} />
       <button
         type="submit"
-        aria-pressed={pinned}
         disabled={full || off}
         title={
           off
@@ -195,37 +194,23 @@ function PinToggle({ page }: { page: PageStanding }) {
             : full
               ? `Your public page shows ${PIN_MAX}. Unpin one in Settings first.`
               : pinned
-                ? "Unpin it from your public page"
+                ? undefined
                 : "Put it in the favorites at the top of your public page, with your note"
         }
-        className={`${chip(
-          pinned &&
-            "border-stone-300 bg-stone-100 text-stone-800 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100",
-        )} disabled:cursor-not-allowed disabled:opacity-50`}
+        className="inline-flex items-center gap-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {/* Both labels share one cell, so the row doesn't shift */}
-        <span className="grid justify-items-center">
-          <span
-            className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${pinned ? "invisible" : ""}`}
-          >
-            <PinIcon size={14} />
-            Pin to my page
-          </span>
-          <span
-            className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${pinned ? "" : "invisible"}`}
-          >
-            <PinIcon size={14} filled />
-            Pinned to my page
-          </span>
+        <PinIcon size={14} filled={pinned} />
+        <span className="underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600">
+          {pinned ? "Unpin from my page" : "Pin to my page"}
         </span>
       </button>
     </fetcher.Form>
   );
 }
 
-// One quiet line under the buttons, for the owner: is this book on their
-// public page at all, and the switch to keep it off
-function PageLine({ page }: { page: PageStanding }) {
+// One quiet line under the pin: is this book on your public page at all,
+// and, on your own shelf, the switch to keep it off
+export function PageLine({ page }: { page: PageStanding }) {
   const { fetcher, pinned, hidden, full } = usePageStanding(page);
   const link =
     "underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100";
@@ -235,13 +220,13 @@ function PageLine({ page }: { page: PageStanding }) {
     if (!pinned && !hidden && !full) return null;
     if (full && !hidden) {
       return (
-        <p className="mb-4 text-xs text-stone-500 dark:text-stone-400">
+        <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
           <FullNote className={link} />
         </p>
       );
     }
     return (
-      <p className="mb-4 text-xs text-stone-500 dark:text-stone-400">
+      <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
         {hidden
           ? pinned
             ? "Pinned, but its owner keeps it off public pages, so it isn't shown"
@@ -261,7 +246,7 @@ function PageLine({ page }: { page: PageStanding }) {
   return (
     <fetcher.Form
       method="post"
-      className="mb-4 flex flex-wrap items-center gap-x-1.5 text-xs text-stone-500 dark:text-stone-400"
+      className="mt-2 flex flex-wrap items-center gap-x-1.5 text-xs text-stone-500 dark:text-stone-400"
     >
       {hidden ? <HiddenIcon size={12} className="flex-shrink-0" /> : null}
       <span>
@@ -300,7 +285,6 @@ export default function ReaderNotes({
   maxLength,
   friendIds,
   readAt,
-  page,
 }: {
   notes: ReaderNote[];
   myNote: ReaderNote | null;
@@ -309,8 +293,6 @@ export default function ReaderNotes({
   friendIds: string[];
   // When you read it, for readers of this copy
   readAt?: string | Date | null;
-  // For the owner: where it stands on their public page
-  page?: PageStanding | null;
 }) {
   const { loved } = useLoved(myNote);
   const noteFetcher = useFetcher<{ noteSaved?: boolean }>();
@@ -345,17 +327,6 @@ export default function ReaderNotes({
           {canNote && readAt !== undefined ? (
             <ReadToggle readAt={readAt} />
           ) : null}
-          {page ? <PinToggle page={page} /> : null}
-          {canNote && !myNote?.body && !isWriting ? (
-            <button
-              type="button"
-              onClick={() => setIsWriting(true)}
-              className={chip(false)}
-            >
-              <PencilIcon size={14} />
-              {hasNotes ? "Add a note" : "Leave a note"}
-            </button>
-          ) : null}
           {heartsOnly.length > 0 ? (
             <p className="inline-flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
               {canNote ? null : (
@@ -380,7 +351,18 @@ export default function ReaderNotes({
           ) : null}
         </div>
       ) : null}
-      {page ? <PageLine page={page} /> : null}
+
+      {/* Not one more button: an empty note, waiting. It looks like the
+          box it opens, with the same words, so tapping it just wakes it. */}
+      {canNote && !myNote?.body && !isWriting ? (
+        <button
+          type="button"
+          onClick={() => setIsWriting(true)}
+          className="mb-4 block w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-left leading-relaxed text-stone-400 dark:text-stone-500 hover:border-stone-300 dark:hover:border-stone-600 transition-colors"
+        >
+          What did you think? A line or two for the next reader.
+        </button>
+      ) : null}
 
       {isWriting ? (
         <noteFetcher.Form method="post" className="py-3">

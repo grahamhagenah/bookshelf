@@ -9,7 +9,7 @@ import ErrorPage from "~/components/error-page";
 import { LentIcon, PencilIcon } from "~/components/icons";
 import OpeningLine, { openingLineType } from "~/components/opening-line";
 import PersonLink from "~/components/person-link";
-import ReaderNotes from "~/components/reader-notes";
+import ReaderNotes, { PageLine, PinToggle } from "~/components/reader-notes";
 import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
 import { importCover, isOpenLibraryCover } from "~/covers.server";
 import { sendBookRequestEmail } from "~/email.server";
@@ -2507,7 +2507,6 @@ export default function BookDetailsPage() {
               maxLength={data.noteMaxLength}
               friendIds={data.friendIds}
               readAt={data.readAt}
-              page={data.page}
             />
           ) : null}
 
@@ -2517,22 +2516,31 @@ export default function BookDetailsPage() {
             </div>
           ) : null}
 
-          {/* Rarely needed, so it waits at the very bottom. The form opens
-              at the top, so the page goes back up to it. */}
-          {data.isOwner && !isEditing ? (
-            <button
-              type="button"
-              onClick={() => {
-                setIsEditing(true);
-                window.scrollTo({ top: 0 });
-              }}
-              className="mt-12 inline-flex items-center gap-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
-            >
-              <PencilIcon size={14} />
-              <span className="underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600">
-                Edit details or cover
-              </span>
-            </button>
+          {/* Rarely needed, so they wait at the very bottom: fixing the
+              details, and this book's place on your public page */}
+          {!isEditing && (data.isOwner || data.page) ? (
+            <div className="mt-12">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                {data.isOwner ? (
+                  <button
+                    type="button"
+                    // The form opens at the top, so the page goes back up
+                    onClick={() => {
+                      setIsEditing(true);
+                      window.scrollTo({ top: 0 });
+                    }}
+                    className="inline-flex items-center gap-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+                  >
+                    <PencilIcon size={14} />
+                    <span className="underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600">
+                      Edit details or cover
+                    </span>
+                  </button>
+                ) : null}
+                {data.page ? <PinToggle page={data.page} /> : null}
+              </div>
+              {data.page ? <PageLine page={data.page} /> : null}
+            </div>
           ) : null}
         </section>
       </main>
