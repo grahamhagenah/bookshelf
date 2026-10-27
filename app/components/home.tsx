@@ -362,7 +362,7 @@ interface Popular {
   to: string;
 }
 
-// One row of covers: four on phones, six on wider screens
+// One row of covers: four on phones, five on wider screens
 function CoverRow({
   items,
   caption,
@@ -380,8 +380,8 @@ function CoverRow({
   badge?: (index: number) => React.ReactNode;
 }) {
   return (
-    <ul className="grid grid-cols-4 gap-3 sm:grid-cols-6">
-      {items.slice(0, 6).map((item, index) => (
+    <ul className="grid grid-cols-4 gap-3 sm:grid-cols-5">
+      {items.slice(0, 5).map((item, index) => (
         <li
           key={item.id}
           className={index >= 4 ? "hidden sm:block" : undefined}
@@ -684,9 +684,6 @@ export default function Home({
                             "Your shelf"
                           )}
                         </Link>
-                        <Link to="/import" className={linkClass}>
-                          Import
-                        </Link>
                         <Link
                           to="/search"
                           className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
@@ -711,7 +708,7 @@ export default function Home({
                       />
                     ) : (
                       // A blank, book-shaped slot where the first cover will go
-                      <ul className="grid grid-cols-4 gap-3 sm:grid-cols-6">
+                      <ul className="grid grid-cols-4 gap-3 sm:grid-cols-5">
                         <li>
                           <Link
                             to="/search"
@@ -728,7 +725,7 @@ export default function Home({
                             </span>
                           </Link>
                         </li>
-                        <li className="col-span-3 self-center text-sm text-stone-500 dark:text-stone-400 sm:col-span-5">
+                        <li className="col-span-3 self-center text-sm text-stone-500 dark:text-stone-400 sm:col-span-4">
                           Nothing here yet. Add your first, or{" "}
                           <Link
                             to="/import"
@@ -786,8 +783,13 @@ export default function Home({
               </div>
               {activity.length > 0 ? (
                 <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-                  {activity.map((item) => (
-                    <li key={item.id}>
+                  {activity.map((item, index) => (
+                    <li
+                      key={item.id}
+                      // On phones the column sits below the rest, so it
+                      // keeps to six; beside it, as many as fit
+                      className={index >= 6 ? "hidden lg:list-item" : undefined}
+                    >
                       <FriendActivityItem item={item} friendIds={friendIds} />
                     </li>
                   ))}

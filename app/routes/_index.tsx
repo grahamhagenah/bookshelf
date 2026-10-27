@@ -51,7 +51,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [books, activity, sentRequests, wanted, invite, popular] =
     await Promise.all([
       getHomeBooks(user.id, await shelfIds(user.id)),
-      getFriendActivity(user.id, { limit: 6 }),
+      // Enough to fill the side column beside the rest; phones show six
+      getFriendActivity(user.id, { limit: 20 }),
       getPendingFriendRequests(user.id),
       getWantToRead(user.id),
       getFriendInvite(user.id),
