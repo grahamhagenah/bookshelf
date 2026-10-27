@@ -391,7 +391,7 @@ export default function Faq() {
         ))}
       </nav>
 
-      {sections.map((section) => (
+      {sections.map((section, sectionIndex) => (
         <section
           key={section.heading}
           id={section.heading.toLowerCase().replace(/[^a-z]+/g, "-")}
@@ -400,18 +400,35 @@ export default function Faq() {
           <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400">
             {section.heading}
           </h2>
-          <dl className="mt-4 space-y-8">
-            {section.items.map((item) => (
-              <div key={item.q}>
-                <dt className={sectionHeading}>
-                  {item.q}
-                </dt>
-                <dd className="mt-2 text-pretty leading-relaxed text-stone-700 dark:text-stone-300">
+          {/* Questions to scan, each opening on its answer; the page's
+              first is open to start, so there's an answer in view */}
+          <div className="mt-2 divide-y divide-stone-200 dark:divide-stone-800">
+            {section.items.map((item, index) => (
+              <details key={item.q} open={sectionIndex + index === 0} className="group py-4">
+                <summary
+                  className={`${sectionHeading} flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden`}
+                >
+                  <span>{item.q}</span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                    className="flex-shrink-0 text-stone-400 transition-transform group-open:rotate-180"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </summary>
+                <div className="mt-2 text-pretty leading-relaxed text-stone-700 dark:text-stone-300">
                   {item.a}
-                </dd>
-              </div>
+                </div>
+              </details>
             ))}
-          </dl>
+          </div>
         </section>
       ))}
 
