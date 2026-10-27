@@ -287,9 +287,17 @@ function Welcome({
           </button>
         </welcomeFetcher.Form>
       </div>
-      <ol className="mt-6 grid gap-8 sm:grid-cols-3 sm:gap-10">
+      {/* Each step in a quiet box of its own; one that's done steps back */}
+      <ol className="mt-6 grid gap-3 sm:grid-cols-3 sm:gap-4">
         {steps.map((step, index) => (
-          <li key={step.title}>
+          <li
+            key={step.title}
+            className={`rounded-lg border p-4 sm:p-5 ${
+              step.done
+                ? "border-stone-100 dark:border-stone-900"
+                : "border-stone-200 dark:border-stone-800"
+            }`}
+          >
             <StepMark number={index + 1} done={step.done} />
             <h3
               className={`mt-3 font-semibold ${
