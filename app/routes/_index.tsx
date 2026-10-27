@@ -123,11 +123,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       inviteUrl: `${publicOrigin(request)}/invite/${invite}`,
       // Sharing a shelf with someone at home already, so it isn't offered
       sharesShelf: shelf.length > 1,
-      groups: groups.map(({ id, name, memberCount, bookCount }) => ({
+      groups: groups.map(({ id, name, memberCount, bookCount, faces }) => ({
         id,
         name,
         memberCount,
         bookCount,
+        faces,
         path: groupPath({ id, name }),
       })),
       waiting,

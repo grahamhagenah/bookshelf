@@ -6,6 +6,7 @@ import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
 
 import BookCover from "./book-cover";
+import Faces from "./faces";
 import FriendActivityItem from "./friend-activity";
 import { LentIcon } from "./icons";
 import { InviteButtons } from "./invite-message";
@@ -35,6 +36,8 @@ export interface HomeGroup {
   memberCount: number;
   bookCount: number;
   path: string;
+  // A few of the people in it, for their pictures
+  faces: { id: string; firstname: string; surname: string; profileEmoji: string | null }[];
 }
 // A book you're in line for: whose copy, and your place in line
 export interface Waiting {
@@ -630,11 +633,13 @@ export default function Home({
     welcomeDismissed ||
     skipping ||
     (ownCount >= BOOK_GOAL && friendIds.length + requestsSent + nameCount > 0);
+  // A group's books to borrow go with the loans too
   const showLoans =
-    setupDone || books.borrowed.length + books.lent.length + waiting.length > 0;
+    setupDone ||
+    books.borrowed.length + books.lent.length + waiting.length + groups.length > 0;
   const showRecent = setupDone || ownCount > 0;
   const showWanted = setupDone || wanted.length > 0;
-  const showFeed = setupDone || friendIds.length > 0 || groups.length > 0;
+  const showFeed = setupDone || friendIds.length > 0;
   const showMain = showLoans || showRecent || showWanted;
   // Every section after the first is set off by a rule
   const divided = "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6";
@@ -663,7 +668,8 @@ export default function Home({
         }`}
       >
         {showMain ? (
-          <div className={showFeed ? "lg:pr-10" : undefined}>
+          // min-w-0, so a long line truncates instead of widening the page
+          <div className={`min-w-0 ${showFeed ? "lg:pr-10" : ""}`}>
             {/* By rank: loans first when there are any, then your recent
                 books, then want-to-read (lifted above your books when a
                 friend has one of them). Empty ones (shown once setup's
@@ -731,6 +737,38 @@ export default function Home({
                         empty="Everything's on your shelf."
                       />
                     </div>
+                    {/* Your groups, a line each: the way to their books */}
+                    {groups.length > 0 ? (
+                      <ul className="mt-4">
+                        {groups.map((group) => (
+                          <li key={group.id}>
+                            <Link
+                              to={group.path}
+                              className="-mx-2 flex items-center gap-2.5 rounded-md px-2 py-2 text-sm hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+                            >
+                              <Faces people={group.faces} size="xs" max={4} />
+                              {/* One line; on phones, the details under the name */}
+                              <span className="min-w-0 text-stone-500 dark:text-stone-400 sm:truncate">
+                                <span className="block truncate font-medium text-stone-900 dark:text-stone-100 sm:inline">
+                                  {group.name}
+                                </span>
+                                <span className="hidden sm:inline"> · </span>
+                                <span className="block truncate sm:inline">
+                                {group.memberCount} {group.memberCount === 1 ? "person" : "people"} ·{" "}
+                                {/* Others' books, as the group's page counts them */}
+                                {group.bookCount === 0
+                                  ? "no books to borrow yet"
+                                  : `${group.bookCount} ${group.bookCount === 1 ? "book" : "books"} to borrow`}
+                                </span>
+                              </span>
+                              <span aria-hidden="true" className="ml-auto flex-shrink-0 text-stone-400 dark:text-stone-500">
+                                →
+                              </span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </section>
                 ),
               },
@@ -867,37 +905,6 @@ export default function Home({
                 : undefined
             }
           >
-            {groups.length > 0 ? (
-              <section
-                aria-labelledby="your-groups"
-                className={`mb-8 ${showMain ? "lg:pl-8" : ""}`}
-              >
-                <h2 id="your-groups" className={`${sectionHeading} mb-2`}>
-                  <Link to="/groups" className={headingLink}>
-                    Groups
-                  </Link>
-                </h2>
-                <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-                  {groups.map((group) => (
-                    <li key={group.id}>
-                      <Link
-                        to={group.path}
-                        className="-mx-2 flex items-baseline justify-between gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
-                      >
-                        <span className="min-w-0 truncate font-medium text-stone-900 dark:text-stone-100">
-                          {group.name}
-                        </span>
-                        <span className="flex-shrink-0 text-sm text-stone-500 dark:text-stone-400">
-                          {/* Others' books, as the group's page counts them */}
-                          {group.memberCount} {group.memberCount === 1 ? "person" : "people"} ·{" "}
-                          {group.bookCount} to borrow
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
             {/* Beside the main column, no taller than it, sharing it with
                 the chart below: what doesn't fit fades out, with the way to
                 the rest */}
