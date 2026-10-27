@@ -8,6 +8,7 @@ import Showcase, {
   ShowcaseDesk,
   ShowcaseFriends,
   ShowcaseGroups,
+  ShowcaseHome,
   ShowcaseNotes,
   ShowcasePage,
 } from "./showcase";
@@ -124,6 +125,27 @@ export default function Landing() {
         </div>
 
         <Showcase />
+      </section>
+
+      {/* The app itself, the way it looks once you're in */}
+      <section className="mt-20 md:mt-28">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-balance text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-4xl">
+            Your home page, at a glance
+          </h2>
+          <p className="mt-4 text-pretty text-lg leading-relaxed text-stone-600 dark:text-stone-300">
+            What you&apos;re borrowing, what&apos;s lent out and when it&apos;s due, and what friends
+            are reading, all on one page.
+          </p>
+        </div>
+        <div className="mt-10">
+          <ShowcaseHome />
+        </div>
+        <div className="mt-6 text-center">
+          <DemoButton className="font-medium text-stone-800 dark:text-stone-200 underline underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:decoration-stone-900 dark:hover:decoration-stone-100">
+            Look around the demo
+          </DemoButton>
+        </div>
       </section>
 
       <div className="mt-20 space-y-20 md:mt-28 md:space-y-28">
