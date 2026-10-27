@@ -336,7 +336,7 @@ export default function ReaderNotes({
       ) : null}
 
       {isWriting ? (
-        <noteFetcher.Form method="post" className="py-3">
+        <noteFetcher.Form method="post" className="mb-6">
           <input type="hidden" name="intent" value="saveNote" />
           <label htmlFor="note-body" className="sr-only">
             Your note
@@ -348,7 +348,7 @@ export default function ReaderNotes({
             maxLength={maxLength}
             defaultValue={myNote?.body ?? ""}
             placeholder="What did you think? A line or two for the next reader."
-            className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+            className="block w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
             // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             required
