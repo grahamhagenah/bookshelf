@@ -1143,14 +1143,20 @@ function LendToFriend({
   friends,
   loanChoices,
   byEmail,
+  open,
+  onOpen,
+  onClose,
 }: {
   friends: { id: string; firstname: string; surname: string }[];
   loanChoices: { weeks: readonly number[]; defaultWeeks: number };
   // Lending to someone not on Stacks: open, waiting on a confirmed
   // email, or not in the demo
   byEmail: "ok" | "confirm-email" | "off";
+  // Kept by the page, so the bar on phones can open it too
+  open: boolean;
+  onOpen: () => void;
+  onClose: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const navigation = useNavigation();
   const actionData = useActionData<{ lendError?: string }>();
   const lending = navigation.formData?.get("intent") === "lendTo";
@@ -1170,7 +1176,7 @@ function LendToFriend({
     return (
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={onOpen}
         className={`w-full ${quietButton("lg")}`}
       >
         Lend this book
@@ -1288,7 +1294,7 @@ function LendToFriend({
         </button>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={onClose}
           className={quietButton("lg")}
         >
           Cancel
@@ -1854,6 +1860,16 @@ export default function BookDetailsPage() {
   } | null;
   const navigation = useNavigation();
   const [isEditing, setIsEditing] = useState(false);
+  // The lending form, opened from its button or from the bar on phones.
+  // It starts closed again once the book's out.
+  const [lendOpen, setLendOpen] = useState(false);
+  const borrowerId = data.book.borrower?.id;
+  useEffect(() => {
+    if (borrowerId) setLendOpen(false);
+  }, [borrowerId]);
+  // The book's main action, which the bar on phones stands in for once
+  // it's scrolled away
+  const actionRef = useRef<HTMLDivElement>(null);
 
   // A book seen for the first time finishes its look-up on Open Library
   // after the page is up; the page reloads its data when that's done. A
@@ -2034,17 +2050,22 @@ export default function BookDetailsPage() {
             </p>
           ) : null}
           {data.isOwner && !isEditing && !data.book.borrower ? (
-            <LendToFriend
-              friends={data.currentUser?.following ?? []}
-              loanChoices={data.loanChoices}
-              byEmail={
-                data.currentUser?.demoGroup
-                  ? "off"
-                  : data.currentUser?.emailVerifiedAt
-                    ? "ok"
-                    : "confirm-email"
-              }
-            />
+            <div ref={actionRef}>
+              <LendToFriend
+                friends={data.currentUser?.following ?? []}
+                loanChoices={data.loanChoices}
+                byEmail={
+                  data.currentUser?.demoGroup
+                    ? "off"
+                    : data.currentUser?.emailVerifiedAt
+                      ? "ok"
+                      : "confirm-email"
+                }
+                open={lendOpen}
+                onOpen={() => setLendOpen(true)}
+                onClose={() => setLendOpen(false)}
+              />
+            </div>
           ) : null}
           {data.isOwner && !isEditing ? (
             <NotLendingNotice until={data.book.notLendingUntil} />
@@ -2057,52 +2078,54 @@ export default function BookDetailsPage() {
             </p>
           ) : null}
           {canRequestBook ? (
-            <Form method="post" className="space-y-2">
-              <input type="hidden" name="intent" value="request" />
-              {/* A word for the owner goes with the ask: when, how long, where */}
-              {requestSent ? null : (
-                <>
-                  <label htmlFor="request-message" className="sr-only">
-                    A note for {data.book.user?.firstname ?? "the owner"}
-                  </label>
-                  <textarea
-                    id="request-message"
-                    name="message"
-                    // One line until the note needs more, then it grows
-                    // with it (up to a few lines, then it scrolls)
-                    rows={1}
-                    onInput={(event) => {
-                      const box = event.currentTarget;
-                      box.style.height = "auto";
-                      box.style.height = `${box.scrollHeight + box.offsetHeight - box.clientHeight}px`;
-                    }}
-                    maxLength={REQUEST_NOTE_MAX}
-                    // No name in the hint, so it stays on one line in the
-                    // narrow column whatever the owner is called; the label
-                    // names them
-                    placeholder="A note: when, and for how long?"
-                    className="block max-h-40 w-full resize-none overflow-y-auto rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
-                  />
-                </>
-              )}
-              <button
-                type="submit"
-                disabled={isSubmitting || requestSent}
-                className={`w-full ${
-                  requestSent
-                    ? quietLabel
+            <div ref={actionRef}>
+              <Form method="post" className="space-y-2">
+                <input type="hidden" name="intent" value="request" />
+                {/* A word for the owner goes with the ask: when, how long, where */}
+                {requestSent ? null : (
+                  <>
+                    <label htmlFor="request-message" className="sr-only">
+                      A note for {data.book.user?.firstname ?? "the owner"}
+                    </label>
+                    <textarea
+                      id="request-message"
+                      name="message"
+                      // One line until the note needs more, then it grows
+                      // with it (up to a few lines, then it scrolls)
+                      rows={1}
+                      onInput={(event) => {
+                        const box = event.currentTarget;
+                        box.style.height = "auto";
+                        box.style.height = `${box.scrollHeight + box.offsetHeight - box.clientHeight}px`;
+                      }}
+                      maxLength={REQUEST_NOTE_MAX}
+                      // No name in the hint, so it stays on one line in the
+                      // narrow column whatever the owner is called; the label
+                      // names them
+                      placeholder="A note: when, and for how long?"
+                      className="block max-h-40 w-full resize-none overflow-y-auto rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+                    />
+                  </>
+                )}
+                <button
+                  type="submit"
+                  disabled={isSubmitting || requestSent}
+                  className={`w-full ${
+                    requestSent
+                      ? quietLabel
+                      : isSubmitting
+                        ? `${primaryButton("lg")} opacity-60 cursor-wait`
+                        : primaryButton("lg")
+                  }`}
+                >
+                  {requestSent
+                    ? "Request sent"
                     : isSubmitting
-                      ? `${primaryButton("lg")} opacity-60 cursor-wait`
-                      : primaryButton("lg")
-                }`}
-              >
-                {requestSent
-                  ? "Request sent"
-                  : isSubmitting
-                    ? "Asking…"
-                    : "Ask to borrow"}
-              </button>
-            </Form>
+                      ? "Asking…"
+                      : "Ask to borrow"}
+                </button>
+              </Form>
+            </div>
           ) : null}
           {canWaitInLine && !isEditing ? (
             <WaitInLine position={data.linePosition} />
@@ -2513,7 +2536,90 @@ export default function BookDetailsPage() {
           ) : null}
         </section>
       </main>
+
+      {/* On phones, the main action follows you down the page */}
+      {data.isOwner && !isEditing && !data.book.borrower ? (
+        <ActionBar
+          target={actionRef}
+          label="Lend this book"
+          className={quietButton("lg")}
+          onClick={() => setLendOpen(true)}
+        />
+      ) : canRequestBook && !requestSent ? (
+        <ActionBar
+          target={actionRef}
+          label="Ask to borrow"
+          className={primaryButton("lg")}
+        />
+      ) : null}
     </>
+  );
+}
+
+// A bar along the bottom of a phone's screen that stands in for the main
+// action once it's scrolled off the top. Tapping it goes back up to the
+// real one (opening it, for lending), so there's one form, not two.
+function ActionBar({
+  target,
+  label,
+  className,
+  onClick,
+}: {
+  target: React.RefObject<HTMLElement | null>;
+  label: string;
+  className: string;
+  onClick?: () => void;
+}) {
+  const [away, setAway] = useState(false);
+  const [atFooter, setAtFooter] = useState(false);
+  useEffect(() => {
+    const element = target.current;
+    if (!element) return;
+    // Away only once it's above the screen (or under the sticky header),
+    // not before it's reached
+    const observer = new IntersectionObserver(
+      ([entry]) =>
+        setAway(!entry.isIntersecting && entry.boundingClientRect.top < 0),
+      { rootMargin: "-56px 0px 0px 0px" },
+    );
+    observer.observe(element);
+    // And out of the way of the site's footer at the very end, once it's
+    // well onto the screen rather than just peeking in at the bottom
+    const footer = document.querySelector("footer");
+    const footerObserver = new IntersectionObserver(
+      ([entry]) => setAtFooter(entry.isIntersecting),
+      { rootMargin: "0px 0px -30% 0px" },
+    );
+    if (footer) footerObserver.observe(footer);
+    return () => {
+      observer.disconnect();
+      footerObserver.disconnect();
+    };
+  }, [target]);
+  const shown = away && !atFooter;
+
+  return (
+    <div
+      inert={!shown}
+      className={`fixed inset-x-0 bottom-0 z-30 border-t border-stone-200 dark:border-stone-800 bg-white/95 dark:bg-stone-950/95 backdrop-blur px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-200 motion-reduce:transition-none md:hidden ${
+        shown ? "translate-y-0" : "translate-y-full"
+      }`}
+    >
+      <button
+        type="button"
+        onClick={() => {
+          onClick?.();
+          // After the form opens, so it lands in view whole. A jump, not a
+          // glide: the form growing above the screen cut a smooth scroll short
+          requestAnimationFrame(() =>
+            target.current?.scrollIntoView({ block: "center" }),
+          );
+        }}
+        className={`w-full ${className}`}
+      >
+        {label}
+      </button>
+    </div>
   );
 }
 
