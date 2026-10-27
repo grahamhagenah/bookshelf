@@ -534,11 +534,16 @@ const ICON_PATHS = {
   ),
   controller: (
     <>
-      {/* A game controller: the pad, a cross of buttons and two round ones */}
-      <path d="M7.5 8h9c2.6 0 4 2.2 4.4 5.2l.6 4c.3 2.2-1.9 3.4-3.4 1.8L16 16.8H8L5.9 19c-1.5 1.6-3.7.4-3.4-1.8l.6-4C3.5 10.2 4.9 8 7.5 8z" />
-      <path d="M7.5 11.2v3M6 12.7h3" />
-      <circle cx="15.7" cy="11.6" r=".85" fill="currentColor" stroke="none" />
-      <circle cx="17.4" cy="13.6" r=".85" fill="currentColor" stroke="none" />
+      {/* A game controller: the pad, a cross of buttons and four round ones
+          in a diamond. Raised to sit in the middle of its circle */}
+      <g transform="translate(0 -1.9)">
+        <path d="M7.5 8h9c2.6 0 4 2.2 4.4 5.2l.6 4c.3 2.2-1.9 3.4-3.4 1.8L16 16.8H8L5.9 19c-1.5 1.6-3.7.4-3.4-1.8l.6-4C3.5 10.2 4.9 8 7.5 8z" />
+        <path d="M7.5 11.2v3M6 12.7h3" />
+        <circle cx="16.5" cy="11" r=".8" fill="currentColor" stroke="none" />
+        <circle cx="14.8" cy="12.7" r=".8" fill="currentColor" stroke="none" />
+        <circle cx="18.2" cy="12.7" r=".8" fill="currentColor" stroke="none" />
+        <circle cx="16.5" cy="14.4" r=".8" fill="currentColor" stroke="none" />
+      </g>
     </>
   ),
   bicycle: (
@@ -642,12 +647,10 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "bloom",
   "tree",
   "cactus",
-  "mountain",
   "sun",
   "moon",
   "star",
   "snowflake",
-  "rainbow",
   "bolt",
   "planet",
   // Creatures
@@ -671,11 +674,9 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   // To wear and to use
   "glasses",
   "crown",
-  "chef",
   "umbrella",
   "anchor",
   "bicycle",
-  "plane",
   // Food and drink
   "wine",
   "cutlery",
