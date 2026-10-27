@@ -27,9 +27,9 @@ const COVERS = {
   circe: cover("9780316556347"),
   dune: cover("9780441172719"),
   overstory: cover("9780393635522"),
-  hobbit: cover("9780547928227"),
-  midnightLibrary: cover("9780525559474"),
-  lessonsInChemistry: cover("9780385547345"),
+  brightCreatures: cover("9780063204157"),
+  thursdayMurderClub: cover("9781984880963"),
+  crawdads: cover("9780735219090"),
 };
 
 const skin =
@@ -398,7 +398,9 @@ const MEMBERS = {
 // covers and a dark pill
 function Member({ who }: { who: keyof typeof MEMBERS }) {
   return (
-    <span className="block rounded-full bg-white ring-2 ring-white dark:bg-stone-900 dark:ring-stone-900">
+    // Positioned, so each face is drawn over the one before it, as the
+    // app's own stacks of faces are
+    <span className="relative block rounded-full bg-white ring-2 ring-white dark:bg-stone-900 dark:ring-stone-900">
       <Avatar icon={MEMBERS[who]} size="xs" />
     </span>
   );
@@ -428,7 +430,7 @@ export function ShowcaseGroups() {
               12 people · 214 books
             </p>
           </div>
-          <div className="flex -space-x-2">
+          <div className="flex -space-x-1.5">
             {(["maya", "sam", "anika", "theo"] as const).map((who) => (
               <Member key={who} who={who} />
             ))}
@@ -479,10 +481,12 @@ export function ShowcaseDesk() {
     <Stage height="h-[350px] sm:h-[360px]">
       <div className={`${panel} left-0 right-[6%] top-0 z-20 -rotate-1 p-3.5`}>
         <div className="flex gap-3">
-          <Cover src={COVERS.hobbit} className="w-14 flex-shrink-0" />
+          {/* At the top, not stretched to the names beside it, which
+              would crop the cover's sides */}
+          <Cover src={COVERS.brightCreatures} className="w-14 flex-shrink-0 self-start" />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">The Hobbit</p>
-            <p className="text-xs text-stone-500 dark:text-stone-400">J. R. R. Tolkien · 2 of 3 copies here</p>
+            <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">Remarkably Bright Creatures</p>
+            <p className="text-xs text-stone-500 dark:text-stone-400">Shelby Van Pelt · 2 of 3 copies here</p>
             <p className="mt-2 text-xs font-medium text-stone-700 dark:text-stone-300">Who&apos;s taking it?</p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {names.map((name, index) => (
@@ -502,13 +506,13 @@ export function ShowcaseDesk() {
         </div>
       </div>
 
-      <div className={`${panel} bottom-[10%] right-0 w-[74%] z-30 rotate-2 p-3.5`}>
+      <div className={`${panel} bottom-[10%] right-0 w-[90%] sm:w-[78%] z-30 rotate-2 p-3.5`}>
         <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">Out now</p>
         <ul className="mt-2 space-y-2">
           {(
             [
-              [COVERS.midnightLibrary, "The Midnight Library", "Bob next door", "due Friday", false],
-              [COVERS.lessonsInChemistry, "Lessons in Chemistry", "Aunt June", "2 days late", true],
+              [COVERS.thursdayMurderClub, "The Thursday Murder Club", "Bob next door", "due Friday", false],
+              [COVERS.crawdads, "Where the Crawdads Sing", "Aunt June", "2 days late", true],
             ] as const
           ).map(([src, title, who, due, late]) => (
             <li key={title} className="flex items-center gap-2.5">
@@ -529,7 +533,7 @@ export function ShowcaseDesk() {
 
       <div className="absolute bottom-0 left-[2%] z-30 flex -rotate-2 items-center gap-1.5 rounded-full bg-stone-900 dark:bg-stone-100 py-1.5 pl-2.5 pr-3.5 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
         <Check />
-        The Hobbit is out to Ava, due in 2 weeks
+        Out to Ava, due in 2 weeks
       </div>
     </Stage>
   );
