@@ -120,7 +120,7 @@ export function LoanList({
                   <BookCover
                     cover={book.cover}
                     title={book.title}
-                    className="w-14 h-21"
+                    className="w-10 h-15"
                   />
                   <span className="min-w-0 flex-1">
                     {/* Up to two lines: still shorter than the cover, so rows keep their height */}
@@ -370,16 +370,18 @@ function PopularChart({
                 to={book.to}
                 className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
               >
+                {/* As wide as the friend icons above, so the covers line
+                    up with the activity's */}
                 <span
                   aria-hidden="true"
-                  className="w-3.5 flex-shrink-0 text-right text-sm font-semibold tabular-nums text-stone-500 dark:text-stone-400"
+                  className="w-7 flex-shrink-0 text-center text-sm font-semibold tabular-nums text-stone-500 dark:text-stone-400"
                 >
                   {index + 1}
                 </span>
                 <BookCover
                   cover={book.cover}
                   title={book.title}
-                  className="w-8 h-12 flex-shrink-0"
+                  className="w-10 h-15 flex-shrink-0"
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium leading-snug text-stone-900 dark:text-stone-100">
