@@ -93,8 +93,10 @@ export default function PositionedMenu() {
     };
   }, [open]);
 
+  // Flex, not inline: on a text line the button left room under an icon
+  // for descenders, and the header grew a pixel and a half
   return (
-    <div className="relative inline-block" ref={menuRef}>
+    <div className="relative flex" ref={menuRef}>
       <button
         ref={buttonRef}
         onClick={() => setOpen(!open)}
