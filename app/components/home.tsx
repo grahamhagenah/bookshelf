@@ -622,7 +622,7 @@ export default function Home({
                           Want to read
                         </Link>
                       </h2>
-                      <AddButton to="/search?for=want">Find a book</AddButton>
+                      <AddButton to="/search?for=want">Find books</AddButton>
                     </div>
                     {wanted.length > 0 ? (
                       <CoverRow
