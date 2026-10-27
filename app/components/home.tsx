@@ -337,6 +337,76 @@ function SeeMore({ className = "" }: { className?: string }) {
   );
 }
 
+// Popular with friends as a chart, the most lent first: ranked rows built
+// like the rest of the home page's lists (a small cover, the title, who
+// has it), with how many times on the right
+function PopularChart({
+  popular,
+  className = "",
+}: {
+  popular: Popular[];
+  className?: string;
+}) {
+  return (
+    <section
+      aria-labelledby="popular"
+      className={`mt-8 border-t border-stone-200 dark:border-stone-800 pt-6 ${className}`}
+    >
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h2 id="popular" className={sectionHeading}>
+          Popular with friends
+        </h2>
+        <Link to="/friends/books" className={linkClass}>
+          Friends&apos; books
+        </Link>
+      </div>
+      <ol className="divide-y divide-stone-100 dark:divide-stone-900">
+        {popular.map((book, index) => {
+          const said =
+            book.loans === 1 ? "Lent once" : `Lent ${book.loans} times`;
+          return (
+            <li key={book.id}>
+              <Link
+                to={book.to}
+                className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+              >
+                <span
+                  aria-hidden="true"
+                  className="w-3.5 flex-shrink-0 text-right text-sm font-semibold tabular-nums text-stone-500 dark:text-stone-400"
+                >
+                  {index + 1}
+                </span>
+                <BookCover
+                  cover={book.cover}
+                  title={book.title}
+                  className="w-8 h-12 flex-shrink-0"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium leading-snug text-stone-900 dark:text-stone-100">
+                    {book.title}
+                  </span>
+                  <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
+                    {book.author}
+                    {book.owners ? ` · ${book.owners}` : ""}
+                  </span>
+                </span>
+                <span
+                  title={said}
+                  className="inline-flex flex-shrink-0 items-center gap-1 text-xs tabular-nums text-stone-500 dark:text-stone-400"
+                >
+                  <LentIcon size={12} />
+                  <span aria-hidden="true">{book.loans}</span>
+                  <span className="sr-only">{said}</span>
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
 interface Wanted {
   id: string;
   title: string;
@@ -366,7 +436,6 @@ interface Popular {
 function CoverRow({
   items,
   caption,
-  badge,
 }: {
   items: {
     id: string;
@@ -376,8 +445,6 @@ function CoverRow({
     to: string;
   }[];
   caption: (index: number) => React.ReactNode;
-  // A small tag on a cover's corner, as the library puts "Lent out"
-  badge?: (index: number) => React.ReactNode;
 }) {
   return (
     <ul className="grid grid-cols-4 gap-3 sm:grid-cols-5">
@@ -391,15 +458,12 @@ function CoverRow({
             title={item.title}
             className="block hover:opacity-90 transition-opacity"
           >
-            <span className="relative block">
-              <BookCover
-                cover={item.cover}
-                title={item.title}
-                author={item.author}
-                className="w-full aspect-[2/3]"
-              />
-              {badge?.(index)}
-            </span>
+            <BookCover
+              cover={item.cover}
+              title={item.title}
+              author={item.author}
+              className="w-full aspect-[2/3]"
+            />
             <span className="mt-1.5 block truncate text-xs text-stone-600 dark:text-stone-300">
               {item.title}
             </span>
@@ -445,9 +509,7 @@ export default function Home({
   const showRecent = setupDone || ownCount > 0;
   const showWanted = setupDone || wanted.length > 0;
   const showFeed = setupDone || friendIds.length > 0;
-  // Only with something to show: it's for finding books, not setting up
-  const showPopular = popular.length > 0;
-  const showMain = showLoans || showRecent || showWanted || showPopular;
+  const showMain = showLoans || showRecent || showWanted;
   // Every section after the first is set off by a rule
   const divided = "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6";
   // Loans, three each way unless asked for all
@@ -605,57 +667,6 @@ export default function Home({
                 ),
               },
               {
-                key: "popular",
-                show: showPopular,
-                // Something new to borrow, above your own books
-                rank: 1.5,
-                render: (first: boolean) => (
-                  <section
-                    aria-labelledby="popular"
-                    className={first ? undefined : divided}
-                  >
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <h2
-                        id="popular"
-                        className={`${sectionHeading} whitespace-nowrap`}
-                      >
-                        Popular with friends
-                      </h2>
-                      <Link
-                        to="/friends/books"
-                        className={`whitespace-nowrap ${linkClass}`}
-                      >
-                        Friends&apos; books
-                      </Link>
-                    </div>
-                    <CoverRow
-                      items={popular}
-                      // How many times it's been lent, on the cover
-                      badge={(index) => {
-                        const { loans } = popular[index];
-                        const said =
-                          loans === 1 ? "Lent once" : `Lent ${loans} times`;
-                        return (
-                          <span
-                            title={said}
-                            className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[11px] font-medium leading-4 text-stone-700 dark:text-stone-200 shadow-sm"
-                          >
-                            <LentIcon size={11} />
-                            <span aria-hidden="true">{loans}</span>
-                            <span className="sr-only">{said}</span>
-                          </span>
-                        );
-                      }}
-                      caption={(index) => (
-                        <span className="line-clamp-2 text-xs text-stone-400 dark:text-stone-500">
-                          {popular[index].owners ?? "\u00a0"}
-                        </span>
-                      )}
-                    />
-                  </section>
-                ),
-              },
-              {
                 key: "recent",
                 show: showRecent,
                 rank: books.recent.length > 0 ? 2 : 12,
@@ -757,67 +768,82 @@ export default function Home({
             aria-labelledby="friend-activity"
             className={
               showMain
-                ? "border-t border-stone-200 dark:border-stone-800 pt-8 lg:relative lg:min-h-[30rem] lg:border-t-0 lg:border-l lg:pt-0"
+                ? "border-t border-stone-200 dark:border-stone-800 pt-8 lg:flex lg:min-h-[30rem] lg:flex-col lg:border-t-0 lg:border-l lg:pt-0"
                 : undefined
             }
           >
-            {/* Beside the main column, no taller than it: what doesn't fit
-                fades out, with the way to the rest */}
+            {/* Beside the main column, no taller than it, sharing it with
+                the chart below: what doesn't fit fades out, with the way to
+                the rest */}
             <div
-              ref={railRef}
               className={
-                showMain
-                  ? "lg:absolute lg:inset-0 lg:overflow-hidden lg:pl-8"
-                  : undefined
+                showMain ? "lg:relative lg:min-h-[16rem] lg:flex-1" : undefined
               }
             >
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <h2 id="friend-activity" className={sectionHeading}>
-                  Friend activity
-                </h2>
+              <div
+                ref={railRef}
+                className={
+                  showMain
+                    ? "lg:absolute lg:inset-0 lg:overflow-hidden lg:pl-8"
+                    : undefined
+                }
+              >
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <h2 id="friend-activity" className={sectionHeading}>
+                    Friend activity
+                  </h2>
+                  {activity.length > 0 ? (
+                    <Link to="/feed" className={linkClass}>
+                      See all
+                    </Link>
+                  ) : null}
+                </div>
                 {activity.length > 0 ? (
-                  <Link to="/feed" className={linkClass}>
-                    See all
-                  </Link>
+                  <ul className="divide-y divide-stone-100 dark:divide-stone-800">
+                    {activity.map((item, index) => (
+                      <li
+                        key={item.id}
+                        // On phones the column sits below the rest, so it
+                        // keeps to six; beside it, as many as fit
+                        className={
+                          index >= 6 ? "hidden lg:list-item" : undefined
+                        }
+                      >
+                        <FriendActivityItem item={item} friendIds={friendIds} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : friendIds.length === 0 ? (
+                  <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
+                    Add friends to see the books they add and love.{" "}
+                    <Link
+                      to="/friends/add"
+                      className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                    >
+                      Find friends
+                    </Link>
+                  </p>
+                ) : (
+                  <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
+                    Nothing new from your friends lately.
+                  </p>
+                )}
+                {/* After the last post when they all fit; on the fade when not */}
+                {activity.length > 0 && !railCut ? (
+                  <SeeMore className="mt-3" />
                 ) : null}
               </div>
-              {activity.length > 0 ? (
-                <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-                  {activity.map((item, index) => (
-                    <li
-                      key={item.id}
-                      // On phones the column sits below the rest, so it
-                      // keeps to six; beside it, as many as fit
-                      className={index >= 6 ? "hidden lg:list-item" : undefined}
-                    >
-                      <FriendActivityItem item={item} friendIds={friendIds} />
-                    </li>
-                  ))}
-                </ul>
-              ) : friendIds.length === 0 ? (
-                <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
-                  Add friends to see the books they add and love.{" "}
-                  <Link
-                    to="/friends/add"
-                    className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-                  >
-                    Find friends
-                  </Link>
-                </p>
-              ) : (
-                <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
-                  Nothing new from your friends lately.
-                </p>
-              )}
-              {/* After the last post when they all fit; on the fade when not */}
-              {activity.length > 0 && !railCut ? (
-                <SeeMore className="mt-3" />
+              {showMain && railCut ? (
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-28 items-end bg-gradient-to-t from-white from-45% to-transparent pl-8 dark:from-stone-950 lg:flex">
+                  <SeeMore className="pointer-events-auto" />
+                </div>
               ) : null}
             </div>
-            {showMain && railCut ? (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-28 items-end bg-gradient-to-t from-white from-45% to-transparent pl-8 dark:from-stone-950 lg:flex">
-                <SeeMore className="pointer-events-auto" />
-              </div>
+            {popular.length > 0 ? (
+              <PopularChart
+                popular={popular}
+                className={showMain ? "lg:pl-8" : ""}
+              />
             ) : null}
           </aside>
         ) : null}

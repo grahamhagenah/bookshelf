@@ -933,6 +933,75 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       borrowedAt: ago(130 * day),
       returnedAt: ago(110 * day),
     },
+    // Books passed around among friends, so Popular with friends has a
+    // chart to show: some lent three times, some twice, two on the
+    // visitor's want-to-read list
+    {
+      title: "Exhalation",
+      borrower: "anika",
+      borrowedAt: ago(140 * day),
+      returnedAt: ago(120 * day),
+    },
+    {
+      title: "Exhalation",
+      borrower: "maya",
+      borrowedAt: ago(20 * day),
+      returnedAt: ago(12 * day),
+    },
+    {
+      title: "The Night Circus",
+      borrower: "sam",
+      borrowedAt: ago(210 * day),
+      returnedAt: ago(190 * day),
+    },
+    {
+      title: "The Night Circus",
+      borrower: "anika",
+      borrowedAt: ago(150 * day),
+      returnedAt: ago(132 * day),
+    },
+    {
+      title: "The Night Circus",
+      borrower: "sam",
+      borrowedAt: ago(60 * day),
+      returnedAt: ago(45 * day),
+    },
+    {
+      title: "Neuromancer",
+      borrower: "anika",
+      borrowedAt: ago(100 * day),
+      returnedAt: ago(85 * day),
+    },
+    {
+      title: "Neuromancer",
+      borrower: "maya",
+      borrowedAt: ago(34 * day),
+      returnedAt: ago(22 * day),
+    },
+    {
+      title: "The Song of Achilles",
+      borrower: "sam",
+      borrowedAt: ago(40 * day),
+      returnedAt: ago(28 * day),
+    },
+    {
+      title: "The Overstory",
+      borrower: "anika",
+      borrowedAt: ago(180 * day),
+      returnedAt: ago(160 * day),
+    },
+    {
+      title: "The Overstory",
+      borrower: "sam",
+      borrowedAt: ago(90 * day),
+      returnedAt: ago(70 * day),
+    },
+    {
+      title: "Nineteen Eighty-Four",
+      borrower: "maya",
+      borrowedAt: ago(70 * day),
+      returnedAt: ago(52 * day),
+    },
     // Long ago: the visitor loved it but never said why, so History asks
     {
       title: "All Systems Red",
