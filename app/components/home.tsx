@@ -463,6 +463,9 @@ function MoreLink({ to, children, className = "" }: { to: string; children: stri
   );
 }
 
+// Friends' books, the most lent first
+const POPULAR_PATH = "/friends/books?sort=popular";
+
 // Popular with friends as a chart, the most lent first: ranked rows built
 // like the rest of the home page's lists (a small cover, the title, who
 // has it), with how many times on the right
@@ -479,7 +482,7 @@ function PopularChart({
       className={`mt-8 border-t border-stone-200 dark:border-stone-800 pt-6 ${className}`}
     >
       <h2 id="popular" className={`${sectionHeading} mb-2`}>
-        <Link to="/friends/books" className={headingLink}>
+        <Link to={POPULAR_PATH} className={headingLink}>
           Popular with friends
         </Link>
       </h2>
@@ -529,7 +532,7 @@ function PopularChart({
           );
         })}
       </ol>
-      <MoreLink to="/friends/books" className="mt-3">
+      <MoreLink to={POPULAR_PATH} className="mt-3">
         All friends&apos; books
       </MoreLink>
     </section>
