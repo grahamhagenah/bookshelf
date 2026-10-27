@@ -6,6 +6,7 @@ import type { getHomeBooks } from "~/models/book.server";
 
 import BookCover from "./book-cover";
 import FriendActivityItem from "./friend-activity";
+import { LentIcon } from "./icons";
 import { InviteButtons } from "./invite-message";
 import { sectionHeading } from "./ui";
 
@@ -347,10 +348,25 @@ interface Wanted {
   to: string;
 }
 
+// One of the books passed around most among friends
+interface Popular {
+  id: string;
+  title: string;
+  author: string;
+  cover: string;
+  // How many times friends' copies of it have been lent
+  loans: number;
+  // "Maya and Sam have it"
+  owners: string | null;
+  // A friend's copy, one free to ask for first
+  to: string;
+}
+
 // One row of covers: four on phones, six on wider screens
 function CoverRow({
   items,
   caption,
+  badge,
 }: {
   items: {
     id: string;
@@ -360,6 +376,8 @@ function CoverRow({
     to: string;
   }[];
   caption: (index: number) => React.ReactNode;
+  // A small tag on a cover's corner, as the library puts "Lent out"
+  badge?: (index: number) => React.ReactNode;
 }) {
   return (
     <ul className="grid grid-cols-4 gap-3 sm:grid-cols-6">
@@ -373,12 +391,15 @@ function CoverRow({
             title={item.title}
             className="block hover:opacity-90 transition-opacity"
           >
-            <BookCover
-              cover={item.cover}
-              title={item.title}
-              author={item.author}
-              className="w-full aspect-[2/3]"
-            />
+            <span className="relative block">
+              <BookCover
+                cover={item.cover}
+                title={item.title}
+                author={item.author}
+                className="w-full aspect-[2/3]"
+              />
+              {badge?.(index)}
+            </span>
             <span className="mt-1.5 block truncate text-xs text-stone-600 dark:text-stone-300">
               {item.title}
             </span>
@@ -393,6 +414,7 @@ function CoverRow({
 export default function Home({
   books,
   wanted,
+  popular,
   activity,
   friendIds,
   requestsSent,
@@ -401,6 +423,7 @@ export default function Home({
 }: {
   books: HomeBooks;
   wanted: Wanted[];
+  popular: Popular[];
   activity: FriendActivity[];
   friendIds: string[];
   requestsSent: number;
@@ -422,7 +445,9 @@ export default function Home({
   const showRecent = setupDone || ownCount > 0;
   const showWanted = setupDone || wanted.length > 0;
   const showFeed = setupDone || friendIds.length > 0;
-  const showMain = showLoans || showRecent || showWanted;
+  // Only with something to show: it's for finding books, not setting up
+  const showPopular = popular.length > 0;
+  const showMain = showLoans || showRecent || showWanted || showPopular;
   // Every section after the first is set off by a rule
   const divided = "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6";
   // Loans, three each way unless asked for all
@@ -576,6 +601,57 @@ export default function Home({
                         </Link>
                       </p>
                     )}
+                  </section>
+                ),
+              },
+              {
+                key: "popular",
+                show: showPopular,
+                // Something new to borrow, above your own books
+                rank: 1.5,
+                render: (first: boolean) => (
+                  <section
+                    aria-labelledby="popular"
+                    className={first ? undefined : divided}
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h2
+                        id="popular"
+                        className={`${sectionHeading} whitespace-nowrap`}
+                      >
+                        Popular with friends
+                      </h2>
+                      <Link
+                        to="/friends/books"
+                        className={`whitespace-nowrap ${linkClass}`}
+                      >
+                        Friends&apos; books
+                      </Link>
+                    </div>
+                    <CoverRow
+                      items={popular}
+                      // How many times it's been lent, on the cover
+                      badge={(index) => {
+                        const { loans } = popular[index];
+                        const said =
+                          loans === 1 ? "Lent once" : `Lent ${loans} times`;
+                        return (
+                          <span
+                            title={said}
+                            className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[11px] font-medium leading-4 text-stone-700 dark:text-stone-200 shadow-sm"
+                          >
+                            <LentIcon size={11} />
+                            <span aria-hidden="true">{loans}</span>
+                            <span className="sr-only">{said}</span>
+                          </span>
+                        );
+                      }}
+                      caption={(index) => (
+                        <span className="line-clamp-2 text-xs text-stone-400 dark:text-stone-500">
+                          {popular[index].owners ?? "\u00a0"}
+                        </span>
+                      )}
+                    />
                   </section>
                 ),
               },
