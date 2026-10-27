@@ -34,7 +34,15 @@ test("a late book lent by name reminds its owner; one lent to a friend reminds t
         }),
       ),
     );
+  // With no email service set up, a send is logged rather than sent
+  const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
   await run();
+  const emailed = log.mock.calls
+    .filter(([first]) => String(first).startsWith("Email not sent"))
+    .map(([, message]) => message as { to: string; subject: string });
+  log.mockRestore();
+  // Walt hears by email too, since Bob can't
+  expect(emailed).toContainEqual({ to: walt.email, subject: "Lonesome Dove is late back from Bob Next Door" });
 
   const about = (bookId: string) =>
     prisma.notification.findMany({ where: { bookId }, select: { type: true, receiverId: true, senderName: true } });

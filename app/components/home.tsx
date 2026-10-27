@@ -191,12 +191,16 @@ export const BOOK_GOAL = 10;
 // one), or until you skip it.
 function Welcome({
   bookCount,
+  borrowingCount,
+  friendBookCount,
   friendCount,
   requestsSent,
   inviteUrl,
   divided,
 }: {
   bookCount: number;
+  borrowingCount: number;
+  friendBookCount: number;
   friendCount: number;
   requestsSent: number;
   inviteUrl: string;
@@ -205,8 +209,31 @@ function Welcome({
 }) {
   const welcomeFetcher = useFetcher({ key: "welcome" });
 
+  // Someone who came to borrow (friends with books, none of their own
+  // yet) starts there; adding a book of their own brings back the shelf
+  const borrower = bookCount === 0 && friendBookCount > 0;
+  const firstStep = borrower
+    ? {
+        title: "See what your friends have",
+        text: `There ${friendBookCount === 1 ? "is 1 book" : `are ${friendBookCount} books`} on your friends' shelves. Find one to borrow, and add your own whenever you like.`,
+        done: borrowingCount > 0,
+        doneText: `Borrowing ${borrowingCount === 1 ? "a book" : `${borrowingCount} books`}`,
+        progress: null,
+        action: (
+          <span className="flex flex-wrap items-center gap-2">
+            <Link to="/friends/books" className={actionClass}>
+              Friends&apos; books
+            </Link>
+            <Link to="/search" className={actionClass}>
+              Add yours
+            </Link>
+          </span>
+        ),
+      }
+    : null;
+
   const steps = [
-    {
+    firstStep ?? {
       title: `Start with ${BOOK_GOAL} books`,
       text: "Scan the barcodes on your nearest shelf, search by title, or import from Goodreads or StoryGraph.",
       done: bookCount >= BOOK_GOAL,
@@ -499,6 +526,7 @@ export default function Home({
   popular,
   activity,
   friendIds,
+  friendBookCount,
   requestsSent,
   inviteUrl,
   welcomeDismissed,
@@ -508,6 +536,8 @@ export default function Home({
   popular: Popular[];
   activity: FriendActivity[];
   friendIds: string[];
+  // Books on friends' shelves, for a welcome that starts with borrowing
+  friendBookCount: number;
   requestsSent: number;
   inviteUrl: string;
   welcomeDismissed: boolean;
@@ -552,6 +582,8 @@ export default function Home({
       {setupDone ? null : (
         <Welcome
           bookCount={ownCount}
+          borrowingCount={books.borrowed.length}
+          friendBookCount={friendBookCount}
           friendCount={friendIds.length}
           requestsSent={requestsSent}
           inviteUrl={inviteUrl}

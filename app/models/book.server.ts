@@ -583,6 +583,7 @@ export async function getOverdueBooks() {
       id: true,
       title: true,
       dueDate: true,
+      borrowedAt: true,
       borrowerId: true,
       userId: true,
       user: {
@@ -622,6 +623,7 @@ export async function getBooksNearDue(daysUntilDue = 3) {
       id: true,
       title: true,
       dueDate: true,
+      borrowedAt: true,
       borrowerId: true,
       userId: true,
       user: {

@@ -270,3 +270,24 @@ async function placeNote(
   });
   if (copy) await adoptWorkNotes(copy.id);
 }
+
+// A pasted list's lines that are only an ISBN: Open Library's title and
+// author for each, a few at a time. The ones it doesn't know come back
+// unfound, to say so.
+export async function findListIsbns(rows: ImportRow[], concurrency = 5) {
+  const unfound: string[] = [];
+  const queue = rows.filter((row) => !row.title && row.isbn);
+  const worker = async () => {
+    for (let row = queue.shift(); row; row = queue.shift()) {
+      const found = await lookupWork({ title: "", author: "", isbn: row.isbn }).catch(() => null);
+      if (found?.title) {
+        row.title = found.title;
+        row.author = found.author ?? "";
+      } else if (row.isbn) {
+        unfound.push(row.isbn);
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: concurrency }, worker));
+  return { rows: rows.filter((row) => row.title), unfound };
+}

@@ -4,6 +4,7 @@ import type { LoaderFunctionArgs } from "react-router";
 
 import { cronAuthorized } from "~/cron.server";
 import { prisma } from "~/db.server";
+import { sendLoanLateEmail } from "~/email.server";
 import { getOverdueBooks, getBooksNearDue } from "~/models/book.server";
 import { createReminderNotification } from "~/models/user.server";
 
@@ -96,12 +97,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 // The owner's reminder about a book lent by name: once, until they've
-// read it. Whether one was made.
+// read it, and by email too when it's late (they may not open Stacks for
+// a while), if they get email. Whether one was made.
 async function remindOwner(
   book: {
     id: string;
     title: string;
     userId: string;
+    dueDate: Date | null;
+    borrowedAt: Date | null;
     borrower: { id: string; firstname: string; surname: string } | null;
   },
   type: "LOAN_OVERDUE" | "LOAN_DUE_SOON",
@@ -111,15 +115,34 @@ async function remindOwner(
     where: { type, bookId: book.id, receiverId: book.userId, read: false },
   });
   if (already) return false;
+  const borrowerName = `${book.borrower.firstname} ${book.borrower.surname}`.trim();
   await prisma.notification.create({
     data: {
       type,
       receiver: { connect: { id: book.userId } },
       sender: { connect: { id: book.borrower.id } },
-      senderName: `${book.borrower.firstname} ${book.borrower.surname}`.trim(),
+      senderName: borrowerName,
       book: { connect: { id: book.id } },
       bookTitle: book.title,
     },
   });
+  if (type === "LOAN_OVERDUE" && book.dueDate) {
+    const owner = await prisma.user.findUnique({
+      where: { id: book.userId },
+      select: { email: true, firstname: true, emailNotifications: true, emailVerifiedAt: true },
+    });
+    if (owner?.emailNotifications && owner.emailVerifiedAt) {
+      await sendLoanLateEmail({
+        toEmail: owner.email,
+        toUserId: book.userId,
+        toName: owner.firstname,
+        borrowerName,
+        title: book.title,
+        bookId: book.id,
+        borrowedAt: book.borrowedAt,
+        dueDate: book.dueDate,
+      });
+    }
+  }
   return true;
 }
