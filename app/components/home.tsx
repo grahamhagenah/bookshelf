@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment } from "react";
 import { Link, useFetcher } from "react-router";
 
 import { daysUntil, dueText } from "~/due";
@@ -638,22 +638,6 @@ export default function Home({
   const showMain = showLoans || showRecent || showWanted;
   // Every section after the first is set off by a rule
   const divided = "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6";
-  // Whether the side column's activity runs past the main column, so it's
-  // cut there with a fade
-  const railRef = useRef<HTMLDivElement>(null);
-  const [railCut, setRailCut] = useState(false);
-  useEffect(() => {
-    const rail = railRef.current;
-    if (!rail) return;
-    const check = () => setRailCut(rail.scrollHeight > rail.clientHeight + 1);
-    check();
-    const observer = new ResizeObserver(check);
-    observer.observe(rail);
-    // Its contents too, as posts come and go
-    for (const child of Array.from(rail.children)) observer.observe(child);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <main className="px-4 md:px-8 pt-4 md:pt-8 pb-8 md:pb-10">
       <h1 className="sr-only">Home</h1>
@@ -923,7 +907,6 @@ export default function Home({
               }
             >
               <div
-                ref={railRef}
                 className={
                   showMain
                     ? "lg:absolute lg:inset-0 lg:overflow-hidden lg:pl-8"
@@ -965,15 +948,25 @@ export default function Home({
                     Nothing new from your friends lately.
                   </p>
                 )}
-                {/* After the last post when they all fit; on the fade when not */}
-                {activity.length > 0 && !railCut ? (
-                  <SeeMore className="mt-3" />
+                {/* After the last post; beside the main column, it sticks to
+                    the column's foot when the posts run past it, so it's on
+                    the fade. Done in CSS, so it's right from the first paint. */}
+                {activity.length > 0 ? (
+                  <div
+                    className={`mt-3 ${showMain ? "lg:sticky lg:bottom-0 lg:z-10" : ""}`}
+                  >
+                    <SeeMore />
+                  </div>
                 ) : null}
               </div>
-              {showMain && railCut ? (
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-28 items-end bg-gradient-to-t from-white from-45% to-transparent pl-8 dark:from-stone-950 lg:flex">
-                  <SeeMore className="pointer-events-auto" />
-                </div>
+              {/* The fade at the column's foot. Over posts that run past it,
+                  it fades them out; over the blank below a short list, it
+                  doesn't show. */}
+              {showMain ? (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-28 bg-gradient-to-t from-white from-45% to-transparent dark:from-stone-950 lg:block"
+                />
               ) : null}
             </div>
             {popular.length > 0 ? (
