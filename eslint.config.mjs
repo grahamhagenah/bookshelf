@@ -2,7 +2,6 @@ import { fixupPluginRules } from "@eslint/compat";
 import js from "@eslint/js";
 import markdown from "@eslint/markdown";
 import prettier from "eslint-config-prettier/flat";
-import cypress from "eslint-plugin-cypress";
 import { flatConfigs as importX } from "eslint-plugin-import-x";
 import jest from "eslint-plugin-jest";
 import jestDom from "eslint-plugin-jest-dom";
@@ -118,12 +117,6 @@ export default tseslint.config(
     // Vitest's API is close to Jest's, so its rules fit; they need to be
     // told which Jest to expect
     settings: { jest: { version: 28 } },
-  },
-
-  // Cypress
-  {
-    files: ["cypress/**/*.ts"],
-    extends: [cypress.configs.recommended],
   },
 
   // Node scripts and config
