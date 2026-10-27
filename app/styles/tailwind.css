@@ -63,7 +63,11 @@
 /* Form fields default to the page's dark colors; a field's own dark:
    classes win over these */
 @layer base {
-  .dark input, .dark textarea, .dark select {
+  /* Not a file picker, which is a button and its file's name, or a
+     checkbox or radio, which draw their own */
+  .dark input:not([type="file"], [type="checkbox"], [type="radio"]),
+  .dark textarea,
+  .dark select {
     background-color: var(--color-stone-900);
     border-color: var(--color-stone-700);
     color: var(--color-stone-100);
