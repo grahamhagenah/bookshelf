@@ -16,6 +16,10 @@ export interface ImportRow {
   pageCount: number | null;
   year: string | null;
   publisher: string | null;
+  // Their stars (out of 5) and review there; five stars become a heart
+  // and the review their note
+  rating: number | null;
+  review: string | null;
 }
 
 export type ImportSource = "goodreads" | "storygraph" | "generic";
@@ -77,6 +81,32 @@ function parseDate(value: string | undefined) {
   if (!match) return null;
   const date = new Date(Date.UTC(+match[1], +match[2] - 1, +match[3], 12));
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+// A star rating; Goodreads writes 0 for none, StoryGraph leaves it empty
+// and allows halves
+function parseRating(value: string | undefined) {
+  const n = parseFloat(value ?? "");
+  return Number.isFinite(n) && n > 0 && n <= 5 ? n : null;
+}
+
+// A review as plain text: Goodreads keeps the line breaks as <br/> and
+// may carry a little other markup
+export function cleanReview(value: string | undefined) {
+  const text = (value ?? "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/?(p|div)[^>]*>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return text || null;
 }
 
 function parseCount(value: string | undefined) {
@@ -149,6 +179,8 @@ export function readExport(text: string): {
           pageCount: parseCount(get(cells, "number of pages")),
           year: get(cells, "year published")?.trim() || null,
           publisher: get(cells, "publisher")?.trim() || null,
+          rating: parseRating(get(cells, "my rating")),
+          review: cleanReview(get(cells, "my review")),
         },
       ];
     }
@@ -166,6 +198,8 @@ export function readExport(text: string): {
           pageCount: null,
           year: null,
           publisher: null,
+          rating: parseRating(get(cells, "star rating")),
+          review: cleanReview(get(cells, "review")),
         },
       ];
     }
@@ -181,6 +215,8 @@ export function readExport(text: string): {
         pageCount: null,
         year: null,
         publisher: null,
+        rating: null,
+        review: null,
       },
     ];
   });
@@ -189,7 +225,7 @@ export function readExport(text: string): {
 }
 
 // Which rows go on the shelf: just the ones marked owned, those plus
-// everything read, or the whole file
+// everything read (for people who own what they read), or the whole file
 export type ShelfChoice = "owned" | "read" | "all";
 
 export function goesOnShelf(row: ImportRow, choice: ShelfChoice) {
@@ -198,20 +234,27 @@ export function goesOnShelf(row: ImportRow, choice: ShelfChoice) {
   return choice === "read" && (row.status === "read" || row.status === "reading");
 }
 
+// A book they've read that isn't going on the shelf: it goes on their
+// Also read list instead, so it's kept without anyone asking to borrow it
+export function goesOnAlsoRead(row: ImportRow, choice: ShelfChoice) {
+  return row.status === "read" && !goesOnShelf(row, choice);
+}
+
 // What an import would do, for the preview and the result
-export function summarize(rows: ImportRow[]) {
+export function summarize(rows: ImportRow[], choice: ShelfChoice = "owned") {
   return {
     total: rows.length,
     owned: rows.filter((row) => row.owned).length,
     read: rows.filter((row) => goesOnShelf(row, "read")).length,
     toRead: rows.filter((row) => row.status === "to-read").length,
+    alsoRead: rows.filter((row) => goesOnAlsoRead(row, choice)).length,
+    // With a review or five stars, which come along
+    noted: rows.filter((row) => row.review !== null || (row.rating ?? 0) >= 5)
+      .length,
   };
 }
 
-// Goodreads users rarely fill in "owned copies", so only lean on it when
-// they have
-export function defaultChoice(rows: ImportRow[]): ShelfChoice {
-  if (rows.some((row) => row.owned)) return "owned";
-  if (rows.some((row) => row.status !== "unknown")) return "read";
-  return "all";
-}
+// Only what's marked owned goes on the shelf unless they say otherwise: a
+// shelf is what friends can borrow, and the rest they've read has the Also
+// read list. A spreadsheet of their own books counts as all owned.
+export const DEFAULT_CHOICE: ShelfChoice = "owned";

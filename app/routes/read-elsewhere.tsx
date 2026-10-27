@@ -6,6 +6,7 @@ import { HeartIcon, ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import ShelfTabs from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
+import { findImportedWorks } from "~/models/import.server";
 import { listMyWorkNotes } from "~/models/work-note.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
@@ -27,8 +28,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     listMyWorkNotes(userId),
     getShelfCounts(userId),
   ]);
+  // Imported books Open Library hasn't placed yet get another look
+  if (items.some((item) => !isWork(item.workKey))) void findImportedWorks(userId);
   return data({ items, counts });
 };
+
+const isWork = (key: string) => key.startsWith("/works/");
 
 export default function ReadElsewhere() {
   const { items, counts } = useLoaderData<typeof loader>();
@@ -74,7 +79,12 @@ export default function ReadElsewhere() {
             {items.map((item) => (
               <li key={item.id}>
                 <Link
-                  to={item.workKey}
+                  // One still being looked up opens a search for it
+                  to={
+                    isWork(item.workKey)
+                      ? item.workKey
+                      : `/search?q=${encodeURIComponent(`${item.title} ${item.author}`)}`
+                  }
                   className="-mx-2 flex items-start gap-4 rounded-lg px-2 py-4 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
                 >
                   <BookCover
