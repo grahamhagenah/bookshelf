@@ -7,7 +7,7 @@ import { normalizeTitle, sameWork } from "~/works";
 
 
 import { shelfIds } from "./household.server";
-import { lookupWork } from "./openlibrary.server";
+import { lookupIsbn, lookupWork } from "./openlibrary.server";
 import { notifyWanters } from "./wish.server";
 import { adoptWorkNotes } from "./work-note.server";
 
@@ -281,7 +281,7 @@ export async function findListIsbns(rows: ImportRow[], concurrency = 5) {
   const queue = rows.filter((row) => !row.title && row.isbn);
   const worker = async () => {
     for (let row = queue.shift(); row; row = queue.shift()) {
-      const found = await lookupWork({ title: "", author: "", isbn: row.isbn }).catch(() => null);
+      const found = row.isbn ? await lookupIsbn(row.isbn).catch(() => null) : null;
       if (found?.title) {
         row.title = found.title;
         row.author = found.author ?? "";

@@ -95,6 +95,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return null;
   }
 
+  // Several people joining a group, shown as one: dismissed together, each
+  // only if it was sent to you
+  const together = formData.getAll("togetherId").filter((id): id is string => typeof id === "string");
+  if (together.length && formData.get("dismiss") === "true") {
+    for (const id of together) {
+      const joined = await getReceivedNotification(userId, id);
+      if (joined) await markNotificationAsRead(joined.id, "dismissed");
+    }
+    return null;
+  }
+
   // Everything below acts on a notification sent to you, and on what it
   // says (who sent it, which book), never on ids from the form
   const notification =
@@ -369,6 +380,66 @@ function Card({
 interface LoanChoices {
   weeks: readonly number[];
   defaultWeeks: number;
+}
+
+// "Ruth and Marcus", "Ruth, Marcus and 2 others"
+function joinedNames(names: string[]) {
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  const others = names.length - 2;
+  return `${names[0]}, ${names[1]} and ${others} ${others === 1 ? "other" : "others"}`;
+}
+
+// Everyone who joined one of your groups lately, as one notice rather than
+// one each: a club's first evening can bring a dozen
+function JoinedTogether({ notifications }: { notifications: ActivityNotification[] }) {
+  const [latest] = notifications;
+  const group = latest.message ?? "the group";
+  return (
+    <form method="post">
+      {notifications.map((notification) => (
+        <input key={notification.id} type="hidden" name="togetherId" value={notification.id} />
+      ))}
+      <Card
+        type="GROUP_JOINED"
+        person={{ name: latest.senderName, icon: latest.sender?.profileEmoji }}
+        date={when(latest.createdAt)}
+        actions={
+          latest.groupId ? (
+            <a href={groupPath({ id: latest.groupId, name: group })} className={quietAction}>
+              See the group
+            </a>
+          ) : null
+        }
+        dismiss
+      >
+        <strong className="font-semibold">
+          {joinedNames(notifications.map((notification) => notification.senderName))}
+        </strong>{" "}
+        joined {group}. You&apos;re friends now.
+      </Card>
+    </form>
+  );
+}
+
+// The New list, with a group's joins put together where the newest of
+// them was
+function withJoinsTogether(updates: ActivityNotification[]) {
+  const byGroup = new Map<string, ActivityNotification[]>();
+  for (const notification of updates) {
+    if (notification.type === "GROUP_JOINED" && notification.groupId) {
+      byGroup.set(notification.groupId, [...(byGroup.get(notification.groupId) ?? []), notification]);
+    }
+  }
+  const rows: ({ one: ActivityNotification } | { joined: ActivityNotification[] })[] = [];
+  for (const notification of updates) {
+    const joins = notification.groupId ? byGroup.get(notification.groupId) : undefined;
+    if (notification.type !== "GROUP_JOINED" || !joins || joins.length < 2) {
+      rows.push({ one: notification });
+    } else if (joins[0] === notification) {
+      rows.push({ joined: joins });
+    }
+  }
+  return rows;
 }
 
 function ActivityItem({
@@ -882,6 +953,8 @@ export default function Activity() {
   const updates = unread.filter(
     (n) => !NEEDS_ACTION.has(n.type || "FRIEND_REQUEST"),
   );
+  // A group's joins together, counted as one
+  const updateRows = withJoinsTogether(updates);
   const pending = data.pendingBookRequests ?? [];
   const history = [...(data.history ?? [])].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -941,7 +1014,7 @@ export default function Activity() {
 
       {updates.length > 0 ? (
         <section className={section}>
-          <SectionHeading title="New" count={updates.length}>
+          <SectionHeading title="New" count={updateRows.length}>
             <form method="post">
               <input type="hidden" name="intent" value="dismissAll" />
               <button
@@ -953,16 +1026,22 @@ export default function Activity() {
             </form>
           </SectionHeading>
           <ul className={list}>
-            {updates.map((notification) => (
-              <li key={notification.id}>
-                <ActivityItem
-                  notification={notification}
-                  friendIds={data.friendIds}
-                  loanChoices={data.loanChoices}
-                  canUndoReturn={data.undoableReturns.includes(notification.id)}
-                />
-              </li>
-            ))}
+            {updateRows.map((row) =>
+              "joined" in row ? (
+                <li key={row.joined[0].id}>
+                  <JoinedTogether notifications={row.joined} />
+                </li>
+              ) : (
+                <li key={row.one.id}>
+                  <ActivityItem
+                    notification={row.one}
+                    friendIds={data.friendIds}
+                    loanChoices={data.loanChoices}
+                    canUndoReturn={data.undoableReturns.includes(row.one.id)}
+                  />
+                </li>
+              ),
+            )}
           </ul>
         </section>
       ) : null}

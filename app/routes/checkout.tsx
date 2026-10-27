@@ -4,6 +4,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 
 import { CameraView, useBarcodeCamera } from "~/components/barcode-camera";
 import BookCover from "~/components/book-cover";
+import { CameraIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
 import { dueText } from "~/due";
@@ -145,9 +146,27 @@ function TakeBack({ copy }: { copy: Copy }) {
   );
 }
 
+// Past this many names, a box to narrow them down
+const FILTER_FROM = 8;
+
 // A book found by the scan: who to lend it to, or who has it
-function Found({ copies, names, weeks }: { copies: Copy[]; names: Person[]; weeks: number }) {
+function Found({
+  copies,
+  names,
+  weeks,
+  outCounts,
+}: {
+  copies: Copy[];
+  names: Person[];
+  weeks: number;
+  // How many books each name has out now, so a class's one-book rule is
+  // easy to keep
+  outCounts: Map<string, number>;
+}) {
   const [first] = copies;
+  const [filter, setFilter] = useState("");
+  const typed = filter.trim().toLowerCase();
+  const shown = typed ? names.filter((person) => fullName(person).toLowerCase().includes(typed)) : names;
   const here = copies.filter((copy) => !copy.borrower);
   const out = copies.filter((copy) => copy.borrower);
   return (
@@ -170,6 +189,17 @@ function Found({ copies, names, weeks }: { copies: Copy[]; names: Person[]; week
               Who&apos;s taking it?{" "}
               <span className={`font-normal ${muted}`}>For {plural(weeks, "week")}</span>
             </p>
+            {names.length > FILTER_FROM ? (
+              <input
+                type="search"
+                value={filter}
+                onChange={(event) => setFilter(event.target.value)}
+                aria-label="Find a name"
+                placeholder="Find a name"
+                autoComplete="off"
+                className={`${textField} mt-2 max-w-56 py-1.5 text-sm`}
+              />
+            ) : null}
             {names.length ? (
               <Form method="post" action="/checkout" preventScrollReset className="mt-2 flex flex-wrap gap-2">
                 <input type="hidden" name="intent" value="lend" />
@@ -177,11 +207,22 @@ function Found({ copies, names, weeks }: { copies: Copy[]; names: Person[]; week
                 {here.map((copy) => (
                   <input key={copy.id} type="hidden" name="bookId" value={copy.id} />
                 ))}
-                {names.map((person) => (
-                  <button key={person.id} type="submit" name="personId" value={person.id} className={chip}>
-                    {fullName(person)}
-                  </button>
-                ))}
+                {shown.map((person) => {
+                  const has = outCounts.get(person.id) ?? 0;
+                  return (
+                    <button key={person.id} type="submit" name="personId" value={person.id} className={chip}>
+                      {fullName(person)}
+                      {has ? (
+                        <span className={`ml-1.5 text-xs ${muted}`}>
+                          {has} out
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+                {shown.length === 0 ? (
+                  <p className={`py-1 text-sm ${muted}`}>No name like that. Type it below to add it.</p>
+                ) : null}
               </Form>
             ) : null}
             <Form method="post" action="/checkout" preventScrollReset className="mt-3 flex max-w-sm gap-2">
@@ -256,6 +297,17 @@ export default function Checkout() {
           email and get nothing from Stacks; reminders come to you.
         </p>
 
+        {/* On a phone the camera is the way in, so it leads */}
+        {camera ? null : (
+          <button
+            type="button"
+            onClick={() => setCamera(true)}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-stone-900 px-4 py-3 font-medium text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white transition-colors sm:hidden"
+          >
+            <CameraIcon size={20} />
+            Scan with the camera
+          </button>
+        )}
         {camera ? (
           <div className="mt-4 max-w-md rounded-lg bg-stone-950 p-3">
             <Camera onIsbn={(isbn) => navigate(`/checkout?q=${isbn}`, { replace: true, preventScrollReset: true })} />
@@ -280,7 +332,8 @@ export default function Checkout() {
             type="button"
             onClick={() => setCamera(!camera)}
             aria-pressed={camera}
-            className={quietButton("lg")}
+            // On phones the big button above turns it on
+            className={`${quietButton("lg")} ${camera ? "" : "hidden sm:inline-flex sm:items-center"}`}
           >
             {camera ? "Camera off" : "Use the camera"}
           </button>
@@ -315,7 +368,7 @@ export default function Checkout() {
           groups.length ? (
             <ul className={`mt-2 divide-y divide-stone-100 dark:divide-stone-800 ${busy ? "opacity-60" : ""}`}>
               {groups.map((copies) => (
-                <Found key={copies[0].id} copies={copies} names={names} weeks={weeks} />
+                <Found key={copies[0].id} copies={copies} names={names} weeks={weeks} outCounts={outByPerson} />
               ))}
             </ul>
           ) : (
