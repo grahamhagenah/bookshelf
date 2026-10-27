@@ -1,0 +1,92 @@
+import { prisma } from "~/db.server";
+
+// Open Library's JSON, kept in the database. A fresh copy is answered at
+// once; so is a stale one, while it's fetched again behind it; with none,
+// it waits on Open Library (up to the timeout). A slow answer the caller
+// stopped waiting for is still kept once it comes, for the next time.
+// When Open Library fails, the last good answer stands in. The same
+// question asked again while one's on its way shares it.
+
+const DAY = 24 * 60 * 60 * 1000;
+// How long an answer counts as fresh: searches turn up new books, a
+// work's record hardly changes
+export const SEARCH_MAX_AGE_MS = DAY;
+export const RECORD_MAX_AGE_MS = 7 * DAY;
+// Answers older than this are cleared out now and then
+const KEEP_MS = 30 * DAY;
+// How long a request is let run, whether anyone's still waiting or not
+const FETCH_TIMEOUT_MS = 20000;
+
+const onTheirWay = new Map<string, Promise<unknown>>();
+
+async function fetchAndKeep(url: string) {
+  const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+  if (!res.ok) throw new Error(`Open Library answered ${res.status}`);
+  const body = await res.text();
+  const json: unknown = JSON.parse(body);
+  const fetchedAt = new Date();
+  await prisma.openLibraryResponse.upsert({
+    where: { url },
+    create: { url, body, fetchedAt },
+    update: { body, fetchedAt },
+  });
+  if (Math.random() < 0.01) void clearOutOld();
+  return json;
+}
+
+function fetchShared(url: string) {
+  let pending = onTheirWay.get(url);
+  if (!pending) {
+    pending = fetchAndKeep(url).finally(() => onTheirWay.delete(url));
+    onTheirWay.set(url, pending);
+  }
+  return pending;
+}
+
+// The answer, or an error once the caller has waited long enough. The
+// request itself carries on.
+function waitAtMost<T>(pending: Promise<T>, timeoutMs: number) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error("Open Library took too long")),
+      timeoutMs,
+    );
+  });
+  return Promise.race([pending, late]).finally(() => clearTimeout(timer));
+}
+
+export async function clearOutOld(now = Date.now()) {
+  await prisma.openLibraryResponse
+    .deleteMany({ where: { fetchedAt: { lt: new Date(now - KEEP_MS) } } })
+    .catch(() => undefined);
+}
+
+// Open Library's answers are loosely typed, as they always were here
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function openLibraryJson<T = any>(
+  url: string,
+  {
+    timeoutMs,
+    maxAgeMs = RECORD_MAX_AGE_MS,
+    // Asked for by someone refreshing a book: go to Open Library, and
+    // fall back on what's kept only if it fails
+    fresh = false,
+  }: { timeoutMs: number; maxAgeMs?: number; fresh?: boolean },
+): Promise<T> {
+  const kept = await prisma.openLibraryResponse
+    .findUnique({ where: { url } })
+    .catch(() => null);
+  if (kept && !fresh) {
+    if (Date.now() - kept.fetchedAt.getTime() >= maxAgeMs) {
+      fetchShared(url).catch(() => undefined);
+    }
+    return JSON.parse(kept.body) as T;
+  }
+  try {
+    return (await waitAtMost(fetchShared(url), timeoutMs)) as T;
+  } catch (error) {
+    if (kept) return JSON.parse(kept.body) as T;
+    throw error;
+  }
+}
