@@ -51,6 +51,10 @@ const COVERS = {
   nineteenEightyFour: coverById(15257377),
   martyr: coverById(14562207),
   rejection: coverById(15104806),
+  exhalation: coverById(8793546),
+  lonesomeDove: coverById(14819521),
+  neuromancer: coverById(283860),
+  secretHistory: coverById(744854),
 };
 
 const skin =
@@ -801,6 +805,14 @@ const POSTS: [who: keyof typeof MEMBERS, name: string, title: string, cover: str
   ],
 ];
 
+// The books most lent around your friends, and who has each
+const POPULAR: [cover: string, title: string, by: string, lent: number][] = [
+  [COVERS.exhalation, "Exhalation", "Ted Chiang · Sam has it", 3],
+  [COVERS.lonesomeDove, "Lonesome Dove", "Larry McMurtry · Maya has it", 3],
+  [COVERS.neuromancer, "Neuromancer", "William Gibson · Sam has it", 2],
+  [COVERS.secretHistory, "The Secret History", "Donna Tartt · Maya has it", 2],
+];
+
 function Loans({ title, count, loans }: { title: string; count: number; loans: Loan[] }) {
   return (
     <div className="min-w-0">
@@ -917,6 +929,30 @@ export function ShowcaseHome() {
               </li>
             ))}
           </ul>
+
+          <p className="mt-5 border-t border-stone-200 dark:border-stone-800 pt-4 mb-1 font-semibold text-stone-900 dark:text-stone-100">
+            Popular with friends
+          </p>
+          <ol className="divide-y divide-stone-100 dark:divide-stone-800">
+            {POPULAR.map(([src, book, by, lent], index) => (
+              <li key={book} className="flex items-center gap-2 py-1.5">
+                <span className="w-3 flex-shrink-0 text-center text-xs font-semibold tabular-nums text-stone-500 dark:text-stone-400">
+                  {index + 1}
+                </span>
+                <Cover src={src} className="w-6 flex-shrink-0" sizes="24px" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-medium text-stone-900 dark:text-stone-100">
+                    {book}
+                  </span>
+                  <span className="block truncate text-[11px] text-stone-500 dark:text-stone-400">{by}</span>
+                </span>
+                <span className="inline-flex flex-shrink-0 items-center gap-0.5 text-[11px] tabular-nums text-stone-500 dark:text-stone-400">
+                  <LentIcon size={10} />
+                  {lent}
+                </span>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
     </div>
