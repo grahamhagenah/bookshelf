@@ -6,7 +6,7 @@ import { lendToFriend, returnBook } from "./book.server";
 import { handOn } from "./hold.server";
 import { shelfIds } from "./household.server";
 import { nameList } from "./name-list.server";
-import { lookupWork } from "./openlibrary.server";
+import { lookupIsbn } from "./openlibrary.server";
 
 // The check-out desk: scan a book from your shelf and lend it to a name
 // in one tap, or scan it again when it comes back. For a classroom, a
@@ -40,7 +40,7 @@ export async function findOnShelf(userId: User["id"], query: string) {
       orderBy: { createdAt: "asc" },
     });
     if (byIsbn.length) return byIsbn;
-    const work = await lookupWork({ title: "", author: "", isbn: forms[0] }, LOOKUP_MS).catch(() => null);
+    const work = await lookupIsbn(forms[0], LOOKUP_MS).catch(() => null);
     if (!work?.key) return [];
     return prisma.book.findMany({
       where: { userId: { in: shelf }, openLibraryKey: work.key },
