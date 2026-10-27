@@ -125,15 +125,6 @@ function Placeholder({
   );
 }
 
-function lifespan(birth: string | null, death: string | null) {
-  const year = (date: string | null) => date?.match(/\d{3,4}/)?.[0] ?? null;
-  const born = year(birth);
-  const died = year(death);
-  if (born && died) return `${born}–${died}`;
-  if (born) return `Born ${born}`;
-  return null;
-}
-
 function AboutAuthor({
   author,
 }: {
@@ -146,7 +137,6 @@ function AboutAuthor({
     wikipedia: string | null;
   };
 }) {
-  const years = lifespan(author.birthDate, author.deathDate);
   const linkClass =
     "text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200";
 
@@ -161,18 +151,11 @@ function AboutAuthor({
   }, [open, author.bio]);
   const clipped = long && !open;
 
-  // The first few lines of the bio, fading out, with the rest (and the
-  // links) a tap away. The name itself is already at the top of the page.
+  // The next paragraph after the book's own description, under the same
+  // heading: the first few lines of the bio, fading out, with the rest (and
+  // the links) a tap away. Open Library's bios start with the name and dates.
   return (
-    <section className="mt-8">
-      <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
-        About the author
-        {years ? (
-          <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">
-            {years}
-          </span>
-        ) : null}
-      </h2>
+    <div className="mt-[1lh] leading-relaxed">
       {author.bio ? (
         <p
           ref={bioRef}
@@ -233,7 +216,7 @@ function AboutAuthor({
           </a>
         </p>
       ) : null}
-    </section>
+    </div>
   );
 }
 
@@ -2458,10 +2441,11 @@ export default function BookDetailsPage() {
             <OpeningLine sentence={data.book.firstSentence} />
           ) : null}
 
+          {/* The book, then whoever wrote it, as one section */}
           {!isEditing ? (
-            <div className="mt-8">
+            <section className="mt-8">
               <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
-                About this book
+                About
               </h2>
               {!data.book.body && lookingUp ? (
                 <Placeholder lines={4} className="max-w-prose" />
@@ -2486,18 +2470,12 @@ export default function BookDetailsPage() {
                   )}
                 </p>
               )}
-            </div>
-          ) : null}
-
-          {!isEditing && data.author ? (
-            <AboutAuthor author={data.author} />
-          ) : lookingUp ? (
-            <div aria-hidden="true" className="mt-8">
-              <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
-                About the author
-              </h2>
-              <Placeholder lines={3} className="max-w-prose" />
-            </div>
+              {data.author ? (
+                <AboutAuthor author={data.author} />
+              ) : lookingUp ? (
+                <Placeholder lines={3} className="mt-[1lh] max-w-prose" />
+              ) : null}
+            </section>
           ) : null}
 
           {!isEditing ? (
