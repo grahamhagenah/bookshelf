@@ -22,7 +22,14 @@ export interface ImportRow {
   review: string | null;
 }
 
-export type ImportSource = "goodreads" | "storygraph" | "generic";
+export type ImportSource =
+  | "goodreads"
+  | "storygraph"
+  | "librarything"
+  | "libib"
+  | "generic"
+  // Typed or pasted in, one book a line
+  | "list";
 
 // RFC 4180, with quoted fields, doubled quotes and newlines inside quotes
 export function parseCsv(text: string): string[][] {
@@ -109,6 +116,20 @@ export function cleanReview(value: string | undefined) {
   return text || null;
 }
 
+// The first ISBN in a cell that may hold several ("[1635575635,
+// 9781635575637]", as LibraryThing writes them), a 13-digit one first
+function firstIsbn(value: string | undefined) {
+  const found = (value ?? "").match(/[0-9Xx-]{10,17}/g) ?? [];
+  const isbns = found.map((one) => cleanIsbn(one)).filter((one) => one !== null);
+  return isbns.find((one) => one.length === 13) ?? isbns[0] ?? null;
+}
+
+// "Clarke, Susanna" (how LibraryThing lists authors) as it's printed
+function firstNameFirst(name: string) {
+  const [last, first] = name.split(",").map((part) => part.trim());
+  return first ? `${first} ${last}` : name.trim();
+}
+
 function parseCount(value: string | undefined) {
   const n = parseInt(value ?? "", 10);
   return Number.isFinite(n) && n > 0 ? n : null;
@@ -150,7 +171,11 @@ export function readExport(text: string): {
       ? "goodreads"
       : column("read status") !== -1
         ? "storygraph"
-        : "generic";
+        : column("primary author") !== -1
+          ? "librarything"
+          : column("ean_isbn13") !== -1
+            ? "libib"
+            : "generic";
 
   const get = (cells: string[], name: string) => {
     const at = column(name);
@@ -160,6 +185,63 @@ export function readExport(text: string): {
   const rows = lines.flatMap((cells): ImportRow[] => {
     const title = cleanTitle(cells[titleAt] ?? "");
     if (!title) return [];
+
+    if (source === "librarything") {
+      // Its collections say what's owned, read or wanted
+      const collections = (get(cells, "collections") ?? "").toLowerCase();
+      const wanted = /wishlist|to read/.test(collections);
+      const readElsewhere = collections.includes("read but unowned");
+      const readAt = parseDate(get(cells, "date read"));
+      const status: ReadStatus = wanted
+        ? "to-read"
+        : readElsewhere || readAt
+          ? "read"
+          : collections.includes("currently reading")
+            ? "reading"
+            : "unknown";
+      return [
+        {
+          title,
+          author: firstNameFirst(get(cells, "primary author") ?? ""),
+          isbn: firstIsbn(get(cells, "isbns")) ?? firstIsbn(get(cells, "isbn")),
+          owned: !wanted && !readElsewhere,
+          status,
+          readAt,
+          addedAt: parseDate(get(cells, "entry date")),
+          pageCount: parseCount(get(cells, "page count")),
+          year: get(cells, "publication")?.match(/\b\d{4}\b/)?.[0] ?? null,
+          publisher: null,
+          rating: parseRating(get(cells, "rating")),
+          review: cleanReview(get(cells, "review")),
+        },
+      ];
+    }
+    if (source === "libib") {
+      // Everything in a Libib library is a book someone has; its status
+      // says whether they've read it
+      const libibStatus = (get(cells, "status") ?? "").toLowerCase();
+      const status: ReadStatus = libibStatus.includes("complete")
+        ? "read"
+        : libibStatus.includes("progress")
+          ? "reading"
+          : "unknown";
+      return [
+        {
+          title,
+          author: (get(cells, "creators") ?? "").split(",")[0].trim(),
+          isbn: cleanIsbn(get(cells, "ean_isbn13")) ?? cleanIsbn(get(cells, "upc_isbn10")),
+          owned: true,
+          status,
+          readAt: status === "read" ? parseDate(get(cells, "completed")) : null,
+          addedAt: parseDate(get(cells, "added")),
+          pageCount: parseCount(get(cells, "length")),
+          year: get(cells, "publish_date")?.match(/\b\d{4}\b/)?.[0] ?? null,
+          publisher: get(cells, "publisher")?.trim() || null,
+          rating: parseRating(get(cells, "rating")),
+          review: cleanReview(get(cells, "review")),
+        },
+      ];
+    }
     // StoryGraph lists every author; the first is the one on the cover
     const author = (get(cells, "author") ?? get(cells, "authors") ?? "")
       .split(",")[0]
@@ -258,3 +340,43 @@ export function summarize(rows: ImportRow[], choice: ShelfChoice = "owned") {
 // shelf is what friends can borrow, and the rest they've read has the Also
 // read list. A spreadsheet of their own books counts as all owned.
 export const DEFAULT_CHOICE: ShelfChoice = "owned";
+
+// A pasted list, one book a line: a title, a title and its author
+// ("Piranesi by Susanna Clarke", "Piranesi - Susanna Clarke", or with a
+// tab between), or just an ISBN, which is looked up for its title. All of
+// them are the person's own.
+export const LIST_MAX = 500;
+
+const ISBN_LINE = /^[0-9Xx][0-9Xx\s-]{8,16}$/;
+
+export function readList(text: string): ImportRow[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, LIST_MAX)
+    .flatMap((line): ImportRow[] => {
+      const row = {
+        owned: true,
+        status: "unknown" as const,
+        readAt: null,
+        addedAt: null,
+        pageCount: null,
+        year: null,
+        publisher: null,
+        rating: null,
+        review: null,
+      };
+      if (ISBN_LINE.test(line)) {
+        const isbn = cleanIsbn(line);
+        return isbn ? [{ ...row, title: "", author: "", isbn }] : [];
+      }
+      const parts =
+        line.split("\t").length > 1
+          ? line.split("\t")
+          : (line.match(/^(.*\S)\s+(?:by|—|–|-)\s+(\S.*)$/i)?.slice(1) ?? [line]);
+      const title = cleanTitle(parts[0]?.trim() ?? "");
+      if (!title) return [];
+      return [{ ...row, title, author: parts[1]?.trim() ?? "", isbn: null }];
+    });
+}

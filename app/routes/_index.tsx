@@ -8,6 +8,7 @@ import { getFriendActivity } from "~/models/activity.server";
 import { getHomeBooks } from "~/models/book.server";
 import { getFriendInvite } from "~/models/friend.server";
 import { shelfIds } from "~/models/household.server";
+import { countPoolBooks } from "~/models/pool.server";
 import { getPopularWithFriends } from "~/models/popular.server";
 import { getPendingFriendRequests, getUserById } from "~/models/user.server";
 import { getWantToRead } from "~/models/wish.server";
@@ -48,7 +49,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   }
 
-  const [books, activity, sentRequests, wanted, invite, popular] =
+  const friendIds = user.following.map((friend) => friend.id);
+  const [books, activity, sentRequests, wanted, invite, popular, friendBookCount] =
     await Promise.all([
       getHomeBooks(user.id, await shelfIds(user.id)),
       // Enough to fill the side column beside the rest; phones show six
@@ -57,6 +59,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getWantToRead(user.id),
       getFriendInvite(user.id),
       getPopularWithFriends(user.id),
+      // For a new account with no books of its own: what friends have
+      countPoolBooks(friendIds),
     ]);
   return data({
     home: {
@@ -91,7 +95,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         ...book,
         owners: haveIt(owners),
       })),
-      friendIds: user.following.map((friend) => friend.id),
+      friendIds,
+      friendBookCount,
       requestsSent: sentRequests.length,
       welcomeDismissed: welcomeDismissed(request),
       // For the "Invite friends" step on a new account's welcome

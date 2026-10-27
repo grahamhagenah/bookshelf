@@ -6,9 +6,9 @@ import InviteMessage from "~/components/invite-message";
 import Layout from "~/components/layout";
 import { primaryButton, quietButton, sectionHeading } from "~/components/ui";
 import type { ImportRow, ImportSource, ShelfChoice } from "~/import-books";
-import { DEFAULT_CHOICE, readExport, summarize } from "~/import-books";
+import { DEFAULT_CHOICE, LIST_MAX, readExport, readList, summarize } from "~/import-books";
 import { getFriendInvite } from "~/models/friend.server";
-import { findImportedWorks, importBooks } from "~/models/import.server";
+import { findImportedWorks, findListIsbns, importBooks } from "~/models/import.server";
 import { fillInBooks } from "~/models/openlibrary.server";
 import { publicOrigin } from "~/origin.server";
 import { UPGRADE_PATH } from "~/plan";
@@ -50,6 +50,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return data({ error: "Couldn't read that file. Try choosing it again." }, { status: 400 });
   }
 
+  // A pasted list: everything in it is theirs
+  if (form.get("intent") === "list") {
+    const text = form.get("list");
+    const pasted = readList(typeof text === "string" ? text : "");
+    if (pasted.length === 0) {
+      return data({ error: "Type or paste a book on each line first.", list: true }, { status: 400 });
+    }
+    const { rows: listed, unfound } = await findListIsbns(pasted);
+    const { bookIds: listedIds, ...listResult } = await importBooks(userId, listed, {
+      shelf: "all",
+      wantToRead: false,
+      alsoRead: false,
+    });
+    void fillInBooks(listedIds);
+    return data({ source: "list" as const, ...listResult, unfound });
+  }
+
   const file = form.get("file");
   if (!(file instanceof File) || file.size === 0) {
     return data({ error: "Choose a file to import first." }, { status: 400 });
@@ -60,7 +77,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return data(
       {
         error:
-          "No books found in that file. It should be the CSV that Goodreads or StoryGraph exports.",
+          "No books found in that file. It should be a CSV with a Title column, like the ones Goodreads, StoryGraph, LibraryThing and Libib export.",
       },
       { status: 400 },
     );
@@ -78,13 +95,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // and which work each book read elsewhere is
   void fillInBooks(bookIds);
   void findImportedWorks(userId);
-  return data({ source, ...result });
+  return data({ source, ...result, unfound: [] as string[] });
 };
 
 const SOURCE_NAMES: Record<ImportSource, string> = {
   goodreads: "Goodreads",
   storygraph: "StoryGraph",
+  librarything: "LibraryThing",
+  libib: "Libib",
   generic: "the file",
+  list: "your list",
 };
 
 interface Preview {
@@ -137,9 +157,10 @@ export default function Import() {
           as notes, and five stars as a heart.
         </p>
         <p className={`mt-2 max-w-xl text-pretty text-sm ${muted}`}>
-          Keep your own list instead? A spreadsheet saved as a CSV file works
-          too: one book a row, with Title and Author columns (an ISBN column
-          helps find the right edition). Everything in it goes on your shelf.
+          A LibraryThing or Libib export works the same way. Keep your own
+          list instead? A spreadsheet saved as a CSV file works too: one book
+          a row, with Title and Author columns (an ISBN column helps find the
+          right edition). Everything in it goes on your shelf.
         </p>
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
           <div>
@@ -195,6 +216,14 @@ export default function Import() {
                 ? ` ${plural(result.skipped, "book")} ${result.skipped === 1 ? "was" : "were"} already there.`
                 : ""}
             </p>
+            {result.unfound.length > 0 ? (
+              <p className={`mt-2 text-sm ${muted}`}>
+                Open Library didn&apos;t know{" "}
+                {result.unfound.length === 1 ? "this ISBN" : "these ISBNs"}:{" "}
+                {result.unfound.join(", ")}. Search for{" "}
+                {result.unfound.length === 1 ? "it" : "them"} by title instead.
+              </p>
+            ) : null}
             {result.overLimit ? (
               <p className="mt-3 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200">
                 Your shelf is full on the free plan, so {plural(result.overLimit, "book")} didn&apos;t
@@ -241,6 +270,7 @@ export default function Import() {
             ) : null}
           </div>
         ) : (
+          <>
           <Form method="post" encType="multipart/form-data" className="max-w-xl">
             <h2 className={sectionHeading}>Choose the file</h2>
             <label className="mt-3 block">
@@ -317,7 +347,7 @@ export default function Import() {
               {count(summary?.toRead)}
             </label>
 
-            {result && "error" in result ? (
+            {result && "error" in result && !("list" in result) ? (
               <p className="mt-4 text-sm text-red-700 dark:text-red-400">{result.error}</p>
             ) : null}
 
@@ -329,6 +359,38 @@ export default function Import() {
               {importing ? "Importing…" : "Import"}
             </button>
           </Form>
+
+          {/* No file? A list typed or pasted in, as a collector might keep */}
+          <Form method="post" className="mt-12 max-w-xl border-t border-stone-200 dark:border-stone-800 pt-8">
+            <input type="hidden" name="intent" value="list" />
+            <h2 className={sectionHeading}>Or paste a list</h2>
+            <p className={`mt-1 text-sm ${muted}`}>
+              One book a line: a title, a title and its author (&ldquo;Piranesi
+              by Susanna Clarke&rdquo;), or an ISBN. Up to {LIST_MAX} at a time,
+              all on your shelf.
+            </p>
+            <label className="mt-3 block">
+              <span className="sr-only">Your list</span>
+              <textarea
+                name="list"
+                rows={6}
+                required
+                placeholder={"Piranesi by Susanna Clarke\nThe Remains of the Day - Kazuo Ishiguro\n9780441172719"}
+                className="block w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm text-stone-800 dark:text-stone-200 placeholder:text-stone-400 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10"
+              />
+            </label>
+            {result && "error" in result && "list" in result ? (
+              <p className="mt-3 text-sm text-red-700 dark:text-red-400">{result.error}</p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={importing}
+              className={`${quietButton("lg")} mt-4 inline-flex items-center disabled:opacity-60`}
+            >
+              {importing ? "Adding…" : "Add these books"}
+            </button>
+          </Form>
+          </>
         )}
       </section>
     </Layout>

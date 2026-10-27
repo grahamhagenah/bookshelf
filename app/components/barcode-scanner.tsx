@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 
 import { UPGRADE_PATH } from "~/plan";
 import type { ScanResponse } from "~/routes/api.scan";
@@ -103,7 +104,14 @@ async function openCamera() {
   return stream;
 }
 
+// An ISBN typed in, rather than a title
+const looksLikeIsbn = (text: string) => {
+  const digits = text.replace(/[\s-]/g, "");
+  return /^[0-9]{9}[0-9Xx]$|^[0-9]{13}$/.test(digits);
+};
+
 export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [scans, setScans] = useState<Scanned[]>([]);
   const [phase, setPhase] = useState<Phase>("starting");
@@ -292,17 +300,24 @@ export default function BarcodeScanner({ onClose }: { onClose: () => void }) {
         className="mx-auto mt-4 flex w-full max-w-lg gap-2 px-4"
         onSubmit={(event) => {
           event.preventDefault();
-          add(manual);
+          const typed = manual.trim();
+          if (!typed) return;
+          // A book with no barcode (older ones have none): find it by title
+          if (!looksLikeIsbn(typed)) {
+            onClose();
+            navigate(`/search?q=${encodeURIComponent(typed)}`);
+            return;
+          }
+          add(typed);
           setManual("");
         }}
       >
         <input
           type="text"
-          inputMode="numeric"
           value={manual}
           onChange={(event) => setManual(event.target.value)}
-          placeholder="Or type the ISBN"
-          aria-label="ISBN"
+          placeholder="No barcode? Type the ISBN or the title"
+          aria-label="ISBN or title"
           className="min-w-0 flex-1 rounded-md bg-stone-900 px-3 py-2 text-sm text-stone-100 ring-1 ring-inset ring-stone-700 placeholder:text-stone-500 focus:outline-none focus:ring-stone-400"
         />
         <button

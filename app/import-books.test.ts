@@ -4,6 +4,7 @@ import {
   cleanTitle,
   parseCsv,
   readExport,
+  readList,
   summarize,
 } from "./import-books";
 
@@ -98,4 +99,77 @@ test("a spreadsheet of one's own books is all theirs", () => {
 
 test("a file without a Title column has no books in it", () => {
   expect(readExport("name,thing\nx,y\n").rows).toEqual([]);
+});
+
+test("reads a LibraryThing export: authors put first-name first, ISBNs out of their lists", () => {
+  const { source, rows } = readExport(
+    `Book Id,Title,Sort Character,Primary Author,Primary Author Role,ISBNs,Rating,Review,Collections,Date Read,Entry Date,Page Count\n` +
+      `1,Piranesi,1,"Clarke, Susanna",Author,"[1635575635, 9781635575637]",5,"Halls and tides.","Your library",2021-03-01,2020-12-25,272\n` +
+      `2,Circe,1,"Miller, Madeline",Author,"[9780316556347]",4,,"Read but unowned",2019-07-04,2019-06-01,393\n` +
+      `3,Dune,1,"Herbert, Frank",Author,,,,"Wishlist",,2024-01-01,\n`,
+  );
+  expect(source).toBe("librarything");
+  expect(rows[0]).toMatchObject({
+    title: "Piranesi",
+    author: "Susanna Clarke",
+    isbn: "9781635575637",
+    owned: true,
+    status: "read",
+    rating: 5,
+    review: "Halls and tides.",
+    pageCount: 272,
+  });
+  expect(rows[1]).toMatchObject({ author: "Madeline Miller", owned: false, status: "read" });
+  expect(rows[2]).toMatchObject({ owned: false, status: "to-read" });
+});
+
+test("reads a Libib export: all owned, read once completed", () => {
+  const { source, rows } = readExport(
+    `item_type,title,creators,first_name,last_name,ean_isbn13,upc_isbn10,description,publisher,publish_date,group,tags,notes,price,length,rating,review,review_date,status,began,completed,added,copies\n` +
+      `book,Lonesome Dove,Larry McMurtry,Larry,McMurtry,9781439195260,,,Simon & Schuster,2010-04-01,,,,,858,5,Gus forever.,,Completed,,2022-08-01,2022-07-01,1\n` +
+      `book,Blood Meridian,Cormac McCarthy,Cormac,McCarthy,9780679728757,,,Vintage,1992,,,,,351,,,,Not begun,,,2023-01-01,1\n`,
+  );
+  expect(source).toBe("libib");
+  expect(rows[0]).toMatchObject({
+    title: "Lonesome Dove",
+    author: "Larry McMurtry",
+    isbn: "9781439195260",
+    owned: true,
+    status: "read",
+    year: "2010",
+    publisher: "Simon & Schuster",
+    pageCount: 858,
+    rating: 5,
+    review: "Gus forever.",
+  });
+  expect(rows[0].readAt?.toISOString()).toBe("2022-08-01T12:00:00.000Z");
+  expect(rows[1]).toMatchObject({ owned: true, status: "unknown", readAt: null });
+});
+
+test("a pasted list: titles, titles with authors, and ISBNs", () => {
+  const rows = readList(
+    [
+      "Piranesi by Susanna Clarke",
+      "The Remains of the Day — Kazuo Ishiguro",
+      "Blood Meridian - Cormac McCarthy",
+      "Lonesome Dove\tLarry McMurtry",
+      "Stand by Me",
+      "978-0-441-17271-9",
+      "",
+      "   ",
+      "Middlemarch",
+    ].join("\n"),
+  );
+  expect(rows.map((row) => [row.title, row.author, row.isbn])).toEqual([
+    ["Piranesi", "Susanna Clarke", null],
+    ["The Remains of the Day", "Kazuo Ishiguro", null],
+    ["Blood Meridian", "Cormac McCarthy", null],
+    ["Lonesome Dove", "Larry McMurtry", null],
+    // "by" splits on the last one, so a title with "by" in it and no
+    // author is read as best it can be
+    ["Stand", "Me", null],
+    ["", "", "9780441172719"],
+    ["Middlemarch", "", null],
+  ]);
+  expect(rows.every((row) => row.owned)).toBe(true);
 });

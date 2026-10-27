@@ -317,6 +317,62 @@ export async function sendRequestAnswerEmail({
   });
 }
 
+// ---- A book lent by name only is late back ----
+
+// The lender's reminder, since there's no one else to send it to: who has
+// the book, since when, and when it was due
+export function renderLoanLate({
+  toUserId,
+  toName,
+  borrowerName,
+  title,
+  bookId,
+  borrowedAt,
+  dueDate,
+}: {
+  toUserId: string;
+  toName: string;
+  borrowerName: string;
+  title: string;
+  bookId: string;
+  borrowedAt: Date | null;
+  dueDate: Date;
+}) {
+  const link = `${APP_URL}/books/${bookId}`;
+  const since = borrowedAt ? ` since ${longDay(borrowedAt)}` : "";
+  const subject = `${title} is late back from ${borrowerName}`;
+  const html = layout({
+    preheader: `It was due on ${longDay(dueDate)}.`,
+    content: `
+        ${paragraph(`Hi ${esc(toName)}, <strong style="color: ${ink};">${esc(borrowerName)}</strong> has had ${bookBold(title)}${esc(since)}, and it was due back on ${esc(longDay(dueDate))}.`)}
+        ${paragraph(`You lent it by name, so this reminder comes to you. Time to ask for it, or give ${esc(borrowerName)} more time.`)}
+        ${button(link, "See the loan")}`,
+    footer: optOutFooter(toUserId, "requests", "Stop emails about loans and requests"),
+  });
+  const text = `Hi ${toName},
+
+${borrowerName} has had ${title}${since}, and it was due back on ${longDay(dueDate)}.
+
+You lent it by name, so this reminder comes to you. Time to ask for it, or give ${borrowerName} more time:
+
+${link}
+
+${optOutText(toUserId, "requests", "Stop emails about loans and requests")}`;
+  return { subject, html, text };
+}
+
+export async function sendLoanLateEmail({
+  toEmail,
+  ...details
+}: Parameters<typeof renderLoanLate>[0] & { toEmail: string }) {
+  if (isDemoEmail(toEmail)) return { success: false, error: "Demo account" };
+  return send({
+    to: toEmail,
+    ...renderLoanLate(details),
+    headers: optOutHeaders(details.toUserId, "requests"),
+  });
+}
+
 // ---- Someone lent you a book, and you're not on Stacks yet ----
 
 // "May 3", for a due date
