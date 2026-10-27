@@ -51,15 +51,16 @@ function useLoved(myNote: ReaderNote | null) {
 }
 
 // Who loved it, the way a reaction count reads: "Anika", "Maya and Anika",
-// "You, Maya and Anika", then "You, Maya and 3 others" past three, so it
-// stays one short line
+// "You, Maya, and Anika", then "You, Maya, and 3 others" past three, so it
+// stays one short line. Three or more get the Oxford comma.
 function lovedBy(names: ReactNode[]) {
   const shown = names.length > 3 ? names.slice(0, 2) : names;
   const rest = names.length - shown.length;
   const parts = rest > 0 ? [...shown, `${rest} others`] : shown;
+  const last = parts.length > 2 ? ", and " : " and ";
   return parts.map((part, index) => (
     <Fragment key={index}>
-      {index === 0 ? null : index === parts.length - 1 ? " and " : ", "}
+      {index === 0 ? null : index === parts.length - 1 ? last : ", "}
       {part}
     </Fragment>
   ));
