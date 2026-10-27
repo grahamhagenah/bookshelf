@@ -65,7 +65,7 @@ function CoverBeside({
       <Link to={to} title={book.title} className="flex-shrink-0">
         <FeedCover
           book={book}
-          className="h-[66px] w-11 hover:opacity-90 transition-opacity"
+          className="h-15 w-10 hover:opacity-90 transition-opacity"
         />
       </Link>
       <div className="min-w-0">
@@ -139,9 +139,9 @@ export default function FriendActivityItem({
           firstname={item.friend.firstname}
           surname={item.friend.surname}
           icon={item.friend.profileEmoji}
-          size="list"
+          size="rail"
         />
-        <div className="min-w-0 flex-1 pt-1.5">
+        <div className="min-w-0 flex-1 pt-0.5">
           <p className="text-stone-800 dark:text-stone-200 leading-snug">
             {name} wrote about{" "}
             <Link
@@ -208,9 +208,9 @@ export default function FriendActivityItem({
         firstname={item.friend.firstname}
         surname={item.friend.surname}
         icon={item.friend.profileEmoji}
-        size="list"
+        size="rail"
       />
-      <div className="min-w-0 flex-1 pt-1.5">
+      <div className="min-w-0 flex-1 pt-0.5">
         <p className="text-stone-800 dark:text-stone-200 leading-snug">
           {text}
         </p>
@@ -231,7 +231,7 @@ export default function FriendActivityItem({
                 <Link key={book.id} to={`/books/${book.id}`} title={book.title}>
                   <FeedCover
                     book={book}
-                    className="h-[66px] w-11 hover:opacity-90 transition-opacity"
+                    className="h-15 w-10 hover:opacity-90 transition-opacity"
                   />
                 </Link>
               ))}

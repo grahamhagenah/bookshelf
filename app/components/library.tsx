@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, NavLink } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, NavLink, useSearchParams } from "react-router";
 
 import { coverSizeOf, coverSrc, libraryViewOf, useOptionalUser } from "~/utils";
 
@@ -163,7 +163,16 @@ export default function Library({
   const grid = GRIDS[coverSizeOf(viewer)];
 
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<Status>("all");
+  // A link can open on one filter, like home's Lent out (?status=lent)
+  const [searchParams] = useSearchParams();
+  const linked = searchParams.get("status");
+  const statusFromLink = (ownerName ? OTHER_STATUSES : OWN_STATUSES).some(
+    ([value]) => value === linked,
+  )
+    ? (linked as Status)
+    : "all";
+  const [status, setStatus] = useState<Status>(statusFromLink);
+  useEffect(() => setStatus(statusFromLink), [statusFromLink]);
 
   const statuses = (ownerName ? OTHER_STATUSES : OWN_STATUSES)
     .map(([value, label]) => ({
