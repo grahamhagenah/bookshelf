@@ -6,7 +6,6 @@ import os from "node:os";
 import path from "node:path";
 
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
 // Model tests run against their own SQLite file, rebuilt each run
@@ -16,9 +15,13 @@ const TEST_DATABASE_URL = "file:./vitest.db";
 const TEST_COVER_CACHE_DIR = mkdtempSync(path.join(os.tmpdir(), "stacks-vitest-covers-"));
 
 export default defineConfig({
-  plugins: [react(), tsconfigPaths()],
+  plugins: [react()],
+  // "~/..." imports, from tsconfig.json
+  resolve: { tsconfigPaths: true },
   test: {
     globals: true,
+    // Every test sits beside the code it checks
+    include: ["app/**/*.test.{ts,tsx}"],
     environment: "happy-dom",
     setupFiles: ["./test/setup-test-env.ts"],
     globalSetup: ["./test/global-setup.ts"],
