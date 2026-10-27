@@ -404,10 +404,9 @@ export default function WorkPage() {
           <OpeningLine sentence={work.firstSentence} />
         ) : null}
 
-        {/* The book, then whoever wrote it, as one section */}
-        <section className="mt-8">
+        <div className="mt-8">
           <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
-            About
+            About this book
           </h2>
           <p className="max-w-prose whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
             {work.description
@@ -416,22 +415,26 @@ export default function WorkPage() {
                 ? "Open Library isn't answering right now, so the details are missing for the moment."
                 : "Open Library has no description for this one yet."}
           </p>
+        </div>
 
-          {work.authorDetails?.bio ? (
-            <div className="mt-[1lh] leading-relaxed">
-              <p className="max-w-prose whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
-                {work.authorDetails.bio}
-              </p>
-              <p className="mt-2 flex gap-4 text-sm">
-                {work.authorDetails.wikipedia ? (
-                  <a
-                    href={work.authorDetails.wikipedia}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={quietLink}
-                  >
-                    Wikipedia
-                  </a>
+        {work.authorDetails?.bio ? (
+          <section className="mt-8">
+            <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
+              About the author
+            </h2>
+            <p className="max-w-prose whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
+              {work.authorDetails.bio}
+            </p>
+            <p className="mt-2 flex gap-4 text-sm">
+              {work.authorDetails.wikipedia ? (
+                <a
+                  href={work.authorDetails.wikipedia}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={quietLink}
+                >
+                  Wikipedia
+                </a>
               ) : null}
               <a
                 href={`https://openlibrary.org/authors/${work.authorDetails.key}`}
@@ -442,9 +445,8 @@ export default function WorkPage() {
                 More on Open Library
               </a>
             </p>
-          </div>
-          ) : null}
-        </section>
+          </section>
+        ) : null}
 
         {/* Your heart, read mark and note when it isn't on your shelf (on
             your shelf, they go on your copy), and your friends' */}
