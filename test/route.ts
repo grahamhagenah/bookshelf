@@ -1,8 +1,19 @@
 // Calling a route's loader or action straight from a test
 
+import { RouterContextProvider } from "react-router";
+
 // The arguments React Router hands a loader or action for a request
-export function routeArgs(request: Request, params: Record<string, string> = {}) {
-  return { request, params, context: {}, url: new URL(request.url), pattern: "" };
+export function routeArgs(
+  request: Request,
+  params: Record<string, string> = {},
+) {
+  return {
+    request,
+    params,
+    context: new RouterContextProvider(),
+    url: new URL(request.url),
+    pattern: "",
+  };
 }
 
 // What a loader or action returned: a Response, or data() with its own

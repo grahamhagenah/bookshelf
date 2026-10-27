@@ -1,4 +1,3 @@
-
 import { Link, NavLink, useLocation, useMatches } from "react-router";
 
 import { BookIcon, FeedIcon, GroupIcon } from "./icons";
@@ -27,7 +26,7 @@ const navClass = ({ isActive }: { isActive: boolean }) =>
 export default function Header() {
   const matches = useMatches();
   const { pathname } = useLocation();
-  const rootData = matches.find((m) => m.id === "root")?.data as
+  const rootData = matches.find((m) => m.id === "root")?.loaderData as
     | RootLoaderData
     | undefined;
   const user = rootData?.user;
@@ -94,7 +93,9 @@ export default function Header() {
                 className={({ isActive }) =>
                   navClass({
                     isActive:
-                      isActive || pathname.startsWith("/friend/") || pathname.startsWith("/groups"),
+                      isActive ||
+                      pathname.startsWith("/friend/") ||
+                      pathname.startsWith("/groups"),
                   })
                 }
               >
@@ -126,10 +127,7 @@ export default function Header() {
               >
                 Sign in
               </Link>
-              <Link
-                to="/join"
-                className={primaryButton("md")}
-              >
+              <Link to="/join" className={primaryButton("md")}>
                 Create account
               </Link>
             </>

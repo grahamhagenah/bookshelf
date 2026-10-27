@@ -1,4 +1,3 @@
-
 import { Link, useMatches } from "react-router";
 
 import { BellIcon } from "./icons";
@@ -11,7 +10,7 @@ interface RootLoaderData {
 
 export default function Notifications() {
   const matches = useMatches();
-  const rootData = matches.find((m) => m.id === "root")?.data as
+  const rootData = matches.find((m) => m.id === "root")?.loaderData as
     | RootLoaderData
     | undefined;
   const notificationCount = rootData?.user?.notificationsReceived?.length ?? 0;
