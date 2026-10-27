@@ -88,27 +88,18 @@ export default function ReadElsewhere() {
                     <p className="text-sm text-stone-500 dark:text-stone-400">
                       {item.author}
                     </p>
-                    {item.body ? (
-                      <p className="mt-1.5 line-clamp-2 text-pretty text-sm text-stone-700 dark:text-stone-300">
-                        “{item.body}”
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="flex flex-shrink-0 items-center gap-2 pt-0.5 text-stone-400 dark:text-stone-500">
-                    {item.loved ? (
-                      <HeartIcon
-                        size={14}
-                        filled
-                        className="text-rose-500"
-                        aria-label="You loved it"
-                      />
-                    ) : null}
-                    {item.readAt ? (
-                      <span className="inline-flex items-center gap-1 text-xs">
-                        <ReadIcon size={12} />
-                        Read
-                      </span>
-                    ) : null}
+                    {/* That there's a note, as History says it, rather than
+                        the note itself, which is on the book's page */}
+                    <p className="mt-2 flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
+                      {item.loved ? <HeartIcon size={13} filled className="text-rose-400" /> : null}
+                      {item.body
+                        ? item.loved
+                          ? "You loved it and left a note"
+                          : "You left a note"
+                        : item.loved
+                          ? "You loved it"
+                          : "Read"}
+                    </p>
                   </div>
                 </Link>
               </li>
