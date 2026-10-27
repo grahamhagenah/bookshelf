@@ -1919,16 +1919,18 @@ export default function BookDetailsPage() {
   const showNotLending =
     !data.isOwner && !data.isBorrower && data.isFriend && notLending;
   const lendsAgainOn = lendingAgainOn(data.book.notLendingUntil);
-  // The publisher stays under Edit details; up here it crowded the title
+  // One quiet line: the year, the length and what it's about, the subjects
+  // as plain words. The publisher stays under Edit details; up here it
+  // crowded the title.
+  const subjects = cleanSubjects(data.book.subjects);
   const details = [
     data.book.datePublished,
     data.book.pageCount ? `${data.book.pageCount} pages` : null,
+    subjects.join(", "),
   ].filter(Boolean);
 
-  const subjects = cleanSubjects(data.book.subjects);
-
-  // Title, details and tags: beside the cover on phones, in the main column
-  // on larger screens
+  // Title and details: beside the cover on phones, in the main column on
+  // larger screens
   const heading = (
     <>
       <h1 className="text-2xl md:text-4xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
@@ -1953,28 +1955,6 @@ export default function BookDetailsPage() {
         </p>
       ) : lookingUp ? (
         <Placeholder className="mt-3 md:mt-4 w-48 max-w-full text-sm" />
-      ) : null}
-
-      {subjects.length > 0 ? (
-        <div className="mt-3 md:mt-4 flex flex-wrap items-center gap-1.5">
-          {subjects.map((subject, index) => (
-            <span
-              key={index}
-              className="rounded-full bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 text-xs text-stone-600 dark:text-stone-300"
-            >
-              {subject}
-            </span>
-          ))}
-        </div>
-      ) : lookingUp ? (
-        <div aria-hidden="true" className="mt-3 md:mt-4 flex gap-1.5">
-          {["w-16", "w-24", "w-20"].map((width) => (
-            <span
-              key={width}
-              className={`h-5 ${width} rounded-full bg-stone-200/60 dark:bg-stone-800 motion-safe:animate-pulse`}
-            />
-          ))}
-        </div>
       ) : null}
     </>
   );

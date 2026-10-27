@@ -248,10 +248,12 @@ export default function WorkPage() {
   const inLibrary = ownCopyId !== null;
   const wanted = data.wanted || fetcher.data?.wanted === true;
   const subjects = cleanSubjects(work.subjects);
-  // No publisher: up by the title it crowded the heading
+  // One quiet line, subjects as plain words. No publisher: up by the title
+  // it crowded the heading.
   const details = [
     work.datePublished,
     work.pageCount ? `${work.pageCount} pages` : null,
+    subjects.join(", "),
   ].filter(Boolean);
 
   const heading = (
@@ -275,19 +277,6 @@ export default function WorkPage() {
         <p className="mt-3 md:mt-4 text-sm text-stone-500 dark:text-stone-400">
           {details.join(" · ")}
         </p>
-      ) : null}
-      {/* Beside the cover on phones, with the title */}
-      {subjects.length > 0 ? (
-        <div className="mt-3 md:mt-4 flex flex-wrap items-center gap-1.5">
-          {subjects.map((subject) => (
-            <span
-              key={subject}
-              className="rounded-full bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 text-xs text-stone-600 dark:text-stone-300"
-            >
-              {subject}
-            </span>
-          ))}
-        </div>
       ) : null}
     </>
   );
