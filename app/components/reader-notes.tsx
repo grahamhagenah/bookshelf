@@ -20,6 +20,9 @@ interface ReaderNote {
     surname: string;
     profileEmoji: string | null;
   };
+  // How they know the book, on a copy's page: "Borrowed this copy in
+  // March", "Read it elsewhere"
+  context?: string | null;
 }
 
 const formatDate = (date: string | Date) =>
@@ -281,10 +284,7 @@ export default function ReaderNotes({
 
   return (
     <div className="mt-12 border-t border-stone-200 dark:border-stone-800 pt-8">
-      <h2
-        id="notes"
-        className={`${sectionHeading} mb-3`}
-      >
+      <h2 id="notes" className={`${sectionHeading} mb-3`}>
         Reader notes
       </h2>
       {/* Having read it comes first, then your heart, beside one count of
@@ -391,34 +391,45 @@ export default function ReaderNotes({
                       icon={note.user.profileEmoji}
                       size="md"
                     />
-                    <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 leading-snug">
-                      <span className="font-semibold text-stone-900 dark:text-stone-100">
-                        {isMine ? (
-                          "You"
-                        ) : (
-                          <PersonLink
-                            id={note.user.id}
-                            name={`${note.user.firstname} ${note.user.surname}`}
-                            friendIds={friendIds}
+                    <div className="min-w-0">
+                      <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 leading-snug">
+                        <span className="font-semibold text-stone-900 dark:text-stone-100">
+                          {isMine ? (
+                            "You"
+                          ) : (
+                            <PersonLink
+                              id={note.user.id}
+                              name={`${note.user.firstname} ${note.user.surname}`}
+                              friendIds={friendIds}
+                            />
+                          )}
+                        </span>
+                        <span className="text-stone-600 dark:text-stone-300">
+                          {(isMine ? loved : note.loved)
+                            ? "loved it"
+                            : "wrote about it"}
+                        </span>
+                        {(isMine ? loved : note.loved) ? (
+                          <HeartIcon
+                            size={13}
+                            filled
+                            className="text-rose-400"
                           />
-                        )}
-                      </span>
-                      <span className="text-stone-600 dark:text-stone-300">
-                        {(isMine ? loved : note.loved)
-                          ? "loved it"
-                          : "wrote about it"}
-                      </span>
-                      {(isMine ? loved : note.loved) ? (
-                        <HeartIcon size={13} filled className="text-rose-400" />
+                        ) : null}
+                        <span className="text-stone-400 dark:text-stone-500">
+                          {" "}
+                          ·{" "}
+                        </span>
+                        <span className="text-sm text-stone-400 dark:text-stone-500">
+                          {formatDate(note.updatedAt)}
+                        </span>
+                      </p>
+                      {note.context ? (
+                        <p className="mt-0.5 text-sm leading-snug text-stone-500 dark:text-stone-400">
+                          {note.context}
+                        </p>
                       ) : null}
-                      <span className="text-stone-400 dark:text-stone-500">
-                        {" "}
-                        ·{" "}
-                      </span>
-                      <span className="text-sm text-stone-400 dark:text-stone-500">
-                        {formatDate(note.updatedAt)}
-                      </span>
-                    </p>
+                    </div>
                   </div>
                   <p className="mt-3 text-pretty leading-relaxed text-stone-800 dark:text-stone-200 whitespace-pre-wrap break-words">
                     {note.body}
