@@ -1,11 +1,8 @@
 import { prisma } from "~/db.server";
 import type { Group, User } from "~/generated/prisma/client";
 import { GROUP_NAME_MAX } from "~/group-links";
-import { isNotLending } from "~/lending";
-import { sameWork } from "~/works";
 
 import { canInteract } from "./demo.server";
-import { shelfIds, shelfIdsFor } from "./household.server";
 import { countPoolBooks } from "./pool.server";
 import { createFriendship } from "./user.server";
 
@@ -259,116 +256,4 @@ export async function resetGroupLink(userId: User["id"], groupId: Group["id"]) {
   if (!(await isMember(groupId, userId))) return false;
   await prisma.group.update({ where: { id: groupId }, data: { inviteToken: newToken() } });
   return true;
-}
-
-// ---- What the group's reading now ----
-
-export const PICK_NOTE_MAX = 120;
-
-export interface PickChoice {
-  key: string;
-  title: string;
-  author: string | null;
-  cover: string | null;
-  note: string | null;
-}
-
-// Anyone in the group can choose the book, or change it
-export async function setGroupPick(userId: User["id"], groupId: Group["id"], pick: PickChoice) {
-  if (!(await isMember(groupId, userId))) return false;
-  await prisma.group.update({
-    where: { id: groupId },
-    data: {
-      pickKey: pick.key,
-      pickTitle: pick.title,
-      pickAuthor: pick.author,
-      pickCover: pick.cover,
-      pickNote: pick.note?.trim().slice(0, PICK_NOTE_MAX) || null,
-      pickedAt: new Date(),
-    },
-  });
-  return true;
-}
-
-export async function clearGroupPick(userId: User["id"], groupId: Group["id"]) {
-  if (!(await isMember(groupId, userId))) return false;
-  await prisma.group.update({
-    where: { id: groupId },
-    data: {
-      pickKey: null,
-      pickTitle: null,
-      pickAuthor: null,
-      pickCover: null,
-      pickNote: null,
-      pickedAt: null,
-    },
-  });
-  return true;
-}
-
-// The pick, with every copy of it in the group as the viewer sees it:
-// whose it is, and whether it's on their shelf or out (with whom, till
-// when, and how many are waiting). Copies are of the same work, on the
-// shelves of the people in the group the viewer can borrow from, and
-// their own. Null with nothing picked.
-export async function getGroupPick(groupId: Group["id"], userId: User["id"], openIds: User["id"][]) {
-  const group = await prisma.group.findUnique({
-    where: { id: groupId },
-    select: {
-      pickKey: true,
-      pickTitle: true,
-      pickAuthor: true,
-      pickCover: true,
-      pickNote: true,
-      pickedAt: true,
-    },
-  });
-  if (!group?.pickKey || !group.pickTitle) return null;
-  const pick = { title: group.pickTitle, openLibraryKey: group.pickKey, isbn: null };
-  const [shelves, myShelf] = await Promise.all([
-    shelfIdsFor([...openIds, userId]),
-    shelfIds(userId),
-  ]);
-  const copies = (
-    await prisma.book.findMany({
-      where: {
-        userId: { in: shelves },
-        OR: [{ openLibraryKey: group.pickKey }, { title: group.pickTitle }],
-      },
-      select: {
-        id: true,
-        title: true,
-        openLibraryKey: true,
-        isbn: true,
-        dueDate: true,
-        notLendingUntil: true,
-        user: { select: { id: true, firstname: true } },
-        borrower: { select: { id: true, firstname: true } },
-        _count: { select: { holds: true } },
-        holds: { where: { userId }, select: { id: true } },
-      },
-      orderBy: { createdAt: "asc" },
-    })
-  )
-    .filter((copy) => sameWork(copy, pick))
-    .map((copy) => ({
-      id: copy.id,
-      owner: copy.user.firstname,
-      mine: myShelf.includes(copy.user.id),
-      borrower: copy.borrower?.firstname ?? null,
-      borrowedByMe: copy.borrower?.id === userId,
-      dueDate: copy.dueDate,
-      notLending: isNotLending(copy.notLendingUntil),
-      waiting: copy._count.holds,
-      inLine: copy.holds.length > 0,
-    }));
-  return {
-    key: group.pickKey,
-    title: group.pickTitle,
-    author: group.pickAuthor,
-    cover: group.pickCover,
-    note: group.pickNote,
-    pickedAt: group.pickedAt,
-    copies,
-  };
 }
