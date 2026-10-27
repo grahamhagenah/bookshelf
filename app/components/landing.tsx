@@ -142,8 +142,16 @@ export default function Landing() {
           <ShowcaseHome />
         </div>
         <div className="mt-6 text-center">
-          <DemoButton className="font-medium text-stone-800 dark:text-stone-200 underline underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:decoration-stone-900 dark:hover:decoration-stone-100">
-            Look around the demo
+          {/* Like the home page's own "See more" links: an arrow that
+              nudges forward on hover */}
+          <DemoButton className="group py-1 font-medium text-stone-800 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white transition-colors">
+            Look around the demo{" "}
+            <span
+              aria-hidden="true"
+              className="inline-block text-stone-400 dark:text-stone-500 transition-transform group-hover:translate-x-0.5"
+            >
+              →
+            </span>
           </DemoButton>
         </div>
       </section>
