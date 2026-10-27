@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Link, useFetcher } from "react-router";
 
+import { daysUntil, dueText } from "~/due";
 import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
 
@@ -27,46 +28,22 @@ export interface Person {
   surname: string;
 }
 
-const DAY = 24 * 60 * 60 * 1000;
-// How far ahead "Coming up" looks
+// How far ahead a due date counts as coming up
 const COMING_UP_DAYS = 7;
 
-const monthDay = (date: string | Date) =>
-  new Date(date).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
-
-// Whole days from today to the due date; negative once it's passed
-function daysUntil(date: string | Date) {
-  const startOfToday = new Date().setHours(0, 0, 0, 0);
-  const due = new Date(date).setHours(0, 0, 0, 0);
-  return Math.round((due - startOfToday) / DAY);
-}
-
-function inDays(days: number) {
-  if (days === 0) return "today";
-  if (days === 1) return "tomorrow";
-  return `in ${days} days`;
-}
-
-// How a loan's due date reads in the lists: a plain date when it's a way
-// off, counting down once it's within the week, and bold once it's late
+// How a loan's due date reads in the lists: in words (see dueText), a
+// little heavier once it's within the week, and bold once it's late
 function dueLabel(dueDate: string | Date) {
   const days = daysUntil(dueDate);
-  if (days < 0) {
-    return {
-      text: `${-days} ${days === -1 ? "day" : "days"} late`,
-      className: "font-semibold text-stone-900 dark:text-stone-100",
-    };
-  }
-  if (days <= COMING_UP_DAYS) {
-    return {
-      text: `due ${inDays(days)}`,
-      className: "font-medium text-stone-700 dark:text-stone-200",
-    };
-  }
-  return { text: `due ${monthDay(dueDate)}`, className: "" };
+  return {
+    text: dueText(dueDate),
+    className:
+      days < 0
+        ? "font-semibold text-stone-900 dark:text-stone-100"
+        : days <= COMING_UP_DAYS
+          ? "font-medium text-stone-700 dark:text-stone-200"
+          : "",
+  };
 }
 
 // Each section's heading is the way to all of it
@@ -410,20 +387,21 @@ function PopularChart({
                   title={book.title}
                   className="w-10 h-15 flex-shrink-0"
                 />
+                {/* Set like the loan rows, whose covers are the same size */}
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium leading-snug text-stone-900 dark:text-stone-100">
+                  <span className="line-clamp-2 font-medium leading-snug text-stone-900 dark:text-stone-100">
                     {book.title}
                   </span>
-                  <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
+                  <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
                     {book.author}
                     {book.owners ? ` · ${book.owners}` : ""}
                   </span>
                 </span>
                 <span
                   title={said}
-                  className="inline-flex flex-shrink-0 items-center gap-1 text-xs tabular-nums text-stone-500 dark:text-stone-400"
+                  className="inline-flex flex-shrink-0 items-center gap-1 text-sm tabular-nums text-stone-500 dark:text-stone-400"
                 >
-                  <LentIcon size={12} />
+                  <LentIcon size={14} />
                   <span aria-hidden="true">{book.loans}</span>
                   <span className="sr-only">{said}</span>
                 </span>
@@ -644,7 +622,7 @@ export default function Home({
                           Want to read
                         </Link>
                       </h2>
-                      <AddButton to="/search?for=want">Find a book</AddButton>
+                      <AddButton to="/search?for=want">Find books</AddButton>
                     </div>
                     {wanted.length > 0 ? (
                       <CoverRow
