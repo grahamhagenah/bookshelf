@@ -2,6 +2,7 @@ import { data, Link, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import BookCover from "~/components/book-cover";
+import EmptyList from "~/components/empty-list";
 import { HeartIcon, ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import ShelfTabs from "~/components/shelf-tabs";
@@ -42,6 +43,9 @@ export default function ReadElsewhere() {
     <Layout title="Read elsewhere">
       <section>
         <ShelfTabs counts={{ ...counts, elsewhere: items.length }} />
+        {/* What the list is for: in a line above it, or, while it's empty,
+            in its place */}
+        {items.length > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
             Books you&apos;ve read that aren&apos;t on your shelf.
@@ -59,21 +63,18 @@ export default function ReadElsewhere() {
             Find a book
           </Link>
         </div>
+        ) : null}
 
         {items.length === 0 ? (
-          <div className="mt-10 flex flex-col items-center py-10 text-center">
-            <ReadIcon
-              size={28}
-              className="text-stone-300 dark:text-stone-600"
-            />
-            <p className="mt-3 text-stone-700 dark:text-stone-300">
-              Nothing here yet.
-            </p>
-            <p className="mt-1 max-w-xs text-sm text-stone-500 dark:text-stone-400">
-              Search for any book you&apos;ve read, then love it, mark it read
-              or leave a note on its page.
-            </p>
-          </div>
+          <EmptyList
+            icon={<ReadIcon size={28} />}
+            title="Books you've read elsewhere"
+            action={{ to: "/search", label: "Find a book" }}
+          >
+            The ones that aren&apos;t on your shelf: from the library, borrowed
+            long ago, given away. Find one, then mark it read, love it or leave
+            a note on its page.
+          </EmptyList>
         ) : (
           <ul className="mt-4 divide-y divide-stone-100 dark:divide-stone-800">
             {items.map((item) => (
