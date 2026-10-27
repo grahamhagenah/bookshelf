@@ -11,10 +11,13 @@ import { LinkIcon } from "./icons";
 // phone it opens the share sheet instead, which has Copy among its choices.
 export default function ShareShelfButton({ iconOnly = false }: { iconOnly?: boolean }) {
   const user = useOptionalUser();
-  // Same key as the share prompt, so both see a newly made link
-  const fetcher = useFetcher<{ url?: string }>({ key: "share-link" });
+  // Its own key, apart from the share prompt's: a link made here is copied
+  // and that's all, rather than also waking the prompt to show it. Keyed,
+  // so the answer survives the page reloading now that a link exists.
+  const fetcher = useFetcher<{ url?: string }>({ key: "share-shelf-button" });
   const [copied, setCopied] = useState(false);
-  // Whether this button asked for the link, since others share the fetcher
+  // Whether this button asked for the link, since both copies of it (wide
+  // and narrow screens) share the fetcher
   const asked = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);

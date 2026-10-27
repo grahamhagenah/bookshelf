@@ -2498,7 +2498,11 @@ export default function BookDetailsPage() {
                 </p>
               </div>
 
-              {data.author ? <AboutAuthor author={data.author} /> : null}
+              {/* Only with something to say: a heading over a bare link
+                  read like something broke */}
+              {data.author?.bio ? (
+                <AboutAuthor author={data.author} />
+              ) : null}
             </div>
           ) : null}
 
