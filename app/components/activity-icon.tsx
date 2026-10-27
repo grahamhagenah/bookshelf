@@ -69,6 +69,19 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M12 7.5v5.5M12 16.5h.01" />
     </>
   ),
+  // A book lent by name only: the same clock and warning, for its owner
+  LOAN_DUE_SOON: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </>
+  ),
+  LOAN_OVERDUE: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5v5.5M12 16.5h.01" />
+    </>
+  ),
   // Heart
   READER_NOTE: (
     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0016.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 002 8.5c0 2.3 1.5 4.05 3 5.5l7 7z" />

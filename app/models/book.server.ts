@@ -48,6 +48,7 @@ export function getBookById(id: Book["id"]) {
           surname: true,
           profileEmoji: true,
           invitedAt: true,
+          nameOnly: true,
         },
       },
       user: {
@@ -596,6 +597,8 @@ export async function getOverdueBooks() {
           id: true,
           firstname: true,
           surname: true,
+          // Lent by name only: their reminders go to the owner
+          nameOnly: true,
         },
       },
     },
@@ -633,6 +636,8 @@ export async function getBooksNearDue(daysUntilDue = 3) {
           id: true,
           firstname: true,
           surname: true,
+          // Lent by name only: their reminders go to the owner
+          nameOnly: true,
         },
       },
     },

@@ -210,6 +210,8 @@ const NEEDS_ACTION = new Set([
   "BOOK_REQUEST",
   "OVERDUE_REMINDER",
   "DUE_SOON_REMINDER",
+  "LOAN_OVERDUE",
+  "LOAN_DUE_SOON",
 ]);
 
 
@@ -313,7 +315,7 @@ function Card({
         <span className="absolute -bottom-1 -right-1 rounded-full ring-2 ring-white dark:ring-stone-950">
           <ActivityIcon
             type={type}
-            urgent={type === "OVERDUE_REMINDER"}
+            urgent={type === "OVERDUE_REMINDER" || type === "LOAN_OVERDUE"}
             size="xs"
           />
         </span>
@@ -487,6 +489,25 @@ function ActivityItem({
         ) : (
           <>
             {book} is due back to {name} soon
+          </>
+        );
+      actions = (
+        <a href={`/books/${notification.bookId}`} className={quietAction}>
+          View book
+        </a>
+      );
+      break;
+    // A book lent by name only: the reminder is the owner's to pass on
+    case "LOAN_OVERDUE":
+    case "LOAN_DUE_SOON":
+      text =
+        type === "LOAN_OVERDUE" ? (
+          <>
+            {book} is late back from {name}. Time to ask for it.
+          </>
+        ) : (
+          <>
+            {book} is due back from {name} soon
           </>
         );
       actions = (
@@ -761,6 +782,10 @@ const getHistoryText = (
       return <>{book} was overdue</>;
     case "DUE_SOON_REMINDER":
       return <>{book} was due soon</>;
+    case "LOAN_OVERDUE":
+      return <>{book} was late back from {name}</>;
+    case "LOAN_DUE_SOON":
+      return <>{book} was due back from {name}</>;
     case "ANNOUNCEMENT":
       return <>From Stacks: {notification.message}</>;
     default:
