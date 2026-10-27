@@ -34,7 +34,7 @@ const FREE_FEATURES = [
   "Lending with due dates and reminders",
   "A want-to-read list, with no limit",
   "Reader notes and hearts",
-  "Import from Goodreads or StoryGraph",
+  "Import from Goodreads, StoryGraph, LibraryThing, Libib or a spreadsheet",
   `A shared shelf for your household, holding ${FREE_LIMITS.sharedBooks} books`,
   "A public link to your shelf",
 ];

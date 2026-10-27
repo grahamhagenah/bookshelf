@@ -72,7 +72,7 @@ test("owned books go on the shelf, others read on Also read, to-read on the list
 test("reviews come along as notes and five stars as hearts, dated when read", async () => {
   const me = await makeUser("Me");
   const readAt = new Date("2019-06-01T12:00:00Z");
-  await importBooks(
+  const result = await importBooks(
     me.id,
     [
       row({ title: "Piranesi", owned: true, status: "read", readAt, rating: 5, review: "A house of halls." }),
@@ -82,6 +82,8 @@ test("reviews come along as notes and five stars as hearts, dated when read", as
     { shelf: "owned", wantToRead: false },
   );
 
+  // Two of them: a review with five stars on the shelf, and one read elsewhere
+  expect(result.notes).toBe(2);
   const copy = await prisma.book.findFirstOrThrow({ where: { userId: me.id, title: "Piranesi" } });
   const note = await prisma.readerNote.findUniqueOrThrow({
     where: { bookId_userId: { bookId: copy.id, userId: me.id } },

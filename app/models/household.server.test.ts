@@ -30,6 +30,16 @@ test("an invite brings someone onto your shelf, and the same link is reused", as
   expect((await joinHousehold(sam.id, token)).ok).toBe(true);
 });
 
+test("whoever shared the link hears that someone joined", async () => {
+  const { priya, sam } = await couple();
+  expect(
+    await prisma.notification.findMany({
+      where: { type: "SHELF_JOINED", receiverId: priya.id },
+      select: { senderId: true, senderName: true },
+    }),
+  ).toEqual([{ senderId: sam.id, senderName: "Sam Reader" }]);
+});
+
 test("each other's books count as your own; notes stay per person", async () => {
   const { priya, sam } = await couple();
   const hers = await makeBook(priya.id, "Piranesi");

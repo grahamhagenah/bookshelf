@@ -541,6 +541,19 @@ function ActivityItem({
         </a>
       );
       break;
+    case "SHELF_JOINED":
+      // Someone came in on your shared-shelf link
+      text = (
+        <>
+          {name} joined your shelf. You can both lend all of it now.
+        </>
+      );
+      actions = (
+        <a href="/books" className={quietAction}>
+          See your shelf
+        </a>
+      );
+      break;
     case "GROUP_JOINED":
       // Someone joined a group you're in
       text = (
@@ -757,6 +770,8 @@ const getHistoryText = (
           {name} joined {notification.message}
         </>
       );
+    case "SHELF_JOINED":
+      return <>{name} joined your shelf</>;
     case "BOOK_APPROVED":
       return (
         <>

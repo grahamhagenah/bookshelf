@@ -13,7 +13,7 @@ import { createBookRequestNotification } from "./user.server";
 export function getHolds(bookId: Book["id"]) {
   return prisma.hold.findMany({
     where: { bookId },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     select: {
       id: true,
       createdAt: true,
@@ -27,6 +27,38 @@ export function getHolds(bookId: Book["id"]) {
       },
     },
   });
+}
+
+// The books someone's waiting for, with whose copy it is and their place
+// in its line (1 is next)
+export async function getMyHolds(userId: User["id"]) {
+  const holds = await prisma.hold.findMany({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+    select: {
+      book: {
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          cover: true,
+          dueDate: true,
+          user: { select: { firstname: true, surname: true } },
+        },
+      },
+    },
+  });
+  return Promise.all(
+    holds.map(async ({ book: { user, ...book } }) => {
+      // The line in order, ties broken the same way every time
+      const line = await prisma.hold.findMany({
+        where: { bookId: book.id },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: { userId: true },
+      });
+      return { book, owner: user, place: line.findIndex((hold) => hold.userId === userId) + 1 };
+    }),
+  );
 }
 
 // Join the line; joining twice keeps your original place
@@ -72,7 +104,7 @@ export async function passToNextInLine(bookId: Book["id"]) {
 
   const next = await prisma.hold.findFirst({
     where: { bookId },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     select: {
       id: true,
       user: { select: { id: true, firstname: true, surname: true } },
@@ -125,7 +157,7 @@ export async function passStraightOn(bookId: Book["id"], borrowerId: User["id"])
 
   const next = await prisma.hold.findFirst({
     where: { bookId },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     select: { id: true, user: { select: { id: true, firstname: true, surname: true } } },
   });
   if (!next) return null;

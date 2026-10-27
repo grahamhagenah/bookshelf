@@ -4,10 +4,14 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 
 import Home from "~/components/home";
 import Landing from "~/components/landing";
+import { groupPath } from "~/group-links";
 import { getFriendActivity } from "~/models/activity.server";
 import { getHomeBooks } from "~/models/book.server";
 import { getFriendInvite } from "~/models/friend.server";
+import { getMyGroups } from "~/models/group.server";
+import { getMyHolds } from "~/models/hold.server";
 import { shelfIds } from "~/models/household.server";
+import { nameList } from "~/models/name-list.server";
 import { countPoolBooks } from "~/models/pool.server";
 import { getPopularWithFriends } from "~/models/popular.server";
 import { getPendingFriendRequests, getUserById } from "~/models/user.server";
@@ -51,18 +55,33 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const friendIds = user.following.map((friend) => friend.id);
   const shelf = await shelfIds(user.id);
-  const [books, activity, sentRequests, wanted, invite, popular, friendBookCount] =
-    await Promise.all([
-      getHomeBooks(user.id, shelf),
-      // Enough to fill the side column beside the rest; phones show six
-      getFriendActivity(user.id, { limit: 20 }),
-      getPendingFriendRequests(user.id),
-      getWantToRead(user.id),
-      getFriendInvite(user.id),
-      getPopularWithFriends(user.id),
-      // For a new account with no books of its own: what friends have
-      countPoolBooks(friendIds),
-    ]);
+  const [
+    books,
+    activity,
+    sentRequests,
+    wanted,
+    invite,
+    popular,
+    friendBookCount,
+    groups,
+    waiting,
+    names,
+  ] = await Promise.all([
+    getHomeBooks(user.id, shelf),
+    // Enough to fill the side column beside the rest; phones show six
+    getFriendActivity(user.id, { limit: 20 }),
+    getPendingFriendRequests(user.id),
+    getWantToRead(user.id),
+    getFriendInvite(user.id),
+    getPopularWithFriends(user.id),
+    // For a new account with no books of its own: what friends have
+    countPoolBooks(friendIds),
+    getMyGroups(user.id),
+    // Books you're in line for
+    getMyHolds(user.id),
+    // People lent to by name, who count as people to lend to
+    nameList(user.id),
+  ]);
   return data({
     home: {
       books,
@@ -104,6 +123,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       inviteUrl: `${publicOrigin(request)}/invite/${invite}`,
       // Sharing a shelf with someone at home already, so it isn't offered
       sharesShelf: shelf.length > 1,
+      groups: groups.map(({ id, name, memberCount, bookCount }) => ({
+        id,
+        name,
+        memberCount,
+        bookCount,
+        path: groupPath({ id, name }),
+      })),
+      waiting,
+      nameCount: names.length,
     },
   });
 };

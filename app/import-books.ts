@@ -156,15 +156,20 @@ function statusFromShelf(shelf: string | undefined): ReadStatus {
 const yes = (value: string | undefined) =>
   /^(yes|true|y|1)$/i.test((value ?? "").trim());
 
+// What a spreadsheet of one's own can carry over
+const GENERIC_COLUMNS = ["title", "author", "authors", "isbn", "isbn13"];
+
 export function readExport(text: string): {
   source: ImportSource;
   rows: ImportRow[];
+  // A spreadsheet's columns that don't come along, to say so
+  leftOut: string[];
 } {
   const [header = [], ...lines] = parseCsv(text);
   const columns = header.map((name) => name.trim().toLowerCase());
   const column = (name: string) => columns.indexOf(name.toLowerCase());
   const titleAt = column("title");
-  if (titleAt === -1) return { source: "generic", rows: [] };
+  if (titleAt === -1) return { source: "generic", rows: [], leftOut: [] };
 
   const source: ImportSource =
     column("exclusive shelf") !== -1
@@ -303,7 +308,11 @@ export function readExport(text: string): {
     ];
   });
 
-  return { source, rows };
+  const leftOut =
+    source === "generic"
+      ? header.map((name) => name.trim()).filter((name) => name && !GENERIC_COLUMNS.includes(name.toLowerCase()))
+      : [];
+  return { source, rows, leftOut };
 }
 
 // Which rows go on the shelf: just the ones marked owned, those plus
@@ -322,13 +331,19 @@ export function goesOnAlsoRead(row: ImportRow, choice: ShelfChoice) {
   return row.status === "read" && !goesOnShelf(row, choice);
 }
 
+// A book they mean to read, or are reading and don't own: it goes on
+// their want-to-read list, so it isn't lost
+export function goesOnWantToRead(row: ImportRow, choice: ShelfChoice) {
+  return (row.status === "to-read" || row.status === "reading") && !goesOnShelf(row, choice);
+}
+
 // What an import would do, for the preview and the result
 export function summarize(rows: ImportRow[], choice: ShelfChoice = "owned") {
   return {
     total: rows.length,
     owned: rows.filter((row) => row.owned).length,
     read: rows.filter((row) => goesOnShelf(row, "read")).length,
-    toRead: rows.filter((row) => row.status === "to-read").length,
+    toRead: rows.filter((row) => goesOnWantToRead(row, choice)).length,
     alsoRead: rows.filter((row) => goesOnAlsoRead(row, choice)).length,
     // With a review or five stars, which come along
     noted: rows.filter((row) => row.review !== null || (row.rating ?? 0) >= 5)

@@ -2,6 +2,7 @@
 import {
   cleanReview,
   cleanTitle,
+  goesOnWantToRead,
   parseCsv,
   readExport,
   readList,
@@ -95,6 +96,21 @@ test("a spreadsheet of one's own books is all theirs", () => {
   expect(rows[0]).toMatchObject({ owned: true, isbn: "9781635575637" });
   // So it all goes on the shelf
   expect(summarize(rows)).toMatchObject({ total: 1, owned: 1, alsoRead: 0 });
+});
+
+test("a spreadsheet's other columns are named, since they don't come along", () => {
+  const { leftOut } = readExport("Title,Author,ISBN,Shelf location,Notes\nPiranesi,Susanna Clarke,,Den 1,\n");
+  expect(leftOut).toEqual(["Shelf location", "Notes"]);
+  // An app's export says nothing of the sort
+  expect(readExport("Title,Author,Exclusive Shelf,Shelf location\nPiranesi,Susanna Clarke,read,Den\n").leftOut).toEqual([]);
+});
+
+test("a book being read and not owned goes on the want-to-read list, not nowhere", () => {
+  const { rows } = readExport(
+    "Title,Author,Exclusive Shelf,Owned Copies\nTrust,Hernan Diaz,currently-reading,0\nPiranesi,Susanna Clarke,currently-reading,1\n",
+  );
+  expect(rows.map((item) => goesOnWantToRead(item, "owned"))).toEqual([true, false]);
+  expect(summarize(rows)).toMatchObject({ owned: 1, toRead: 1 });
 });
 
 test("a file without a Title column has no books in it", () => {

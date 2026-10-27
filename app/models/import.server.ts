@@ -1,7 +1,7 @@
 import { prisma } from "~/db.server";
 import type { User, WorkNote } from "~/generated/prisma/client";
 import type { ImportRow, ShelfChoice } from "~/import-books";
-import { goesOnAlsoRead, goesOnShelf } from "~/import-books";
+import { goesOnAlsoRead, goesOnShelf, goesOnWantToRead } from "~/import-books";
 import { roomForBooks } from "~/plan.server";
 import { normalizeTitle, sameWork } from "~/works";
 
@@ -89,7 +89,7 @@ export async function importBooks(
     else if (alsoRead && goesOnAlsoRead(row, shelf)) {
       if (notedWorks.some((note) => sameWork(note, row))) skipped++;
       else toAlsoRead.push(row);
-    } else if (wantToRead && row.status === "to-read") toList.push(row);
+    } else if (wantToRead && goesOnWantToRead(row, shelf)) toList.push(row);
   }
 
   // What fits on a free shelf: the books they own first, then the rest,
@@ -193,6 +193,8 @@ export async function importBooks(
     added: books.length,
     alsoRead: toAlsoRead.length,
     wanted: toList.length,
+    // Reviews and five stars that came along, as notes and hearts
+    notes: [...toShelf, ...toAlsoRead].filter(hasNote).length,
     skipped,
     overLimit,
     bookIds: books.map((book) => book.id),

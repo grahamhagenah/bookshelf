@@ -251,7 +251,7 @@ export default function Library({
                 to="/import"
                 className="inline-flex h-9 items-center rounded-md border border-stone-200 dark:border-stone-700 px-4 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
               >
-                Import from Goodreads
+                Import books
               </Link>
             </div>
           </section>

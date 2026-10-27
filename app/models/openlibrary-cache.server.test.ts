@@ -74,6 +74,35 @@ test("when Open Library fails, the last good answer stands in", async () => {
   await expect(openLibraryJson(anAddress(), { timeoutMs: 1000 })).rejects.toThrow("down");
 });
 
+test("a dropped connection or a busy answer gets one more try", async () => {
+  const dropped = anAddress();
+  let tries = 0;
+  const calls = stubOpenLibrary(() => (++tries === 1 ? new TypeError("fetch failed") : { title: "Holes" }));
+  expect(await openLibraryJson(dropped, { timeoutMs: 2000 })).toEqual({ title: "Holes" });
+  expect(calls()).toBe(2);
+
+  const busy = anAddress();
+  let asked = 0;
+  vi.stubGlobal("fetch", async () =>
+    ++asked === 1
+      ? new Response("Busy", { status: 503 })
+      : new Response(JSON.stringify({ title: "Wonder" }), { status: 200 }),
+  );
+  expect(await openLibraryJson(busy, { timeoutMs: 2000 })).toEqual({ title: "Wonder" });
+  expect(asked).toBe(2);
+});
+
+test("an answer that it isn't there is believed, not asked again", async () => {
+  const url = anAddress();
+  let asked = 0;
+  vi.stubGlobal("fetch", async () => {
+    asked++;
+    return new Response("Not found", { status: 404 });
+  });
+  await expect(openLibraryJson(url, { timeoutMs: 1000 })).rejects.toThrow("Open Library answered 404");
+  expect(asked).toBe(1);
+});
+
 test("an error answer isn't kept", async () => {
   const url = anAddress();
   vi.stubGlobal("fetch", async () => new Response("Not found", { status: 404 }));

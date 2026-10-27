@@ -1,5 +1,5 @@
 
-import { data, Link, useLoaderData } from "react-router";
+import { data, Link, useLoaderData, useSearchParams } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import Library from "~/components/library";
@@ -14,6 +14,7 @@ import { getShelfCounts } from "~/models/history.server";
 import { getHousehold, shelfIds } from "~/models/household.server";
 import { getLoveCounts } from "~/models/note.server";
 import { getUserById } from "~/models/user.server";
+import { FREE_LIMITS } from "~/plan";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -79,13 +80,33 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function BooksPage() {
   const data = useLoaderData<typeof loader>();
+  // Just in from someone's shared-shelf link: say whose shelf it is now
+  const [searchParams] = useSearchParams();
+  const others = data.sharedWith?.members
+    .filter((member) => member.id !== data.sharedWith?.viewerId)
+    .map((member) => member.firstname);
+  const joined = searchParams.get("joined") === "1" && others?.length;
 
   return (
     <>
       <Library
         bookListItems={data.bookListItems}
         sharedWith={data.sharedWith}
-        header={<ShelfTabs counts={data.counts} sharedWith={data.sharedWith} />}
+        header={
+          <>
+            {joined ? (
+              <p
+                role="status"
+                className="mb-6 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200"
+              >
+                You&apos;re sharing a shelf with {others.join(" and ")} now. Your books and{" "}
+                {others.length === 1 ? "theirs are one shelf, and either" : "everyone's are one shelf, and any"}{" "}
+                of you can lend from it, with room for {FREE_LIMITS.sharedBooks} books free.
+              </p>
+            ) : null}
+            <ShelfTabs counts={data.counts} sharedWith={data.sharedWith} />
+          </>
+        }
       />
     </>
   );

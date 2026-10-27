@@ -711,7 +711,8 @@ export default function Account() {
             </h3>
             <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
               Live with someone whose books are your books? You both see and
-              lend everything, and keep your own notes, hearts and friends.
+              lend everything, and keep your own notes, hearts and friends. A
+              shared shelf holds {FREE_LIMITS.sharedBooks} books free.
             </p>
             <div className="mt-3">
               <HouseholdPanel household={household} />
@@ -722,7 +723,7 @@ export default function Account() {
 
       <Section
         title="Import and export"
-        description="Bring your shelf over from Goodreads or StoryGraph in one go, or take a copy of it with you."
+        description="Bring your books over from Goodreads, StoryGraph, LibraryThing, Libib or a spreadsheet, or take a copy with you."
       >
         <div className="flex flex-wrap gap-3">
           <Link
