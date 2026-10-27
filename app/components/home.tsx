@@ -69,8 +69,27 @@ function dueLabel(dueDate: string | Date) {
   return { text: `due ${monthDay(dueDate)}`, className: "" };
 }
 
-const linkClass =
-  "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
+// Each section's heading is the way to all of it
+const headingLink =
+  "underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline";
+
+// A section's one action, beside its heading
+function AddButton({ to, children }: { to: string; children: string }) {
+  return (
+    <Link
+      to={to}
+      className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
+    >
+      <span
+        aria-hidden="true"
+        className="text-base leading-none text-stone-400"
+      >
+        +
+      </span>
+      {children}
+    </Link>
+  );
+}
 
 // The most pressing few loans each way (late and due soon come first); the
 // headings link to the rest on your shelf
@@ -104,10 +123,7 @@ export function LoanList({
         className={`${sectionHeading} mb-2 flex items-baseline gap-2`}
       >
         {to && books.length > 0 ? (
-          <Link
-            to={to}
-            className="underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline"
-          >
+          <Link to={to} className={headingLink}>
             {title}
           </Link>
         ) : (
@@ -366,14 +382,11 @@ function PopularChart({
       aria-labelledby="popular"
       className={`mt-8 border-t border-stone-200 dark:border-stone-800 pt-6 ${className}`}
     >
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 id="popular" className={sectionHeading}>
+      <h2 id="popular" className={`${sectionHeading} mb-2`}>
+        <Link to="/friends/books" className={headingLink}>
           Popular with friends
-        </h2>
-        <Link to="/friends/books" className={linkClass}>
-          Friends&apos; books
         </Link>
-      </div>
+      </h2>
       <ol className="divide-y divide-stone-100 dark:divide-stone-900">
         {popular.map((book, index) => {
           const said =
@@ -627,18 +640,11 @@ export default function Home({
                         id="want-to-read"
                         className={`${sectionHeading} whitespace-nowrap`}
                       >
-                        Want to read
-                      </h2>
-                      <div className="flex items-center gap-4 whitespace-nowrap">
-                        {wanted.length > 0 ? (
-                          <Link to="/want-to-read" className={linkClass}>
-                            All {wanted.length}
-                          </Link>
-                        ) : null}
-                        <Link to="/search?for=want" className={linkClass}>
-                          Find a book
+                        <Link to="/want-to-read" className={headingLink}>
+                          Want to read
                         </Link>
-                      </div>
+                      </h2>
+                      <AddButton to="/search?for=want">Find a book</AddButton>
                     </div>
                     {wanted.length > 0 ? (
                       <CoverRow
@@ -679,34 +685,11 @@ export default function Home({
                         id="recently-added"
                         className={`${sectionHeading} whitespace-nowrap`}
                       >
-                        Recently added
+                        <Link to="/books" className={headingLink}>
+                          Recently added
+                        </Link>
                       </h2>
-                      <div className="flex items-center gap-4 whitespace-nowrap">
-                        <Link to="/books" className={linkClass}>
-                          {ownCount > 0 ? (
-                            <>
-                              <span className="sm:hidden">All {ownCount}</span>
-                              <span className="hidden sm:inline">
-                                All {ownCount} on your shelf
-                              </span>
-                            </>
-                          ) : (
-                            "Your shelf"
-                          )}
-                        </Link>
-                        <Link
-                          to="/search"
-                          className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-                        >
-                          <span
-                            aria-hidden="true"
-                            className="text-base leading-none text-stone-400"
-                          >
-                            +
-                          </span>
-                          Add books
-                        </Link>
-                      </div>
+                      <AddButton to="/search">Add books</AddButton>
                     </div>
                     {books.recent.length > 0 ? (
                       <CoverRow
@@ -787,9 +770,10 @@ export default function Home({
                     : undefined
                 }
               >
-                {/* "See more" under the posts goes to the whole feed */}
                 <h2 id="friend-activity" className={`${sectionHeading} mb-2`}>
-                  Friend activity
+                  <Link to="/feed" className={headingLink}>
+                    Friend activity
+                  </Link>
                 </h2>
                 {activity.length > 0 ? (
                   <ul className="divide-y divide-stone-100 dark:divide-stone-800">
