@@ -6,7 +6,7 @@ import invariant from "tiny-invariant";
 import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
 import ErrorPage from "~/components/error-page";
-import { LentIcon } from "~/components/icons";
+import { LentIcon, PencilIcon } from "~/components/icons";
 import OpeningLine, { openingLineType } from "~/components/opening-line";
 import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
@@ -233,7 +233,8 @@ function BookCover({
   src: string;
   title: string;
   author: string;
-  // For the owner: the placeholder offers to fix the missing cover
+  // For the owner: the placeholder offers to fix a missing cover, and a
+  // cover that's there opens the editor when clicked
   onAddCover?: () => void;
   // A pasted cover is being fetched and kept by the save that's under way
   fetching?: boolean;
@@ -317,6 +318,21 @@ function BookCover({
           onLoad={(e) => showCover(e.currentTarget)}
           onError={() => setError(true)}
         />
+      ) : null}
+      {/* The whole cover is the button; its label shows on hover, or when
+          reached by keyboard */}
+      {loaded && !error && onAddCover && !fetching ? (
+        <button
+          type="button"
+          onClick={onAddCover}
+          aria-label="Change cover"
+          className="group absolute inset-0 flex items-end justify-center p-2 focus-visible:outline-none"
+        >
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-white/90 dark:bg-stone-900/90 px-2 py-1.5 text-xs font-medium text-stone-800 dark:text-stone-100 shadow-sm ring-1 ring-stone-900/10 dark:ring-white/10 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+            <PencilIcon size={12} />
+            Change cover
+          </span>
+        </button>
       ) : null}
     </div>
   );
@@ -1968,9 +1984,17 @@ export default function BookDetailsPage() {
               src={data.book.cover}
               title={data.book.title}
               author={data.book.author}
+              // Straight to the cover part of the form
               onAddCover={
                 data.isOwner && !isEditing
-                  ? () => setIsEditing(true)
+                  ? () => {
+                      setIsEditing(true);
+                      requestAnimationFrame(() =>
+                        document
+                          .getElementById("cover")
+                          ?.scrollIntoView({ block: "center" }),
+                      );
+                    }
                   : undefined
               }
               // Saving a cover pasted from another site downloads it first,
@@ -2477,9 +2501,12 @@ export default function BookDetailsPage() {
                 setIsEditing(true);
                 window.scrollTo({ top: 0 });
               }}
-              className="mt-12 text-sm text-stone-400 dark:text-stone-500 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+              className="mt-12 inline-flex items-center gap-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
             >
-              Edit details or cover
+              <PencilIcon size={14} />
+              <span className="underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600">
+                Edit details or cover
+              </span>
             </button>
           ) : null}
         </section>
