@@ -1905,6 +1905,12 @@ export default function BookDetailsPage() {
   // Until it's in, what's to come keeps its place on the page. From the
   // server's render on, so the first paint already has the room.
   const lookingUp = data.fillingIn && gaveUp !== data.book.id && !isEditing;
+  // Whether this visit waited for Open Library, so what it brought fades
+  // in rather than popping
+  const [waitedForDetails, setWaitedForDetails] = useState(false);
+  useEffect(() => {
+    if (lookingUp) setWaitedForDetails(true);
+  }, [lookingUp]);
   // The cover field is controlled so the picker below it can fill it in
   const [cover, setCover] = useState(data.book.cover);
 
@@ -2439,31 +2445,38 @@ export default function BookDetailsPage() {
             </>
           )}
 
-          {lookingUp && !data.book.firstSentence ? (
-            <div className="mt-10">
+          {/* The opening line, the description and the author arrive as
+              one: while Open Library is asked, all three wait as
+              placeholders (even a description we already have), so the
+              page fills in once instead of piece by piece */}
+          {lookingUp ? (
+            <div>
               <p role="status" className="sr-only">
                 Looking up more about this book on Open Library…
               </p>
               <Placeholder
                 lines={2}
-                className={`${openingLineType} max-w-prose`}
+                className={`mt-10 ${openingLineType} max-w-prose`}
               />
+              <Placeholder lines={3} className="mt-8 max-w-prose" />
+              <Placeholder lines={3} className="mt-8 max-w-prose" />
             </div>
           ) : null}
-          {!isEditing && data.book.firstSentence ? (
-            <OpeningLine sentence={data.book.firstSentence} />
-          ) : null}
 
-          {!isEditing ? (
-            <div className="mt-8">
-              {/* Unlabeled, like a jacket's blurb; About the author keeps its
-                  label */}
-              <h2 className="sr-only">
-                About this book
-              </h2>
-              {!data.book.body && lookingUp ? (
-                <Placeholder lines={4} className="max-w-prose" />
-              ) : (
+          {!isEditing && !lookingUp ? (
+            <div
+              className={
+                waitedForDetails ? "motion-safe:animate-fade-in" : undefined
+              }
+            >
+              {data.book.firstSentence ? (
+                <OpeningLine sentence={data.book.firstSentence} />
+              ) : null}
+
+              <div className="mt-8">
+                {/* Unlabeled, like a jacket's blurb; About the author keeps
+                    its label */}
+                <h2 className="sr-only">About this book</h2>
                 <p className="whitespace-pre-wrap text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
                   {data.book.body ? (
                     stripMarkdown(data.book.body)
@@ -2483,18 +2496,9 @@ export default function BookDetailsPage() {
                     "No description yet."
                   )}
                 </p>
-              )}
-            </div>
-          ) : null}
+              </div>
 
-          {!isEditing && data.author ? (
-            <AboutAuthor author={data.author} />
-          ) : lookingUp ? (
-            <div aria-hidden="true" className="mt-8">
-              <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
-                About the author
-              </h2>
-              <Placeholder lines={3} className="max-w-prose" />
+              {data.author ? <AboutAuthor author={data.author} /> : null}
             </div>
           ) : null}
 
