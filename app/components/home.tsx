@@ -783,8 +783,13 @@ export default function Home({
               </div>
               {activity.length > 0 ? (
                 <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-                  {activity.map((item) => (
-                    <li key={item.id}>
+                  {activity.map((item, index) => (
+                    <li
+                      key={item.id}
+                      // On phones the column sits below the rest, so it
+                      // keeps to six; beside it, as many as fit
+                      className={index >= 6 ? "hidden lg:list-item" : undefined}
+                    >
                       <FriendActivityItem item={item} friendIds={friendIds} />
                     </li>
                   ))}
