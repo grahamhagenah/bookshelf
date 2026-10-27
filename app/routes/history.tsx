@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { data, Link, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
@@ -38,7 +37,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 type Entry = LoaderData<typeof loader>["entries"][number];
-type Show = "all" | "borrowed" | "lent";
 
 const monthDay = (date: string | Date) => {
   const d = new Date(date);
@@ -162,14 +160,6 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
 
 export default function History() {
   const { entries, counts, friendIds } = useLoaderData<typeof loader>();
-  const [show, setShow] = useState<Show>("all");
-  const borrowedCount = entries.filter((entry) => entry.kind === "borrowed").length;
-  const filters: [Show, string, number][] = [
-    ["all", "All", entries.length],
-    ["borrowed", "Borrowed", borrowedCount],
-    ["lent", "Lent", entries.length - borrowedCount],
-  ];
-  const visible = show === "all" ? entries : entries.filter((entry) => entry.kind === show);
 
   return (
     <Layout title="History">
@@ -183,28 +173,11 @@ export default function History() {
           </EmptyList>
         ) : (
           <>
-            {/* The list says what it's for; only while empty does it need saying */}
-            <div className="flex gap-1.5" role="group" aria-label="Show">
-              {filters.map(([value, label, count]) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={show === value}
-                  onClick={() => setShow(value)}
-                  className={`whitespace-nowrap rounded-full px-2.5 py-1 text-sm transition-colors ${
-                    show === value
-                      ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
-                      : "text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-900 hover:text-stone-800 dark:hover:text-stone-200"
-                  }`}
-                >
-                  {label}
-                  <span className="ml-1.5 text-stone-400 dark:text-stone-500">{count}</span>
-                </button>
-              ))}
-            </div>
-            {/* Two columns where there's room, as To read and Also read */}
-            <ul className="mt-2 grid gap-x-10 md:grid-cols-2">
-              {visible.map((entry) => (
+            {/* Every loan both ways, newest first: each row says which way
+                it went, so there's nothing to filter. Two columns where
+                there's room, as To read and Also read */}
+            <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
+              {entries.map((entry) => (
                 <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />
               ))}
             </ul>
