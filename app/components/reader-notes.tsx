@@ -286,18 +286,19 @@ export default function ReaderNotes({
       >
         Reader notes
       </h2>
-      {/* Hearts first: yours to give, and one count of everyone who's given
-          one, like a reaction count, whether they wrote a note or not */}
+      {/* Having read it comes first, then your heart, beside one count of
+          everyone who's given one (like a reaction count, whether they
+          wrote a note or not) */}
       {canNote || otherHearts.length > 0 ? (
         <div className="mb-3 flex flex-wrap items-center gap-2">
+          {canNote && readAt !== undefined ? (
+            <ReadToggle readAt={readAt} />
+          ) : null}
           {canNote ? (
             <HeartToggle
               myNote={myNote}
               others={otherHearts.map((note) => note.user.firstname)}
             />
-          ) : null}
-          {canNote && readAt !== undefined ? (
-            <ReadToggle readAt={readAt} />
           ) : null}
           {/* Once you've given yours, your heart names them instead */}
           {otherHearts.length > 0 && !(canNote && loved) ? (
