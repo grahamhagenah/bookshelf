@@ -1,6 +1,6 @@
-import type { User } from "@prisma/client";
-
 import { prisma } from "~/db.server";
+import type { User } from "~/generated/prisma/client";
+
 
 import { NOTE_MAX_LENGTH } from "./note.server";
 

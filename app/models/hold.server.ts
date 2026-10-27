@@ -1,6 +1,5 @@
-import type { Book, User } from "@prisma/client";
-
 import { prisma } from "~/db.server";
+import type { Book, User } from "~/generated/prisma/client";
 import { isNotLending } from "~/lending";
 
 import { createBookRequestNotification } from "./user.server";

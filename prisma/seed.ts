@@ -1,7 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
 
-const prisma = new PrismaClient();
+import { prisma } from "../app/db.server";
 
 async function seed() {
   const email = "graham@gmail.com";

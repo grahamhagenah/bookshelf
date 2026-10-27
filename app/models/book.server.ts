@@ -1,6 +1,5 @@
-import type { User, Book } from "@prisma/client";
-
 import { prisma } from "~/db.server";
+import type { User, Book } from "~/generated/prisma/client";
 import { cleanSubjects, hasTranslationSubjects } from "~/utils";
 import type { Work } from "~/works";
 import { sameWork } from "~/works";

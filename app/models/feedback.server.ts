@@ -1,8 +1,8 @@
-import type { User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 import { sendFeedbackEmail } from "~/email.server";
 import { FEEDBACK_MAX_LENGTH } from "~/feedback";
+import type { User } from "~/generated/prisma/client";
 
 // What people tell us from the feedback page: saved for the admin
 // dashboard, and emailed to the admins as it comes in

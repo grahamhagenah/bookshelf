@@ -1,7 +1,7 @@
-import type { Book } from "@prisma/client";
 
 import { editionCoverId, isbnCoverParts } from "~/covers.server";
 import { prisma } from "~/db.server";
+import type { Book } from "~/generated/prisma/client";
 import {
   cleanSubjects,
   editionPublisher,

@@ -1,5 +1,4 @@
-import type { User } from "@prisma/client";
-
+import type { User } from "~/generated/prisma/client";
 import { groupPath } from "~/group-links";
 import { POOL_PAGE, POOL_SORTS, POOL_STATUSES, getPoolWanted, searchPool } from "~/models/pool.server";
 

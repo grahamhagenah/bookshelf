@@ -1,8 +1,8 @@
-import type { Book, User } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 import { prisma } from "~/db.server";
 import { sendLoanInviteEmail } from "~/email.server";
+import type { Book, User } from "~/generated/prisma/client";
 import { INVITES_PER_DAY, makeInviteToken, readInviteToken, splitName } from "~/loan-invite";
 import { normalizeEmail, validateEmail } from "~/utils";
 import { canResend } from "~/verify-email";

@@ -1,6 +1,5 @@
-import type { User } from "@prisma/client";
-
 import { prisma } from "~/db.server";
+import type { User } from "~/generated/prisma/client";
 import type { ImportRow, ShelfChoice } from "~/import-books";
 import { goesOnShelf } from "~/import-books";
 import { roomForBooks } from "~/plan.server";

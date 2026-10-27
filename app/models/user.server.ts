@@ -1,14 +1,14 @@
-import type { Password, User, Notification } from "@prisma/client";
 import { compare, hash } from "bcryptjs";
 
 import { cancelBilling } from "~/billing.server";
 import { prisma } from "~/db.server";
+import type { Password, User, Notification } from "~/generated/prisma/client";
 import { REQUEST_NOTE_MAX } from "~/lending";
 import { shelfIds } from "~/models/household.server";
 import type { CoverSize, LibraryView, Theme } from "~/utils";
 import { normalizeEmail } from "~/utils";
 
-export type { User } from "@prisma/client";
+export type { User } from "~/generated/prisma/client";
 
 export async function getUserById(id: User["id"]) {
   return prisma.user.findUnique({

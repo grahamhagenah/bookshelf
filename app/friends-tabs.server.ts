@@ -1,6 +1,5 @@
-import type { User } from "@prisma/client";
-
 import { prisma } from "~/db.server";
+import type { User } from "~/generated/prisma/client";
 import { shelfIds } from "~/models/household.server";
 import { countPoolBooks } from "~/models/pool.server";
 

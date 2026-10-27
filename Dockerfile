@@ -31,10 +31,8 @@ WORKDIR /myapp
 
 COPY --from=deps /myapp/node_modules /myapp/node_modules
 
-ADD prisma .
-RUN npx prisma generate
-
 ADD . .
+RUN npx prisma generate
 RUN npm run build
 
 # Finally, build the production image with minimal footprint
@@ -54,10 +52,8 @@ RUN echo "#!/bin/sh\nset -x\nsqlite3 \$DATABASE_URL" > /usr/local/bin/database-c
 
 WORKDIR /myapp
 
+# Prisma's CLI is a production dependency, for start.sh's migrations
 COPY --from=production-deps /myapp/node_modules /myapp/node_modules
-COPY --from=build /myapp/node_modules/.prisma /myapp/node_modules/.prisma
-COPY --from=deps /myapp/node_modules/prisma /myapp/node_modules/prisma
-COPY --from=deps /myapp/node_modules/@prisma/engines /myapp/node_modules/@prisma/engines
 
 COPY --from=build /myapp/build /myapp/build
 COPY --from=build /myapp/public /myapp/public
@@ -65,5 +61,6 @@ COPY --from=build /myapp/package.json /myapp/package.json
 COPY --from=build /myapp/start.sh /myapp/start.sh
 COPY --from=build /myapp/litestream.yml /etc/litestream.yml
 COPY --from=build /myapp/prisma /myapp/prisma
+COPY --from=build /myapp/prisma.config.ts /myapp/prisma.config.ts
 
 ENTRYPOINT [ "./start.sh" ]

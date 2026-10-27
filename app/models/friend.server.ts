@@ -1,6 +1,5 @@
-import type { User } from "@prisma/client";
-
 import { prisma } from "~/db.server";
+import type { User } from "~/generated/prisma/client";
 import { isNotLending } from "~/lending";
 import { isDemoEmail } from "~/utils";
 import { sameWork } from "~/works";

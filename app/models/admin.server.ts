@@ -1,7 +1,7 @@
-import type { Prisma } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 import { sendNewSignupEmail, sendSignupSummaryEmail } from "~/email.server";
+import type { Prisma } from "~/generated/prisma/client";
 
 // Everything the admin dashboard shows. Demo sandboxes are left out of
 // every number: only real accounts (demoGroup null) count.
