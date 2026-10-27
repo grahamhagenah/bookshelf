@@ -238,7 +238,7 @@ export default function ShowcaseLending({
           <span className="font-semibold text-stone-900 dark:text-stone-100">
             {set.borrowed.title}
           </span>{" "}
-          goes back to Maya Chen · tomorrow
+          goes back to Maya Castellanos · tomorrow
         </p>
       </div>
 
@@ -593,14 +593,14 @@ export function ShowcasePage() {
           <div className="flex items-start gap-3">
             <Bookplate
               firstname="Maya"
-              surname="Chen"
+              surname="Castellanos"
               color="plum"
               box="h-12 w-12 text-base"
               framed
             />
             <div className="min-w-0">
               <p className="text-lg font-bold leading-tight tracking-tight text-stone-900 dark:text-stone-50">
-                Maya Chen
+                Maya Castellanos
               </p>
               <p className="mt-0.5 text-sm leading-snug text-stone-700 dark:text-stone-300">
                 Sci-fi, slow mornings, always happy to lend
