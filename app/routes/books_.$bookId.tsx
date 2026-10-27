@@ -37,13 +37,14 @@ import {
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import {
   getHolds,
+  handOn,
   leaveHold,
   passStraightOn,
-  passToNextInLine,
   placeHold,
 } from "~/models/hold.server";
 import { shelfIds } from "~/models/household.server";
-import { lendByEmail, lendByName, nameOnlyBorrowers } from "~/models/loan-invite.server";
+import { lendByEmail, lendByName } from "~/models/loan-invite.server";
+import { nameList } from "~/models/name-list.server";
 import {
   NOTE_MAX_LENGTH,
   canLeaveNote,
@@ -510,7 +511,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     extendWeeks: EXTEND_WEEKS,
     loanChoices: { weeks: LOAN_WEEKS, defaultWeeks: DEFAULT_LOAN_WEEKS },
     // People the owner lent to by name before, to pick again
-    lentByName: isOwner ? await nameOnlyBorrowers(userId) : [],
+    lentByName: isOwner ? await nameList(userId) : [],
     // Who's waiting is shown to the owner and the borrower; others just
     // see their own place
     waiting:
@@ -539,16 +540,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         : null,
   });
 };
-
-// When a book comes back, ask for it on behalf of whoever is first in line.
-// A demo friend who owns it answers straight away, but never on behalf of
-// the person who just marked it returned: that's theirs to decide.
-async function handOn(bookId: string, actingUserId: string) {
-  const request = await passToNextInLine(bookId);
-  if (request && request.receiverId !== actingUserId) {
-    await respondAsDemoPersona(request.id);
-  }
-}
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -808,7 +799,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     if (
       owner &&
       typeof friendId === "string" &&
-      (await nameOnlyBorrowers(userId)).some((person) => person.id === friendId)
+      (await nameList(userId)).some((person) => person.id === friendId)
     ) {
       await lendToFriend(book.id, userId, friendId, weeks);
       return data({ lentTo: friendId });
@@ -1349,7 +1340,15 @@ function LendToFriend({
                 </Link>{" "}
                 first.
               </>
-            ) : null}
+            ) : null}{" "}
+            Lending to a class?{" "}
+            <Link
+              to="/checkout"
+              className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+            >
+              Use the check-out desk
+            </Link>
+            .
           </p>
         </>
       ) : null}

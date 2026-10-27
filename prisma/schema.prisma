@@ -73,6 +73,10 @@ model User {
   // lender's records, not a person who can sign in or be emailed. Their
   // address is a stand-in at stacks.invalid, which never delivers.
   nameOnly             Boolean    @default(false)
+  // Whose list of names a name-only person is on, to lend to in one tap
+  // (a class, say). Taken off the list, they keep their loans.
+  listedBy             User?      @relation("nameList", fields: [listedById], references: [id], onDelete: SetNull)
+  listedById           String?
   // Set on throwaway demo accounts; everyone in one demo sandbox shares it
   demoGroup            String?
   // When a demo's visitor first went past the page they landed on: a person
@@ -107,8 +111,11 @@ model User {
   feedMutes  FeedMute[]    @relation("feedMutes")
   mutedBy    FeedMute[]    @relation("mutedBy")
   groups     GroupMember[]
+  // The names on your list, lent to by name only
+  nameList   User[]        @relation("nameList")
 
   @@index([demoGroup], name: "demo_group_index")
+  @@index([listedById])
 }
 
 model Password {

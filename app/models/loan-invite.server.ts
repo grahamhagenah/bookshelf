@@ -10,6 +10,7 @@ import { canResend } from "~/verify-email";
 import { lendToFriend } from "./book.server";
 import { canInteract } from "./demo.server";
 import { shelfIds } from "./household.server";
+import { findOrAddName } from "./name-list.server";
 import {
   createBookApprovedNotification,
   createFriendship,
@@ -111,57 +112,18 @@ export async function lendByEmail(
 // child, a class. They're a name in the lender's records, not an account:
 // nothing is sent to them, and reminders come to the lender. Lending to
 // the same name again from this shelf finds the same person, so their
-// loans stay together. Needs no confirmed email, since nothing is sent,
-// and works in the demo for the same reason.
-export const NAME_ONLY_DOMAIN = "stacks.invalid";
-
+// loans stay together, and they go on the shelf's list of names. Needs no
+// confirmed email, since nothing is sent, and works in the demo for the
+// same reason.
 export async function lendByName(
   lenderId: User["id"],
   book: Pick<Book, "id" | "title">,
   { name, weeks }: { name: string; weeks: number },
 ): Promise<LendResult> {
-  const { firstname, surname } = splitName(name);
-  if (!firstname) return { ok: false, error: "Add their name." };
-
-  const [known, lender] = await Promise.all([
-    nameOnlyBorrowers(lenderId),
-    prisma.user.findUnique({ where: { id: lenderId }, select: { demoGroup: true } }),
-  ]);
-  // However they typed it this time
-  const same = (person: { firstname: string; surname: string }) =>
-    `${person.firstname} ${person.surname}`.trim().toLowerCase() ===
-    `${firstname} ${surname}`.trim().toLowerCase();
-  const person =
-    known.find(same) ??
-    (await prisma.user.create({
-      data: {
-        email: `name-only-${crypto.randomUUID()}@${NAME_ONLY_DOMAIN}`,
-        firstname,
-        surname,
-        nameOnly: true,
-        discoverable: false,
-        emailNotifications: false,
-        weeklyDigest: false,
-        theme: "system",
-        // In the demo, they go when the demo is cleared
-        demoGroup: lender?.demoGroup ?? null,
-      },
-      select: { id: true },
-    }));
+  const person = await findOrAddName(lenderId, name);
+  if (!person) return { ok: false, error: "Add their name." };
   await lendToFriend(book.id, lenderId, person.id, weeks);
   return { ok: true, borrowerId: person.id, invited: false };
-}
-
-// The name-only people this shelf has lent to, to lend to again
-export async function nameOnlyBorrowers(lenderId: User["id"]) {
-  return prisma.user.findMany({
-    where: {
-      nameOnly: true,
-      lendingHistory: { some: { book: { userId: { in: await shelfIds(lenderId) } } } },
-    },
-    select: { id: true, firstname: true, surname: true },
-    orderBy: { firstname: "asc" },
-  });
 }
 
 // Emails the link that claims a waiting account, with what they have on

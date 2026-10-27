@@ -307,3 +307,12 @@ export function BorrowedIcon({ className = "", size = 24 }: IconProps) {
     </svg>
   );
 }
+
+// A barcode in a scanner's corners, for the check-out desk
+export function CheckoutIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3M7 8v8M10.5 8v8M13 8v8M17 8v8" />
+    </svg>
+  );
+}
