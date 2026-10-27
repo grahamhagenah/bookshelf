@@ -476,7 +476,7 @@ export function ShowcaseGroups() {
 // The check-out desk: a book scanned, a name tapped, and what's out, to a
 // class, a neighbor and family alike
 export function ShowcaseDesk() {
-  const names = ["Ava C.", "Bob next door", "Liam P.", "Aunt June", "Sofia G.", "Mia D."];
+  const names = ["Ava C.", "Rosa next door", "Liam P.", "Aunt June", "Sofia G.", "Mia D."];
   return (
     <Stage height="h-[350px] sm:h-[360px]">
       <div className={`${panel} left-0 right-[6%] top-0 z-20 -rotate-1 p-3.5`}>
@@ -511,7 +511,7 @@ export function ShowcaseDesk() {
         <ul className="mt-2 space-y-2">
           {(
             [
-              [COVERS.pachinko, "Pachinko", "Bob next door", "due Friday", false],
+              [COVERS.pachinko, "Pachinko", "Rosa next door", "due Friday", false],
               [COVERS.crawdads, "Where the Crawdads Sing", "Aunt June", "2 days late", true],
             ] as const
           ).map(([src, title, who, due, late]) => (
