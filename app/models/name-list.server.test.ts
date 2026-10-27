@@ -1,9 +1,11 @@
 // @vitest-environment node
 import { makeBook, makeUser, prisma } from "../../test/db";
 
+import { returnBook } from "./book.server";
 import { createHouseholdInvite, joinHousehold } from "./household.server";
 import { lendByName } from "./loan-invite.server";
-import { addNames, findOrAddName, nameList, readNames, unlistName } from "./name-list.server";
+import { addNames, nameList, readNames, removeName } from "./name-list.server";
+import { deleteUsers } from "./user.server";
 
 const names = async (userId: string) =>
   (await nameList(userId)).map((person) => `${person.firstname} ${person.surname}`.trim());
@@ -35,7 +37,7 @@ test("names go on the list once, in order, and the household shares it", async (
   expect(await names((await makeUser("Priya")).id)).toEqual([]);
 });
 
-test("taken off the list, someone keeps their loan, and lending to them again puts them back", async () => {
+test("a name is removed for good, with its loans, but not while they have a book out", async () => {
   const dana = await makeUser("Dana");
   const book = await makeBook(dana.id, "Wonder");
   const lent = await lendByName(dana.id, book, { name: "Theo", weeks: 2 });
@@ -43,20 +45,44 @@ test("taken off the list, someone keeps their loan, and lending to them again pu
   // Lending by name puts them on the list
   expect(await names(dana.id)).toEqual(["Theo"]);
 
-  await unlistName(dana.id, lent.borrowerId);
-  expect(await names(dana.id)).toEqual([]);
-  expect((await prisma.book.findUniqueOrThrow({ where: { id: book.id } })).borrowerId).toBe(lent.borrowerId);
-
-  // The same Theo, not a second one
-  expect((await findOrAddName(dana.id, "theo"))?.id).toBe(lent.borrowerId);
+  // Not with Wonder still out
+  expect(await removeName(dana.id, lent.borrowerId)).toEqual({ ok: false, out: ["Wonder"] });
   expect(await names(dana.id)).toEqual(["Theo"]);
+
+  // Back, then gone: the name and the loan in the history
+  await returnBook(book.id);
+  expect(await removeName(dana.id, lent.borrowerId)).toEqual({ ok: true });
+  expect(await names(dana.id)).toEqual([]);
+  expect(await prisma.user.findUnique({ where: { id: lent.borrowerId } })).toBeNull();
+  expect(await prisma.lendingHistory.count({ where: { bookId: book.id } })).toBe(0);
+  // The book itself stays on the shelf
+  expect(await prisma.book.findUnique({ where: { id: book.id } })).not.toBeNull();
 });
 
-test("only names on your own list can be taken off it", async () => {
+test("only names on your own list can be removed", async () => {
   const dana = await makeUser("Dana");
   const priya = await makeUser("Priya");
   await addNames(dana.id, ["Theo"]);
   const [theo] = await nameList(dana.id);
-  await unlistName(priya.id, theo.id);
+  await removeName(priya.id, theo.id);
   expect(await names(dana.id)).toEqual(["Theo"]);
+  // And never someone with an account
+  expect(await removeName(dana.id, priya.id)).toEqual({ ok: true });
+  expect(await prisma.user.findUnique({ where: { id: priya.id } })).not.toBeNull();
+});
+
+test("deleting your account deletes your names, unless someone you share the shelf with keeps them", async () => {
+  const dana = await makeUser("Dana");
+  await addNames(dana.id, ["Theo"]);
+  const [theo] = await nameList(dana.id);
+  await deleteUsers([dana.id]);
+  expect(await prisma.user.findUnique({ where: { id: theo.id } })).toBeNull();
+
+  // On a shared shelf, the one who stays keeps the list
+  const walt = await makeUser("Walt");
+  const kim = await makeUser("Kim");
+  await joinHousehold(kim.id, await createHouseholdInvite(walt.id));
+  await addNames(walt.id, ["Bob"]);
+  await deleteUsers([walt.id]);
+  expect(await names(kim.id)).toEqual(["Bob"]);
 });

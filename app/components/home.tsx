@@ -444,17 +444,27 @@ function Welcome({
   );
 }
 
-// The way from the home page's few posts to the whole feed
-function SeeMore({ className = "" }: { className?: string }) {
+// The way from a side-column section's few to all of them: words and an
+// arrow, lined up with the list above, with no box around them
+function MoreLink({ to, children, className = "" }: { to: string; children: string; className?: string }) {
   return (
     <Link
-      to="/feed"
-      className={`inline-flex h-8 items-center rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-950 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors ${className}`}
+      to={to}
+      className={`group inline-flex items-center gap-1.5 py-1 text-sm font-medium text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white transition-colors ${className}`}
     >
-      See more
+      {children}
+      <span
+        aria-hidden="true"
+        className="text-stone-400 dark:text-stone-500 transition-transform group-hover:translate-x-0.5"
+      >
+        →
+      </span>
     </Link>
   );
 }
+
+// Friends' books, the most lent first
+const POPULAR_PATH = "/friends/books?sort=popular";
 
 // Popular with friends as a chart, the most lent first: ranked rows built
 // like the rest of the home page's lists (a small cover, the title, who
@@ -472,7 +482,7 @@ function PopularChart({
       className={`mt-8 border-t border-stone-200 dark:border-stone-800 pt-6 ${className}`}
     >
       <h2 id="popular" className={`${sectionHeading} mb-2`}>
-        <Link to="/friends/books" className={headingLink}>
+        <Link to={POPULAR_PATH} className={headingLink}>
           Popular with friends
         </Link>
       </h2>
@@ -522,6 +532,9 @@ function PopularChart({
           );
         })}
       </ol>
+      <MoreLink to={POPULAR_PATH} className="mt-3">
+        All friends&apos; books
+      </MoreLink>
     </section>
   );
 }
@@ -763,7 +776,7 @@ export default function Home({
                                   : `${group.bookCount} ${group.bookCount === 1 ? "book" : "books"} to borrow`}
                                 </span>
                               </span>
-                              <span aria-hidden="true" className="ml-auto flex-shrink-0 text-stone-400 dark:text-stone-500">
+                              <span aria-hidden="true" className="flex-shrink-0 text-stone-400 dark:text-stone-500">
                                 →
                               </span>
                             </Link>
@@ -937,7 +950,11 @@ export default function Home({
                   Nothing new from your friends lately.
                 </p>
               )}
-              {activity.length > 0 ? <SeeMore className="mt-3" /> : null}
+              {activity.length > 0 ? (
+                <MoreLink to="/feed" className="mt-3">
+                  See more
+                </MoreLink>
+              ) : null}
             </div>
             {popular.length > 0 ? (
               <PopularChart

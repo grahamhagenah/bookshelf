@@ -193,6 +193,7 @@ export default function PooledShelf({
             onChange={(value) => go({ sort: value === "newest" ? null : value })}
             options={[
               ["newest", "Newest"],
+              ["popular", "Popular"],
               ["title", "Title"],
               ["author", "Author"],
             ]}

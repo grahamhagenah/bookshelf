@@ -14,7 +14,7 @@ export const meta: MetaFunction = () =>
     path: "/privacy",
   });
 
-const UPDATED = "October 22, 2026";
+const UPDATED = "October 27, 2026";
 
 const strong = "font-semibold text-stone-900 dark:text-stone-100";
 const list = "list-disc space-y-2 pl-5 marker:text-stone-300 dark:marker:text-stone-600";
@@ -49,6 +49,11 @@ export default function Privacy() {
             a shelf with.
           </li>
           <li>
+            <strong className={strong}>People you lend to by name:</strong> just the name you
+            type for someone who isn&apos;t on Stacks, like a neighbor or a student, and what
+            they&apos;ve borrowed. Stacks never contacts them.
+          </li>
+          <li>
             <strong className={strong}>Messages you send:</strong> feedback, with the page you
             sent it from.
           </li>
@@ -72,7 +77,11 @@ export default function Privacy() {
           </li>
           <li>
             <strong className={strong}>Anyone you share a shelf with</strong> sees and manages the
-            shelf with you; your notes and friends stay your own.
+            shelf with you, and the names you lend to; your notes and friends stay your own.
+          </li>
+          <li>
+            <strong className={strong}>People you lend to by name</strong> see nothing, since
+            they have no account, and nobody else sees their names.
           </li>
           <li>
             <strong className={strong}>Anyone with your public link</strong> sees your name and
@@ -112,9 +121,12 @@ export default function Privacy() {
 
       <GuideSection title="Email">
         <p>
-          Stacks emails you to confirm your address, when a friend asks to borrow a book, and with
-          a weekly roundup. Each email has a link at the bottom to stop that kind, and you can
-          change both in Settings. Account emails, like password resets, always come through.
+          Stacks emails you to confirm your address, when a friend asks to borrow a book, when a
+          book you lent by name is late, and with a weekly roundup. Each email has a link at the
+          bottom to stop that kind, and you can change them in Settings. Account emails, like
+          password resets, always come through. If you lend a book to someone by their email
+          address, Stacks emails them about that loan, with a link to see it and join if they
+          like.
         </p>
       </GuideSection>
 
@@ -124,8 +136,13 @@ export default function Privacy() {
           there any time. To delete your account and everything in it, use{" "}
           <strong className={strong}>Delete account</strong> at the bottom of Settings; it also
           cancels any subscription. Deleted data is gone from the live site straight away and from
-          backups within 30 days. Feedback you&apos;ve sent is kept without your name attached.
-          Demo accounts delete themselves after a day.
+          backups within 30 days. That includes the names you lend to, unless someone you share a
+          shelf with still uses them. Feedback you&apos;ve sent is kept without your name
+          attached. Demo accounts delete themselves after a day.
+        </p>
+        <p>
+          To delete one name you lend to, and its loans, remove it from your list on the{" "}
+          <Link to="/checkout" className={proseLink}>check-out desk</Link>.
         </p>
         <p>
           Wherever you live, you can ask what Stacks keeps about you, have it corrected, or have it
@@ -134,7 +151,11 @@ export default function Privacy() {
       </GuideSection>
 
       <GuideSection title="Children">
-        <p>Stacks isn&apos;t meant for anyone under 13, and doesn&apos;t knowingly keep their information.</p>
+        <p>
+          Stacks accounts aren&apos;t for anyone under 13. If you lend to children by name, as a
+          teacher might, only the names you type are kept, they&apos;re never contacted, and you
+          can remove them any time. First names or initials work fine.
+        </p>
       </GuideSection>
 
       <GuideSection title="Changes">

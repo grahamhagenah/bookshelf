@@ -16,6 +16,7 @@ const shelfBook = {
   borrowerId: true,
   notLendingUntil: true,
   createdAt: true,
+  lendCount: true,
   user: { select: { id: true, firstname: true } },
 } as const;
 
@@ -27,6 +28,7 @@ interface ShelfRow {
   borrowerId: string | null;
   notLendingUntil: Date | null;
   createdAt: Date;
+  lendCount: number;
   user: { id: string; firstname: string };
 }
 
@@ -35,7 +37,9 @@ export const POOL_ROW = 12;
 // The most books one search gathers before putting copies together
 const SEARCH_LIMIT = 5000;
 
-export const POOL_SORTS = ["newest", "title", "author"] as const;
+// Popular is the most lent first, as Popular with friends on the home
+// page counts it
+export const POOL_SORTS = ["newest", "popular", "title", "author"] as const;
 export type PoolSort = (typeof POOL_SORTS)[number];
 
 // Two copies are the same book when title and author's surname match:
@@ -57,6 +61,8 @@ function asWorks(books: ShelfRow[], now = new Date()) {
       author: string;
       cover: string;
       addedAt: Date;
+      // Times its copies here have been lent, all told
+      loans: number;
       copies: { bookId: string; owner: { id: string; firstname: string }; available: boolean; lent: boolean }[];
     }
   >();
@@ -73,6 +79,7 @@ function asWorks(books: ShelfRow[], now = new Date()) {
       work.copies.push(copy);
       if (!work.cover && book.cover) work.cover = book.cover;
       if (book.createdAt > work.addedAt) work.addedAt = book.createdAt;
+      work.loans += book.lendCount;
     } else {
       works.set(key, {
         key,
@@ -80,6 +87,7 @@ function asWorks(books: ShelfRow[], now = new Date()) {
         author: book.author,
         cover: book.cover,
         addedAt: book.createdAt,
+        loans: book.lendCount,
         copies: [copy],
       });
     }
@@ -137,7 +145,10 @@ export async function searchPool(
   const works = (status === "available" ? all.filter(isFree) : status === "lent" ? all.filter(isOut) : all).filter(
     (work) => !left.has(work.key),
   );
-  if (sort === "title") {
+  if (sort === "popular") {
+    // Most lent first; the rest stay newest first
+    works.sort((a, b) => b.loans - a.loans);
+  } else if (sort === "title") {
     works.sort((a, b) => byTitle(a.title).localeCompare(byTitle(b.title)));
   } else if (sort === "author") {
     works.sort(

@@ -466,10 +466,25 @@ export async function deleteUserByEmail(email: User["email"]) {
 // Remove accounts and everything that points at them. Their own books,
 // notes, holds and passwords cascade; notifications and borrowing records
 // don't, and books they'd borrowed go back to their owners.
-export async function deleteUsers(ids: User["id"][]) {
-  if (ids.length === 0) return;
+export async function deleteUsers(accountIds: User["id"][]) {
+  if (accountIds.length === 0) return;
   // Stop any subscription first, so nobody is billed for a deleted account
-  await cancelBilling(ids);
+  await cancelBilling(accountIds);
+  // The names someone lent to by name go with them, unless someone they
+  // shared a shelf with stays, who keeps the list
+  const named = await prisma.user.findMany({
+    where: { nameOnly: true, listedById: { in: accountIds } },
+    select: {
+      id: true,
+      listedBy: { select: { household: { select: { members: { select: { id: true } } } } } },
+    },
+  });
+  const ids = [...accountIds];
+  for (const person of named) {
+    const keeper = person.listedBy?.household?.members.find((member) => !accountIds.includes(member.id));
+    if (keeper) await prisma.user.update({ where: { id: person.id }, data: { listedById: keeper.id } });
+    else ids.push(person.id);
+  }
   await prisma.notification.deleteMany({
     where: {
       OR: [

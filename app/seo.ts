@@ -30,6 +30,7 @@ export const PUBLIC_PAGES = [
   "/lend-books-to-friends",
   "/goodreads-alternative",
   "/for-storygraph-readers",
+  "/classroom-library",
 ];
 
 // What a public page needs to render for a crawler: the built scripts,

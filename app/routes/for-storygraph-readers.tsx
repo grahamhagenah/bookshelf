@@ -90,8 +90,10 @@ export default function ForStoryGraphReaders() {
           </li>
           <li>Import that file into Stacks.</li>
           <li>
-            Books marked as owned go on your shelf. Your to-read books can go on
-            your want-to-read list. You choose before anything is added.
+            Books marked as owned go on your shelf, the others you&apos;ve read
+            on your Also read list, and your to-read books on your want-to-read
+            list. Your reviews come along as notes, and five stars as a heart.
+            You choose before anything is added.
           </li>
         </ol>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">

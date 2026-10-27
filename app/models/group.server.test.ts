@@ -189,6 +189,15 @@ test("a big group's shelf: one entry per book, sorted as asked", async () => {
     "Zorba",
   ]);
 
+  // Popular: the most lent first, both Dunes' loans counted together
+  await prisma.book.update({ where: { id: piranesi.id }, data: { lendCount: 2 } });
+  await prisma.book.update({ where: { id: calsDune.id }, data: { lendCount: 3 } });
+  const popular = await searchPool(openIds, { sort: "popular" });
+  expect(popular.works.slice(0, 2).map((work) => [work.title, work.loans])).toEqual([
+    ["Dune", 3],
+    ["Piranesi", 2],
+  ]);
+  expect(popular.works.slice(2).every((work) => work.loans === 0)).toBe(true);
 });
 
 test("whoever started the group can take people out; nobody else can", async () => {

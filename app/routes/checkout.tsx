@@ -9,7 +9,7 @@ import { primaryButton, quietButton, sectionHeading, textField } from "~/compone
 import { dueText } from "~/due";
 import { LOAN_WEEKS, loanWeeks } from "~/models/book.server";
 import { checkIn, checkOut, findOnShelf, loansOut } from "~/models/checkout.server";
-import { addNames, findOrAddName, NAME_LIST_MAX, nameList, readNames, unlistName } from "~/models/name-list.server";
+import { addNames, findOrAddName, NAME_LIST_MAX, nameList, readNames, removeName } from "~/models/name-list.server";
 import { pageUrl } from "~/page-url";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
@@ -77,20 +77,30 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "addNames") {
     const names = readNames(text("names"));
-    if (!names.length) return data({ error: "Add a name or two." }, { status: 400 });
+    if (!names.length) return data({ error: "Add a name or two.", about: "names" }, { status: 400 });
     const result = await addNames(userId, names);
     if (result.full) {
-      return data({ error: `A list holds up to ${NAME_LIST_MAX} names.` }, { status: 400 });
+      return data({ error: `A list holds up to ${NAME_LIST_MAX} names.`, about: "names" }, { status: 400 });
     }
     return data({
       done: result.added ? `${plural(result.added, "name")} added.` : "They're on the list already.",
       weeks,
+      about: "names",
     });
   }
 
-  if (intent === "unlist") {
-    await unlistName(userId, text("personId"));
-    return data({ done: null, weeks });
+  if (intent === "removeName") {
+    const removed = await removeName(userId, text("personId"));
+    if (!removed.ok) {
+      return data(
+        {
+          error: `${text("name")} still has ${removed.out.join(" and ")}. Take it back first, then remove them.`,
+          about: "names",
+        },
+        { status: 400 },
+      );
+    }
+    return data({ done: `${text("name")} is off your list, with their loans.`, weeks, about: "names" });
   }
 
   throw new Response("Unknown intent", { status: 400 });
@@ -290,12 +300,12 @@ export default function Checkout() {
           </select>
         </label>
 
-        {result && "done" in result && result.done && !query ? (
+        {result && "done" in result && result.done && !query && !("about" in result) ? (
           <p role="status" className="mt-4 rounded-lg bg-forest-600/[0.08] dark:bg-forest-400/10 px-4 py-3 text-sm font-medium text-forest-800 dark:text-forest-300">
             {result.done}
           </p>
         ) : null}
-        {result && "error" in result ? (
+        {result && "error" in result && !("about" in result) ? (
           <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-400">
             {result.error}
           </p>
@@ -356,9 +366,17 @@ export default function Checkout() {
         </h2>
         <p className={`mt-1 max-w-xl text-pretty text-sm ${muted}`}>
           {names.length
-            ? "Tap one to lend them a book you've scanned. Taking a name off leaves their loans as they are."
+            ? "Tap one to lend them a book you've scanned. Removing a name deletes it and its loans from your history."
             : "Put your class on the list, and each one is a tap away when you scan a book. Anyone you lend to by name goes on it too."}
         </p>
+        {result && "about" in result ? (
+          <p
+            role={"error" in result ? "alert" : "status"}
+            className={`mt-3 text-sm ${"error" in result ? "text-red-700 dark:text-red-400" : "font-medium text-forest-800 dark:text-forest-300"}`}
+          >
+            {"error" in result ? result.error : result.done}
+          </p>
+        ) : null}
         {names.length ? (
           <ul className="mt-3 flex flex-wrap gap-2">
             {names.map((person) => (
@@ -370,12 +388,23 @@ export default function Checkout() {
                 {outByPerson.get(person.id) ? (
                   <span className={`ml-1 text-xs ${muted}`}>{outByPerson.get(person.id)} out</span>
                 ) : null}
-                <Form method="post" action="/checkout" preventScrollReset>
-                  <input type="hidden" name="intent" value="unlist" />
+                <Form
+                  method="post"
+                  action="/checkout"
+                  preventScrollReset
+                  // For good, with their loan history, so it's asked first
+                  onSubmit={(event) => {
+                    if (!window.confirm(`Remove ${fullName(person)} and their loans from your history?`)) {
+                      event.preventDefault();
+                    }
+                  }}
+                >
+                  <input type="hidden" name="intent" value="removeName" />
                   <input type="hidden" name="personId" value={person.id} />
+                  <input type="hidden" name="name" value={fullName(person)} />
                   <button
                     type="submit"
-                    aria-label={`Take ${fullName(person)} off the list`}
+                    aria-label={`Remove ${fullName(person)}`}
                     className="flex h-6 w-6 items-center justify-center rounded-full text-stone-400 hover:bg-stone-200 hover:text-stone-700 dark:hover:bg-stone-700 dark:hover:text-stone-200 transition-colors"
                   >
                     <span aria-hidden="true">×</span>
