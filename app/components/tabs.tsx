@@ -1,12 +1,12 @@
 import { NavLink } from "react-router";
 
 // A row of tabs over a rule, with room across from them for the page's own
-// actions: My shelf's lists, the Friends page's views
+// actions: My shelf's lists, the Friends page's views. Words only: the
+// header's links carry the icons.
 
 export interface Tab {
   to: string;
   label: string;
-  icon: React.ReactNode;
   // Left out when there's none to show
   count?: number | null;
   // Only the exact address, not the pages under it
@@ -40,7 +40,6 @@ export default function Tabs({
       >
         {tabs.map((tab) => (
           <NavLink key={tab.to} to={tab.to} end={tab.end} className={tabClass}>
-            {tab.icon}
             {tab.label}
             {tab.count != null ? (
               <span className="font-normal text-stone-400 dark:text-stone-500">{tab.count}</span>

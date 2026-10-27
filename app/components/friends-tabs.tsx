@@ -1,7 +1,6 @@
 
 import { Link } from "react-router";
 
-import { BookIcon, GroupIcon, GroupsIcon } from "./icons";
 import Tabs from "./tabs";
 
 // The Friends page's views, side by side as My shelf's tabs are: the
@@ -21,19 +20,16 @@ export default function FriendsTabs({
           to: "/friends",
           end: true,
           label: "Friends",
-          icon: <GroupIcon size={16} className="hidden sm:block" />,
           count: counts.friends,
         },
         {
           to: "/friends/books",
           label: "Books",
-          icon: <BookIcon size={16} className="hidden sm:block" />,
           count: counts.books,
         },
         {
           to: "/groups",
           label: "Groups",
-          icon: <GroupsIcon size={17} className="hidden sm:block" />,
           count: counts.groups > 0 ? counts.groups : null,
         },
       ]}

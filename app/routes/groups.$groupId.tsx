@@ -5,7 +5,7 @@ import invariant from "tiny-invariant";
 
 import Faces from "~/components/faces";
 import GroupPick from "~/components/group-pick";
-import { BookIcon, FeedIcon, GroupsIcon, LinkIcon, PencilIcon } from "~/components/icons";
+import { LinkIcon, PencilIcon } from "~/components/icons";
 import { GROUP_NAME_MAX, codeFromLink, groupInvitePath, groupPath } from "~/group-links";
 import { loadGroup } from "~/group-page.server";
 import {
@@ -171,16 +171,13 @@ export default function GroupLayout() {
           className="-mb-px flex min-w-0 flex-1 gap-5 sm:gap-6 overflow-x-auto [scrollbar-width:none]"
         >
           <NavLink to={path} end className={tab}>
-            <BookIcon size={16} className="hidden sm:block" />
             Books
             <span className={count}>{group.bookCount}</span>
           </NavLink>
           <NavLink to={`${path}/lately`} className={tab}>
-            <FeedIcon size={16} strokeWidth={1.5} className="hidden sm:block" />
             Lately
           </NavLink>
           <NavLink to={`${path}/people`} className={tab}>
-            <GroupsIcon size={17} className="hidden sm:block" />
             People
             <span className={count}>{group.members.length}</span>
           </NavLink>
