@@ -2,8 +2,10 @@
 import { data, Link, useLoaderData, useRouteLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 
+import InviteMessage from "~/components/invite-message";
 import PooledShelf from "~/components/pooled-shelf";
 import { sectionHeading } from "~/components/ui";
+import { groupInviteText } from "~/group-links";
 import { loadGroup } from "~/group-page.server";
 import { loadPooledShelf } from "~/pooled-shelf.server";
 
@@ -50,9 +52,19 @@ export default function GroupBooks() {
           <>
             <h2 className={sectionHeading}>No books to borrow yet</h2>
             <p className="mx-auto mt-1 max-w-sm text-stone-500 dark:text-stone-400">
-              Once people join {layout?.group.name ?? "the group"}, their books show up here. Invite
-              them with the button above.
+              Once people join {layout?.group.name ?? "the group"}, their books show up here.
             </p>
+            {/* The message to send them, ready to go */}
+            {layout ? (
+              <InviteMessage
+                url={layout.inviteUrl}
+                title="Invite them"
+                intro="Send this to the group. Whoever joins from the link is friends with everyone in it."
+                text={groupInviteText(layout.group.name, layout.inviteUrl)}
+                subject={`Join ${layout.group.name} on Stacks`}
+                className="mx-auto mt-6 max-w-md text-left"
+              />
+            ) : null}
           </>
         )
       }

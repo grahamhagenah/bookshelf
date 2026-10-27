@@ -128,7 +128,7 @@ export default function GroupLayout() {
           <GroupName key={group.name} name={group.name} path={path} />
           <p className="text-sm text-stone-500 dark:text-stone-400">
             {group.lenderCount > 0
-              ? `${plural(group.members.length, "person", "people")} · ${plural(group.bookCount, "book")} to borrow.${
+              ? `${plural(group.members.length, "person", "people")} · ${plural(group.bookCount, "book")}.${
                   // Only when there's something of yours to mention
                   group.myBookCount > 0
                     ? ` Your ${plural(group.myBookCount, "book")} ${group.myBookCount === 1 ? "is" : "are"} in it too.`

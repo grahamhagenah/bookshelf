@@ -772,8 +772,8 @@ export default function Home({
                                 {group.memberCount} {group.memberCount === 1 ? "person" : "people"} ·{" "}
                                 {/* Others' books, as the group's page counts them */}
                                 {group.bookCount === 0
-                                  ? "no books to borrow yet"
-                                  : `${group.bookCount} ${group.bookCount === 1 ? "book" : "books"} to borrow`}
+                                  ? "no books yet"
+                                  : `${group.bookCount} ${group.bookCount === 1 ? "book" : "books"}`}
                                 </span>
                               </span>
                               <span aria-hidden="true" className="flex-shrink-0 text-stone-400 dark:text-stone-500">

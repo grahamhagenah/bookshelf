@@ -25,6 +25,10 @@ const withName = (name: string, code: string) => {
 // The link that lets someone join
 export const groupInvitePath = (name: string, token: string) => `/g/${withName(name, token)}`;
 
+// The message that goes with the link, ready to send
+export const groupInviteText = (name: string, url: string) =>
+  `Join ${name} on Stacks, so we can borrow each other's books: ${url}`;
+
 // The group's own page
 export const groupPath = (group: { id: string; name: string }) =>
   `/groups/${withName(group.name, group.id)}`;

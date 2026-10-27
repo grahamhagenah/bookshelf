@@ -6,6 +6,7 @@ import Avatar from "~/components/avatar";
 import CopyButton from "~/components/copy-button";
 import { mailtoInvite } from "~/components/invite-message";
 import { sectionHeading } from "~/components/ui";
+import { groupInviteText } from "~/group-links";
 import { loadGroup } from "~/group-page.server";
 import type { LoaderData } from "~/utils";
 
@@ -168,7 +169,7 @@ function GroupInvite({ name, url, alone, path }: { name: string; url: string; al
   const [canShare, setCanShare] = useState(false);
   useEffect(() => setCanShare(typeof navigator.share === "function"), []);
   const subject = `Join ${name} on Stacks`;
-  const text = `Join ${name} on Stacks, so we can borrow each other's books: ${url}`;
+  const text = groupInviteText(name, url);
   // Two answers side by side across the column, as the Friends sidebar's
   // requests are
   const half = "inline-flex h-8 flex-1 items-center justify-center rounded-md text-sm transition-colors";

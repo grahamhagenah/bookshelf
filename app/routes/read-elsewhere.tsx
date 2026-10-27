@@ -17,10 +17,10 @@ import { requireUserId } from "~/session.server";
 // notes are seen by friends; marking a book read is just for you.
 
 export const meta: MetaFunction = () =>
-  seo({ title: "Read elsewhere", noindex: true });
+  seo({ title: "Also read", noindex: true });
 
 export const handle = {
-  breadcrumb: () => <span>Read elsewhere</span>,
+  breadcrumb: () => <span>Also read</span>,
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -40,7 +40,7 @@ export default function ReadElsewhere() {
   const { items, counts } = useLoaderData<typeof loader>();
 
   return (
-    <Layout title="Read elsewhere">
+    <Layout title="Also read">
       <section>
         <ShelfTabs counts={{ ...counts, elsewhere: items.length }} />
         {/* What the list is for: in a line above it, or, while it's empty,

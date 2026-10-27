@@ -1326,8 +1326,8 @@ function LendToFriend({
           )}
           <p className="text-xs text-stone-500 dark:text-stone-400">
             {byEmail === "off"
-              ? "It goes down under their name, and reminders come to you."
-              : "With an email, we tell them you lent it, with a link to see the loan and join if they like. Without one, it goes down under their name, and reminders come to you."}
+              ? "Reminders come to you."
+              : "With an email, they get a link to the loan. Without one, reminders come to you."}
             {byEmail === "confirm-email" ? (
               <>
                 {" "}
