@@ -287,16 +287,13 @@ function Welcome({
           </button>
         </welcomeFetcher.Form>
       </div>
-      {/* Each step in a quiet box of its own; one that's done steps back */}
+      {/* Each step in a quiet box of its own, ruled like the lines between
+          the page's sections */}
       <ol className="mt-6 grid gap-3 sm:grid-cols-3 sm:gap-4">
         {steps.map((step, index) => (
           <li
             key={step.title}
-            className={`rounded-lg border p-4 sm:p-5 ${
-              step.done
-                ? "border-stone-100 dark:border-stone-900"
-                : "border-stone-200 dark:border-stone-800"
-            }`}
+            className="rounded-lg border border-stone-200 dark:border-stone-800 p-4 sm:p-5"
           >
             <StepMark number={index + 1} done={step.done} />
             <h3
