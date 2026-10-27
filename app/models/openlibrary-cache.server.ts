@@ -19,7 +19,7 @@ const FETCH_TIMEOUT_MS = 20000;
 
 // Open Library drops a connection now and then, and answers 5xx when it's
 // busy; one more try a moment later usually gets through
-const RETRY_AFTER_MS = 300;
+const RETRY_AFTER_MS = Number(process.env.OPEN_LIBRARY_RETRY_MS ?? 300);
 
 const onTheirWay = new Map<string, Promise<unknown>>();
 
