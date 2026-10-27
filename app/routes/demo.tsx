@@ -1,4 +1,4 @@
-import isBot from "isbot";
+import { isbot } from "isbot";
 import { redirect } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
@@ -21,7 +21,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (userId) return redirect("/");
 
   // Link previews and crawlers shouldn't spin up sandboxes
-  if (isBot(request.headers.get("user-agent"))) return redirect("/");
+  if (isbot(request.headers.get("user-agent"))) return redirect("/");
 
   const demoUserId = await createDemoSandbox();
   return createUserSession({
@@ -46,7 +46,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // give themselves away by filling in the hidden field
   if (
     !demoGroup &&
-    (isBot(request.headers.get("user-agent")) || filledHoneypot(formData))
+    (isbot(request.headers.get("user-agent")) || filledHoneypot(formData))
   ) {
     return redirect("/");
   }

@@ -1,7 +1,7 @@
 import { PassThrough } from "node:stream";
 
 import { createReadableStreamFromReadable } from "@react-router/node";
-import isBot from "isbot";
+import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 import type { EntryContext } from "react-router";
 import { ServerRouter } from "react-router";
@@ -18,7 +18,7 @@ export default function handleRequest(
   responseHeaders: Headers,
   routerContext: EntryContext,
 ) {
-  const bot = isBot(request.headers.get("user-agent"));
+  const bot = isbot(request.headers.get("user-agent"));
   return new Promise((resolve, reject) => {
     const send = () => {
       const body = new PassThrough();
