@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { useFetcher } from "react-router";
 
 import { PIN_MAX } from "~/profile";
@@ -49,26 +50,29 @@ function useLoved(myNote: ReaderNote | null) {
   return { fetcher, loved };
 }
 
-// "You", "You and Anika", "You, Anika and Sam", "You, Anika and 3 others":
-// a couple of names at most, so the heart stays one short line
-function lovedBy(others: string[]) {
-  const names = ["You", ...others.slice(0, 2)];
-  const rest = others.length - 2;
-  if (rest > 1) return `${names.join(", ")} and ${rest} others`;
-  if (rest === 1) names.push(others[2]);
-  return names.length === 1
-    ? names[0]
-    : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+// Who loved it, the way a reaction count reads: "Anika", "Maya and Anika",
+// "You, Maya and Anika", then "You, Maya and 3 others" past three, so it
+// stays one short line
+function lovedBy(names: ReactNode[]) {
+  const shown = names.length > 3 ? names.slice(0, 2) : names;
+  const rest = names.length - shown.length;
+  const parts = rest > 0 ? [...shown, `${rest} others`] : shown;
+  return parts.map((part, index) => (
+    <Fragment key={index}>
+      {index === 0 ? null : index === parts.length - 1 ? " and " : ", "}
+      {part}
+    </Fragment>
+  ));
 }
 
 // Your heart for this copy, for anyone who's read it. Once it's given, it
-// names whoever else gave one without a note.
+// names everyone else who gave one too.
 function HeartToggle({
   myNote,
   others,
 }: {
   myNote: ReaderNote | null;
-  // First names of the others who loved it, without a note
+  // First names of the others who loved it
   others: string[];
 }) {
   const { fetcher, loved } = useLoved(myNote);
@@ -90,7 +94,7 @@ function HeartToggle({
           filled={loved}
           className={loved ? "text-rose-500" : ""}
         />
-        {loved ? `${lovedBy(others)} loved it` : "Love it"}
+        {loved ? <>{lovedBy(["You", ...others])} loved it</> : "Love it"}
       </button>
     </fetcher.Form>
   );
@@ -269,9 +273,9 @@ export default function ReaderNotes({
 
   const isSaving = noteFetcher.state !== "idle";
   const hasNotes = notes.some((note) => note.body);
-  // Other readers who left a heart but no words
-  const heartsOnly = notes.filter(
-    (note) => note.loved && !note.body && note.id !== myNote?.id,
+  // Everyone else who gave a heart, with a note or without
+  const otherHearts = notes.filter(
+    (note) => note.loved && note.id !== myNote?.id,
   );
 
   return (
@@ -282,40 +286,36 @@ export default function ReaderNotes({
       >
         Reader notes
       </h2>
-      {/* Hearts first: yours to give, and who else gave one without a note
-          (people who wrote one show it on their note below) */}
-      {canNote || heartsOnly.length > 0 ? (
+      {/* Hearts first: yours to give, and one count of everyone who's given
+          one, like a reaction count, whether they wrote a note or not */}
+      {canNote || otherHearts.length > 0 ? (
         <div className="mb-3 flex flex-wrap items-center gap-2">
           {canNote ? (
             <HeartToggle
               myNote={myNote}
-              others={heartsOnly.map((note) => note.user.firstname)}
+              others={otherHearts.map((note) => note.user.firstname)}
             />
           ) : null}
           {canNote && readAt !== undefined ? (
             <ReadToggle readAt={readAt} />
           ) : null}
           {/* Once you've given yours, your heart names them instead */}
-          {heartsOnly.length > 0 && !(canNote && loved) ? (
+          {otherHearts.length > 0 && !(canNote && loved) ? (
             <p className="inline-flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
-              {canNote ? null : (
-                <HeartIcon size={13} filled className="text-rose-400" />
-              )}
-              {hasNotes ? "Also loved by " : "Loved by "}
-              {heartsOnly.map((note, index) => (
-                <span key={note.id}>
-                  {index > 0
-                    ? index === heartsOnly.length - 1
-                      ? " and "
-                      : ", "
-                    : null}
-                  <PersonLink
-                    id={note.user.id}
-                    name={note.user.firstname}
-                    friendIds={friendIds}
-                  />
-                </span>
-              ))}
+              <HeartIcon size={13} filled className="text-rose-400" />
+              <span>
+                {lovedBy(
+                  otherHearts.map((note) => (
+                    <PersonLink
+                      key={note.id}
+                      id={note.user.id}
+                      name={note.user.firstname}
+                      friendIds={friendIds}
+                    />
+                  )),
+                )}{" "}
+                loved it
+              </span>
             </p>
           ) : null}
         </div>
@@ -445,7 +445,7 @@ export default function ReaderNotes({
               );
             })}
         </ul>
-      ) : !canNote && heartsOnly.length === 0 ? (
+      ) : !canNote && otherHearts.length === 0 ? (
         <p className="py-2 text-sm text-stone-400 dark:text-stone-500">
           No notes yet.
         </p>
