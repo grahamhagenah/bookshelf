@@ -141,144 +141,131 @@ export default function Import() {
       <span className="ml-1.5 text-stone-400 dark:text-stone-500">{n}</span>
     );
   const choices: { value: ShelfChoice; label: string; count: number | undefined }[] = [
-    { value: "owned", label: "Only the books marked as owned", count: summary?.owned },
-    { value: "read", label: "Books I've read, plus any marked as owned", count: summary?.read },
-    { value: "all", label: "Everything in the file", count: summary?.total },
+    { value: "owned", label: "Books marked as owned", count: summary?.owned },
+    { value: "read", label: "Books I've read, and any owned", count: summary?.read },
+    { value: "all", label: "Everything", count: summary?.total },
   ];
 
   const muted = "text-stone-500 dark:text-stone-400";
   const linkClass = "underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600";
+  // A quiet box for each part, ruled like the page's other lines
+  const box = "rounded-lg border border-stone-200 dark:border-stone-800 p-4 sm:p-5";
+  const boxHeading = "font-semibold text-stone-900 dark:text-stone-100";
+  const option = "flex items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200";
+
+  // Where each service keeps its export
+  const sources = [
+    {
+      name: "Goodreads",
+      steps: (
+        <>
+          <a href="https://www.goodreads.com/review/import" className={linkClass} target="_blank" rel="noreferrer">
+            My Books → Import and export
+          </a>
+          , then Export Library.
+        </>
+      ),
+    },
+    {
+      name: "StoryGraph",
+      steps: (
+        <>
+          <a href="https://app.thestorygraph.com/user-export" className={linkClass} target="_blank" rel="noreferrer">
+            Manage account → Export
+          </a>
+          , then download it when it&apos;s ready.
+        </>
+      ),
+    },
+    {
+      name: "Anywhere else",
+      steps: "A LibraryThing or Libib export, or a spreadsheet saved as CSV with Title and Author columns.",
+    },
+  ];
 
   return (
     <Layout title="Import your books">
-      <section>
-        <h2 className={sectionHeading}>Import your books</h2>
-        <p className={`mt-1 max-w-xl text-pretty ${muted}`}>
-          Already keep your books on Goodreads or StoryGraph? Export them there
-          and bring the file here. Books you own go on your shelf, the others
-          you&apos;ve read on your Also read list, and the ones you&apos;re
-          meaning to read on your want-to-read list. Your reviews come along
-          as notes, and five stars as a heart.
-        </p>
-        <p className={`mt-2 max-w-xl text-pretty text-sm ${muted}`}>
-          A LibraryThing or Libib export works the same way. Keep your own
-          list instead? A spreadsheet saved as a CSV file works too: one book
-          a row, with Title and Author columns (an ISBN column helps find the
-          right edition). Everything in it goes on your shelf.
-        </p>
-        <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          <div>
-            <h3 className="text-sm font-semibold text-stone-500 dark:text-stone-400">
-              From Goodreads
-            </h3>
-            <ol className="mt-1.5 list-decimal space-y-1 pl-5 text-sm text-stone-700 dark:text-stone-300">
-              <li>
-                Open{" "}
-                <a
-                  href="https://www.goodreads.com/review/import"
-                  className={linkClass}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  My Books → Import and export
-                </a>
-              </li>
-              <li>Choose Export Library, then download the file it makes</li>
-            </ol>
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-stone-500 dark:text-stone-400">
-              From StoryGraph
-            </h3>
-            <ol className="mt-1.5 list-decimal space-y-1 pl-5 text-sm text-stone-700 dark:text-stone-300">
-              <li>
-                Open{" "}
-                <a
-                  href="https://app.thestorygraph.com/user-export"
-                  className={linkClass}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Manage account → Export StoryGraph library
-                </a>
-              </li>
-              <li>Download the file once it&apos;s ready</li>
-            </ol>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        {result && "added" in result ? (
-          <div>
-            <h2 className={sectionHeading}>Done</h2>
-            <p className="mt-1 text-stone-700 dark:text-stone-300">
-              From {SOURCE_NAMES[result.source]}: {plural(result.added, "book")} added to your shelf
-              {result.alsoRead ? `, ${result.alsoRead} to your Also read list` : ""}
-              {result.wanted ? `, ${result.wanted} to your want-to-read list` : ""}.
-              {result.skipped
-                ? ` ${plural(result.skipped, "book")} ${result.skipped === 1 ? "was" : "were"} already there.`
-                : ""}
+      {result && "added" in result ? (
+        <section>
+          <h2 className={sectionHeading}>Done</h2>
+          <p className="mt-1 text-stone-700 dark:text-stone-300">
+            {result.added + result.alsoRead + result.wanted === 0
+              ? `Nothing new from ${SOURCE_NAMES[result.source]}`
+              : `From ${SOURCE_NAMES[result.source]}: ${plural(result.added, "book")} added to your shelf${
+                  result.alsoRead ? `, ${result.alsoRead} to Also read` : ""
+                }${result.wanted ? `, ${result.wanted} to Want to read` : ""}`}
+            .
+            {result.skipped
+              ? ` ${plural(result.skipped, "book")} ${result.skipped === 1 ? "was" : "were"} already there.`
+              : ""}
+          </p>
+          {result.added > 0 ? (
+            <p className={`mt-1 text-sm ${muted}`}>Covers and details fill in over the next minute or two.</p>
+          ) : null}
+          {result.unfound.length > 0 ? (
+            <p className={`mt-2 text-sm ${muted}`}>
+              Open Library didn&apos;t know {result.unfound.join(", ")}. Try{" "}
+              {result.unfound.length === 1 ? "it" : "them"} by title in search.
             </p>
-            {result.unfound.length > 0 ? (
-              <p className={`mt-2 text-sm ${muted}`}>
-                Open Library didn&apos;t know{" "}
-                {result.unfound.length === 1 ? "this ISBN" : "these ISBNs"}:{" "}
-                {result.unfound.join(", ")}. Search for{" "}
-                {result.unfound.length === 1 ? "it" : "them"} by title instead.
-              </p>
-            ) : null}
-            {result.overLimit ? (
-              <p className="mt-3 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200">
-                Your shelf is full on the free plan, so {plural(result.overLimit, "book")} didn&apos;t
-                fit. With Stacks Plus you can import the file again to bring in the rest.{" "}
-                <Link to={UPGRADE_PATH} className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2">
-                  See Stacks Plus
-                </Link>
-              </p>
-            ) : null}
-            <p className={`mt-1 text-sm ${muted}`}>
-              Covers and details are filling in from Open Library now. Give it a minute or two.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Link
-                to="/books"
-                className={`${primaryButton("lg")} inline-flex items-center`}
-              >
-                See your shelf
+          ) : null}
+          {result.overLimit ? (
+            <p className="mt-3 rounded-lg bg-stone-100 dark:bg-stone-900 px-4 py-3 text-sm text-stone-700 dark:text-stone-200">
+              Your free shelf is full, so {plural(result.overLimit, "book")} didn&apos;t fit. With
+              Stacks Plus, import again to add the rest.{" "}
+              <Link to={UPGRADE_PATH} className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2">
+                See Stacks Plus
               </Link>
-              {result.alsoRead ? (
-                <Link
-                  to="/read-elsewhere"
-                  className={`${quietButton("lg")} inline-flex items-center`}
-                >
-                  Also read
-                </Link>
-              ) : null}
-              {result.wanted ? (
-                <Link
-                  to="/want-to-read"
-                  className={`${quietButton("lg")} inline-flex items-center`}
-                >
-                  Want to read
-                </Link>
-              ) : null}
-            </div>
-            {result.added > 0 ? (
-              <InviteMessage
-                url={inviteUrl}
-                title="Now tell your friends"
-                intro="Your shelf is ready to borrow from. Send this, and whoever joins from it is your friend straight away."
-                className="mt-8"
-              />
+            </p>
+          ) : null}
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link to="/books" className={`${primaryButton("lg")} inline-flex items-center`}>
+              See your shelf
+            </Link>
+            {result.alsoRead ? (
+              <Link to="/read-elsewhere" className={`${quietButton("lg")} inline-flex items-center`}>
+                Also read
+              </Link>
             ) : null}
-            {sharesShelf ? null : <ShareShelfOffer className="mt-6" />}
+            {result.wanted ? (
+              <Link to="/want-to-read" className={`${quietButton("lg")} inline-flex items-center`}>
+                Want to read
+              </Link>
+            ) : null}
           </div>
-        ) : (
-          <>
-          <Form method="post" encType="multipart/form-data" className="max-w-xl">
-            <h2 className={sectionHeading}>Choose the file</h2>
-            <label className="mt-3 block">
+          {result.added > 0 ? (
+            <InviteMessage
+              url={inviteUrl}
+              title="Now tell your friends"
+              intro="Your shelf is ready to borrow from. Whoever joins from this message is your friend straight away."
+              className="mt-8"
+            />
+          ) : null}
+          {sharesShelf ? null : <ShareShelfOffer className="mt-6" />}
+        </section>
+      ) : (
+        <section>
+          <h2 className={sectionHeading}>Import your books</h2>
+          <p className={`mt-1 max-w-xl text-pretty ${muted}`}>
+            Bring your library over from another app or a spreadsheet. Reviews come along as notes,
+            and five stars as a heart.
+          </p>
+
+          <h3 className={`mt-6 text-sm font-semibold ${muted}`}>1. Export your books</h3>
+          <ul className="mt-2 grid gap-3 sm:grid-cols-3">
+            {sources.map((source) => (
+              <li key={source.name} className={`${box} text-sm`}>
+                <p className={boxHeading}>{source.name}</p>
+                <p className="mt-1 text-pretty text-stone-600 dark:text-stone-300">{source.steps}</p>
+              </li>
+            ))}
+          </ul>
+
+          {/* The file, and beside it on wide screens the way without one */}
+          <div className="mt-8 grid items-start gap-8 lg:grid-cols-2 lg:gap-4">
+          <div>
+          <h3 className={`text-sm font-semibold ${muted}`}>2. Bring in the file</h3>
+          <Form method="post" encType="multipart/form-data" className={`mt-2 ${box}`}>
+            <label className="block">
               <span className="sr-only">Export file</span>
               <input
                 type="file"
@@ -293,21 +280,19 @@ export default function Import() {
               <p className={`mt-2 text-sm ${muted}`}>
                 {summary?.total === 0
                   ? "No books found in this file."
-                  : `${plural(summary?.total ?? 0, "book")} in your ${SOURCE_NAMES[preview.source]} export${
-                      summary?.noted
-                        ? `, ${summary.noted} with a review or five stars`
-                        : ""
+                  : `${plural(summary?.total ?? 0, "book")} from ${SOURCE_NAMES[preview.source]}${
+                      summary?.noted ? `, ${summary.noted} with a review or five stars` : ""
                     }.`}
               </p>
             ) : null}
 
-            <fieldset className="mt-6">
-              <legend className="text-sm font-semibold text-stone-500 dark:text-stone-400">
-                What goes on your shelf?
-              </legend>
-              <div className="mt-2 space-y-2">
+            <fieldset className="mt-5 border-t border-stone-100 dark:border-stone-800 pt-4">
+              <legend className="sr-only">What goes on your shelf?</legend>
+              <p className={boxHeading}>What goes on your shelf?</p>
+              <p className={`mt-0.5 text-sm ${muted}`}>Your shelf is what friends can borrow.</p>
+              <div className="mt-3 space-y-2">
                 {choices.map((choice) => (
-                  <label key={choice.value} className="flex items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200">
+                  <label key={choice.value} className={option}>
                     <input
                       type="radio"
                       name="shelf"
@@ -322,35 +307,23 @@ export default function Import() {
                 ))}
               </div>
               <p className={`mt-2 text-xs ${muted}`}>
-                Your shelf is what friends can ask to borrow. Goodreads only
-                knows which books you own if you&apos;ve set &ldquo;owned
-                copies&rdquo; on them; if you haven&apos;t, pick the second
-                option only if you own what you&apos;ve read, or scan the books
-                on your shelves afterwards.
+                Goodreads only knows you own a book if you set &ldquo;owned copies&rdquo; on it.
               </p>
             </fieldset>
 
-            <label className="mt-5 flex items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200">
-              <input
-                type="checkbox"
-                name="alsoRead"
-                defaultChecked
-                className="accent-stone-700 dark:accent-stone-300"
-              />
-              Put the other books I&apos;ve read on my Also read list
-              {count(summary?.alsoRead)}
-            </label>
-
-            <label className="mt-2 flex items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200">
-              <input
-                type="checkbox"
-                name="wantToRead"
-                defaultChecked
-                className="accent-stone-700 dark:accent-stone-300"
-              />
-              Put the rest of my to-read books on my want-to-read list
-              {count(summary?.toRead)}
-            </label>
+            <div className="mt-5 space-y-2 border-t border-stone-100 dark:border-stone-800 pt-4">
+              <p className={boxHeading}>And the rest</p>
+              <label className={option}>
+                <input type="checkbox" name="alsoRead" defaultChecked className="accent-stone-700 dark:accent-stone-300" />
+                Other books I&apos;ve read go on Also read
+                {count(summary?.alsoRead)}
+              </label>
+              <label className={option}>
+                <input type="checkbox" name="wantToRead" defaultChecked className="accent-stone-700 dark:accent-stone-300" />
+                Books I want to read go on Want to read
+                {count(summary?.toRead)}
+              </label>
+            </div>
 
             {result && "error" in result && !("list" in result) ? (
               <p className="mt-4 text-sm text-red-700 dark:text-red-400">{result.error}</p>
@@ -359,26 +332,28 @@ export default function Import() {
             <button
               type="submit"
               disabled={importing || summary?.total === 0}
-              className={`${primaryButton("lg")} mt-6 inline-flex items-center disabled:opacity-60`}
+              className={`${primaryButton("lg")} mt-5 inline-flex items-center disabled:opacity-60`}
             >
               {importing ? "Importing…" : "Import"}
             </button>
           </Form>
 
+          </div>
+
           {/* No file? A list typed or pasted in, as a collector might keep */}
-          <Form method="post" className="mt-12 max-w-xl border-t border-stone-200 dark:border-stone-800 pt-8">
+          <div>
+          <h3 className={`text-sm font-semibold ${muted}`}>No file? Paste a list</h3>
+          <Form method="post" className={`mt-2 ${box}`}>
             <input type="hidden" name="intent" value="list" />
-            <h2 className={sectionHeading}>Or paste a list</h2>
-            <p className={`mt-1 text-sm ${muted}`}>
-              One book a line: a title, a title and its author (&ldquo;Piranesi
-              by Susanna Clarke&rdquo;), or an ISBN. Up to {LIST_MAX} at a time,
-              all on your shelf.
+            <p className={`text-sm ${muted}`}>
+              One book a line: a title, &ldquo;title by author&rdquo;, or an ISBN. Up to {LIST_MAX}, all
+              on your shelf.
             </p>
             <label className="mt-3 block">
               <span className="sr-only">Your list</span>
               <textarea
                 name="list"
-                rows={6}
+                rows={8}
                 required
                 placeholder={"Piranesi by Susanna Clarke\nThe Remains of the Day - Kazuo Ishiguro\n9780441172719"}
                 className="block w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm text-stone-800 dark:text-stone-200 placeholder:text-stone-400 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10"
@@ -395,9 +370,10 @@ export default function Import() {
               {importing ? "Adding…" : "Add these books"}
             </button>
           </Form>
-          </>
-        )}
-      </section>
+          </div>
+          </div>
+        </section>
+      )}
     </Layout>
   );
 }
