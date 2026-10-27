@@ -444,12 +444,13 @@ function Welcome({
   );
 }
 
-// The way from a side-column section's few to all of them
+// The way from a side-column section's few to all of them: words and an
+// arrow, lined up with the list above, with no box around them
 function MoreLink({ to, children, className = "" }: { to: string; children: string; className?: string }) {
   return (
     <Link
       to={to}
-      className={`group inline-flex h-8 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-950 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors ${className}`}
+      className={`group inline-flex items-center gap-1.5 py-1 text-sm font-medium text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white transition-colors ${className}`}
     >
       {children}
       <span
