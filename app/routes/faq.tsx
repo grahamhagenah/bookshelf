@@ -13,7 +13,7 @@ export const meta: MetaFunction = () => [
   ...seo({
     title: "FAQ",
     description:
-      "What Stacks is, how it differs from Goodreads and StoryGraph, and how lending, notes, shared shelves and importing work.",
+      "What Stacks is, how it differs from Goodreads and StoryGraph, and how lending, groups, classroom libraries, notes, shared shelves and importing work.",
     path: "/faq",
   }),
   // The same questions and answers, machine-readable
@@ -86,8 +86,9 @@ const sections: {
               you can{" "}
               <Link to="/import" className={link}>
                 import it
-              </Link>{" "}
-              and carry on using both. There&apos;s a{" "}
+              </Link>
+              , reviews and all (five stars become a heart), and carry on using
+              both. There&apos;s a{" "}
               <Link to="/goodreads-alternative" className={link}>
                 fuller comparison
               </Link>{" "}
@@ -159,11 +160,26 @@ const sections: {
         ),
       },
       {
+        q: "Can I lend to someone who isn't on Stacks?",
+        a: (
+          <>
+            Yes, two ways, from the book&apos;s page. With their email address,
+            they get one email about the loan, with a link to see it and join
+            if they like. With just their name, nothing is sent at all: it goes
+            down under their name, and the reminders come to you instead. Good
+            for neighbors, family, and anyone who&apos;d rather not sign up.
+          </>
+        ),
+      },
+      {
         q: "What if someone else has the book I want?",
         a: (
           <>
             Get in line. When the book comes back, Stacks asks the owner on your
-            behalf and lets you know. Lines are first come, first served.
+            behalf and lets you know. Lines are first come, first served, and
+            your place shows on your home page. When it&apos;s your turn, whoever
+            has the book can pass it straight to you, without taking it back to
+            the owner first.
           </>
         ),
       },
@@ -172,7 +188,7 @@ const sections: {
         a: (
           <>
             Your shelf: every book you own, whether it&apos;s in or out, and the
-            notes on each copy. Nobody else sees anything unless you make a{" "}
+            notes on each copy. Everyone in a group with you counts as a friend. Nobody else sees anything unless you make a{" "}
             <Link to="/account" className={link}>
               share link
             </Link>
@@ -185,13 +201,68 @@ const sections: {
         q: "Can I add books I don't own?",
         a: (
           <>
-            Not to your shelf, since a friend might ask to borrow it. Put them
-            on your{" "}
+            Not to your shelf, since a friend might ask to borrow it. A book
+            you&apos;ve read from the library or elsewhere goes on your{" "}
+            <Link to="/read-elsewhere" className={link}>
+              Also read
+            </Link>{" "}
+            list, with your note and heart. One you&apos;d like to read goes on
+            your{" "}
             <Link to="/want-to-read" className={link}>
               want-to-read list
+            </Link>
+            : Stacks tells you when a friend has one and lets you ask for it.
+          </>
+        ),
+      },
+    ],
+  },
+  {
+    heading: "Groups and classrooms",
+    items: [
+      {
+        q: "How do groups work?",
+        a: (
+          <>
+            Start a group from{" "}
+            <Link to="/groups" className={link}>
+              Friends, then Groups
             </Link>{" "}
-            instead: Stacks tells you when a friend has one and lets you ask for
-            it.
+            and share its link. Everyone who joins becomes friends with everyone
+            else, so a whole book club, office or family can browse and borrow
+            from each other at once. Your groups show on your home page with how
+            many books there are to borrow, and a group&apos;s books can be
+            sorted by the most lent.
+          </>
+        ),
+      },
+      {
+        q: "Our book club shares one copy. Does it have to go back each time?",
+        a: (
+          <>
+            No. The next reader gets in line, and whoever has the book passes it
+            straight on from its page. The owner hears where their book has gone,
+            and the new reader gets the usual due date and reminders.
+          </>
+        ),
+      },
+      {
+        q: "I run a classroom library. Does Stacks work for that?",
+        a: (
+          <>
+            Yes. Paste your class list into the{" "}
+            <Link to="/checkout" className={link}>
+              check-out desk
+            </Link>
+            , then scan a book and tap a name to lend it, and scan it again when
+            it comes back. A barcode reader plugged into a computer works as
+            well as a phone&apos;s camera, and several copies of one book are
+            handled as a class set. Students need no accounts or email, and only
+            the names you type are kept.{" "}
+            <Link to="/classroom-library" className={link}>
+              More on classroom libraries
+            </Link>
+            .
           </>
         ),
       },
@@ -207,7 +278,9 @@ const sections: {
             A heart, or a line or two, left on a copy by someone who has read
             it. Only readers of that copy can leave one: the owner,
             whoever&apos;s borrowing it, and anyone who has borrowed it before.
-            Notes stay with the copy, so the next reader finds them.
+            Notes stay with the copy, so the next reader finds them. Read a book
+            somewhere else? You can note a friend&apos;s copy of it too, and your
+            note follows the book if it later lands on your shelf.
           </>
         ),
       },
@@ -215,9 +288,10 @@ const sections: {
         q: "Can I keep track of what I've read?",
         a: (
           <>
-            Yes, for your own shelf: mark a book read on its page, and filter
-            your shelf by read and not read. It&apos;s personal, so two people
-            sharing a shelf each have their own marks.
+            Yes. Mark a book read on its page and filter your shelf by read and
+            not read; books you read elsewhere go on your Also read list. An
+            import brings your reading history over too. It&apos;s personal, so
+            two people sharing a shelf each have their own marks.
           </>
         ),
       },
@@ -231,10 +305,11 @@ const sections: {
         a: (
           <>
             One each, sharing a shelf. From{" "}
-            <Link to="/account" className={link}>
-              Account
+            <Link to="/account#share-a-shelf" className={link}>
+              Settings
             </Link>
-            , make an invite link and send it to the other person. Once they
+            , make an invite link and send it to the other person. A shared
+            shelf holds {FREE_LIMITS.sharedBooks} books free. Once they
             join, you both see and lend everything, and each of you keeps your
             own notes, hearts, read marks, want-to-read list and friends. Books
             show who added them. Either of you can leave later and take your own
@@ -266,12 +341,14 @@ const sections: {
               Search
             </Link>{" "}
             and tap Scan: point the camera at each barcode and the books add
-            themselves. If you already keep a list on Goodreads or StoryGraph,{" "}
+            themselves. Already keep a list?{" "}
             <Link to="/import" className={link}>
-              import their export file
+              Import it
             </Link>{" "}
-            and choose what goes on your shelf and what goes on your
-            want-to-read list.
+            from Goodreads, StoryGraph, LibraryThing, Libib or any spreadsheet
+            with Title and Author columns, or paste a list of titles. Books you
+            own go on your shelf, ones you&apos;ve read on Also read, and ones
+            you want on your want-to-read list.
           </>
         ),
       },

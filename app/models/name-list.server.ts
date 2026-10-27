@@ -3,6 +3,7 @@ import type { User } from "~/generated/prisma/client";
 import { splitName } from "~/loan-invite";
 
 import { shelfIds } from "./household.server";
+import { deleteUsers } from "./user.server";
 
 // A shelf's list of names to lend to by name only: a class, a reading
 // group, the neighbors' children. Each is a name-only person (no email,
@@ -97,11 +98,29 @@ export async function addNames(userId: User["id"], names: string[]) {
   return { added: fresh.length, full: false };
 }
 
-// Off the list. Anything they have out stays with them, and their past
-// loans stay in the history.
-export async function unlistName(userId: User["id"], personId: User["id"]) {
-  await prisma.user.updateMany({
-    where: { id: personId, nameOnly: true, listedById: { in: await shelfIds(userId) } },
-    data: { listedById: null },
+// Gone for good: the name, and every loan to them in your history, as
+// someone clearing out last year's class would want. Not while they have
+// a book out, so nothing goes missing; take it back first.
+export async function removeName(
+  userId: User["id"],
+  personId: User["id"],
+): Promise<{ ok: true } | { ok: false; out: string[] }> {
+  const shelf = await shelfIds(userId);
+  const person = await prisma.user.findFirst({
+    where: {
+      id: personId,
+      nameOnly: true,
+      OR: [
+        { listedById: { in: shelf } },
+        { lendingHistory: { some: { book: { userId: { in: shelf } } } } },
+      ],
+    },
+    select: { id: true, borrowedBooks: { select: { title: true } } },
   });
+  if (!person) return { ok: true };
+  if (person.borrowedBooks.length) {
+    return { ok: false, out: person.borrowedBooks.map((book) => book.title) };
+  }
+  await deleteUsers([person.id]);
+  return { ok: true };
 }

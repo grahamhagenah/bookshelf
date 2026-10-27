@@ -67,13 +67,15 @@ export default function LendBooksToFriends() {
             <strong className="font-semibold text-stone-900 dark:text-stone-100">Add your books.</strong>{" "}
             Search for them, scan the barcodes with your phone, or{" "}
             <Link to="/import" className={proseLink}>
-              import a Goodreads or StoryGraph export
+              import a list from Goodreads, StoryGraph, LibraryThing or a spreadsheet
             </Link>
             .
           </li>
           <li>
             <strong className="font-semibold text-stone-900 dark:text-stone-100">Invite your friends.</strong>{" "}
-            Send your invite link; when they join, you can see each other&apos;s shelves.
+            Send your invite link; when they join, you can see each other&apos;s shelves. For
+            a book club or an office, start a group. For anyone who&apos;d rather not sign up,
+            lend by name and the reminders come to you.
           </li>
           <li>
             <strong className="font-semibold text-stone-900 dark:text-stone-100">Lend with a due date.</strong>{" "}
@@ -94,8 +96,9 @@ export default function LendBooksToFriends() {
       <GuideSection title="Borrowing works the same way">
         <p>
           Search once to see which friends own a book and ask to borrow it. If someone else has
-          it, get in line and Stacks asks for you when it comes back. Keep a want-to-read list,
-          and you&apos;ll hear when a friend adds one of those books to their shelf.
+          it, get in line and Stacks asks for you when it comes back, or the reader before you
+          passes it straight on. Keep a want-to-read list, and you&apos;ll hear when a friend adds
+          one of those books to their shelf.
         </p>
         <p>
           It&apos;s free to start and works in your phone&apos;s browser. Wondering how it compares with

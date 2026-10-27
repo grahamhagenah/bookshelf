@@ -27,6 +27,9 @@ const COVERS = {
   circe: cover("9780316556347"),
   dune: cover("9780441172719"),
   overstory: cover("9780393635522"),
+  wonder: cover("9780375869020"),
+  holes: cover("9780440414803"),
+  matilda: cover("9780142410370"),
 };
 
 const skin =
@@ -466,6 +469,69 @@ export function ShowcaseGroups() {
       <div className="absolute bottom-0 left-[2%] z-30 flex -rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 py-1.5 pl-1.5 pr-3.5 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
         <Member who="lena" />
         Lena joined Thursday book club
+      </div>
+    </Stage>
+  );
+}
+
+// The check-out desk: a class set scanned, a name tapped, and what's out
+export function ShowcaseDesk() {
+  const names = ["Ava C.", "Liam P.", "Sofia G.", "Noah K.", "Mia D.", "Ethan W."];
+  return (
+    <Stage height="h-[350px] sm:h-[360px]">
+      <div className={`${panel} left-0 right-[6%] top-0 z-20 -rotate-1 p-3.5`}>
+        <div className="flex gap-3">
+          <Cover src={COVERS.wonder} className="w-14 flex-shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">Wonder</p>
+            <p className="text-xs text-stone-500 dark:text-stone-400">R. J. Palacio · 4 of 5 copies here</p>
+            <p className="mt-2 text-xs font-medium text-stone-700 dark:text-stone-300">Who&apos;s taking it?</p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {names.map((name, index) => (
+                <span
+                  key={name}
+                  className={`rounded-full border px-2 py-0.5 text-xs ${
+                    index === 0
+                      ? "border-forest-600 bg-forest-600/10 text-forest-800 dark:border-forest-400 dark:text-forest-300"
+                      : "border-stone-200 text-stone-700 dark:border-stone-700 dark:text-stone-200"
+                  }`}
+                >
+                  {name}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={`${panel} bottom-[10%] right-0 w-[74%] z-30 rotate-2 p-3.5`}>
+        <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">Out now</p>
+        <ul className="mt-2 space-y-2">
+          {(
+            [
+              [COVERS.holes, "Holes", "Liam P.", "due Friday", false],
+              [COVERS.matilda, "Matilda", "Sofia G.", "2 days late", true],
+            ] as const
+          ).map(([src, title, who, due, late]) => (
+            <li key={title} className="flex items-center gap-2.5">
+              <Cover src={src} className="w-7 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium text-stone-900 dark:text-stone-100">{title}</p>
+                <p className="truncate text-[11px] text-stone-500 dark:text-stone-400">
+                  {who} · <span className={late ? "font-semibold text-red-700 dark:text-red-400" : ""}>{due}</span>
+                </p>
+              </div>
+              <span className="flex-shrink-0 rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-[11px] text-stone-700 dark:text-stone-200">
+                Take it back
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="absolute bottom-0 left-[2%] z-30 flex -rotate-2 items-center gap-1.5 rounded-full bg-stone-900 dark:bg-stone-100 py-1.5 pl-2.5 pr-3.5 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
+        <Check />
+        Wonder is out to Ava, due in 2 weeks
       </div>
     </Stage>
   );

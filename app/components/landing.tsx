@@ -5,6 +5,7 @@ import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
 
 import DemoButton from "./demo-button";
 import Showcase, {
+  ShowcaseDesk,
   ShowcaseFriends,
   ShowcaseGroups,
   ShowcaseNotes,
@@ -78,7 +79,8 @@ const QUESTIONS: { q: string; a: React.ReactNode }[] = [
     q: "Does it cost anything?",
     a: (
       <>
-        It&apos;s free for up to {FREE_LIMITS.books} books, with as many
+        It&apos;s free for up to {FREE_LIMITS.books} books (
+        {FREE_LIMITS.sharedBooks} on a shelf you share at home), with as many
         friends as you like. Stacks Plus lifts the book limit for $
         {PLUS_PRICES.monthly} a month or ${PLUS_PRICES.yearly} a year.{" "}
         <Link to="/pricing" className="underline underline-offset-2">
@@ -144,17 +146,26 @@ export default function Landing() {
           everyone else&apos;s shelves, without adding each other one by one.
         </Feature>
 
-        <Feature title="Your shelf, out in the world." visual={<ShowcasePage />}>
+        <Feature
+          title="Lend to anyone, even without an account."
+          visual={<ShowcaseDesk />}
+        >
+          Neighbors, family, a whole classroom: lend by name, and the reminders
+          come to you. The check-out desk makes it quick. Scan a book, tap a
+          name, and scan it again when it comes back.
+        </Feature>
+
+        <Feature
+          title="Your shelf, out in the world."
+          visual={<ShowcasePage />}
+          flip
+        >
           Your shelf gets its own page, with a line about you and the favorites
           you pin, each with a note on why you love it. Anyone can browse it
           without an account, and friends can ask to borrow.
         </Feature>
 
-        <Feature
-          title="Books with a history."
-          visual={<ShowcaseNotes />}
-          flip
-        >
+        <Feature title="Books with a history." visual={<ShowcaseNotes />}>
           Leave a heart or a line for the next reader. Notes stay with the book
           as it moves between friends, so you can see where it&apos;s been and
           what everyone thought.
@@ -209,8 +220,9 @@ export default function Landing() {
           </h2>
           <p className="mx-auto mt-3 max-w-lg text-balance text-lg text-stone-600 dark:text-stone-300">
             Most books get read once, then sit on a shelf for years. Put yours
-            where friends can borrow them: scan your shelf with your phone or
-            bring your Goodreads list over. Free for your first{" "}
+            where friends can borrow them: scan your shelf with your phone, or
+            bring your list over from Goodreads, StoryGraph or a spreadsheet.
+            Free for your first{" "}
             {FREE_LIMITS.books} books.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">

@@ -122,6 +122,11 @@ export default function GoodreadsAlternative() {
             <strong className="font-semibold text-stone-900 dark:text-stone-100">One shelf for the household.</strong>{" "}
             Couples and housemates can share a shelf and keep their own notes and friends.
           </li>
+          <li>
+            <strong className="font-semibold text-stone-900 dark:text-stone-100">Groups and lending by name.</strong>{" "}
+            A book club shares one link, and a neighbor or a classroom can borrow without an
+            account.
+          </li>
         </ul>
         <div className="pt-4">
           <ShowcaseFriends />
@@ -136,7 +141,10 @@ export default function GoodreadsAlternative() {
           <Link to="/import" className={proseLink}>
             import the file
           </Link>
-          . You choose which books go on your shelf and which go on your want-to-read list.
+          . Books you own go on your shelf, ones you read elsewhere on your Also read list, and
+          ones you want on your want-to-read list, and you choose before anything is added. Your
+          reviews come along as notes, and five stars as a heart. Moving from LibraryThing or
+          Libib? Their exports import the same way.
         </p>
       </GuideSection>
 

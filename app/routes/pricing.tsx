@@ -16,7 +16,7 @@ import { getUserId } from "~/session.server";
 export const meta: MetaFunction = () =>
   seo({
     title: "Pricing",
-    description: `Stacks is free for up to ${FREE_LIMITS.books} books, with as many friends as you like. Stacks Plus lifts the book limit for $${PLUS_PRICES.monthly} a month or $${PLUS_PRICES.yearly} a year.`,
+    description: `Stacks is free for up to ${FREE_LIMITS.books} books (${FREE_LIMITS.sharedBooks} on a shared shelf), with as many friends as you like. Stacks Plus lifts the book limit for $${PLUS_PRICES.monthly} a month or $${PLUS_PRICES.yearly} a year.`,
     path: "/pricing",
   });
 
@@ -32,6 +32,8 @@ const FREE_FEATURES = [
   `Up to ${FREE_LIMITS.books} books on your shelf`,
   "As many friends as you like",
   "Lending with due dates and reminders",
+  "Lending by name to anyone, and a check-out desk for classrooms",
+  "Groups for book clubs, offices and families",
   "A want-to-read list, with no limit",
   "Reader notes and hearts",
   "Import from Goodreads, StoryGraph, LibraryThing, Libib or a spreadsheet",
