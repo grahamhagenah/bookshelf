@@ -5,6 +5,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import BookCover from "~/components/book-cover";
 import ErrorPage from "~/components/error-page";
 import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
+import OpeningLine from "~/components/opening-line";
 import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
 import { primaryButton, quietButton } from "~/components/ui";
@@ -247,10 +248,10 @@ export default function WorkPage() {
   const inLibrary = ownCopyId !== null;
   const wanted = data.wanted || fetcher.data?.wanted === true;
   const subjects = cleanSubjects(work.subjects);
+  // No publisher: up by the title it crowded the heading
   const details = [
     work.datePublished,
     work.pageCount ? `${work.pageCount} pages` : null,
-    work.publisher,
   ].filter(Boolean);
 
   const heading = (
@@ -400,14 +401,7 @@ export default function WorkPage() {
         ) : null}
 
         {work.firstSentence ? (
-          <div className="mt-8">
-            <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
-              Opening line
-            </h2>
-            <blockquote className="max-w-prose border-l-2 border-stone-200 dark:border-stone-700 pl-4 italic leading-relaxed text-stone-700 dark:text-stone-300">
-              “{work.firstSentence}”
-            </blockquote>
-          </div>
+          <OpeningLine sentence={work.firstSentence} />
         ) : null}
 
         <div className="mt-8">

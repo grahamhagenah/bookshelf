@@ -7,6 +7,7 @@ import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
 import ErrorPage from "~/components/error-page";
 import { LentIcon } from "~/components/icons";
+import OpeningLine, { openingLineType } from "~/components/opening-line";
 import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
 import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
@@ -1932,10 +1933,10 @@ export default function BookDetailsPage() {
   const showNotLending =
     !data.isOwner && !data.isBorrower && data.isFriend && notLending;
   const lendsAgainOn = lendingAgainOn(data.book.notLendingUntil);
+  // The publisher stays under Edit details; up here it crowded the title
   const details = [
     data.book.datePublished,
     data.book.pageCount ? `${data.book.pageCount} pages` : null,
-    data.book.publisher,
   ].filter(Boolean);
 
   // Title and details: beside the cover on phones, in the main column on
@@ -2441,28 +2442,18 @@ export default function BookDetailsPage() {
           )}
 
           {lookingUp && !data.book.firstSentence ? (
-            <div className="mt-8">
-              <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
-                Opening line
-              </h2>
+            <div className="mt-10">
               <p role="status" className="sr-only">
                 Looking up more about this book on Open Library…
               </p>
               <Placeholder
-                lines={3}
-                className="border-l-2 border-stone-200 dark:border-stone-700 pl-4 max-w-prose"
+                lines={2}
+                className={`${openingLineType} max-w-prose`}
               />
             </div>
           ) : null}
           {!isEditing && data.book.firstSentence ? (
-            <div className="mt-8">
-              <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
-                Opening line
-              </h2>
-              <blockquote className="border-l-2 border-stone-200 dark:border-stone-700 pl-4 italic text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
-                “{data.book.firstSentence}”
-              </blockquote>
-            </div>
+            <OpeningLine sentence={data.book.firstSentence} />
           ) : null}
 
           {!isEditing ? (

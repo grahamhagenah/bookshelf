@@ -55,9 +55,38 @@ const noteLink =
 function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] }) {
   const borrowed = entry.kind === "borrowed";
   const name = `${entry.person.firstname} ${entry.person.surname}`;
-  const dates = entry.returnedAt
-    ? `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
-    : `Since ${monthDay(entry.borrowedAt)} · ${borrowed ? "you have it now" : "has it now"}`;
+  const person = (
+    <strong className="whitespace-nowrap font-semibold text-stone-800 dark:text-stone-200">
+      <PersonLink id={entry.person.id} name={name} friendIds={friendIds} />
+    </strong>
+  );
+  const date = (value: string | Date) => (
+    <strong className="whitespace-nowrap font-semibold text-stone-800 dark:text-stone-200">
+      {monthDay(value)}
+    </strong>
+  );
+  // Told as a sentence: who had it, and when it went and came back
+  const story = borrowed ? (
+    entry.returnedAt ? (
+      <>
+        You borrowed it from {person} on {date(entry.borrowedAt)} and gave it
+        back {date(entry.returnedAt)}.
+      </>
+    ) : (
+      <>
+        You’ve been borrowing it from {person} since {date(entry.borrowedAt)}.
+      </>
+    )
+  ) : entry.returnedAt ? (
+    <>
+      {person} borrowed it on {date(entry.borrowedAt)} and gave it back{" "}
+      {date(entry.returnedAt)}.
+    </>
+  ) : (
+    <>
+      {person} has been borrowing it since {date(entry.borrowedAt)}.
+    </>
+  );
   const notes = `/books/${entry.book.id}#notes`;
   const body = entry.note?.body?.trim();
 
@@ -80,19 +109,13 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
           {entry.book.title}
         </Link>
         <p className="text-sm text-stone-500 dark:text-stone-400">{entry.book.author}</p>
-        <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-sm text-stone-600 dark:text-stone-300">
+        <p className="mt-1 flex items-start gap-1.5 text-sm text-stone-600 dark:text-stone-300">
           {borrowed ? (
-            <BorrowedIcon size={13} className="text-stone-400 dark:text-stone-500" />
+            <BorrowedIcon size={13} className="mt-[3px] flex-shrink-0 text-stone-400 dark:text-stone-500" />
           ) : (
-            <LentIcon size={13} className="text-stone-400 dark:text-stone-500" />
+            <LentIcon size={13} className="mt-[3px] flex-shrink-0 text-stone-400 dark:text-stone-500" />
           )}
-          {borrowed ? "From" : "To"}{" "}
-          <PersonLink id={entry.person.id} name={name} friendIds={friendIds} />
-          {/* Beside the name on wider screens, a line of its own on phones */}
-          <span className="w-full text-stone-400 dark:text-stone-500 sm:w-auto">
-            <span className="hidden sm:inline">· </span>
-            {dates}
-          </span>
+          <span>{story}</span>
         </p>
 
         {/* What was thought of it: your note on a book you borrowed (or a
