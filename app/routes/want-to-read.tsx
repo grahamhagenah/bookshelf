@@ -18,6 +18,7 @@ import { LIMIT_MESSAGES, UPGRADE_PATH } from "~/plan";
 import { roomForBooks } from "~/plan.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+import { workPath } from "~/utils";
 
 export const meta: MetaFunction = () =>
   seo({ title: "Want to read", noindex: true });
@@ -94,7 +95,7 @@ function WantRow({
   item,
   friendIds,
 }: {
-  item: Pick<Item, "id" | "title" | "author" | "cover"> & {
+  item: Pick<Item, "id" | "title" | "author" | "cover" | "openLibraryKey"> & {
     copies: Item["copies"];
   };
   friendIds: string[];
@@ -104,6 +105,7 @@ function WantRow({
   // page scrolls here, and the book is lightly tinted
   const picked = useLocation().hash === `#wish-${item.id}`;
   if (remove.state !== "idle") return null;
+  const page = workPath(item.openLibraryKey) ?? `/want-to-read/${item.id}`;
 
   // Available copies first, so the one you can ask for leads
   const copies = [...item.copies].sort(
@@ -119,11 +121,23 @@ function WantRow({
           : ""
       }`}
     >
-      <Cover cover={item.cover} title={item.title} author={item.author} />
+      {/* The book's own page: straight there when its Open Library work
+          is known, else by way of finding it */}
+      <Link
+        to={page}
+        tabIndex={-1}
+        aria-hidden="true"
+        className="flex-shrink-0"
+      >
+        <Cover cover={item.cover} title={item.title} author={item.author} />
+      </Link>
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-stone-900 dark:text-stone-100">
+        <Link
+          to={page}
+          className="font-medium text-stone-900 dark:text-stone-100 underline-offset-2 hover:underline"
+        >
           {item.title}
-        </p>
+        </Link>
         <p className="text-sm text-stone-500 dark:text-stone-400">
           {item.author}
         </p>

@@ -93,6 +93,43 @@ export async function addWantToRead(
   });
 }
 
+// One book on your list
+export function getWish(id: string, userId: User["id"]) {
+  return prisma.wantToRead.findFirst({ where: { id, userId } });
+}
+
+// The Open Library work for a book on your list that came without one
+// (from an import, or the demo's list), as a friend's copy of it already
+// knows it. Using theirs keeps the two matched: once both have a key, only
+// the same key counts, and Open Library has duplicate works.
+export async function workKeyFromFriends(userId: User["id"], wish: Work) {
+  const friendIds = await friendIdsOf(userId);
+  if (friendIds.length === 0) return null;
+  const books = await prisma.book.findMany({
+    where: {
+      userId: { in: await shelfIdsFor(friendIds) },
+      openLibraryKey: { startsWith: "/works/" },
+    },
+    select: { title: true, openLibraryKey: true, isbn: true },
+  });
+  const match = books.find((book) =>
+    sameWork({ ...wish, openLibraryKey: null }, book),
+  );
+  return match?.openLibraryKey ?? null;
+}
+
+// Remembers the work found for a book on your list, so it's asked once
+export function setWishWork(
+  id: string,
+  userId: User["id"],
+  openLibraryKey: string,
+) {
+  return prisma.wantToRead.updateMany({
+    where: { id, userId },
+    data: { openLibraryKey },
+  });
+}
+
 export function removeWantToRead(id: string, userId: User["id"]) {
   return prisma.wantToRead.deleteMany({ where: { id, userId } });
 }

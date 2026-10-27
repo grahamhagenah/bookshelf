@@ -5,9 +5,12 @@ import { createFriendship } from "./user.server";
 import {
   addWantToRead,
   getWantToRead,
+  getWish,
   moveToShelf,
   notifyWanters,
   sameWork,
+  setWishWork,
+  workKeyFromFriends,
 } from "./wish.server";
 
 const wish = (title: string) => ({ title, author: "Someone", cover: "" });
@@ -74,4 +77,32 @@ test("getting a copy moves it from the list to your shelf", async () => {
   const book = await moveToShelf(item!.id, me.id);
   expect(book).toMatchObject({ title: "Dune", userId: me.id, isbn: "9780441172719" });
   expect(await getWantToRead(me.id)).toEqual([]);
+});
+
+test("a book on the list without a work borrows a friend's copy's, and keeps it", async () => {
+  const me = await makeUser("Me");
+  const priya = await makeUser("Priya");
+  const stranger = await makeUser("Stranger");
+  await createFriendship(me.id, priya.id);
+  const theirs = await makeBook(priya.id, "Piranesi (Hardcover)");
+  await prisma.book.update({ where: { id: theirs.id }, data: { openLibraryKey: "/works/OL1W" } });
+  // A stranger's copy, under another work, doesn't count
+  const strangers = await makeBook(stranger.id, "Circe");
+  await prisma.book.update({ where: { id: strangers.id }, data: { openLibraryKey: "/works/OL2W" } });
+
+  const piranesi = (await addWantToRead(me.id, wish("Piranesi")))!;
+  const circe = (await addWantToRead(me.id, wish("Circe")))!;
+  expect(await workKeyFromFriends(me.id, piranesi)).toBe("/works/OL1W");
+  expect(await workKeyFromFriends(me.id, circe)).toBeNull();
+
+  // Saved, it's asked once, and the friend's copy still matches
+  await setWishWork(piranesi.id, me.id, "/works/OL1W");
+  expect((await getWish(piranesi.id, me.id))?.openLibraryKey).toBe("/works/OL1W");
+  const [item] = (await getWantToRead(me.id)).filter((entry) => entry.title === "Piranesi");
+  expect(item.copies.map((copy) => copy.bookId)).toEqual([theirs.id]);
+
+  // Someone else's list isn't yours to look at or change
+  expect(await getWish(piranesi.id, stranger.id)).toBeNull();
+  await setWishWork(piranesi.id, stranger.id, "/works/OL9W");
+  expect((await getWish(piranesi.id, me.id))?.openLibraryKey).toBe("/works/OL1W");
 });

@@ -72,16 +72,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
             ...new Set(sorted.map((copy) => copy.owner.firstname)),
           ];
           const available = sorted.filter((copy) => copy.available);
-          // Where the cover goes: with a choice of copies to borrow, the
-          // book on the list to pick from; else the one copy (on a shelf if
-          // there is); with none, the book's own page, or, for one that
-          // came without an Open Library key, its place on the list
+          // Where the cover goes: a friend's one copy (on a shelf if there
+          // is) when that's the only choice; else the book's own page, which
+          // lists friends' copies too. One that came without an Open
+          // Library key gets it found on the way.
           const to =
-            available.length > 1
-              ? `/want-to-read#wish-${id}`
-              : sorted[0]
-                ? `/books/${sorted[0].bookId}`
-                : (workPath(openLibraryKey) ?? `/want-to-read#wish-${id}`);
+            sorted[0] && available.length <= 1
+              ? `/books/${sorted[0].bookId}`
+              : (workPath(openLibraryKey) ?? `/want-to-read/${id}`);
           return { id, title, author, cover, owners: haveIt(owners), to };
         }),
       friendIds: user.following.map((friend) => friend.id),
