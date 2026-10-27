@@ -111,20 +111,32 @@ test("an error answer isn't kept", async () => {
   expect(await prisma.openLibraryResponse.findUnique({ where: { url } })).toBeNull();
 });
 
-test("answers older than a month are cleared out", async () => {
-  const old = anAddress();
-  const recent = anAddress();
+// A fresh search address, as anAddress is for a record
+const aSearch = () =>
+  `https://openlibrary.org/search.json?q=${crypto.randomUUID()}`;
+
+test("searches older than a month are cleared out, records after a year", async () => {
+  const oldSearch = aSearch();
+  const recentSearch = aSearch();
+  const monthOldRecord = anAddress();
+  const yearOldRecord = anAddress();
   await prisma.openLibraryResponse.createMany({
     data: [
-      { url: old, body: "{}", fetchedAt: new Date(Date.now() - 31 * DAY) },
-      { url: recent, body: "{}", fetchedAt: new Date(Date.now() - DAY) },
+      { url: oldSearch, body: "{}", fetchedAt: new Date(Date.now() - 31 * DAY) },
+      { url: recentSearch, body: "{}", fetchedAt: new Date(Date.now() - DAY) },
+      { url: monthOldRecord, body: "{}", fetchedAt: new Date(Date.now() - 31 * DAY) },
+      { url: yearOldRecord, body: "{}", fetchedAt: new Date(Date.now() - 366 * DAY) },
     ],
   });
 
   await clearOutOld();
 
-  expect(await prisma.openLibraryResponse.findUnique({ where: { url: old } })).toBeNull();
-  expect(await prisma.openLibraryResponse.findUnique({ where: { url: recent } })).not.toBeNull();
+  const kept = async (url: string) =>
+    (await prisma.openLibraryResponse.findUnique({ where: { url } })) !== null;
+  expect(await kept(oldSearch)).toBe(false);
+  expect(await kept(recentSearch)).toBe(true);
+  expect(await kept(monthOldRecord)).toBe(true);
+  expect(await kept(yearOldRecord)).toBe(false);
 });
 
 test("an answer too slow for the caller is still kept for the next one", async () => {

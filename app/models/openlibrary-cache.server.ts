@@ -12,8 +12,11 @@ const DAY = 24 * 60 * 60 * 1000;
 // work's record hardly changes
 export const SEARCH_MAX_AGE_MS = DAY;
 export const RECORD_MAX_AGE_MS = 7 * DAY;
-// Answers older than this are cleared out now and then
-const KEEP_MS = 30 * DAY;
+// Answers older than this are cleared out now and then: searches after a
+// month, records (a work, an author, an edition) after a year, since
+// they hardly change and stand in whenever Open Library is down
+const KEEP_SEARCHES_MS = 30 * DAY;
+const KEEP_RECORDS_MS = 365 * DAY;
 // How long a request is let run, whether anyone's still waiting or not
 const FETCH_TIMEOUT_MS = 20000;
 
@@ -74,7 +77,17 @@ function waitAtMost<T>(pending: Promise<T>, timeoutMs: number) {
 
 export async function clearOutOld(now = Date.now()) {
   await prisma.openLibraryResponse
-    .deleteMany({ where: { fetchedAt: { lt: new Date(now - KEEP_MS) } } })
+    .deleteMany({
+      where: {
+        OR: [
+          {
+            url: { contains: "/search.json" },
+            fetchedAt: { lt: new Date(now - KEEP_SEARCHES_MS) },
+          },
+          { fetchedAt: { lt: new Date(now - KEEP_RECORDS_MS) } },
+        ],
+      },
+    })
     .catch(() => undefined);
 }
 

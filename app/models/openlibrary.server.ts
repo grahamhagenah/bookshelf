@@ -1,7 +1,8 @@
 
-import { editionCoverId, isbnCoverParts } from "~/covers.server";
+import { editionCoverId, isbnCoverParts, isOpenLibraryCover } from "~/covers.server";
 import { prisma } from "~/db.server";
 import type { Book } from "~/generated/prisma/client";
+import { isbnForms } from "~/isbn";
 import {
   cleanSubjects,
   editionPublisher,
@@ -256,6 +257,95 @@ export async function lookupWork(
   };
 }
 
+// What's read from a copy on someone's shelf to stand in for Open
+// Library's lookup
+const COPY_FIELDS = {
+  title: true,
+  author: true,
+  cover: true,
+  openLibraryKey: true,
+  datePublished: true,
+  pageCount: true,
+  subjects: true,
+  publisher: true,
+  firstSentence: true,
+  authorKey: true,
+  isbn: true,
+  body: true,
+} as const;
+
+type Copy = Pick<Book, keyof typeof COPY_FIELDS>;
+
+// A copy, as Open Library's lookup would give it
+function foundIn(copy: Copy): Found {
+  return {
+    title: copy.title,
+    author: copy.author || null,
+    key: copy.openLibraryKey,
+    // A cover pasted from elsewhere is that owner's own
+    cover: isOpenLibraryCover(copy.cover) ? copy.cover : null,
+    datePublished: copy.datePublished,
+    pageCount: copy.pageCount,
+    subjects: copy.subjects,
+    publisher: copy.publisher,
+    firstSentence: copy.firstSentence,
+    authorKey: copy.authorKey,
+    isbn: copy.isbn,
+  };
+}
+
+// What Stacks already knows of the book with this ISBN, either way of
+// writing it: a copy someone has whose work is known, with the catalog's
+// record of that work to fill any gaps. Null when no one has it.
+export async function knownByIsbn(isbn: string): Promise<Found | null> {
+  const forms = isbnForms(isbn);
+  if (forms.length === 0) return null;
+  const copy = await prisma.book.findFirst({
+    where: { isbn: { in: forms }, openLibraryKey: { not: null }, title: { not: "" } },
+    select: COPY_FIELDS,
+    // One whose details were looked up, the latest, first
+    orderBy: [{ detailsFetchedAt: { sort: "desc", nulls: "last" } }, { createdAt: "asc" }],
+  });
+  if (!copy?.openLibraryKey) return null;
+  const work = await prisma.catalogBook.findUnique({ where: { key: copy.openLibraryKey } });
+  const found = foundIn(copy);
+  return {
+    ...found,
+    author: found.author ?? work?.author ?? null,
+    cover: found.cover ?? (work?.coverId ? `https://covers.openlibrary.org/b/id/${work.coverId}-L.jpg` : null),
+    datePublished: found.datePublished ?? (work?.year ? String(work.year) : null),
+    pageCount: found.pageCount ?? work?.pages ?? null,
+    subjects: found.subjects ?? work?.subjects ?? null,
+    publisher: found.publisher ?? work?.publisher ?? null,
+  };
+}
+
+// A scanned or typed ISBN's book: from a copy already in Stacks when
+// there is one, so Open Library is asked only about books new to Stacks
+export async function lookupIsbn(isbn: string, timeoutMs = TIMEOUT_MS) {
+  return (await knownByIsbn(isbn)) ?? lookupWork({ title: "", author: "", isbn }, timeoutMs);
+}
+
+// Another copy of this book whose details were already looked up: the
+// same work, or for a book whose work isn't known, the same ISBN. One
+// with a description, if any has one.
+async function lookedUpCopy(book: Pick<Book, "id" | "openLibraryKey" | "isbn">) {
+  const forms = book.isbn ? isbnForms(book.isbn) : [];
+  const same = book.openLibraryKey
+    ? { openLibraryKey: book.openLibraryKey }
+    : forms.length
+      ? { isbn: { in: forms }, openLibraryKey: { not: null } }
+      : null;
+  if (!same) return null;
+  const copies = await prisma.book.findMany({
+    where: { ...same, id: { not: book.id }, detailsFetchedAt: { not: null } },
+    select: COPY_FIELDS,
+    orderBy: { detailsFetchedAt: "desc" },
+    take: 5,
+  });
+  return copies.find((copy) => copy.body) ?? copies[0] ?? null;
+}
+
 // Every cover Open Library has for a book: the work's own, then its
 // editions', newest-listed first. For the owner to pick from. Someone
 // clicked for this, so it waits out a slow Open Library; a book whose
@@ -335,8 +425,14 @@ export async function fetchDescription(key: string, timeoutMs = TIMEOUT_MS): Pro
 
 // Fills in whatever a book is missing (cover, description, details, the
 // opening line, the author) from Open Library, and remembers it was
-// looked up. Leaves what the owner already has alone.
-export async function fillInBook(bookId: Book["id"], timeoutMs = TIMEOUT_MS) {
+// looked up. Leaves what the owner already has alone. Another copy of
+// the same book that was looked up already answers instead, unless this
+// is someone refreshing the book, which goes to Open Library.
+export async function fillInBook(
+  bookId: Book["id"],
+  timeoutMs = TIMEOUT_MS,
+  { fresh = false } = {},
+) {
   const book = await prisma.book.findUnique({
     where: { id: bookId },
     select: {
@@ -356,12 +452,14 @@ export async function fillInBook(bookId: Book["id"], timeoutMs = TIMEOUT_MS) {
   if (!book) return;
 
   try {
-    const found = await lookupWork(book, timeoutMs);
+    const copy = fresh ? null : await lookedUpCopy(book);
+    const found = copy ? foundIn(copy) : await lookupWork(book, timeoutMs);
     const key = book.openLibraryKey ?? found?.key ?? null;
-    // The description and the author don't depend on each other
+    // The description and the author don't depend on each other. A copy
+    // brings its description, and its author was kept when it was looked up.
     const [description] = await Promise.all([
-      !book.body && key ? fetchDescription(key, timeoutMs) : "",
-      found?.authorKey ? refreshAuthor(found.authorKey, timeoutMs) : undefined,
+      book.body ? "" : copy ? copy.body : key ? fetchDescription(key, timeoutMs) : "",
+      !copy && found?.authorKey ? refreshAuthor(found.authorKey, timeoutMs) : undefined,
     ]);
 
     // A cover made from the ISBN is kept by its edition's cover ID, which
@@ -433,7 +531,7 @@ export async function ensureBookDetails(
   { force = false } = {},
 ) {
   if (book.detailsFetchedAt && !force) return;
-  await fillInBook(book.id);
+  await fillInBook(book.id, TIMEOUT_MS, { fresh: force });
 }
 
 export function getAuthor(key: string | null) {
