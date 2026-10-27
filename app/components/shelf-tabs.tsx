@@ -22,19 +22,19 @@ export default function ShelfTabs({
         {
           to: "/books",
           end: true,
-          label: "My shelf",
+          label: "Shelf",
           icon: <BookIcon size={16} className="hidden sm:block" />,
           count: counts.library,
         },
         {
           to: "/want-to-read",
-          label: "Want to read",
+          label: "To read",
           icon: <BookmarkIcon size={16} className="hidden sm:block" />,
           count: counts.want,
         },
         {
           to: "/read-elsewhere",
-          label: "Read elsewhere",
+          label: "Also read",
           icon: <ReadIcon size={16} className="hidden sm:block" />,
           count: counts.elsewhere,
         },
