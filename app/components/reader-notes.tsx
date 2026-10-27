@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useFetcher } from "react-router";
+import { useFetcher } from "react-router";
 
 import { PIN_MAX } from "~/profile";
 
@@ -122,13 +122,11 @@ function ReadToggle({ readAt }: { readAt: string | Date | null }) {
 // Where this book stands on its owner's public page
 export interface PageStanding {
   pinned: boolean;
-  hasNote: boolean;
   count: number;
   // From their own shelf, rather than borrowed from a friend
   own: boolean;
   // Kept off public pages (by its owner, when it's a friend's)
   hidden: boolean;
-  on: boolean;
 }
 
 function usePageStanding(page: PageStanding) {
@@ -149,39 +147,21 @@ function usePageStanding(page: PageStanding) {
   return { fetcher, pinned, hidden, full };
 }
 
-// Why it can't be pinned when the page's favorites are all taken, and
-// where to make room
-function FullNote({
-  className,
-  after = false,
-}: {
-  className: string;
-  after?: boolean;
-}) {
-  return (
-    <span>
-      {after ? (
-        <span aria-hidden="true" className="mr-1.5">
-          ·
-        </span>
-      ) : null}
-      Favorites full ({PIN_MAX} of {PIN_MAX}).{" "}
-      <Link to="/account#pinned" className={className}>
-        Unpin one
-      </Link>
-    </span>
-  );
-}
+// This book's place on your public page, from the bottom of the book page:
+// rarely needed, so quiet links beside Edit details rather than buttons
+const quietAction =
+  "inline-flex items-center gap-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+const quietLabel =
+  "underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600";
 
 // Pinning it to the favorites at the top of your public page. Your note
-// on it is what shows there with it. Rarely needed, so the book page keeps
-// it at the bottom, a quiet link beside Edit details.
+// on it is what shows there with it.
 export function PinToggle({ page }: { page: PageStanding }) {
   const { fetcher, pinned, hidden, full } = usePageStanding(page);
   // A book kept off the page can't be at the top of it
   const off = !pinned && hidden;
   return (
-    <fetcher.Form method="post">
+    <fetcher.Form method="post" className="inline-flex items-center gap-2">
       <input type="hidden" name="intent" value={pinned ? "unpin" : "pin"} />
       <button
         type="submit"
@@ -189,7 +169,7 @@ export function PinToggle({ page }: { page: PageStanding }) {
         title={
           off
             ? page.own
-              ? "It's kept off your public page. Show it there first."
+              ? "It's hidden from your public page. Show it there first."
               : "Its owner keeps it off public pages."
             : full
               ? `Your public page shows ${PIN_MAX}. Unpin one in Settings first.`
@@ -197,82 +177,45 @@ export function PinToggle({ page }: { page: PageStanding }) {
                 ? undefined
                 : "Put it in the favorites at the top of your public page, with your note"
         }
-        className="inline-flex items-center gap-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        className={quietAction}
       >
         <PinIcon size={14} filled={pinned} />
-        <span className="underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600">
-          {pinned ? "Unpin from my page" : "Pin to my page"}
+        <span className={quietLabel}>
+          {pinned ? "Unpin from top of my page" : "Pin to top of my page"}
         </span>
       </button>
+      {fetcher.data?.pinError ? (
+        <span role="alert" className="text-sm text-red-700 dark:text-red-400">
+          {fetcher.data.pinError}
+        </span>
+      ) : null}
     </fetcher.Form>
   );
 }
 
-// One quiet line under the pin: is this book on your public page at all,
-// and, on your own shelf, the switch to keep it off
-export function PageLine({ page }: { page: PageStanding }) {
-  const { fetcher, pinned, hidden, full } = usePageStanding(page);
-  const link =
-    "underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100";
-  // A friend's book: whether it's shown at all is theirs to say, so
-  // there's only something to say once it's pinned, or can't be
-  if (!page.own) {
-    if (!pinned && !hidden && !full) return null;
-    if (full && !hidden) {
-      return (
-        <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
-          <FullNote className={link} />
-        </p>
-      );
-    }
-    return (
-      <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
-        {hidden
-          ? pinned
-            ? "Pinned, but its owner keeps it off public pages, so it isn't shown"
-            : "Its owner keeps it off public pages"
-          : page.hasNote
-            ? "Pinned to your public page, with your note. Who lent it isn't shown"
-            : "Pinned to your public page. Leave a note to show with it"}
-        {page.on ? null : " (yours is off for now)"}.
-        {fetcher.data?.pinError ? (
-          <span role="alert" className="ml-1.5 text-red-700 dark:text-red-400">
-            {fetcher.data.pinError}
-          </span>
-        ) : null}
-      </p>
-    );
-  }
+// Keeping one of your own books off your public page altogether. Friends
+// still see it on your shelf. Whether a friend's book shows is theirs to say.
+export function HideToggle({ page }: { page: PageStanding }) {
+  const { fetcher, hidden } = usePageStanding(page);
+  if (!page.own) return null;
   return (
-    <fetcher.Form
-      method="post"
-      className="mt-2 flex flex-wrap items-center gap-x-1.5 text-xs text-stone-500 dark:text-stone-400"
-    >
-      {hidden ? <HiddenIcon size={12} className="flex-shrink-0" /> : null}
-      <span>
-        {hidden
-          ? "Kept off your public page"
-          : pinned
-            ? page.hasNote
-              ? "Pinned to your public page, with your note"
-              : "Pinned to your public page. Leave a note to show with it"
-            : "Shown on your public page"}
-        {page.on ? null : " (it's off for now)"}.
-      </span>
+    <fetcher.Form method="post">
       <button
         type="submit"
         name="intent"
         value={hidden ? "showOnPage" : "hideFromPage"}
-        className={link}
+        title={
+          hidden
+            ? undefined
+            : "Keep it off your public page. Friends still see it on your shelf."
+        }
+        className={quietAction}
       >
-        {hidden ? "Show it" : "Keep it off"}
-      </button>
-      {full && !hidden ? <FullNote className={link} after /> : null}
-      {fetcher.data?.pinError ? (
-        <span role="alert" className="text-red-700 dark:text-red-400">
-          {fetcher.data.pinError}
+        <HiddenIcon size={14} />
+        <span className={quietLabel}>
+          {hidden ? "Show on my page" : "Hide from my page"}
         </span>
-      ) : null}
+      </button>
     </fetcher.Form>
   );
 }
