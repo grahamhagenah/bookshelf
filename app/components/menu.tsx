@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Form, Link, useLocation, useMatches } from "react-router";
 
+import { shelfPath } from "~/profile";
+
 import Avatar from "./avatar";
 import {
   BookIcon,
@@ -9,7 +11,6 @@ import {
   GroupIcon,
   LogoutIcon,
   DashboardIcon,
-  BookmarkIcon,
 } from "./icons";
 
 interface RootLoaderData {
@@ -21,6 +22,8 @@ interface RootLoaderData {
     demoGroup?: string | null;
     isAdmin?: boolean;
     profileEmoji?: string | null;
+    handle?: string | null;
+    shareToken?: string | null;
   } | null;
 }
 
@@ -56,20 +59,43 @@ export default function PositionedMenu() {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
   const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  // Your shelf as others see it, while sharing is on
+  const publicShelf = user ? shelfPath(user) : null;
 
+  // Closes on a click outside, on Escape (back to the avatar) and when
+  // focus tabs out of it
   useEffect(() => {
+    if (!open) return;
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setOpen(false);
       }
     }
+    function handleKey(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      buttonRef.current?.focus();
+    }
+    function handleFocus(event: FocusEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("keydown", handleKey);
+    document.addEventListener("focusin", handleFocus);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKey);
+      document.removeEventListener("focusin", handleFocus);
+    };
+  }, [open]);
 
   return (
     <div className="relative inline-block" ref={menuRef}>
       <button
+        ref={buttonRef}
         onClick={() => setOpen(!open)}
         aria-label={user ? "Account menu" : "Log in"}
         aria-expanded={open}
@@ -96,13 +122,31 @@ export default function PositionedMenu() {
         // On phones: wider, with larger text and icons
         <div className="absolute right-0 mt-1 w-72 md:w-52 bg-white dark:bg-stone-950 rounded-xl md:rounded-lg shadow-soft border border-stone-200/80 dark:border-stone-800 py-1.5 md:py-1 z-50 text-base md:text-sm [&_svg]:size-[22px] md:[&_svg]:size-[18px] [&_svg]:text-stone-600 dark:[&_svg]:text-stone-300 [&_svg]:[stroke-width:1.75]">
           {user ? (
-            <div className="px-4 pt-2 pb-3 md:px-3 md:pt-1.5 md:pb-2 mb-1 border-b dark:border-stone-800">
-              <p className="truncate font-medium text-stone-900 dark:text-stone-100">
-                {user.firstname} {user.surname}
-              </p>
-              <p className="truncate text-sm md:text-xs text-stone-500 dark:text-stone-400">
-                {user.demoGroup ? "Demo account" : user.email}
-              </p>
+            <div className="mb-1 border-b dark:border-stone-800 pb-1">
+              {publicShelf ? (
+                // Your name opens your shelf as friends and visitors see it
+                <Link
+                  to={publicShelf}
+                  onClick={() => setOpen(false)}
+                  className="block px-4 py-2 md:px-3 md:py-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                >
+                  <span className="block truncate font-medium text-stone-900 dark:text-stone-100">
+                    {user.firstname} {user.surname}
+                  </span>
+                  <span className="block truncate text-sm md:text-xs text-stone-500 dark:text-stone-400">
+                    View your public shelf
+                  </span>
+                </Link>
+              ) : (
+                <div className="px-4 pt-2 pb-2 md:px-3 md:pt-1.5 md:pb-1">
+                  <p className="truncate font-medium text-stone-900 dark:text-stone-100">
+                    {user.firstname} {user.surname}
+                  </p>
+                  <p className="truncate text-sm md:text-xs text-stone-500 dark:text-stone-400">
+                    {user.demoGroup ? "Demo account" : user.email}
+                  </p>
+                </div>
+              )}
             </div>
           ) : null}
           {/* The header has its own link on wider screens */}
@@ -121,14 +165,6 @@ export default function PositionedMenu() {
           >
             <GroupIcon size={18} />
             <span>Friends</span>
-          </Link>
-          <Link
-            to="/want-to-read"
-            onClick={() => setOpen(false)}
-            className={item}
-          >
-            <BookmarkIcon size={18} />
-            <span>Want to read</span>
           </Link>
           <Link to="/account" onClick={() => setOpen(false)} className={item}>
             <SettingsIcon size={18} />
