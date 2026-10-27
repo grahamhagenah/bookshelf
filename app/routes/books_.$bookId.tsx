@@ -2510,8 +2510,7 @@ export default function BookDetailsPage() {
                         >
                           Fix it on Open Library
                         </a>
-                        , then refresh. That fixes it for everyone who adds this
-                        book after you.
+                        , then refresh.
                       </p>
                     ) : null}
                     {refreshResult ? (
