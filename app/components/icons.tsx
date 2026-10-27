@@ -61,13 +61,13 @@ export function SettingsIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
-// Two people side by side, the same size: friends, as equals
+// A pulse line, for what friends have been up to
 export function GroupIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="7.5" cy="8.5" r="3"/>
-      <circle cx="16.5" cy="8.5" r="3"/>
-      <path d="M2 19.5c0-3 2.5-5.5 5.5-5.5 1.7 0 3.3.8 4.5 2.1 1.2-1.3 2.8-2.1 4.5-2.1 3 0 5.5 2.5 5.5 5.5"/>
+      <circle cx="9" cy="8" r="3.5"/>
+      <path d="M2.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/>
+      <path d="M16 4.6a3.5 3.5 0 010 6.8M18.5 14c1.8 1 3 3 3 6"/>
     </svg>
   );
 }
