@@ -5,5 +5,4 @@ import type { Config } from "@react-router/dev/config";
 export default {
   ssr: true,
   buildDirectory: process.env.BUILD_DIR || "build",
-  serverModuleFormat: "cjs",
 } satisfies Config;

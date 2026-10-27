@@ -128,7 +128,7 @@ export default tseslint.config(
 
   // Node scripts and config
   {
-    files: ["*.config.{js,mjs,ts}", "mocks/**/*.js"],
+    files: ["*.config.{js,mjs,ts}"],
     languageOptions: { globals: globals.node },
   },
 
