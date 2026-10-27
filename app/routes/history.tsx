@@ -53,7 +53,8 @@ const noteLink =
 
 function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] }) {
   const borrowed = entry.kind === "borrowed";
-  const name = `${entry.person.firstname} ${entry.person.surname}`;
+  // First names: the rows say enough without the rest, and stay short
+  const name = entry.person.firstname;
   const person = (
     <strong className="whitespace-nowrap font-semibold text-stone-800 dark:text-stone-200">
       <PersonLink id={entry.person.id} name={name} friendIds={friendIds} />
