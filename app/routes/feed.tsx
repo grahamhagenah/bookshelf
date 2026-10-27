@@ -237,7 +237,7 @@ export default function Feed() {
         <h1 className="sr-only">Feed</h1>
         {prompts.length > 0 ? (
           <div className="mb-6">
-            <NotePrompt books={prompts} />
+            <NotePrompt books={prompts} userId={userId} />
           </div>
         ) : null}
         {activity.length > 0 ? (
