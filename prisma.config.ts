@@ -13,7 +13,5 @@ export default defineConfig({
   },
   datasource: {
     url: `file:${databaseFile(process.env.DATABASE_URL ?? "file:./data.db")}`,
-    // For checking the migrations against the schema
-    shadowDatabaseUrl: `file:${databaseFile("file:./shadow.db")}`,
   },
 });
