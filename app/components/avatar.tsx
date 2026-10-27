@@ -294,11 +294,11 @@ const ICON_PATHS = {
   skull: (
     <>
       {/* A skull: the cranium narrowing to a jaw, two sockets, a soft
-          point-down nose and two teeth */}
+          point-up nose and two teeth */}
       <path d="M4.5 11.5C4.5 6.5 7.9 3.5 12 3.5s7.5 3 7.5 8c0 3-1.3 4.9-3 5.8V21h-9v-3.7c-1.7-.9-3-2.8-3-5.8z" />
       <ellipse cx="9" cy="11.6" rx="2" ry="2.2" fill="currentColor" stroke="none" />
       <ellipse cx="15" cy="11.6" rx="2" ry="2.2" fill="currentColor" stroke="none" />
-      <path d="M11.1 14.3h1.8L12 15.9z" fill="currentColor" />
+      <path d="M11.1 15.9h1.8L12 14.3z" fill="currentColor" />
       <path d="M10.5 18v3M13.5 18v3" />
     </>
   ),
