@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment } from "react";
 import { Link, useFetcher } from "react-router";
 
 import { daysUntil, dueText } from "~/due";
@@ -6,6 +6,7 @@ import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
 
 import BookCover from "./book-cover";
+import Faces from "./faces";
 import FriendActivityItem from "./friend-activity";
 import { LentIcon } from "./icons";
 import { InviteButtons } from "./invite-message";
@@ -35,6 +36,8 @@ export interface HomeGroup {
   memberCount: number;
   bookCount: number;
   path: string;
+  // A few of the people in it, for their pictures
+  faces: { id: string; firstname: string; surname: string; profileEmoji: string | null }[];
 }
 // A book you're in line for: whose copy, and your place in line
 export interface Waiting {
@@ -86,6 +89,8 @@ function AddButton({ to, children }: { to: string; children: string }) {
 // The most pressing few loans each way (late and due soon come first); the
 // headings link to the rest on your shelf
 const LOANS_SHOWN = 3;
+// And as many of friends' latest posts beside them
+export const POSTS_SHOWN = 3;
 
 // One row of a loan list: the book, who it's from or to, and when it's
 // due, with a note when something needs doing (someone's waiting for it).
@@ -630,30 +635,16 @@ export default function Home({
     welcomeDismissed ||
     skipping ||
     (ownCount >= BOOK_GOAL && friendIds.length + requestsSent + nameCount > 0);
+  // A group's books to borrow go with the loans too
   const showLoans =
-    setupDone || books.borrowed.length + books.lent.length + waiting.length > 0;
+    setupDone ||
+    books.borrowed.length + books.lent.length + waiting.length + groups.length > 0;
   const showRecent = setupDone || ownCount > 0;
   const showWanted = setupDone || wanted.length > 0;
-  const showFeed = setupDone || friendIds.length > 0 || groups.length > 0;
+  const showFeed = setupDone || friendIds.length > 0;
   const showMain = showLoans || showRecent || showWanted;
   // Every section after the first is set off by a rule
   const divided = "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6";
-  // Whether the side column's activity runs past the main column, so it's
-  // cut there with a fade
-  const railRef = useRef<HTMLDivElement>(null);
-  const [railCut, setRailCut] = useState(false);
-  useEffect(() => {
-    const rail = railRef.current;
-    if (!rail) return;
-    const check = () => setRailCut(rail.scrollHeight > rail.clientHeight + 1);
-    check();
-    const observer = new ResizeObserver(check);
-    observer.observe(rail);
-    // Its contents too, as posts come and go
-    for (const child of Array.from(rail.children)) observer.observe(child);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <main className="px-4 md:px-8 pt-4 md:pt-8 pb-8 md:pb-10">
       <h1 className="sr-only">Home</h1>
@@ -679,7 +670,8 @@ export default function Home({
         }`}
       >
         {showMain ? (
-          <div className={showFeed ? "lg:pr-10" : undefined}>
+          // min-w-0, so a long line truncates instead of widening the page
+          <div className={`min-w-0 ${showFeed ? "lg:pr-10" : ""}`}>
             {/* By rank: loans first when there are any, then your recent
                 books, then want-to-read (lifted above your books when a
                 friend has one of them). Empty ones (shown once setup's
@@ -747,6 +739,38 @@ export default function Home({
                         empty="Everything's on your shelf."
                       />
                     </div>
+                    {/* Your groups, a line each: the way to their books */}
+                    {groups.length > 0 ? (
+                      <ul className="mt-4">
+                        {groups.map((group) => (
+                          <li key={group.id}>
+                            <Link
+                              to={group.path}
+                              className="-mx-2 flex items-center gap-2.5 rounded-md px-2 py-2 text-sm hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+                            >
+                              <Faces people={group.faces} size="xs" max={4} />
+                              {/* One line; on phones, the details under the name */}
+                              <span className="min-w-0 text-stone-500 dark:text-stone-400 sm:truncate">
+                                <span className="block truncate font-medium text-stone-900 dark:text-stone-100 sm:inline">
+                                  {group.name}
+                                </span>
+                                <span className="hidden sm:inline"> · </span>
+                                <span className="block truncate sm:inline">
+                                {group.memberCount} {group.memberCount === 1 ? "person" : "people"} ·{" "}
+                                {/* Others' books, as the group's page counts them */}
+                                {group.bookCount === 0
+                                  ? "no books to borrow yet"
+                                  : `${group.bookCount} ${group.bookCount === 1 ? "book" : "books"} to borrow`}
+                                </span>
+                              </span>
+                              <span aria-hidden="true" className="ml-auto flex-shrink-0 text-stone-400 dark:text-stone-500">
+                                →
+                              </span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </section>
                 ),
               },
@@ -879,102 +903,41 @@ export default function Home({
             aria-labelledby="friend-activity"
             className={
               showMain
-                ? "border-t border-stone-200 dark:border-stone-800 pt-8 lg:flex lg:min-h-[30rem] lg:flex-col lg:border-t-0 lg:border-l lg:pt-0"
+                ? "border-t border-stone-200 dark:border-stone-800 pt-8 lg:border-t-0 lg:border-l lg:pt-0"
                 : undefined
             }
           >
-            {groups.length > 0 ? (
-              <section
-                aria-labelledby="your-groups"
-                className={`mb-8 ${showMain ? "lg:pl-8" : ""}`}
-              >
-                <h2 id="your-groups" className={`${sectionHeading} mb-2`}>
-                  <Link to="/groups" className={headingLink}>
-                    Groups
-                  </Link>
-                </h2>
+            {/* The latest few, like the loans beside them, and the way to the rest */}
+            <div className={showMain ? "lg:pl-8" : undefined}>
+              <h2 id="friend-activity" className={`${sectionHeading} mb-2`}>
+                <Link to="/feed" className={headingLink}>
+                  Friend activity
+                </Link>
+              </h2>
+              {activity.length > 0 ? (
                 <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-                  {groups.map((group) => (
-                    <li key={group.id}>
-                      <Link
-                        to={group.path}
-                        className="-mx-2 flex items-baseline justify-between gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
-                      >
-                        <span className="min-w-0 truncate font-medium text-stone-900 dark:text-stone-100">
-                          {group.name}
-                        </span>
-                        <span className="flex-shrink-0 text-sm text-stone-500 dark:text-stone-400">
-                          {/* Others' books, as the group's page counts them */}
-                          {group.memberCount} {group.memberCount === 1 ? "person" : "people"} ·{" "}
-                          {group.bookCount} to borrow
-                        </span>
-                      </Link>
+                  {activity.map((item) => (
+                    <li key={item.id}>
+                      <FriendActivityItem item={item} friendIds={friendIds} />
                     </li>
                   ))}
                 </ul>
-              </section>
-            ) : null}
-            {/* Beside the main column, no taller than it, sharing it with
-                the chart below: what doesn't fit fades out, with the way to
-                the rest */}
-            <div
-              className={
-                showMain ? "lg:relative lg:min-h-[16rem] lg:flex-1" : undefined
-              }
-            >
-              <div
-                ref={railRef}
-                className={
-                  showMain
-                    ? "lg:absolute lg:inset-0 lg:overflow-hidden lg:pl-8"
-                    : undefined
-                }
-              >
-                <h2 id="friend-activity" className={`${sectionHeading} mb-2`}>
-                  <Link to="/feed" className={headingLink}>
-                    Friend activity
+              ) : friendIds.length === 0 ? (
+                <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
+                  Add friends to see the books they add and love.{" "}
+                  <Link
+                    to="/friends/add"
+                    className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                  >
+                    Find friends
                   </Link>
-                </h2>
-                {activity.length > 0 ? (
-                  <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-                    {activity.map((item, index) => (
-                      <li
-                        key={item.id}
-                        // On phones the column sits below the rest, so it
-                        // keeps to six; beside it, as many as fit
-                        className={
-                          index >= 6 ? "hidden lg:list-item" : undefined
-                        }
-                      >
-                        <FriendActivityItem item={item} friendIds={friendIds} />
-                      </li>
-                    ))}
-                  </ul>
-                ) : friendIds.length === 0 ? (
-                  <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
-                    Add friends to see the books they add and love.{" "}
-                    <Link
-                      to="/friends/add"
-                      className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-                    >
-                      Find friends
-                    </Link>
-                  </p>
-                ) : (
-                  <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
-                    Nothing new from your friends lately.
-                  </p>
-                )}
-                {/* After the last post when they all fit; on the fade when not */}
-                {activity.length > 0 && !railCut ? (
-                  <SeeMore className="mt-3" />
-                ) : null}
-              </div>
-              {showMain && railCut ? (
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-28 items-end bg-gradient-to-t from-white from-45% to-transparent pl-8 dark:from-stone-950 lg:flex">
-                  <SeeMore className="pointer-events-auto" />
-                </div>
-              ) : null}
+                </p>
+              ) : (
+                <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
+                  Nothing new from your friends lately.
+                </p>
+              )}
+              {activity.length > 0 ? <SeeMore className="mt-3" /> : null}
             </div>
             {popular.length > 0 ? (
               <PopularChart

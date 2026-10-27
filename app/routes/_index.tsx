@@ -2,7 +2,7 @@
 import { data, useLoaderData } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import Home from "~/components/home";
+import Home, { POSTS_SHOWN } from "~/components/home";
 import Landing from "~/components/landing";
 import { groupPath } from "~/group-links";
 import { getFriendActivity } from "~/models/activity.server";
@@ -68,8 +68,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     names,
   ] = await Promise.all([
     getHomeBooks(user.id, shelf),
-    // Enough to fill the side column beside the rest; phones show six
-    getFriendActivity(user.id, { limit: 20 }),
+    // The latest few, as many as the loans beside them
+    getFriendActivity(user.id, { limit: POSTS_SHOWN }),
     getPendingFriendRequests(user.id),
     getWantToRead(user.id),
     getFriendInvite(user.id),
@@ -123,11 +123,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       inviteUrl: `${publicOrigin(request)}/invite/${invite}`,
       // Sharing a shelf with someone at home already, so it isn't offered
       sharesShelf: shelf.length > 1,
-      groups: groups.map(({ id, name, memberCount, bookCount }) => ({
+      groups: groups.map(({ id, name, memberCount, bookCount, faces }) => ({
         id,
         name,
         memberCount,
         bookCount,
+        faces,
         path: groupPath({ id, name }),
       })),
       waiting,
