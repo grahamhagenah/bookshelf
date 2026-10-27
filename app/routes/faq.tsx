@@ -376,42 +376,70 @@ export default function Faq() {
         What Stacks is, what it isn&apos;t, and how the lending works.
       </p>
 
-      <nav
-        aria-label="Sections"
-        className="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-sm"
-      >
-        {sections.map((section) => (
-          <a
-            key={section.heading}
-            href={`#${section.heading.toLowerCase().replace(/[^a-z]+/g, "-")}`}
-            className="text-stone-500 dark:text-stone-400 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline"
-          >
-            {section.heading}
-          </a>
-        ))}
+      {/* Jump links to each section: chips with a downward arrow, so
+          they read as "take me down there" */}
+      <nav aria-label="Jump to a section" className="mt-6">
+        <ul className="flex flex-wrap gap-2">
+          {sections.map((section) => (
+            <li key={section.heading}>
+              {/* The router's link, so it scrolls to the section rather
+                  than resetting to the top as a bare hash link does here */}
+              <Link
+                to={`#${section.heading.toLowerCase().replace(/[^a-z]+/g, "-")}`}
+                className="group inline-flex items-center gap-1.5 rounded-full border border-stone-200 dark:border-stone-700 px-3 py-1 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 hover:text-stone-950 dark:hover:text-white transition-colors"
+              >
+                {section.heading}
+                <span
+                  aria-hidden="true"
+                  className="text-stone-400 dark:text-stone-500 transition-transform group-hover:translate-y-0.5"
+                >
+                  ↓
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </nav>
 
-      {sections.map((section) => (
+      {sections.map((section, sectionIndex) => (
         <section
           key={section.heading}
           id={section.heading.toLowerCase().replace(/[^a-z]+/g, "-")}
-          className="mt-12 border-t border-stone-200 dark:border-stone-800 pt-8"
+          // Set apart by space and a bolder heading, rather than a rule
+          className="mt-14"
         >
-          <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400">
+          <h2 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
             {section.heading}
           </h2>
-          <dl className="mt-4 space-y-8">
-            {section.items.map((item) => (
-              <div key={item.q}>
-                <dt className={sectionHeading}>
-                  {item.q}
-                </dt>
-                <dd className="mt-2 text-pretty leading-relaxed text-stone-700 dark:text-stone-300">
+          {/* Questions to scan, each opening on its answer; the page's
+              first is open to start, so there's an answer in view */}
+          <div className="mt-2 divide-y divide-stone-200 dark:divide-stone-800">
+            {section.items.map((item, index) => (
+              <details key={item.q} open={sectionIndex + index === 0} className="group py-4">
+                <summary
+                  className={`${sectionHeading} flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden`}
+                >
+                  <span>{item.q}</span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                    className="flex-shrink-0 text-stone-400 transition-transform group-open:rotate-180"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </summary>
+                <div className="mt-2 text-pretty leading-relaxed text-stone-700 dark:text-stone-300">
                   {item.a}
-                </dd>
-              </div>
+                </div>
+              </details>
             ))}
-          </dl>
+          </div>
         </section>
       ))}
 
