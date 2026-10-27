@@ -282,7 +282,7 @@ export default function WorkPage() {
   );
 
   return (
-    <main className="flex w-full flex-col gap-6 px-4 py-8 md:flex-row md:gap-12 md:px-8 md:py-12">
+    <main className="flex w-full flex-col gap-6 px-4 py-8 md:flex-row md:gap-12 lg:gap-16 xl:gap-20 md:px-8 md:py-12">
       <section className="flex-shrink-0 space-y-4 md:w-[200px] lg:w-[240px]">
         <div className="flex items-start gap-4">
           <BookCover

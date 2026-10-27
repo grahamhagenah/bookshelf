@@ -9,7 +9,7 @@ import ErrorPage from "~/components/error-page";
 import { LentIcon, PencilIcon } from "~/components/icons";
 import OpeningLine, { openingLineType } from "~/components/opening-line";
 import PersonLink from "~/components/person-link";
-import ReaderNotes from "~/components/reader-notes";
+import ReaderNotes, { HideToggle, PinToggle } from "~/components/reader-notes";
 import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
 import { importCover, isOpenLibraryCover } from "~/covers.server";
 import { sendBookRequestEmail } from "~/email.server";
@@ -489,7 +489,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
             ...(await getPin(userId, book.id)),
             own: isOwner,
             hidden: book.hiddenFromPage,
-            on: Boolean(currentUser?.shareToken),
           }
         : null,
   });
@@ -1993,7 +1992,7 @@ export default function BookDetailsPage() {
 
   return (
     <>
-      <main className="flex flex-col md:flex-row gap-6 md:gap-12 md:gap-12 px-4 md:px-8 py-8 md:py-12 w-full">
+      <main className="flex flex-col md:flex-row gap-6 md:gap-12 lg:gap-16 xl:gap-20 px-4 md:px-8 py-8 md:py-12 w-full">
         {/* The cover stays in view while the page scrolls, on screens tall
             enough to hold it with the lending form open below the header */}
         <section className="flex-shrink-0 md:w-[200px] lg:w-[240px] space-y-4 md:self-start md:[@media(min-height:45rem)]:sticky md:[@media(min-height:45rem)]:top-20">
@@ -2507,7 +2506,6 @@ export default function BookDetailsPage() {
               maxLength={data.noteMaxLength}
               friendIds={data.friendIds}
               readAt={data.readAt}
-              page={data.page}
             />
           ) : null}
 
@@ -2517,22 +2515,29 @@ export default function BookDetailsPage() {
             </div>
           ) : null}
 
-          {/* Rarely needed, so it waits at the very bottom. The form opens
-              at the top, so the page goes back up to it. */}
-          {data.isOwner && !isEditing ? (
-            <button
-              type="button"
-              onClick={() => {
-                setIsEditing(true);
-                window.scrollTo({ top: 0 });
-              }}
-              className="mt-12 inline-flex items-center gap-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
-            >
-              <PencilIcon size={14} />
-              <span className="underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600">
-                Edit details or cover
-              </span>
-            </button>
+          {/* Rarely needed, so they wait at the very bottom: fixing the
+              details, and this book's place on your public page */}
+          {!isEditing && (data.isOwner || data.page) ? (
+            <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2">
+              {data.isOwner ? (
+                <button
+                  type="button"
+                  // The form opens at the top, so the page goes back up
+                  onClick={() => {
+                    setIsEditing(true);
+                    window.scrollTo({ top: 0 });
+                  }}
+                  className="inline-flex items-center gap-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+                >
+                  <PencilIcon size={14} />
+                  <span className="underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600">
+                    Edit details or cover
+                  </span>
+                </button>
+              ) : null}
+              {data.page ? <PinToggle page={data.page} /> : null}
+              {data.page ? <HideToggle page={data.page} /> : null}
+            </div>
           ) : null}
         </section>
       </main>

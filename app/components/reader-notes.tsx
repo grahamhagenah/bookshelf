@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import { Link, useFetcher } from "react-router";
+import { Fragment, useEffect, useState } from "react";
+import type { ReactNode } from "react";
+import { useFetcher } from "react-router";
 
 import { PIN_MAX } from "~/profile";
 
 import Avatar from "./avatar";
-import { HeartIcon, HiddenIcon, PencilIcon, PinIcon, ReadIcon } from "./icons";
+import { HeartIcon, HiddenIcon, PinIcon, ReadIcon } from "./icons";
 import PersonLink from "./person-link";
 import { sectionHeading } from "./ui";
 
@@ -28,8 +29,8 @@ const formatDate = (date: string | Date) =>
     year: "numeric",
   });
 
-// Your own marks on a book (a heart, having read it, a note) share one
-// look: a small rounded toggle, tinted once it's on
+// Your own marks on a book (a heart, having read it) share one look: a
+// small rounded toggle, tinted once it's on
 const chip = (on: string | false) =>
   `inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
     on ||
@@ -49,8 +50,32 @@ function useLoved(myNote: ReaderNote | null) {
   return { fetcher, loved };
 }
 
-// Your heart for this copy, for anyone who's read it
-function HeartToggle({ myNote }: { myNote: ReaderNote | null }) {
+// Who loved it, the way a reaction count reads: "Anika", "Maya and Anika",
+// "You, Maya, and Anika", then "You, Maya, and 3 others" past three, so it
+// stays one short line. Three or more get the Oxford comma.
+function lovedBy(names: ReactNode[]) {
+  const shown = names.length > 3 ? names.slice(0, 2) : names;
+  const rest = names.length - shown.length;
+  const parts = rest > 0 ? [...shown, `${rest} others`] : shown;
+  const last = parts.length > 2 ? ", and " : " and ";
+  return parts.map((part, index) => (
+    <Fragment key={index}>
+      {index === 0 ? null : index === parts.length - 1 ? last : ", "}
+      {part}
+    </Fragment>
+  ));
+}
+
+// Your heart for this copy, for anyone who's read it. Once it's given, it
+// names everyone else who gave one too.
+function HeartToggle({
+  myNote,
+  others,
+}: {
+  myNote: ReaderNote | null;
+  // First names of the others who loved it
+  others: string[];
+}) {
   const { fetcher, loved } = useLoved(myNote);
   return (
     <fetcher.Form method="post">
@@ -70,7 +95,7 @@ function HeartToggle({ myNote }: { myNote: ReaderNote | null }) {
           filled={loved}
           className={loved ? "text-rose-500" : ""}
         />
-        {loved ? "You loved it" : "Love it"}
+        {loved ? <>{lovedBy(["You", ...others])} loved it</> : "Love it"}
       </button>
     </fetcher.Form>
   );
@@ -122,13 +147,11 @@ function ReadToggle({ readAt }: { readAt: string | Date | null }) {
 // Where this book stands on its owner's public page
 export interface PageStanding {
   pinned: boolean;
-  hasNote: boolean;
   count: number;
   // From their own shelf, rather than borrowed from a friend
   own: boolean;
   // Kept off public pages (by its owner, when it's a friend's)
   hidden: boolean;
-  on: boolean;
 }
 
 function usePageStanding(page: PageStanding) {
@@ -149,145 +172,75 @@ function usePageStanding(page: PageStanding) {
   return { fetcher, pinned, hidden, full };
 }
 
-// Why it can't be pinned when the page's favorites are all taken, and
-// where to make room
-function FullNote({
-  className,
-  after = false,
-}: {
-  className: string;
-  after?: boolean;
-}) {
-  return (
-    <span>
-      {after ? (
-        <span aria-hidden="true" className="mr-1.5">
-          ·
-        </span>
-      ) : null}
-      Favorites full ({PIN_MAX} of {PIN_MAX}).{" "}
-      <Link to="/account#pinned" className={className}>
-        Unpin one
-      </Link>
-    </span>
-  );
-}
+// This book's place on your public page, from the bottom of the book page:
+// rarely needed, so quiet links beside Edit details rather than buttons
+const quietAction =
+  "inline-flex items-center gap-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+const quietLabel =
+  "underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600";
 
-// Pinning it to the favorites at the top of your public page, beside the
-// heart and the read mark, since it's another thing you say about it.
-// Your note on it is what shows there with it.
-function PinToggle({ page }: { page: PageStanding }) {
+// Pinning it to the favorites at the top of your public page. Your note
+// on it is what shows there with it.
+export function PinToggle({ page }: { page: PageStanding }) {
   const { fetcher, pinned, hidden, full } = usePageStanding(page);
   // A book kept off the page can't be at the top of it
   const off = !pinned && hidden;
   return (
-    <fetcher.Form method="post">
+    <fetcher.Form method="post" className="inline-flex items-center gap-2">
       <input type="hidden" name="intent" value={pinned ? "unpin" : "pin"} />
       <button
         type="submit"
-        aria-pressed={pinned}
         disabled={full || off}
         title={
           off
             ? page.own
-              ? "It's kept off your public page. Show it there first."
+              ? "It's hidden from your public page. Show it there first."
               : "Its owner keeps it off public pages."
             : full
               ? `Your public page shows ${PIN_MAX}. Unpin one in Settings first.`
               : pinned
-                ? "Unpin it from your public page"
+                ? undefined
                 : "Put it in the favorites at the top of your public page, with your note"
         }
-        className={`${chip(
-          pinned &&
-            "border-stone-300 bg-stone-100 text-stone-800 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100",
-        )} disabled:cursor-not-allowed disabled:opacity-50`}
+        className={quietAction}
       >
-        {/* Both labels share one cell, so the row doesn't shift */}
-        <span className="grid justify-items-center">
-          <span
-            className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${pinned ? "invisible" : ""}`}
-          >
-            <PinIcon size={14} />
-            Pin to my page
-          </span>
-          <span
-            className={`col-start-1 row-start-1 inline-flex items-center gap-1.5 ${pinned ? "" : "invisible"}`}
-          >
-            <PinIcon size={14} filled />
-            Pinned to my page
-          </span>
+        <PinIcon size={14} filled={pinned} />
+        <span className={quietLabel}>
+          {pinned ? "Unpin from top of my page" : "Pin to top of my page"}
         </span>
       </button>
+      {fetcher.data?.pinError ? (
+        <span role="alert" className="text-sm text-red-700 dark:text-red-400">
+          {fetcher.data.pinError}
+        </span>
+      ) : null}
     </fetcher.Form>
   );
 }
 
-// One quiet line under the buttons, for the owner: is this book on their
-// public page at all, and the switch to keep it off
-function PageLine({ page }: { page: PageStanding }) {
-  const { fetcher, pinned, hidden, full } = usePageStanding(page);
-  const link =
-    "underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100";
-  // A friend's book: whether it's shown at all is theirs to say, so
-  // there's only something to say once it's pinned, or can't be
-  if (!page.own) {
-    if (!pinned && !hidden && !full) return null;
-    if (full && !hidden) {
-      return (
-        <p className="mb-4 text-xs text-stone-500 dark:text-stone-400">
-          <FullNote className={link} />
-        </p>
-      );
-    }
-    return (
-      <p className="mb-4 text-xs text-stone-500 dark:text-stone-400">
-        {hidden
-          ? pinned
-            ? "Pinned, but its owner keeps it off public pages, so it isn't shown"
-            : "Its owner keeps it off public pages"
-          : page.hasNote
-            ? "Pinned to your public page, with your note. Who lent it isn't shown"
-            : "Pinned to your public page. Leave a note to show with it"}
-        {page.on ? null : " (yours is off for now)"}.
-        {fetcher.data?.pinError ? (
-          <span role="alert" className="ml-1.5 text-red-700 dark:text-red-400">
-            {fetcher.data.pinError}
-          </span>
-        ) : null}
-      </p>
-    );
-  }
+// Keeping one of your own books off your public page altogether. Friends
+// still see it on your shelf. Whether a friend's book shows is theirs to say.
+export function HideToggle({ page }: { page: PageStanding }) {
+  const { fetcher, hidden } = usePageStanding(page);
+  if (!page.own) return null;
   return (
-    <fetcher.Form
-      method="post"
-      className="mb-4 flex flex-wrap items-center gap-x-1.5 text-xs text-stone-500 dark:text-stone-400"
-    >
-      {hidden ? <HiddenIcon size={12} className="flex-shrink-0" /> : null}
-      <span>
-        {hidden
-          ? "Kept off your public page"
-          : pinned
-            ? page.hasNote
-              ? "Pinned to your public page, with your note"
-              : "Pinned to your public page. Leave a note to show with it"
-            : "Shown on your public page"}
-        {page.on ? null : " (it's off for now)"}.
-      </span>
+    <fetcher.Form method="post">
       <button
         type="submit"
         name="intent"
         value={hidden ? "showOnPage" : "hideFromPage"}
-        className={link}
+        title={
+          hidden
+            ? undefined
+            : "Keep it off your public page. Friends still see it on your shelf."
+        }
+        className={quietAction}
       >
-        {hidden ? "Show it" : "Keep it off"}
-      </button>
-      {full && !hidden ? <FullNote className={link} after /> : null}
-      {fetcher.data?.pinError ? (
-        <span role="alert" className="text-red-700 dark:text-red-400">
-          {fetcher.data.pinError}
+        <HiddenIcon size={14} />
+        <span className={quietLabel}>
+          {hidden ? "Show on my page" : "Hide from my page"}
         </span>
-      ) : null}
+      </button>
     </fetcher.Form>
   );
 }
@@ -300,7 +253,6 @@ export default function ReaderNotes({
   maxLength,
   friendIds,
   readAt,
-  page,
 }: {
   notes: ReaderNote[];
   myNote: ReaderNote | null;
@@ -309,8 +261,6 @@ export default function ReaderNotes({
   friendIds: string[];
   // When you read it, for readers of this copy
   readAt?: string | Date | null;
-  // For the owner: where it stands on their public page
-  page?: PageStanding | null;
 }) {
   const { loved } = useLoved(myNote);
   const noteFetcher = useFetcher<{ noteSaved?: boolean }>();
@@ -324,9 +274,9 @@ export default function ReaderNotes({
 
   const isSaving = noteFetcher.state !== "idle";
   const hasNotes = notes.some((note) => note.body);
-  // Other readers who left a heart but no words
-  const heartsOnly = notes.filter(
-    (note) => note.loved && !note.body && note.id !== myNote?.id,
+  // Everyone else who gave a heart, with a note or without
+  const otherHearts = notes.filter(
+    (note) => note.loved && note.id !== myNote?.id,
   );
 
   return (
@@ -337,53 +287,56 @@ export default function ReaderNotes({
       >
         Reader notes
       </h2>
-      {/* Hearts first: yours to give, and who else gave one without a note
-          (people who wrote one show it on their note below) */}
-      {canNote || heartsOnly.length > 0 ? (
+      {/* Having read it comes first, then your heart, beside one count of
+          everyone who's given one (like a reaction count, whether they
+          wrote a note or not) */}
+      {canNote || otherHearts.length > 0 ? (
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          {canNote ? <HeartToggle myNote={myNote} /> : null}
           {canNote && readAt !== undefined ? (
             <ReadToggle readAt={readAt} />
           ) : null}
-          {page ? <PinToggle page={page} /> : null}
-          {canNote && !myNote?.body && !isWriting ? (
-            <button
-              type="button"
-              onClick={() => setIsWriting(true)}
-              className={chip(false)}
-            >
-              <PencilIcon size={14} />
-              {hasNotes ? "Add a note" : "Leave a note"}
-            </button>
+          {canNote ? (
+            <HeartToggle
+              myNote={myNote}
+              others={otherHearts.map((note) => note.user.firstname)}
+            />
           ) : null}
-          {heartsOnly.length > 0 ? (
+          {/* Once you've given yours, your heart names them instead */}
+          {otherHearts.length > 0 && !(canNote && loved) ? (
             <p className="inline-flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
-              {canNote ? null : (
-                <HeartIcon size={13} filled className="text-rose-400" />
-              )}
-              {loved || hasNotes ? "Also loved by " : "Loved by "}
-              {heartsOnly.map((note, index) => (
-                <span key={note.id}>
-                  {index > 0
-                    ? index === heartsOnly.length - 1
-                      ? " and "
-                      : ", "
-                    : null}
-                  <PersonLink
-                    id={note.user.id}
-                    name={note.user.firstname}
-                    friendIds={friendIds}
-                  />
-                </span>
-              ))}
+              <HeartIcon size={13} filled className="text-rose-400" />
+              <span>
+                {lovedBy(
+                  otherHearts.map((note) => (
+                    <PersonLink
+                      key={note.id}
+                      id={note.user.id}
+                      name={note.user.firstname}
+                      friendIds={friendIds}
+                    />
+                  )),
+                )}{" "}
+                loved it
+              </span>
             </p>
           ) : null}
         </div>
       ) : null}
-      {page ? <PageLine page={page} /> : null}
+
+      {/* Not one more button: an empty note, waiting. It looks like the
+          box it opens, with the same words, so tapping it just wakes it. */}
+      {canNote && !myNote?.body && !isWriting ? (
+        <button
+          type="button"
+          onClick={() => setIsWriting(true)}
+          className="mb-4 block w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-left leading-relaxed text-stone-400 dark:text-stone-500 hover:border-stone-300 dark:hover:border-stone-600 transition-colors"
+        >
+          What did you think? A line or two for the next reader.
+        </button>
+      ) : null}
 
       {isWriting ? (
-        <noteFetcher.Form method="post" className="py-3">
+        <noteFetcher.Form method="post" className="mb-6">
           <input type="hidden" name="intent" value="saveNote" />
           <label htmlFor="note-body" className="sr-only">
             Your note
@@ -395,7 +348,7 @@ export default function ReaderNotes({
             maxLength={maxLength}
             defaultValue={myNote?.body ?? ""}
             placeholder="What did you think? A line or two for the next reader."
-            className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+            className="block w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
             // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             required
@@ -494,7 +447,7 @@ export default function ReaderNotes({
               );
             })}
         </ul>
-      ) : !canNote && heartsOnly.length === 0 ? (
+      ) : !canNote && otherHearts.length === 0 ? (
         <p className="py-2 text-sm text-stone-400 dark:text-stone-500">
           No notes yet.
         </p>

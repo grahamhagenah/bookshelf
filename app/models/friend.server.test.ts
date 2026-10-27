@@ -142,5 +142,10 @@ test("a friend's card names the books you both have, any edition, once each", as
   await makeBook(maya.id, "Dune");
 
   const [card] = await getFriendCards(me.id);
-  expect(card.inCommon.map((book) => book.title).sort()).toEqual(["Piranesi", "middlemarch"].sort());
+  // Either of their Piranesis stands for it: both were made in the same
+  // instant, so which comes first is the database's to say
+  const titles = card.inCommon.map((book) => book.title);
+  expect(titles).toHaveLength(2);
+  expect(titles).toContain("middlemarch");
+  expect(titles.some((title) => title.startsWith("Piranesi"))).toBe(true);
 });
