@@ -50,9 +50,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const friendIds = user.following.map((friend) => friend.id);
+  const shelf = await shelfIds(user.id);
   const [books, activity, sentRequests, wanted, invite, popular, friendBookCount] =
     await Promise.all([
-      getHomeBooks(user.id, await shelfIds(user.id)),
+      getHomeBooks(user.id, shelf),
       // Enough to fill the side column beside the rest; phones show six
       getFriendActivity(user.id, { limit: 20 }),
       getPendingFriendRequests(user.id),
@@ -101,6 +102,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       welcomeDismissed: welcomeDismissed(request),
       // For the "Invite friends" step on a new account's welcome
       inviteUrl: `${publicOrigin(request)}/invite/${invite}`,
+      // Sharing a shelf with someone at home already, so it isn't offered
+      sharesShelf: shelf.length > 1,
     },
   });
 };

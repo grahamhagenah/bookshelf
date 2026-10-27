@@ -9,6 +9,7 @@ import BookCover from "./book-cover";
 import FriendActivityItem from "./friend-activity";
 import { LentIcon } from "./icons";
 import { InviteButtons } from "./invite-message";
+import ShareShelfOffer from "./share-shelf-offer";
 import { sectionHeading } from "./ui";
 
 // The signed-in home page: a row of your newest books, a row from your
@@ -196,6 +197,7 @@ function Welcome({
   friendCount,
   requestsSent,
   inviteUrl,
+  sharesShelf,
   divided,
 }: {
   bookCount: number;
@@ -204,6 +206,7 @@ function Welcome({
   friendCount: number;
   requestsSent: number;
   inviteUrl: string;
+  sharesShelf: boolean;
   // A rule underneath only when something follows
   divided: boolean;
 }) {
@@ -366,6 +369,7 @@ function Welcome({
           </li>
         ))}
       </ol>
+      {sharesShelf ? null : <ShareShelfOffer className="mt-4" />}
     </section>
   );
 }
@@ -529,6 +533,7 @@ export default function Home({
   friendBookCount,
   requestsSent,
   inviteUrl,
+  sharesShelf,
   welcomeDismissed,
 }: {
   books: HomeBooks;
@@ -540,6 +545,7 @@ export default function Home({
   friendBookCount: number;
   requestsSent: number;
   inviteUrl: string;
+  sharesShelf: boolean;
   welcomeDismissed: boolean;
 }) {
   const ownCount = books.lent.length + books.shelf.length;
@@ -587,6 +593,7 @@ export default function Home({
           friendCount={friendIds.length}
           requestsSent={requestsSent}
           inviteUrl={inviteUrl}
+          sharesShelf={sharesShelf}
           divided={showMain || showFeed}
         />
       )}

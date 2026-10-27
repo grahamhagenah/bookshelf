@@ -4,10 +4,12 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 
 import InviteMessage from "~/components/invite-message";
 import Layout from "~/components/layout";
+import ShareShelfOffer from "~/components/share-shelf-offer";
 import { primaryButton, quietButton, sectionHeading } from "~/components/ui";
 import type { ImportRow, ImportSource, ShelfChoice } from "~/import-books";
 import { DEFAULT_CHOICE, LIST_MAX, readExport, readList, summarize } from "~/import-books";
 import { getFriendInvite } from "~/models/friend.server";
+import { shelfIds } from "~/models/household.server";
 import { findImportedWorks, findListIsbns, importBooks } from "~/models/import.server";
 import { fillInBooks } from "~/models/openlibrary.server";
 import { publicOrigin } from "~/origin.server";
@@ -30,6 +32,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Once the books are in, a message to bring friends over
   return data({
     inviteUrl: `${publicOrigin(request)}/invite/${await getFriendInvite(userId)}`,
+    // And to someone at home, unless they share the shelf already
+    sharesShelf: (await shelfIds(userId)).length > 1,
   });
 };
 
@@ -117,7 +121,7 @@ const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}
 
 export default function Import() {
   const result = useActionData<typeof action>();
-  const { inviteUrl } = useLoaderData<typeof loader>();
+  const { inviteUrl, sharesShelf } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const importing = navigation.state !== "idle" && navigation.formMethod === "POST";
 
@@ -268,6 +272,7 @@ export default function Import() {
                 className="mt-8"
               />
             ) : null}
+            {sharesShelf ? null : <ShareShelfOffer className="mt-6" />}
           </div>
         ) : (
           <>

@@ -705,7 +705,7 @@ export default function Account() {
             pins={data.pins}
           />
 
-          <div>
+          <div id="share-a-shelf" className="scroll-mt-20">
             <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">
               Share a shelf
             </h3>
