@@ -3,9 +3,11 @@ import { getShelfProfile } from "~/profile.server";
 
 import { makeBook, makeUser, prisma } from "../../test/db";
 
+import { createBook } from "./book.server";
 import { getShelfCounts } from "./history.server";
 import { createFriendship } from "./user.server";
 import {
+  adoptWorkNotes,
   getFriendsWorkNotes,
   getMyWorkNote,
   getWorkNotes,
@@ -100,4 +102,49 @@ test("a book read elsewhere and hearted is among the page's favorites, unlinked"
   expect(favorites.map((book) => [book.title, book.onShelf])).toEqual([
     ["Fantastic Mr Fox", false],
   ]);
+});
+
+test("a book you'd noted joins your shelf: your marks move onto your copy", async () => {
+  const me = await makeUser("Me");
+  await saveWorkNote(me.id, fox, { loved: true });
+  await saveWorkNote(me.id, fox, { read: true });
+  await saveWorkNote(me.id, fox, { body: "Read it at the library first." });
+
+  const copy = await createBook({
+    title: fox.title,
+    author: fox.author,
+    body: "",
+    cover: fox.cover,
+    openLibraryKey: fox.key,
+    userId: me.id,
+  });
+  const onCopy = await prisma.readerNote.findUnique({
+    where: { bookId_userId: { bookId: copy.id, userId: me.id } },
+  });
+  expect(onCopy).toMatchObject({ loved: true, body: "Read it at the library first." });
+  expect(onCopy?.readAt).not.toBeNull();
+  // Not shown twice
+  expect(await getMyWorkNote(me.id, fox.key)).toBeNull();
+});
+
+test("a copy whose work is found later takes the marks, keeping what's already on it", async () => {
+  const me = await makeUser("Me");
+  const someoneElse = await makeUser("Someone");
+  await saveWorkNote(me.id, fox, { loved: true, body: "From elsewhere." });
+  await saveWorkNote(someoneElse.id, fox, { loved: true });
+
+  // Imported without a work, and already written about on the copy
+  const copy = await makeBook(me.id, fox.title);
+  await prisma.readerNote.create({ data: { bookId: copy.id, userId: me.id, body: "On my copy." } });
+  await prisma.book.update({ where: { id: copy.id }, data: { openLibraryKey: fox.key } });
+  await adoptWorkNotes(copy.id);
+
+  const onCopy = await prisma.readerNote.findUnique({
+    where: { bookId_userId: { bookId: copy.id, userId: me.id } },
+  });
+  expect(onCopy).toMatchObject({ loved: true, body: "On my copy." });
+  expect(await getMyWorkNote(me.id, fox.key)).toBeNull();
+  // Only the shelf's own people: someone else's note stays theirs
+  expect(await getMyWorkNote(someoneElse.id, fox.key)).not.toBeNull();
+  expect(await prisma.readerNote.count({ where: { bookId: copy.id, userId: someoneElse.id } })).toBe(0);
 });

@@ -5,6 +5,7 @@ import type { Work } from "~/works";
 import { sameWork } from "~/works";
 
 import { shelfIdsFor } from "./household.server";
+import { adoptWorkNotes } from "./work-note.server";
 
 // Stops lending a book until a moment (far off means until they say),
 // or, given null, starts again
@@ -151,7 +152,7 @@ export type BookInput = Pick<Book, "title" | "author" | "body" | "cover"> & {
   isbn?: string | null;
 };
 
-export function createBook({
+export async function createBook({
   title,
   author,
   body,
@@ -166,7 +167,7 @@ export function createBook({
 }: BookInput & {
   userId: User["id"];
 }) {
-  return prisma.book.create({
+  const book = await prisma.book.create({
     data: {
       title,
       author,
@@ -186,6 +187,9 @@ export function createBook({
       },
     },
   });
+  // Noted before it was yours? Those marks come along onto it
+  if (openLibraryKey) await adoptWorkNotes(book.id);
+  return book;
 }
 
 // Whether this person has read this copy: kept on their reader note, so

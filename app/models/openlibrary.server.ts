@@ -13,6 +13,8 @@ import {
 } from "~/utils";
 import type { WithEnglishEdition } from "~/utils";
 
+import { adoptWorkNotes } from "./work-note.server";
+
 // Open Library can be slow; never hold a page up for long. A lookup
 // someone asked for and is waiting on (picking a cover, opening a book's
 // page) gets more patience: its slow days run to ten seconds a call.
@@ -378,6 +380,8 @@ export async function fillInBook(bookId: Book["id"], timeoutMs = TIMEOUT_MS) {
         detailsFetchedAt: new Date(),
       },
     });
+    // Its work only now known: marks made on it elsewhere come along
+    if (key && key !== book.openLibraryKey) await adoptWorkNotes(book.id);
   } catch {
     // Open Library unreachable or slow; leave it for the next visit
   }

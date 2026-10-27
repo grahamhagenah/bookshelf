@@ -67,6 +67,7 @@ import {
   getLoanReply,
 } from "~/models/user.server";
 import {
+  adoptWorkNotes,
   getFriendsWorkNotes,
   getMyWorkNote,
   saveWorkNote,
@@ -985,6 +986,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         { id: book.id, detailsFetchedAt: null },
         { force: true },
       );
+      await adoptWorkNotes(book.id);
       return data({
         refreshed: true,
         message: "Book info updated from Open Library!",
