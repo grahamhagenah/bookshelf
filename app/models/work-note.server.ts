@@ -1,7 +1,7 @@
 import { prisma } from "~/db.server";
-import type { User } from "~/generated/prisma/client";
+import type { Book, User } from "~/generated/prisma/client";
 
-
+import { shelfIds } from "./household.server";
 import { NOTE_MAX_LENGTH } from "./note.server";
 
 // Hearts, read marks and notes on books that aren't on the reader's
@@ -182,4 +182,45 @@ export function getWorkSnapshot(workKey: string) {
     orderBy: { updatedAt: "desc" },
     select: { title: true, author: true, cover: true },
   });
+}
+
+// A book noted while it wasn't yours has joined your shelf (bought, given,
+// imported, or just found on Open Library): the heart, read mark and note
+// move onto your copy, so they're there when you open it, and the read-
+// elsewhere one goes so it isn't shown twice. Anything already on the copy
+// stays. Everyone sharing the shelf brings their own.
+export async function adoptWorkNotes(bookId: Book["id"]) {
+  const book = await prisma.book.findUnique({
+    where: { id: bookId },
+    select: { userId: true, openLibraryKey: true },
+  });
+  if (!book?.openLibraryKey?.startsWith("/works/")) return;
+  const notes = await prisma.workNote.findMany({
+    where: {
+      workKey: book.openLibraryKey,
+      userId: { in: await shelfIds(book.userId) },
+    },
+  });
+  for (const note of notes) {
+    const where = { bookId_userId: { bookId, userId: note.userId } };
+    const onCopy = await prisma.readerNote.findUnique({ where });
+    await prisma.$transaction([
+      prisma.readerNote.upsert({
+        where,
+        create: {
+          bookId,
+          userId: note.userId,
+          loved: note.loved,
+          body: note.body,
+          readAt: note.readAt,
+        },
+        update: {
+          loved: onCopy?.loved || note.loved,
+          body: onCopy?.body ?? note.body,
+          readAt: onCopy?.readAt ?? note.readAt,
+        },
+      }),
+      prisma.workNote.delete({ where: { id: note.id } }),
+    ]);
+  }
 }

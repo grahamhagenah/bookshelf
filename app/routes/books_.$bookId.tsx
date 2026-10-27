@@ -66,7 +66,12 @@ import {
   createReaderNoteNotification,
   getLoanReply,
 } from "~/models/user.server";
-import { getFriendsWorkNotes } from "~/models/work-note.server";
+import {
+  adoptWorkNotes,
+  getFriendsWorkNotes,
+  getMyWorkNote,
+  saveWorkNote,
+} from "~/models/work-note.server";
 import {
   getPin,
   pinBook,
@@ -76,7 +81,7 @@ import {
 import type { CoversResponse } from "~/routes/api.covers";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
-import { cleanSubjects, coverSrc, editionPublisher, ENGLISH_EDITION_FIELDS, ENGLISH_EDITION_PARAMS, type LoaderData, stripMarkdown } from "~/utils";
+import { cleanSubjects, coverSrc, editionPublisher, ENGLISH_EDITION_FIELDS, ENGLISH_EDITION_PARAMS, type LoaderData, stripMarkdown, workPath } from "~/utils";
 
 // "Oct 21", adding the year only when it isn't this year
 const monthDay = (date: string | Date) => {
@@ -436,9 +441,17 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         readerNotes.map((note) => note.user.id),
       )
     : [];
-  const notes = [...readerNotes, ...readElsewhere].sort(
-    (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
-  );
+  // A friend's copy you've never had: you may still have read the book.
+  // Your heart, read mark and note go on the book itself, as on its Open
+  // Library page (and in Read elsewhere), and show here with the rest.
+  const workKey = workPath(book.openLibraryKey) ? book.openLibraryKey : null;
+  const elsewhere = !canNote && workKey !== null;
+  const myWorkNote = elsewhere ? await getMyWorkNote(userId, workKey) : null;
+  const notes = [
+    ...readerNotes,
+    ...readElsewhere,
+    ...(myWorkNote && (myWorkNote.loved || myWorkNote.body) ? [myWorkNote] : []),
+  ].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
   // Where you are in line for this book, counting from 1
   const holdIndex = holds.findIndex((hold) => hold.user.id === userId);
 
@@ -451,8 +464,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   return data({
     book,
-    // The viewer's own read mark; their housemate has their own
-    readAt: await getReadAt(userId, book),
+    // The viewer's own read mark; their housemate has their own. On a
+    // friend's copy they've never had, the one on the book itself.
+    readAt: elsewhere
+      ? (myWorkNote?.readAt ?? null)
+      : await getReadAt(userId, book),
     isOwner,
     isBorrowed,
     isBorrower,
@@ -460,8 +476,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     currentUser,
     lendingHistory: lendingHistoryWithFriendStatus,
     readerNotes: notes,
-    myNote: readerNotes.find((note) => note.user.id === userId) ?? null,
-    canNote,
+    myNote: elsewhere
+      ? myWorkNote
+      : (readerNotes.find((note) => note.user.id === userId) ?? null),
+    canNote: canNote || elsewhere,
     noteMaxLength: NOTE_MAX_LENGTH,
     extendWeeks: EXTEND_WEEKS,
     loanChoices: { weeks: LOAN_WEEKS, defaultWeeks: DEFAULT_LOAN_WEEKS },
@@ -541,6 +559,42 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       await setHiddenFromPage(userId, book.id, intent === "hideFromPage");
     }
     return data({ ok: true });
+  }
+
+  // A friend's copy you've never had: a heart, read mark or note goes on
+  // the book itself, as on its Open Library page, rather than this copy
+  if (
+    (intent === "toggleRead" ||
+      intent === "toggleLove" ||
+      intent === "saveNote" ||
+      intent === "deleteNote") &&
+    book.openLibraryKey &&
+    workPath(book.openLibraryKey) &&
+    !(await canLeaveNote(userId, book))
+  ) {
+    const body = formData.get("body");
+    await saveWorkNote(
+      userId,
+      {
+        key: book.openLibraryKey,
+        title: book.title,
+        author: book.author,
+        cover: book.cover,
+      },
+      intent === "toggleLove"
+        ? { loved: formData.get("loved") === "true" }
+        : intent === "toggleRead"
+          ? { read: formData.get("read") === "true" }
+          : {
+              body:
+                intent === "saveNote" && typeof body === "string" ? body : null,
+            },
+    );
+    return data(
+      intent === "saveNote" || intent === "deleteNote"
+        ? { noteSaved: true }
+        : { ok: true },
+    );
   }
 
   if (intent === "toggleRead") {
@@ -932,6 +986,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         { id: book.id, detailsFetchedAt: null },
         { force: true },
       );
+      await adoptWorkNotes(book.id);
       return data({
         refreshed: true,
         message: "Book info updated from Open Library!",
