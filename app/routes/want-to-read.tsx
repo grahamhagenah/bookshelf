@@ -88,10 +88,9 @@ function Cover({
   );
 }
 
-const quietButton =
-  "rounded-md px-2.5 py-1 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors";
-const outlineButton =
-  "rounded-md border border-stone-200 dark:border-stone-700 px-3 py-1 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
+// A row's actions as words, light enough to sit under the book
+const textAction =
+  "font-medium text-stone-700 dark:text-stone-200 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline hover:text-stone-950 dark:hover:text-white transition-colors";
 
 function WantRow({
   item,
@@ -180,26 +179,23 @@ function WantRow({
             ))
           )}
         </p>
-      </div>
-      <div className="flex flex-shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center">
-        <Form method="post">
-          <input type="hidden" name="intent" value="gotIt" />
-          <input type="hidden" name="id" value={item.id} />
-          <button
-            type="submit"
-            className={outlineButton}
-            title="Move it to your shelf"
-          >
-            Got a copy
-          </button>
-        </Form>
-        <remove.Form method="post">
-          <input type="hidden" name="intent" value="remove" />
-          <input type="hidden" name="id" value={item.id} />
-          <button type="submit" className={quietButton}>
-            Remove
-          </button>
-        </remove.Form>
+        {/* What to do with it, quietly under the rest */}
+        <div className="mt-2 flex items-center gap-4 text-sm">
+          <Form method="post">
+            <input type="hidden" name="intent" value="gotIt" />
+            <input type="hidden" name="id" value={item.id} />
+            <button type="submit" className={textAction} title="Move it to your shelf">
+              Got a copy
+            </button>
+          </Form>
+          <remove.Form method="post">
+            <input type="hidden" name="intent" value="remove" />
+            <input type="hidden" name="id" value={item.id} />
+            <button type="submit" className={`${textAction} text-stone-500 dark:text-stone-400`}>
+              Remove
+            </button>
+          </remove.Form>
+        </div>
       </div>
     </li>
   );
