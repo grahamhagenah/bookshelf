@@ -109,7 +109,6 @@ Book request emails include:
 | `npm run build` | Build for production |
 | `npm start` | Run production server |
 | `npm test` | Run unit tests |
-| `npm run test:e2e:dev` | Run Cypress tests |
 | `npm run typecheck` | Check TypeScript types |
 | `npm run lint` | Lint with ESLint |
 | `npm run format` | Format with Prettier |
