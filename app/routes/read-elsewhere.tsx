@@ -5,7 +5,7 @@ import BookCover from "~/components/book-cover";
 import EmptyList from "~/components/empty-list";
 import { HeartIcon, ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
-import ShelfTabs from "~/components/shelf-tabs";
+import ShelfTabs, { AddLink } from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
 import { findImportedWorks } from "~/models/import.server";
 import { listMyWorkNotes } from "~/models/work-note.server";
@@ -42,23 +42,13 @@ export default function ReadElsewhere() {
   return (
     <Layout title="Also read">
       <section>
-        <ShelfTabs counts={{ ...counts, elsewhere: items.length }} />
-        {/* What the list is for is said only while it's empty, in its place */}
+        <ShelfTabs counts={{ ...counts, elsewhere: items.length }} add={items.length > 0 ? { to: "/search", label: "Find a book" } : undefined} />
+        {/* What the list is for is said only while it's empty, in its place.
+            Phones have no room beside the tabs, so the way to add is here */}
         {items.length > 0 ? (
-        <div className="flex justify-end">
-          <Link
-            to="/search"
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-          >
-            <span
-              aria-hidden="true"
-              className="text-base leading-none text-stone-400 dark:text-stone-500"
-            >
-              +
-            </span>
-            Find a book
-          </Link>
-        </div>
+          <div className="-mt-2 flex justify-end sm:hidden">
+            <AddLink to="/search">Find a book</AddLink>
+          </div>
         ) : null}
 
         {items.length === 0 ? (

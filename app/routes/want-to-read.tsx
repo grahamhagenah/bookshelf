@@ -7,7 +7,7 @@ import EmptyList from "~/components/empty-list";
 import { BookmarkIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
-import ShelfTabs from "~/components/shelf-tabs";
+import ShelfTabs, { AddLink } from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
 import { getUserById } from "~/models/user.server";
 import {
@@ -217,23 +217,13 @@ export default function WantToRead() {
   return (
     <Layout title="Want to read">
       <section>
-        <ShelfTabs counts={{ ...counts, want: items.length }} />
-        {/* What the list is for is said only while it's empty, in its place */}
+        <ShelfTabs counts={{ ...counts, want: items.length }} add={items.length > 0 ? { to: "/search?for=want", label: "Add a book" } : undefined} />
+        {/* What the list is for is said only while it's empty, in its place.
+            Phones have no room beside the tabs, so the way to add is here */}
         {items.length > 0 ? (
-        <div className="flex justify-end">
-          <Link
-            to="/search?for=want"
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-          >
-            <span
-              aria-hidden="true"
-              className="text-base leading-none text-stone-400 dark:text-stone-500"
-            >
-              +
-            </span>
-            Add a book
-          </Link>
-        </div>
+          <div className="-mt-2 flex justify-end sm:hidden">
+            <AddLink to="/search?for=want">Add a book</AddLink>
+          </div>
         ) : null}
 
         {limit ? (
