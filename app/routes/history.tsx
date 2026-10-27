@@ -92,15 +92,15 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
   const body = entry.note?.body?.trim();
 
   return (
-    // The cover stretches to the height of the row beside it
+    // A cover the size of To read's and Also read's
     <li className="flex gap-4 py-4">
       <Link
         to={`/books/${entry.book.id}`}
         tabIndex={-1}
         aria-hidden="true"
-        className="block w-16 flex-shrink-0 self-stretch"
+        className="block flex-shrink-0"
       >
-        <BookCover cover={entry.book.cover} title={entry.book.title} author={entry.book.author} className="h-full w-full" />
+        <BookCover cover={entry.book.cover} title={entry.book.title} author={entry.book.author} className="h-24 w-16" />
       </Link>
       <div className="min-w-0 flex-1">
         <Link

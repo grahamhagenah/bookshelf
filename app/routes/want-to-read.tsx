@@ -82,7 +82,8 @@ function Cover({
       cover={cover}
       title={title}
       author={author}
-      className="h-[72px] w-12 flex-shrink-0"
+      // The same size as Also read's and History's covers
+      className="h-24 w-16 flex-shrink-0"
     />
   );
 }
@@ -116,7 +117,7 @@ function WantRow({
     <li
       id={`wish-${item.id}`}
       // The tint reaches past the row's edges with a shadow, so nothing moves
-      className={`flex scroll-mt-24 items-start gap-4 rounded-lg py-4 transition-colors ${
+      className={`flex scroll-mt-24 items-start gap-4 border-b border-stone-100 dark:border-stone-800 py-4 transition-colors ${
         picked
           ? "bg-forest-600/[0.06] shadow-[0_0_0_10px_rgb(31_107_78/0.06)] dark:bg-forest-400/10 dark:shadow-[0_0_0_10px_rgb(58_154_116/0.1)]"
           : ""
@@ -270,7 +271,9 @@ export default function WantToRead() {
             from Goodreads.
           </EmptyList>
         ) : (
-          <ul className="mt-4 divide-y divide-stone-100 dark:divide-stone-800">
+          // Two columns where there's room; each row ruled underneath, so
+          // the rules line up across both
+          <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
             {items.map((item) => (
               <WantRow key={item.id} item={item} friendIds={friendIds} />
             ))}

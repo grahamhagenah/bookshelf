@@ -76,9 +76,10 @@ export default function ReadElsewhere() {
             a note on its page.
           </EmptyList>
         ) : (
-          <ul className="mt-4 divide-y divide-stone-100 dark:divide-stone-800">
+          // Two columns where there's room, as To read has
+          <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
             {items.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} className="border-b border-stone-100 dark:border-stone-800">
                 <Link
                   // One still being looked up opens a search for it
                   to={
@@ -92,7 +93,7 @@ export default function ReadElsewhere() {
                     cover={item.cover}
                     title={item.title}
                     author={item.author}
-                    className="h-[72px] w-12 flex-shrink-0"
+                    className="h-24 w-16 flex-shrink-0"
                   />
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-stone-900 dark:text-stone-100">
