@@ -28,6 +28,20 @@ export interface Person {
   firstname: string;
   surname: string;
 }
+// A group you're in, as the home page lists it
+export interface HomeGroup {
+  id: string;
+  name: string;
+  memberCount: number;
+  bookCount: number;
+  path: string;
+}
+// A book you're in line for: whose copy, and your place in line
+export interface Waiting {
+  book: HomeBook;
+  owner: Person;
+  place: number;
+}
 
 // How far ahead a due date counts as coming up
 const COMING_UP_DAYS = 7;
@@ -73,6 +87,56 @@ function AddButton({ to, children }: { to: string; children: string }) {
 // headings link to the rest on your shelf
 const LOANS_SHOWN = 3;
 
+// One row of a loan list: the book, who it's from or to, and when it's
+// due, with a note when something needs doing (someone's waiting for it).
+// A row can say its own line instead, as one you're in line for does.
+export interface LoanEntry {
+  book: HomeBook;
+  person: Person | null;
+  note?: string | null;
+  line?: string;
+}
+
+function LoanRows({ entries, personLabel }: { entries: LoanEntry[]; personLabel: string }) {
+  return (
+    <ul className="divide-y divide-stone-100 dark:divide-stone-900">
+      {entries.map(({ book, person, note, line }) => {
+        const due = !line && book.dueDate ? dueLabel(book.dueDate) : null;
+        return (
+          <li key={book.id}>
+            <Link
+              to={`/books/${book.id}`}
+              className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+            >
+              <BookCover cover={book.cover} title={book.title} className="w-10 h-15" />
+              <span className="min-w-0 flex-1">
+                {/* Up to two lines: still shorter than the cover, so rows keep their height */}
+                <span className="line-clamp-2 font-medium leading-snug text-stone-900 dark:text-stone-100">
+                  {book.title}
+                </span>
+                <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
+                  {line ?? (
+                    <>
+                      {person ? `${personLabel} ${person.firstname} ${person.surname}` : null}
+                      {person && due ? " · " : null}
+                      {due ? <span className={due.className}>{due.text}</span> : null}
+                    </>
+                  )}
+                </span>
+                {note ? (
+                  <span className="block truncate text-sm font-medium text-forest-700 dark:text-forest-400">
+                    {note}
+                  </span>
+                ) : null}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 // A compact list for one direction of lending (the feed's rail shows it too)
 export function LoanList({
   id,
@@ -82,17 +146,20 @@ export function LoanList({
   personLabel,
   empty,
   to,
+  children,
 }: {
   id: string;
   title: string;
   // Where all of them are, which the heading links to
   to?: string;
-  books: { book: HomeBook; person: Person | null }[];
+  books: LoanEntry[];
   // "From" or "To", so the name doesn't read as the author's
   personLabel: string;
   empty: string;
   // How many there are in all, when only the first few are shown
   total?: number;
+  // Anything more under the list
+  children?: React.ReactNode;
 }) {
   return (
     <section aria-labelledby={id} className="min-w-0">
@@ -116,44 +183,20 @@ export function LoanList({
           {empty}
         </p>
       ) : (
-        <ul className="divide-y divide-stone-100 dark:divide-stone-900">
-          {books.map(({ book, person }) => {
-            const due = book.dueDate ? dueLabel(book.dueDate) : null;
-            return (
-              <li key={book.id}>
-                <Link
-                  to={`/books/${book.id}`}
-                  className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
-                >
-                  <BookCover
-                    cover={book.cover}
-                    title={book.title}
-                    className="w-10 h-15"
-                  />
-                  <span className="min-w-0 flex-1">
-                    {/* Up to two lines: still shorter than the cover, so rows keep their height */}
-                    <span className="line-clamp-2 font-medium leading-snug text-stone-900 dark:text-stone-100">
-                      {book.title}
-                    </span>
-                    <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
-                      {person
-                        ? `${personLabel} ${person.firstname} ${person.surname}`
-                        : null}
-                      {person && due ? " · " : null}
-                      {due ? (
-                        <span className={due.className}>{due.text}</span>
-                      ) : null}
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <LoanRows entries={books} personLabel={personLabel} />
       )}
+      {children}
     </section>
   );
 }
+
+// "1st", "2nd", "3rd", "4th"
+const ordinal = (n: number) => {
+  const tens = n % 100;
+  const suffix =
+    tens >= 11 && tens <= 13 ? "th" : (["th", "st", "nd", "rd"][n % 10] ?? "th");
+  return `${n}${suffix}`;
+};
 
 const actionClass =
   "inline-flex h-8 items-center rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
@@ -188,29 +231,39 @@ function StepMark({ number, done }: { number: number; done: boolean }) {
 export const BOOK_GOAL = 10;
 
 // For a new account: three steps to a working shelf, each ticked off as
-// it's done. Shown until you have ten books and a friend (or have asked
-// one), or until you skip it.
+// it's done. Shown until you have ten books and someone to lend to (a
+// friend, one asked, or a name on your list), or until you skip it.
 function Welcome({
   bookCount,
   borrowingCount,
+  waitingCount,
   friendBookCount,
   friendCount,
   requestsSent,
+  nameCount,
+  groups,
   inviteUrl,
   sharesShelf,
   divided,
 }: {
   bookCount: number;
   borrowingCount: number;
+  // Books in line for, which count as borrowing for a start
+  waitingCount: number;
   friendBookCount: number;
   friendCount: number;
   requestsSent: number;
+  // People lent to by name: neighbors, a class
+  nameCount: number;
+  groups: HomeGroup[];
   inviteUrl: string;
   sharesShelf: boolean;
   // A rule underneath only when something follows
   divided: boolean;
 }) {
   const welcomeFetcher = useFetcher({ key: "welcome" });
+  // The first group others have joined
+  const clubbed = groups.find((group) => group.memberCount > 1);
 
   // Someone who came to borrow (friends with books, none of their own
   // yet) starts there; adding a book of their own brings back the shelf
@@ -219,8 +272,10 @@ function Welcome({
     ? {
         title: "See what your friends have",
         text: `There ${friendBookCount === 1 ? "is 1 book" : `are ${friendBookCount} books`} on your friends' shelves. Find one to borrow, and add your own whenever you like.`,
-        done: borrowingCount > 0,
-        doneText: `Borrowing ${borrowingCount === 1 ? "a book" : `${borrowingCount} books`}`,
+        done: borrowingCount + waitingCount > 0,
+        doneText: borrowingCount
+          ? `Borrowing ${borrowingCount === 1 ? "a book" : `${borrowingCount} books`}`
+          : `In line for ${waitingCount === 1 ? "a book" : `${waitingCount} books`}`,
         progress: null,
         action: (
           <span className="flex flex-wrap items-center gap-2">
@@ -238,7 +293,7 @@ function Welcome({
   const steps = [
     firstStep ?? {
       title: `Start with ${BOOK_GOAL} books`,
-      text: "Scan the barcodes on your nearest shelf, search by title, or import from Goodreads or StoryGraph.",
+      text: "Scan the barcodes on your nearest shelf, search by title, or import a Goodreads export or a spreadsheet.",
       done: bookCount >= BOOK_GOAL,
       doneText: `${bookCount} books on your shelf`,
       progress: bookCount > 0 && bookCount < BOOK_GOAL ? bookCount : null,
@@ -257,25 +312,35 @@ function Welcome({
       ),
     },
     {
-      title: "Find your friends",
-      text: "Paste the email addresses of people you lend to, and see who's already here.",
-      // Asking counts: accepting is up to them
-      done: friendCount + requestsSent > 0,
+      title: "Who you lend to",
+      text: "Find friends by their email addresses. Lending to neighbors or a class? Lend to them by name.",
+      // Asking counts: accepting is up to them. So does a name to lend to.
+      done: friendCount + requestsSent + nameCount > 0,
       doneText: friendCount
         ? `${friendCount} ${friendCount === 1 ? "friend" : "friends"}`
-        : `${requestsSent === 1 ? "Request" : `${requestsSent} requests`} sent`,
+        : requestsSent
+          ? `${requestsSent === 1 ? "Request" : `${requestsSent} requests`} sent`
+          : `${nameCount} ${nameCount === 1 ? "name" : "names"} to lend to`,
       progress: null,
       action: (
-        <Link to="/friends/add#by-email" className={actionClass}>
-          Find friends
-        </Link>
+        <span className="flex flex-wrap items-center gap-2">
+          <Link to="/friends/add#by-email" className={actionClass}>
+            Find friends
+          </Link>
+          <Link to="/checkout" className={actionClass}>
+            Lend by name
+          </Link>
+        </span>
       ),
     },
     {
       title: "Invite the rest",
       text: "Send a ready-made message with your invite link: whoever joins from it is your friend straight away. For a book club or an office, start a group, and everyone who joins can borrow from everyone.",
-      done: false,
-      doneText: null,
+      // Someone's come in on a group's link
+      done: Boolean(clubbed),
+      doneText: clubbed
+        ? `${clubbed.name}: ${clubbed.memberCount} people`
+        : null,
       progress: null,
       action: (
         <span className="flex flex-wrap items-center gap-2">
@@ -534,6 +599,9 @@ export default function Home({
   requestsSent,
   inviteUrl,
   sharesShelf,
+  groups,
+  waiting,
+  nameCount,
   welcomeDismissed,
 }: {
   books: HomeBooks;
@@ -546,6 +614,9 @@ export default function Home({
   requestsSent: number;
   inviteUrl: string;
   sharesShelf: boolean;
+  groups: HomeGroup[];
+  waiting: Waiting[];
+  nameCount: number;
   welcomeDismissed: boolean;
 }) {
   const ownCount = books.lent.length + books.shelf.length;
@@ -558,11 +629,12 @@ export default function Home({
   const setupDone =
     welcomeDismissed ||
     skipping ||
-    (ownCount >= BOOK_GOAL && friendIds.length + requestsSent > 0);
-  const showLoans = setupDone || books.borrowed.length + books.lent.length > 0;
+    (ownCount >= BOOK_GOAL && friendIds.length + requestsSent + nameCount > 0);
+  const showLoans =
+    setupDone || books.borrowed.length + books.lent.length + waiting.length > 0;
   const showRecent = setupDone || ownCount > 0;
   const showWanted = setupDone || wanted.length > 0;
-  const showFeed = setupDone || friendIds.length > 0;
+  const showFeed = setupDone || friendIds.length > 0 || groups.length > 0;
   const showMain = showLoans || showRecent || showWanted;
   // Every section after the first is set off by a rule
   const divided = "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6";
@@ -589,9 +661,12 @@ export default function Home({
         <Welcome
           bookCount={ownCount}
           borrowingCount={books.borrowed.length}
+          waitingCount={waiting.length}
           friendBookCount={friendBookCount}
           friendCount={friendIds.length}
           requestsSent={requestsSent}
+          nameCount={nameCount}
+          groups={groups}
           inviteUrl={inviteUrl}
           sharesShelf={sharesShelf}
           divided={showMain || showFeed}
@@ -615,7 +690,10 @@ export default function Home({
                 key: "loans",
                 show: showLoans,
                 // Late and due-soon books need doing
-                rank: books.borrowed.length + books.lent.length > 0 ? 0 : 10,
+                rank:
+                  books.borrowed.length + books.lent.length + waiting.length > 0
+                    ? 0
+                    : 10,
                 render: (first: boolean) => (
                   // No heading of its own: Borrowing and Lent out say it
                   <section
@@ -629,11 +707,34 @@ export default function Home({
                         to="/books?status=borrowed"
                         books={books.borrowed
                           .slice(0, LOANS_SHOWN)
-                          .map((book) => ({ book, person: book.owner }))}
+                          .map((book) => ({
+                            book,
+                            person: book.owner,
+                            // The cue to hand it on when you're done
+                            note: book.nextInLine
+                              ? `${book.nextInLine} is waiting for it`
+                              : null,
+                          }))}
                         total={books.borrowed.length}
                         personLabel="From"
                         empty="Nothing borrowed right now."
-                      />
+                      >
+                        {waiting.length > 0 ? (
+                          <>
+                            <h3 className="mt-4 mb-1 text-sm font-semibold text-stone-500 dark:text-stone-400">
+                              In line for
+                            </h3>
+                            <LoanRows
+                              personLabel="From"
+                              entries={waiting.slice(0, LOANS_SHOWN).map(({ book, owner, place }) => ({
+                                book,
+                                person: owner,
+                                line: `${owner.firstname}'s copy · ${place === 1 ? "you're next" : `${ordinal(place)} in line`}`,
+                              }))}
+                            />
+                          </>
+                        ) : null}
+                      </LoanList>
                       <LoanList
                         id="lent-out"
                         title="Lent out"
@@ -782,6 +883,37 @@ export default function Home({
                 : undefined
             }
           >
+            {groups.length > 0 ? (
+              <section
+                aria-labelledby="your-groups"
+                className={`mb-8 ${showMain ? "lg:pl-8" : ""}`}
+              >
+                <h2 id="your-groups" className={`${sectionHeading} mb-2`}>
+                  <Link to="/groups" className={headingLink}>
+                    Groups
+                  </Link>
+                </h2>
+                <ul className="divide-y divide-stone-100 dark:divide-stone-800">
+                  {groups.map((group) => (
+                    <li key={group.id}>
+                      <Link
+                        to={group.path}
+                        className="-mx-2 flex items-baseline justify-between gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+                      >
+                        <span className="min-w-0 truncate font-medium text-stone-900 dark:text-stone-100">
+                          {group.name}
+                        </span>
+                        <span className="flex-shrink-0 text-sm text-stone-500 dark:text-stone-400">
+                          {/* Others' books, as the group's page counts them */}
+                          {group.memberCount} {group.memberCount === 1 ? "person" : "people"} ·{" "}
+                          {group.bookCount} to borrow
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
             {/* Beside the main column, no taller than it, sharing it with
                 the chart below: what doesn't fit fades out, with the way to
                 the rest */}

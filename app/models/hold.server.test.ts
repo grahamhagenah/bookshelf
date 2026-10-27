@@ -13,6 +13,7 @@ import {
 } from "./book.server";
 import {
   getHolds,
+  getMyHolds,
   leaveHold,
   passStraightOn,
   passToNextInLine,
@@ -80,6 +81,18 @@ describe("passToNextInLine", () => {
     await returnBook(book.id);
     expect(await passToNextInLine(book.id)).toBeNull();
   });
+});
+
+test("the books you're in line for, with your place in each line", async () => {
+  const { book } = await lentBook();
+  const kofi = await makeUser("Kofi");
+  const ruth = await makeUser("Ruth");
+  await placeHold(book.id, kofi.id);
+  await placeHold(book.id, ruth.id);
+  expect(await getMyHolds(ruth.id)).toEqual([
+    expect.objectContaining({ book: expect.objectContaining({ id: book.id }), owner: { firstname: "Olive", surname: "Reader" }, place: 2 }),
+  ]);
+  expect((await getMyHolds(kofi.id))[0].place).toBe(1);
 });
 
 test("getting the book clears your own hold", async () => {

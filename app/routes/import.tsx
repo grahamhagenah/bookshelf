@@ -14,6 +14,7 @@ import { findImportedWorks, findListIsbns, importBooks } from "~/models/import.s
 import { fillInBooks } from "~/models/openlibrary.server";
 import { publicOrigin } from "~/origin.server";
 import { UPGRADE_PATH } from "~/plan";
+import { roomForBooks } from "~/plan.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -29,11 +30,14 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
+  const room = await roomForBooks(userId);
   // Once the books are in, a message to bring friends over
   return data({
     inviteUrl: `${publicOrigin(request)}/invite/${await getFriendInvite(userId)}`,
     // And to someone at home, unless they share the shelf already
     sharesShelf: (await shelfIds(userId)).length > 1,
+    // How many more a free shelf takes; none means no limit
+    room: Number.isFinite(room) ? room : null,
   });
 };
 
@@ -115,13 +119,14 @@ interface Preview {
   name: string;
   source: ImportSource;
   rows: ImportRow[];
+  leftOut: string[];
 }
 
 const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
 
 export default function Import() {
   const result = useActionData<typeof action>();
-  const { inviteUrl, sharesShelf } = useLoaderData<typeof loader>();
+  const { inviteUrl, sharesShelf, room } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const importing = navigation.state !== "idle" && navigation.formMethod === "POST";
 
@@ -131,11 +136,22 @@ export default function Import() {
   const [shelf, setShelf] = useState<ShelfChoice>(DEFAULT_CHOICE);
   const onFile = async (file: File | undefined) => {
     if (!file) return setPreview(null);
-    const { source, rows } = readExport(await file.text());
-    setPreview({ name: file.name, source, rows });
+    const { source, rows, leftOut } = readExport(await file.text());
+    setPreview({ name: file.name, source, rows, leftOut });
   };
 
   const summary = preview ? summarize(preview.rows, shelf) : undefined;
+  // Everything in it goes on the shelf, as with a spreadsheet of one's own
+  // books, so there's nothing to choose
+  const allShelf =
+    summary !== undefined && summary.owned === summary.total && summary.toRead === 0 && summary.alsoRead === 0;
+  const onShelf = summary
+    ? shelf === "all"
+      ? summary.total
+      : shelf === "read"
+        ? summary.read
+        : summary.owned
+    : 0;
   const count = (n: number | undefined) =>
     n === undefined ? null : (
       <span className="ml-1.5 text-stone-400 dark:text-stone-500">{n}</span>
@@ -199,6 +215,12 @@ export default function Import() {
               ? ` ${plural(result.skipped, "book")} ${result.skipped === 1 ? "was" : "were"} already there.`
               : ""}
           </p>
+          {"notes" in result && result.notes > 0 ? (
+            <p className="mt-1 text-stone-700 dark:text-stone-300">
+              Your {result.notes === 1 ? "review or five stars" : `${result.notes} reviews and five stars`} came
+              along as notes and hearts.
+            </p>
+          ) : null}
           {result.added > 0 ? (
             <p className={`mt-1 text-sm ${muted}`}>Covers and details fill in over the next minute or two.</p>
           ) : null}
@@ -277,18 +299,42 @@ export default function Import() {
               />
             </label>
             {preview ? (
-              <p className={`mt-2 text-sm ${muted}`}>
-                {summary?.total === 0
-                  ? "No books found in this file."
-                  : `${plural(summary?.total ?? 0, "book")} from ${SOURCE_NAMES[preview.source]}${
-                      summary?.noted ? `, ${summary.noted} with a review or five stars` : ""
-                    }.`}
-              </p>
+              <div className={`mt-2 space-y-1 text-sm ${muted}`}>
+                <p>
+                  {summary?.total === 0
+                    ? "No books found in this file."
+                    : `${plural(summary?.total ?? 0, "book")} from ${SOURCE_NAMES[preview.source]}${
+                        summary?.noted ? `, ${summary.noted} with a review or five stars` : ""
+                      }.${allShelf ? " All of them go on your shelf." : ""}`}
+                </p>
+                {preview.leftOut.length > 0 ? (
+                  <p>
+                    Titles, authors and ISBNs come in; {preview.leftOut.join(", ")}{" "}
+                    {preview.leftOut.length === 1 ? "doesn't" : "don't"}.
+                  </p>
+                ) : null}
+                {room !== null && onShelf > room ? (
+                  <p className="font-medium text-stone-700 dark:text-stone-300">
+                    Your free shelf has room for {plural(room, "more book")}, so{" "}
+                    {room === 0 ? "none will fit" : `the first ${room} go on`}
+                    {summary && summary.owned < onShelf ? ", owned ones first" : ""}.{" "}
+                    <Link to={UPGRADE_PATH} className={linkClass}>
+                      Stacks Plus
+                    </Link>{" "}
+                    takes them all.
+                  </p>
+                ) : null}
+              </div>
             ) : null}
 
+            {allShelf ? null : (
+            <>
             <fieldset className="mt-5 border-t border-stone-100 dark:border-stone-800 pt-4">
               <legend className="sr-only">What goes on your shelf?</legend>
-              <p className={boxHeading}>What goes on your shelf?</p>
+              {/* The legend says it to screen readers */}
+              <p aria-hidden="true" className={boxHeading}>
+                What goes on your shelf?
+              </p>
               <p className={`mt-0.5 text-sm ${muted}`}>Your shelf is what friends can borrow.</p>
               <div className="mt-3 space-y-2">
                 {choices.map((choice) => (
@@ -320,10 +366,12 @@ export default function Import() {
               </label>
               <label className={option}>
                 <input type="checkbox" name="wantToRead" defaultChecked className="accent-stone-700 dark:accent-stone-300" />
-                Books I want to read go on Want to read
+                Books I want to read, or am reading, go on Want to read
                 {count(summary?.toRead)}
               </label>
             </div>
+            </>
+            )}
 
             {result && "error" in result && !("list" in result) ? (
               <p className="mt-4 text-sm text-red-700 dark:text-red-400">{result.error}</p>

@@ -110,11 +110,24 @@ export async function joinHousehold(userId: User["id"], inviteToken: string): Pr
     return { ok: false, reason: "already-in-one" };
   }
 
-  await prisma.user.update({ where: { id: userId }, data: { householdId: household.id } });
+  const joiner = await prisma.user.update({
+    where: { id: userId },
+    data: { householdId: household.id },
+    select: { firstname: true, surname: true },
+  });
   // A household they were alone in is no use to anyone now
   if (user.household) {
     await prisma.household.delete({ where: { id: user.household.id } });
   }
+  // Whoever shared the link hears they're in
+  await prisma.notification.createMany({
+    data: household.members.map((member) => ({
+      type: "SHELF_JOINED",
+      senderId: userId,
+      receiverId: member.id,
+      senderName: `${joiner.firstname} ${joiner.surname}`.trim(),
+    })),
+  });
   return { ok: true, members: household.members.map((m) => m.firstname) };
 }
 

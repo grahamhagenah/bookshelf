@@ -115,7 +115,16 @@ export async function getHomeBooks(
     }),
     prisma.book.findMany({
       where: { borrowerId: userId },
-      select: { ...fields, user: person },
+      select: {
+        ...fields,
+        user: person,
+        // Whoever's next in line for it, so it can be handed on
+        holds: {
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          take: 1,
+          select: { user: { select: { firstname: true } } },
+        },
+      },
       orderBy: { dueDate: "asc" },
     }),
   ]);
@@ -123,7 +132,11 @@ export async function getHomeBooks(
   const due = (book: { dueDate: Date | null }) =>
     book.dueDate?.getTime() ?? Infinity;
   return {
-    borrowed: borrowed.map(({ user, ...book }) => ({ ...book, owner: user })),
+    borrowed: borrowed.map(({ user, holds, ...book }) => ({
+      ...book,
+      owner: user,
+      nextInLine: holds[0]?.user.firstname ?? null,
+    })),
     lent: own.filter((book) => book.borrower).sort((a, b) => due(a) - due(b)),
     shelf: own.filter((book) => !book.borrower),
     // Two rows of covers on the home page
