@@ -97,15 +97,15 @@ export function CommonIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
-// A speech bubble with a line or two in it: the feed, which is mostly
-// what friends have said about books. Lucide's bubble, so it sits evenly
-// beside search and notifications (2px there); 1.5px beside the book
-// icon in the desktop links.
+// A folded newspaper: the feed, what friends have been reading and saying.
+// Not a speech bubble, which sat beside the bell looking like another
+// kind of notification. 2px beside search and notifications; 1.5px beside
+// the book icon in the desktop links.
 export function FeedIcon({ className = "", size = 24, strokeWidth = 2 }: IconProps & { strokeWidth?: number }) {
   return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
-      <path d="M8 10.5h8M8 14h5"/>
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+      <path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/>
     </svg>
   );
 }

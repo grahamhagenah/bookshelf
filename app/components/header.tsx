@@ -41,7 +41,7 @@ export default function Header() {
     // across the top of the phone. Dark mode keeps it solid.
     <header className="sticky top-0 z-40 w-full border-b border-stone-200 dark:border-stone-800 bg-white/90 backdrop-blur dark:bg-stone-950 dark:backdrop-blur-none">
       <div className="mx-auto max-w-[var(--page-max,64rem)] flex items-center justify-between px-4 md:px-8 py-1.5">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex flex-1 items-center gap-2 md:gap-5 lg:gap-6 min-w-0">
           <Link
             to="/"
             className="flex items-center gap-1.5 sm:gap-2 font-semibold flex-shrink-0"
@@ -53,8 +53,10 @@ export default function Header() {
               Lend and borrow books with friends
             </p>
           ) : null}
+          {/* The way to find and add books, so first after the wordmark */}
+          {user ? <Search as="box" /> : null}
         </div>
-        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+        <div className="ml-4 flex items-center gap-1 md:gap-2 flex-shrink-0">
           {/* Your shelf, and what your friends are up to, are what you come
               back for, so on wider screens they get labeled links of their
               own; phones keep the icons */}
@@ -79,11 +81,11 @@ export default function Header() {
                   })
                 }
               >
-                <BookIcon size={16} />
+                <BookIcon size={18} />
                 <span className={label}>My shelf</span>
               </NavLink>
               <NavLink title="Feed" to="/feed" className={navClass}>
-                <FeedIcon size={16} strokeWidth={1.5} />
+                <FeedIcon size={18} strokeWidth={1.5} />
                 <span className={label}>Feed</span>
               </NavLink>
               {/* Friends, their books and your groups, and a friend's own page */}
@@ -99,12 +101,12 @@ export default function Header() {
                   })
                 }
               >
-                <GroupIcon size={16} />
+                <GroupIcon size={18} />
                 <span className={label}>Friends</span>
               </NavLink>
             </nav>
           ) : null}
-          {user ? <Search /> : null}
+          {user ? <Search as="icon" /> : null}
           {user ? (
             <Link
               to="/feed"

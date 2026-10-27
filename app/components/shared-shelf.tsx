@@ -6,6 +6,7 @@ import BookCover from "~/components/book-cover";
 import { HeartIcon, StacksLogo } from "~/components/icons";
 import Library from "~/components/library";
 import type { FriendStatus } from "~/models/user.server";
+import { noteTip } from "~/profile";
 import type { loadSharedShelf } from "~/share.server";
 import type { LoaderData } from "~/utils";
 
@@ -71,6 +72,8 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
     (book) => !favoriteIds.has(book.id),
   ).length;
   const setAside = rest > 0 && rest < data.bookListItems.length;
+  // On your own page only
+  const tip = data.friendStatus === "self" ? noteTip(profile) : null;
   const facts = [
     plural(stats.books, "book"),
     // How generous the shelf has been, rather than how much anyone's read
@@ -174,6 +177,31 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
             })}
           </ul>
         </section>
+      ) : null}
+
+      {tip ? (
+        <aside
+          aria-label="Tip"
+          className="mt-8 flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg border border-dashed border-stone-300 dark:border-stone-700 px-4 py-3 text-sm text-stone-600 dark:text-stone-300"
+        >
+          <p className="min-w-0 flex-1 basis-64">
+            <span className="font-semibold text-stone-900 dark:text-stone-100">
+              Tip:
+            </span>{" "}
+            {tip.text}{" "}
+            <span className="text-stone-400 dark:text-stone-500">
+              Only you see this.
+            </span>
+          </p>
+          {tip.link ? (
+            <Link
+              to={tip.link.to}
+              className="font-medium text-stone-900 dark:text-stone-100 underline decoration-stone-300 dark:decoration-stone-600 underline-offset-2 hover:decoration-current"
+            >
+              {tip.link.label}
+            </Link>
+          ) : null}
+        </aside>
       ) : null}
 
       <h2 className="mt-8 text-sm font-semibold text-stone-500 dark:text-stone-400">
