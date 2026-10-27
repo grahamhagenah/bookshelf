@@ -93,7 +93,7 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
 
   return (
     // A cover the size of To read's and Also read's
-    <li className="flex gap-4 py-4">
+    <li className="flex gap-4 border-b border-stone-100 dark:border-stone-800 py-4">
       <Link
         to={`/books/${entry.book.id}`}
         tabIndex={-1}
@@ -205,7 +205,8 @@ export default function History() {
                 </button>
               ))}
             </div>
-            <ul className="mt-2 divide-y divide-stone-100 dark:divide-stone-800">
+            {/* Two columns where there's room, as To read and Also read */}
+            <ul className="mt-2 grid gap-x-10 md:grid-cols-2">
               {visible.map((entry) => (
                 <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />
               ))}
