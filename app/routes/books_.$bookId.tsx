@@ -2446,7 +2446,9 @@ export default function BookDetailsPage() {
 
           {!isEditing ? (
             <div className="mt-8">
-              <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
+              {/* Unlabeled, like a jacket's blurb; About the author keeps its
+                  label */}
+              <h2 className="sr-only">
                 About this book
               </h2>
               {!data.book.body && lookingUp ? (

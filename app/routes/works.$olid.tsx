@@ -405,7 +405,9 @@ export default function WorkPage() {
         ) : null}
 
         <div className="mt-8">
-          <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
+          {/* Unlabeled, like a jacket's blurb; About the author keeps its
+              label */}
+          <h2 className="sr-only">
             About this book
           </h2>
           <p className="max-w-prose whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
