@@ -70,8 +70,6 @@ function dueLabel(dueDate: string | Date) {
 
 const linkClass =
   "text-sm text-stone-500 dark:text-stone-400 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100 hover:underline";
-const subheadingClass =
-  "mb-1 flex items-baseline gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400";
 
 const LOANS_SHOWN = 3;
 
@@ -95,12 +93,15 @@ export function LoanList({
 }) {
   return (
     <section aria-labelledby={id} className="min-w-0">
-      <h3 id={id} className={subheadingClass}>
+      <h2
+        id={id}
+        className={`${sectionHeading} mb-2 flex items-baseline gap-2`}
+      >
         {title}
-        <span className="font-normal text-stone-400 dark:text-stone-500">
+        <span className="text-base font-normal text-stone-400 dark:text-stone-500">
           {total ?? books.length}
         </span>
-      </h3>
+      </h2>
       {books.length === 0 ? (
         <p className="py-2 text-sm text-stone-400 dark:text-stone-500">
           {empty}
@@ -477,32 +478,11 @@ export default function Home({
                 // Late and due-soon books need doing
                 rank: books.borrowed.length + books.lent.length > 0 ? 0 : 10,
                 render: (first: boolean) => (
+                  // No heading of its own: Borrowing and Lent out say it
                   <section
-                    aria-labelledby="loans"
+                    aria-label="Loans"
                     className={first ? undefined : divided}
                   >
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <h2
-                        id="loans"
-                        className={`${sectionHeading} whitespace-nowrap`}
-                      >
-                        Loans
-                      </h2>
-                      {/* The most pressing few each way show (late and due
-                      soon come first); the rest on request */}
-                      {hiddenLoans > 0 || allLoans ? (
-                        <button
-                          type="button"
-                          onClick={() => setAllLoans((all) => !all)}
-                          aria-expanded={allLoans}
-                          className={`whitespace-nowrap ${linkClass}`}
-                        >
-                          {allLoans
-                            ? "Show fewer loans"
-                            : `Show all ${books.borrowed.length + books.lent.length} loans`}
-                        </button>
-                      ) : null}
-                    </div>
                     <div className="grid gap-8 sm:grid-cols-2 sm:gap-10">
                       <LoanList
                         id="borrowing"
@@ -525,6 +505,20 @@ export default function Home({
                         empty="Everything's on your shelf."
                       />
                     </div>
+                    {/* The most pressing few each way show (late and due
+                        soon come first); the rest on request */}
+                    {hiddenLoans > 0 || allLoans ? (
+                      <button
+                        type="button"
+                        onClick={() => setAllLoans((all) => !all)}
+                        aria-expanded={allLoans}
+                        className={`mt-3 whitespace-nowrap ${linkClass}`}
+                      >
+                        {allLoans
+                          ? "Show fewer loans"
+                          : `Show all ${books.borrowed.length + books.lent.length} loans`}
+                      </button>
+                    ) : null}
                   </section>
                 ),
               },
@@ -698,43 +692,49 @@ export default function Home({
                 fades out, with the way to the rest */}
             <div
               ref={railRef}
-              className={showMain ? "lg:absolute lg:inset-0 lg:overflow-hidden lg:pl-8" : undefined}
+              className={
+                showMain
+                  ? "lg:absolute lg:inset-0 lg:overflow-hidden lg:pl-8"
+                  : undefined
+              }
             >
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <h2 id="friend-activity" className={sectionHeading}>
-                Friend activity
-              </h2>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <h2 id="friend-activity" className={sectionHeading}>
+                  Friend activity
+                </h2>
+                {activity.length > 0 ? (
+                  <Link to="/feed" className={linkClass}>
+                    See all
+                  </Link>
+                ) : null}
+              </div>
               {activity.length > 0 ? (
-                <Link to="/feed" className={linkClass}>
-                  See all
-                </Link>
+                <ul className="divide-y divide-stone-100 dark:divide-stone-800">
+                  {activity.map((item) => (
+                    <li key={item.id}>
+                      <FriendActivityItem item={item} friendIds={friendIds} />
+                    </li>
+                  ))}
+                </ul>
+              ) : friendIds.length === 0 ? (
+                <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
+                  Add friends to see the books they add and love.{" "}
+                  <Link
+                    to="/friends/add"
+                    className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
+                  >
+                    Find friends
+                  </Link>
+                </p>
+              ) : (
+                <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
+                  Nothing new from your friends lately.
+                </p>
+              )}
+              {/* After the last post when they all fit; on the fade when not */}
+              {activity.length > 0 && !railCut ? (
+                <SeeMore className="mt-3" />
               ) : null}
-            </div>
-            {activity.length > 0 ? (
-              <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-                {activity.map((item) => (
-                  <li key={item.id}>
-                    <FriendActivityItem item={item} friendIds={friendIds} />
-                  </li>
-                ))}
-              </ul>
-            ) : friendIds.length === 0 ? (
-              <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
-                Add friends to see the books they add and love.{" "}
-                <Link
-                  to="/friends/add"
-                  className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-                >
-                  Find friends
-                </Link>
-              </p>
-            ) : (
-              <p className="py-2 text-sm text-stone-500 dark:text-stone-400">
-                Nothing new from your friends lately.
-              </p>
-            )}
-            {/* After the last post when they all fit; on the fade when not */}
-            {activity.length > 0 && !railCut ? <SeeMore className="mt-3" /> : null}
             </div>
             {showMain && railCut ? (
               <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-28 items-end bg-gradient-to-t from-white from-45% to-transparent pl-8 dark:from-stone-950 lg:flex">

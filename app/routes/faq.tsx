@@ -278,9 +278,9 @@ const sections: {
         q: "A book has the wrong cover or details. Can I fix it?",
         a: (
           <>
-            Yes. On the book page, Edit details or cover lets you change
-            anything, pick another cover from Open Library, or refresh the
-            details from there.
+            Yes. At the bottom of the book page, Edit details or cover lets
+            you change anything, pick another cover from Open Library, or
+            refresh the details from there.
           </>
         ),
       },

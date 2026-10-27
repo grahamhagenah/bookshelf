@@ -5,6 +5,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import BookCover from "~/components/book-cover";
 import ErrorPage from "~/components/error-page";
 import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
+import OpeningLine from "~/components/opening-line";
 import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
 import { primaryButton, quietButton } from "~/components/ui";
@@ -247,10 +248,12 @@ export default function WorkPage() {
   const inLibrary = ownCopyId !== null;
   const wanted = data.wanted || fetcher.data?.wanted === true;
   const subjects = cleanSubjects(work.subjects);
+  // One quiet line, subjects as plain words. No publisher: up by the title
+  // it crowded the heading.
   const details = [
     work.datePublished,
     work.pageCount ? `${work.pageCount} pages` : null,
-    work.publisher,
+    subjects.join(", "),
   ].filter(Boolean);
 
   const heading = (
@@ -386,32 +389,14 @@ export default function WorkPage() {
       <section className="relative min-w-0 flex-1">
         <div className="hidden md:block">{heading}</div>
 
-        {subjects.length > 0 ? (
-          <div className="md:mt-4 flex flex-wrap items-center gap-1.5">
-            {subjects.map((subject) => (
-              <span
-                key={subject}
-                className="rounded-full bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 text-xs text-stone-600 dark:text-stone-300"
-              >
-                {subject}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
         {work.firstSentence ? (
-          <div className="mt-8">
-            <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
-              Opening line
-            </h2>
-            <blockquote className="max-w-prose border-l-2 border-stone-200 dark:border-stone-700 pl-4 italic leading-relaxed text-stone-700 dark:text-stone-300">
-              “{work.firstSentence}”
-            </blockquote>
-          </div>
+          <OpeningLine sentence={work.firstSentence} />
         ) : null}
 
         <div className="mt-8">
-          <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
+          {/* Unlabeled, like a jacket's blurb; About the author keeps its
+              label */}
+          <h2 className="sr-only">
             About this book
           </h2>
           <p className="max-w-prose whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">

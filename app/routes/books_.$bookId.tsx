@@ -6,7 +6,8 @@ import invariant from "tiny-invariant";
 import Avatar from "~/components/avatar";
 import CoverPlaceholder from "~/components/cover-placeholder";
 import ErrorPage from "~/components/error-page";
-import { LentIcon } from "~/components/icons";
+import { LentIcon, PencilIcon } from "~/components/icons";
+import OpeningLine, { openingLineType } from "~/components/opening-line";
 import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
 import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
@@ -124,15 +125,6 @@ function Placeholder({
   );
 }
 
-function lifespan(birth: string | null, death: string | null) {
-  const year = (date: string | null) => date?.match(/\d{3,4}/)?.[0] ?? null;
-  const born = year(birth);
-  const died = year(death);
-  if (born && died) return `${born}–${died}`;
-  if (born) return `Born ${born}`;
-  return null;
-}
-
 function AboutAuthor({
   author,
 }: {
@@ -145,7 +137,6 @@ function AboutAuthor({
     wikipedia: string | null;
   };
 }) {
-  const years = lifespan(author.birthDate, author.deathDate);
   const linkClass =
     "text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-800 dark:hover:text-stone-200";
 
@@ -161,16 +152,12 @@ function AboutAuthor({
   const clipped = long && !open;
 
   // The first few lines of the bio, fading out, with the rest (and the
-  // links) a tap away. The name itself is already at the top of the page.
+  // links) a tap away. The name itself is already at the top of the page,
+  // and the bio usually opens with the dates, so neither repeats here.
   return (
     <section className="mt-8">
       <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
         About the author
-        {years ? (
-          <span className="ml-2 font-normal text-stone-400 dark:text-stone-500">
-            {years}
-          </span>
-        ) : null}
       </h2>
       {author.bio ? (
         <p
@@ -246,7 +233,8 @@ function BookCover({
   src: string;
   title: string;
   author: string;
-  // For the owner: the placeholder offers to fix the missing cover
+  // For the owner: the placeholder offers to fix a missing cover, and a
+  // cover that's there opens the editor when clicked
   onAddCover?: () => void;
   // A pasted cover is being fetched and kept by the save that's under way
   fetching?: boolean;
@@ -330,6 +318,21 @@ function BookCover({
           onLoad={(e) => showCover(e.currentTarget)}
           onError={() => setError(true)}
         />
+      ) : null}
+      {/* The whole cover is the button; its label shows on hover, or when
+          reached by keyboard */}
+      {loaded && !error && onAddCover && !fetching ? (
+        <button
+          type="button"
+          onClick={onAddCover}
+          aria-label="Change cover"
+          className="group absolute inset-0 flex items-end justify-center p-2 focus-visible:outline-none"
+        >
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-white/90 dark:bg-stone-900/90 px-2 py-1.5 text-xs font-medium text-stone-800 dark:text-stone-100 shadow-sm ring-1 ring-stone-900/10 dark:ring-white/10 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+            <PencilIcon size={12} />
+            Change cover
+          </span>
+        </button>
       ) : null}
     </div>
   );
@@ -1140,14 +1143,20 @@ function LendToFriend({
   friends,
   loanChoices,
   byEmail,
+  open,
+  onOpen,
+  onClose,
 }: {
   friends: { id: string; firstname: string; surname: string }[];
   loanChoices: { weeks: readonly number[]; defaultWeeks: number };
   // Lending to someone not on Stacks: open, waiting on a confirmed
   // email, or not in the demo
   byEmail: "ok" | "confirm-email" | "off";
+  // Kept by the page, so the bar on phones can open it too
+  open: boolean;
+  onOpen: () => void;
+  onClose: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const navigation = useNavigation();
   const actionData = useActionData<{ lendError?: string }>();
   const lending = navigation.formData?.get("intent") === "lendTo";
@@ -1167,7 +1176,7 @@ function LendToFriend({
     return (
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={onOpen}
         className={`w-full ${quietButton("lg")}`}
       >
         Lend this book
@@ -1285,7 +1294,7 @@ function LendToFriend({
         </button>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={onClose}
           className={quietButton("lg")}
         >
           Cancel
@@ -1851,6 +1860,16 @@ export default function BookDetailsPage() {
   } | null;
   const navigation = useNavigation();
   const [isEditing, setIsEditing] = useState(false);
+  // The lending form, opened from its button or from the bar on phones.
+  // It starts closed again once the book's out.
+  const [lendOpen, setLendOpen] = useState(false);
+  const borrowerId = data.book.borrower?.id;
+  useEffect(() => {
+    if (borrowerId) setLendOpen(false);
+  }, [borrowerId]);
+  // The book's main action, which the bar on phones stands in for once
+  // it's scrolled away
+  const actionRef = useRef<HTMLDivElement>(null);
 
   // A book seen for the first time finishes its look-up on Open Library
   // after the page is up; the page reloads its data when that's done. A
@@ -1932,10 +1951,14 @@ export default function BookDetailsPage() {
   const showNotLending =
     !data.isOwner && !data.isBorrower && data.isFriend && notLending;
   const lendsAgainOn = lendingAgainOn(data.book.notLendingUntil);
+  // One quiet line: the year, the length and what it's about, the subjects
+  // as plain words. The publisher stays under Edit details; up here it
+  // crowded the title.
+  const subjects = cleanSubjects(data.book.subjects);
   const details = [
     data.book.datePublished,
     data.book.pageCount ? `${data.book.pageCount} pages` : null,
-    data.book.publisher,
+    subjects.join(", "),
   ].filter(Boolean);
 
   // Title and details: beside the cover on phones, in the main column on
@@ -1971,15 +1994,25 @@ export default function BookDetailsPage() {
   return (
     <>
       <main className="flex flex-col md:flex-row gap-6 md:gap-12 md:gap-12 px-4 md:px-8 py-8 md:py-12 w-full">
-        <section className="flex-shrink-0 md:w-[200px] lg:w-[240px] space-y-4">
+        {/* The cover stays in view while the page scrolls, on screens tall
+            enough to hold it with the lending form open below the header */}
+        <section className="flex-shrink-0 md:w-[200px] lg:w-[240px] space-y-4 md:self-start md:[@media(min-height:45rem)]:sticky md:[@media(min-height:45rem)]:top-20">
           <div className="flex items-start gap-4">
             <BookCover
               src={data.book.cover}
               title={data.book.title}
               author={data.book.author}
+              // Straight to the cover part of the form
               onAddCover={
                 data.isOwner && !isEditing
-                  ? () => setIsEditing(true)
+                  ? () => {
+                      setIsEditing(true);
+                      requestAnimationFrame(() =>
+                        document
+                          .getElementById("cover")
+                          ?.scrollIntoView({ block: "center" }),
+                      );
+                    }
                   : undefined
               }
               // Saving a cover pasted from another site downloads it first,
@@ -2017,17 +2050,22 @@ export default function BookDetailsPage() {
             </p>
           ) : null}
           {data.isOwner && !isEditing && !data.book.borrower ? (
-            <LendToFriend
-              friends={data.currentUser?.following ?? []}
-              loanChoices={data.loanChoices}
-              byEmail={
-                data.currentUser?.demoGroup
-                  ? "off"
-                  : data.currentUser?.emailVerifiedAt
-                    ? "ok"
-                    : "confirm-email"
-              }
-            />
+            <div ref={actionRef}>
+              <LendToFriend
+                friends={data.currentUser?.following ?? []}
+                loanChoices={data.loanChoices}
+                byEmail={
+                  data.currentUser?.demoGroup
+                    ? "off"
+                    : data.currentUser?.emailVerifiedAt
+                      ? "ok"
+                      : "confirm-email"
+                }
+                open={lendOpen}
+                onOpen={() => setLendOpen(true)}
+                onClose={() => setLendOpen(false)}
+              />
+            </div>
           ) : null}
           {data.isOwner && !isEditing ? (
             <NotLendingNotice until={data.book.notLendingUntil} />
@@ -2040,52 +2078,54 @@ export default function BookDetailsPage() {
             </p>
           ) : null}
           {canRequestBook ? (
-            <Form method="post" className="space-y-2">
-              <input type="hidden" name="intent" value="request" />
-              {/* A word for the owner goes with the ask: when, how long, where */}
-              {requestSent ? null : (
-                <>
-                  <label htmlFor="request-message" className="sr-only">
-                    A note for {data.book.user?.firstname ?? "the owner"}
-                  </label>
-                  <textarea
-                    id="request-message"
-                    name="message"
-                    // One line until the note needs more, then it grows
-                    // with it (up to a few lines, then it scrolls)
-                    rows={1}
-                    onInput={(event) => {
-                      const box = event.currentTarget;
-                      box.style.height = "auto";
-                      box.style.height = `${box.scrollHeight + box.offsetHeight - box.clientHeight}px`;
-                    }}
-                    maxLength={REQUEST_NOTE_MAX}
-                    // No name in the hint, so it stays on one line in the
-                    // narrow column whatever the owner is called; the label
-                    // names them
-                    placeholder="A note: when, and for how long?"
-                    className="block max-h-40 w-full resize-none overflow-y-auto rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
-                  />
-                </>
-              )}
-              <button
-                type="submit"
-                disabled={isSubmitting || requestSent}
-                className={`w-full ${
-                  requestSent
-                    ? quietLabel
+            <div ref={actionRef}>
+              <Form method="post" className="space-y-2">
+                <input type="hidden" name="intent" value="request" />
+                {/* A word for the owner goes with the ask: when, how long, where */}
+                {requestSent ? null : (
+                  <>
+                    <label htmlFor="request-message" className="sr-only">
+                      A note for {data.book.user?.firstname ?? "the owner"}
+                    </label>
+                    <textarea
+                      id="request-message"
+                      name="message"
+                      // One line until the note needs more, then it grows
+                      // with it (up to a few lines, then it scrolls)
+                      rows={1}
+                      onInput={(event) => {
+                        const box = event.currentTarget;
+                        box.style.height = "auto";
+                        box.style.height = `${box.scrollHeight + box.offsetHeight - box.clientHeight}px`;
+                      }}
+                      maxLength={REQUEST_NOTE_MAX}
+                      // No name in the hint, so it stays on one line in the
+                      // narrow column whatever the owner is called; the label
+                      // names them
+                      placeholder="A note: when, and for how long?"
+                      className="block max-h-40 w-full resize-none overflow-y-auto rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+                    />
+                  </>
+                )}
+                <button
+                  type="submit"
+                  disabled={isSubmitting || requestSent}
+                  className={`w-full ${
+                    requestSent
+                      ? quietLabel
+                      : isSubmitting
+                        ? `${primaryButton("lg")} opacity-60 cursor-wait`
+                        : primaryButton("lg")
+                  }`}
+                >
+                  {requestSent
+                    ? "Request sent"
                     : isSubmitting
-                      ? `${primaryButton("lg")} opacity-60 cursor-wait`
-                      : primaryButton("lg")
-                }`}
-              >
-                {requestSent
-                  ? "Request sent"
-                  : isSubmitting
-                    ? "Asking…"
-                    : "Ask to borrow"}
-              </button>
-            </Form>
+                      ? "Asking…"
+                      : "Ask to borrow"}
+                </button>
+              </Form>
+            </div>
           ) : null}
           {canWaitInLine && !isEditing ? (
             <WaitInLine position={data.linePosition} />
@@ -2396,78 +2436,30 @@ export default function BookDetailsPage() {
           ) : (
             /* View Mode */
             <>
-              {/* Room on the right for "Edit details or cover", so a long
-                  title wraps before it reaches the button */}
-              <div
-                className={`hidden md:block ${data.isOwner ? "md:pr-40" : ""}`}
-              >
-                {heading}
-              </div>
-
-              {cleanSubjects(data.book.subjects).length > 0 ? (
-                <div className="md:mt-4 flex flex-wrap items-center gap-1.5">
-                  {cleanSubjects(data.book.subjects).map((subject, index) => (
-                    <span
-                      key={index}
-                      className="rounded-full bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 text-xs text-stone-600 dark:text-stone-300"
-                    >
-                      {subject}
-                    </span>
-                  ))}
-                </div>
-              ) : lookingUp ? (
-                <div aria-hidden="true" className="md:mt-4 flex gap-1.5">
-                  {["w-16", "w-24", "w-20"].map((width) => (
-                    <span
-                      key={width}
-                      className={`h-5 ${width} rounded-full bg-stone-200/60 dark:bg-stone-800 motion-safe:animate-pulse`}
-                    />
-                  ))}
-                </div>
-              ) : null}
-
-              {/* Rarely needed, so it sits quietly in the top corner on
-                  wider screens, and under the details on phones */}
-              {data.isOwner ? (
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(true)}
-                  className="mt-3 md:absolute md:right-0 md:top-1 md:mt-0 text-sm text-stone-400 dark:text-stone-500 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
-                >
-                  Edit details or cover
-                </button>
-              ) : null}
+              <div className="hidden md:block">{heading}</div>
             </>
           )}
 
           {lookingUp && !data.book.firstSentence ? (
-            <div className="mt-8">
-              <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
-                Opening line
-              </h2>
+            <div className="mt-10">
               <p role="status" className="sr-only">
                 Looking up more about this book on Open Library…
               </p>
               <Placeholder
-                lines={3}
-                className="border-l-2 border-stone-200 dark:border-stone-700 pl-4 max-w-prose"
+                lines={2}
+                className={`${openingLineType} max-w-prose`}
               />
             </div>
           ) : null}
           {!isEditing && data.book.firstSentence ? (
-            <div className="mt-8">
-              <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
-                Opening line
-              </h2>
-              <blockquote className="border-l-2 border-stone-200 dark:border-stone-700 pl-4 italic text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
-                “{data.book.firstSentence}”
-              </blockquote>
-            </div>
+            <OpeningLine sentence={data.book.firstSentence} />
           ) : null}
 
           {!isEditing ? (
             <div className="mt-8">
-              <h2 className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2">
+              {/* Unlabeled, like a jacket's blurb; About the author keeps its
+                  label */}
+              <h2 className="sr-only">
                 About this book
               </h2>
               {!data.book.body && lookingUp ? (
@@ -2524,9 +2516,110 @@ export default function BookDetailsPage() {
               <LendingHistory data={data} />
             </div>
           ) : null}
+
+          {/* Rarely needed, so it waits at the very bottom. The form opens
+              at the top, so the page goes back up to it. */}
+          {data.isOwner && !isEditing ? (
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditing(true);
+                window.scrollTo({ top: 0 });
+              }}
+              className="mt-12 inline-flex items-center gap-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+            >
+              <PencilIcon size={14} />
+              <span className="underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600">
+                Edit details or cover
+              </span>
+            </button>
+          ) : null}
         </section>
       </main>
+
+      {/* On phones, the main action follows you down the page */}
+      {data.isOwner && !isEditing && !data.book.borrower ? (
+        <ActionBar
+          target={actionRef}
+          label="Lend this book"
+          className={quietButton("lg")}
+          onClick={() => setLendOpen(true)}
+        />
+      ) : canRequestBook && !requestSent ? (
+        <ActionBar
+          target={actionRef}
+          label="Ask to borrow"
+          className={primaryButton("lg")}
+        />
+      ) : null}
     </>
+  );
+}
+
+// A bar along the bottom of a phone's screen that stands in for the main
+// action once it's scrolled off the top. Tapping it goes back up to the
+// real one (opening it, for lending), so there's one form, not two.
+function ActionBar({
+  target,
+  label,
+  className,
+  onClick,
+}: {
+  target: React.RefObject<HTMLElement | null>;
+  label: string;
+  className: string;
+  onClick?: () => void;
+}) {
+  const [away, setAway] = useState(false);
+  const [atFooter, setAtFooter] = useState(false);
+  useEffect(() => {
+    const element = target.current;
+    if (!element) return;
+    // Away only once it's above the screen (or under the sticky header),
+    // not before it's reached
+    const observer = new IntersectionObserver(
+      ([entry]) =>
+        setAway(!entry.isIntersecting && entry.boundingClientRect.top < 0),
+      { rootMargin: "-56px 0px 0px 0px" },
+    );
+    observer.observe(element);
+    // And out of the way of the site's footer at the very end, once it's
+    // well onto the screen rather than just peeking in at the bottom
+    const footer = document.querySelector("footer");
+    const footerObserver = new IntersectionObserver(
+      ([entry]) => setAtFooter(entry.isIntersecting),
+      { rootMargin: "0px 0px -30% 0px" },
+    );
+    if (footer) footerObserver.observe(footer);
+    return () => {
+      observer.disconnect();
+      footerObserver.disconnect();
+    };
+  }, [target]);
+  const shown = away && !atFooter;
+
+  return (
+    <div
+      inert={!shown}
+      className={`fixed inset-x-0 bottom-0 z-30 border-t border-stone-200 dark:border-stone-800 bg-white/95 dark:bg-stone-950/95 backdrop-blur px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-200 motion-reduce:transition-none md:hidden ${
+        shown ? "translate-y-0" : "translate-y-full"
+      }`}
+    >
+      <button
+        type="button"
+        onClick={() => {
+          onClick?.();
+          // After the form opens, so it lands in view whole. A jump, not a
+          // glide: the form growing above the screen cut a smooth scroll short
+          requestAnimationFrame(() =>
+            target.current?.scrollIntoView({ block: "center" }),
+          );
+        }}
+        className={`w-full ${className}`}
+      >
+        {label}
+      </button>
+    </div>
   );
 }
 
