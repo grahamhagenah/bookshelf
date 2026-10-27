@@ -137,15 +137,16 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v7
 
+      # The top-level app = "…" line; fails the job if it can't find one
       - name: 👀 Read app name
-        uses: SebRollen/toml-action@v1.0.2
         id: app_name
-        with:
-          file: fly.toml
-          field: app
+        run: |
+          app=$(sed -nE 's/^app *= *"([^"]+)".*/\1/p' fly.toml)
+          test -n "$app"
+          echo "value=$app" >> "$GITHUB_OUTPUT"
 
       - name: 🎈 Setup Fly
-        uses: superfly/flyctl-actions/setup-flyctl@1.5
+        uses: superfly/flyctl-actions/setup-flyctl@1.6
 
       - name: 🚀 Deploy Staging
         if: ${{ github.ref == 'refs/heads/dev' }}
