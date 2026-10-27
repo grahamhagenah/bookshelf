@@ -628,6 +628,33 @@ function ActivityItem({
         </>
       );
       break;
+    // Handed straight on by the last borrower, as a book club does
+    case "BOOK_PASSED":
+      text = (
+        <>
+          {name} passed you {book}
+          {notification.message ? `, ${notification.message}'s copy` : ""}.
+          It&apos;s yours to read now.
+        </>
+      );
+      actions = (
+        <a href={`/books/${notification.bookId}`} className={quietAction}>
+          View book
+        </a>
+      );
+      break;
+    case "BOOK_PASSED_ON":
+      text = (
+        <>
+          {name} passed your {book} on to {notification.message ?? "the next in line"}
+        </>
+      );
+      actions = (
+        <a href={`/books/${notification.bookId}`} className={quietAction}>
+          View book
+        </a>
+      );
+      break;
     case "LOAN_EXTENDED":
       text = (
         <>
@@ -782,6 +809,18 @@ const getHistoryText = (
       return <>{book} was overdue</>;
     case "DUE_SOON_REMINDER":
       return <>{book} was due soon</>;
+    case "BOOK_PASSED":
+      return (
+        <>
+          {name} passed you {book}
+        </>
+      );
+    case "BOOK_PASSED_ON":
+      return (
+        <>
+          {name} passed your {book} on to {notification.message ?? "the next in line"}
+        </>
+      );
     case "LOAN_OVERDUE":
       return <>{book} was late back from {name}</>;
     case "LOAN_DUE_SOON":

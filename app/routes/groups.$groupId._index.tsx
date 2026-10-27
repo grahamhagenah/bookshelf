@@ -29,10 +29,15 @@ export default function GroupBooks() {
         // Before anyone's joined, ask for people; after, for books
         (layout?.group.members.length ?? 0) > 1 ? (
           <>
-            <h2 className={sectionHeading}>No one&apos;s added books yet</h2>
+            <h2 className={sectionHeading}>
+              {(layout?.group.myBookCount ?? 0) > 0
+                ? "No one else has added books yet"
+                : "No one\u2019s added books yet"}
+            </h2>
             <p className="mx-auto mt-1 max-w-sm text-stone-500 dark:text-stone-400">
-              Add yours, and everyone in {layout?.group.name ?? "the group"} can borrow them.
-              Their books show up here as they add them.
+              {(layout?.group.myBookCount ?? 0) > 0
+                ? "Yours are in it already. Everyone else's show up here as they add them."
+                : `Add yours, and everyone in ${layout?.group.name ?? "the group"} can borrow them. Their books show up here as they add them.`}
             </p>
             <Link
               to="/search"

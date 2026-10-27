@@ -49,6 +49,13 @@ const PATHS: Record<string, React.ReactNode> = {
     </>
   ),
   // Clock with a plus
+  // A book handed from one reader to the next: two arrows, one onward
+  BOOK_PASSED: (
+    <path d="M4 9h12l-3-3M20 15H8l3 3" />
+  ),
+  BOOK_PASSED_ON: (
+    <path d="M4 9h12l-3-3M20 15H8l3 3" />
+  ),
   LOAN_EXTENDED: (
     <>
       <circle cx="11" cy="12" r="7.5" />

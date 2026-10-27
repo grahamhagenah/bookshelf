@@ -392,6 +392,16 @@ model Group {
   inviteToken String        @unique
   members     GroupMember[]
 
+  // What the group's reading now, for a book club: the Open Library work,
+  // as it was when picked, and a line about it ("We meet on the 12th").
+  // Anyone in the group can set or clear it.
+  pickKey    String?
+  pickTitle  String?
+  pickAuthor String?
+  pickCover  String?
+  pickNote   String?
+  pickedAt   DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

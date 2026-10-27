@@ -2,6 +2,7 @@ import { prisma } from "~/db.server";
 import type { Book, User } from "~/generated/prisma/client";
 import { isNotLending } from "~/lending";
 
+import { DEFAULT_LOAN_WEEKS, lendToFriend, returnBook } from "./book.server";
 import { createBookRequestNotification } from "./user.server";
 
 // Holds: friends waiting in line for a book that's out on loan. When it
@@ -87,4 +88,65 @@ export async function passToNextInLine(bookId: Book["id"]) {
     },
   });
   return request;
+}
+
+// The borrower hands the book straight to whoever's first in line, as a
+// book club does, without it going back to the owner in between. The loan
+// ends and the next one starts for the usual length, and both the owner
+// and the new borrower hear who passed it to whom. Not while the owner
+// has stopped lending: then it goes back to them. Null when there's no
+// one to pass it to.
+export async function passStraightOn(bookId: Book["id"], borrowerId: User["id"]) {
+  const book = await prisma.book.findUnique({
+    where: { id: bookId },
+    select: {
+      id: true,
+      title: true,
+      userId: true,
+      borrowerId: true,
+      notLendingUntil: true,
+      user: { select: { firstname: true } },
+      borrower: { select: { firstname: true, surname: true } },
+    },
+  });
+  if (!book || book.borrowerId !== borrowerId || !book.borrower) return null;
+  if (isNotLending(book.notLendingUntil)) return null;
+
+  const next = await prisma.hold.findFirst({
+    where: { bookId },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, user: { select: { id: true, firstname: true, surname: true } } },
+  });
+  if (!next) return null;
+
+  const passer = `${book.borrower.firstname} ${book.borrower.surname}`.trim();
+  const to = `${next.user.firstname} ${next.user.surname}`.trim();
+  await prisma.hold.delete({ where: { id: next.id } });
+  await returnBook(bookId);
+  await lendToFriend(bookId, book.userId, next.user.id, DEFAULT_LOAN_WEEKS);
+  await prisma.notification.createMany({
+    data: [
+      // To the one who has it now: who it's from, and whose it is
+      {
+        type: "BOOK_PASSED",
+        senderId: borrowerId,
+        receiverId: next.user.id,
+        senderName: passer,
+        bookId,
+        bookTitle: book.title,
+        message: book.user.firstname,
+      },
+      // To the owner: where their book's gone
+      {
+        type: "BOOK_PASSED_ON",
+        senderId: borrowerId,
+        receiverId: book.userId,
+        senderName: passer,
+        bookId,
+        bookTitle: book.title,
+        message: to,
+      },
+    ],
+  });
+  return { to: next.user };
 }

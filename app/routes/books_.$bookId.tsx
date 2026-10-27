@@ -38,6 +38,7 @@ import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import {
   getHolds,
   leaveHold,
+  passStraightOn,
   passToNextInLine,
   placeHold,
 } from "~/models/hold.server";
@@ -852,6 +853,18 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
     await returnBook(book.id);
     await handOn(book.id, userId);
+    return redirect("/books");
+  }
+
+  // Handed straight to whoever's next in line, as a book club does
+  if (intent === "passOn") {
+    if (book.borrowerId !== userId) {
+      throw new Response("Unauthorized", { status: 403 });
+    }
+    const passed = await passStraightOn(book.id, userId);
+    if (!passed) {
+      return data({ passError: "No one's waiting for it now. Return it instead." }, { status: 400 });
+    }
     return redirect("/books");
   }
 
@@ -2282,6 +2295,23 @@ export default function BookDetailsPage() {
                   ? `Return book to ${data.book.user.firstname}`
                   : "Return book"}
               </button>
+            </Form>
+          ) : null}
+          {/* Someone's waiting: hand it straight on, as a book club does */}
+          {data.isBorrower &&
+          data.waiting.length > 0 &&
+          !isNotLending(data.book.notLendingUntil) ? (
+            <Form method="post">
+              <input type="hidden" name="intent" value="passOn" />
+              <button type="submit" className={`w-full ${quietButton("lg")}`}>
+                Pass it to {data.waiting[0].firstname}
+              </button>
+              <p className="mt-1.5 text-xs text-stone-500 dark:text-stone-400">
+                {data.waiting[0].firstname} is next in line. Hand it over and
+                it&apos;s theirs for {data.loanChoices.defaultWeeks} weeks;
+                {data.book.user ? ` ${data.book.user.firstname}` : " its owner"}{" "}
+                hears where it went.
+              </p>
             </Form>
           ) : null}
           {!isEditing ? <BookFacts data={data} /> : null}
