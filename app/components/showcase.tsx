@@ -1,7 +1,17 @@
 import { coverSrc } from "~/utils";
 
 import Avatar, { Bookplate } from "./avatar";
-import { BorrowedIcon, HeartIcon, LentIcon, SearchIcon } from "./icons";
+import {
+  BellIcon,
+  BookIcon,
+  BorrowedIcon,
+  FeedIcon,
+  GroupIcon,
+  HeartIcon,
+  LentIcon,
+  SearchIcon,
+} from "./icons";
+import Wordmark from "./wordmark";
 
 // Staged glimpses of the app for the landing page: cards styled like the
 // real ones, tilted and overlapping. The default export, about lending,
@@ -10,6 +20,11 @@ import { BorrowedIcon, HeartIcon, LentIcon, SearchIcon } from "./icons";
 
 export const cover = (isbn: string) =>
   coverSrc(`https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`);
+
+// By Open Library's cover ID, for books whose ISBN finds no cover or a
+// poor one, as the demo does
+const coverById = (id: number) =>
+  coverSrc(`https://covers.openlibrary.org/b/id/${id}-L.jpg`);
 
 const COVERS = {
   stationEleven: cover("9780804172448"),
@@ -30,6 +45,16 @@ const COVERS = {
   brightCreatures: cover("9780063204157"),
   pachinko: cover("9781455563920"),
   crawdads: cover("9780735219090"),
+  slaughterhouse: coverById(14951202),
+  evicted: coverById(14622049),
+  howToDoNothing: coverById(8750439),
+  nineteenEightyFour: coverById(15257377),
+  martyr: coverById(14562207),
+  rejection: coverById(15104806),
+  exhalation: coverById(8793546),
+  lonesomeDove: coverById(14819521),
+  neuromancer: coverById(283860),
+  secretHistory: coverById(744854),
 };
 
 const skin =
@@ -627,6 +652,24 @@ export function ShowcaseNotes() {
   );
 }
 
+// A browser window's top: three dots and the address
+function BrowserBar({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 border-b border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 px-3 py-2">
+      <span className="flex gap-1">
+        <span className="h-2 w-2 rounded-full bg-stone-300 dark:bg-stone-700" />
+        <span className="h-2 w-2 rounded-full bg-stone-300 dark:bg-stone-700" />
+        <span className="h-2 w-2 rounded-full bg-stone-300 dark:bg-stone-700" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="mx-auto block max-w-sm truncate rounded-md bg-white dark:bg-stone-900 px-2.5 py-1 text-center text-xs text-stone-500 dark:text-stone-400 ring-1 ring-stone-900/5 dark:ring-white/10">
+          {children}
+        </span>
+      </span>
+    </div>
+  );
+}
+
 // Your shelf's own page, as anyone with the link sees it: a browser window
 // at your address, with your bookplate, a line about you, your favorites
 // and the shelf beneath
@@ -644,20 +687,12 @@ export function ShowcasePage() {
       <div
         className={`${panel} inset-x-0 top-[3%] z-20 -rotate-1 overflow-hidden`}
       >
-        {/* The window's top: three dots and the address */}
-        <div className="flex items-center gap-3 border-b border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 px-3 py-2">
-          <span className="flex gap-1">
-            <span className="h-2 w-2 rounded-full bg-stone-300 dark:bg-stone-700" />
-            <span className="h-2 w-2 rounded-full bg-stone-300 dark:bg-stone-700" />
-            <span className="h-2 w-2 rounded-full bg-stone-300 dark:bg-stone-700" />
+        <BrowserBar>
+          bookstacks.app/
+          <span className="font-medium text-stone-800 dark:text-stone-200">
+            @maya
           </span>
-          <span className="flex-1 truncate rounded-md bg-white dark:bg-stone-900 px-2.5 py-1 text-center text-xs text-stone-500 dark:text-stone-400 ring-1 ring-stone-900/5 dark:ring-white/10">
-            bookstacks.app/
-            <span className="font-medium text-stone-800 dark:text-stone-200">
-              @maya
-            </span>
-          </span>
-        </div>
+        </BrowserBar>
 
         <div className="p-4">
           <div className="flex items-start gap-3">
@@ -729,5 +764,197 @@ export function ShowcasePage() {
         Link copied
       </div>
     </Stage>
+  );
+}
+
+// The home page as it looks once you're in, drawn from the demo library:
+// what you're borrowing, what's lent out, a group, your want-to-read list
+// and friends' notes. Straight on, not tilted, as a look at the app itself.
+// On a phone the window narrows the way the app does: the friends' column
+// goes and each list shows less.
+type Loan = [cover: string, title: string, who: string, due: string, late?: boolean];
+
+const BORROWING: Loan[] = [
+  [COVERS.slaughterhouse, "Slaughterhouse-Five", "From Anika Rao", "due Thursday"],
+  [COVERS.cityWalls, "The City and Its Uncertain Walls", "From Maya Castellanos", "due in 2 weeks"],
+  [COVERS.evicted, "Evicted", "From Sam Okafor", "due in 3 weeks"],
+];
+
+const LENT_OUT: Loan[] = [
+  [COVERS.piranesi, "Piranesi", "To Sam Okafor", "5 days late", true],
+  [COVERS.stationEleven, "Station Eleven", "To Anika Rao", "due in a week"],
+  [COVERS.hailMary, "Project Hail Mary", "To Maya Castellanos", "due in 2 weeks"],
+];
+
+const WANTED: [cover: string, title: string, who: string][] = [
+  [COVERS.overstory, "The Overstory", "Maya has it"],
+  [COVERS.nineteenEightyFour, "Nineteen Eighty-Four", "Anika has it"],
+  [COVERS.rejection, "Rejection", "Sam has it"],
+  [COVERS.martyr, "Martyr!", "Theo has it"],
+  [COVERS.demonCopperhead, "Demon Copperhead", "Noah has it"],
+];
+
+const POSTS: [who: keyof typeof MEMBERS, name: string, title: string, cover: string, note: string][] = [
+  ["maya", "Maya Castellanos", "Circe", COVERS.circe, "Gorgeous. The chapters on Aiaia felt like a long summer."],
+  [
+    "anika",
+    "Anika Rao",
+    "How to Do Nothing",
+    COVERS.howToDoNothing,
+    "Read it on the porch with my phone in another room, which is the point.",
+  ],
+];
+
+// The books most lent around your friends, and who has each
+const POPULAR: [cover: string, title: string, by: string, lent: number][] = [
+  [COVERS.exhalation, "Exhalation", "Ted Chiang · Sam has it", 3],
+  [COVERS.lonesomeDove, "Lonesome Dove", "Larry McMurtry · Maya has it", 3],
+  [COVERS.neuromancer, "Neuromancer", "William Gibson · Sam has it", 2],
+  [COVERS.secretHistory, "The Secret History", "Donna Tartt · Maya has it", 2],
+];
+
+function Loans({ title, count, loans }: { title: string; count: number; loans: Loan[] }) {
+  return (
+    <div className="min-w-0">
+      <p className="mb-1 flex items-baseline gap-2 font-semibold text-stone-900 dark:text-stone-100">
+        {title}
+        <span className="text-sm font-normal text-stone-400 dark:text-stone-500">{count}</span>
+      </p>
+      <ul className="divide-y divide-stone-100 dark:divide-stone-800">
+        {loans.map(([src, book, who, due, late], index) => (
+          <li
+            key={book}
+            className={`items-center gap-2.5 py-1.5 ${index > 1 ? "hidden sm:flex" : "flex"}`}
+          >
+            <Cover src={src} className="w-8 flex-shrink-0" sizes="32px" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium text-stone-900 dark:text-stone-100">
+                {book}
+              </span>
+              <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
+                {who} ·{" "}
+                <span className={late ? "font-semibold text-stone-900 dark:text-stone-100" : ""}>{due}</span>
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function ShowcaseHome() {
+  return (
+    <div aria-hidden="true" className={`${skin} select-none overflow-hidden`}>
+      <BrowserBar>bookstacks.app</BrowserBar>
+
+      {/* The app's header */}
+      <div className="flex items-center gap-4 border-b border-stone-200 dark:border-stone-800 px-4 py-2.5">
+        <Wordmark className="text-xl leading-none text-stone-900 dark:text-stone-100" />
+        <span className="hidden h-7 w-56 items-center gap-1.5 rounded-md bg-stone-100 dark:bg-stone-800 px-2.5 text-xs text-stone-400 md:flex">
+          <SearchIcon size={12} />
+          Search or add books
+        </span>
+        <span className="ml-auto flex items-center gap-3.5 text-xs text-stone-700 dark:text-stone-300">
+          {(
+            [
+              [<BookIcon key="shelf" size={14} />, "My shelf"],
+              [<FeedIcon key="feed" size={14} strokeWidth={1.5} />, "Feed"],
+              [<GroupIcon key="friends" size={14} />, "Friends"],
+              [<BellIcon key="alerts" size={14} />, "Alerts"],
+            ] as const
+          ).map(([icon, label]) => (
+            <span key={label} className="flex items-center gap-1">
+              {icon}
+              <span className="hidden sm:inline">{label}</span>
+            </span>
+          ))}
+          <Bookplate firstname="Jordan" surname="Avery" color="ochre" box="h-6 w-6 text-[10px]" framed={false} />
+        </span>
+      </div>
+
+      {/* Cut off at the window's bottom, partway down the want-to-read
+          covers, as a page that goes on would be */}
+      <div className="flex h-[520px] overflow-hidden sm:h-[470px]">
+        <div className="min-w-0 flex-1 p-4 sm:p-5">
+          <div className="grid gap-5 sm:grid-cols-2 sm:gap-8">
+            <Loans title="Borrowing" count={4} loans={BORROWING} />
+            <Loans title="Lent out" count={6} loans={LENT_OUT} />
+          </div>
+
+          <p className="mt-3 flex items-center gap-2 rounded-md bg-stone-50 dark:bg-stone-800/60 px-2.5 py-1.5 text-xs">
+            <span className="flex flex-shrink-0 -space-x-1.5">
+              {(["maya", "sam", "anika"] as const).map((who) => (
+                <Member key={who} who={who} />
+              ))}
+            </span>
+            <span className="min-w-0 truncate text-stone-500 dark:text-stone-400">
+              <span className="font-semibold text-stone-900 dark:text-stone-100">Thursday book club</span> · 4
+              people · 28 books
+            </span>
+          </p>
+
+          <p className="mt-5 mb-2 font-semibold text-stone-900 dark:text-stone-100">Want to read</p>
+          <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-5">
+            {WANTED.map(([src, book, who], index) => (
+              <div key={book} className={`min-w-0 ${index > 3 ? "hidden sm:block" : ""}`}>
+                <Cover src={src} className="w-full" sizes="(min-width: 640px) 110px, 20vw" />
+                <p className="mt-1 truncate text-[11px] text-stone-600 dark:text-stone-300">{book}</p>
+                <p className="truncate text-[11px] text-stone-400 dark:text-stone-500">{who}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Friends' notes, in the column beside, as on a wide screen */}
+        <div className="hidden w-64 flex-shrink-0 border-l border-stone-200 dark:border-stone-800 p-5 md:block">
+          <p className="mb-3 font-semibold text-stone-900 dark:text-stone-100">Friend activity</p>
+          <ul className="space-y-4">
+            {POSTS.map(([who, name, book, src, note]) => (
+              <li key={name} className="flex gap-2.5">
+                <Face who={who} small />
+                <div className="min-w-0">
+                  <p className="text-xs leading-snug text-stone-600 dark:text-stone-300">
+                    <span className="font-semibold text-stone-900 dark:text-stone-100">{name}</span> wrote
+                    about <span className="font-semibold text-stone-900 dark:text-stone-100">{book}</span>{" "}
+                    <Heart size={10} />
+                  </p>
+                  <div className="mt-1.5 flex gap-2">
+                    <Cover src={src} className="w-8 flex-shrink-0 self-start" sizes="32px" />
+                    <p className="text-pretty text-xs leading-snug text-stone-600 dark:text-stone-300">
+                      &ldquo;{note}&rdquo;
+                    </p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <p className="mt-5 border-t border-stone-200 dark:border-stone-800 pt-4 mb-1 font-semibold text-stone-900 dark:text-stone-100">
+            Popular with friends
+          </p>
+          <ol className="divide-y divide-stone-100 dark:divide-stone-800">
+            {POPULAR.map(([src, book, by, lent], index) => (
+              <li key={book} className="flex items-center gap-2 py-1.5">
+                <span className="w-3 flex-shrink-0 text-center text-xs font-semibold tabular-nums text-stone-500 dark:text-stone-400">
+                  {index + 1}
+                </span>
+                <Cover src={src} className="w-6 flex-shrink-0" sizes="24px" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-medium text-stone-900 dark:text-stone-100">
+                    {book}
+                  </span>
+                  <span className="block truncate text-[11px] text-stone-500 dark:text-stone-400">{by}</span>
+                </span>
+                <span className="inline-flex flex-shrink-0 items-center gap-0.5 text-[11px] tabular-nums text-stone-500 dark:text-stone-400">
+                  <LentIcon size={10} />
+                  {lent}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </div>
   );
 }
