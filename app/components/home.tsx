@@ -387,20 +387,21 @@ function PopularChart({
                   title={book.title}
                   className="w-10 h-15 flex-shrink-0"
                 />
+                {/* Set like the loan rows, whose covers are the same size */}
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium leading-snug text-stone-900 dark:text-stone-100">
+                  <span className="line-clamp-2 font-medium leading-snug text-stone-900 dark:text-stone-100">
                     {book.title}
                   </span>
-                  <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
+                  <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
                     {book.author}
                     {book.owners ? ` · ${book.owners}` : ""}
                   </span>
                 </span>
                 <span
                   title={said}
-                  className="inline-flex flex-shrink-0 items-center gap-1 text-xs tabular-nums text-stone-500 dark:text-stone-400"
+                  className="inline-flex flex-shrink-0 items-center gap-1 text-sm tabular-nums text-stone-500 dark:text-stone-400"
                 >
-                  <LentIcon size={12} />
+                  <LentIcon size={14} />
                   <span aria-hidden="true">{book.loans}</span>
                   <span className="sr-only">{said}</span>
                 </span>
