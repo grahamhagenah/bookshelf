@@ -1,5 +1,5 @@
 // @vitest-environment node
-import bcrypt from "bcryptjs";
+import { hash } from "bcryptjs";
 
 import { makeUser, prisma } from "../test/db";
 
@@ -16,9 +16,9 @@ const secret = () => process.env.SESSION_SECRET!;
 
 async function userWithPassword(name: string, data: Parameters<typeof makeUser>[1] = {}) {
   const user = await makeUser(name, data);
-  const hash = await bcrypt.hash("old-password", 4);
-  await prisma.password.create({ data: { userId: user.id, hash } });
-  return { ...user, hash };
+  const oldHash = await hash("old-password", 4);
+  await prisma.password.create({ data: { userId: user.id, hash: oldHash } });
+  return { ...user, hash: oldHash };
 }
 
 const sentAt = async (id: string) =>

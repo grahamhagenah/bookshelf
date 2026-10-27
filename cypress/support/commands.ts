@@ -88,6 +88,7 @@ function deleteUserByEmail(email: string) {
 // ===========================================================
 function visitAndCheck(url: string, waitTime = 1000) {
   cy.visit(url);
+  // eslint-disable-next-line cypress/no-unnecessary-waiting -- the issue above
   cy.location("pathname").should("contain", url).wait(waitTime);
 }
 

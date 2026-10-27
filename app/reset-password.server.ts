@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+import { hash } from "bcryptjs";
 
 import { prisma } from "~/db.server";
 import { sendPasswordResetEmail } from "~/email.server";
@@ -64,7 +64,7 @@ export async function resetPasswordWithToken(token: string, newPassword: string)
   await prisma.user.update({
     where: { id: userId },
     data: {
-      password: { update: { hash: await bcrypt.hash(newPassword, 10) } },
+      password: { update: { hash: await hash(newPassword, 10) } },
       passwordResetSentAt: null,
       ...(user.emailVerifiedAt ? {} : { emailVerifiedAt: new Date() }),
     },

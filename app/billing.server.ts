@@ -1,3 +1,5 @@
+// The default import, as Stripe documents it
+// eslint-disable-next-line import-x/no-named-as-default
 import Stripe from "stripe";
 
 import { prisma } from "~/db.server";

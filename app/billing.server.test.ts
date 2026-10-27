@@ -1,4 +1,6 @@
 // @vitest-environment node
+// The default import, as Stripe documents it
+// eslint-disable-next-line import-x/no-named-as-default
 import type Stripe from "stripe";
 
 import { makeUser, prisma } from "../test/db";
