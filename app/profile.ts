@@ -57,3 +57,28 @@ export function shelfPath(user: { handle?: string | null; shareToken?: string | 
   if (!user.shareToken) return null;
   return user.handle ? `/@${user.handle}` : `/share/${user.shareToken}`;
 }
+
+// A tip for the owner on their own public page while none of their
+// favorites says anything: a note shows in a bubble beside a pinned cover,
+// telling visitors why it's there. Null once one does. It points to a
+// favorite from their own shelf, where the pin and the note are.
+export function noteTip(profile: {
+  pinned: boolean;
+  favorites: { id: string; title: string; onShelf: boolean; note: string | null }[];
+}) {
+  if (profile.favorites.some((book) => book.note)) return null;
+  const book = profile.favorites.find((favorite) => favorite.onShelf);
+  return {
+    text: profile.pinned
+      ? "Add a note to a pinned book and it shows beside the cover, so visitors know why you love it."
+      : "Pin a book to the top of your page and add a note to it, so visitors know why you love it.",
+    link: book
+      ? {
+          label: profile.pinned
+            ? `Write one on ${book.title}`
+            : `Start with ${book.title}`,
+          to: `/books/${book.id}`,
+        }
+      : null,
+  };
+}
