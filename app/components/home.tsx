@@ -6,6 +6,7 @@ import type { getHomeBooks } from "~/models/book.server";
 
 import BookCover from "./book-cover";
 import FriendActivityItem from "./friend-activity";
+import { LentIcon } from "./icons";
 import { InviteButtons } from "./invite-message";
 import { sectionHeading } from "./ui";
 
@@ -365,6 +366,7 @@ interface Popular {
 function CoverRow({
   items,
   caption,
+  badge,
 }: {
   items: {
     id: string;
@@ -374,6 +376,8 @@ function CoverRow({
     to: string;
   }[];
   caption: (index: number) => React.ReactNode;
+  // A small tag on a cover's corner, as the library puts "Lent out"
+  badge?: (index: number) => React.ReactNode;
 }) {
   return (
     <ul className="grid grid-cols-4 gap-3 sm:grid-cols-6">
@@ -387,12 +391,15 @@ function CoverRow({
             title={item.title}
             className="block hover:opacity-90 transition-opacity"
           >
-            <BookCover
-              cover={item.cover}
-              title={item.title}
-              author={item.author}
-              className="w-full aspect-[2/3]"
-            />
+            <span className="relative block">
+              <BookCover
+                cover={item.cover}
+                title={item.title}
+                author={item.author}
+                className="w-full aspect-[2/3]"
+              />
+              {badge?.(index)}
+            </span>
             <span className="mt-1.5 block truncate text-xs text-stone-600 dark:text-stone-300">
               {item.title}
             </span>
@@ -623,17 +630,25 @@ export default function Home({
                     </div>
                     <CoverRow
                       items={popular}
+                      // How many times it's been lent, on the cover
+                      badge={(index) => {
+                        const { loans } = popular[index];
+                        const said =
+                          loans === 1 ? "Lent once" : `Lent ${loans} times`;
+                        return (
+                          <span
+                            title={said}
+                            className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[11px] font-medium leading-4 text-stone-700 dark:text-stone-200 shadow-sm"
+                          >
+                            <LentIcon size={11} />
+                            <span aria-hidden="true">{loans}</span>
+                            <span className="sr-only">{said}</span>
+                          </span>
+                        );
+                      }}
                       caption={(index) => (
                         <span className="line-clamp-2 text-xs text-stone-400 dark:text-stone-500">
-                          {popular[index].loans === 1
-                            ? "Lent once"
-                            : `Lent ${popular[index].loans} times`}
-                          {popular[index].owners ? (
-                            <>
-                              <br />
-                              {popular[index].owners}
-                            </>
-                          ) : null}
+                          {popular[index].owners ?? "\u00a0"}
                         </span>
                       )}
                     />
