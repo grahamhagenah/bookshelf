@@ -8,6 +8,7 @@ import {
   BookIcon,
   UserIcon,
   SettingsIcon,
+  CheckoutIcon,
   GroupIcon,
   LogoutIcon,
   DashboardIcon,
@@ -165,6 +166,10 @@ export default function PositionedMenu() {
           >
             <GroupIcon size={18} />
             <span>Friends</span>
+          </Link>
+          <Link to="/checkout" onClick={() => setOpen(false)} className={item}>
+            <CheckoutIcon size={18} />
+            <span>Check-out desk</span>
           </Link>
           <Link to="/account" onClick={() => setOpen(false)} className={item}>
             <SettingsIcon size={18} />

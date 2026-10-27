@@ -3,6 +3,7 @@ import type { Book, User } from "~/generated/prisma/client";
 import { isNotLending } from "~/lending";
 
 import { DEFAULT_LOAN_WEEKS, lendToFriend, returnBook } from "./book.server";
+import { respondAsDemoPersona } from "./demo.server";
 import { createBookRequestNotification } from "./user.server";
 
 // Holds: friends waiting in line for a book that's out on loan. When it
@@ -39,6 +40,16 @@ export async function placeHold(bookId: Book["id"], userId: User["id"]) {
 
 export function leaveHold(bookId: Book["id"], userId: User["id"]) {
   return prisma.hold.deleteMany({ where: { bookId, userId } });
+}
+
+// When a book comes back, ask for it on behalf of whoever is first in line.
+// A demo friend who owns it answers straight away, but never on behalf of
+// the person who just marked it returned: that's theirs to decide.
+export async function handOn(bookId: Book["id"], actingUserId: User["id"]) {
+  const request = await passToNextInLine(bookId);
+  if (request && request.receiverId !== actingUserId) {
+    await respondAsDemoPersona(request.id);
+  }
 }
 
 // The book is back: turn the first hold into a borrow request to the

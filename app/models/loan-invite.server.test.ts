@@ -8,8 +8,8 @@ import {
   getInvite,
   lendByEmail,
   lendByName,
-  nameOnlyBorrowers,
 } from "./loan-invite.server";
+import { nameList } from "./name-list.server";
 import { getFriendStatus, searchUsers, verifyLogin } from "./user.server";
 
 process.env.SESSION_SECRET ??= "test-secret";
@@ -166,14 +166,14 @@ test("lending by name only needs no email from anyone, and sends none", async ()
   expect(await lendByName(walt.id, another, { name: "bob next door", weeks: 2 })).toMatchObject({
     borrowerId: bob.id,
   });
-  expect((await nameOnlyBorrowers(walt.id)).map((person) => person.id)).toEqual([bob.id]);
+  expect((await nameList(walt.id)).map((person) => person.id)).toEqual([bob.id]);
 
   // Someone else's Bob is their own
   const priya = await makeUser("Priya");
   const theirs = await makeBook(priya.id, "Circe");
   const other = await lendByName(priya.id, theirs, { name: "Bob Next Door", weeks: 2 });
   expect(other.ok && other.borrowerId).not.toBe(bob.id);
-  expect(await nameOnlyBorrowers(priya.id)).toHaveLength(1);
+  expect(await nameList(priya.id)).toHaveLength(1);
 
   expect(await lendByName(walt.id, theirs, { name: "  ", weeks: 2 })).toMatchObject({ ok: false });
 });
