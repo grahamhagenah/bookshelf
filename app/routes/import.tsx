@@ -5,10 +5,10 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import InviteMessage from "~/components/invite-message";
 import Layout from "~/components/layout";
 import { primaryButton, quietButton, sectionHeading } from "~/components/ui";
-import type { ImportSource, ShelfChoice } from "~/import-books";
-import { defaultChoice, readExport, summarize } from "~/import-books";
+import type { ImportRow, ImportSource, ShelfChoice } from "~/import-books";
+import { DEFAULT_CHOICE, readExport, summarize } from "~/import-books";
 import { getFriendInvite } from "~/models/friend.server";
-import { importBooks } from "~/models/import.server";
+import { findImportedWorks, importBooks } from "~/models/import.server";
 import { fillInBooks } from "~/models/openlibrary.server";
 import { publicOrigin } from "~/origin.server";
 import { UPGRADE_PATH } from "~/plan";
@@ -70,11 +70,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { bookIds, ...result } = await importBooks(userId, rows, {
     shelf: SHELF_CHOICES.includes(shelf as ShelfChoice)
       ? (shelf as ShelfChoice)
-      : defaultChoice(rows),
+      : DEFAULT_CHOICE,
     wantToRead: form.get("wantToRead") === "on",
+    alsoRead: form.get("alsoRead") === "on",
   });
-  // Covers and details come from Open Library after the reply goes out
+  // Covers and details come from Open Library after the reply goes out,
+  // and which work each book read elsewhere is
   void fillInBooks(bookIds);
+  void findImportedWorks(userId);
   return data({ source, ...result });
 };
 
@@ -87,7 +90,7 @@ const SOURCE_NAMES: Record<ImportSource, string> = {
 interface Preview {
   name: string;
   source: ImportSource;
-  summary: ReturnType<typeof summarize>;
+  rows: ImportRow[];
 }
 
 const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
@@ -101,15 +104,14 @@ export default function Import() {
   // Read the file in the browser first, so the choices below can say
   // what they'd do with it
   const [preview, setPreview] = useState<Preview | null>(null);
-  const [shelf, setShelf] = useState<ShelfChoice>("owned");
+  const [shelf, setShelf] = useState<ShelfChoice>(DEFAULT_CHOICE);
   const onFile = async (file: File | undefined) => {
     if (!file) return setPreview(null);
     const { source, rows } = readExport(await file.text());
-    setPreview({ name: file.name, source, summary: summarize(rows) });
-    setShelf(defaultChoice(rows));
+    setPreview({ name: file.name, source, rows });
   };
 
-  const summary = preview?.summary;
+  const summary = preview ? summarize(preview.rows, shelf) : undefined;
   const count = (n: number | undefined) =>
     n === undefined ? null : (
       <span className="ml-1.5 text-stone-400 dark:text-stone-500">{n}</span>
@@ -129,8 +131,15 @@ export default function Import() {
         <h2 className={sectionHeading}>Import your books</h2>
         <p className={`mt-1 max-w-xl text-pretty ${muted}`}>
           Already keep your books on Goodreads or StoryGraph? Export them there
-          and bring the file here. Books you own go on your shelf, and the ones
-          you&apos;re meaning to read can go on your want-to-read list.
+          and bring the file here. Books you own go on your shelf, the others
+          you&apos;ve read on your Also read list, and the ones you&apos;re
+          meaning to read on your want-to-read list. Your reviews come along
+          as notes, and five stars as a heart.
+        </p>
+        <p className={`mt-2 max-w-xl text-pretty text-sm ${muted}`}>
+          Keep your own list instead? A spreadsheet saved as a CSV file works
+          too: one book a row, with Title and Author columns (an ISBN column
+          helps find the right edition). Everything in it goes on your shelf.
         </p>
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
           <div>
@@ -180,6 +189,7 @@ export default function Import() {
             <h2 className={sectionHeading}>Done</h2>
             <p className="mt-1 text-stone-700 dark:text-stone-300">
               From {SOURCE_NAMES[result.source]}: {plural(result.added, "book")} added to your shelf
+              {result.alsoRead ? `, ${result.alsoRead} to your Also read list` : ""}
               {result.wanted ? `, ${result.wanted} to your want-to-read list` : ""}.
               {result.skipped
                 ? ` ${plural(result.skipped, "book")} ${result.skipped === 1 ? "was" : "were"} already there.`
@@ -204,6 +214,14 @@ export default function Import() {
               >
                 See your shelf
               </Link>
+              {result.alsoRead ? (
+                <Link
+                  to="/read-elsewhere"
+                  className={`${quietButton("lg")} inline-flex items-center`}
+                >
+                  Also read
+                </Link>
+              ) : null}
               {result.wanted ? (
                 <Link
                   to="/want-to-read"
@@ -238,9 +256,13 @@ export default function Import() {
             </label>
             {preview ? (
               <p className={`mt-2 text-sm ${muted}`}>
-                {preview.summary.total === 0
+                {summary?.total === 0
                   ? "No books found in this file."
-                  : `${plural(preview.summary.total, "book")} in your ${SOURCE_NAMES[preview.source]} export.`}
+                  : `${plural(summary?.total ?? 0, "book")} in your ${SOURCE_NAMES[preview.source]} export${
+                      summary?.noted
+                        ? `, ${summary.noted} with a review or five stars`
+                        : ""
+                    }.`}
               </p>
             ) : null}
 
@@ -265,13 +287,26 @@ export default function Import() {
                 ))}
               </div>
               <p className={`mt-2 text-xs ${muted}`}>
-                Goodreads only knows which books you own if you&apos;ve set
-                &ldquo;owned copies&rdquo; on them, so most people pick the
-                second option.
+                Your shelf is what friends can ask to borrow. Goodreads only
+                knows which books you own if you&apos;ve set &ldquo;owned
+                copies&rdquo; on them; if you haven&apos;t, pick the second
+                option only if you own what you&apos;ve read, or scan the books
+                on your shelves afterwards.
               </p>
             </fieldset>
 
             <label className="mt-5 flex items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200">
+              <input
+                type="checkbox"
+                name="alsoRead"
+                defaultChecked
+                className="accent-stone-700 dark:accent-stone-300"
+              />
+              Put the other books I&apos;ve read on my Also read list
+              {count(summary?.alsoRead)}
+            </label>
+
+            <label className="mt-2 flex items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200">
               <input
                 type="checkbox"
                 name="wantToRead"
@@ -288,7 +323,7 @@ export default function Import() {
 
             <button
               type="submit"
-              disabled={importing || (preview !== null && preview.summary.total === 0)}
+              disabled={importing || summary?.total === 0}
               className={`${primaryButton("lg")} mt-6 inline-flex items-center disabled:opacity-60`}
             >
               {importing ? "Importing…" : "Import"}

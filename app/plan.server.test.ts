@@ -95,6 +95,8 @@ test("an import fills the free shelf and says how many didn't fit", async () => 
     pageCount: null,
     year: null,
     publisher: null,
+    rating: null,
+    review: null,
   });
   const result = await importBooks(
     me.id,

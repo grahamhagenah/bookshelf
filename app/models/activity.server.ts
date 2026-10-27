@@ -324,11 +324,12 @@ export async function getFriendActivity(
       take: limit,
     }),
     // Notes on books read somewhere else; bare hearts and read marks
-    // stay out of the feed
+    // stay out of the feed, as do imported ones Open Library hasn't placed
     prisma.workNote.findMany({
       where: {
         updatedAt: { gte: since },
         body: { not: null },
+        workKey: { startsWith: "/works/" },
         userId: { in: withOwnNotes ? [...sourceIds, userId] : sourceIds },
       },
       select: {

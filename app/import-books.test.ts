@@ -1,7 +1,7 @@
 // @vitest-environment node
 import {
+  cleanReview,
   cleanTitle,
-  defaultChoice,
   parseCsv,
   readExport,
   summarize,
@@ -50,8 +50,9 @@ test("reads a Goodreads export", () => {
   expect(rows[1]).toMatchObject({ title: "Piranesi", owned: false, status: "to-read", readAt: null });
   expect(rows[2]).toMatchObject({ isbn: null, owned: false, status: "read" });
 
-  expect(summarize(rows)).toEqual({ total: 3, owned: 1, read: 2, toRead: 1 });
-  expect(defaultChoice(rows)).toBe("owned");
+  // Dune was read but not owned: the Also read list's
+  expect(summarize(rows)).toEqual({ total: 3, owned: 1, read: 2, toRead: 1, alsoRead: 1, noted: 1 });
+  expect(summarize(rows, "read").alsoRead).toBe(0);
 });
 
 const STORYGRAPH = `Title,Authors,Contributors,ISBN/UID,Format,Read Status,Date Added,Last Date Read,Dates Read,Read Count,Moods,Pace,Character- or Plot-Driven?,Strong Character Development?,Loveable Characters?,Diverse Characters?,Flawed Characters?,Star Rating,Review,Content Warnings,Content Warning Description,Tags,Owned?
@@ -71,8 +72,28 @@ test("reads a StoryGraph export", () => {
   });
   expect(rows[0].readAt?.toISOString()).toBe("2022-02-01T12:00:00.000Z");
   expect(rows[1]).toMatchObject({ status: "to-read", owned: false });
-  // Nothing marked owned, so lean on what's been read
-  expect(defaultChoice(rows)).toBe("read");
+  // Nothing marked owned: what's been read goes on the Also read list
+  expect(summarize(rows).alsoRead).toBe(1);
+  // Four and a half stars is no heart
+  expect(rows[0]).toMatchObject({ rating: 4.5, review: null });
+});
+
+test("reviews and stars come along; Goodreads' line breaks and markup are tidied", () => {
+  const header = "Title,Author,My Rating,My Review,Exclusive Shelf,Owned Copies";
+  const { rows } = readExport(
+    `${header}\nCirce,Madeline Miller,5,"Gods are petty.<br/><br/>Witches are <i>not</i> &amp; never were.",read,0\nDune,Frank Herbert,0,,read,0\n`,
+  );
+  expect(rows[0]).toMatchObject({ rating: 5, review: "Gods are petty.\n\nWitches are not & never were." });
+  expect(rows[1]).toMatchObject({ rating: null, review: null });
+  expect(cleanReview("  ")).toBeNull();
+});
+
+test("a spreadsheet of one's own books is all theirs", () => {
+  const { source, rows } = readExport("Title,Author,ISBN\nPiranesi,Susanna Clarke,9781635575637\n");
+  expect(source).toBe("generic");
+  expect(rows[0]).toMatchObject({ owned: true, isbn: "9781635575637" });
+  // So it all goes on the shelf
+  expect(summarize(rows)).toMatchObject({ total: 1, owned: 1, alsoRead: 0 });
 });
 
 test("a file without a Title column has no books in it", () => {

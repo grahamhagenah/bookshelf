@@ -77,7 +77,13 @@ export async function getLovedByFriends(
       take: 200,
     }),
     prisma.workNote.findMany({
-      where: { userId: { in: sourceIds }, loved: true, updatedAt: { gte: since } },
+      where: {
+        userId: { in: sourceIds },
+        loved: true,
+        updatedAt: { gte: since },
+        // Imported ones Open Library hasn't placed have no page to open
+        workKey: { startsWith: "/works/" },
+      },
       select: {
         updatedAt: true,
         user: person,
