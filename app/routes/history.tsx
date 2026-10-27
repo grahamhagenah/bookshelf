@@ -183,11 +183,8 @@ export default function History() {
           </EmptyList>
         ) : (
           <>
-            {/* What the list is for, above it; while it's empty, in its place */}
-            <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
-              Every book that&apos;s passed between you and a friend.
-            </p>
-            <div className="mt-4 flex gap-1.5" role="group" aria-label="Show">
+            {/* The list says what it's for; only while empty does it need saying */}
+            <div className="flex gap-1.5" role="group" aria-label="Show">
               {filters.map(([value, label, count]) => (
                 <button
                   key={value}

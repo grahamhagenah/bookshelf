@@ -43,13 +43,9 @@ export default function ReadElsewhere() {
     <Layout title="Also read">
       <section>
         <ShelfTabs counts={{ ...counts, elsewhere: items.length }} />
-        {/* What the list is for: in a line above it, or, while it's empty,
-            in its place */}
+        {/* What the list is for is said only while it's empty, in its place */}
         {items.length > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="max-w-xl text-sm text-stone-500 dark:text-stone-400">
-            Books you&apos;ve read that aren&apos;t on your shelf.
-          </p>
+        <div className="flex justify-end">
           <Link
             to="/search"
             className="inline-flex h-8 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
