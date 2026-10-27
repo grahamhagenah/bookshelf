@@ -53,7 +53,8 @@ const noteLink =
 
 function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] }) {
   const borrowed = entry.kind === "borrowed";
-  const name = `${entry.person.firstname} ${entry.person.surname}`;
+  // First names: the rows say enough without the rest, and stay short
+  const name = entry.person.firstname;
   const person = (
     <strong className="whitespace-nowrap font-semibold text-stone-800 dark:text-stone-200">
       <PersonLink id={entry.person.id} name={name} friendIds={friendIds} />
@@ -117,17 +118,17 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
           <span>{story}</span>
         </p>
 
-        {/* What was thought of it: your note on a book you borrowed (or a
-            way to leave one), the borrower's on a book you lent */}
+        {/* Whether anything was said about it: that there's a note, with
+            the way to it, rather than the note itself; or a way to leave
+            yours on a book you borrowed */}
         <div className="mt-2 text-sm">
           {body ? (
-            <p className="flex items-start gap-1.5 text-stone-700 dark:text-stone-300">
-              {entry.note?.loved ? (
-                <HeartIcon size={13} filled className="mt-1 flex-shrink-0 text-rose-400" />
-              ) : null}
-              <span className="line-clamp-2 italic">
-                {borrowed ? "You: " : `${entry.person.firstname}: `}“{body}”
-              </span>
+            <p className="flex items-center gap-1.5 text-stone-500 dark:text-stone-400">
+              {entry.note?.loved ? <HeartIcon size={13} filled className="text-rose-400" /> : null}
+              {borrowed ? "You left a note" : `${entry.person.firstname} left a note`} ·{" "}
+              <Link to={notes} className={noteLink}>
+                Read it
+              </Link>
             </p>
           ) : entry.note?.loved ? (
             <p className="flex items-center gap-1.5 text-stone-500 dark:text-stone-400">
