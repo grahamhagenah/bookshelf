@@ -49,8 +49,28 @@ function useLoved(myNote: ReaderNote | null) {
   return { fetcher, loved };
 }
 
-// Your heart for this copy, for anyone who's read it
-function HeartToggle({ myNote }: { myNote: ReaderNote | null }) {
+// "You", "You and Anika", "You, Anika and Sam", "You, Anika and 3 others":
+// a couple of names at most, so the heart stays one short line
+function lovedBy(others: string[]) {
+  const names = ["You", ...others.slice(0, 2)];
+  const rest = others.length - 2;
+  if (rest > 1) return `${names.join(", ")} and ${rest} others`;
+  if (rest === 1) names.push(others[2]);
+  return names.length === 1
+    ? names[0]
+    : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+// Your heart for this copy, for anyone who's read it. Once it's given, it
+// names whoever else gave one without a note.
+function HeartToggle({
+  myNote,
+  others,
+}: {
+  myNote: ReaderNote | null;
+  // First names of the others who loved it, without a note
+  others: string[];
+}) {
   const { fetcher, loved } = useLoved(myNote);
   return (
     <fetcher.Form method="post">
@@ -70,7 +90,7 @@ function HeartToggle({ myNote }: { myNote: ReaderNote | null }) {
           filled={loved}
           className={loved ? "text-rose-500" : ""}
         />
-        {loved ? "You loved it" : "Love it"}
+        {loved ? `${lovedBy(others)} loved it` : "Love it"}
       </button>
     </fetcher.Form>
   );
@@ -266,16 +286,22 @@ export default function ReaderNotes({
           (people who wrote one show it on their note below) */}
       {canNote || heartsOnly.length > 0 ? (
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          {canNote ? <HeartToggle myNote={myNote} /> : null}
+          {canNote ? (
+            <HeartToggle
+              myNote={myNote}
+              others={heartsOnly.map((note) => note.user.firstname)}
+            />
+          ) : null}
           {canNote && readAt !== undefined ? (
             <ReadToggle readAt={readAt} />
           ) : null}
-          {heartsOnly.length > 0 ? (
+          {/* Once you've given yours, your heart names them instead */}
+          {heartsOnly.length > 0 && !(canNote && loved) ? (
             <p className="inline-flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
               {canNote ? null : (
                 <HeartIcon size={13} filled className="text-rose-400" />
               )}
-              {loved || hasNotes ? "Also loved by " : "Loved by "}
+              {hasNotes ? "Also loved by " : "Loved by "}
               {heartsOnly.map((note, index) => (
                 <span key={note.id}>
                   {index > 0
