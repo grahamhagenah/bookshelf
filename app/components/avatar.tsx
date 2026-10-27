@@ -642,12 +642,10 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "bloom",
   "tree",
   "cactus",
-  "mountain",
   "sun",
   "moon",
   "star",
   "snowflake",
-  "rainbow",
   "bolt",
   "planet",
   // Creatures
@@ -671,11 +669,9 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   // To wear and to use
   "glasses",
   "crown",
-  "chef",
   "umbrella",
   "anchor",
   "bicycle",
-  "plane",
   // Food and drink
   "wine",
   "cutlery",
