@@ -6,7 +6,7 @@ import { workPath } from "~/utils";
 
 import Avatar from "./avatar";
 import BookCover from "./book-cover";
-import { BookmarkIcon, HeartIcon } from "./icons";
+import { BookmarkIcon, HeartIcon, PencilIcon } from "./icons";
 import PersonLink from "./person-link";
 import { primaryButton } from "./ui";
 
@@ -344,10 +344,13 @@ function Actions({
   book,
   userId,
   underNote = false,
+  onEdit,
 }: {
   book: FeedBook;
   userId: string;
   underNote?: boolean;
+  // Under your own note: rewrite it
+  onEdit?: () => void;
 }) {
   const love = useFetcher({ key: `love-${book.id}` });
   const borrow = useFetcher({ key: `borrow-${book.id}` });
@@ -415,6 +418,13 @@ function Actions({
         <Link to={`/books/${book.id}#notes`} className={actionClass}>
           {book.notes} {book.notes === 1 ? "note" : "notes"}
         </Link>
+      ) : null}
+
+      {onEdit ? (
+        <button type="button" onClick={onEdit} className={actionClass}>
+          <PencilIcon size={14} />
+          Edit note
+        </button>
       ) : null}
 
       {isOwner ? (
@@ -496,7 +506,16 @@ function Actions({
 // A friend's note on a book they read somewhere else. Nothing of theirs
 // to borrow, so it offers what can be done: want it, or ask a friend
 // who has a copy.
-function ElsewhereCard({ item, mine }: { item: ElsewhereItem; mine: boolean }) {
+function ElsewhereCard({
+  item,
+  mine,
+  onEdit,
+}: {
+  item: ElsewhereItem;
+  mine: boolean;
+  // Your own note: rewrite it
+  onEdit?: () => void;
+}) {
   const want = useFetcher<{ wanted?: boolean }>();
   const { ownCopyId, copies } = item.viewer;
   const wanted =
@@ -535,6 +554,12 @@ function ElsewhereCard({ item, mine }: { item: ElsewhereItem; mine: boolean }) {
         </Link>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-stone-100 dark:border-stone-800 pt-2">
+        {onEdit ? (
+          <button type="button" onClick={onEdit} className={actionClass}>
+            <PencilIcon size={14} />
+            Edit note
+          </button>
+        ) : null}
         {ownCopyId ? (
           <Link to={`/books/${ownCopyId}`} className={actionClass}>
             Open your copy
@@ -652,18 +677,6 @@ export function FeedPost({
             >
               {ago(item.at)}
             </time>
-            {editable && !editing ? (
-              <>
-                <span className="text-stone-400 dark:text-stone-500"> · </span>
-                <button
-                  type="button"
-                  onClick={() => setEditing(true)}
-                  className="text-sm text-stone-400 dark:text-stone-500 underline-offset-2 hover:text-stone-800 hover:underline dark:hover:text-stone-200"
-                >
-                  Edit note
-                </button>
-              </>
-            ) : null}
           </p>
         </div>
       </header>
@@ -677,7 +690,11 @@ export function FeedPost({
       ) : null}
 
       {item.kind === "elsewhere" ? (
-        <ElsewhereCard item={item} mine={item.friend.id === userId} />
+        <ElsewhereCard
+          item={item}
+          mine={item.friend.id === userId}
+          onEdit={editable && !editing ? () => setEditing(true) : undefined}
+        />
       ) : item.kind === "added" && item.books.length > 1 ? (
         <>
           {/* Even columns: three across on phones, six on wider screens,
@@ -708,6 +725,7 @@ export function FeedPost({
             book={books[0]}
             userId={userId}
             underNote={item.kind === "note"}
+            onEdit={editable && !editing ? () => setEditing(true) : undefined}
           />
         </>
       )}
