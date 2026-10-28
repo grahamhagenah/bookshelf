@@ -29,7 +29,7 @@ export default function Notifications() {
       className={`inline-flex items-center justify-center gap-1.5 w-11 h-11 md:w-9 md:h-9 lg:w-auto lg:px-2.5 rounded-full lg:rounded-md whitespace-nowrap text-[15px] transition-colors ${
         here
           ? hereIcon
-          : "text-stone-600 dark:text-stone-300 md:text-stone-700 md:dark:text-stone-200 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800"
+          : "text-stone-600 dark:text-stone-300 md:text-stone-700 md:dark:text-stone-200 hover:text-stone-900 dark:hover:text-white hover:[&_svg]:text-forest-600 dark:hover:[&_svg]:text-forest-400"
       }`}
     >
       {/* A dot on the bell's corner while there's something new; how

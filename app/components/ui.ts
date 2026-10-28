@@ -24,4 +24,4 @@ export const sectionHeading = "text-lg font-semibold text-stone-900 dark:text-st
 // header's bottom edge, as tabs mark theirs, and its icon in green. Phones
 // show icons only, so there it's the icon alone
 export const hereIcon =
-  "relative text-stone-900 dark:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800 [&_svg]:text-forest-600 dark:[&_svg]:text-forest-400 md:after:absolute md:after:inset-x-2.5 md:after:-bottom-[7px] md:after:h-0.5 md:after:rounded-full md:after:bg-forest-600 dark:md:after:bg-forest-400";
+  "relative text-stone-900 dark:text-stone-100 [&_svg]:text-forest-600 dark:[&_svg]:text-forest-400 md:after:absolute md:after:inset-x-2.5 md:after:-bottom-[7px] md:after:h-0.5 md:after:rounded-full md:after:bg-forest-600 dark:md:after:bg-forest-400";
