@@ -7,6 +7,7 @@ import { HistoryIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
+import { sectionHeading } from "~/components/ui";
 import { getHistory, getShelfCounts } from "~/models/history.server";
 import { getUserById } from "~/models/user.server";
 import { seo } from "~/seo";
@@ -97,16 +98,28 @@ export default function History() {
             you&apos;ve borrowed, and what you&apos;ve lent.
           </EmptyList>
         ) : (
-          <>
-            {/* Every loan both ways, newest first: each row says which way
-                it went, so there's nothing to filter. Two columns where
-                there's room, as To read and Also read */}
-            <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
-              {entries.map((entry) => (
-                <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />
-              ))}
-            </ul>
-          </>
+          // What's out now, either way, then what's come back: newest first
+          // in each, two columns where there's room, as To read and Also read
+          [
+            { id: "out-now", title: "Out now", rows: entries.filter((entry) => !entry.returnedAt) },
+            { id: "returned", title: "Returned", rows: entries.filter((entry) => entry.returnedAt) },
+          ]
+            .filter((group) => group.rows.length > 0)
+            .map((group) => (
+              <section key={group.id} aria-labelledby={group.id} className="mt-8">
+                <h2 id={group.id} className={`${sectionHeading} flex items-baseline gap-2`}>
+                  {group.title}
+                  <span className="text-base font-normal text-stone-400 dark:text-stone-500">
+                    {group.rows.length}
+                  </span>
+                </h2>
+                <ul className="mt-1 grid gap-x-10 md:grid-cols-2">
+                  {group.rows.map((entry) => (
+                    <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />
+                  ))}
+                </ul>
+              </section>
+            ))
         )}
       </section>
     </Layout>
