@@ -4,7 +4,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 
 import { BookRow, RowLine, rowEmphasis, rowEmphasisLink, rowPrimary, rowSecondary } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
-import { BookmarkIcon, GroupIcon } from "~/components/icons";
+import { BookmarkIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
 import ShelfTabs, { AddLink } from "~/components/shelf-tabs";
@@ -98,7 +98,7 @@ function WantRow({
           : ""
       }`}
       line={
-        <RowLine icon={<GroupIcon size={13} />}>
+        <RowLine>
           {copies.length === 0
             ? "None of your friends have it yet"
             : copies.map((copy, index) => (

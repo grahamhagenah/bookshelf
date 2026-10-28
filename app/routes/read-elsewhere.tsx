@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { BookRow, RowLine } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
-import { HeartIcon, PencilIcon, ReadIcon } from "~/components/icons";
+import { ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import ShelfTabs, { AddLink } from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
@@ -77,17 +77,7 @@ export default function ReadElsewhere() {
                   // What you marked, as History says it; the note itself is on
                   // the book's page
                   line={
-                    <RowLine
-                      icon={
-                        item.loved ? (
-                          <HeartIcon size={13} filled className="text-rose-400" />
-                        ) : item.body ? (
-                          <PencilIcon size={13} />
-                        ) : (
-                          <ReadIcon size={13} />
-                        )
-                      }
-                    >
+                    <RowLine>
                       {item.body
                         ? item.loved
                           ? "You loved it and left a note"

@@ -69,21 +69,7 @@ export function BookRow({
   );
 }
 
-// Where a book stands, after a small icon that every line has, so the
-// words in a list start in the same place
-export function RowLine({
-  icon,
-  children,
-}: {
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <p className="flex items-start gap-1.5 text-sm text-stone-500 dark:text-stone-400">
-      <span className="mt-[3px] flex h-[13px] w-[13px] flex-shrink-0 items-center justify-center text-stone-400 dark:text-stone-500">
-        {icon}
-      </span>
-      <span className="min-w-0">{children}</span>
-    </p>
-  );
+// Where a book stands, in a line or two of quiet words
+export function RowLine({ children }: { children: React.ReactNode }) {
+  return <p className="text-sm text-stone-500 dark:text-stone-400">{children}</p>;
 }

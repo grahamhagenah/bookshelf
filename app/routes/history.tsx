@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { BookRow, RowLine, rowEmphasis } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
-import { BorrowedIcon, HistoryIcon, LentIcon } from "~/components/icons";
+import { HistoryIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
@@ -70,7 +70,7 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
       to={`/books/${entry.book.id}`}
       book={entry.book}
       line={
-        <RowLine icon={borrowed ? <BorrowedIcon size={13} /> : <LentIcon size={13} />}>
+        <RowLine>
           {who}
           <span className="block text-stone-400 dark:text-stone-500">{when}</span>
         </RowLine>
