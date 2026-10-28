@@ -1988,6 +1988,9 @@ export default function BookDetailsPage() {
   // The book's main action, which the bar on phones stands in for once
   // it's scrolled away
   const actionRef = useRef<HTMLDivElement>(null);
+  const returnLabel = data.book.user
+    ? `Return book to ${data.book.user.firstname}`
+    : "Return book";
 
   // A book seen for the first time finishes its look-up on Open Library
   // after the page is up; the page reloads its data when that's done. A
@@ -2316,14 +2319,14 @@ export default function BookDetailsPage() {
           ) : null}
           {/* Whose it is and when it's due are in the lending history */}
           {data.isBorrower ? (
-            <Form method="post">
-              <input type="hidden" name="intent" value="return" />
-              <button type="submit" className={`w-full ${quietButton("lg")}`}>
-                {data.book.user
-                  ? `Return book to ${data.book.user.firstname}`
-                  : "Return book"}
-              </button>
-            </Form>
+            <div ref={actionRef}>
+              <Form method="post">
+                <input type="hidden" name="intent" value="return" />
+                <button type="submit" className={`w-full ${quietButton("lg")}`}>
+                  {returnLabel}
+                </button>
+              </Form>
+            </div>
           ) : null}
           {/* Someone's waiting: hand it straight on, as a book club does */}
           {data.isBorrower &&
@@ -2716,6 +2719,12 @@ export default function BookDetailsPage() {
           target={actionRef}
           label="Ask to borrow"
           className={primaryButton("lg")}
+        />
+      ) : data.isBorrower && !isEditing ? (
+        <ActionBar
+          target={actionRef}
+          label={returnLabel}
+          className={quietButton("lg")}
         />
       ) : null}
     </>
