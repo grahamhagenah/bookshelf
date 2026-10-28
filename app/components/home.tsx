@@ -5,7 +5,6 @@ import { daysUntil, dueText } from "~/due";
 import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
 
-import Avatar from "./avatar";
 import BookCover from "./book-cover";
 import FriendActivityItem from "./friend-activity";
 import { BorrowedIcon, LentIcon, SearchIcon } from "./icons";
@@ -515,20 +514,6 @@ function PopularChart({
                 to={book.to}
                 className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
               >
-                {/* Whose copy, in the column the activity above keeps for
-                    its friends' faces, so the two lists line up */}
-                {book.faces[0] ? (
-                  <span aria-hidden="true" className="flex w-7 flex-shrink-0 justify-center">
-                    <Avatar
-                      firstname={book.faces[0].firstname}
-                      surname={book.faces[0].surname}
-                      icon={book.faces[0].profileEmoji}
-                      size="rail"
-                    />
-                  </span>
-                ) : (
-                  <span aria-hidden="true" className="w-7 flex-shrink-0" />
-                )}
                 <BookCover
                   cover={book.cover}
                   title={book.title}
@@ -541,7 +526,12 @@ function PopularChart({
                   </span>
                   <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
                     {book.author}
-                    {book.owners ? ` · ${book.owners}` : ""}
+                    {book.owners.length > 0 ? (
+                      <>
+                        {" · "}
+                        <HaveIt names={book.owners} />
+                      </>
+                    ) : null}
                   </span>
                 </span>
                 <span
@@ -564,6 +554,26 @@ function PopularChart({
   );
 }
 
+// "Maya has it", "Maya and Sam have it", "Maya and 2 others have it",
+// with the names standing out, as Want to read's rows set them
+function HaveIt({ names }: { names: string[] }) {
+  const name = (text: string) => (
+    <span className="font-medium text-stone-700 dark:text-stone-200">{text}</span>
+  );
+  if (names.length === 1) return <>{name(names[0])} has it</>;
+  if (names.length === 2)
+    return (
+      <>
+        {name(names[0])} and {name(names[1])} have it
+      </>
+    );
+  return (
+    <>
+      {name(names[0])} and {names.length - 1} others have it
+    </>
+  );
+}
+
 interface Wanted {
   id: string;
   title: string;
@@ -583,10 +593,8 @@ interface Popular {
   cover: string;
   // How many times friends' copies of it have been lent
   loans: number;
-  // "Maya and Sam have it"
-  owners: string | null;
-  // And their faces, in the same order
-  faces: { id: string; firstname: string; surname: string; profileEmoji: string | null }[];
+  // Friends with a copy, by first name
+  owners: string[];
   // A friend's copy, one free to ask for first
   to: string;
 }
