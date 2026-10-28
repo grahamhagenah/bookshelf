@@ -376,141 +376,146 @@ function Actions({
   const isBorrower = book.borrowerId === userId;
 
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-stone-100 dark:border-stone-800 pt-2">
-      {viewer.canLove ? (
-        <love.Form method="post">
-          <input type="hidden" name="intent" value="toggleLove" />
-          <input type="hidden" name="bookId" value={book.id} />
-          <input type="hidden" name="loved" value={loved ? "false" : "true"} />
-          <button
-            type="submit"
-            aria-pressed={loved}
-            // Under a note it's the book being loved, not the note; the
-            // label says so without lengthening the row
-            title={underNote ? "Love the book" : undefined}
-            aria-label={`${loved ? "Loved" : "Love"}${underNote ? " the book" : ""}${
-              lovesText ? `, ${lovesText}` : ""
-            }`}
-            className={`${actionClass} ${loved ? "text-rose-600 dark:text-rose-400" : ""}`}
-          >
-            <HeartIcon
-              size={15}
-              filled={loved}
-              className={loved ? "text-rose-500" : ""}
-            />
-            {loved ? "Loved" : "Love"}
-            {lovesText ? (
-              <span className="min-w-[1.25rem] rounded-full bg-stone-100 dark:bg-stone-800 px-1.5 text-center text-xs font-medium leading-5 tabular-nums text-stone-500 dark:text-stone-400">
-                {lovesText}
-              </span>
-            ) : null}
-          </button>
-        </love.Form>
-      ) : lovesText ? (
-        <span
-          className={stateClass}
-          title="Hearts from people who've read this copy"
-        >
-          <HeartIcon size={15} filled className="text-rose-400" />
-          {lovesText}
-        </span>
-      ) : null}
-
-      {book.notes > 0 ? (
-        <Link to={`/books/${book.id}#notes`} className={actionClass}>
-          {book.notes} {book.notes === 1 ? "note" : "notes"}
-        </Link>
-      ) : null}
-
-      {onEdit ? (
-        <button type="button" onClick={onEdit} className={actionClass}>
-          <PencilIcon size={14} />
-          Edit note
-        </button>
-      ) : null}
-
-      {isOwner ? (
-        <span className={stateClass}>Your copy</span>
-      ) : returned ? (
-        <span className={stateClass}>Returned to {book.owner.firstname}</span>
-      ) : isBorrower ? (
-        // Read it, said so: the next thing is giving it back
-        <giveBack.Form method="post" action={`/books/${book.id}`}>
-          <input type="hidden" name="intent" value="return" />
-          <input type="hidden" name="stay" value="true" />
-          <button type="submit" className={actionClass}>
-            Return to {book.owner.firstname}
-          </button>
-        </giveBack.Form>
-      ) : viewer.canRequest && book.notLending ? (
-        <span className={stateClass}>Not lending</span>
-      ) : viewer.canRequest && book.available ? (
-        requested ? (
-          <span className={stateClass}>Requested</span>
-        ) : asking ? (
-          <borrow.Form
-            method="post"
-            className="flex w-full flex-wrap items-center gap-2"
-            onSubmit={() => setAsking(false)}
-          >
-            <input type="hidden" name="intent" value="request" />
+    <>
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-stone-100 dark:border-stone-800 pt-2">
+        {viewer.canLove ? (
+          <love.Form method="post">
+            <input type="hidden" name="intent" value="toggleLove" />
             <input type="hidden" name="bookId" value={book.id} />
-            <label htmlFor={`request-note-${book.id}`} className="sr-only">
-              A note for {book.owner.firstname}
-            </label>
-            <input
-              id={`request-note-${book.id}`}
-              name="message"
-              type="text"
-              maxLength={300}
-              placeholder={`A note for ${book.owner.firstname} (optional)`}
-              className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 py-1.5 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
-            />
+            <input type="hidden" name="loved" value={loved ? "false" : "true"} />
             <button
               type="submit"
-              className={primaryButton("md")}
+              aria-pressed={loved}
+              // Under a note it's the book being loved, not the note; the
+              // label says so without lengthening the row
+              title={underNote ? "Love the book" : undefined}
+              aria-label={`${loved ? "Loved" : "Love"}${underNote ? " the book" : ""}${
+                lovesText ? `, ${lovesText}` : ""
+              }`}
+              className={`${actionClass} ${loved ? "text-rose-600 dark:text-rose-400" : ""}`}
+            >
+              <HeartIcon
+                size={15}
+                filled={loved}
+                className={loved ? "text-rose-500" : ""}
+              />
+              {loved ? "Loved" : "Love"}
+              {lovesText ? (
+                <span className="min-w-[1.25rem] rounded-full bg-stone-100 dark:bg-stone-800 px-1.5 text-center text-xs font-medium leading-5 tabular-nums text-stone-500 dark:text-stone-400">
+                  {lovesText}
+                </span>
+              ) : null}
+            </button>
+          </love.Form>
+        ) : lovesText ? (
+          <span
+            className={stateClass}
+            title="Hearts from people who've read this copy"
+          >
+            <HeartIcon size={15} filled className="text-rose-400" />
+            {lovesText}
+          </span>
+        ) : null}
+
+        {book.notes > 0 ? (
+          <Link to={`/books/${book.id}#notes`} className={actionClass}>
+            {book.notes} {book.notes === 1 ? "note" : "notes"}
+          </Link>
+        ) : null}
+
+        {onEdit ? (
+          <button type="button" onClick={onEdit} className={actionClass}>
+            <PencilIcon size={14} />
+            Edit note
+          </button>
+        ) : null}
+
+        {isOwner ? (
+          <span className={stateClass}>Your copy</span>
+        ) : returned ? (
+          <span className={stateClass}>Returned to {book.owner.firstname}</span>
+        ) : isBorrower ? (
+          // Read it, said so: the next thing is giving it back
+          <giveBack.Form method="post" action={`/books/${book.id}`}>
+            <input type="hidden" name="intent" value="return" />
+            <input type="hidden" name="stay" value="true" />
+            <button type="submit" className={actionClass}>
+              Return to {book.owner.firstname}
+            </button>
+          </giveBack.Form>
+        ) : viewer.canRequest && book.notLending ? (
+          <span className={stateClass}>Not lending</span>
+        ) : viewer.canRequest && book.available ? (
+          requested ? (
+            <span className={stateClass}>Requested</span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAsking(!asking)}
+              aria-expanded={asking}
+              className={`${actionClass} ${asking ? "text-stone-900 dark:text-stone-100" : ""}`}
             >
               Ask to borrow
             </button>
-            <button
-              type="button"
-              onClick={() => setAsking(false)}
-              className={actionClass}
-            >
-              Cancel
+          )
+        ) : viewer.canRequest ? (
+          <borrow.Form method="post">
+            <input
+              type="hidden"
+              name="intent"
+              value={inLine ? "leaveHold" : "placeHold"}
+            />
+            <input type="hidden" name="bookId" value={book.id} />
+            <button type="submit" className={actionClass}>
+              {inLine ? "In line · Leave" : "Get in line"}
             </button>
           </borrow.Form>
-        ) : (
+        ) : null}
+
+        {/* The cover and title open the book too; on phones that's enough,
+            and the row stays on one line */}
+        <span className="ml-auto hidden sm:block">
+          <Link to={`/books/${book.id}`} className={actionClass}>
+            View book
+          </Link>
+        </span>
+      </div>
+      {/* The ask, on a line of its own under the row, so the row keeps its
+          shape while you write */}
+      {asking && viewer.canRequest && book.available && !requested ? (
+        <borrow.Form
+          method="post"
+          className="mt-2 flex flex-wrap items-center gap-2"
+          onSubmit={() => setAsking(false)}
+        >
+          <input type="hidden" name="intent" value="request" />
+          <input type="hidden" name="bookId" value={book.id} />
+          <label htmlFor={`request-note-${book.id}`} className="sr-only">
+            A note for {book.owner.firstname}
+          </label>
+          <input
+            id={`request-note-${book.id}`}
+            name="message"
+            type="text"
+            maxLength={300}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+            placeholder={`A note for ${book.owner.firstname} (optional)`}
+            className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 py-1.5 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
+          />
+          <button type="submit" className={primaryButton("md")}>
+            Send
+          </button>
           <button
             type="button"
-            onClick={() => setAsking(true)}
+            onClick={() => setAsking(false)}
             className={actionClass}
           >
-            Ask to borrow
-          </button>
-        )
-      ) : viewer.canRequest ? (
-        <borrow.Form method="post">
-          <input
-            type="hidden"
-            name="intent"
-            value={inLine ? "leaveHold" : "placeHold"}
-          />
-          <input type="hidden" name="bookId" value={book.id} />
-          <button type="submit" className={actionClass}>
-            {inLine ? "In line · Leave" : "Get in line"}
+            Cancel
           </button>
         </borrow.Form>
       ) : null}
-
-      {/* The cover and title open the book too; on phones that's enough,
-          and the row stays on one line */}
-      <span className="ml-auto hidden sm:block">
-        <Link to={`/books/${book.id}`} className={actionClass}>
-          View book
-        </Link>
-      </span>
-    </div>
+    </>
   );
 }
 
