@@ -2109,7 +2109,7 @@ export default function BookDetailsPage() {
       </p>
 
       {details.length > 0 ? (
-        <p className="mt-3 md:mt-4 text-sm text-stone-500 dark:text-stone-400">
+        <p className="mt-3 md:mt-4 text-[15px] md:text-base text-stone-500 dark:text-stone-400">
           {details.join(" · ")}
         </p>
       ) : lookingUp ? (
