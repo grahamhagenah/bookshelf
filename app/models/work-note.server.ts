@@ -3,6 +3,7 @@ import type { Book, User } from "~/generated/prisma/client";
 
 import { shelfIds } from "./household.server";
 import { NOTE_MAX_LENGTH } from "./note.server";
+import { withSharedCover } from "./shared-cover.server";
 
 // Hearts, read marks and notes on books that aren't on the reader's
 // shelf. Hearts and notes are seen by their friends; the read mark is
@@ -139,7 +140,7 @@ export async function saveWorkNote(
   const snapshot = {
     title: work.title,
     author: work.author,
-    cover: work.cover,
+    cover: await withSharedCover(work.cover, { openLibraryKey: work.key }),
   };
   const where = { userId_workKey: { userId, workKey: work.key } };
   const was = keepTime

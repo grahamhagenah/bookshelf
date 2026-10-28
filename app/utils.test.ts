@@ -59,6 +59,15 @@ test("coverSrc routes Open Library covers through the cache", () => {
   );
 });
 
+test("coverSrc sizes a pasted cover like an Open Library one", () => {
+  const large = `/covers/custom/${"a".repeat(40)}-L.jpg`;
+  expect(coverSrc(large, "M")).toBe(`/covers/custom/${"a".repeat(40)}-M.jpg`);
+  expect(coverSrc(large)).toBe(large);
+  // Kept before sizes came in: only the one
+  const old = `/covers/custom/${"a".repeat(40)}.jpg`;
+  expect(coverSrc(old, "M")).toBe(old);
+});
+
 describe("cleanSubjects", () => {
   test("drops catalog codes, library labels and generic genres", () => {
     expect(

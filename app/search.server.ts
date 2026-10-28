@@ -4,6 +4,7 @@ import {
   SEARCH_MAX_AGE_MS,
 } from "~/models/openlibrary-cache.server";
 import { inEnglish } from "~/models/openlibrary.server";
+import { sharedCoversForWorks } from "~/models/shared-cover.server";
 import type { getWantToReadWorks } from "~/models/wish.server";
 import { ENGLISH_EDITION_FIELDS, ENGLISH_EDITION_PARAMS, tidySearchResults } from "~/utils";
 import { sameWork } from "~/works";
@@ -45,11 +46,13 @@ export interface OpenLibraryResults {
   totalPages: number;
   // Results already on the want-to-read list, by work key
   wantKeys: string[];
+  // Covers people picked over Open Library's, by work key
+  covers: Record<string, string>;
   // Open Library didn't answer, which is not the same as no matches
   failed: boolean;
 }
 
-export const NO_RESULTS: Omit<OpenLibraryResults, "key"> = { docs: [], numFound: 0, totalPages: 0, wantKeys: [], failed: false };
+export const NO_RESULTS: Omit<OpenLibraryResults, "key"> = { docs: [], numFound: 0, totalPages: 0, wantKeys: [], covers: {}, failed: false };
 
 // Open Library can take ten seconds or more on a slow day. The page is
 // already up by then, so the wait is shown, not hidden.
@@ -130,6 +133,7 @@ export async function searchOpenLibrary({
     numFound: data.numFound,
     totalPages: Math.ceil(data.numFound / RESULTS_PER_PAGE),
     wantKeys,
+    covers: await sharedCoversForWorks(data.docs.map((doc) => doc.key)),
     failed: false,
   };
 }

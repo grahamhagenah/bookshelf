@@ -23,6 +23,7 @@ import {
   lookupWork,
   lookupWorkPage,
 } from "~/models/openlibrary.server";
+import { withSharedCover } from "~/models/shared-cover.server";
 import { getUserById } from "~/models/user.server";
 import {
   addWantToRead,
@@ -119,6 +120,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       authorDetails: null,
     };
   }
+  // A cover someone picked for it, over Open Library's
+  work = { ...work, cover: await withSharedCover(work.cover, { openLibraryKey: key }) };
 
   const [ownCopy, wanted, matches, user, myNote, notes] = await Promise.all([
     findOwnCopy(await shelfIds(userId), {

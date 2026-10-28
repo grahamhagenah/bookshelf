@@ -20,6 +20,7 @@ import {
   RECORD_MAX_AGE_MS,
   SEARCH_MAX_AGE_MS,
 } from "./openlibrary-cache.server";
+import { withSharedCover } from "./shared-cover.server";
 import { adoptWorkNotes } from "./work-note.server";
 
 // Open Library can be slow; never hold a page up for long. A lookup
@@ -474,6 +475,12 @@ export async function fillInBook(
     } else if (!cover && found?.cover) {
       cover = found.cover;
     }
+    // Its edition or work only now known: a cover someone picked for it
+    // takes over from Open Library's
+    cover = await withSharedCover(cover, {
+      isbn: book.isbn ?? found?.isbn,
+      openLibraryKey: key,
+    });
 
     await prisma.book.update({
       where: { id: book.id },

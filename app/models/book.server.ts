@@ -5,6 +5,7 @@ import type { Work } from "~/works";
 import { sameWork } from "~/works";
 
 import { shelfIds, shelfIdsFor } from "./household.server";
+import { withSharedCover } from "./shared-cover.server";
 import { adoptWorkNotes } from "./work-note.server";
 
 // Stops lending a book until a moment (far off means until they say),
@@ -186,7 +187,8 @@ export async function createBook({
       title,
       author,
       body,
-      cover,
+      // A cover someone else picked for this book, over Open Library's
+      cover: await withSharedCover(cover, { isbn, openLibraryKey }),
       datePublished,
       pageCount,
       // Open Library's subject list mixes real topics with catalog codes
