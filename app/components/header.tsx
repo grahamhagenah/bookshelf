@@ -17,10 +17,10 @@ interface RootLoaderData {
 const label = "sr-only lg:not-sr-only";
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
-  `inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-[15px] transition-colors hover:bg-stone-100 dark:hover:bg-stone-800 ${
+  `inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-[15px] transition-colors ${
     isActive
-      ? `text-stone-900 dark:text-stone-100 ${hereIcon}`
-      : "text-stone-700 dark:text-stone-200 hover:text-stone-900 dark:hover:text-white"
+      ? hereIcon
+      : "text-stone-700 dark:text-stone-200 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800"
   }`;
 
 export default function Header() {
@@ -113,8 +113,10 @@ export default function Header() {
               aria-label="Feed"
               title="Feed"
               aria-current={pathname === "/feed" ? "page" : undefined}
-              className={`md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors ${
-                pathname === "/feed" ? hereIcon : ""
+              className={`md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full transition-colors ${
+                pathname === "/feed"
+                  ? hereIcon
+                  : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800"
               }`}
             >
               <FeedIcon size={24} />

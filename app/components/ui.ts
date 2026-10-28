@@ -20,6 +20,7 @@ export const textField =
 
 export const sectionHeading = "text-lg font-semibold text-stone-900 dark:text-stone-100";
 
-// The page you're on, in the header: its icon in green, the app's own
-// color; the name beside it stays ink, a shade darker
-export const hereIcon = "[&_svg]:text-forest-600 dark:[&_svg]:text-forest-400";
+// The page you're on, in the header: a soft wash of the app's green
+// behind it, the icon and name in green
+export const hereIcon =
+  "bg-forest-600/10 text-forest-700 hover:bg-forest-600/15 dark:bg-forest-400/15 dark:text-forest-400 dark:hover:bg-forest-400/20 [&_svg]:text-forest-600 dark:[&_svg]:text-forest-400";
