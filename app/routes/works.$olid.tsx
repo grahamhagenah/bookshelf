@@ -465,7 +465,9 @@ export default function WorkPage() {
         {work.authorDetails?.bio ? (
           <section className="mt-8">
             <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
-              {work.authorDetails.name}
+              {work.authorDetails.name
+                ? `About ${work.authorDetails.name}`
+                : "About the author"}
             </h2>
             <p className="max-w-150 whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
               {work.authorDetails.bio}

@@ -169,7 +169,7 @@ function AboutAuthor({
   return (
     <section className="mt-8">
       <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
-        {author.name}
+        {author.name ? `About ${author.name}` : "About the author"}
       </h2>
       {author.bio ? (
         <p
