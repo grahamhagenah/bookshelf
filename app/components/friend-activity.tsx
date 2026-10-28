@@ -6,7 +6,7 @@ import { workPath } from "~/utils";
 
 import Avatar from "./avatar";
 import BookCover from "./book-cover";
-import { BookmarkIcon, HeartIcon, PencilIcon } from "./icons";
+import { BookmarkIcon, HeartIcon, NoteIcon, PencilIcon } from "./icons";
 import PersonLink from "./person-link";
 import { primaryButton } from "./ui";
 
@@ -418,8 +418,14 @@ function Actions({
         ) : null}
 
         {book.notes > 0 ? (
-          <Link to={`/books/${book.id}#notes`} className={actionClass}>
-            {book.notes} {book.notes === 1 ? "note" : "notes"}
+          <Link
+            to={`/books/${book.id}#notes`}
+            aria-label={`${book.notes} ${book.notes === 1 ? "note" : "notes"}`}
+            title={`${book.notes} ${book.notes === 1 ? "note" : "notes"}`}
+            className={actionClass}
+          >
+            <NoteIcon size={15} />
+            {book.notes}
           </Link>
         ) : null}
 
