@@ -769,7 +769,8 @@ export function ShowcasePage() {
 
 // The home page as it looks once you're in, drawn from the demo library:
 // what you're borrowing, what's lent out, your want-to-read list, and
-// beside them friends' notes, what's popular and your group. Straight on, not tilted, as a look at the app itself.
+// beside them friends' notes and what's popular. Straight on, not tilted,
+// as a look at the app itself.
 // On a phone the window narrows the way the app does: the friends' column
 // goes and each list shows less.
 type Loan = [cover: string, title: string, who: string, due: string, late?: boolean];
@@ -875,7 +876,7 @@ export function ShowcaseHome() {
 
       {/* Cut off at the window's bottom, partway down the want-to-read
           covers, as a page that goes on would be */}
-      <div className="flex h-[520px] overflow-hidden sm:h-[470px] md:h-[530px]">
+      <div className="flex h-[520px] overflow-hidden sm:h-[470px]">
         <div className="min-w-0 flex-1 p-4 sm:p-5">
           <div className="grid gap-5 sm:grid-cols-2 sm:gap-8">
             <Loans title="Borrowing" count={4} loans={BORROWING} />
@@ -923,7 +924,7 @@ export function ShowcaseHome() {
             Popular with friends
           </p>
           <ol className="divide-y divide-stone-100 dark:divide-stone-800">
-            {POPULAR.slice(0, 2).map(([src, book, by, lent], index) => (
+            {POPULAR.map(([src, book, by, lent], index) => (
               <li key={book} className="flex items-center gap-2 py-1.5">
                 <span className="w-3 flex-shrink-0 text-center text-xs font-semibold tabular-nums text-stone-500 dark:text-stone-400">
                   {index + 1}
@@ -942,26 +943,6 @@ export function ShowcaseHome() {
               </li>
             ))}
           </ol>
-
-          <p className="mt-4 border-t border-stone-200 dark:border-stone-800 pt-4 mb-2 flex items-baseline justify-between gap-3 font-semibold text-stone-900 dark:text-stone-100">
-            <span>
-              Groups <span className="text-xs font-normal text-stone-400 dark:text-stone-500">1</span>
-            </span>
-            <span className="text-xs font-normal text-stone-500 dark:text-stone-400">See all</span>
-          </p>
-          <div className="flex items-center gap-2.5">
-            <span className="flex flex-shrink-0 -space-x-1.5">
-              {(["maya", "sam", "anika"] as const).map((who) => (
-                <Member key={who} who={who} />
-              ))}
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-xs font-medium text-stone-900 dark:text-stone-100">
-                Thursday book club
-              </span>
-              <span className="block text-[11px] text-stone-500 dark:text-stone-400">4 people</span>
-            </span>
-          </div>
         </div>
       </div>
     </div>

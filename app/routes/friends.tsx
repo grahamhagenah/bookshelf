@@ -106,11 +106,12 @@ export default function Friends() {
   return (
     <Layout
       title="Friends"
-      // Beside your friends on wide screens, the groups you're in
-      // Kept in view while the friends scroll past: your groups, and the
-      // requests you're waiting on
+      // Beside your friends on wide screens, kept in view while they scroll
+      // past: your groups first, then requests to answer and the ones
+      // you're waiting on
       aside={
         <aside className="hidden space-y-10 self-start lg:sticky lg:top-24 lg:block">
+          <RailGroups groups={data.groups} limit={10} />
           {data.incoming.length > 0 ? (
             <section aria-labelledby="rail-requests">
               <h2 id="rail-requests" className={`${sectionHeading} mb-3`}>
@@ -126,7 +127,6 @@ export default function Friends() {
               </ul>
             </section>
           ) : null}
-          <RailGroups groups={data.groups} limit={10} />
           {data.pendingRequests.length > 0 ? (
             <section aria-labelledby="rail-waiting">
               <h2 id="rail-waiting" className={`${sectionHeading} mb-3`}>
