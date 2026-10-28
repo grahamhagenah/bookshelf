@@ -113,8 +113,9 @@ export default function ReadElsewhere() {
         ) : (
           // In columns where there's room, as Want to read has
           <>
-            {/* What belongs here, since it isn't plain from the name */}
-            <p className="text-sm text-stone-500 dark:text-stone-400">
+            {/* What belongs here, since it isn't plain from the name. As
+                tall as the other lists' filters, so their books start level */}
+            <p className="py-1 text-sm text-stone-500 dark:text-stone-400">
               Books you&apos;ve read that aren&apos;t on your shelf: library
               books, audiobooks, ones you read years ago and passed on.
             </p>
