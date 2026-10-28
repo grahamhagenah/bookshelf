@@ -1680,8 +1680,7 @@ function PublicPage({
     <div>
       {heading}
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-        Anyone with the link can see your shelf without signing in, apart from
-        any book you keep off it from that book&apos;s page.
+        Anyone with the link can see your shelf without signing in.
       </p>
       <fetcher.Form method="post" className="mt-3 grid grid-cols-1 gap-3">
         <input type="hidden" name="intent" value="saveProfile" />
@@ -1737,8 +1736,8 @@ function PublicPage({
               id="handle-hint"
               className="mt-1.5 text-sm text-stone-500 dark:text-stone-400"
             >
-              Pick a handle for a link that&apos;s easy to share. Until then,
-              Copy gives you a longer link that works just the same.
+              Pick a handle to get a short link with your name in it. Until
+              you do, your page has a random link, and Copy copies that.
             </p>
           )}
         </div>
