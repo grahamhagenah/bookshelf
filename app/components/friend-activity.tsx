@@ -8,7 +8,7 @@ import Avatar from "./avatar";
 import BookCover from "./book-cover";
 import { BookmarkIcon, HeartIcon, PencilIcon } from "./icons";
 import PersonLink from "./person-link";
-import { primaryButton } from "./ui";
+import { primaryButton, quietButton } from "./ui";
 
 type FeedItem = FriendActivity;
 type FeedBook = Extract<FeedItem, { kind: "added" }>["books"][number];
@@ -253,6 +253,9 @@ export default function FriendActivityItem({
 
 const actionClass =
   "inline-flex items-center gap-1.5 rounded-md px-2 py-1 -mx-2 text-sm text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-900 hover:text-stone-900 dark:hover:text-stone-100 transition-colors";
+// The thing a post asks of you (borrow it, get in line, save it, give it
+// back), as a button of its own, as the lists' rows have it
+const nextClass = `${quietButton("sm")} inline-flex items-center gap-1.5 font-medium`;
 const stateClass =
   "inline-flex items-center gap-1.5 py-1 text-sm text-stone-400 dark:text-stone-500";
 
@@ -384,7 +387,7 @@ function Actions({
     <giveBack.Form method="post" action={`/books/${book.id}`}>
       <input type="hidden" name="intent" value="return" />
       <input type="hidden" name="stay" value="true" />
-      <button type="submit" className={actionClass}>
+      <button type="submit" className={nextClass}>
         Return to {book.owner.firstname}
       </button>
     </giveBack.Form>
@@ -401,7 +404,7 @@ function Actions({
         type="button"
         onClick={() => setAsking(!asking)}
         aria-expanded={asking}
-        className={`${actionClass} ${asking ? "text-stone-900 dark:text-stone-100" : ""}`}
+        className={`${nextClass} ${asking ? "border-stone-400 dark:border-stone-500" : ""}`}
       >
         Ask to borrow
       </button>
@@ -411,7 +414,7 @@ function Actions({
     <borrow.Form method="post">
       <input type="hidden" name="intent" value={inLine ? "leaveHold" : "placeHold"} />
       <input type="hidden" name="bookId" value={book.id} />
-      <button type="submit" className={actionClass}>
+      <button type="submit" className={inLine ? actionClass : nextClass}>
         {inLine ? "In line · Leave" : "Get in line"}
       </button>
     </borrow.Form>
@@ -426,7 +429,7 @@ function Actions({
     <want.Form method="post">
       <input type="hidden" name="intent" value="wantBook" />
       <input type="hidden" name="bookId" value={book.id} />
-      <button type="submit" className={actionClass}>
+      <button type="submit" className={nextClass}>
         <BookmarkIcon size={14} />
         Want to read
       </button>
