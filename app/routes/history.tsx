@@ -57,8 +57,8 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
       <PersonLink id={entry.person.id} name={name} friendIds={friendIds} />
     </span>
   );
-  // Who, then when on a line of its own: short lines rather than one long
-  // sentence. The two dates, out and back ("Since" only as a fallback)
+  // Who, and when after it in a lighter gray: the two dates, out and back
+  // ("Since" only as a fallback)
   // Said from your side, so which way it went is plain
   const who = borrowed ? <>You borrowed from {person}</> : <>You lent to {person}</>;
   const when = entry.returnedAt
@@ -67,7 +67,7 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
   // A heart, if they loved it: the borrower's on a book you lent, yours on
   // one you borrowed. Notes are on the book's page
   const loved = entry.note?.loved ? (
-    <span className="mt-2 block">
+    <span className="mt-1 block">
       <RowLoved>{borrowed ? "You loved it" : `${name} loved it`}</RowLoved>
     </span>
   ) : null;
@@ -78,7 +78,11 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
       line={
         <RowLine>
           {who}
-          <span className="block text-stone-400 dark:text-stone-500">{when}</span>
+          {/* The dates kept together, so a long name moves them whole */}
+          <span className="text-stone-400 dark:text-stone-500">
+            {" · "}
+            <span className="whitespace-nowrap">{when}</span>
+          </span>
           {loved}
         </RowLine>
       }
