@@ -6,7 +6,7 @@ import { workPath } from "~/utils";
 
 import Avatar from "./avatar";
 import BookCover from "./book-cover";
-import { BookmarkIcon, HeartIcon, NoteIcon, PencilIcon } from "./icons";
+import { BookmarkIcon, HeartIcon, PencilIcon } from "./icons";
 import PersonLink from "./person-link";
 import { primaryButton } from "./ui";
 
@@ -336,9 +336,9 @@ function BookCard({
   );
 }
 
-// Notes and borrowing, done from the feed. Each form posts to the feed
-// route; the counts update when the loader comes back. No heart: beside a
-// post it read as liking the post, so books are loved on their own pages.
+// Borrowing, done from the feed. Each form posts to the feed route; what
+// it says updates when the loader comes back. No heart or note count:
+// beside a post they read as reactions to the post, not the book.
 function Actions({
   book,
   userId,
@@ -369,22 +369,13 @@ function Actions({
 
   const isOwner = book.owner.id === userId;
   const isBorrower = book.borrowerId === userId;
+  // Anything to say or do beside View book; without, it shows on phones too
+  const hasAction =
+    Boolean(onEdit) || isOwner || isBorrower || mine || returned || viewer.canRequest;
 
   return (
     <>
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-stone-100 dark:border-stone-800 pt-2">
-        {book.notes > 0 ? (
-          <Link
-            to={`/books/${book.id}#notes`}
-            aria-label={`${book.notes} ${book.notes === 1 ? "note" : "notes"}`}
-            title={`${book.notes} ${book.notes === 1 ? "note" : "notes"}`}
-            className={actionClass}
-          >
-            <NoteIcon size={15} />
-            {book.notes}
-          </Link>
-        ) : null}
-
         {onEdit ? (
           <button type="button" onClick={onEdit} className={actionClass}>
             <PencilIcon size={14} />
@@ -439,7 +430,7 @@ function Actions({
 
         {/* The cover and title open the book too; on phones that's enough,
             and the row stays on one line */}
-        <span className="ml-auto hidden sm:block">
+        <span className={`ml-auto ${hasAction ? "hidden sm:block" : ""}`}>
           <Link to={`/books/${book.id}`} className={actionClass}>
             View book
           </Link>
