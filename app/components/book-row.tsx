@@ -29,6 +29,7 @@ export function BookRow({
   book,
   line,
   actions,
+  coverNote,
   className = "",
 }: {
   id?: string;
@@ -37,8 +38,11 @@ export function BookRow({
   book: { title: string; author: string; cover: string };
   // Where it stands: one RowLine
   line?: React.ReactNode;
-  // What you can do, in rowPrimary or rowSecondary, or said in rowQuiet
+  // What you can do, in rowPrimary or rowSecondary
   actions?: React.ReactNode;
+  // A few quiet words under the cover, like History's dates, so they take
+  // no room from the lines beside it
+  coverNote?: React.ReactNode;
   className?: string;
 }) {
   return (
@@ -46,14 +50,19 @@ export function BookRow({
       id={id}
       className={`flex items-start gap-4 border-b border-stone-100 dark:border-stone-800 py-4 ${className}`}
     >
-      <Link to={to} tabIndex={-1} aria-hidden="true" className="flex-shrink-0">
-        <BookCover
-          cover={book.cover}
-          title={book.title}
-          author={book.author}
-          className="h-36 w-24"
-        />
-      </Link>
+      <div className="w-24 flex-shrink-0">
+        <Link to={to} tabIndex={-1} aria-hidden="true" className="block">
+          <BookCover
+            cover={book.cover}
+            title={book.title}
+            author={book.author}
+            className="h-36 w-24"
+          />
+        </Link>
+        {coverNote ? (
+          <p className="mt-1.5 text-center text-xs text-stone-400 dark:text-stone-500">{coverNote}</p>
+        ) : null}
+      </div>
       <div className="min-w-0 flex-1">
         <Link
           to={to}

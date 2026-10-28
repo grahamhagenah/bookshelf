@@ -65,8 +65,8 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
       <PersonLink id={entry.person.id} name={name} friendIds={friendIds} />
     </span>
   );
-  // Who, and when after it in a lighter gray: the two dates, out and back
-  // ("Since" only as a fallback)
+  // Who on the line beside the cover; when, the two dates out and back,
+  // under the cover ("Since" only as a fallback)
   // Said from your side, so which way it went is plain
   const who = borrowed ? <>You borrowed from {person}</> : <>You lent to {person}</>;
   const when = entry.returnedAt
@@ -120,15 +120,11 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
       line={
         <RowLine>
           {who}
-          {/* The dates kept together, so a long name moves them whole */}
-          <span className="text-stone-400 dark:text-stone-500">
-            {" · "}
-            <span className="whitespace-nowrap">{when}</span>
-          </span>
           {marks ? <span className="mt-1 block">{marks}</span> : null}
         </RowLine>
       }
       actions={actions}
+      coverNote={when}
     />
   );
 }
