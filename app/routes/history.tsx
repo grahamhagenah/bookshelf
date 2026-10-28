@@ -64,28 +64,14 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
   const when = entry.returnedAt
     ? `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
     : `Since ${monthDay(entry.borrowedAt)}`;
-  // What was said about it, if anything: a heart, and two lines of the
-  // note at most, whose it is first. On a book you lent, the borrower's;
-  // on one you borrowed, yours. The rest is on the book's page
-  const said = borrowed ? "You" : name;
-  const body = entry.note?.body?.trim();
-  const snippet =
-    body || entry.note?.loved ? (
-      <span className="mt-2 flex items-start gap-1.5 text-stone-600 dark:text-stone-300">
-        {entry.note?.loved ? (
-          <HeartIcon size={12} filled className="mt-1 flex-shrink-0 text-rose-400" />
-        ) : null}
-        <span className="line-clamp-2">
-          {body ? (
-            <>
-              <span className={rowEmphasis}>{said}:</span> &ldquo;{body}&rdquo;
-            </>
-          ) : (
-            `${said} loved it`
-          )}
-        </span>
-      </span>
-    ) : null;
+  // A heart, if they loved it: the borrower's on a book you lent, yours on
+  // one you borrowed. Notes are on the book's page
+  const loved = entry.note?.loved ? (
+    <span className="mt-2 flex items-center gap-1.5 text-stone-600 dark:text-stone-300">
+      <HeartIcon size={12} filled className="flex-shrink-0 text-rose-400" />
+      {borrowed ? "You loved it" : `${name} loved it`}
+    </span>
+  ) : null;
   return (
     <BookRow
       to={`/books/${entry.book.id}`}
@@ -94,7 +80,7 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
         <RowLine>
           {who}
           <span className="block text-stone-400 dark:text-stone-500">{when}</span>
-          {snippet}
+          {loved}
         </RowLine>
       }
     />
