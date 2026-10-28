@@ -519,7 +519,7 @@ export function ShowcaseDesk() {
                   key={name}
                   className={`rounded-full border px-2 py-0.5 text-xs ${
                     index === 0
-                      ? "border-forest-600 bg-forest-600/10 text-forest-800 dark:border-forest-400 dark:text-forest-300"
+                      ? "border-forest-600 bg-forest-600/10 text-forest-700 dark:border-forest-400 dark:text-forest-400"
                       : "border-stone-200 text-stone-700 dark:border-stone-700 dark:text-stone-200"
                   }`}
                 >

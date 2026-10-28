@@ -372,7 +372,7 @@ export default function Checkout() {
           </label>
 
           {result && "done" in result && result.done && !query && !("about" in result) ? (
-            <p role="status" className="mt-4 rounded-lg bg-forest-600/[0.08] dark:bg-forest-400/10 px-4 py-3 text-sm font-medium text-forest-800 dark:text-forest-300">
+            <p role="status" className="mt-4 rounded-lg bg-forest-600/[0.08] dark:bg-forest-400/10 px-4 py-3 text-sm font-medium text-forest-700 dark:text-forest-400">
               {result.done}
             </p>
           ) : null}
@@ -448,7 +448,7 @@ export default function Checkout() {
         {result && "about" in result ? (
           <p
             role={"error" in result ? "alert" : "status"}
-            className={`mt-3 text-sm ${"error" in result ? "text-red-700 dark:text-red-400" : "font-medium text-forest-800 dark:text-forest-300"}`}
+            className={`mt-3 text-sm ${"error" in result ? "text-red-700 dark:text-red-400" : "font-medium text-forest-700 dark:text-forest-400"}`}
           >
             {"error" in result ? result.error : result.done}
           </p>
