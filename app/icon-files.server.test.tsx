@@ -4,7 +4,7 @@ import { AVATAR_ICONS, ICON_PATHS } from "~/components/avatar";
 import { iconFiles, iconSvg, zip } from "./icon-files.server";
 
 test("each icon is a standalone SVG in a solid ink", () => {
-  const svg = iconSvg("raven");
+  const svg = iconSvg("ufo");
   expect(svg).toMatch(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
   expect(svg).not.toContain("currentColor");
   expect(svg).toContain("<path");

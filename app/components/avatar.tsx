@@ -635,21 +635,17 @@ export const ICON_PATHS = {
       <path d="M18.4 12h.8a2.3 2.3 0 0 1 0 4.6h-2.7" />
     </>
   ),
-  raven: (
-    // Solid, as a raven is, with its heavy beak; the eye is a hole in it,
-    // so the circle's own color shows through
-    <path
-      d="M3 20c1.1-4.4 3.5-7 6.9-8.1-.4-.7-.6-1.5-.6-2.3a4.1 4.1 0 0 1 6.9-3l5.3 2.6c-1.3.4-3 .5-4.5.3-.3 5.2-4.4 9.5-10.5 10.5zM13.4 7.5a.9 1.2 0 1 0 0 2.4.9 1.2 0 1 0 0-2.4z"
-      fill="currentColor"
-      fillRule="evenodd"
-    />
-  ),
   ufo: (
-    // A saucer and its dome, tipped as if mid-swoop
-    <g transform="rotate(-14 12 12.5)">
-      <path d="M7.8 11a4.2 4.2 0 0 1 8.4 0" />
-      <path d="M2.2 13.6c2-2 5.6-3 9.8-3s7.8 1 9.8 3c-2 2-5.6 3-9.8 3s-7.8-1-9.8-3z" />
-    </g>
+    <>
+      {/* A saucer and its dome, tipped as if mid-swoop, with a tractor
+          beam shining straight down from it */}
+      <g transform="translate(0 -3.2) rotate(-14 12 12.5)">
+        <path d="M7.8 11a4.2 4.2 0 0 1 8.4 0" />
+        <path d="M2.2 13.6c2-2 5.6-3 9.8-3s7.8 1 9.8 3c-2 2-5.6 3-9.8 3s-7.8-1-9.8-3z" />
+      </g>
+      <path d="M9.9 13.6 6.4 21h11.2l-3.5-7.6z" fill="currentColor" fillOpacity=".18" stroke="none" />
+      <path d="M9.9 13.6 6.4 21M14.1 13.4l3.5 7.6" />
+    </>
   ),
 };
 
@@ -682,7 +678,6 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "bee",
   "butterfly",
   "paw",
-  "raven",
   // Spooky, and characters
   "ghost",
   "skull",
