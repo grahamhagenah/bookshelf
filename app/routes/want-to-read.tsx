@@ -88,9 +88,12 @@ function Cover({
   );
 }
 
-// A row's actions as words, light enough to sit under the book
-const textAction =
-  "font-medium text-stone-700 dark:text-stone-200 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline hover:text-stone-950 dark:hover:text-white transition-colors";
+// A row's actions as words, light enough to sit under the book. Getting a
+// copy is the one it's waiting for, in the green for what comes next;
+// removing it stays quiet
+const textAction = "underline-offset-4 hover:underline transition-colors";
+const gotItAction = `${textAction} font-medium text-forest-600 decoration-forest-600/40 hover:text-forest-700 dark:text-forest-400 dark:decoration-forest-400/40`;
+const removeAction = `${textAction} text-stone-400 decoration-stone-300 hover:text-stone-700 dark:text-stone-500 dark:decoration-stone-600 dark:hover:text-stone-200`;
 
 function WantRow({
   item,
@@ -184,14 +187,14 @@ function WantRow({
           <Form method="post">
             <input type="hidden" name="intent" value="gotIt" />
             <input type="hidden" name="id" value={item.id} />
-            <button type="submit" className={textAction} title="Move it to your shelf">
+            <button type="submit" className={gotItAction} title="Move it to your shelf">
               Got a copy
             </button>
           </Form>
           <remove.Form method="post">
             <input type="hidden" name="intent" value="remove" />
             <input type="hidden" name="id" value={item.id} />
-            <button type="submit" className={`${textAction} text-stone-500 dark:text-stone-400`}>
+            <button type="submit" className={removeAction}>
               Remove
             </button>
           </remove.Form>
