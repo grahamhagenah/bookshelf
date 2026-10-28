@@ -123,9 +123,10 @@ export function NoteButton({
   );
 }
 
-// Your own marks on a book, as History and Also read offer them: the way
-// to your note (or to leave one), and until you've loved it, a heart to
-// give right there. loveAction is the page that saves the heart
+// Your own marks on a book, as History and Also read offer them: one
+// button in two parts, a heart you can give or take back right there,
+// and the way to your note (or to leave one). loveAction is the page that
+// saves the heart; without one, the heart only shows
 export function YourNoteActions({
   notes,
   loveAction,
@@ -138,28 +139,40 @@ export function YourNoteActions({
   hasNote: boolean;
 }) {
   const love = useFetcher();
-  // A heart given from the row shows at once
-  const isLoved = loved || love.state !== "idle";
+  // What was just pressed shows at once, before the page catches up
+  const pending = love.formData?.get("loved");
+  const isLoved = pending ? pending === "true" : loved;
+  const part =
+    "inline-flex h-[30px] items-center gap-1.5 text-sm text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors";
+  const heart = (
+    <HeartIcon
+      size={13}
+      filled={isLoved}
+      className={isLoved ? "text-rose-400" : "text-stone-400 dark:text-stone-500"}
+    />
+  );
   return (
-    <>
-      <NoteButton to={notes} loved={isLoved}>
-        {hasNote ? "Read your note" : "Leave a note"}
-      </NoteButton>
-      {isLoved || !loveAction ? null : (
-        <love.Form method="post" action={loveAction}>
+    <span className="inline-flex divide-x divide-stone-200 overflow-hidden rounded-md border border-stone-200 dark:divide-stone-700 dark:border-stone-700">
+      {loveAction ? (
+        <love.Form method="post" action={loveAction} className="flex">
           <input type="hidden" name="intent" value="toggleLove" />
-          <input type="hidden" name="loved" value="true" />
+          <input type="hidden" name="loved" value={isLoved ? "false" : "true"} />
           <button
             type="submit"
-            aria-label="Love it"
-            title="Love it"
-            // A square the button's height, in the same outline as the button
-            className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-md border border-stone-200 text-stone-500 hover:border-stone-400 hover:text-rose-400 dark:border-stone-700 dark:text-stone-400 dark:hover:border-stone-500 transition-colors"
+            aria-label={isLoved ? "Loved" : "Love it"}
+            aria-pressed={isLoved}
+            title={isLoved ? "Loved. Take the heart back" : "Love it"}
+            className={`${part} px-2`}
           >
-            <HeartIcon size={13} />
+            {heart}
           </button>
         </love.Form>
+      ) : (
+        <span className={`${part} px-2`}>{heart}</span>
       )}
-    </>
+      <Link to={notes} className={`${part} px-2.5 font-medium`}>
+        {hasNote ? "Read your note" : "Leave a note"}
+      </Link>
+    </span>
   );
 }
