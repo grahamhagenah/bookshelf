@@ -6,6 +6,7 @@ import { sameWork } from "~/works";
 
 import { createBook } from "./book.server";
 import { shelfIdsFor } from "./household.server";
+import { withSharedCover } from "./shared-cover.server";
 import { saveWorkNote } from "./work-note.server";
 
 export { normalizeTitle, sameWork } from "~/works";
@@ -87,7 +88,7 @@ export async function addWantToRead(
       userId,
       title: book.title,
       author: book.author,
-      cover: book.cover,
+      cover: await withSharedCover(book.cover, book),
       openLibraryKey: book.openLibraryKey ?? null,
       isbn: book.isbn ?? null,
     },

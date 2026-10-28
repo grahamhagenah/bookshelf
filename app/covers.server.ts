@@ -16,8 +16,9 @@ export const NO_COVER_BYTES = 200;
 
 // Only Open Library's own cover paths, e.g. b/isbn/9780547928227-M.jpg,
 // and covers people pasted a link to, kept here under a hash of that link
+// (in two sizes, like Open Library's, for those kept since sizes came in)
 export const COVER_PATH =
-  /^(b\/(id|isbn|olid)\/[A-Za-z0-9-]+-(S|M|L)\.jpg|custom\/[a-f0-9]{40}\.jpg)$/;
+  /^(b\/(id|isbn|olid)\/[A-Za-z0-9-]+-(S|M|L)\.jpg|custom\/[a-f0-9]{40}(-[ML])?\.jpg)$/;
 
 // A pasted cover is fetched once, from a known picture host only (the
 // server fetching any address people type would reach into places it
@@ -51,9 +52,31 @@ export function coverHostAllowed(url: string) {
   }
 }
 
-// Where a pasted cover lives once fetched: its own path under the proxy
+// Where a pasted cover lives once fetched: its own path under the proxy.
+// That's the large one; the same path ending -M is a medium one made from
+// it, for thumbnails, as Open Library has.
 export function customCoverPath(url: string) {
-  return `custom/${createHash("sha1").update(url).digest("hex")}.jpg`;
+  return `custom/${createHash("sha1").update(url).digest("hex")}-L.jpg`;
+}
+
+// About as wide as Open Library's medium covers
+const MEDIUM_WIDTH = 180;
+
+// A pasted cover's medium size, made from its large one
+async function makeMedium(coverPath: string, file: string) {
+  const large = await readCached(fileFor(coverPath.replace(/-M\.jpg$/, "-L.jpg")));
+  if (!large) return null;
+  try {
+    const bytes = await sharp(large)
+      .resize({ width: MEDIUM_WIDTH, withoutEnlargement: true })
+      .jpeg({ quality: 85 })
+      .toBuffer();
+    await store(file, bytes).catch(() => undefined);
+    return bytes;
+  } catch {
+    // Not a picture sharp can read: the large one does
+    return large;
+  }
 }
 
 // Production keeps its data on the Fly volume mounted at /data
@@ -203,12 +226,16 @@ export async function loadCover(coverPath: string) {
   const file = fileFor(coverPath);
   const cached = await readCached(file);
   if (cached) return cached;
-  // A pasted cover is only ever on disk; there's nowhere else to ask
-  if (coverPath.startsWith("custom/")) return null;
+  // A pasted cover is only ever on disk; there's nowhere else to ask, but
+  // its medium size can be made from its large one
+  const medium = /^custom\/.*-M\.jpg$/.test(coverPath);
+  if (coverPath.startsWith("custom/") && !medium) return null;
 
   let pending = inFlight.get(coverPath);
   if (!pending) {
-    pending = fetchAndStore(coverPath, file).finally(() =>
+    pending = (
+      medium ? makeMedium(coverPath, file) : fetchAndStore(coverPath, file)
+    ).finally(() =>
       inFlight.delete(coverPath),
     );
     inFlight.set(coverPath, pending);

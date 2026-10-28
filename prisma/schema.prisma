@@ -291,6 +291,17 @@ model CatalogBook {
   updatedAt DateTime @updatedAt
 }
 
+// A cover someone picked for a book by hand, shared with every other copy
+// of it that still has Open Library's: by its ISBN ("isbn:…") and by its
+// Open Library work ("/works/OL…W")
+model SharedCover {
+  key       String   @id
+  cover     String
+  // Who picked it, for when one needs undoing
+  userId    String
+  updatedAt DateTime @updatedAt
+}
+
 model Author {
   key       String   @id
   name      String

@@ -60,6 +60,7 @@ import {
   tidyAuthor,
   PATIENT_MS,
 } from "~/models/openlibrary.server";
+import { shareCover } from "~/models/shared-cover.server";
 import {
   getUserById,
   getUserEmailById,
@@ -1105,6 +1106,11 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       publisher: typeof publisher === "string" && publisher ? publisher : null,
       subjects: typeof subjects === "string" && subjects ? subjects : null,
     });
+    // A cover picked by hand goes to every other copy of the book still
+    // showing Open Library's
+    if (coverToSave && coverToSave !== book.cover) {
+      await shareCover(book.id, coverToSave, userId);
+    }
 
     return data({ edited: true, message: "Book updated successfully!" });
   }

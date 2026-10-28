@@ -297,10 +297,13 @@ function SearchResultItem({
   isInLibrary,
   isWanted,
   forWant = false,
+  sharedCover,
 }: {
   book: OpenLibraryBook;
   isInLibrary: boolean;
   isWanted: boolean;
+  // A cover someone picked for it over Open Library's
+  sharedCover?: string;
   // From the want-to-read list: that's the button to lead with
   forWant?: boolean;
 }) {
@@ -330,9 +333,10 @@ function SearchResultItem({
         <WorkLink workKey={book.key} className="flex-shrink-0 self-stretch">
           <BookCover
             cover={
-              book.cover_i
+              sharedCover ??
+              (book.cover_i
                 ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
-                : null
+                : null)
             }
             title={book.title}
             author={author}
@@ -720,6 +724,9 @@ export default function Search() {
                         }
                         isWanted={
                           book.key ? results.wantKeys.includes(book.key) : false
+                        }
+                        sharedCover={
+                          book.key ? results.covers?.[book.key] : undefined
                         }
                       />
                     ))}

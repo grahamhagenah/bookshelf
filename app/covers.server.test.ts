@@ -63,8 +63,12 @@ test("a pasted cover is fetched from known picture hosts only, over https", () =
 
 test("a pasted cover's path is a hash of its link, and the proxy knows it", () => {
   const path = customCoverPath("https://m.media-amazon.com/images/I/a.jpg");
-  expect(path).toMatch(/^custom\/[a-f0-9]{40}\.jpg$/);
+  expect(path).toMatch(/^custom\/[a-f0-9]{40}-L\.jpg$/);
   expect(COVER_PATH.test(path)).toBe(true);
+  expect(COVER_PATH.test(path.replace("-L.jpg", "-M.jpg"))).toBe(true);
+  // Kept before sizes came in
+  expect(COVER_PATH.test(path.replace("-L.jpg", ".jpg"))).toBe(true);
+  expect(COVER_PATH.test(path.replace("-L.jpg", "-S.jpg"))).toBe(false);
   expect(COVER_PATH.test("custom/../b/id/1-L.jpg")).toBe(false);
   expect(COVER_PATH.test("b/isbn/9780547928227-M.jpg")).toBe(true);
 });
@@ -189,4 +193,27 @@ test("the cover route gives WebP to browsers that take it, and JPEG to the rest"
   const jpeg = await get("image/png,image/*;q=0.8");
   expect(jpeg.headers.get("Content-Type")).toBe("image/jpeg");
   expect(jpeg.headers.get("Vary")).toBe("Accept");
+});
+
+test("a pasted cover's medium size is made from its large one, and kept", async () => {
+  const dir = process.env.COVER_CACHE_DIR ?? path.join(os.tmpdir(), "stacks-covers");
+  await mkdir(dir, { recursive: true });
+  const large = await sharp({
+    create: { width: 600, height: 900, channels: 3, background: "#7a6" },
+  })
+    .jpeg()
+    .toBuffer();
+  const coverPath = customCoverPath(`https://m.media-amazon.com/images/I/${Math.random()}.jpg`);
+  await writeFile(path.join(dir, coverPath.replace("/", "_")), large);
+
+  const fetchSpy = vi.spyOn(globalThis, "fetch");
+  const medium = await loadCover(coverPath.replace("-L.jpg", "-M.jpg"));
+  expect(fetchSpy).not.toHaveBeenCalled();
+  fetchSpy.mockRestore();
+  expect((await sharp(medium!).metadata()).width).toBe(180);
+  expect(
+    await readFile(path.join(dir, coverPath.replace("/", "_").replace("-L.jpg", "-M.jpg"))),
+  ).toEqual(medium);
+  // No large one, no medium one
+  expect(await loadCover(`custom/${"1".repeat(40)}-M.jpg`)).toBeNull();
 });

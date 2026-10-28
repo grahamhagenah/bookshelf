@@ -111,6 +111,10 @@ export function workPath(openLibraryKey: string | null | undefined) {
 }
 
 export function coverSrc(url: string, size?: "M" | "L") {
+  // A pasted cover kept here comes in the same two sizes
+  if (/^\/covers\/custom\/[a-f0-9]{40}-[ML]\.jpg$/.test(url)) {
+    return size ? url.replace(/-[ML]\.jpg$/, `-${size}.jpg`) : url;
+  }
   if (!url.startsWith("https://covers.openlibrary.org/")) return url;
   const local = url.replace("https://covers.openlibrary.org/", "/covers/");
   return size ? local.replace(/-[SML]\.jpg$/, `-${size}.jpg`) : local;
