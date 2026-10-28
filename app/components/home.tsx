@@ -187,9 +187,6 @@ export function LoanList({
         id={id}
         className={`${sectionHeading} mb-2 flex items-baseline gap-2`}
       >
-        {icon ? (
-          <span className="self-center text-stone-400 dark:text-stone-500">{icon}</span>
-        ) : null}
         {to && books.length > 0 ? (
           <Link to={to} className={headingLink}>
             {title}
@@ -197,7 +194,10 @@ export function LoanList({
         ) : (
           title
         )}
-        <span className="text-base font-normal text-stone-400 dark:text-stone-500">
+        {/* The count with its mark beside it, as the shelf's badges show
+            them */}
+        <span className="inline-flex items-center gap-1 self-center text-base font-normal text-stone-400 dark:text-stone-500">
+          {icon}
           {total ?? books.length}
         </span>
       </h2>
@@ -743,7 +743,7 @@ export default function Home({
                       <LoanList
                         id="borrowing"
                         title="Borrowing"
-                        icon={<BorrowedIcon size={18} />}
+                        icon={<BorrowedIcon size={14} />}
                         to="/books?status=borrowed"
                         books={books.borrowed
                           .slice(0, LOANS_SHOWN)
@@ -778,7 +778,7 @@ export default function Home({
                       <LoanList
                         id="lent-out"
                         title="Lent out"
-                        icon={<LentIcon size={18} />}
+                        icon={<LentIcon size={14} />}
                         to="/books?status=lent"
                         books={books.lent
                           .slice(0, LOANS_SHOWN)
