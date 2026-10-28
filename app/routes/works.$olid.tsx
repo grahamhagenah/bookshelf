@@ -360,7 +360,11 @@ export default function WorkPage() {
             // On the list, and the way off it
             <p className="inline-flex items-center justify-center gap-1.5 py-2 text-sm text-stone-500 dark:text-stone-400">
               <BookmarkIcon size={14} />
-              On your To read list ·
+              {/* The list's name, set off so its capital reads as one */}
+              <span>
+                On your{" "}
+                <span className="font-semibold text-stone-700 dark:text-stone-200">To read</span> list ·
+              </span>
               <input type="hidden" name="title" value={work.title ?? ""} />
               <button
                 type="submit"
