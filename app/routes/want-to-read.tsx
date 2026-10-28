@@ -2,7 +2,17 @@
 import { data, Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { BookRow, bookRowGrid, RowLine, RowSub, rowEmphasis, rowPrimary, rowSecondary } from "~/components/book-row";
+import {
+  BookRow,
+  bookRowGrid,
+  RowLine,
+  RowMenu,
+  rowMenuItem,
+  RowSub,
+  rowEmphasis,
+  rowPrimary,
+  rowSecondary,
+} from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
 import { BookmarkIcon } from "~/components/icons";
 import Layout from "~/components/layout";
@@ -140,31 +150,17 @@ function WantRow({
           )}
         </RowLine>
       }
-      // Taking it off the list: last and quietest, an × in the corner
+      // Taking it off the list: last and quietest, in the corner's menu
       corner={
-        <remove.Form method="post">
-          <input type="hidden" name="intent" value="remove" />
-          <input type="hidden" name="id" value={item.id} />
-          <button
-            type="submit"
-            aria-label={`Remove ${item.title} from your list`}
-            title="Remove from your list"
-            className="flex h-7 w-7 items-center justify-center rounded-full text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              aria-hidden="true"
-            >
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
-        </remove.Form>
+        <RowMenu label={`More for ${item.title}`}>
+          <remove.Form method="post">
+            <input type="hidden" name="intent" value="remove" />
+            <input type="hidden" name="id" value={item.id} />
+            <button type="submit" role="menuitem" className={rowMenuItem}>
+              Remove from Want to read
+            </button>
+          </remove.Form>
+        </RowMenu>
       }
       // Asking a friend leads when one has it free, then getting your own copy
       actions={

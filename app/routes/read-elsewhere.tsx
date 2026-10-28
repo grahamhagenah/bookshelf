@@ -1,14 +1,24 @@
-import { data, useLoaderData } from "react-router";
-import type { LoaderFunctionArgs, MetaFunction } from "react-router";
+import { data, useFetcher, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { BookRow, bookRowGrid, rowDate, RowLine, RowSub, YourNoteActions } from "~/components/book-row";
+import {
+  BookRow,
+  bookRowGrid,
+  rowDate,
+  RowLine,
+  RowMenu,
+  rowMenuHint,
+  rowMenuItem,
+  RowSub,
+  YourNoteActions,
+} from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
 import { ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import ShelfTabs, { AddLink } from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
 import { findImportedWorks } from "~/models/import.server";
-import { listMyWorkNotes } from "~/models/work-note.server";
+import { listMyWorkNotes, removeWorkNote } from "~/models/work-note.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -22,6 +32,33 @@ export const meta: MetaFunction = () =>
 export const handle = {
   breadcrumb: () => <span>Also read</span>,
 };
+
+// Taking a book off Also read: your read mark, heart and note on it
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const userId = await requireUserId(request);
+  const form = await request.formData();
+  if (form.get("intent") === "remove") {
+    await removeWorkNote(userId, String(form.get("id") ?? ""));
+  }
+  return data({ ok: true });
+};
+
+// Its ⋯: off the list, with what that clears said plainly
+function AlsoReadMenu({ id, title }: { id: string; title: string }) {
+  const remove = useFetcher();
+  return (
+    <RowMenu label={`More for ${title}`}>
+      <remove.Form method="post" action="/read-elsewhere">
+        <input type="hidden" name="intent" value="remove" />
+        <input type="hidden" name="id" value={id} />
+        <button type="submit" role="menuitem" className={rowMenuItem}>
+          Remove from Also read
+          <span className={rowMenuHint}>Clears your read mark, heart and note</span>
+        </button>
+      </remove.Form>
+    </RowMenu>
+  );
+}
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -77,6 +114,7 @@ export default function ReadElsewhere() {
                   // What you did with it and when, as History says who had it
                   // and when; then the same buttons History gives a book you
                   // borrowed: your note, and a heart to give
+                  corner={<AlsoReadMenu id={item.id} title={item.title} />}
                   line={
                     <RowLine>
                       {item.readAt ? "You read it" : item.body ? "You left a note" : "You loved it"}

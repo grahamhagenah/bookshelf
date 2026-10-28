@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { Link, useFetcher } from "react-router";
 
 import BookCover from "./book-cover";
@@ -181,3 +182,65 @@ export function YourNoteActions({
     </span>
   );
 }
+
+// A row's quieter things to do (remove it, hide it), behind a small ⋯ in
+// its top corner. Closes on a click outside, on Escape (back to the ⋯) and
+// when focus moves out of it
+export function RowMenu({ label, children }: { label: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const outside = (event: Event) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    const key = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      button.current?.focus();
+    };
+    document.addEventListener("mousedown", outside);
+    document.addEventListener("focusin", outside);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("mousedown", outside);
+      document.removeEventListener("focusin", outside);
+      document.removeEventListener("keydown", key);
+    };
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <button
+        ref={button}
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title={label}
+        className="flex h-7 w-7 items-center justify-center rounded-full text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="5.5" cy="12" r="1.6" />
+          <circle cx="12" cy="12" r="1.6" />
+          <circle cx="18.5" cy="12" r="1.6" />
+        </svg>
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-8 z-20 w-56 overflow-hidden rounded-lg bg-white py-1 shadow-soft ring-1 ring-stone-900/5 dark:bg-stone-900 dark:ring-white/10"
+        >
+          {children}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// One thing in a RowMenu, on a button in its own form; a quieter second
+// line under it says what it does when that isn't plain
+export const rowMenuItem =
+  "block w-full px-3 py-2 text-left text-sm text-stone-700 hover:bg-stone-100 dark:text-stone-200 dark:hover:bg-stone-800 transition-colors";
+export const rowMenuHint = "block text-xs text-stone-400 dark:text-stone-500";

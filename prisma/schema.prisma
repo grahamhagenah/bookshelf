@@ -199,6 +199,11 @@ model LendingHistory {
   // never did can put the loan back as it was
   dueDate    DateTime?
 
+  // Taken off one side's History without touching the other's: the
+  // lender's shelf, or the borrower
+  hiddenByLender   Boolean @default(false)
+  hiddenByBorrower Boolean @default(false)
+
   createdAt DateTime @default(now())
 
   @@index([bookId], name: "lending_history_book_index")

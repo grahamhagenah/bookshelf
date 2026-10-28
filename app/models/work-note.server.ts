@@ -175,6 +175,11 @@ export function listMyWorkNotes(userId: User["id"]) {
   });
 }
 
+// Off your Also read: your read mark, heart and note on it, all gone
+export async function removeWorkNote(userId: User["id"], id: string) {
+  await prisma.workNote.deleteMany({ where: { id, userId } });
+}
+
 // What's saved of a work, for when Open Library doesn't answer
 export function getWorkSnapshot(workKey: string) {
   return prisma.workNote.findFirst({

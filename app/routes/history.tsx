@@ -1,5 +1,5 @@
-import { data, useLoaderData } from "react-router";
-import type { LoaderFunctionArgs, MetaFunction } from "react-router";
+import { data, useFetcher, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import {
   BookRow,
@@ -8,6 +8,9 @@ import {
   rowDate,
   RowLine,
   RowLoved,
+  RowMenu,
+  rowMenuHint,
+  rowMenuItem,
   RowSub,
   rowEmphasis,
   YourNoteActions,
@@ -17,7 +20,7 @@ import { HistoryIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
-import { getHistory, getShelfCounts } from "~/models/history.server";
+import { getHistory, getShelfCounts, hideFromHistory } from "~/models/history.server";
 import { getUserById } from "~/models/user.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
@@ -46,9 +49,23 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
 };
 
+// Hiding a loan from your History; your friend's keeps it
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const userId = await requireUserId(request);
+  const form = await request.formData();
+  if (form.get("intent") === "hide") {
+    await hideFromHistory(userId, {
+      id: String(form.get("id") ?? ""),
+      kind: form.get("kind") === "borrowed" ? "borrowed" : "lent",
+    });
+  }
+  return data({ ok: true });
+};
+
 type Entry = LoaderData<typeof loader>["entries"][number];
 
 function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] }) {
+  const hide = useFetcher();
   const borrowed = entry.kind === "borrowed";
   // First names: the rows say enough without the rest, and stay short
   const name = entry.person.firstname;
@@ -87,10 +104,25 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
     <RowLoved>{name} loved it</RowLoved>
   ) : null;
 
+  // Gone as soon as it's hidden
+  if (hide.state !== "idle") return null;
   return (
     <BookRow
       to={`/books/${entry.book.id}`}
       book={entry.book}
+      corner={
+        <RowMenu label={`More for ${entry.book.title}`}>
+          <hide.Form method="post" action="/history">
+            <input type="hidden" name="intent" value="hide" />
+            <input type="hidden" name="id" value={entry.id} />
+            <input type="hidden" name="kind" value={entry.kind} />
+            <button type="submit" role="menuitem" className={rowMenuItem}>
+              Hide from History
+              <span className={rowMenuHint}>Only from yours; {name} still sees it</span>
+            </button>
+          </hide.Form>
+        </RowMenu>
+      }
       line={
         <RowLine>
           {who}
