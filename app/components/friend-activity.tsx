@@ -504,7 +504,7 @@ function Actions({
             className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 py-1.5 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
           />
           <button type="submit" className={primaryButton("md")}>
-            Send
+            Send request
           </button>
           <button
             type="button"
