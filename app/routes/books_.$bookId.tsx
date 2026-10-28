@@ -174,7 +174,7 @@ function AboutAuthor({
         <p
           ref={bioRef}
           id={`bio-${author.key}`}
-          className={`summary max-w-prose text-pretty leading-relaxed text-stone-700 dark:text-stone-300 ${
+          className={`summary max-w-150 text-pretty leading-relaxed text-stone-700 dark:text-stone-300 ${
             clipped
               ? "line-clamp-3 [mask-image:linear-gradient(to_bottom,black_45%,transparent)]"
               : ""
@@ -2609,8 +2609,8 @@ export default function BookDetailsPage() {
                 lines={2}
                 className={`mt-10 ${openingLineType} max-w-prose`}
               />
-              <Placeholder lines={3} className="mt-8 max-w-prose" />
-              <Placeholder lines={3} className="mt-8 max-w-prose" />
+              <Placeholder lines={3} className="mt-8 max-w-150" />
+              <Placeholder lines={3} className="mt-8 max-w-150" />
             </div>
           ) : null}
 
@@ -2628,7 +2628,7 @@ export default function BookDetailsPage() {
                 {/* Unlabeled, like a jacket's blurb; About the author keeps
                     its label */}
                 <h2 className="sr-only">About this book</h2>
-                <p className="whitespace-pre-wrap text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
+                <p className="whitespace-pre-wrap text-stone-700 dark:text-stone-300 leading-relaxed max-w-150">
                   {data.book.body ? (
                     stripMarkdown(data.book.body)
                   ) : data.isOwner ? (
