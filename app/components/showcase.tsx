@@ -921,14 +921,11 @@ export function ShowcaseHome() {
           </ul>
 
           <p className="mt-5 border-t border-stone-200 dark:border-stone-800 pt-4 mb-1 font-semibold text-stone-900 dark:text-stone-100">
-            Popular with friends
+            Most borrowed
           </p>
           <ol className="divide-y divide-stone-100 dark:divide-stone-800">
-            {POPULAR.map(([src, book, by, lent], index) => (
+            {POPULAR.map(([src, book, by, lent]) => (
               <li key={book} className="flex items-center gap-2 py-1.5">
-                <span className="w-3 flex-shrink-0 text-center text-xs font-semibold tabular-nums text-stone-500 dark:text-stone-400">
-                  {index + 1}
-                </span>
                 <Cover src={src} className="w-6 flex-shrink-0" sizes="24px" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-xs font-medium text-stone-900 dark:text-stone-100">
@@ -936,9 +933,8 @@ export function ShowcaseHome() {
                   </span>
                   <span className="block truncate text-[11px] text-stone-500 dark:text-stone-400">{by}</span>
                 </span>
-                <span className="inline-flex flex-shrink-0 items-center gap-0.5 text-[11px] tabular-nums text-stone-500 dark:text-stone-400">
-                  <LentIcon size={10} />
-                  {lent}
+                <span className="flex-shrink-0 whitespace-nowrap text-[11px] tabular-nums text-stone-500 dark:text-stone-400">
+                  {lent} {lent === 1 ? "loan" : "loans"}
                 </span>
               </li>
             ))}

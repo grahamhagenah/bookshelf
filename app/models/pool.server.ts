@@ -37,7 +37,7 @@ export const POOL_ROW = 12;
 // The most books one search gathers before putting copies together
 const SEARCH_LIMIT = 5000;
 
-// Popular is the most lent first, as Popular with friends on the home
+// Popular is the most lent first, as Most borrowed on the home
 // page counts it
 export const POOL_SORTS = ["newest", "popular", "title", "author"] as const;
 export type PoolSort = (typeof POOL_SORTS)[number];

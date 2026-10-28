@@ -484,9 +484,9 @@ function MoreLink({ to, children, className = "" }: { to: string; children: stri
 // Friends' books, the most lent first
 const POPULAR_PATH = "/friends/books?sort=popular";
 
-// Popular with friends as a chart, the most lent first: ranked rows built
-// like the rest of the home page's lists (a small cover, the title, who
-// has it), with how many times on the right
+// Most borrowed: friends' books lent the most times, the most first. Rows
+// built like the rest of the home page's lists (a small cover, the title,
+// who has it), with how many loans on the right, in words
 function PopularChart({
   popular,
   className = "",
@@ -501,13 +501,11 @@ function PopularChart({
     >
       <h2 id="popular" className={`${sectionHeading} mb-2`}>
         <Link to={POPULAR_PATH} className={headingLink}>
-          Popular with friends
+          Most borrowed
         </Link>
       </h2>
       <ol className="divide-y divide-stone-100 dark:divide-stone-900">
         {popular.map((book) => {
-          const said =
-            book.loans === 1 ? "Lent once" : `Lent ${book.loans} times`;
           return (
             <li key={book.id}>
               <Link
@@ -534,13 +532,8 @@ function PopularChart({
                     ) : null}
                   </span>
                 </span>
-                <span
-                  title={said}
-                  className="inline-flex flex-shrink-0 items-center gap-1 text-sm tabular-nums text-stone-500 dark:text-stone-400"
-                >
-                  <LentIcon size={14} />
-                  <span aria-hidden="true">{book.loans}</span>
-                  <span className="sr-only">{said}</span>
+                <span className="flex-shrink-0 whitespace-nowrap text-sm tabular-nums text-stone-500 dark:text-stone-400">
+                  {book.loans} {book.loans === 1 ? "loan" : "loans"}
                 </span>
               </Link>
             </li>
