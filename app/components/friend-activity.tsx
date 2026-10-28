@@ -281,6 +281,50 @@ function BookTile({ book }: { book: FeedBook }) {
 // One book beside its details. Says whose copy it is when it isn't the
 // friend's own, and who lent it to them when they borrowed it. The title's
 // link covers the card, with the lender's name over it as its own link.
+// The book's heart, on its card at the right: tap to love the book (not
+// the post), with how many have. Over the card's own link. Just the count
+// for someone who can't love this copy yet
+function BookLove({ book }: { book: FeedBook }) {
+  const love = useFetcher({ key: `love-${book.id}` });
+  const { viewer } = book;
+  // What's shown while a change is on its way
+  const pending = love.formData?.get("loved");
+  const loved = pending ? pending === "true" : viewer.loved;
+  const loves = book.loves + (loved ? 1 : 0) - (viewer.loved ? 1 : 0);
+  const count = loves > 0 ? (
+    <span className="text-xs tabular-nums text-stone-500 dark:text-stone-400">{loves}</span>
+  ) : null;
+  const stack = "flex flex-col items-center gap-0.5 rounded-md px-2 py-1.5";
+  const place = "relative z-10 ml-auto flex-shrink-0 self-center";
+
+  if (!viewer.canLove) {
+    return loves > 0 ? (
+      <span className={`${place} ${stack}`} title={`Loved by ${loves} ${loves === 1 ? "reader" : "readers"} of this copy`}>
+        {/* An outline: filled is for a heart you gave */}
+        <HeartIcon size={18} className="text-stone-400 dark:text-stone-500" />
+        {count}
+      </span>
+    ) : null;
+  }
+  return (
+    <love.Form method="post" className={place}>
+      <input type="hidden" name="intent" value="toggleLove" />
+      <input type="hidden" name="bookId" value={book.id} />
+      <input type="hidden" name="loved" value={loved ? "false" : "true"} />
+      <button
+        type="submit"
+        aria-pressed={loved}
+        title={loved ? "You love this book" : "Love this book"}
+        aria-label={`${loved ? "Loved" : "Love this book"}${loves > 0 ? `, ${loves}` : ""}`}
+        className={`${stack} text-stone-400 hover:bg-stone-100 hover:text-rose-500 dark:text-stone-500 dark:hover:bg-stone-800 transition-colors`}
+      >
+        <HeartIcon size={18} filled={loved} className={loved ? "text-rose-500" : ""} />
+        {count}
+      </button>
+    </love.Form>
+  );
+}
+
 function BookCard({
   book,
   friendId,
@@ -330,32 +374,29 @@ function BookCard({
                 : "Lent out"}
           </span>
         </span>
+        <BookLove book={book} />
       </div>
       {asking && from ? <FriendPrompt from={from} /> : null}
     </div>
   );
 }
 
-// Hearts, notes and borrowing, done from the feed. Each form posts to
-// the feed route; the counts update when the loader comes back.
-// The heart is on the book, never the post: under someone's note it says
-// so, or it would read as liking what they wrote.
+// Notes and borrowing, done from the feed. Each form posts to the feed
+// route; the counts update when the loader comes back. The heart isn't
+// here: it's on the book, in its card, or it would read as liking the post.
 function Actions({
   book,
   userId,
-  underNote = false,
   onEdit,
   mine = false,
 }: {
   book: FeedBook;
   userId: string;
-  underNote?: boolean;
   // Under your own note: rewrite it
   onEdit?: () => void;
   // Your own post about a friend's copy: you've read it
   mine?: boolean;
 }) {
-  const love = useFetcher({ key: `love-${book.id}` });
   const borrow = useFetcher({ key: `borrow-${book.id}` });
   const giveBack = useFetcher<{ returned?: boolean }>({ key: `return-${book.id}` });
   const returned = giveBack.formData !== undefined || giveBack.data?.returned === true;
@@ -364,9 +405,6 @@ function Actions({
   const [asking, setAsking] = useState(false);
 
   // What's shown while a change is on its way
-  const pendingLove = love.formData?.get("loved");
-  const loved = pendingLove ? pendingLove === "true" : viewer.loved;
-  const loves = book.loves + (loved ? 1 : 0) - (viewer.loved ? 1 : 0);
   const pendingBorrow = borrow.formData?.get("intent");
   const requested = viewer.requested || pendingBorrow === "request";
   const inLine =
@@ -374,52 +412,12 @@ function Actions({
       ? false
       : viewer.inLine || pendingBorrow === "placeHold";
 
-  const lovesText = loves === 0 ? null : `${loves}`;
   const isOwner = book.owner.id === userId;
   const isBorrower = book.borrowerId === userId;
 
   return (
     <>
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-stone-100 dark:border-stone-800 pt-2">
-        {viewer.canLove ? (
-          <love.Form method="post">
-            <input type="hidden" name="intent" value="toggleLove" />
-            <input type="hidden" name="bookId" value={book.id} />
-            <input type="hidden" name="loved" value={loved ? "false" : "true"} />
-            <button
-              type="submit"
-              aria-pressed={loved}
-              // Under a note it's the book being loved, not the note; the
-              // label says so without lengthening the row
-              title={underNote ? "Love the book" : undefined}
-              aria-label={`${loved ? "Loved" : "Love"}${underNote ? " the book" : ""}${
-                lovesText ? `, ${lovesText}` : ""
-              }`}
-              className={`${actionClass} ${loved ? "text-rose-600 dark:text-rose-400" : ""}`}
-            >
-              <HeartIcon
-                size={15}
-                filled={loved}
-                className={loved ? "text-rose-500" : ""}
-              />
-              {loved ? "Loved" : "Love"}
-              {lovesText ? (
-                <span className="min-w-[1.25rem] rounded-full bg-stone-100 dark:bg-stone-800 px-1.5 text-center text-xs font-medium leading-5 tabular-nums text-stone-500 dark:text-stone-400">
-                  {lovesText}
-                </span>
-              ) : null}
-            </button>
-          </love.Form>
-        ) : lovesText ? (
-          <span
-            className={stateClass}
-            title="Hearts from people who've read this copy"
-          >
-            <HeartIcon size={15} filled className="text-rose-400" />
-            {lovesText}
-          </span>
-        ) : null}
-
         {book.notes > 0 ? (
           <Link
             to={`/books/${book.id}#notes`}
@@ -752,7 +750,6 @@ export function FeedPost({
           <Actions
             book={books[0]}
             userId={userId}
-            underNote={item.kind === "note"}
             onEdit={editable && !editing ? () => setEditing(true) : undefined}
             mine={item.friend.id === userId}
           />
