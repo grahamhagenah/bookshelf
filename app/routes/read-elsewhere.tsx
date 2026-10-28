@@ -107,8 +107,8 @@ export default function ReadElsewhere() {
             action={{ to: "/search", label: "Find a book", search: true }}
           >
             The ones that aren&apos;t on your shelf: library books, audiobooks,
-            ones you read years ago and passed on. Find one, then mark it read,
-            love it or leave a note on its page.
+            books you&apos;ve given away. Find one, then mark it read, love it
+            or leave a note on its page.
           </EmptyList>
         ) : (
           // In columns where there's room, as Want to read has
@@ -117,7 +117,7 @@ export default function ReadElsewhere() {
                 tall as the other lists' filters, so their books start level */}
             <p className="py-1 text-sm text-stone-500 dark:text-stone-400">
               Books you&apos;ve read that aren&apos;t on your shelf: library
-              books, audiobooks, ones you read years ago and passed on.
+              books, audiobooks, books you&apos;ve given away.
             </p>
             <ul className={`mt-4 ${bookRowGrid}`}>
               {items.map((item) => {
