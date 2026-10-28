@@ -7,7 +7,7 @@ import type { getHomeBooks } from "~/models/book.server";
 
 import BookCover from "./book-cover";
 import FriendActivityItem from "./friend-activity";
-import { LentIcon, SearchIcon } from "./icons";
+import { BorrowedIcon, LentIcon, SearchIcon } from "./icons";
 import { InviteButtons } from "./invite-message";
 import ShareShelfOffer from "./share-shelf-offer";
 import { sectionHeading } from "./ui";
@@ -163,10 +163,13 @@ export function LoanList({
   personLabel,
   empty,
   to,
+  icon,
   children,
 }: {
   id: string;
   title: string;
+  // The mark the shelf uses for these: borrowed, or lent out
+  icon?: React.ReactNode;
   // Where all of them are, which the heading links to
   to?: string;
   books: LoanEntry[];
@@ -184,6 +187,9 @@ export function LoanList({
         id={id}
         className={`${sectionHeading} mb-2 flex items-baseline gap-2`}
       >
+        {icon ? (
+          <span className="self-center text-stone-400 dark:text-stone-500">{icon}</span>
+        ) : null}
         {to && books.length > 0 ? (
           <Link to={to} className={headingLink}>
             {title}
@@ -737,6 +743,7 @@ export default function Home({
                       <LoanList
                         id="borrowing"
                         title="Borrowing"
+                        icon={<BorrowedIcon size={18} />}
                         to="/books?status=borrowed"
                         books={books.borrowed
                           .slice(0, LOANS_SHOWN)
@@ -771,6 +778,7 @@ export default function Home({
                       <LoanList
                         id="lent-out"
                         title="Lent out"
+                        icon={<LentIcon size={18} />}
                         to="/books?status=lent"
                         books={books.lent
                           .slice(0, LOANS_SHOWN)
