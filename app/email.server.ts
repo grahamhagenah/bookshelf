@@ -594,7 +594,7 @@ function activityRow(item: Digest["activity"][number]) {
 
 function wantedRow(item: Digest["wanted"][number]) {
   return textOnly(
-    `<strong style="color: ${ink};">${esc(item.friend)}</strong> added ${bookLink(item.bookId, item.title)}, which is on your want-to-read list`,
+    `<strong style="color: ${ink};">${esc(item.friend)}</strong> added ${bookLink(item.bookId, item.title)}, which is on your Want to read list`,
   );
 }
 
@@ -611,7 +611,7 @@ export function renderDigest({
   const sections: [string, string[], string][] = [
     ["Due back", digest.due.map(dueRow), `${APP_URL}/`],
     [
-      "From your want-to-read list",
+      "From your Want to read list",
       digest.wanted.map(wantedRow),
       `${APP_URL}/want-to-read`,
     ],
@@ -646,7 +646,7 @@ export function renderDigest({
     ...[
       ["Due back", lines.due, `${APP_URL}/`] as const,
       [
-        "From your want-to-read list",
+        "From your Want to read list",
         lines.wanted,
         `${APP_URL}/want-to-read`,
       ] as const,
