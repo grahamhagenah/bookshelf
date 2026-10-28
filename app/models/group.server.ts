@@ -61,13 +61,14 @@ export async function getMyGroups(userId: User["id"]) {
   );
 }
 
-// Your groups as the Groups page previews them: who's in each, by first
-// name with you first, and the newest books on the others' shelves
+// Your groups as the Groups page shows them, like friends' cards: who's
+// in each, by first name with you first, when you joined, and the newest
+// books on the others' shelves
 export async function getGroupPreviews(userId: User["id"]) {
   const groups = await getMyGroups(userId);
   return Promise.all(
     groups.map(async (group) => {
-      const [people, newest] = await Promise.all([
+      const [people, newest, mine] = await Promise.all([
         prisma.user.findMany({
           where: { id: { in: group.memberIds } },
           select: { id: true, firstname: true },
@@ -76,14 +77,18 @@ export async function getGroupPreviews(userId: User["id"]) {
           where: { userId: { in: group.memberIds.filter((id) => id !== userId) } },
           orderBy: { createdAt: "desc" },
           take: 5,
-          select: { id: true, title: true, author: true, cover: true },
+          select: { id: true, title: true, author: true, cover: true, createdAt: true },
+        }),
+        prisma.groupMember.findUnique({
+          where: { groupId_userId: { groupId: group.id, userId } },
+          select: { joinedAt: true },
         }),
       ]);
       const others = group.memberIds
         .filter((id) => id !== userId)
         .map((id) => people.find((someone) => someone.id === id)?.firstname)
         .filter((name): name is string => Boolean(name));
-      return { ...group, names: ["You", ...others], newest };
+      return { ...group, names: ["You", ...others], newest, joinedAt: mine?.joinedAt ?? null };
     }),
   );
 }

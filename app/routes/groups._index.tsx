@@ -6,7 +6,7 @@ import BookCover from "~/components/book-cover";
 import EmptyList from "~/components/empty-list";
 import Faces from "~/components/faces";
 import FriendsTabs from "~/components/friends-tabs";
-import { GroupsIcon } from "~/components/icons";
+import { BookIcon, ClockIcon, GroupIcon, GroupsIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import { primaryButton, sectionHeading } from "~/components/ui";
 import { getFriendsTabCounts } from "~/friends-tabs.server";
@@ -20,6 +20,7 @@ import {
 } from "~/models/group.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
+import { agoInWords, type LoaderData } from "~/utils";
 
 // Every group you're in, and where to start one: a book club, an office,
 // a family, where everyone can borrow from everyone. A tab of Friends,
@@ -43,6 +44,106 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+type Group = LoaderData<typeof loader>["groups"][number];
+
+const monthYear = (date: string | Date) =>
+  new Date(date).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+
+// A group, built as the Friends page's friend card is: who it is, the
+// newest covers on its shelves, a few plain facts, and the way in
+function GroupCard({ group }: { group: Group }) {
+  const page = groupPath(group);
+  // Five slots: the newest covers, the last one saying how many more
+  const covers = group.bookCount > 5 ? group.newest.slice(0, 4) : group.newest;
+  const more = group.bookCount - covers.length;
+  return (
+    <li className="flex flex-col rounded-xl border border-stone-200 dark:border-stone-800 p-4">
+      <div className="flex items-center gap-3">
+        <Link to={page} tabIndex={-1} aria-hidden="true" className="flex-shrink-0">
+          <Faces people={group.faces} max={3} />
+        </Link>
+        <div className="min-w-0">
+          <Link
+            to={page}
+            className="block truncate font-semibold text-stone-900 dark:text-stone-100 hover:underline underline-offset-2"
+          >
+            {group.name}
+          </Link>
+          <p className="truncate text-sm text-stone-500 dark:text-stone-400">
+            {[
+              plural(group.memberCount, "person", "people"),
+              group.joinedAt ? `Joined ${monthYear(group.joinedAt)}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        </div>
+      </div>
+
+      {covers.length > 0 ? (
+        <ul className="mt-4 grid grid-cols-5 gap-2" aria-label={`Newest in ${group.name}`}>
+          {covers.map((book) => (
+            <li key={book.id}>
+              <Link
+                to={`/books/${book.id}`}
+                title={book.title}
+                className="block hover:opacity-90 transition-opacity"
+              >
+                <BookCover
+                  cover={book.cover}
+                  title={book.title}
+                  author={book.author}
+                  alt={book.title}
+                  className="aspect-[2/3]"
+                />
+              </Link>
+            </li>
+          ))}
+          {more > 0 ? (
+            <li>
+              <Link
+                to={page}
+                aria-label={`${more} more in ${group.name}`}
+                className="flex aspect-[2/3] items-center justify-center rounded-xs bg-stone-50 dark:bg-stone-900 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+              >
+                +{more}
+              </Link>
+            </li>
+          ) : null}
+        </ul>
+      ) : null}
+
+      <ul className="mt-4 mb-4 space-y-1.5 text-sm text-stone-600 dark:text-stone-300 [&_svg]:flex-shrink-0 [&_svg]:text-stone-400 dark:[&_svg]:text-stone-500">
+        <li className="flex items-center gap-2">
+          <BookIcon size={14} />
+          {group.bookCount
+            ? `${plural(group.bookCount, "book", "books")} between them`
+            : "No books on their shelves yet"}
+        </li>
+        <li className="flex min-w-0 items-center gap-2">
+          <GroupIcon size={14} />
+          <span className="truncate">{whoIsIn(group.names)}</span>
+        </li>
+        {group.newest[0] ? (
+          <li className="flex items-center gap-2">
+            <ClockIcon size={14} />
+            Last added a book {agoInWords(group.newest[0].createdAt)}
+          </li>
+        ) : null}
+      </ul>
+
+      <div className="mt-auto border-t border-stone-100 dark:border-stone-800 pt-3">
+        <Link
+          to={page}
+          className="text-sm font-medium text-stone-800 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white"
+        >
+          See the group →
+        </Link>
+      </div>
+    </li>
+  );
+}
 
 // "You, Maya and Sam", "You, Maya, Sam and 4 others"
 function whoIsIn(names: string[]) {
@@ -95,64 +196,20 @@ export default function Groups() {
           <section>
             {/* The tab above already says how many */}
             <h2 className="sr-only">Your groups</h2>
-            {/* As tall as the column beside: one group fills it, more share it */}
-            <ul className="grid h-full gap-3">
+            <ul className="grid gap-4">
               {groups.map((group) => (
-                <li key={group.id}>
-                  <Link
-                    to={groupPath(group)}
-                    className="flex h-full flex-col rounded-xl border border-stone-200 dark:border-stone-800 p-4 hover:border-stone-400 dark:hover:border-stone-600 transition-colors"
-                  >
-                    <span className="flex items-center gap-4">
-                      <Faces people={group.faces} max={3} />
-                      <span className="min-w-0">
-                        <span className="block truncate font-medium text-stone-900 dark:text-stone-100">
-                          {group.name}
-                        </span>
-                        <span className="block text-sm text-stone-500 dark:text-stone-400">
-                          {plural(group.memberCount, "person", "people")} ·{" "}
-                          {plural(group.bookCount, "book", "books")}
-                        </span>
-                      </span>
-                    </span>
-                    {/* Who's in it, by first name */}
-                    <span className="mt-3 block text-sm text-stone-600 dark:text-stone-300">
-                      {whoIsIn(group.names)}
-                    </span>
-                    {/* And what's new on their shelves, along the bottom */}
-                    {group.newest.length > 0 ? (
-                      <span className="mt-auto block pt-4">
-                        <span className="block text-xs text-stone-400 dark:text-stone-500">
-                          Newest on their shelves
-                        </span>
-                        <span className="mt-1.5 flex gap-2">
-                          {group.newest.map((book) => (
-                            <BookCover
-                              key={book.id}
-                              cover={book.cover}
-                              title={book.title}
-                              author={book.author}
-                              className="h-15 w-10 flex-shrink-0"
-                            />
-                          ))}
-                        </span>
-                      </span>
-                    ) : null}
-                  </Link>
-                </li>
+                <GroupCard key={group.id} group={group} />
               ))}
             </ul>
           </section>
 
-          {/* Stretched to the groups beside it, the form along its foot, so
-              the two columns end together */}
-          <section className="flex flex-col">
+          <section>
             <h2 className={sectionHeading}>Start a group</h2>
             <p className="mt-1 max-w-xl text-stone-500 dark:text-stone-400">
               You&apos;ll get a link to share. Everyone who joins from it becomes friends with
               everyone else, so all their shelves open up at once. Up to {maxMembers} people.
             </p>
-            {startForm("mt-auto pt-4")}
+            {startForm("mt-4")}
           </section>
         </div>
       ) : (
