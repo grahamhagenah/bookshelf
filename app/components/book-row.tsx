@@ -1,21 +1,23 @@
 import { Link } from "react-router";
 
 import BookCover from "./book-cover";
+import { quietButton } from "./ui";
 
 // One book in one of your lists (To read, Also read, History), the same
 // way in each: the cover, the title and author, a line on where it stands,
 // then what you can do with it. Names and dates in the line stand out a
-// little; the thing to do next is green, anything else quiet.
+// little; the thing to do next is a button, anything else quiet.
 
 // A name, date or link inside a book's line
 export const rowEmphasis = "font-medium text-stone-700 dark:text-stone-200";
 export const rowEmphasisLink = `${rowEmphasis} underline-offset-2 hover:underline`;
 
-const action = "underline-offset-4 hover:underline transition-colors";
-// What the row is waiting for: getting a copy, leaving a note
-export const rowPrimary = `${action} font-medium text-forest-600 decoration-forest-600/40 hover:text-forest-700 dark:text-forest-400 dark:decoration-forest-400/40`;
+// What the row is waiting for (getting a copy, leaving a note), as a
+// button of its own
+export const rowPrimary = `${quietButton("sm")} inline-flex items-center font-medium`;
 // Anything else you can do: remove it, read a note
-export const rowSecondary = `${action} text-stone-500 decoration-stone-300 hover:text-stone-800 dark:text-stone-400 dark:decoration-stone-600 dark:hover:text-stone-100`;
+export const rowSecondary =
+  "text-stone-500 underline-offset-4 decoration-stone-300 hover:text-stone-800 hover:underline dark:text-stone-400 dark:decoration-stone-600 dark:hover:text-stone-100 transition-colors";
 // Said rather than done: no note yet, nobody has it
 export const rowQuiet = "text-stone-400 dark:text-stone-500";
 
@@ -47,7 +49,7 @@ export function BookRow({
           cover={book.cover}
           title={book.title}
           author={book.author}
-          className="h-24 w-16"
+          className="h-30 w-20"
         />
       </Link>
       <div className="min-w-0 flex-1">
@@ -60,7 +62,7 @@ export function BookRow({
         <p className="text-sm text-stone-500 dark:text-stone-400">{book.author}</p>
         {line ? <div className="mt-2">{line}</div> : null}
         {actions ? (
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             {actions}
           </div>
         ) : null}
