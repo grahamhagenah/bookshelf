@@ -128,7 +128,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         : { loved: form.get("loved") === "true" },
     );
     // Let the owner know when a reader hearts or writes about their book
-    if (book.userId !== userId && (note.loved || note.body)) {
+    // Not again for an edit; the owner heard about the note already
+    if (
+      book.userId !== userId &&
+      (note.loved || note.body) &&
+      form.get("edit") !== "true"
+    ) {
       const reader = await getUserById(userId);
       if (reader) {
         await createReaderNoteNotification(

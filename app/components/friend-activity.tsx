@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useFetcher } from "react-router";
 
 import type { FriendActivity, getNotePrompts, Lender } from "~/models/activity.server";
+import { workPath } from "~/utils";
 
 import Avatar from "./avatar";
 import BookCover from "./book-cover";
@@ -616,6 +617,12 @@ export function FeedPost({
         : [item.book];
   const more = item.kind === "added" ? item.books.length - books.length : 0;
 
+  // Your own words, editable where you see them
+  const note =
+    (item.kind === "note" || item.kind === "elsewhere") && item.body ? item : null;
+  const editable = note !== null && item.friend.id === userId;
+  const [editing, setEditing] = useState(false);
+
   return (
     <article className="rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 px-4 py-3.5">
       <header className="flex items-center gap-3">
@@ -645,13 +652,27 @@ export function FeedPost({
             >
               {ago(item.at)}
             </time>
+            {editable && !editing ? (
+              <>
+                <span className="text-stone-400 dark:text-stone-500"> · </span>
+                <button
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  className="text-sm text-stone-400 dark:text-stone-500 underline-offset-2 hover:text-stone-800 hover:underline dark:hover:text-stone-200"
+                >
+                  Edit note
+                </button>
+              </>
+            ) : null}
           </p>
         </div>
       </header>
 
-      {(item.kind === "note" || item.kind === "elsewhere") && item.body ? (
+      {note && editing ? (
+        <NoteEdit item={note} onDone={() => setEditing(false)} />
+      ) : note ? (
         <blockquote className="mt-3 whitespace-pre-line text-pretty leading-relaxed text-stone-800 dark:text-stone-200">
-          &ldquo;{item.body}&rdquo;
+          &ldquo;{note.body}&rdquo;
         </blockquote>
       ) : null}
 
@@ -691,6 +712,75 @@ export function FeedPost({
         </>
       )}
     </article>
+  );
+}
+
+// Your note, rewritten in place: on the copy it's about, or on the book
+// itself when you read it elsewhere. Saving an empty box takes the words
+// away and leaves the heart
+function NoteEdit({
+  item,
+  onDone,
+}: {
+  item: Exclude<FeedItem, { kind: "added" }>;
+  onDone: () => void;
+}) {
+  const fetcher = useFetcher<{ ok?: boolean }>();
+  const [body, setBody] = useState(item.body ?? "");
+  const saving = fetcher.state !== "idle";
+  const action = "work" in item ? workPath(item.work.key) : null;
+  // Opens ready to go on writing: focused, the cursor after the last word
+  const box = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
+  }, []);
+  // Back to the quote once it's saved; the feed has the new words by then
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data) onDone();
+  }, [fetcher.state, fetcher.data, onDone]);
+
+  return (
+    <fetcher.Form method="post" action={action ?? undefined} className="mt-3">
+      {"work" in item ? (
+        <input type="hidden" name="intent" value="saveNote" />
+      ) : (
+        <>
+          <input type="hidden" name="intent" value="note" />
+          <input type="hidden" name="bookId" value={item.book.id} />
+          {/* An edit, not news: the owner heard about the note already */}
+          <input type="hidden" name="edit" value="true" />
+        </>
+      )}
+      <textarea
+        ref={box}
+        name="body"
+        value={body}
+        onChange={(event) => setBody(event.target.value)}
+        rows={3}
+        maxLength={500}
+        aria-label="Your note"
+        className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-950 px-3 py-2 leading-relaxed text-stone-900 dark:text-stone-100 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+      />
+      <div className="mt-2 flex items-center gap-3">
+        <button
+          type="submit"
+          disabled={saving}
+          className={`${primaryButton("md")} disabled:cursor-wait`}
+        >
+          {saving ? "Saving…" : "Save"}
+        </button>
+        <button
+          type="button"
+          onClick={onDone}
+          className="px-1 py-1.5 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
+        >
+          Cancel
+        </button>
+      </div>
+    </fetcher.Form>
   );
 }
 
