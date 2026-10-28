@@ -86,6 +86,8 @@ function WantRow({
   const copies = [...item.copies].sort(
     (a, b) => Number(b.available) - Number(a.available),
   );
+  // A copy a friend could lend you now: the one to ask for
+  const borrowable = copies.find((copy) => copy.available);
   // Everyone with a copy, once each
   const owners = copies
     .map((copy) => copy.owner)
@@ -122,38 +124,67 @@ function WantRow({
                 : owners.length === 2
                   ? " have it"
                   : " has it"}
-              <RowSub>
-                <Link
-                  to={`/books/${copies[0].bookId}`}
-                  className="underline-offset-2 hover:underline hover:text-stone-600 dark:hover:text-stone-300"
-                >
-                  {copies[0].available
-                    ? "Available to borrow"
-                    : copies[0].notLending
-                      ? "Not lending right now"
-                      : "Lent out right now"}
-                </Link>
-              </RowSub>
+              {/* Why there's no asking yet; one free to borrow has its
+                  button below instead */}
+              {borrowable ? null : (
+                <RowSub>
+                  <Link
+                    to={`/books/${copies[0].bookId}`}
+                    className="underline-offset-2 hover:underline hover:text-stone-600 dark:hover:text-stone-300"
+                  >
+                    {copies[0].notLending ? "Not lending right now" : "Lent out right now"}
+                  </Link>
+                </RowSub>
+              )}
             </>
           )}
         </RowLine>
       }
+      // Taking it off the list: last and quietest, an × in the corner
+      corner={
+        <remove.Form method="post">
+          <input type="hidden" name="intent" value="remove" />
+          <input type="hidden" name="id" value={item.id} />
+          <button
+            type="submit"
+            aria-label={`Remove ${item.title} from your list`}
+            title="Remove from your list"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </remove.Form>
+      }
+      // Asking a friend leads when one has it free, then getting your own copy
       actions={
         <>
+          {borrowable ? (
+            <Link to={`/books/${borrowable.bookId}`} className={rowPrimary}>
+              Ask to borrow
+            </Link>
+          ) : null}
           <Form method="post">
             <input type="hidden" name="intent" value="gotIt" />
             <input type="hidden" name="id" value={item.id} />
-            <button type="submit" className={rowPrimary} title="Move it to your shelf">
+            <button
+              type="submit"
+              className={borrowable ? rowSecondary : rowPrimary}
+              title="Move it to your shelf"
+            >
               Got a copy
             </button>
           </Form>
-          <remove.Form method="post">
-            <input type="hidden" name="intent" value="remove" />
-            <input type="hidden" name="id" value={item.id} />
-            <button type="submit" className={rowSecondary}>
-              Remove
-            </button>
-          </remove.Form>
         </>
       }
     />

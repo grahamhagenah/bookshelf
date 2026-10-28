@@ -28,6 +28,7 @@ export function BookRow({
   book,
   line,
   actions,
+  corner,
   className = "",
 }: {
   id?: string;
@@ -38,12 +39,15 @@ export function BookRow({
   line?: React.ReactNode;
   // What you can do, in rowPrimary or rowSecondary
   actions?: React.ReactNode;
+  // A small control in the top corner, like To read's ×, out of the way of
+  // the title and the buttons
+  corner?: React.ReactNode;
   className?: string;
 }) {
   return (
     <li
       id={id}
-      className={`flex items-start gap-4 border-b border-stone-100 dark:border-stone-800 py-4 ${className}`}
+      className={`relative flex items-start gap-4 border-b border-stone-100 dark:border-stone-800 py-4 ${className}`}
     >
       <Link to={to} tabIndex={-1} aria-hidden="true" className="flex-shrink-0">
         <BookCover
@@ -58,7 +62,7 @@ export function BookRow({
       <div className="flex min-h-36 min-w-0 flex-1 flex-col">
         <Link
           to={to}
-          className="self-start font-medium text-stone-900 dark:text-stone-100 underline-offset-2 hover:underline"
+          className={`self-start font-medium text-stone-900 dark:text-stone-100 underline-offset-2 hover:underline ${corner ? "pr-7" : ""}`}
         >
           {book.title}
         </Link>
@@ -70,6 +74,7 @@ export function BookRow({
           </div>
         ) : null}
       </div>
+      {corner ? <div className="absolute right-0 top-3">{corner}</div> : null}
     </li>
   );
 }
