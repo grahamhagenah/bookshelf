@@ -1,9 +1,16 @@
-import { data, Link, useLoaderData } from "react-router";
+import { data, Link, useFetcher, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import BookCover from "~/components/book-cover";
+import {
+  BookRow,
+  bookRowGrid,
+  RowLine,
+  RowLoved,
+  rowEmphasis,
+  rowPrimary,
+} from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
-import { BorrowedIcon, HeartIcon, HistoryIcon, LentIcon } from "~/components/icons";
+import { HeartIcon, HistoryIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
@@ -48,114 +55,82 @@ const monthDay = (date: string | Date) => {
 };
 
 
-const noteLink =
-  "font-medium text-stone-800 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:decoration-stone-500";
-
 function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] }) {
   const borrowed = entry.kind === "borrowed";
   // First names: the rows say enough without the rest, and stay short
   const name = entry.person.firstname;
   const person = (
-    <strong className="whitespace-nowrap font-semibold text-stone-800 dark:text-stone-200">
+    <span className={`whitespace-nowrap ${rowEmphasis}`}>
       <PersonLink id={entry.person.id} name={name} friendIds={friendIds} />
-    </strong>
+    </span>
   );
-  const date = (value: string | Date) => (
-    <strong className="whitespace-nowrap font-semibold text-stone-800 dark:text-stone-200">
-      {monthDay(value)}
-    </strong>
-  );
-  // Told as a sentence: who had it, and when it went and came back
-  const story = borrowed ? (
-    entry.returnedAt ? (
-      <>
-        You borrowed it from {person} on {date(entry.borrowedAt)} and gave it
-        back {date(entry.returnedAt)}.
-      </>
-    ) : (
-      <>
-        You’ve been borrowing it from {person} since {date(entry.borrowedAt)}.
-      </>
-    )
-  ) : entry.returnedAt ? (
-    <>
-      {person} borrowed it on {date(entry.borrowedAt)} and gave it back{" "}
-      {date(entry.returnedAt)}.
-    </>
-  ) : (
-    <>
-      {person} has been borrowing it since {date(entry.borrowedAt)}.
-    </>
-  );
-  const notes = `/books/${entry.book.id}#notes`;
+  // Said from your side, so which way it went is plain, then when: the two
+  // dates out and back ("Since" only as a fallback)
+  const who = borrowed ? <>You borrowed from {person}</> : <>You lent to {person}</>;
+  const when = entry.returnedAt
+    ? `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
+    : `Since ${monthDay(entry.borrowedAt)}`;
+
+  // What was said about it lives on the book's page. The row's one button
+  // goes there, with a heart in it when the book was loved: yours on a book
+  // you borrowed, the borrower's on one you lent
+  const love = useFetcher();
   const body = entry.note?.body?.trim();
+  // A heart given from the row shows at once
+  const loved = Boolean(entry.note?.loved) || love.state !== "idle";
+  const heart = <HeartIcon size={13} filled className="flex-shrink-0 text-rose-400" />;
+  const notes = `/books/${entry.book.id}#notes`;
+  const noteButton = (label: string) => (
+    <Link to={notes} className={`${rowPrimary} gap-1.5`}>
+      {loved ? heart : null}
+      {label}
+    </Link>
+  );
+  const actions = borrowed ? (
+    <>
+      {noteButton(body ? "Read your note" : "Leave a note")}
+      {/* Not loved yet: a heart to give, right here */}
+      {loved ? null : (
+        <love.Form method="post" action={`/books/${entry.book.id}`}>
+          <input type="hidden" name="intent" value="toggleLove" />
+          <input type="hidden" name="loved" value="true" />
+          <button
+            type="submit"
+            aria-label="Love it"
+            title="Love it"
+            // A square the button's height, in the same outline as the button
+            className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-md border border-stone-200 text-stone-500 hover:border-stone-400 hover:text-rose-400 dark:border-stone-700 dark:text-stone-400 dark:hover:border-stone-500 transition-colors"
+          >
+            <HeartIcon size={13} />
+          </button>
+        </love.Form>
+      )}
+    </>
+  ) : body ? (
+    noteButton(`Read ${name}'s note`)
+  ) : loved ? (
+    // Loved, with nothing to read: the heart said quietly
+    <RowLoved>{name} loved it</RowLoved>
+  ) : null;
 
   return (
-    // A cover the size of To read's and Also read's
-    <li className="flex gap-4 border-b border-stone-100 dark:border-stone-800 py-4">
-      <Link
-        to={`/books/${entry.book.id}`}
-        tabIndex={-1}
-        aria-hidden="true"
-        className="block flex-shrink-0"
-      >
-        <BookCover cover={entry.book.cover} title={entry.book.title} author={entry.book.author} className="h-24 w-16" />
-      </Link>
-      <div className="min-w-0 flex-1">
-        <Link
-          to={`/books/${entry.book.id}`}
-          className="font-medium text-stone-900 dark:text-stone-100 hover:underline underline-offset-2"
-        >
-          {entry.book.title}
-        </Link>
-        <p className="text-sm text-stone-500 dark:text-stone-400">{entry.book.author}</p>
-        <p className="mt-1 flex items-start gap-1.5 text-sm text-stone-600 dark:text-stone-300">
-          {borrowed ? (
-            <BorrowedIcon size={13} className="mt-[3px] flex-shrink-0 text-stone-400 dark:text-stone-500" />
-          ) : (
-            <LentIcon size={13} className="mt-[3px] flex-shrink-0 text-stone-400 dark:text-stone-500" />
-          )}
-          <span>{story}</span>
-        </p>
-
-        {/* Whether anything was said about it: that there's a note, with
-            the way to it, rather than the note itself; or a way to leave
-            yours on a book you borrowed */}
-        <div className="mt-2 text-sm">
-          {body ? (
-            <p className="flex items-center gap-1.5 text-stone-500 dark:text-stone-400">
-              {entry.note?.loved ? <HeartIcon size={13} filled className="text-rose-400" /> : null}
-              {borrowed ? "You left a note" : `${entry.person.firstname} left a note`} ·{" "}
-              <Link to={notes} className={noteLink}>
-                Read it
-              </Link>
-            </p>
-          ) : entry.note?.loved ? (
-            <p className="flex items-center gap-1.5 text-stone-500 dark:text-stone-400">
-              <HeartIcon size={13} filled className="text-rose-400" />
-              {borrowed ? (
-                <>
-                  You loved it ·{" "}
-                  <Link to={notes} className={noteLink}>
-                    Add a note
-                  </Link>
-                </>
-              ) : (
-                `${entry.person.firstname} loved it`
-              )}
-            </p>
-          ) : borrowed ? (
-            <Link to={notes} className={noteLink}>
-              Leave a note
-            </Link>
-          ) : (
-            <p className="text-stone-400 dark:text-stone-500">
-              No note from {entry.person.firstname} yet
-            </p>
-          )}
-        </div>
-      </div>
-    </li>
+    <BookRow
+      to={`/books/${entry.book.id}`}
+      book={entry.book}
+      // The cover and title say which book; the row is about the loan
+      showAuthor={false}
+      line={
+        <RowLine>
+          {who}
+          {/* The dates kept together, so a long name moves them whole */}
+          <span className="text-stone-400 dark:text-stone-500">
+            {" · "}
+            <span className="whitespace-nowrap">{when}</span>
+          </span>
+        </RowLine>
+      }
+      actions={actions}
+    />
   );
 }
 
@@ -173,20 +148,18 @@ export default function History() {
             title="Your lending history"
             action={{ to: "/friends/books", label: "See friends' books" }}
           >
-            Every book that passes between you and a friend shows up here: what
-            you&apos;ve borrowed, and what you&apos;ve lent.
+            Books you&apos;ve borrowed and lent show up here once they&apos;re
+            back. What&apos;s out now is on your shelf.
           </EmptyList>
         ) : (
-          <>
-            {/* Every loan both ways, newest first: each row says which way
-                it went, so there's nothing to filter. Two columns where
-                there's room, as To read and Also read */}
-            <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
-              {entries.map((entry) => (
-                <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />
-              ))}
-            </ul>
-          </>
+          // Loans that are over, both ways, the most recently back first;
+          // what's out now is on your shelf. In columns where there's room,
+          // as To read and Also read
+          <ul className={`mt-4 ${bookRowGrid}`}>
+            {entries.map((entry) => (
+              <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />
+            ))}
+          </ul>
         )}
       </section>
     </Layout>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useSearchParams } from "react-router";
 
-import { coverSizeOf, coverSrc, libraryViewOf, useOptionalUser } from "~/utils";
+import { coverSizeOf, coverSrc, useOptionalUser } from "~/utils";
 
 import BookCover from "./book-cover";
 import EmptyList from "./empty-list";
@@ -162,7 +162,6 @@ export default function Library({
 }: LibraryProps) {
   // Set on the account page, and the same on every shelf you look at
   const viewer = useOptionalUser();
-  const viewMode = libraryViewOf(viewer);
   const grid = GRIDS[coverSizeOf(viewer)];
 
   const [query, setQuery] = useState("");
@@ -207,7 +206,6 @@ export default function Library({
   const notAbove = visibleBooks.filter((book) => !shownAbove.includes(book.id));
   const shelfBooks =
     !isFiltered && notAbove.length > 0 ? notAbove : visibleBooks;
-  const showMarks = !ownerName && visibleBooks.some((book) => book.readAt);
 
   return (
     <>
@@ -334,168 +332,69 @@ export default function Library({
             </div>
           ) : null}
 
-          {/* Cover View */}
-          {viewMode === "cover" ? (
-            <ol className={`grid gap-3 sm:gap-4 ${grid.columns}`}>
-              {shelfBooks.map((book, index) => (
-                <li key={book.id}>
-                  <NavLink to={`/books/${book.id}`} className="group block">
-                    <div className="relative">
-                      <GridCover
-                        cover={book.cover}
-                        eager={index < 7}
-                        sizes={grid.sizes}
-                        title={book.title}
-                        author={book.author}
-                        className="w-full aspect-[2/3] transition-opacity duration-200 group-hover:opacity-90"
-                      />
-                      {/* Where the copy is, as a small tag on the cover itself */}
-                      {book.isBorrowed || book.isLending ? (
-                        <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[11px] leading-4 text-stone-700 dark:text-stone-200 shadow-sm">
-                          {book.isBorrowed ? (
-                            <BorrowedIcon size={11} />
-                          ) : (
-                            <LentIcon size={11} />
-                          )}
-                          {book.isBorrowed ? "Borrowed" : "Lent out"}
-                        </span>
-                      ) : book.notLending ? (
-                        <span className="absolute left-1.5 top-1.5 inline-flex items-center rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[11px] leading-4 text-stone-500 dark:text-stone-400 shadow-sm">
-                          Not lending
-                        </span>
-                      ) : null}
-                    </div>
-                    <span className="mt-1.5 flex items-center gap-2 text-sm">
-                      <span className="min-w-0 flex-1 truncate text-stone-700 dark:text-stone-300">
-                        {book.title}
+          <ol className={`grid gap-3 sm:gap-4 ${grid.columns}`}>
+            {shelfBooks.map((book, index) => (
+              <li key={book.id}>
+                <NavLink to={`/books/${book.id}`} className="group block">
+                  <div className="relative">
+                    <GridCover
+                      cover={book.cover}
+                      eager={index < 7}
+                      sizes={grid.sizes}
+                      title={book.title}
+                      author={book.author}
+                      className="w-full aspect-[2/3] transition-opacity duration-200 group-hover:opacity-90"
+                    />
+                    {/* Where the copy is, as a small tag on the cover itself */}
+                    {book.isBorrowed || book.isLending ? (
+                      <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[11px] leading-4 text-stone-700 dark:text-stone-200 shadow-sm">
+                        {book.isBorrowed ? (
+                          <BorrowedIcon size={11} />
+                        ) : (
+                          <LentIcon size={11} />
+                        )}
+                        {book.isBorrowed ? "Borrowed" : "Lent out"}
                       </span>
-                      {book.loveCount ? (
-                        <span
-                          className="inline-flex flex-shrink-0 items-center gap-1 text-xs text-stone-400 dark:text-stone-500"
-                          title={`${book.loveCount} ${book.loveCount === 1 ? "reader loved" : "readers loved"} this`}
-                        >
-                          <HeartIcon
-                            size={11}
-                            filled
-                            className="text-rose-400"
-                          />
-                          {book.loveCount}
-                        </span>
-                      ) : null}
-                    </span>
-                    {/* Read. The line is kept (empty if need be) whenever any
-                        book has one, so the rows line up. On a shared shelf
-                        every copy is everyone's, so no owner's name */}
-                    {showMarks ? (
-                      <span className="mt-0.5 flex h-4 items-center text-xs text-stone-400 dark:text-stone-500">
-                        {book.readAt ? (
-                          <span className="inline-flex items-center gap-1">
-                            <ReadIcon size={11} />
-                            Read
-                          </span>
-                        ) : null}
-                      </span>
-                    ) : null}
-                  </NavLink>
-                </li>
-              ))}
-            </ol>
-          ) : null}
-
-          {/* List View */}
-          {viewMode === "list" ? (
-            <ol className="border-t border-stone-100 dark:border-stone-800">
-              {shelfBooks.map((book) => (
-                <li
-                  key={book.id}
-                  className="border-b border-stone-100 dark:border-stone-800"
-                >
-                  <NavLink
-                    to={`/books/${book.id}`}
-                    className="flex items-center gap-3 px-2 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
-                  >
-                    <div className="flex-grow min-w-0">
-                      <span className="font-medium text-stone-900 dark:text-stone-100">
-                        {book.title}
-                      </span>
-                      {book.author ? (
-                        <span className="text-stone-400 dark:text-stone-500">
-                          {" "}
-                          ·{" "}
-                        </span>
-                      ) : null}
-                      {book.author ? (
-                        <span className="text-stone-500 dark:text-stone-400">
-                          {book.author}
-                        </span>
-                      ) : null}
-                      {book.datePublished ? (
-                        <span className="text-stone-400 dark:text-stone-500">
-                          {" "}
-                          ·{" "}
-                        </span>
-                      ) : null}
-                      {book.datePublished ? (
-                        <span className="text-stone-400 dark:text-stone-500">
-                          {book.datePublished}
-                        </span>
-                      ) : null}
-                      {book.pageCount ? (
-                        <span className="text-stone-400 dark:text-stone-500">
-                          {" "}
-                          ·{" "}
-                        </span>
-                      ) : null}
-                      {book.pageCount ? (
-                        <span className="text-stone-400 dark:text-stone-500">
-                          {book.pageCount} pages
-                        </span>
-                      ) : null}
-                      {book.lendCount !== undefined && book.lendCount > 0 ? (
-                        <span className="text-stone-400 dark:text-stone-500">
-                          {" "}
-                          ·{" "}
-                        </span>
-                      ) : null}
-                      {book.lendCount !== undefined && book.lendCount > 0 ? (
-                        <span className="text-stone-400 dark:text-stone-500">
-                          lent {book.lendCount}×
-                        </span>
-                      ) : null}
-                    </div>
-                    {book.loveCount ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-stone-400 dark:text-stone-500 flex-shrink-0">
-                        <HeartIcon size={11} filled className="text-rose-400" />
-                        {book.loveCount}
-                      </span>
-                    ) : null}
-                    {book.readAt && !ownerName && !book.isBorrowed ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-stone-400 dark:text-stone-500 flex-shrink-0">
-                        <ReadIcon size={11} />
-                        Read
-                      </span>
-                    ) : null}
-                    {book.isBorrowed ? (
-                      <span className="bg-stone-900 dark:bg-stone-100 text-white text-xs px-2 py-1 rounded-full flex-shrink-0 inline-flex items-center gap-1">
-                        <BorrowedIcon size={12} />
-                        Borrowed
-                      </span>
-                    ) : null}
-                    {book.isLending ? (
-                      <span className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 text-xs px-2 py-1 rounded-full flex-shrink-0 inline-flex items-center gap-1">
-                        <LentIcon size={12} />
-                        Lent out
-                      </span>
-                    ) : book.notLending && !book.isBorrowed ? (
-                      <span className="bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 text-xs px-2 py-1 rounded-full flex-shrink-0">
+                    ) : book.notLending ? (
+                      <span className="absolute left-1.5 top-1.5 inline-flex items-center rounded bg-white/95 dark:bg-stone-950/90 px-1.5 py-0.5 text-[11px] leading-4 text-stone-500 dark:text-stone-400 shadow-sm">
                         Not lending
                       </span>
                     ) : null}
-                  </NavLink>
-                </li>
-              ))}
-            </ol>
-          ) : null}
+                  </div>
+                  {/* One line: the title, then whether you've read it and
+                      how loved it is. Read is yours alone, so not on a
+                      friend's shelf */}
+                  <span className="mt-1.5 flex items-center gap-2 text-sm">
+                    <span className="min-w-0 flex-1 truncate text-stone-700 dark:text-stone-300">
+                      {book.title}
+                    </span>
+                    {book.readAt && !ownerName && !book.isBorrowed ? (
+                      <span
+                        className="flex-shrink-0 text-stone-400 dark:text-stone-500"
+                        title="You've read it"
+                      >
+                        <ReadIcon size={12} />
+                        <span className="sr-only">Read</span>
+                      </span>
+                    ) : null}
+                    {book.loveCount ? (
+                      <span
+                        className="inline-flex flex-shrink-0 items-center gap-1 text-xs text-stone-400 dark:text-stone-500"
+                        title={`${book.loveCount} ${book.loveCount === 1 ? "reader loved" : "readers loved"} this`}
+                      >
+                        <HeartIcon
+                          size={11}
+                          filled
+                          className="text-rose-400"
+                        />
+                        {book.loveCount}
+                      </span>
+                    ) : null}
+                  </span>
+                </NavLink>
+              </li>
+            ))}
+          </ol>
         </main>
       )}
     </>

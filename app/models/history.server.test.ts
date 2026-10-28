@@ -5,7 +5,7 @@ import { lendBook, returnBook } from "./book.server";
 import { getHistory, getShelfCounts } from "./history.server";
 import { createFriendship } from "./user.server";
 
-test("history lists books you borrowed and lent, newest first, with the notes on them", async () => {
+test("history lists books you borrowed and lent once they're back, newest first, with the notes on them", async () => {
   const me = await makeUser("Me");
   const priya = await makeUser("Priya");
   const maya = await makeUser("Maya");
@@ -21,12 +21,16 @@ test("history lists books you borrowed and lent, newest first, with the notes on
   await lendBook(mine.id, maya.id);
   await prisma.readerNote.create({ data: { bookId: mine.id, userId: maya.id, loved: true } });
 
+  // Still out: on your shelf, not yet history
+  expect((await getHistory(me.id)).map((entry) => entry.book.title)).toEqual(["Piranesi"]);
+  expect((await getShelfCounts(me.id)).history).toBe(1);
+
+  await returnBook(mine.id);
   const history = await getHistory(me.id);
   expect(history.map((entry) => [entry.kind, entry.book.title, entry.person.firstname])).toEqual([
     ["lent", "Circe", "Maya"],
     ["borrowed", "Piranesi", "Priya"],
   ]);
-  expect(history[0].returnedAt).toBeNull();
   expect(history[0].note).toMatchObject({ loved: true });
   expect(history[1].returnedAt).not.toBeNull();
   expect(history[1].note).toMatchObject({ body: "Strange and lovely." });

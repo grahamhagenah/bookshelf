@@ -1,9 +1,9 @@
-import { data, Link, useLoaderData } from "react-router";
+import { data, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import BookCover from "~/components/book-cover";
+import { BookRow, bookRowGrid, RowLine, RowLoved } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
-import { HeartIcon, ReadIcon } from "~/components/icons";
+import { ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import ShelfTabs, { AddLink } from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
@@ -62,48 +62,35 @@ export default function ReadElsewhere() {
             a note on its page.
           </EmptyList>
         ) : (
-          // Two columns where there's room, as To read has
-          <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
-            {items.map((item) => (
-              <li key={item.id} className="border-b border-stone-100 dark:border-stone-800">
-                <Link
-                  // One still being looked up opens a search for it
-                  to={
-                    isWork(item.workKey)
-                      ? item.workKey
-                      : `/search?q=${encodeURIComponent(`${item.title} ${item.author}`)}`
+          // In columns where there's room, as To read has
+          <ul className={`mt-4 ${bookRowGrid}`}>
+            {items.map((item) => {
+              // One still being looked up opens a search for it
+              const page = isWork(item.workKey)
+                ? item.workKey
+                : `/search?q=${encodeURIComponent(`${item.title} ${item.author}`)}`;
+              return (
+                <BookRow
+                  key={item.id}
+                  to={page}
+                  book={item}
+                  // What you marked, as History says it; the note itself is on
+                  // the book's page
+                  line={
+                    <RowLine>
+                      {/* A heart as History shows one */}
+                      {item.loved ? (
+                        <RowLoved>{item.body ? "You loved it and left a note" : "You loved it"}</RowLoved>
+                      ) : item.body ? (
+                        "You left a note"
+                      ) : (
+                        "You read it"
+                      )}
+                    </RowLine>
                   }
-                  className="-mx-2 flex items-start gap-4 rounded-lg px-2 py-4 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
-                >
-                  <BookCover
-                    cover={item.cover}
-                    title={item.title}
-                    author={item.author}
-                    className="h-24 w-16 flex-shrink-0"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-stone-900 dark:text-stone-100">
-                      {item.title}
-                    </p>
-                    <p className="text-sm text-stone-500 dark:text-stone-400">
-                      {item.author}
-                    </p>
-                    {/* That there's a note, as History says it, rather than
-                        the note itself, which is on the book's page */}
-                    <p className="mt-2 flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
-                      {item.loved ? <HeartIcon size={13} filled className="text-rose-400" /> : null}
-                      {item.body
-                        ? item.loved
-                          ? "You loved it and left a note"
-                          : "You left a note"
-                        : item.loved
-                          ? "You loved it"
-                          : "Read"}
-                    </p>
-                  </div>
-                </Link>
-              </li>
-            ))}
+                />
+              );
+            })}
           </ul>
         )}
       </section>
