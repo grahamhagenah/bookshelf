@@ -29,7 +29,6 @@ export function BookRow({
   book,
   line,
   actions,
-  showAuthor = true,
   className = "",
 }: {
   id?: string;
@@ -40,9 +39,6 @@ export function BookRow({
   line?: React.ReactNode;
   // What you can do, in rowPrimary or rowSecondary
   actions?: React.ReactNode;
-  // Off where the row is about something else than the book, like
-  // History's loans: the cover and title say which book it is
-  showAuthor?: boolean;
   className?: string;
 }) {
   return (
@@ -67,10 +63,8 @@ export function BookRow({
         >
           {book.title}
         </Link>
-        {showAuthor ? (
-          <p className="text-sm text-stone-500 dark:text-stone-400">{book.author}</p>
-        ) : null}
-        {line ? <div className={showAuthor ? "mt-2" : "mt-1"}>{line}</div> : null}
+        <p className="text-sm text-stone-500 dark:text-stone-400">{book.author}</p>
+        {line ? <div className="mt-2">{line}</div> : null}
         {actions ? (
           <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 pt-3 text-sm">
             {actions}

@@ -117,8 +117,6 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
     <BookRow
       to={`/books/${entry.book.id}`}
       book={entry.book}
-      // The cover and title say which book; the row is about the loan
-      showAuthor={false}
       line={
         <RowLine>
           {who}
