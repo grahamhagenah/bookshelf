@@ -345,12 +345,15 @@ function Actions({
   userId,
   underNote = false,
   onEdit,
+  mine = false,
 }: {
   book: FeedBook;
   userId: string;
   underNote?: boolean;
   // Under your own note: rewrite it
   onEdit?: () => void;
+  // Your own post about a friend's copy: you've read it
+  mine?: boolean;
 }) {
   const love = useFetcher({ key: `love-${book.id}` });
   const borrow = useFetcher({ key: `borrow-${book.id}` });
@@ -449,6 +452,9 @@ function Actions({
               Return to {book.owner.firstname}
             </button>
           </giveBack.Form>
+        ) : mine ? (
+          // Back with its owner: no asking for a book you just read
+          <span className={stateClass}>You read it</span>
         ) : viewer.canRequest && book.notLending ? (
           <span className={stateClass}>Not lending</span>
         ) : viewer.canRequest && book.available ? (
@@ -591,7 +597,7 @@ function ElsewhereCard({
             {wanted ? (
               <span className={stateClass}>
                 <BookmarkIcon size={14} />
-                On your want-to-read list
+                On your Want to read list
               </span>
             ) : (
               <want.Form method="post">
@@ -748,6 +754,7 @@ export function FeedPost({
             userId={userId}
             underNote={item.kind === "note"}
             onEdit={editable && !editing ? () => setEditing(true) : undefined}
+            mine={item.friend.id === userId}
           />
         </>
       )}
@@ -790,10 +797,11 @@ function NoteEdit({
         <>
           <input type="hidden" name="intent" value="note" />
           <input type="hidden" name="bookId" value={item.book.id} />
-          {/* An edit, not news: the owner heard about the note already */}
-          <input type="hidden" name="edit" value="true" />
         </>
       )}
+      {/* An edit, not news: it keeps its place in the feed, and the owner
+          isn't told again */}
+      <input type="hidden" name="edit" value="true" />
       <textarea
         ref={box}
         name="body"

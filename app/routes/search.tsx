@@ -418,7 +418,7 @@ function SearchResultItem({
                 className={`inline-flex items-center gap-1.5 border border-transparent px-1 py-1.5 text-sm text-stone-500 dark:text-stone-400 ${forWant ? "order-first" : ""}`}
               >
                 <BookmarkIcon size={14} />
-                On your want-to-read list
+                On your Want to read list
               </span>
             ) : (
               <button

@@ -594,7 +594,7 @@ function ActivityItem({
       // A friend added a book from your want-to-read list
       text = (
         <>
-          {name} added {book}, which is on your want-to-read list
+          {name} added {book}, which is on your Want to read list
         </>
       );
       actions = (
@@ -863,7 +863,7 @@ const getHistoryText = (
     case "WANT_MATCH":
       return (
         <>
-          {name} added {book}, from your want-to-read list
+          {name} added {book}, from your Want to read list
         </>
       );
     case "BOOK_RETURNED":

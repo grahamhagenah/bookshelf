@@ -126,6 +126,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       intent === "note"
         ? { body: typeof body === "string" ? body : null }
         : { loved: form.get("loved") === "true" },
+      { keepTime: form.get("edit") === "true" },
     );
     // Let the owner know when a reader hearts or writes about their book
     // Not again for an edit; the owner heard about the note already

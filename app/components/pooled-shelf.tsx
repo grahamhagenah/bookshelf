@@ -218,7 +218,7 @@ export default function PooledShelf({
       {wanted.length > 0 ? (
         <section aria-labelledby="wanted" className="mb-8">
           <h2 id="wanted" className="mb-3 text-sm font-medium text-stone-500 dark:text-stone-400">
-            From your want-to-read list
+            From your Want to read list
           </h2>
           <Shelf works={wanted} grid={grid} />
         </section>

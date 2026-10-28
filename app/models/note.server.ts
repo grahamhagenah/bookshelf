@@ -38,19 +38,26 @@ export async function canLeaveNote(
   return pastLoan !== null;
 }
 
+// keepTime is for an edit: the note keeps its time, so the feed leaves it
+// where it was instead of posting it again as new
 export async function saveReaderNote(
   userId: User["id"],
   bookId: Book["id"],
   data: { loved?: boolean; body?: string | null },
+  { keepTime = false }: { keepTime?: boolean } = {},
 ) {
   const body =
     data.body === undefined
       ? undefined
       : data.body?.trim().slice(0, NOTE_MAX_LENGTH) || null;
+  const where = { bookId_userId: { bookId, userId } };
+  const was = keepTime
+    ? await prisma.readerNote.findUnique({ where, select: { updatedAt: true } })
+    : null;
   return prisma.readerNote.upsert({
-    where: { bookId_userId: { bookId, userId } },
+    where,
     create: { bookId, userId, loved: data.loved ?? false, body: body ?? null },
-    update: { loved: data.loved, body },
+    update: { loved: data.loved, body, ...(was ? { updatedAt: was.updatedAt } : {}) },
   });
 }
 

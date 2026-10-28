@@ -122,10 +122,13 @@ export async function getFriendsWorkNotes(
 }
 
 // Saves a heart, read mark or note; a row with nothing left on it goes
+// keepTime is for an edit: the note keeps its time, so the feed leaves it
+// where it was instead of posting it again as new
 export async function saveWorkNote(
   userId: User["id"],
   work: WorkSnapshot,
   change: { loved?: boolean; body?: string | null; read?: boolean },
+  { keepTime = false }: { keepTime?: boolean } = {},
 ) {
   const body =
     change.body === undefined
@@ -138,8 +141,12 @@ export async function saveWorkNote(
     author: work.author,
     cover: work.cover,
   };
+  const where = { userId_workKey: { userId, workKey: work.key } };
+  const was = keepTime
+    ? await prisma.workNote.findUnique({ where, select: { updatedAt: true } })
+    : null;
   const note = await prisma.workNote.upsert({
-    where: { userId_workKey: { userId, workKey: work.key } },
+    where,
     create: {
       userId,
       workKey: work.key,
@@ -148,7 +155,13 @@ export async function saveWorkNote(
       body: body ?? null,
       readAt: readAt ?? null,
     },
-    update: { ...snapshot, loved: change.loved, body, readAt },
+    update: {
+      ...snapshot,
+      loved: change.loved,
+      body,
+      readAt,
+      ...(was ? { updatedAt: was.updatedAt } : {}),
+    },
   });
   if (!note.loved && !note.body && !note.readAt) {
     await prisma.workNote.delete({ where: { id: note.id } });
