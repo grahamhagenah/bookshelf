@@ -927,10 +927,12 @@ function IconPicker({
 }) {
   const picture = pictureOf(current);
   const [color, setColor] = useState<PlateColor | null>(picture.color);
+  // The chosen one's ring is in its own color: each button's text is
+  // already the tone it shows
   const ring = (on: boolean) =>
     `ring-offset-2 ring-offset-white dark:ring-offset-stone-950 transition-shadow ${
       on
-        ? "ring-2 ring-forest-600 dark:ring-forest-400"
+        ? "ring-2 ring-current"
         : "ring-1 ring-stone-200 dark:ring-stone-700 hover:ring-stone-400 dark:hover:ring-stone-500"
     }`;
   const choices = Object.keys(PLATE_COLORS) as PlateColor[];
@@ -978,14 +980,16 @@ function IconPicker({
           value={value(null, color)}
           aria-label="Use your initials"
           aria-pressed={!picture.icon}
-          className={`rounded-full ${ring(!picture.icon)}`}
+          className="rounded-full"
         >
+          {/* The ring on the plate itself, so it takes the plate's color */}
           <Bookplate
             firstname={firstname}
             surname={surname}
             color={color}
             box="h-11 w-11 text-sm"
             framed
+            className={ring(!picture.icon)}
           />
         </button>
         {AVATAR_ICONS.map((icon) => {
