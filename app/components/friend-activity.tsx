@@ -354,6 +354,8 @@ function Actions({
 }) {
   const love = useFetcher({ key: `love-${book.id}` });
   const borrow = useFetcher({ key: `borrow-${book.id}` });
+  const giveBack = useFetcher<{ returned?: boolean }>({ key: `return-${book.id}` });
+  const returned = giveBack.formData !== undefined || giveBack.data?.returned === true;
   const { viewer } = book;
   // Asking opens a line for a note first; the ask goes with it
   const [asking, setAsking] = useState(false);
@@ -429,8 +431,17 @@ function Actions({
 
       {isOwner ? (
         <span className={stateClass}>Your copy</span>
+      ) : returned ? (
+        <span className={stateClass}>Returned to {book.owner.firstname}</span>
       ) : isBorrower ? (
-        <span className={stateClass}>You have it</span>
+        // Read it, said so: the next thing is giving it back
+        <giveBack.Form method="post" action={`/books/${book.id}`}>
+          <input type="hidden" name="intent" value="return" />
+          <input type="hidden" name="stay" value="true" />
+          <button type="submit" className={actionClass}>
+            Return to {book.owner.firstname}
+          </button>
+        </giveBack.Form>
       ) : viewer.canRequest && book.notLending ? (
         <span className={stateClass}>Not lending</span>
       ) : viewer.canRequest && book.available ? (

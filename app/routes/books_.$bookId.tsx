@@ -858,6 +858,8 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
     await returnBook(book.id);
     await handOn(book.id, userId);
+    // From the feed: it stays where it was, and says so
+    if (formData.get("stay") === "true") return data({ returned: true });
     return redirect("/books");
   }
 
