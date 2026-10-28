@@ -4,7 +4,6 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 
 import Home, { POSTS_SHOWN } from "~/components/home";
 import Landing from "~/components/landing";
-import { groupPath } from "~/group-links";
 import { getFriendActivity } from "~/models/activity.server";
 import { getHomeBooks } from "~/models/book.server";
 import { getFriendInvite } from "~/models/friend.server";
@@ -123,13 +122,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       inviteUrl: `${publicOrigin(request)}/invite/${invite}`,
       // Sharing a shelf with someone at home already, so it isn't offered
       sharesShelf: shelf.length > 1,
-      groups: groups.map(({ id, name, memberCount, bookCount, faces }) => ({
+      groups: groups.map(({ id, name, memberCount, faces }) => ({
         id,
         name,
         memberCount,
-        bookCount,
         faces,
-        path: groupPath({ id, name }),
       })),
       waiting,
       nameCount: names.length,
