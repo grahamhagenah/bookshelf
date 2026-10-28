@@ -138,6 +138,8 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
                     cover={book.cover}
                     title={book.title}
                     author={book.author}
+                    // Five across from small tablets up, two on phones
+                    sizes="(min-width: 640px) 220px, 50vw"
                     className="aspect-[2/3] w-full transition-opacity duration-200 group-hover:opacity-90"
                   />
                   <span className="sr-only">

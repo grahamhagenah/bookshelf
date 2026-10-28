@@ -40,6 +40,14 @@ export default function BookCover({
   compact?: boolean;
 }) {
   const source = src ?? (cover ? coverSrc(cover, size) : null);
+  // Given how wide it shows (sizes), an Open Library cover also offers its
+  // large scan, so a sharp screen fetches that instead of stretching the
+  // medium one
+  const sharp =
+    !src && !srcSet && sizes && source && /-[ML]\.jpg$/.test(source)
+      ? `${source.replace(/-[ML]\.jpg$/, "-M.jpg")} 180w, ${source.replace(/-[ML]\.jpg$/, "-L.jpg")} 400w`
+      : undefined;
+  const sources = srcSet ?? sharp;
   const [state, setState] = useState<"loading" | "shown" | "failed">(source ? "loading" : "failed");
   const check = (img: HTMLImageElement) => setState(img.naturalWidth <= 1 ? "failed" : "shown");
 
@@ -57,8 +65,8 @@ export default function BookCover({
       {source && state !== "failed" ? (
         <img
           src={source}
-          srcSet={srcSet}
-          sizes={srcSet ? sizes : undefined}
+          srcSet={sources}
+          sizes={sources ? sizes : undefined}
           alt=""
           loading={eager ? "eager" : "lazy"}
           decoding="async"
