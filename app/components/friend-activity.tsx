@@ -281,50 +281,6 @@ function BookTile({ book }: { book: FeedBook }) {
 // One book beside its details. Says whose copy it is when it isn't the
 // friend's own, and who lent it to them when they borrowed it. The title's
 // link covers the card, with the lender's name over it as its own link.
-// The book's heart, on its card at the right: tap to love the book (not
-// the post), with how many have. Over the card's own link. Just the count
-// for someone who can't love this copy yet
-function BookLove({ book }: { book: FeedBook }) {
-  const love = useFetcher({ key: `love-${book.id}` });
-  const { viewer } = book;
-  // What's shown while a change is on its way
-  const pending = love.formData?.get("loved");
-  const loved = pending ? pending === "true" : viewer.loved;
-  const loves = book.loves + (loved ? 1 : 0) - (viewer.loved ? 1 : 0);
-  const count = loves > 0 ? (
-    <span className="text-xs tabular-nums text-stone-500 dark:text-stone-400">{loves}</span>
-  ) : null;
-  const stack = "flex flex-col items-center gap-0.5 rounded-md px-2 py-1.5";
-  const place = "relative z-10 ml-auto flex-shrink-0 self-center";
-
-  if (!viewer.canLove) {
-    return loves > 0 ? (
-      <span className={`${place} ${stack}`} title={`Loved by ${loves} ${loves === 1 ? "reader" : "readers"} of this copy`}>
-        {/* An outline: filled is for a heart you gave */}
-        <HeartIcon size={18} className="text-stone-400 dark:text-stone-500" />
-        {count}
-      </span>
-    ) : null;
-  }
-  return (
-    <love.Form method="post" className={place}>
-      <input type="hidden" name="intent" value="toggleLove" />
-      <input type="hidden" name="bookId" value={book.id} />
-      <input type="hidden" name="loved" value={loved ? "false" : "true"} />
-      <button
-        type="submit"
-        aria-pressed={loved}
-        title={loved ? "You love this book" : "Love this book"}
-        aria-label={`${loved ? "Loved" : "Love this book"}${loves > 0 ? `, ${loves}` : ""}`}
-        className={`${stack} text-stone-400 hover:bg-stone-100 hover:text-rose-500 dark:text-stone-500 dark:hover:bg-stone-800 transition-colors`}
-      >
-        <HeartIcon size={18} filled={loved} className={loved ? "text-rose-500" : ""} />
-        {count}
-      </button>
-    </love.Form>
-  );
-}
-
 function BookCard({
   book,
   friendId,
@@ -374,7 +330,6 @@ function BookCard({
                 : "Lent out"}
           </span>
         </span>
-        <BookLove book={book} />
       </div>
       {asking && from ? <FriendPrompt from={from} /> : null}
     </div>
@@ -382,8 +337,8 @@ function BookCard({
 }
 
 // Notes and borrowing, done from the feed. Each form posts to the feed
-// route; the counts update when the loader comes back. The heart isn't
-// here: it's on the book, in its card, or it would read as liking the post.
+// route; the counts update when the loader comes back. No heart: beside a
+// post it read as liking the post, so books are loved on their own pages.
 function Actions({
   book,
   userId,
