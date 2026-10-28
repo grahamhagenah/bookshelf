@@ -22,6 +22,7 @@ export async function getUserById(id: User["id"]) {
       shareToken: true,
       handle: true,
       bio: true,
+      createdAt: true,
       isAdmin: true,
       darkMode: true,
       theme: true,

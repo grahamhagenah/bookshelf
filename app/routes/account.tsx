@@ -60,7 +60,7 @@ import { BIO_MAX, HANDLE_MAX, PIN_MAX } from "~/profile";
 import { getPins, movePin, saveProfile, unpinBook } from "~/profile.server";
 import { seo } from "~/seo";
 import { getSession, requireUserId, sessionStorage } from "~/session.server";
-import { coverSizeOf, isCoverSize, isTheme, type LoaderData, themeOf } from "~/utils";
+import { agoInWords, coverSizeOf, isCoverSize, isTheme, type LoaderData, themeOf } from "~/utils";
 import { sendVerification } from "~/verify-email.server";
 
 export const meta: MetaFunction = () =>
@@ -479,6 +479,17 @@ export default function Account() {
             <p className="truncate text-stone-500 dark:text-stone-400">
               {user?.demoGroup ? "Demo account" : user?.email}
             </p>
+            {/* How long they've been here: the month, and how long ago */}
+            {user?.createdAt ? (
+              <p className="mt-0.5 text-sm text-stone-400 dark:text-stone-500">
+                Joined{" "}
+                {new Date(user.createdAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  year: "numeric",
+                })}{" "}
+                · {agoInWords(user.createdAt)}
+              </p>
+            ) : null}
           </div>
         </div>
         <dl className="grid grid-cols-4 gap-2 sm:gap-3">
@@ -930,11 +941,11 @@ function IconPicker({
     icon ? (tone ? `${icon}:${tone}` : icon) : tone ? `${PLATE}${tone}` : "";
   return (
     <>
-      {/* On phones the six colors take the icon grid's six columns, so the
+      {/* On phones the six colors sit in the icon grid's six columns, so the
           two line up, and the word goes unsaid (the group is still labeled).
           From there, one row with the word in front. */}
       <div
-        className="grid grid-cols-6 justify-items-center pt-1 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5"
+        className="grid w-fit grid-cols-[repeat(6,2.75rem)] justify-items-center gap-3 pt-1 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5"
         role="group"
         aria-label="Color"
       >
@@ -960,9 +971,9 @@ function IconPicker({
           </button>
         ))}
       </div>
-      <div className="!mt-6 grid grid-cols-6 justify-items-center gap-y-3 sm:w-fit sm:grid-cols-9 sm:gap-3">
-        {/* Your initials first, then the icons: six across on phones, the
-            width of the screen; nine across from there, packed */}
+      <div className="!mt-6 grid w-fit grid-cols-[repeat(6,2.75rem)] gap-3 sm:grid-cols-[repeat(9,2.75rem)]">
+        {/* Your initials first, then the icons: six across on phones, nine
+            from there, the same gap between them both ways */}
         <button
           type="submit"
           name="emoji"
