@@ -2206,7 +2206,7 @@ export default function BookDetailsPage() {
               <input type="hidden" name="intent" value="moveToWant" />
               <button
                 type="submit"
-                className="text-xs text-stone-500 dark:text-stone-400 underline-offset-2 hover:underline hover:text-stone-800 dark:hover:text-stone-200"
+                className="-my-2 py-2 text-xs text-stone-500 dark:text-stone-400 underline-offset-2 hover:underline hover:text-stone-800 dark:hover:text-stone-200"
               >
                 Don&apos;t own it? Move to Want to read
               </button>
