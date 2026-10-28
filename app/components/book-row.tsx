@@ -18,8 +18,6 @@ export const rowPrimary = `${quietButton("sm")} inline-flex items-center font-me
 // Anything else you can do: remove it, read a note
 export const rowSecondary =
   "text-stone-500 underline-offset-4 decoration-stone-300 hover:text-stone-800 hover:underline dark:text-stone-400 dark:decoration-stone-600 dark:hover:text-stone-100 transition-colors";
-// Said rather than done: no note yet, nobody has it
-export const rowQuiet = "text-stone-400 dark:text-stone-500";
 
 export function BookRow({
   id,

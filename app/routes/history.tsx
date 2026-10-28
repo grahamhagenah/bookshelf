@@ -1,9 +1,9 @@
-import { data, Link, useLoaderData } from "react-router";
+import { data, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { BookRow, RowLine, rowEmphasis, rowPrimary, rowQuiet, rowSecondary } from "~/components/book-row";
+import { BookRow, RowLine, rowEmphasis } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
-import { BorrowedIcon, HeartIcon, HistoryIcon, LentIcon } from "~/components/icons";
+import { BorrowedIcon, HistoryIcon, LentIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
@@ -82,15 +82,8 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
       {person} has been borrowing it since {date(entry.borrowedAt)}.
     </>
   );
-  const notes = `/books/${entry.book.id}#notes`;
-  const body = entry.note?.body?.trim();
-  const loved = entry.note?.loved ? (
-    <span className={`inline-flex items-center gap-1.5 ${rowQuiet}`}>
-      <HeartIcon size={13} filled className="text-rose-400" />
-      {borrowed ? "You loved it" : `${name} loved it`}
-    </span>
-  ) : null;
-
+  // Just who had it and when: notes and hearts are on the book's page,
+  // one tap away, rather than a different line for each case here
   return (
     <BookRow
       to={`/books/${entry.book.id}`}
@@ -99,28 +92,6 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
         <RowLine icon={borrowed ? <BorrowedIcon size={13} /> : <LentIcon size={13} />}>
           {story}
         </RowLine>
-      }
-      // Whether anything was said about it: that there's a note, with the
-      // way to it, rather than the note itself; or a way to leave yours on
-      // a book you borrowed
-      actions={
-        body ? (
-          <>
-            {loved}
-            <Link to={notes} className={rowSecondary}>
-              {borrowed ? "Read your note" : `Read ${name}'s note`}
-            </Link>
-          </>
-        ) : borrowed ? (
-          <>
-            {loved}
-            <Link to={notes} className={rowPrimary}>
-              {loved ? "Add a note" : "Leave a note"}
-            </Link>
-          </>
-        ) : (
-          loved ?? <span className={rowQuiet}>No note from {name} yet</span>
-        )
       }
     />
   );

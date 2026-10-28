@@ -1,7 +1,7 @@
-import { data, Link, useLoaderData } from "react-router";
+import { data, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { BookRow, RowLine, rowPrimary, rowSecondary } from "~/components/book-row";
+import { BookRow, RowLine } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
 import { HeartIcon, PencilIcon, ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
@@ -96,19 +96,6 @@ export default function ReadElsewhere() {
                           ? "You loved it"
                           : "You read it"}
                     </RowLine>
-                  }
-                  actions={
-                    isWork(item.workKey) ? (
-                      item.body ? (
-                        <Link to={`${page}#notes`} className={rowSecondary}>
-                          Read your note
-                        </Link>
-                      ) : (
-                        <Link to={`${page}#notes`} className={rowPrimary}>
-                          Leave a note
-                        </Link>
-                      )
-                    ) : null
                   }
                 />
               );
