@@ -22,8 +22,10 @@ const person = {
 export async function getHistory(userId: User["id"]) {
   const myShelf = await shelfIds(userId);
   const [borrowed, lent] = await Promise.all([
+    // Only loans that are over: ones still out are on your shelf and the
+    // home page already
     prisma.lendingHistory.findMany({
-      where: { borrowerId: userId },
+      where: { borrowerId: userId, returnedAt: { not: null } },
       select: {
         id: true,
         borrowedAt: true,
@@ -41,7 +43,7 @@ export async function getHistory(userId: User["id"]) {
       },
     }),
     prisma.lendingHistory.findMany({
-      where: { book: { userId: { in: myShelf } } },
+      where: { book: { userId: { in: myShelf } }, returnedAt: { not: null } },
       select: {
         id: true,
         borrowedAt: true,
@@ -94,8 +96,10 @@ export async function getHistory(userId: User["id"]) {
       }),
     ),
   ];
+  // The most recently back first
   return entries.sort(
-    (a, b) => b.borrowedAt.getTime() - a.borrowedAt.getTime(),
+    (a, b) =>
+      (b.returnedAt ?? b.borrowedAt).getTime() - (a.returnedAt ?? a.borrowedAt).getTime(),
   );
 }
 
@@ -106,9 +110,10 @@ export async function getShelfCounts(userId: User["id"]) {
     getBookStats(userId, myShelf),
     prisma.wantToRead.count({ where: { userId } }),
     prisma.workNote.count({ where: { userId } }),
-    prisma.lendingHistory.count({ where: { borrowerId: userId } }),
+    // History is loans that are over, as its page lists them
+    prisma.lendingHistory.count({ where: { borrowerId: userId, returnedAt: { not: null } } }),
     prisma.lendingHistory.count({
-      where: { book: { userId: { in: myShelf } } },
+      where: { book: { userId: { in: myShelf } }, returnedAt: { not: null } },
     }),
   ]);
   return {

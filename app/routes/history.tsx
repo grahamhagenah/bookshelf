@@ -7,7 +7,6 @@ import { HistoryIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
-import { sectionHeading } from "~/components/ui";
 import { getHistory, getShelfCounts } from "~/models/history.server";
 import { getUserById } from "~/models/user.server";
 import { seo } from "~/seo";
@@ -59,7 +58,7 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
     </span>
   );
   // Who, then when on a line of its own: short lines rather than one long
-  // sentence. Still out, it's "Since Oct 19"; back, the two dates
+  // sentence. The two dates, out and back ("Since" only as a fallback)
   const who = borrowed ? <>Borrowed from {person}</> : <>Lent to {person}</>;
   const when = entry.returnedAt
     ? `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
@@ -94,32 +93,18 @@ export default function History() {
             title="Your lending history"
             action={{ to: "/friends/books", label: "See friends' books" }}
           >
-            Every book that passes between you and a friend shows up here: what
-            you&apos;ve borrowed, and what you&apos;ve lent.
+            Books you&apos;ve borrowed and lent show up here once they&apos;re
+            back. What&apos;s out now is on your shelf.
           </EmptyList>
         ) : (
-          // What's out now, either way, then what's come back: newest first
-          // in each, two columns where there's room, as To read and Also read
-          [
-            { id: "out-now", title: "Out now", rows: entries.filter((entry) => !entry.returnedAt) },
-            { id: "returned", title: "Returned", rows: entries.filter((entry) => entry.returnedAt) },
-          ]
-            .filter((group) => group.rows.length > 0)
-            .map((group) => (
-              <section key={group.id} aria-labelledby={group.id} className="mt-8">
-                <h2 id={group.id} className={`${sectionHeading} flex items-baseline gap-2`}>
-                  {group.title}
-                  <span className="text-base font-normal text-stone-400 dark:text-stone-500">
-                    {group.rows.length}
-                  </span>
-                </h2>
-                <ul className="mt-1 grid gap-x-10 md:grid-cols-2">
-                  {group.rows.map((entry) => (
-                    <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />
-                  ))}
-                </ul>
-              </section>
-            ))
+          // Loans that are over, both ways, the most recently back first;
+          // what's out now is on your shelf. Two columns where there's room,
+          // as To read and Also read
+          <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
+            {entries.map((entry) => (
+              <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />
+            ))}
+          </ul>
         )}
       </section>
     </Layout>
