@@ -15,12 +15,16 @@ import { coverSizeOf, libraryViewOf, useOptionalUser } from "~/utils";
 type ShelfWork = PoolWork;
 
 // "Maya", "Maya and Sam", "Maya, Sam and 4 others"
+// Whose copy it is, said as a sentence so a name under a cover doesn't
+// read as its author: "Anika has it", "Anika and Sam have it", as the home
+// page says it
 function whoHasIt(work: ShelfWork) {
   const names = [...new Set(work.copies.map((copy) => copy.owner.firstname))];
-  if (names.length <= 1) return names[0] ?? "";
-  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  if (names.length === 0) return "";
+  if (names.length === 1) return `${names[0]} has it`;
+  if (names.length === 2) return `${names[0]} and ${names[1]} have it`;
   const others = names.length - 2;
-  return `${names[0]}, ${names[1]} and ${others} ${others === 1 ? "other" : "others"}`;
+  return `${names[0]}, ${names[1]} and ${others} ${others === 1 ? "other" : "others"} have it`;
 }
 
 // Where the book stands, as My shelf tags a cover: nothing when a copy's
