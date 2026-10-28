@@ -36,13 +36,17 @@ export default function SharePrompt({ show }: { show: boolean }) {
             <p className="hidden sm:block flex-shrink-0 font-semibold text-stone-900 dark:text-stone-200">
               Your shelf&apos;s link:
             </p>
-            <input
-              readOnly
-              value={url}
-              aria-label="Your shelf's public link"
-              onFocus={(event) => event.currentTarget.select()}
-              className="h-7 min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-stone-600 dark:text-stone-300 focus:outline-none focus:border-stone-400"
-            />
+            {/* The link as plain text, not a box that looks like it takes
+                typing: open it to see the page, or copy it beside */}
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open your shared shelf"
+              className="min-w-0 flex-1 truncate text-stone-600 dark:text-stone-300 underline-offset-2 hover:underline hover:text-stone-900 dark:hover:text-stone-100"
+            >
+              {url.replace(/^https?:\/\//, "")}
+            </a>
             <CopyButton value={url} className={`${buttonClass} flex-shrink-0`} />
           </>
         ) : (
