@@ -162,12 +162,12 @@ function AboutAuthor({
   const clipped = long && !open;
 
   // The first few lines of the bio, fading out, with the rest (and the
-  // links) a tap away. The name itself is already at the top of the page,
-  // and the bio usually opens with the dates, so neither repeats here.
+  // links) a tap away, under the author's name. The bio usually opens with
+  // the dates, so they don't repeat here.
   return (
     <section className="mt-8">
       <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
-        About the author
+        {author.name ? `About ${author.name}` : "About the author"}
       </h2>
       {author.bio ? (
         <p
