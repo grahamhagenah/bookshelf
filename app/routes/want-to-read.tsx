@@ -18,6 +18,7 @@ import {
 import EmptyList from "~/components/empty-list";
 import { BookmarkIcon } from "~/components/icons";
 import Layout from "~/components/layout";
+import { useListFilter } from "~/components/list-filter";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
@@ -195,6 +196,11 @@ function WantRow({
 
 export default function WantToRead() {
   const { items, friendIds, counts } = useLoaderData<typeof loader>();
+  // Whether a friend has a copy: the ones to ask for, and the ones to wait on
+  const { shown, chips } = useListFilter(items, [
+    { value: "friend", label: "A friend has it", test: (item) => item.copies.length > 0 },
+    { value: "nobody", label: "No one has it yet", test: (item) => item.copies.length === 0 },
+  ]);
   // "Got a copy" with a full shelf on the free plan
   const actionData = useActionData<typeof action>();
   const limit =
@@ -238,11 +244,14 @@ export default function WantToRead() {
         ) : (
           // In columns where there's room; each row ruled underneath, so
           // the rules line up across them
-          <ul className={`mt-4 ${bookRowGrid}`}>
-            {items.map((item) => (
-              <WantRow key={item.id} item={item} friendIds={friendIds} />
-            ))}
-          </ul>
+          <>
+            {chips}
+            <ul className={`mt-4 ${bookRowGrid}`}>
+              {shown.map((item) => (
+                <WantRow key={item.id} item={item} friendIds={friendIds} />
+              ))}
+            </ul>
+          </>
         )}
       </section>
     </Layout>

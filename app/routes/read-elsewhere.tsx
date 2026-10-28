@@ -17,6 +17,7 @@ import {
 import EmptyList from "~/components/empty-list";
 import { ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
+import { useListFilter } from "~/components/list-filter";
 import ShelfTabs from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
 import { findImportedWorks } from "~/models/import.server";
@@ -94,6 +95,12 @@ const isWork = (key: string) => key.startsWith("/works/");
 
 export default function ReadElsewhere() {
   const { items, counts } = useLoaderData<typeof loader>();
+  // By what you marked: read, loved, or wrote about
+  const { shown, chips } = useListFilter(items, [
+    { value: "read", label: "Read", test: (item) => Boolean(item.readAt) },
+    { value: "loved", label: "Loved", test: (item) => item.loved },
+    { value: "notes", label: "With a note", test: (item) => Boolean(item.body) },
+  ]);
 
   return (
     <Layout title="Also read">
@@ -112,47 +119,50 @@ export default function ReadElsewhere() {
           </EmptyList>
         ) : (
           // In columns where there's room, as Want to read has
-          <ul className={`mt-4 ${bookRowGrid}`}>
-            {items.map((item) => {
-              // One still being looked up opens a search for it
-              const page = isWork(item.workKey)
-                ? item.workKey
-                : `/search?q=${encodeURIComponent(`${item.title} ${item.author}`)}`;
-              return (
-                <BookRow
-                  key={item.id}
-                  to={page}
-                  book={item}
-                  // What you did with it and when, as History says who had it
-                  // and when; then the same buttons History gives a book you
-                  // borrowed: your note, and a heart to give
-                  corner={
-                    <AlsoReadMenu
-                      id={item.id}
-                      title={item.title}
-                      page={isWork(item.workKey) ? item.workKey : null}
-                    />
-                  }
-                  line={
-                    <RowLine>
-                      {item.readAt ? "You read it" : item.body ? "You left a note" : "You loved it"}
-                      {item.readAt ? <RowSub>{rowDate(item.readAt)}</RowSub> : null}
-                    </RowLine>
-                  }
-                  actions={
-                    isWork(item.workKey) ? (
-                      <YourNoteActions
-                        notes={`${page}#notes`}
-                        loveAction={page}
-                        loved={item.loved}
-                        hasNote={Boolean(item.body)}
+          <>
+            {chips}
+            <ul className={`mt-4 ${bookRowGrid}`}>
+              {shown.map((item) => {
+                // One still being looked up opens a search for it
+                const page = isWork(item.workKey)
+                  ? item.workKey
+                  : `/search?q=${encodeURIComponent(`${item.title} ${item.author}`)}`;
+                return (
+                  <BookRow
+                    key={item.id}
+                    to={page}
+                    book={item}
+                    // What you did with it and when, as History says who had it
+                    // and when; then the same buttons History gives a book you
+                    // borrowed: your note, and a heart to give
+                    corner={
+                      <AlsoReadMenu
+                        id={item.id}
+                        title={item.title}
+                        page={isWork(item.workKey) ? item.workKey : null}
                       />
-                    ) : null
-                  }
-                />
-              );
-            })}
-          </ul>
+                    }
+                    line={
+                      <RowLine>
+                        {item.readAt ? "You read it" : item.body ? "You left a note" : "You loved it"}
+                        {item.readAt ? <RowSub>{rowDate(item.readAt)}</RowSub> : null}
+                      </RowLine>
+                    }
+                    actions={
+                      isWork(item.workKey) ? (
+                        <YourNoteActions
+                          notes={`${page}#notes`}
+                          loveAction={page}
+                          loved={item.loved}
+                          hasNote={Boolean(item.body)}
+                        />
+                      ) : null
+                    }
+                  />
+                );
+              })}
+            </ul>
+          </>
         )}
       </section>
     </Layout>

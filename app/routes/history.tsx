@@ -20,6 +20,7 @@ import {
 import EmptyList from "~/components/empty-list";
 import { HistoryIcon } from "~/components/icons";
 import Layout from "~/components/layout";
+import { useListFilter } from "~/components/list-filter";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
 import { getHistory, getShelfCounts, hideFromHistory } from "~/models/history.server";
@@ -147,6 +148,10 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
 
 export default function History() {
   const { entries, counts, friendIds } = useLoaderData<typeof loader>();
+  const { shown, chips } = useListFilter(entries, [
+    { value: "lent", label: "Lent", test: (entry) => entry.kind === "lent" },
+    { value: "borrowed", label: "Borrowed", test: (entry) => entry.kind === "borrowed" },
+  ]);
 
   return (
     <Layout title="History">
@@ -166,11 +171,14 @@ export default function History() {
           // Loans that are over, both ways, the most recently back first;
           // what's out now is on your shelf. In columns where there's room,
           // as Want to read and Also read
-          <ul className={`mt-4 ${bookRowGrid}`}>
-            {entries.map((entry) => (
-              <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />
-            ))}
-          </ul>
+          <>
+            {chips}
+            <ul className={`mt-4 ${bookRowGrid}`}>
+              {shown.map((entry) => (
+                <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />
+              ))}
+            </ul>
+          </>
         )}
       </section>
     </Layout>
