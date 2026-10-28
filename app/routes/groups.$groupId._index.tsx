@@ -1,10 +1,11 @@
 
-import { data, Link, useLoaderData, useRouteLoaderData } from "react-router";
+import { data, useLoaderData, useRouteLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 
+import EmptyList from "~/components/empty-list";
+import { BookIcon } from "~/components/icons";
 import InviteMessage from "~/components/invite-message";
 import PooledShelf from "~/components/pooled-shelf";
-import { sectionHeading } from "~/components/ui";
 import { groupInviteText } from "~/group-links";
 import { loadGroup } from "~/group-page.server";
 import { loadPooledShelf } from "~/pooled-shelf.server";
@@ -30,42 +31,45 @@ export default function GroupBooks() {
       empty={
         // Before anyone's joined, ask for people; after, for books
         (layout?.group.members.length ?? 0) > 1 ? (
-          <>
-            <h2 className={sectionHeading}>
-              {(layout?.group.myBookCount ?? 0) > 0
+          <EmptyList
+            icon={<BookIcon size={28} />}
+            title={
+              (layout?.group.myBookCount ?? 0) > 0
                 ? "No one else has added books yet"
-                : "No one\u2019s added books yet"}
-            </h2>
-            <p className="mx-auto mt-1 max-w-sm text-stone-500 dark:text-stone-400">
-              {(layout?.group.myBookCount ?? 0) > 0
-                ? "Yours are in it already. Everyone else's show up here as they add them."
-                : `Add yours, and everyone in ${layout?.group.name ?? "the group"} can borrow them. Their books show up here as they add them.`}
-            </p>
-            <Link
-              to="/search"
-              className="mt-4 inline-flex h-8 items-center rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-            >
-              Add books
-            </Link>
-          </>
+                : "No one\u2019s added books yet"
+            }
+            action={
+              (layout?.group.myBookCount ?? 0) > 0
+                ? undefined
+                : { to: "/search", label: "Add books", plus: true }
+            }
+            className="mt-2"
+          >
+            {(layout?.group.myBookCount ?? 0) > 0
+              ? "Yours are in it already. Everyone else's show up here as they add them."
+              : `Add yours, and everyone in ${layout?.group.name ?? "the group"} can borrow them. Their books show up here as they add them.`}
+          </EmptyList>
         ) : (
-          <>
-            <h2 className={sectionHeading}>No books to borrow yet</h2>
-            <p className="mx-auto mt-1 max-w-sm text-stone-500 dark:text-stone-400">
-              Once people join {layout?.group.name ?? "the group"}, their books show up here.
-            </p>
-            {/* The message to send them, ready to go */}
-            {layout ? (
-              <InviteMessage
-                url={layout.inviteUrl}
-                title="Invite them"
-                intro="Send this to the group. Whoever joins from the link is friends with everyone in it."
-                text={groupInviteText(layout.group.name, layout.inviteUrl)}
-                subject={`Join ${layout.group.name} on Stacks`}
-                className="mx-auto mt-6 max-w-md text-left"
-              />
-            ) : null}
-          </>
+          <EmptyList
+            icon={<BookIcon size={28} />}
+            title="No books to borrow yet"
+            // The message to send them, ready to go
+            action={
+              layout ? (
+                <InviteMessage
+                  url={layout.inviteUrl}
+                  title="Invite them"
+                  intro="Send this to the group. Whoever joins from the link is friends with everyone in it."
+                  text={groupInviteText(layout.group.name, layout.inviteUrl)}
+                  subject={`Join ${layout.group.name} on Stacks`}
+                  className="mx-auto mt-2 max-w-md text-left"
+                />
+              ) : undefined
+            }
+            className="mt-2"
+          >
+            Once people join {layout?.group.name ?? "the group"}, their books show up here.
+          </EmptyList>
         )
       }
     />

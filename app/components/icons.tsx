@@ -172,26 +172,6 @@ export function HistoryIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
-export function GridViewIcon({ className = "", size = 24 }: IconProps) {
-  return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/>
-      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/>
-      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/>
-      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>
-    </svg>
-  );
-}
-
-export function ListViewIcon({ className = "", size = 24 }: IconProps) {
-  return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 6h11M9 12h11M9 18h11"/>
-      <path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" strokeWidth="2.5"/>
-    </svg>
-  );
-}
-
 export function DashboardIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -219,6 +199,15 @@ export function HeartIcon({
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0016.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 002 8.5c0 2.3 1.5 4.05 3 5.5l7 7z"/>
+    </svg>
+  );
+}
+
+// A speech bubble: notes readers left on a book
+export function NoteIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20.5 11.5c0 4.14-3.8 7.5-8.5 7.5-1.1 0-2.15-.18-3.12-.52L4 20l1.3-3.6C4.17 15.1 3.5 13.36 3.5 11.5 3.5 7.36 7.3 4 12 4s8.5 3.36 8.5 7.5z"/>
     </svg>
   );
 }
@@ -283,9 +272,9 @@ export function HiddenIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
-export function BookmarkIcon({ className = "", size = 24 }: IconProps) {
+export function BookmarkIcon({ className = "", size = 24, filled = false }: IconProps & { filled?: boolean }) {
   return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M6.5 3.5h11v17l-5.5-4-5.5 4z" />
     </svg>
   );

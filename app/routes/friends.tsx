@@ -4,6 +4,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
+import EmptyList from "~/components/empty-list";
 import Faces from "~/components/faces";
 import FriendsTabs from "~/components/friends-tabs";
 import {
@@ -13,6 +14,7 @@ import {
   ClockIcon,
   CommonIcon,
   FeedIcon,
+  GroupIcon,
   LentIcon,
 } from "~/components/icons";
 import Layout from "~/components/layout";
@@ -106,11 +108,12 @@ export default function Friends() {
   return (
     <Layout
       title="Friends"
-      // Beside your friends on wide screens, the groups you're in
-      // Kept in view while the friends scroll past: your groups, and the
-      // requests you're waiting on
+      // Beside your friends on wide screens, kept in view while they scroll
+      // past: your groups first, then requests to answer and the ones
+      // you're waiting on
       aside={
         <aside className="hidden space-y-10 self-start lg:sticky lg:top-24 lg:block">
+          <RailGroups groups={data.groups} limit={10} />
           {data.incoming.length > 0 ? (
             <section aria-labelledby="rail-requests">
               <h2 id="rail-requests" className={`${sectionHeading} mb-3`}>
@@ -126,7 +129,6 @@ export default function Friends() {
               </ul>
             </section>
           ) : null}
-          <RailGroups groups={data.groups} limit={10} />
           {data.pendingRequests.length > 0 ? (
             <section aria-labelledby="rail-waiting">
               <h2 id="rail-waiting" className={`${sectionHeading} mb-3`}>
@@ -204,18 +206,15 @@ export default function Friends() {
             ))}
           </ul>
         ) : (
-          <div className="rounded-xl border border-dashed border-stone-300 dark:border-stone-700 px-6 py-10 text-center">
-            <p className="font-medium text-stone-900 dark:text-stone-100">No friends yet</p>
-            <p className="mt-1 text-stone-500 dark:text-stone-400">
-              Stacks is better with people to borrow from.
-            </p>
-            <Link
-              to="/friends/add"
-              className="mt-4 inline-flex h-9 items-center rounded-md bg-forest-600 px-4 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
-            >
-              Add friends
-            </Link>
-          </div>
+          <EmptyList
+            icon={<GroupIcon size={28} />}
+            title="No friends yet"
+            action={{ to: "/friends/add", label: "Add friends", plus: true }}
+            className="mt-2"
+          >
+            Stacks is better with people to borrow from. Add them by email, or
+            send them your invite link.
+          </EmptyList>
         )}
 
         {/* On phones; wider screens have it in the side column */}

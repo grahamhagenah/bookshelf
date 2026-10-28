@@ -5,7 +5,8 @@ import { prisma } from "~/db.server";
 import type { Password, User, Notification } from "~/generated/prisma/client";
 import { REQUEST_NOTE_MAX } from "~/lending";
 import { shelfIds } from "~/models/household.server";
-import type { CoverSize, LibraryView, Theme } from "~/utils";
+import { HANDLE_MAX, HANDLE_MIN, handleProblem } from "~/profile";
+import type { CoverSize, Theme } from "~/utils";
 import { normalizeEmail } from "~/utils";
 
 export type { User } from "~/generated/prisma/client";
@@ -24,7 +25,6 @@ export async function getUserById(id: User["id"]) {
       isAdmin: true,
       darkMode: true,
       theme: true,
-      libraryView: true,
       coverSize: true,
       profileEmoji: true,
       emailNotifications: true,
@@ -558,7 +558,53 @@ export async function generateShareToken(userId: string): Promise<string> {
     where: { id: userId },
     data: { shareToken: token },
   });
+  // A public page starts out at an address with their name in it
+  await giveDefaultHandle(userId);
   return token;
+}
+
+// A handle made from a name: "Jordan Avery" is "jordanavery", "Zoë" is
+// "zoe". Letters and numbers only, short enough to take a number after it
+export function handleFromName(firstname: string, surname: string) {
+  const base = `${firstname}${surname}`
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, HANDLE_MAX - 3);
+  return base || "reader";
+}
+
+// Gives a public page its address from the owner's name when it has none
+// yet: "jordanavery", or "jordanavery2" and on when that's taken. Not for
+// demo accounts, whose sample names would use up real people's. Gives back
+// the handle it has now, if any.
+export async function giveDefaultHandle(userId: string): Promise<string | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { handle: true, shareToken: true, demoGroup: true, firstname: true, surname: true },
+  });
+  if (!user) return null;
+  if (user.handle || !user.shareToken || user.demoGroup) return user.handle;
+  const base = handleFromName(user.firstname, user.surname);
+  for (let n = 1; n < 1000; n++) {
+    const handle = n === 1 ? base : `${base}${n}`;
+    if (handle.length < HANDLE_MIN || handleProblem(handle)) continue;
+    try {
+      // Only while they still have none, so one they just picked stays
+      const { count } = await prisma.user.updateMany({
+        where: { id: userId, handle: null },
+        data: { handle },
+      });
+      if (count === 1) return handle;
+      return (await prisma.user.findUnique({ where: { id: userId }, select: { handle: true } }))?.handle ?? null;
+    } catch (error) {
+      // Someone else has it: try the next number
+      if ((error as { code?: string }).code === "P2002") continue;
+      throw error;
+    }
+  }
+  return null;
 }
 
 export async function getUserByShareToken(token: string) {
@@ -583,7 +629,7 @@ export async function revokeShareToken(userId: string) {
 
 export async function setAppearance(
   userId: string,
-  appearance: { theme?: Theme; libraryView?: LibraryView; coverSize?: CoverSize },
+  appearance: { theme?: Theme; coverSize?: CoverSize },
 ) {
   await prisma.user.update({ where: { id: userId }, data: appearance });
 }

@@ -6,9 +6,8 @@ import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
 
 import BookCover from "./book-cover";
-import Faces from "./faces";
 import FriendActivityItem from "./friend-activity";
-import { LentIcon } from "./icons";
+import { BorrowedIcon, LentIcon, SearchIcon } from "./icons";
 import { InviteButtons } from "./invite-message";
 import ShareShelfOffer from "./share-shelf-offer";
 import { sectionHeading } from "./ui";
@@ -34,8 +33,6 @@ export interface HomeGroup {
   id: string;
   name: string;
   memberCount: number;
-  bookCount: number;
-  path: string;
   // A few of the people in it, for their pictures
   faces: { id: string; firstname: string; surname: string; profileEmoji: string | null }[];
 }
@@ -68,19 +65,32 @@ function dueLabel(dueDate: string | Date) {
 const headingLink =
   "underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline";
 
-// A section's one action, beside its heading
-function AddButton({ to, children }: { to: string; children: string }) {
+// A section's one action, beside its heading: a + to add, a magnifying
+// glass to go looking
+function AddButton({
+  to,
+  search = false,
+  children,
+}: {
+  to: string;
+  search?: boolean;
+  children: string;
+}) {
   return (
     <Link
       to={to}
       className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
     >
-      <span
-        aria-hidden="true"
-        className="text-base leading-none text-stone-400"
-      >
-        +
-      </span>
+      {search ? (
+        <SearchIcon size={14} className="text-stone-400" />
+      ) : (
+        <span
+          aria-hidden="true"
+          className="text-base leading-none text-stone-400"
+        >
+          +
+        </span>
+      )}
       {children}
     </Link>
   );
@@ -91,6 +101,8 @@ function AddButton({ to, children }: { to: string; children: string }) {
 const LOANS_SHOWN = 3;
 // And as many of friends' latest posts beside them
 export const POSTS_SHOWN = 3;
+// And of the books most lent around your friends, under them
+export const POPULAR_SHOWN = 5;
 
 // One row of a loan list: the book, who it's from or to, and when it's
 // due, with a note when something needs doing (someone's waiting for it).
@@ -151,10 +163,13 @@ export function LoanList({
   personLabel,
   empty,
   to,
+  icon,
   children,
 }: {
   id: string;
   title: string;
+  // The mark the shelf uses for these: borrowed, or lent out
+  icon?: React.ReactNode;
   // Where all of them are, which the heading links to
   to?: string;
   books: LoanEntry[];
@@ -179,7 +194,10 @@ export function LoanList({
         ) : (
           title
         )}
-        <span className="text-base font-normal text-stone-400 dark:text-stone-500">
+        {/* The count with its mark beside it, as the shelf's badges show
+            them */}
+        <span className="inline-flex items-center gap-1 self-center text-base font-normal text-stone-400 dark:text-stone-500">
+          {icon}
           {total ?? books.length}
         </span>
       </h2>
@@ -466,9 +484,9 @@ function MoreLink({ to, children, className = "" }: { to: string; children: stri
 // Friends' books, the most lent first
 const POPULAR_PATH = "/friends/books?sort=popular";
 
-// Popular with friends as a chart, the most lent first: ranked rows built
-// like the rest of the home page's lists (a small cover, the title, who
-// has it), with how many times on the right
+// Most borrowed: friends' books lent the most times, the most first. Rows
+// built like the rest of the home page's lists (a small cover, the title,
+// who has it), with how many loans on the right, in words
 function PopularChart({
   popular,
   className = "",
@@ -483,27 +501,17 @@ function PopularChart({
     >
       <h2 id="popular" className={`${sectionHeading} mb-2`}>
         <Link to={POPULAR_PATH} className={headingLink}>
-          Popular with friends
+          Most borrowed
         </Link>
       </h2>
       <ol className="divide-y divide-stone-100 dark:divide-stone-900">
-        {popular.map((book, index) => {
-          const said =
-            book.loans === 1 ? "Lent once" : `Lent ${book.loans} times`;
+        {popular.map((book) => {
           return (
             <li key={book.id}>
               <Link
                 to={book.to}
                 className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
               >
-                {/* As wide as the friend icons above, so the covers line
-                    up with the activity's */}
-                <span
-                  aria-hidden="true"
-                  className="w-7 flex-shrink-0 text-center text-sm font-semibold tabular-nums text-stone-500 dark:text-stone-400"
-                >
-                  {index + 1}
-                </span>
                 <BookCover
                   cover={book.cover}
                   title={book.title}
@@ -516,16 +524,16 @@ function PopularChart({
                   </span>
                   <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
                     {book.author}
-                    {book.owners ? ` · ${book.owners}` : ""}
+                    {book.owners.length > 0 ? (
+                      <>
+                        {" · "}
+                        <HaveIt names={book.owners} />
+                      </>
+                    ) : null}
                   </span>
                 </span>
-                <span
-                  title={said}
-                  className="inline-flex flex-shrink-0 items-center gap-1 text-sm tabular-nums text-stone-500 dark:text-stone-400"
-                >
-                  <LentIcon size={14} />
-                  <span aria-hidden="true">{book.loans}</span>
-                  <span className="sr-only">{said}</span>
+                <span className="flex-shrink-0 whitespace-nowrap text-sm tabular-nums text-stone-500 dark:text-stone-400">
+                  {book.loans} {book.loans === 1 ? "loan" : "loans"}
                 </span>
               </Link>
             </li>
@@ -536,6 +544,26 @@ function PopularChart({
         All friends&apos; books
       </MoreLink>
     </section>
+  );
+}
+
+// "Maya has it", "Maya and Sam have it", "Maya and 2 others have it",
+// with the names standing out, as Want to read's rows set them
+function HaveIt({ names }: { names: string[] }) {
+  const name = (text: string) => (
+    <span className="font-medium text-stone-700 dark:text-stone-200">{text}</span>
+  );
+  if (names.length === 1) return <>{name(names[0])} has it</>;
+  if (names.length === 2)
+    return (
+      <>
+        {name(names[0])} and {name(names[1])} have it
+      </>
+    );
+  return (
+    <>
+      {name(names[0])} and {names.length - 1} others have it
+    </>
   );
 }
 
@@ -558,8 +586,8 @@ interface Popular {
   cover: string;
   // How many times friends' copies of it have been lent
   loans: number;
-  // "Maya and Sam have it"
-  owners: string | null;
+  // Friends with a copy, by first name
+  owners: string[];
   // A friend's copy, one free to ask for first
   to: string;
 }
@@ -648,10 +676,8 @@ export default function Home({
     welcomeDismissed ||
     skipping ||
     (ownCount >= BOOK_GOAL && friendIds.length + requestsSent + nameCount > 0);
-  // A group's books to borrow go with the loans too
   const showLoans =
-    setupDone ||
-    books.borrowed.length + books.lent.length + waiting.length + groups.length > 0;
+    setupDone || books.borrowed.length + books.lent.length + waiting.length > 0;
   const showRecent = setupDone || ownCount > 0;
   const showWanted = setupDone || wanted.length > 0;
   const showFeed = setupDone || friendIds.length > 0;
@@ -699,7 +725,25 @@ export default function Home({
                   books.borrowed.length + books.lent.length + waiting.length > 0
                     ? 0
                     : 10,
-                render: (first: boolean) => (
+                render: (first: boolean) =>
+                  books.borrowed.length + books.lent.length + waiting.length === 0 ? (
+                    // Nothing out either way: one line, not two empty lists
+                    <section aria-labelledby="loans" className={first ? undefined : divided}>
+                      <h2 id="loans" className={`${sectionHeading} mb-1`}>
+                        Borrowing and lending
+                      </h2>
+                      <p className="text-sm text-stone-500 dark:text-stone-400">
+                        Nothing out either way. Borrow from{" "}
+                        <Link
+                          to="/friends/books"
+                          className="text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
+                        >
+                          friends&apos; shelves
+                        </Link>
+                        , or lend one of yours from its page.
+                      </p>
+                    </section>
+                  ) : (
                   // No heading of its own: Borrowing and Lent out say it
                   <section
                     aria-label="Loans"
@@ -709,6 +753,7 @@ export default function Home({
                       <LoanList
                         id="borrowing"
                         title="Borrowing"
+                        icon={<BorrowedIcon size={14} />}
                         to="/books?status=borrowed"
                         books={books.borrowed
                           .slice(0, LOANS_SHOWN)
@@ -743,6 +788,7 @@ export default function Home({
                       <LoanList
                         id="lent-out"
                         title="Lent out"
+                        icon={<LentIcon size={14} />}
                         to="/books?status=lent"
                         books={books.lent
                           .slice(0, LOANS_SHOWN)
@@ -752,40 +798,8 @@ export default function Home({
                         empty="Everything's on your shelf."
                       />
                     </div>
-                    {/* Your groups, a line each: the way to their books */}
-                    {groups.length > 0 ? (
-                      <ul className="mt-4">
-                        {groups.map((group) => (
-                          <li key={group.id}>
-                            <Link
-                              to={group.path}
-                              className="-mx-2 flex items-center gap-2.5 rounded-md px-2 py-2 text-sm hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
-                            >
-                              <Faces people={group.faces} size="xs" max={4} />
-                              {/* One line; on phones, the details under the name */}
-                              <span className="min-w-0 text-stone-500 dark:text-stone-400 sm:truncate">
-                                <span className="block truncate font-medium text-stone-900 dark:text-stone-100 sm:inline">
-                                  {group.name}
-                                </span>
-                                <span className="hidden sm:inline"> · </span>
-                                <span className="block truncate sm:inline">
-                                {group.memberCount} {group.memberCount === 1 ? "person" : "people"} ·{" "}
-                                {/* Others' books, as the group's page counts them */}
-                                {group.bookCount === 0
-                                  ? "no books yet"
-                                  : `${group.bookCount} ${group.bookCount === 1 ? "book" : "books"}`}
-                                </span>
-                              </span>
-                              <span aria-hidden="true" className="flex-shrink-0 text-stone-400 dark:text-stone-500">
-                                →
-                              </span>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
                   </section>
-                ),
+                  ),
               },
               {
                 key: "wanted",
@@ -810,7 +824,9 @@ export default function Home({
                           Want to read
                         </Link>
                       </h2>
-                      <AddButton to="/search?for=want">Find books</AddButton>
+                      <AddButton to="/search?for=want" search>
+                        Find books
+                      </AddButton>
                     </div>
                     {wanted.length > 0 ? (
                       <CoverRow
@@ -823,15 +839,10 @@ export default function Home({
                         )}
                       />
                     ) : (
-                      <p className="py-6 text-center text-stone-500 dark:text-stone-400">
+                      // The heading's button finds them, so just what it's for
+                      <p className="text-sm text-stone-500 dark:text-stone-400">
                         Books you&apos;d like to read go here, and you&apos;ll
-                        hear when a friend has one.{" "}
-                        <Link
-                          to="/search?for=want"
-                          className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-                        >
-                          Find one
-                        </Link>
+                        hear when a friend has one.
                       </p>
                     )}
                   </section>
@@ -855,7 +866,10 @@ export default function Home({
                           Recently added
                         </Link>
                       </h2>
-                      <AddButton to="/search">Add books</AddButton>
+                      {/* Until there's one, the empty slot below is the way to add */}
+                      {books.recent.length > 0 ? (
+                        <AddButton to="/search">Add books</AddButton>
+                      ) : null}
                     </div>
                     {books.recent.length > 0 ? (
                       <CoverRow

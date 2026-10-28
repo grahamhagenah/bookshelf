@@ -148,3 +148,19 @@ test("a copy whose work is found later takes the marks, keeping what's already o
   expect(await getMyWorkNote(someoneElse.id, fox.key)).not.toBeNull();
   expect(await prisma.readerNote.count({ where: { bookId: copy.id, userId: someoneElse.id } })).toBe(0);
 });
+
+test("a note on a book read elsewhere keeps its time when edited", async () => {
+  const reader = await makeUser("Reader");
+  const work = { key: "/works/OL1W", title: "Educated", author: "Tara Westover", cover: "" };
+  const first = await saveWorkNote(reader.id, work, { body: "The audiobook." });
+  await new Promise((resolve) => setTimeout(resolve, 20));
+
+  const edited = await saveWorkNote(
+    reader.id,
+    work,
+    { body: "The audiobook, twice." },
+    { keepTime: true },
+  );
+  expect(edited?.body).toBe("The audiobook, twice.");
+  expect(edited?.updatedAt).toEqual(first?.updatedAt);
+});

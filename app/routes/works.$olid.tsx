@@ -1,5 +1,5 @@
 
-import { data, Link, useFetcher, useLoaderData } from "react-router";
+import { data, Form, Link, useFetcher, useLoaderData } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import BookCover from "~/components/book-cover";
@@ -8,6 +8,7 @@ import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
 import OpeningLine from "~/components/opening-line";
 import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
+import SubjectTags from "~/components/subject-tags";
 import { primaryButton, quietButton } from "~/components/ui";
 import { isNotLending } from "~/lending";
 import {
@@ -27,6 +28,7 @@ import {
   addWantToRead,
   isOnWantToRead,
   notifyWanters,
+  removeWantedWork,
 } from "~/models/wish.server";
 import {
   getMyWorkNote,
@@ -57,11 +59,30 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
     noindex: true,
   });
 
+// The trail goes back the way you most likely came: from your shelf, your
+// Want to read or Also read list when the book's on one, else from search
 export const handle = {
-  breadcrumbs: (data: { work?: { title: string } } | undefined) => [
-    { label: "Search", href: "/search" },
-    { label: data?.work?.title ?? "Book" },
-  ],
+  breadcrumbs: (
+    data:
+      | {
+          work?: { title: string };
+          ownCopyId?: string | null;
+          wanted?: boolean;
+          myNote?: { loved: boolean; body: string | null; readAt: unknown } | null;
+        }
+      | undefined,
+  ) => {
+    const myShelf = { label: "My shelf", href: "/books" };
+    const from = data?.ownCopyId
+      ? [myShelf]
+      : data?.wanted
+        ? // The tab is short beside the others; a trail says it in full
+          [myShelf, { label: "Want to read", href: "/want-to-read" }]
+        : data?.myNote && (data.myNote.loved || data.myNote.body || data.myNote.readAt)
+          ? [myShelf, { label: "Also read", href: "/read-elsewhere" }]
+          : [{ label: "Search", href: "/search" }];
+    return [...from, { label: data?.work?.title ?? "Book" }];
+  },
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -148,6 +169,16 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const form = await request.formData();
   const intent = String(form.get("intent") ?? "");
 
+  // Off your Want to read list. Matched by the work, or the title it was put
+  // on the list with, so Open Library needn't be asked
+  if (intent === "unwant") {
+    await removeWantedWork(userId, {
+      title: String(form.get("title") ?? ""),
+      openLibraryKey: key,
+    });
+    return data({ success: true, wanted: false });
+  }
+
   // A heart, read mark or note on a book read somewhere else. What it's
   // saved with comes from an earlier note when there is one, so Open
   // Library is asked only the first time.
@@ -178,6 +209,8 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
               body:
                 intent === "saveNote" && typeof body === "string" ? body : null,
             },
+      // Rewritten from the feed: it keeps its place there
+      { keepTime: form.get("edit") === "true" },
     );
     return data(
       intent === "saveNote" || intent === "deleteNote"
@@ -241,19 +274,25 @@ export default function WorkPage() {
     limit?: string;
   }>();
   const intent = fetcher.formData?.get("intent");
-  const adding = fetcher.state !== "idle" && intent !== "want";
+  const adding = fetcher.state !== "idle" && intent !== "want" && intent !== "unwant";
   const wanting = fetcher.state !== "idle" && intent === "want";
   const added = fetcher.data?.added;
   const ownCopyId = data.ownCopyId ?? fetcher.data?.ownCopyId ?? null;
   const inLibrary = ownCopyId !== null;
-  const wanted = data.wanted || fetcher.data?.wanted === true;
+  // What the last want or unwant said, until the page's own data catches up
+  const wanted =
+    fetcher.state !== "idle" && intent === "unwant"
+      ? false
+      : typeof fetcher.data?.wanted === "boolean"
+        ? fetcher.data.wanted
+        : data.wanted;
   const subjects = cleanSubjects(work.subjects);
-  // One quiet line, subjects as plain words. No publisher: up by the title
-  // it crowded the heading.
+  // One quiet line: the year and the length. What it's about goes in tags
+  // under the author; no publisher, since up by the title it crowded the
+  // heading.
   const details = [
     work.datePublished,
     work.pageCount ? `${work.pageCount} pages` : null,
-    subjects.join(", "),
   ].filter(Boolean);
 
   const heading = (
@@ -274,7 +313,7 @@ export default function WorkPage() {
         ) : null}
       </p>
       {details.length > 0 ? (
-        <p className="mt-3 md:mt-4 text-sm text-stone-500 dark:text-stone-400">
+        <p className="mt-3 md:mt-4 text-[15px] md:text-base text-stone-500 dark:text-stone-400">
           {details.join(" · ")}
         </p>
       ) : null}
@@ -320,23 +359,26 @@ export default function WorkPage() {
               {adding ? "Adding…" : "Add to my shelf"}
             </button>
           )}
-          {added || inLibrary ? null : wanted ? (
-            <p className="inline-flex items-center justify-center gap-1.5 py-2 text-sm text-stone-500 dark:text-stone-400">
-              <BookmarkIcon size={14} />
-              On your want-to-read list
-            </p>
-          ) : (
+          {/* Want to read, as a toggle: pressed while it's on your list,
+              and pressing it again takes it off */}
+          {added || inLibrary ? null : (
             <button
               type="submit"
               name="intent"
-              value="want"
+              value={wanted ? "unwant" : "want"}
+              aria-pressed={wanted}
+              title={wanted ? "Take it off your Want to read list" : undefined}
               disabled={wanting}
-              className={`${quietButton("lg")} inline-flex w-full items-center justify-center gap-1.5 disabled:opacity-60`}
+              className={`${quietButton("lg")} inline-flex w-full items-center justify-center gap-1.5 disabled:opacity-60 ${
+                wanted ? "border-transparent bg-stone-100 dark:border-transparent dark:bg-stone-800" : ""
+              }`}
             >
-              <BookmarkIcon size={14} />
-              {wanting ? "Saving…" : "Want to read"}
+              <BookmarkIcon size={14} filled={wanted} />
+              {wanting ? "Saving…" : wanted ? "On your list" : "Want to read"}
             </button>
           )}
+          {/* Matched by the title it went on the list with, when taken off */}
+          {wanted ? <input type="hidden" name="title" value={work.title ?? ""} /> : null}
           {fetcher.data?.limit ? (
             <p className="text-sm text-stone-600 dark:text-stone-300">
               {fetcher.data.limit}{" "}
@@ -349,6 +391,18 @@ export default function WorkPage() {
             </p>
           ) : null}
         </fetcher.Form>
+        {/* Just added, but meant for the list: undone in one tap */}
+        {added ? (
+          <Form method="post" action={`/books/${added}`} className="-mt-2 text-center">
+            <input type="hidden" name="intent" value="moveToWant" />
+            <button
+              type="submit"
+              className="-my-2 py-2 text-xs text-stone-500 dark:text-stone-400 underline-offset-2 hover:underline hover:text-stone-800 dark:hover:text-stone-200"
+            >
+              Meant Want to read? Move it there
+            </button>
+          </Form>
+        ) : null}
 
         {/* Borrow it instead: a friend already has a copy */}
         {data.friendCopies.length > 0 ? (
@@ -399,7 +453,7 @@ export default function WorkPage() {
           <h2 className="sr-only">
             About this book
           </h2>
-          <p className="max-w-prose whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
+          <p className="max-w-150 whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
             {work.description
               ? stripMarkdown(work.description)
               : data.offline
@@ -411,11 +465,11 @@ export default function WorkPage() {
         {work.authorDetails?.bio ? (
           <section className="mt-8">
             <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
-              {work.authorDetails.name || work.author
-                ? `About ${work.authorDetails.name || work.author}`
+              {work.authorDetails.name
+                ? `About ${work.authorDetails.name}`
                 : "About the author"}
             </h2>
-            <p className="max-w-prose whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
+            <p className="max-w-150 whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
               {work.authorDetails.bio}
             </p>
             <p className="mt-2 flex gap-4 text-sm">
@@ -440,6 +494,7 @@ export default function WorkPage() {
             </p>
           </section>
         ) : null}
+        <SubjectTags subjects={subjects} title={work.title} className="mt-6" />
 
         {/* Your heart, read mark and note when it isn't on your shelf (on
             your shelf, they go on your copy), and your friends' */}

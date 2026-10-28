@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import invariant from "tiny-invariant";
 
 import SharedShelf, { shelfSummary } from "~/components/shared-shelf";
-import { getUserByShareToken } from "~/models/user.server";
+import { getUserByShareToken, giveDefaultHandle } from "~/models/user.server";
 import { seo } from "~/seo";
 import { askToBeFriends, loadSharedShelf } from "~/share.server";
 
@@ -32,7 +32,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   invariant(params.token, "token not found");
   const user = await getUserByShareToken(params.token);
   if (!user) throw new Response("Not Found", { status: 404 });
-  if (user.handle) return redirect(`/@${user.handle}`);
+  // On to the shelf's own address, given now from the owner's name if it
+  // had none (not for demo accounts, which keep this link)
+  const handle = user.handle ?? (await giveDefaultHandle(user.id));
+  if (handle) return redirect(`/@${handle}`);
   return loadSharedShelf(request, { id: user.id, shareToken: params.token });
 };
 

@@ -17,6 +17,7 @@ import {
   SEARCH_MAX_AGE_MS,
 } from "~/models/openlibrary-cache.server";
 import { inEnglish } from "~/models/openlibrary.server";
+import { getWantToReadWorks, sameWork } from "~/models/wish.server";
 import { pageUrl } from "~/page-url";
 import { requireUserId } from "~/session.server";
 import { ENGLISH_EDITION_FIELDS, ENGLISH_EDITION_PARAMS } from "~/utils";
@@ -35,6 +36,8 @@ interface OpenLibrarySuggestion {
   subjects: string | null;
   publisher: string | null;
   inLibrary: boolean;
+  // On your Want to read list already
+  wanted: boolean;
 }
 
 interface FriendSuggestion {
@@ -67,6 +70,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const libraryKeys = new Set(await getUserLibraryKeys(await shelfIds(userId)));
+  const wishes = await getWantToReadWorks(userId);
+  const mine = { libraryKeys, wishes };
 
   if (source === "openLibrary") {
     const [known, found] = await Promise.all([
@@ -79,7 +84,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       query,
       friends: [],
       openLibrary: ranked(query, entries, shelved).map((entry) =>
-        suggestion(entry, libraryKeys),
+        suggestion(entry, mine),
       ),
     });
   }
@@ -101,7 +106,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       notLending: isNotLending(book.notLendingUntil),
     })),
     openLibrary: ranked(query, known, shelved).map((entry) =>
-      suggestion(entry, libraryKeys),
+      suggestion(entry, mine),
     ),
   });
 };
@@ -215,7 +220,7 @@ function ranked(query: string, entries: CatalogEntry[], shelved: Set<string>) {
 
 function suggestion(
   entry: CatalogEntry,
-  libraryKeys: Set<string>,
+  { libraryKeys, wishes }: { libraryKeys: Set<string>; wishes: Awaited<ReturnType<typeof getWantToReadWorks>> },
 ): OpenLibrarySuggestion {
   return {
     title: entry.title,
@@ -227,5 +232,6 @@ function suggestion(
     subjects: entry.subjects,
     publisher: entry.publisher,
     inLibrary: libraryKeys.has(entry.key),
+    wanted: wishes.some((wish) => sameWork(wish, { title: entry.title, openLibraryKey: entry.key })),
   };
 }

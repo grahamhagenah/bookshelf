@@ -6,6 +6,7 @@ import { sameWork } from "~/works";
 
 import { createBook } from "./book.server";
 import { shelfIdsFor } from "./household.server";
+import { saveWorkNote } from "./work-note.server";
 
 export { normalizeTitle, sameWork } from "~/works";
 
@@ -93,6 +94,18 @@ export async function addWantToRead(
   });
 }
 
+// Off your list, from the book's own page: however it got on, by its
+// Open Library work or its title
+export async function removeWantedWork(userId: User["id"], work: Work) {
+  const wishes = await prisma.wantToRead.findMany({
+    where: { userId },
+    select: { id: true, title: true, openLibraryKey: true, isbn: true },
+  });
+  const ids = wishes.filter((wish) => sameWork(wish, work)).map((wish) => wish.id);
+  if (ids.length) await prisma.wantToRead.deleteMany({ where: { id: { in: ids }, userId } });
+  return ids.length;
+}
+
 // One book on your list
 export function getWish(id: string, userId: User["id"]) {
   return prisma.wantToRead.findFirst({ where: { id, userId } });
@@ -132,6 +145,53 @@ export function setWishWork(
 
 export function removeWantToRead(id: string, userId: User["id"]) {
   return prisma.wantToRead.deleteMany({ where: { id, userId } });
+}
+
+// Off your shelf and onto your list: for a book added by mistake that you
+// don't own. Only a copy that's never been lent or borrowed, so no one's
+// History loses a loan. Your read mark, heart and note on it go to the
+// book itself, as Also read keeps them
+export async function moveToWantToRead(
+  userId: User["id"],
+  bookId: Book["id"],
+): Promise<{ ok: true } | { ok: false; reason: "missing" | "lent" }> {
+  const book = await prisma.book.findFirst({
+    // Only your own copy: a housemate's on your shared shelf is theirs to keep
+    where: { id: bookId, userId },
+    select: {
+      id: true,
+      title: true,
+      author: true,
+      cover: true,
+      isbn: true,
+      openLibraryKey: true,
+      borrowerId: true,
+      readAt: true,
+      _count: { select: { lendingHistory: true } },
+      readerNotes: { where: { userId }, select: { loved: true, body: true, readAt: true } },
+    },
+  });
+  if (!book) return { ok: false, reason: "missing" };
+  if (book.borrowerId || book._count.lendingHistory > 0) return { ok: false, reason: "lent" };
+
+  await addWantToRead(userId, {
+    title: book.title,
+    author: book.author,
+    cover: book.cover,
+    openLibraryKey: book.openLibraryKey,
+    isbn: book.isbn,
+  });
+  const mine = book.readerNotes[0];
+  const read = Boolean(book.readAt ?? mine?.readAt);
+  if (book.openLibraryKey?.startsWith("/works/") && (read || mine?.loved || mine?.body)) {
+    await saveWorkNote(
+      userId,
+      { key: book.openLibraryKey, title: book.title, author: book.author, cover: book.cover },
+      { loved: mine?.loved ?? false, body: mine?.body ?? null, read },
+    );
+  }
+  await prisma.book.delete({ where: { id: book.id } });
+  return { ok: true };
 }
 
 // You got hold of a copy: it leaves the list and joins your shelf

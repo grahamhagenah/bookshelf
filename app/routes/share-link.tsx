@@ -2,7 +2,7 @@
 
 import type { ActionFunctionArgs } from "react-router";
 
-import { generateShareToken, getUserById } from "~/models/user.server";
+import { generateShareToken, getUserById, giveDefaultHandle } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
 import { shelfPath } from "~/profile";
 import { requireUserId } from "~/session.server";
@@ -25,5 +25,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Reuse an existing link rather than breaking one already handed out
   const user = await getUserById(userId);
   const shareToken = user?.shareToken ?? (await generateShareToken(userId));
-  return Response.json({ url: `${publicOrigin(request)}${shelfPath({ handle: user?.handle, shareToken })}` });
+  // Its address with their name in it, given now if it hadn't one
+  const handle = await giveDefaultHandle(userId);
+  return Response.json({ url: `${publicOrigin(request)}${shelfPath({ handle, shareToken })}` });
 };

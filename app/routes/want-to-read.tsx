@@ -2,12 +2,24 @@
 import { data, Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import BookCover from "~/components/book-cover";
+import {
+  BookRow,
+  bookRowGrid,
+  RowLine,
+  RowMenu,
+  RowMenuDivider,
+  rowMenuItem,
+  rowMenuList,
+  RowSub,
+  rowEmphasis,
+  rowPrimary,
+  rowSecondary,
+} from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
 import { BookmarkIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
-import ShelfTabs, { AddLink } from "~/components/shelf-tabs";
+import ShelfTabs from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
 import { getUserById } from "~/models/user.server";
 import {
@@ -68,37 +80,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 type Item = Awaited<ReturnType<typeof getWantToRead>>[number];
 
-function Cover({
-  cover,
-  title,
-  author,
-}: {
-  cover: string;
-  title: string;
-  author: string;
-}) {
-  return (
-    <BookCover
-      cover={cover}
-      title={title}
-      author={author}
-      // The same size as Also read's and History's covers
-      className="h-24 w-16 flex-shrink-0"
-    />
-  );
-}
-
-// A row's actions as words, light enough to sit under the book
-const textAction =
-  "font-medium text-stone-700 dark:text-stone-200 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline hover:text-stone-950 dark:hover:text-white transition-colors";
-
 function WantRow({
   item,
   friendIds,
 }: {
-  item: Pick<Item, "id" | "title" | "author" | "cover" | "openLibraryKey"> & {
-    copies: Item["copies"];
-  };
+  item: Item;
   friendIds: string[];
 }) {
   const remove = useFetcher({ key: `remove-${item.id}` });
@@ -112,92 +98,98 @@ function WantRow({
   const copies = [...item.copies].sort(
     (a, b) => Number(b.available) - Number(a.available),
   );
+  // A copy a friend could lend you now: the one to ask for
+  const borrowable = copies.find((copy) => copy.available);
+  // Everyone with a copy, once each
+  const owners = copies
+    .map((copy) => copy.owner)
+    .filter((owner, index, all) => all.findIndex((other) => other.id === owner.id) === index);
   return (
-    <li
+    <BookRow
       id={`wish-${item.id}`}
+      to={page}
+      book={item}
       // The tint reaches past the row's edges with a shadow, so nothing moves
-      className={`flex scroll-mt-24 items-start gap-4 border-b border-stone-100 dark:border-stone-800 py-4 transition-colors ${
+      className={`scroll-mt-24 transition-colors ${
         picked
           ? "bg-forest-600/[0.06] shadow-[0_0_0_10px_rgb(31_107_78/0.06)] dark:bg-forest-400/10 dark:shadow-[0_0_0_10px_rgb(58_154_116/0.1)]"
           : ""
       }`}
-    >
-      {/* The book's own page: straight there when its Open Library work
-          is known, else by way of finding it */}
-      <Link
-        to={page}
-        tabIndex={-1}
-        aria-hidden="true"
-        className="flex-shrink-0"
-      >
-        <Cover cover={item.cover} title={item.title} author={item.author} />
-      </Link>
-      <div className="min-w-0 flex-1">
-        <Link
-          to={page}
-          className="font-medium text-stone-900 dark:text-stone-100 underline-offset-2 hover:underline"
-        >
-          {item.title}
-        </Link>
-        <p className="text-sm text-stone-500 dark:text-stone-400">
-          {item.author}
-        </p>
-        <p className="mt-1.5 text-sm">
-          {copies.length === 0 ? (
-            <span className="text-stone-400 dark:text-stone-500">
-              None of your friends have it yet
-            </span>
+      line={
+        // Who has it, then, quieter, how the copy you could get soonest
+        // stands, as History says who had a book and then when
+        <RowLine>
+          {owners.length === 0 ? (
+            "None of your friends have it yet"
           ) : (
-            copies.map((copy, index) => (
-              <span
-                key={copy.bookId}
-                className="text-stone-600 dark:text-stone-300"
-              >
-                {index > 0 ? (
-                  <span className="text-stone-400 dark:text-stone-500">
-                    {" "}
-                    ·{" "}
+            <>
+              {owners.slice(0, 2).map((owner, index) => (
+                <span key={owner.id}>
+                  {index > 0 ? (owners.length > 2 ? ", " : " and ") : null}
+                  <span className={rowEmphasis}>
+                    <PersonLink id={owner.id} name={owner.firstname} friendIds={friendIds} />
                   </span>
-                ) : null}
-                <PersonLink
-                  id={copy.owner.id}
-                  name={copy.owner.firstname}
-                  friendIds={friendIds}
-                />{" "}
-                has it,{" "}
-                <Link
-                  to={`/books/${copy.bookId}`}
-                  className="font-medium text-stone-800 dark:text-stone-200 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
-                >
-                  {copy.available
-                    ? "ask to borrow it"
-                    : copy.notLending
-                      ? "not lending it right now"
-                      : "lent out right now"}
-                </Link>
-              </span>
-            ))
+                </span>
+              ))}
+              {owners.length > 2
+                ? ` and ${owners.length - 2} ${owners.length === 3 ? "other" : "others"} have it`
+                : owners.length === 2
+                  ? " have it"
+                  : " has it"}
+              {/* Why there's no asking yet; one free to borrow has its
+                  button below instead */}
+              {borrowable ? null : (
+                <RowSub>
+                  <Link
+                    to={`/books/${copies[0].bookId}`}
+                    className="underline-offset-2 hover:underline hover:text-stone-600 dark:hover:text-stone-300"
+                  >
+                    {copies[0].notLending ? "Not lending right now" : "Lent out right now"}
+                  </Link>
+                </RowSub>
+              )}
+            </>
           )}
-        </p>
-        {/* What to do with it, quietly under the rest */}
-        <div className="mt-2 flex items-center gap-4 text-sm">
-          <Form method="post">
-            <input type="hidden" name="intent" value="gotIt" />
-            <input type="hidden" name="id" value={item.id} />
-            <button type="submit" className={textAction} title="Move it to your shelf">
-              Got a copy
-            </button>
-          </Form>
+        </RowLine>
+      }
+      // Taking it off the list: last and quietest, in the corner's menu
+      corner={
+        <RowMenu label={`More for ${item.title}`}>
+          <Link to={page} role="menuitem" className={rowMenuItem}>
+            Open book page
+          </Link>
+          <RowMenuDivider />
           <remove.Form method="post">
             <input type="hidden" name="intent" value="remove" />
             <input type="hidden" name="id" value={item.id} />
-            <button type="submit" className={`${textAction} text-stone-500 dark:text-stone-400`}>
-              Remove
+            <button type="submit" role="menuitem" className={rowMenuItem}>
+              Remove from <span className={rowMenuList}>Want to read</span>
             </button>
           </remove.Form>
-        </div>
-      </div>
-    </li>
+        </RowMenu>
+      }
+      // Asking a friend leads when one has it free, then getting your own copy
+      actions={
+        <>
+          {borrowable ? (
+            <Link to={`/books/${borrowable.bookId}`} className={rowPrimary}>
+              Ask to borrow
+            </Link>
+          ) : null}
+          <Form method="post">
+            <input type="hidden" name="intent" value="gotIt" />
+            <input type="hidden" name="id" value={item.id} />
+            <button
+              type="submit"
+              className={borrowable ? rowSecondary : rowPrimary}
+              title="Move it to your shelf"
+            >
+              Got a copy
+            </button>
+          </Form>
+        </>
+      }
+    />
   );
 }
 
@@ -214,13 +206,6 @@ export default function WantToRead() {
     <Layout title="Want to read">
       <section>
         <ShelfTabs counts={{ ...counts, want: items.length }} add={items.length > 0 ? { to: "/search?for=want", label: "Add a book" } : undefined} />
-        {/* What the list is for is said only while it's empty, in its place.
-            Phones have no room beside the tabs, so the way to add is here */}
-        {items.length > 0 ? (
-          <div className="-mt-2 flex justify-end sm:hidden">
-            <AddLink to="/search?for=want">Add a book</AddLink>
-          </div>
-        ) : null}
 
         {limit ? (
           <p
@@ -241,7 +226,7 @@ export default function WantToRead() {
           <EmptyList
             icon={<BookmarkIcon size={28} />}
             title="Books you'd like to read"
-            action={{ to: "/search?for=want", label: "Add a book" }}
+            action={{ to: "/search?for=want", label: "Add a book", plus: true }}
           >
             Keep the ones you don&apos;t own here, and you&apos;ll hear when a
             friend has a copy to lend. Or{" "}
@@ -251,9 +236,9 @@ export default function WantToRead() {
             from Goodreads.
           </EmptyList>
         ) : (
-          // Two columns where there's room; each row ruled underneath, so
-          // the rules line up across both
-          <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
+          // In columns where there's room; each row ruled underneath, so
+          // the rules line up across them
+          <ul className={`mt-4 ${bookRowGrid}`}>
             {items.map((item) => (
               <WantRow key={item.id} item={item} friendIds={friendIds} />
             ))}

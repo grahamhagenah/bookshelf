@@ -13,9 +13,10 @@ export interface Tab {
   end?: boolean;
 }
 
-// The same weight either way, so switching tabs never nudges the others
+// The same weight either way, so switching tabs never nudges the others.
+// A size smaller on phones, so a row of four fits without scrolling
 const tabClass = ({ isActive }: { isActive: boolean }) =>
-  `flex items-center gap-1.5 whitespace-nowrap border-b-2 px-1 pb-2.5 font-medium transition-colors ${
+  `flex items-center gap-1 sm:gap-1.5 whitespace-nowrap border-b-2 px-0.5 sm:px-1 pb-2.5 text-sm sm:text-base font-medium transition-colors ${
     isActive
       ? "border-stone-900 dark:border-stone-100 text-stone-900 dark:text-stone-100"
       : "border-transparent text-stone-500 dark:text-stone-400 hover:border-stone-300 dark:hover:border-stone-600 hover:text-stone-800 dark:hover:text-stone-200"
@@ -36,12 +37,13 @@ export default function Tabs({
       <nav
         aria-label={label}
         // Down over the rule, so the current tab's underline covers it
-        className="-mb-px flex min-w-0 flex-1 gap-5 sm:gap-6 overflow-x-auto [scrollbar-width:none]"
+        className="-mb-px flex min-w-0 flex-1 gap-4 sm:gap-6 overflow-x-auto [scrollbar-width:none]"
       >
         {tabs.map((tab) => (
           <NavLink key={tab.to} to={tab.to} end={tab.end} className={tabClass}>
             {tab.label}
-            {tab.count != null ? (
+            {/* No "0": an empty list's tab is just its name */}
+            {tab.count ? (
               <span className="font-normal text-stone-400 dark:text-stone-500">{tab.count}</span>
             ) : null}
           </NavLink>

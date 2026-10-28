@@ -3,6 +3,8 @@ import { mkdir, open, readFile, rename, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
+import sharp from "sharp";
+
 // Covers come from Open Library, which answers slowly (two redirects to
 // Internet Archive) and is sometimes down. Each cover is fetched once and
 // kept on disk.
@@ -210,6 +212,44 @@ export async function loadCover(coverPath: string) {
       inFlight.delete(coverPath),
     );
     inFlight.set(coverPath, pending);
+  }
+  return pending;
+}
+
+// The cover as WebP, for browsers that take it: about half a JPEG cover's
+// weight with no loss you can see at the sizes covers are shown. Made once
+// from the kept cover and kept beside it. Where WebP comes out no smaller,
+// or the picture can't be read, the original is kept in its place, so it's
+// never worse than the JPEG
+const WEBP_QUALITY = 80;
+const webpInFlight = new Map<string, Promise<Buffer>>();
+
+async function toWebp(bytes: Buffer) {
+  try {
+    const webp = await sharp(bytes).webp({ quality: WEBP_QUALITY }).toBuffer();
+    return webp.length < bytes.length ? webp : bytes;
+  } catch {
+    return bytes;
+  }
+}
+
+export async function loadCoverWebp(coverPath: string) {
+  const original = await loadCover(coverPath);
+  if (!original) return null;
+  const file = `${fileFor(coverPath)}.webp`;
+  const cached = await readCached(file);
+  if (cached) return cached;
+
+  let pending = webpInFlight.get(file);
+  if (!pending) {
+    pending = toWebp(original)
+      .then(async (bytes) => {
+        // Not kept is only slower next time, so it doesn't fail the picture
+        await store(file, bytes).catch(() => undefined);
+        return bytes;
+      })
+      .finally(() => webpInFlight.delete(file));
+    webpInFlight.set(file, pending);
   }
   return pending;
 }

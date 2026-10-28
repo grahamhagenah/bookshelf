@@ -45,32 +45,37 @@ export default function SideRail({ friends, groups, children, sticky = true }: S
     <aside
       className={`hidden space-y-10 self-start lg:block ${sticky ? "lg:sticky lg:top-24" : ""}`}
     >
-      <section aria-labelledby="rail-friends">
-        <div className="mb-3 flex items-baseline justify-between gap-3">
-          <h2 id="rail-friends" className={heading}>
-            Friends
-            <span className="ml-1.5 text-sm font-normal text-stone-400 dark:text-stone-500">
-              {friends.length}
-            </span>
-          </h2>
-          <Link to={friends.length > 0 ? "/friends" : "/friends/add"} className={link}>
-            {friends.length > 0 ? "See all" : "Find friends"}
-          </Link>
-        </div>
-        {friends.length > 0 ? (
+      {/* Your friends, once there are some: before then the page itself
+          asks for them, so this would only say it twice */}
+      {friends.length > 0 ? (
+        <section aria-labelledby="rail-friends">
+          <div className="mb-3 flex items-baseline justify-between gap-3">
+            <h2 id="rail-friends" className={heading}>
+              Friends
+              <span className="ml-1.5 text-sm font-normal text-stone-400 dark:text-stone-500">
+                {friends.length}
+              </span>
+            </h2>
+            <Link to="/friends" className={link}>
+              See all
+            </Link>
+          </div>
           <ul className="flex flex-wrap gap-2">
             {friends.slice(0, 12).map((friend) => (
               <li key={friend.id}>
                 <Link
                   to={`/friend/${friend.id}`}
                   title={`${friend.firstname} ${friend.surname}`}
-                  className="block rounded-full ring-2 ring-transparent hover:ring-stone-300 dark:hover:ring-stone-600 transition-shadow"
+                  className="group block rounded-full"
                 >
+                  {/* On hover, a ring in their picture's own color, as the
+                      header's account button has */}
                   <Avatar
                     firstname={friend.firstname}
                     surname={friend.surname}
                     icon={friend.profileEmoji}
                     size="md"
+                    className="ring-2 ring-transparent group-hover:ring-current/25 group-focus-visible:ring-current/40 transition-shadow"
                   />
                   <span className="sr-only">
                     {friend.firstname} {friend.surname}
@@ -79,12 +84,8 @@ export default function SideRail({ friends, groups, children, sticky = true }: S
               </li>
             ))}
           </ul>
-        ) : (
-          <p className="text-sm text-stone-400 dark:text-stone-500">
-            Friends&apos; books show up here once you have some.
-          </p>
-        )}
-      </section>
+        </section>
+      ) : null}
 
       {groups ? <RailGroups groups={groups} /> : null}
 

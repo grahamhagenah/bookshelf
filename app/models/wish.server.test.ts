@@ -1,17 +1,22 @@
 // @vitest-environment node
 import { makeBook, makeUser, prisma } from "../../test/db";
 
+import { lendBook, returnBook } from "./book.server";
+import { createHouseholdInvite, joinHousehold } from "./household.server";
 import { createFriendship } from "./user.server";
 import {
   addWantToRead,
   getWantToRead,
   getWish,
   moveToShelf,
+  moveToWantToRead,
   notifyWanters,
+  removeWantedWork,
   sameWork,
   setWishWork,
   workKeyFromFriends,
 } from "./wish.server";
+import { listMyWorkNotes } from "./work-note.server";
 
 const wish = (title: string) => ({ title, author: "Someone", cover: "" });
 
@@ -105,4 +110,52 @@ test("a book on the list without a work borrows a friend's copy's, and keeps it"
   expect(await getWish(piranesi.id, stranger.id)).toBeNull();
   await setWishWork(piranesi.id, stranger.id, "/works/OL9W");
   expect((await getWish(piranesi.id, me.id))?.openLibraryKey).toBe("/works/OL1W");
+});
+
+test("a book comes off the list from its own page, by its work or its title", async () => {
+  const dana = await makeUser("Dana");
+  await addWantToRead(dana.id, { ...wish("Martyr!"), openLibraryKey: "/works/OL1W" });
+  // On the list from an import, with no work yet
+  await addWantToRead(dana.id, wish("Hamnet"));
+  await addWantToRead(dana.id, wish("Circe"));
+
+  expect(await removeWantedWork(dana.id, { title: "Martyr!", openLibraryKey: "/works/OL1W" })).toBe(1);
+  expect(await removeWantedWork(dana.id, { title: "Hamnet", openLibraryKey: "/works/OL2W" })).toBe(1);
+  expect((await getWantToRead(dana.id)).map((item) => item.title)).toEqual(["Circe"]);
+
+  // Only your own list
+  const kim = await makeUser("Kim");
+  expect(await removeWantedWork(kim.id, { title: "Circe" })).toBe(0);
+  expect(await getWantToRead(dana.id)).toHaveLength(1);
+});
+
+test("a book put on your shelf by mistake moves to your list, your marks with it", async () => {
+  const dana = await makeUser("Dana");
+  const book = await makeBook(dana.id, "Martyr!");
+  await prisma.book.update({
+    where: { id: book.id },
+    data: { openLibraryKey: "/works/OL1W", readAt: new Date() },
+  });
+  await prisma.readerNote.create({ data: { bookId: book.id, userId: dana.id, loved: true } });
+
+  expect(await moveToWantToRead(dana.id, book.id)).toEqual({ ok: true });
+  expect(await prisma.book.findUnique({ where: { id: book.id } })).toBeNull();
+  expect((await getWantToRead(dana.id)).map((item) => item.title)).toEqual(["Martyr!"]);
+  // The heart and read mark are kept, on the book itself
+  expect(await listMyWorkNotes(dana.id)).toMatchObject([{ title: "Martyr!", loved: true }]);
+
+  // Not someone else's book
+  const kim = await makeUser("Kim");
+  const theirs = await makeBook(kim.id, "Circe");
+  expect(await moveToWantToRead(dana.id, theirs.id)).toEqual({ ok: false, reason: "missing" });
+  // Not even a housemate's, on the shelf you share
+  await joinHousehold(kim.id, await createHouseholdInvite(dana.id));
+  expect(await moveToWantToRead(dana.id, theirs.id)).toEqual({ ok: false, reason: "missing" });
+
+  // Not one that's been lent: its loans are in someone's History
+  const lent = await makeBook(dana.id, "Piranesi");
+  await lendBook(lent.id, kim.id);
+  await returnBook(lent.id);
+  expect(await moveToWantToRead(dana.id, lent.id)).toEqual({ ok: false, reason: "lent" });
+  expect(await prisma.book.findUnique({ where: { id: lent.id } })).not.toBeNull();
 });

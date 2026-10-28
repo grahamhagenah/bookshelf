@@ -1,14 +1,26 @@
-import { data, Link, useLoaderData } from "react-router";
-import type { LoaderFunctionArgs, MetaFunction } from "react-router";
+import { data, Link, useFetcher, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import BookCover from "~/components/book-cover";
+import {
+  BookRow,
+  bookRowGrid,
+  rowDate,
+  RowLine,
+  RowMenu,
+  RowMenuDivider,
+  rowMenuHint,
+  rowMenuItem,
+  rowMenuList,
+  RowSub,
+  YourNoteActions,
+} from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
-import { HeartIcon, ReadIcon } from "~/components/icons";
+import { ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
-import ShelfTabs, { AddLink } from "~/components/shelf-tabs";
+import ShelfTabs from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
 import { findImportedWorks } from "~/models/import.server";
-import { listMyWorkNotes } from "~/models/work-note.server";
+import { listMyWorkNotes, removeWorkNote } from "~/models/work-note.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -22,6 +34,50 @@ export const meta: MetaFunction = () =>
 export const handle = {
   breadcrumb: () => <span>Also read</span>,
 };
+
+// Taking a book off Also read: your read mark, heart and note on it
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const userId = await requireUserId(request);
+  const form = await request.formData();
+  if (form.get("intent") === "remove") {
+    await removeWorkNote(userId, String(form.get("id") ?? ""));
+  }
+  return data({ ok: true });
+};
+
+// Its ⋯: the book's page; onto your shelf, for a book you've since got a
+// copy of (your marks go with it); and off the list, with what that
+// clears said plainly
+function AlsoReadMenu({ id, title, page }: { id: string; title: string; page: string | null }) {
+  const remove = useFetcher();
+  const add = useFetcher();
+  return (
+    <RowMenu label={`More for ${title}`}>
+      {page ? (
+        <>
+          <Link to={page} role="menuitem" className={rowMenuItem}>
+            Open book page
+          </Link>
+          <add.Form method="post" action={page}>
+            <button type="submit" role="menuitem" className={rowMenuItem}>
+              Add to <span className={rowMenuList}>My shelf</span>
+              <span className={rowMenuHint}>Your note and heart go with it</span>
+            </button>
+          </add.Form>
+          <RowMenuDivider />
+        </>
+      ) : null}
+      <remove.Form method="post" action="/read-elsewhere">
+        <input type="hidden" name="intent" value="remove" />
+        <input type="hidden" name="id" value={id} />
+        <button type="submit" role="menuitem" className={rowMenuItem}>
+          Remove from <span className={rowMenuList}>Also read</span>
+          <span className={rowMenuHint}>Clears your read mark, heart and note</span>
+        </button>
+      </remove.Form>
+    </RowMenu>
+  );
+}
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -42,68 +98,60 @@ export default function ReadElsewhere() {
   return (
     <Layout title="Also read">
       <section>
-        <ShelfTabs counts={{ ...counts, elsewhere: items.length }} add={items.length > 0 ? { to: "/search", label: "Find a book" } : undefined} />
-        {/* What the list is for is said only while it's empty, in its place.
-            Phones have no room beside the tabs, so the way to add is here */}
-        {items.length > 0 ? (
-          <div className="-mt-2 flex justify-end sm:hidden">
-            <AddLink to="/search">Find a book</AddLink>
-          </div>
-        ) : null}
+        <ShelfTabs counts={{ ...counts, elsewhere: items.length }} add={items.length > 0 ? { to: "/search", label: "Find a book", search: true } : undefined} />
 
         {items.length === 0 ? (
           <EmptyList
             icon={<ReadIcon size={28} />}
             title="Books you've read elsewhere"
-            action={{ to: "/search", label: "Find a book" }}
+            action={{ to: "/search", label: "Find a book", search: true }}
           >
             The ones that aren&apos;t on your shelf: from the library, borrowed
             long ago, given away. Find one, then mark it read, love it or leave
             a note on its page.
           </EmptyList>
         ) : (
-          // Two columns where there's room, as To read has
-          <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
-            {items.map((item) => (
-              <li key={item.id} className="border-b border-stone-100 dark:border-stone-800">
-                <Link
-                  // One still being looked up opens a search for it
-                  to={
-                    isWork(item.workKey)
-                      ? item.workKey
-                      : `/search?q=${encodeURIComponent(`${item.title} ${item.author}`)}`
+          // In columns where there's room, as Want to read has
+          <ul className={`mt-4 ${bookRowGrid}`}>
+            {items.map((item) => {
+              // One still being looked up opens a search for it
+              const page = isWork(item.workKey)
+                ? item.workKey
+                : `/search?q=${encodeURIComponent(`${item.title} ${item.author}`)}`;
+              return (
+                <BookRow
+                  key={item.id}
+                  to={page}
+                  book={item}
+                  // What you did with it and when, as History says who had it
+                  // and when; then the same buttons History gives a book you
+                  // borrowed: your note, and a heart to give
+                  corner={
+                    <AlsoReadMenu
+                      id={item.id}
+                      title={item.title}
+                      page={isWork(item.workKey) ? item.workKey : null}
+                    />
                   }
-                  className="-mx-2 flex items-start gap-4 rounded-lg px-2 py-4 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
-                >
-                  <BookCover
-                    cover={item.cover}
-                    title={item.title}
-                    author={item.author}
-                    className="h-24 w-16 flex-shrink-0"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-stone-900 dark:text-stone-100">
-                      {item.title}
-                    </p>
-                    <p className="text-sm text-stone-500 dark:text-stone-400">
-                      {item.author}
-                    </p>
-                    {/* That there's a note, as History says it, rather than
-                        the note itself, which is on the book's page */}
-                    <p className="mt-2 flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400">
-                      {item.loved ? <HeartIcon size={13} filled className="text-rose-400" /> : null}
-                      {item.body
-                        ? item.loved
-                          ? "You loved it and left a note"
-                          : "You left a note"
-                        : item.loved
-                          ? "You loved it"
-                          : "Read"}
-                    </p>
-                  </div>
-                </Link>
-              </li>
-            ))}
+                  line={
+                    <RowLine>
+                      {item.readAt ? "You read it" : item.body ? "You left a note" : "You loved it"}
+                      {item.readAt ? <RowSub>{rowDate(item.readAt)}</RowSub> : null}
+                    </RowLine>
+                  }
+                  actions={
+                    isWork(item.workKey) ? (
+                      <YourNoteActions
+                        notes={`${page}#notes`}
+                        loveAction={page}
+                        loved={item.loved}
+                        hasNote={Boolean(item.body)}
+                      />
+                    ) : null
+                  }
+                />
+              );
+            })}
           </ul>
         )}
       </section>

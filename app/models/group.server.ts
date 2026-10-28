@@ -61,6 +61,38 @@ export async function getMyGroups(userId: User["id"]) {
   );
 }
 
+// Your groups as the Groups page shows them, like friends' cards: who's
+// in each, by first name with you first, when you joined, and the newest
+// books on the others' shelves
+export async function getGroupPreviews(userId: User["id"]) {
+  const groups = await getMyGroups(userId);
+  return Promise.all(
+    groups.map(async (group) => {
+      const [people, newest, mine] = await Promise.all([
+        prisma.user.findMany({
+          where: { id: { in: group.memberIds } },
+          select: { id: true, firstname: true },
+        }),
+        prisma.book.findMany({
+          where: { userId: { in: group.memberIds.filter((id) => id !== userId) } },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: { id: true, title: true, author: true, cover: true, createdAt: true },
+        }),
+        prisma.groupMember.findUnique({
+          where: { groupId_userId: { groupId: group.id, userId } },
+          select: { joinedAt: true },
+        }),
+      ]);
+      const others = group.memberIds
+        .filter((id) => id !== userId)
+        .map((id) => people.find((someone) => someone.id === id)?.firstname)
+        .filter((name): name is string => Boolean(name));
+      return { ...group, names: ["You", ...others], newest, joinedAt: mine?.joinedAt ?? null };
+    }),
+  );
+}
+
 // Everything the group's page shows about the people in it, for someone
 // in it. Whose books you can see is your friends among them: anyone
 // you've since unfriended keeps their shelf closed, as anywhere else.

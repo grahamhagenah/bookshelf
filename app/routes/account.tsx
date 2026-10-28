@@ -23,11 +23,9 @@ import {
   BorrowedIcon,
   CheckCircleIcon,
   ExportIcon,
-  GridViewIcon,
   GroupIcon,
   ImportIcon,
   LentIcon,
-  ListViewIcon,
 } from "~/components/icons";
 import Layout from "~/components/layout";
 import { joinNames } from "~/components/shared-with";
@@ -46,6 +44,7 @@ import {
   getUserByEmail,
   updateUser,
   generateShareToken,
+  giveDefaultHandle,
   revokeShareToken,
   changePassword,
   setAppearance,
@@ -61,7 +60,7 @@ import { BIO_MAX, HANDLE_MAX, PIN_MAX } from "~/profile";
 import { getPins, movePin, saveProfile, unpinBook } from "~/profile.server";
 import { seo } from "~/seo";
 import { getSession, requireUserId, sessionStorage } from "~/session.server";
-import { coverSizeOf, isCoverSize, isLibraryView, isTheme, libraryViewOf, type LoaderData, themeOf } from "~/utils";
+import { coverSizeOf, isCoverSize, isTheme, type LoaderData, themeOf } from "~/utils";
 import { sendVerification } from "~/verify-email.server";
 
 export const meta: MetaFunction = () =>
@@ -83,6 +82,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
     return redirect("/account?upgraded=1#plan");
   }
+  // A page shared before handles came by default gets one from the name
+  await giveDefaultHandle(userId);
   const [user, bookStats, household, plan, pins] = await Promise.all([
     getUserById(userId),
     getBookStats(userId, await shelfIds(userId)),
@@ -217,14 +218,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
-  // Theme, library view and cover size: one at a time, whichever was sent
+  // Theme and cover size: one at a time, whichever was sent
   if (intent === "appearance") {
     const theme = formData.get("theme");
-    const libraryView = formData.get("libraryView");
     const coverSize = formData.get("coverSize");
     await setAppearance(userId, {
       theme: isTheme(theme) ? theme : undefined,
-      libraryView: isLibraryView(libraryView) ? libraryView : undefined,
       coverSize: isCoverSize(coverSize) ? coverSize : undefined,
     });
     return data({
@@ -625,16 +624,6 @@ export default function Account() {
             ]}
           />
           <Choice
-            name="libraryView"
-            value={libraryViewOf(user)}
-            label="Shelf view"
-            hint="For your shelf and your friends'"
-            options={[
-              ["cover", "Covers", GridViewIcon],
-              ["list", "List", ListViewIcon],
-            ]}
-          />
-          <Choice
             name="coverSize"
             value={coverSizeOf(user)}
             label="Cover size"
@@ -927,10 +916,12 @@ function IconPicker({
 }) {
   const picture = pictureOf(current);
   const [color, setColor] = useState<PlateColor | null>(picture.color);
+  // The chosen one's ring is in its own color: each button's text is
+  // already the tone it shows
   const ring = (on: boolean) =>
     `ring-offset-2 ring-offset-white dark:ring-offset-stone-950 transition-shadow ${
       on
-        ? "ring-2 ring-forest-600 dark:ring-forest-400"
+        ? "ring-2 ring-current"
         : "ring-1 ring-stone-200 dark:ring-stone-700 hover:ring-stone-400 dark:hover:ring-stone-500"
     }`;
   const choices = Object.keys(PLATE_COLORS) as PlateColor[];
@@ -978,14 +969,16 @@ function IconPicker({
           value={value(null, color)}
           aria-label="Use your initials"
           aria-pressed={!picture.icon}
-          className={`rounded-full ${ring(!picture.icon)}`}
+          className="rounded-full"
         >
+          {/* The ring on the plate itself, so it takes the plate's color */}
           <Bookplate
             firstname={firstname}
             surname={surname}
             color={color}
             box="h-11 w-11 text-sm"
             framed
+            className={ring(!picture.icon)}
           />
         </button>
         {AVATAR_ICONS.map((icon) => {
@@ -1690,8 +1683,7 @@ function PublicPage({
     <div>
       {heading}
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-        Anyone with the link can see your shelf without signing in, apart from
-        any book you keep off it from that book&apos;s page.
+        Anyone with the link can see your shelf without signing in.
       </p>
       <fetcher.Form method="post" className="mt-3 grid grid-cols-1 gap-3">
         <input type="hidden" name="intent" value="saveProfile" />
@@ -1747,8 +1739,8 @@ function PublicPage({
               id="handle-hint"
               className="mt-1.5 text-sm text-stone-500 dark:text-stone-400"
             >
-              Pick a handle for a link that&apos;s easy to share. Until then,
-              Copy gives you a longer link that works just the same.
+              Pick a handle to get a short link with your name in it. Until
+              you do, your page has a random link, and Copy copies that.
             </p>
           )}
         </div>

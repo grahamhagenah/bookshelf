@@ -22,8 +22,10 @@ const person = {
 export async function getHistory(userId: User["id"]) {
   const myShelf = await shelfIds(userId);
   const [borrowed, lent] = await Promise.all([
+    // Only loans that are over: ones still out are on your shelf and the
+    // home page already
     prisma.lendingHistory.findMany({
-      where: { borrowerId: userId },
+      where: { borrowerId: userId, returnedAt: { not: null }, hiddenByBorrower: false },
       select: {
         id: true,
         borrowedAt: true,
@@ -41,7 +43,7 @@ export async function getHistory(userId: User["id"]) {
       },
     }),
     prisma.lendingHistory.findMany({
-      where: { book: { userId: { in: myShelf } } },
+      where: { book: { userId: { in: myShelf } }, returnedAt: { not: null }, hiddenByLender: false },
       select: {
         id: true,
         borrowedAt: true,
@@ -94,9 +96,31 @@ export async function getHistory(userId: User["id"]) {
       }),
     ),
   ];
+  // The most recently back first
   return entries.sort(
-    (a, b) => b.borrowedAt.getTime() - a.borrowedAt.getTime(),
+    (a, b) =>
+      (b.returnedAt ?? b.borrowedAt).getTime() - (a.returnedAt ?? a.borrowedAt).getTime(),
   );
+}
+
+// Off your History, and only yours: a book you borrowed leaves the
+// borrower's side, one you lent leaves your shelf's. Your friend's History
+// keeps it
+export async function hideFromHistory(
+  userId: User["id"],
+  entry: { id: string; kind: "borrowed" | "lent" },
+) {
+  if (entry.kind === "borrowed") {
+    await prisma.lendingHistory.updateMany({
+      where: { id: entry.id, borrowerId: userId },
+      data: { hiddenByBorrower: true },
+    });
+  } else {
+    await prisma.lendingHistory.updateMany({
+      where: { id: entry.id, book: { userId: { in: await shelfIds(userId) } } },
+      data: { hiddenByLender: true },
+    });
+  }
 }
 
 // The numbers on the tabs above your library, want-to-read list and history
@@ -106,9 +130,12 @@ export async function getShelfCounts(userId: User["id"]) {
     getBookStats(userId, myShelf),
     prisma.wantToRead.count({ where: { userId } }),
     prisma.workNote.count({ where: { userId } }),
-    prisma.lendingHistory.count({ where: { borrowerId: userId } }),
+    // History is loans that are over, as its page lists them
     prisma.lendingHistory.count({
-      where: { book: { userId: { in: myShelf } } },
+      where: { borrowerId: userId, returnedAt: { not: null }, hiddenByBorrower: false },
+    }),
+    prisma.lendingHistory.count({
+      where: { book: { userId: { in: myShelf } }, returnedAt: { not: null }, hiddenByLender: false },
     }),
   ]);
   return {

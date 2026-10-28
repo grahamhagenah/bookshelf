@@ -10,6 +10,7 @@ import { LentIcon, PencilIcon } from "~/components/icons";
 import OpeningLine, { openingLineType } from "~/components/opening-line";
 import PersonLink from "~/components/person-link";
 import ReaderNotes, { HideToggle, PinToggle } from "~/components/reader-notes";
+import SubjectTags from "~/components/subject-tags";
 import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
 import { importCover, isOpenLibraryCover } from "~/covers.server";
 import { daysUntil, dueText } from "~/due";
@@ -71,6 +72,7 @@ import {
   createReaderNoteNotification,
   getLoanReply,
 } from "~/models/user.server";
+import { moveToWantToRead } from "~/models/wish.server";
 import {
   adoptWorkNotes,
   getFriendsWorkNotes,
@@ -162,8 +164,8 @@ function AboutAuthor({
   const clipped = long && !open;
 
   // The first few lines of the bio, fading out, with the rest (and the
-  // links) a tap away, under the author's name. The bio usually opens with
-  // the dates, so they don't repeat here.
+  // links) a tap away, under the author's own name. The bio usually opens
+  // with the dates, so they don't repeat here.
   return (
     <section className="mt-8">
       <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
@@ -173,7 +175,7 @@ function AboutAuthor({
         <p
           ref={bioRef}
           id={`bio-${author.key}`}
-          className={`summary max-w-prose text-pretty leading-relaxed text-stone-700 dark:text-stone-300 ${
+          className={`summary max-w-150 text-pretty leading-relaxed text-stone-700 dark:text-stone-300 ${
             clipped
               ? "line-clamp-3 [mask-image:linear-gradient(to_bottom,black_45%,transparent)]"
               : ""
@@ -663,6 +665,19 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     return data({ noteSaved: true });
   }
 
+  // Added by mistake, not owned: off the shelf and onto your list
+  if (intent === "moveToWant") {
+    if (book.userId !== userId) {
+      throw new Response("Unauthorized", { status: 403 });
+    }
+    const moved = await moveToWantToRead(userId, book.id);
+    if (moved.ok) return redirect("/want-to-read");
+    return data(
+      { error: "This copy has been lent, so it stays on your shelf. Delete it from Edit if you must." },
+      { status: 400 },
+    );
+  }
+
   if (intent === "delete") {
     // Verify ownership before deleting
     if (!managerIds.includes(book.userId)) {
@@ -844,6 +859,8 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
     await returnBook(book.id);
     await handOn(book.id, userId);
+    // From the feed: it stays where it was, and says so
+    if (formData.get("stay") === "true") return data({ returned: true });
     return redirect("/books");
   }
 
@@ -1972,6 +1989,9 @@ export default function BookDetailsPage() {
   // The book's main action, which the bar on phones stands in for once
   // it's scrolled away
   const actionRef = useRef<HTMLDivElement>(null);
+  const returnLabel = data.book.user
+    ? `Return book to ${data.book.user.firstname}`
+    : "Return book";
 
   // A book seen for the first time finishes its look-up on Open Library
   // after the page is up; the page reloads its data when that's done. A
@@ -2059,14 +2079,13 @@ export default function BookDetailsPage() {
   const showNotLending =
     !data.isOwner && !data.isBorrower && data.isFriend && notLending;
   const lendsAgainOn = lendingAgainOn(data.book.notLendingUntil);
-  // One quiet line: the year, the length and what it's about, the subjects
-  // as plain words. The publisher stays under Edit details; up here it
-  // crowded the title.
+  // One quiet line: the year and the length. What it's about goes in tags
+  // under the author; the publisher stays under Edit details, since up here
+  // it crowded the title.
   const subjects = cleanSubjects(data.book.subjects);
   const details = [
     data.book.datePublished,
     data.book.pageCount ? `${data.book.pageCount} pages` : null,
-    subjects.join(", "),
   ].filter(Boolean);
 
   // Title and details: beside the cover on phones, in the main column on
@@ -2090,7 +2109,7 @@ export default function BookDetailsPage() {
       </p>
 
       {details.length > 0 ? (
-        <p className="mt-3 md:mt-4 text-sm text-stone-500 dark:text-stone-400">
+        <p className="mt-3 md:mt-4 text-[15px] md:text-base text-stone-500 dark:text-stone-400">
           {details.join(" · ")}
         </p>
       ) : lookingUp ? (
@@ -2182,6 +2201,19 @@ export default function BookDetailsPage() {
           ) : null}
           {data.isOwner && !isEditing ? (
             <NotLendingNotice until={data.book.notLendingUntil} />
+          ) : null}
+          {/* Added by mistake: back to the list in one tap, for a copy
+              that's never been lent, so no one's History loses it */}
+          {data.book.userId === data.currentUser?.id && !isEditing && !data.book.borrower && data.lendingHistory.length === 0 ? (
+            <Form method="post" className="text-center">
+              <input type="hidden" name="intent" value="moveToWant" />
+              <button
+                type="submit"
+                className="-my-2 py-2 text-xs text-stone-500 dark:text-stone-400 underline-offset-2 hover:underline hover:text-stone-800 dark:hover:text-stone-200"
+              >
+                Don&apos;t own it? Move to Want to read
+              </button>
+            </Form>
           ) : null}
           {showNotLending ? (
             <p className={`block text-center ${quietLabel}`}>
@@ -2287,14 +2319,14 @@ export default function BookDetailsPage() {
           ) : null}
           {/* Whose it is and when it's due are in the lending history */}
           {data.isBorrower ? (
-            <Form method="post">
-              <input type="hidden" name="intent" value="return" />
-              <button type="submit" className={`w-full ${quietButton("lg")}`}>
-                {data.book.user
-                  ? `Return book to ${data.book.user.firstname}`
-                  : "Return book"}
-              </button>
-            </Form>
+            <div ref={actionRef}>
+              <Form method="post">
+                <input type="hidden" name="intent" value="return" />
+                <button type="submit" className={`w-full ${quietButton("lg")}`}>
+                  {returnLabel}
+                </button>
+              </Form>
+            </div>
           ) : null}
           {/* Someone's waiting: hand it straight on, as a book club does */}
           {data.isBorrower &&
@@ -2582,8 +2614,8 @@ export default function BookDetailsPage() {
                 lines={2}
                 className={`mt-10 ${openingLineType} max-w-prose`}
               />
-              <Placeholder lines={3} className="mt-8 max-w-prose" />
-              <Placeholder lines={3} className="mt-8 max-w-prose" />
+              <Placeholder lines={3} className="mt-8 max-w-150" />
+              <Placeholder lines={3} className="mt-8 max-w-150" />
             </div>
           ) : null}
 
@@ -2601,7 +2633,7 @@ export default function BookDetailsPage() {
                 {/* Unlabeled, like a jacket's blurb; About the author keeps
                     its label */}
                 <h2 className="sr-only">About this book</h2>
-                <p className="whitespace-pre-wrap text-stone-700 dark:text-stone-300 leading-relaxed max-w-prose">
+                <p className="whitespace-pre-wrap text-stone-700 dark:text-stone-300 leading-relaxed max-w-150">
                   {data.book.body ? (
                     stripMarkdown(data.book.body)
                   ) : data.isOwner ? (
@@ -2627,6 +2659,7 @@ export default function BookDetailsPage() {
               {data.author?.bio ? (
                 <AboutAuthor author={data.author} />
               ) : null}
+              <SubjectTags subjects={subjects} title={data.book.title} className="mt-6" />
             </div>
           ) : null}
 
@@ -2687,6 +2720,12 @@ export default function BookDetailsPage() {
           target={actionRef}
           label="Ask to borrow"
           className={primaryButton("lg")}
+        />
+      ) : data.isBorrower && !isEditing ? (
+        <ActionBar
+          target={actionRef}
+          label={returnLabel}
+          className={quietButton("lg")}
         />
       ) : null}
     </>

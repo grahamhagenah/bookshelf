@@ -933,7 +933,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       borrowedAt: ago(130 * day),
       returnedAt: ago(110 * day),
     },
-    // Books passed around among friends, so Popular with friends has a
+    // Books passed around among friends, so Most borrowed has a
     // chart to show: some lent three times, some twice, two on the
     // visitor's want-to-read list
     {
