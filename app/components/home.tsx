@@ -696,7 +696,25 @@ export default function Home({
                   books.borrowed.length + books.lent.length + waiting.length > 0
                     ? 0
                     : 10,
-                render: (first: boolean) => (
+                render: (first: boolean) =>
+                  books.borrowed.length + books.lent.length + waiting.length === 0 ? (
+                    // Nothing out either way: one line, not two empty lists
+                    <section aria-labelledby="loans" className={first ? undefined : divided}>
+                      <h2 id="loans" className={`${sectionHeading} mb-1`}>
+                        Borrowing and lending
+                      </h2>
+                      <p className="text-sm text-stone-500 dark:text-stone-400">
+                        Nothing out either way. Borrow from{" "}
+                        <Link
+                          to="/friends/books"
+                          className="text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
+                        >
+                          friends&apos; shelves
+                        </Link>
+                        , or lend one of yours from its page.
+                      </p>
+                    </section>
+                  ) : (
                   // No heading of its own: Borrowing and Lent out say it
                   <section
                     aria-label="Loans"
@@ -750,7 +768,7 @@ export default function Home({
                       />
                     </div>
                   </section>
-                ),
+                  ),
               },
               {
                 key: "wanted",
@@ -788,15 +806,10 @@ export default function Home({
                         )}
                       />
                     ) : (
-                      <p className="py-6 text-center text-stone-500 dark:text-stone-400">
+                      // The heading's button finds them, so just what it's for
+                      <p className="text-sm text-stone-500 dark:text-stone-400">
                         Books you&apos;d like to read go here, and you&apos;ll
-                        hear when a friend has one.{" "}
-                        <Link
-                          to="/search?for=want"
-                          className="text-stone-800 dark:text-stone-200 underline underline-offset-2"
-                        >
-                          Find one
-                        </Link>
+                        hear when a friend has one.
                       </p>
                     )}
                   </section>
@@ -820,7 +833,10 @@ export default function Home({
                           Recently added
                         </Link>
                       </h2>
-                      <AddButton to="/search">Add books</AddButton>
+                      {/* Until there's one, the empty slot below is the way to add */}
+                      {books.recent.length > 0 ? (
+                        <AddButton to="/search">Add books</AddButton>
+                      ) : null}
                     </div>
                     {books.recent.length > 0 ? (
                       <CoverRow

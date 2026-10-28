@@ -4,6 +4,7 @@ import { Link, NavLink, useSearchParams } from "react-router";
 import { coverSizeOf, coverSrc, libraryViewOf, useOptionalUser } from "~/utils";
 
 import BookCover from "./book-cover";
+import EmptyList from "./empty-list";
 import {
   SearchIcon,
   BookIcon,
@@ -15,7 +16,9 @@ import {
 import ShareShelfButton from "./share-shelf-button";
 import SharedWith from "./shared-with";
 import type { Member } from "./shared-with";
-import { sectionHeading } from "./ui";
+
+// Books on a shelf before it gets a filter box
+const FILTER_FROM = 12;
 
 const OPEN_LIBRARY_SIZE = /-[SML]\.jpg$/;
 
@@ -163,6 +166,9 @@ export default function Library({
   const grid = GRIDS[coverSizeOf(viewer)];
 
   const [query, setQuery] = useState("");
+  // A short shelf is read at a glance; the filter comes once there's
+  // enough to look through, and stays while it's in use
+  const showFilter = bookListItems.length >= FILTER_FROM || query !== "";
   // A link can open on one filter, like home's Lent out (?status=lent)
   const [searchParams] = useSearchParams();
   const linked = searchParams.get("status");
@@ -226,35 +232,19 @@ export default function Library({
         // are the home page's welcome steps.
         <main className="mt-8 md:mt-10 px-4 md:px-8 pb-8">
           {header}
-          <section className="rounded-xl border border-stone-200 dark:border-stone-800 px-6 py-12 text-center">
-            <BookIcon
-              size={28}
-              className="mx-auto text-stone-400 dark:text-stone-500"
-            />
-            <h1 className={`${sectionHeading} mt-3`}>
-              Your library is empty
-            </h1>
-            <p className="mx-auto mt-1 max-w-sm text-stone-500 dark:text-stone-400">
-              Add the books you own, and friends can see what they could borrow.
-            </p>
-            <div className="mt-5 flex flex-wrap justify-center gap-2">
-              <Link
-                to="/search"
-                className="inline-flex h-9 items-center gap-1.5 rounded-md bg-forest-600 px-4 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
-              >
-                <span aria-hidden="true" className="text-base leading-none">
-                  +
-                </span>
-                Add books
-              </Link>
-              <Link
-                to="/import"
-                className="inline-flex h-9 items-center rounded-md border border-stone-200 dark:border-stone-700 px-4 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-              >
-                Import books
-              </Link>
-            </div>
-          </section>
+          <EmptyList
+            icon={<BookIcon size={28} />}
+            title="Your shelf is empty"
+            heading="h1"
+            action={{ to: "/search", label: "Add books", plus: true }}
+          >
+            Add the books you own, and friends can see what they could borrow.
+            Or{" "}
+            <Link to="/import" className="underline underline-offset-2">
+              import a list
+            </Link>{" "}
+            from Goodreads, StoryGraph or a spreadsheet.
+          </EmptyList>
         </main>
       ) : (
         <main className="mt-8 md:mt-10 px-4 md:px-8 pb-8">
@@ -263,19 +253,21 @@ export default function Library({
               wider screens. On phones the pills drop to a second line of
               their own (and scroll if they run out of room) */}
           <div className="mb-6 flex flex-wrap md:flex-nowrap items-center gap-2">
-            <div className="relative min-w-0 flex-1 md:w-56 md:flex-none">
-              <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400">
-                <SearchIcon size={14} />
+            {showFilter ? (
+              <div className="relative min-w-0 flex-1 md:w-56 md:flex-none">
+                <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400">
+                  <SearchIcon size={14} />
+                </div>
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Filter books"
+                  aria-label="Filter by title or author"
+                  className="h-8 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 pl-8 pr-2 text-sm placeholder:text-stone-400 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+                />
               </div>
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Filter books"
-                aria-label="Filter by title or author"
-                className="h-8 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 pl-8 pr-2 text-sm placeholder:text-stone-400 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
-              />
-            </div>
+            ) : null}
             {statuses.length > 1 ? (
               <div
                 className="order-last w-full md:order-none md:w-auto flex gap-1.5 overflow-x-auto min-w-0 [scrollbar-width:none]"

@@ -1,10 +1,11 @@
 
-import { data, Link, useLoaderData } from "react-router";
+import { data, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
+import EmptyList from "~/components/empty-list";
 import FriendsTabs from "~/components/friends-tabs";
+import { BookIcon } from "~/components/icons";
 import PooledShelf from "~/components/pooled-shelf";
-import { sectionHeading } from "~/components/ui";
 import { getFriendsTabCounts } from "~/friends-tabs.server";
 import { getMyGroups } from "~/models/group.server";
 import { shelfIds } from "~/models/household.server";
@@ -48,24 +49,20 @@ export default function FriendsBooks() {
       <PooledShelf
         data={shelf}
         empty={
-          <>
-            <h2 className={sectionHeading}>
-              {counts.friends === 0 ? "No friends yet" : "No books on their shelves yet"}
-            </h2>
-            <p className="mx-auto mt-1 max-w-sm text-stone-500 dark:text-stone-400">
-              {counts.friends === 0
-                ? "Once you have friends on Stacks, everything on their shelves shows up here to browse."
-                : "As your friends add books, they show up here."}
-            </p>
-            {counts.friends === 0 ? (
-              <Link
-                to="/friends/add"
-                className="mt-5 inline-flex h-9 items-center rounded-md bg-forest-600 px-4 text-sm font-medium text-white hover:bg-forest-700 transition-colors"
-              >
-                Find friends
-              </Link>
-            ) : null}
-          </>
+          <EmptyList
+            icon={<BookIcon size={28} />}
+            title={counts.friends === 0 ? "No friends yet" : "No books on their shelves yet"}
+            action={
+              counts.friends === 0
+                ? { to: "/friends/add", label: "Add friends", plus: true }
+                : undefined
+            }
+            className="mt-2"
+          >
+            {counts.friends === 0
+              ? "Once you have friends on Stacks, everything on their shelves shows up here to browse."
+              : "As your friends add books, they show up here."}
+          </EmptyList>
         }
       />
     </main>

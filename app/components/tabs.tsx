@@ -41,7 +41,8 @@ export default function Tabs({
         {tabs.map((tab) => (
           <NavLink key={tab.to} to={tab.to} end={tab.end} className={tabClass}>
             {tab.label}
-            {tab.count != null ? (
+            {/* No "0": an empty list's tab is just its name */}
+            {tab.count ? (
               <span className="font-normal text-stone-400 dark:text-stone-500">{tab.count}</span>
             ) : null}
           </NavLink>

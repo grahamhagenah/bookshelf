@@ -4,12 +4,13 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 
 import { CameraView, useBarcodeCamera } from "~/components/barcode-camera";
 import BookCover from "~/components/book-cover";
-import { CameraIcon } from "~/components/icons";
+import EmptyList from "~/components/empty-list";
+import { CameraIcon, CheckoutIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
 import { dueText } from "~/due";
 import { LOAN_WEEKS, loanWeeks } from "~/models/book.server";
-import { checkIn, checkOut, findOnShelf, loansOut } from "~/models/checkout.server";
+import { checkIn, checkOut, findOnShelf, loansOut, shelfBookCount } from "~/models/checkout.server";
 import { addNames, findOrAddName, NAME_LIST_MAX, nameList, readNames, removeName } from "~/models/name-list.server";
 import { pageUrl } from "~/page-url";
 import { seo } from "~/seo";
@@ -32,12 +33,13 @@ const DESK_WEEKS = 2;
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   const query = pageUrl(request).searchParams.get("q")?.trim() ?? "";
-  const [names, out, found] = await Promise.all([
+  const [names, out, found, bookCount] = await Promise.all([
     nameList(userId),
     loansOut(userId),
     query ? findOnShelf(userId, query) : null,
+    shelfBookCount(userId),
   ]);
-  return data({ query, names, out, found, weekChoices: LOAN_WEEKS });
+  return data({ query, names, out, found, bookCount, weekChoices: LOAN_WEEKS });
 };
 
 const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
@@ -264,7 +266,7 @@ function Found({
 }
 
 export default function Checkout() {
-  const { query, names, out, found, weekChoices } = useLoaderData<typeof loader>();
+  const { query, names, out, found, bookCount, weekChoices } = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
   const navigation = useNavigation();
   const navigate = useNavigate();
@@ -297,121 +299,142 @@ export default function Checkout() {
           email and get nothing from Stacks; reminders come to you.
         </p>
 
-        {/* On a phone the camera is the way in, so it leads */}
-        {camera ? null : (
-          <button
-            type="button"
-            onClick={() => setCamera(true)}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-stone-900 px-4 py-3 font-medium text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white transition-colors sm:hidden"
+        {bookCount === 0 ? (
+          // Nothing to scan yet: books first
+          <EmptyList
+            icon={<CheckoutIcon size={28} />}
+            title="Nothing on your shelf to lend yet"
+            action={{ to: "/search", label: "Add books", plus: true }}
+            className="mt-2"
           >
-            <CameraIcon size={20} />
-            Scan with the camera
-          </button>
+            Add your books first, or{" "}
+            <Link to="/import" className="underline underline-offset-2">
+              import a spreadsheet
+            </Link>{" "}
+            with Title and Author columns. Then scan one here to lend it.
+          </EmptyList>
+        ) : (
+          <>
+          {/* On a phone the camera is the way in, so it leads */}
+          {camera ? null : (
+            <button
+              type="button"
+              onClick={() => setCamera(true)}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-stone-900 px-4 py-3 font-medium text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white transition-colors sm:hidden"
+            >
+              <CameraIcon size={20} />
+              Scan with the camera
+            </button>
+          )}
+          {camera ? (
+            <div className="mt-4 max-w-md rounded-lg bg-stone-950 p-3">
+              <Camera onIsbn={(isbn) => navigate(`/checkout?q=${isbn}`, { replace: true, preventScrollReset: true })} />
+            </div>
+          ) : null}
+
+          <Form method="get" action="/checkout" className="mt-4 flex max-w-xl flex-wrap gap-2">
+            <input
+              ref={inputRef}
+              key={query}
+              name="q"
+              defaultValue={query}
+              aria-label="ISBN or title"
+              placeholder="Scan or type an ISBN or title"
+              autoComplete="off"
+              className={`${textField} min-w-0 flex-1 basis-56`}
+            />
+            <button type="submit" className={primaryButton("lg")}>
+              Find
+            </button>
+            <button
+              type="button"
+              onClick={() => setCamera(!camera)}
+              aria-pressed={camera}
+              // On phones the big button above turns it on
+              className={`${quietButton("lg")} ${camera ? "" : "hidden sm:inline-flex sm:items-center"}`}
+            >
+              {camera ? "Camera off" : "Use the camera"}
+            </button>
+          </Form>
+          <label className={`mt-3 flex items-center gap-2 text-sm ${muted}`}>
+            Lend for
+            <select
+              value={weeks}
+              onChange={(event) => setWeeks(Number(event.target.value))}
+              className="rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 py-1 text-sm text-stone-800 dark:text-stone-100"
+            >
+              {weekChoices.map((choice) => (
+                <option key={choice} value={choice}>
+                  {plural(choice, "week")}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {result && "done" in result && result.done && !query && !("about" in result) ? (
+            <p role="status" className="mt-4 rounded-lg bg-forest-600/[0.08] dark:bg-forest-400/10 px-4 py-3 text-sm font-medium text-forest-800 dark:text-forest-300">
+              {result.done}
+            </p>
+          ) : null}
+          {result && "error" in result && !("about" in result) ? (
+            <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-400">
+              {result.error}
+            </p>
+          ) : null}
+
+          {query ? (
+            groups.length ? (
+              <ul className={`mt-2 divide-y divide-stone-100 dark:divide-stone-800 ${busy ? "opacity-60" : ""}`}>
+                {groups.map((copies) => (
+                  <Found key={copies[0].id} copies={copies} names={names} weeks={weeks} outCounts={outByPerson} />
+                ))}
+              </ul>
+            ) : (
+              <p className={`mt-4 text-sm ${muted}`}>
+                Nothing on your shelf matches &ldquo;{query}&rdquo;.{" "}
+                <Link
+                  to={`/search?q=${encodeURIComponent(query)}`}
+                  className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2"
+                >
+                  Add it to your shelf
+                </Link>
+              </p>
+            )
+          ) : null}
+          </>
         )}
-        {camera ? (
-          <div className="mt-4 max-w-md rounded-lg bg-stone-950 p-3">
-            <Camera onIsbn={(isbn) => navigate(`/checkout?q=${isbn}`, { replace: true, preventScrollReset: true })} />
-          </div>
-        ) : null}
+      </section>
 
-        <Form method="get" action="/checkout" className="mt-4 flex max-w-xl flex-wrap gap-2">
-          <input
-            ref={inputRef}
-            key={query}
-            name="q"
-            defaultValue={query}
-            aria-label="ISBN or title"
-            placeholder="Scan or type an ISBN or title"
-            autoComplete="off"
-            className={`${textField} min-w-0 flex-1 basis-56`}
-          />
-          <button type="submit" className={primaryButton("lg")}>
-            Find
-          </button>
-          <button
-            type="button"
-            onClick={() => setCamera(!camera)}
-            aria-pressed={camera}
-            // On phones the big button above turns it on
-            className={`${quietButton("lg")} ${camera ? "" : "hidden sm:inline-flex sm:items-center"}`}
-          >
-            {camera ? "Camera off" : "Use the camera"}
-          </button>
-        </Form>
-        <label className={`mt-3 flex items-center gap-2 text-sm ${muted}`}>
-          Lend for
-          <select
-            value={weeks}
-            onChange={(event) => setWeeks(Number(event.target.value))}
-            className="rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 py-1 text-sm text-stone-800 dark:text-stone-100"
-          >
-            {weekChoices.map((choice) => (
-              <option key={choice} value={choice}>
-                {plural(choice, "week")}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {result && "done" in result && result.done && !query && !("about" in result) ? (
-          <p role="status" className="mt-4 rounded-lg bg-forest-600/[0.08] dark:bg-forest-400/10 px-4 py-3 text-sm font-medium text-forest-800 dark:text-forest-300">
-            {result.done}
-          </p>
-        ) : null}
-        {result && "error" in result && !("about" in result) ? (
-          <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-400">
-            {result.error}
-          </p>
-        ) : null}
-
-        {query ? (
-          groups.length ? (
-            <ul className={`mt-2 divide-y divide-stone-100 dark:divide-stone-800 ${busy ? "opacity-60" : ""}`}>
-              {groups.map((copies) => (
-                <Found key={copies[0].id} copies={copies} names={names} weeks={weeks} outCounts={outByPerson} />
+      {/* Nothing can be out from an empty shelf */}
+      {bookCount > 0 || out.length > 0 ? (
+        <section>
+          <h2 className={sectionHeading}>
+            Out now <span className={`font-normal ${muted}`}>{out.length}</span>
+          </h2>
+          {out.length ? (
+            <ul className="mt-3 divide-y divide-stone-100 dark:divide-stone-800">
+              {out.map((copy) => (
+                <li key={copy.id} className="flex items-center gap-3 py-3">
+                  <BookCover cover={copy.cover} title={copy.title} className="w-8 h-12 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-stone-900 dark:text-stone-100">
+                      <Link to={`/books/${copy.id}`} className="hover:underline underline-offset-2">
+                        {copy.title}
+                      </Link>
+                    </p>
+                    <p className={`truncate text-sm ${muted}`}>
+                      {copy.borrower ? fullName(copy.borrower) : ""} · <Late dueDate={copy.dueDate} />
+                    </p>
+                  </div>
+                  <TakeBack copy={copy} />
+                </li>
               ))}
             </ul>
           ) : (
-            <p className={`mt-4 text-sm ${muted}`}>
-              Nothing on your shelf matches &ldquo;{query}&rdquo;.{" "}
-              <Link
-                to={`/search?q=${encodeURIComponent(query)}`}
-                className="font-medium text-forest-700 dark:text-forest-400 underline underline-offset-2"
-              >
-                Add it to your shelf
-              </Link>
-            </p>
-          )
-        ) : null}
-      </section>
-
-      <section>
-        <h2 className={sectionHeading}>
-          Out now <span className={`font-normal ${muted}`}>{out.length}</span>
-        </h2>
-        {out.length ? (
-          <ul className="mt-3 divide-y divide-stone-100 dark:divide-stone-800">
-            {out.map((copy) => (
-              <li key={copy.id} className="flex items-center gap-3 py-3">
-                <BookCover cover={copy.cover} title={copy.title} className="w-8 h-12 flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-stone-900 dark:text-stone-100">
-                    <Link to={`/books/${copy.id}`} className="hover:underline underline-offset-2">
-                      {copy.title}
-                    </Link>
-                  </p>
-                  <p className={`truncate text-sm ${muted}`}>
-                    {copy.borrower ? fullName(copy.borrower) : ""} · <Late dueDate={copy.dueDate} />
-                  </p>
-                </div>
-                <TakeBack copy={copy} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className={`mt-1 text-sm ${muted}`}>Nothing&apos;s out. Books you lend show here until they&apos;re back.</p>
-        )}
-      </section>
+            <p className={`mt-1 text-sm ${muted}`}>Nothing&apos;s out. Books you lend show here until they&apos;re back.</p>
+          )}
+        </section>
+      ) : null}
 
       <section>
         <h2 className={sectionHeading}>

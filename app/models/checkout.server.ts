@@ -63,6 +63,11 @@ export async function findOnShelf(userId: User["id"], query: string) {
 }
 
 // Everything out from your shelf, whoever has it, soonest due first
+// How many books are on the shelf to lend, so an empty desk can say so
+export async function shelfBookCount(userId: User["id"]) {
+  return prisma.book.count({ where: { userId: { in: await shelfIds(userId) } } });
+}
+
 export async function loansOut(userId: User["id"]) {
   return prisma.book.findMany({
     where: { userId: { in: await shelfIds(userId) }, borrowerId: { not: null } },

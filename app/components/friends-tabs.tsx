@@ -30,7 +30,7 @@ export default function FriendsTabs({
         {
           to: "/groups",
           label: "Groups",
-          count: counts.groups > 0 ? counts.groups : null,
+          count: counts.groups,
         },
       ]}
     >
