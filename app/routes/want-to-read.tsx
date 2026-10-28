@@ -2,7 +2,7 @@
 import { data, Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { BookRow, bookRowGrid, RowLine, rowEmphasis, rowEmphasisLink, rowPrimary, rowSecondary } from "~/components/book-row";
+import { BookRow, bookRowGrid, RowLine, RowSub, rowEmphasis, rowPrimary, rowSecondary } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
 import { BookmarkIcon } from "~/components/icons";
 import Layout from "~/components/layout";
@@ -86,6 +86,10 @@ function WantRow({
   const copies = [...item.copies].sort(
     (a, b) => Number(b.available) - Number(a.available),
   );
+  // Everyone with a copy, once each
+  const owners = copies
+    .map((copy) => copy.owner)
+    .filter((owner, index, all) => all.findIndex((other) => other.id === owner.id) === index);
   return (
     <BookRow
       id={`wish-${item.id}`}
@@ -98,25 +102,40 @@ function WantRow({
           : ""
       }`}
       line={
+        // Who has it, then, quieter, how the copy you could get soonest
+        // stands, as History says who had a book and then when
         <RowLine>
-          {copies.length === 0
-            ? "None of your friends have it yet"
-            : copies.map((copy, index) => (
-                <span key={copy.bookId}>
-                  {index > 0 ? " · " : null}
+          {owners.length === 0 ? (
+            "None of your friends have it yet"
+          ) : (
+            <>
+              {owners.slice(0, 2).map((owner, index) => (
+                <span key={owner.id}>
+                  {index > 0 ? (owners.length > 2 ? ", " : " and ") : null}
                   <span className={rowEmphasis}>
-                    <PersonLink id={copy.owner.id} name={copy.owner.firstname} friendIds={friendIds} />
-                  </span>{" "}
-                  has it,{" "}
-                  <Link to={`/books/${copy.bookId}`} className={rowEmphasisLink}>
-                    {copy.available
-                      ? "ask to borrow it"
-                      : copy.notLending
-                        ? "not lending it right now"
-                        : "lent out right now"}
-                  </Link>
+                    <PersonLink id={owner.id} name={owner.firstname} friendIds={friendIds} />
+                  </span>
                 </span>
               ))}
+              {owners.length > 2
+                ? ` and ${owners.length - 2} ${owners.length === 3 ? "other" : "others"} have it`
+                : owners.length === 2
+                  ? " have it"
+                  : " has it"}
+              <RowSub>
+                <Link
+                  to={`/books/${copies[0].bookId}`}
+                  className="underline-offset-2 hover:underline hover:text-stone-600 dark:hover:text-stone-300"
+                >
+                  {copies[0].available
+                    ? "Available to borrow"
+                    : copies[0].notLending
+                      ? "Not lending right now"
+                      : "Lent out right now"}
+                </Link>
+              </RowSub>
+            </>
+          )}
         </RowLine>
       }
       actions={

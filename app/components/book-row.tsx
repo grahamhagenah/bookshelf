@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useFetcher } from "react-router";
 
 import BookCover from "./book-cover";
 import { HeartIcon } from "./icons";
@@ -14,7 +14,6 @@ export const bookRowGrid = "grid gap-x-8 md:grid-cols-2 lg:grid-cols-3";
 
 // A name, date or link inside a book's line
 export const rowEmphasis = "font-medium text-stone-700 dark:text-stone-200";
-export const rowEmphasisLink = `${rowEmphasis} underline-offset-2 hover:underline`;
 
 // What the row is waiting for (getting a copy, leaving a note), as a
 // button of its own
@@ -88,5 +87,79 @@ export function RowLoved({ children }: { children: React.ReactNode }) {
       <HeartIcon size={12} filled className="flex-shrink-0 text-rose-400" />
       {children}
     </span>
+  );
+}
+
+// A date in a row: "Oct 1", with the year only when it isn't this one
+export function rowDate(date: string | Date) {
+  const d = new Date(date);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(d.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}),
+  });
+}
+
+// The quieter second line of a book's line: when, or how it stands
+export function RowSub({ children }: { children: React.ReactNode }) {
+  return <span className="block text-stone-400 dark:text-stone-500">{children}</span>;
+}
+
+// The way to a book's notes, with a heart in it when the book was loved
+export function NoteButton({
+  to,
+  loved,
+  children,
+}: {
+  to: string;
+  loved: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link to={to} className={`${rowPrimary} gap-1.5`}>
+      {loved ? <HeartIcon size={13} filled className="flex-shrink-0 text-rose-400" /> : null}
+      {children}
+    </Link>
+  );
+}
+
+// Your own marks on a book, as History and Also read offer them: the way
+// to your note (or to leave one), and until you've loved it, a heart to
+// give right there. loveAction is the page that saves the heart
+export function YourNoteActions({
+  notes,
+  loveAction,
+  loved,
+  hasNote,
+}: {
+  notes: string;
+  loveAction?: string;
+  loved: boolean;
+  hasNote: boolean;
+}) {
+  const love = useFetcher();
+  // A heart given from the row shows at once
+  const isLoved = loved || love.state !== "idle";
+  return (
+    <>
+      <NoteButton to={notes} loved={isLoved}>
+        {hasNote ? "Read your note" : "Leave a note"}
+      </NoteButton>
+      {isLoved || !loveAction ? null : (
+        <love.Form method="post" action={loveAction}>
+          <input type="hidden" name="intent" value="toggleLove" />
+          <input type="hidden" name="loved" value="true" />
+          <button
+            type="submit"
+            aria-label="Love it"
+            title="Love it"
+            // A square the button's height, in the same outline as the button
+            className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-md border border-stone-200 text-stone-500 hover:border-stone-400 hover:text-rose-400 dark:border-stone-700 dark:text-stone-400 dark:hover:border-stone-500 transition-colors"
+          >
+            <HeartIcon size={13} />
+          </button>
+        </love.Form>
+      )}
+    </>
   );
 }

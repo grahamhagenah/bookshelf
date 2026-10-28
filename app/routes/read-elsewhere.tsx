@@ -1,7 +1,7 @@
 import { data, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { BookRow, bookRowGrid, RowLine, RowLoved } from "~/components/book-row";
+import { BookRow, bookRowGrid, rowDate, RowLine, RowSub, YourNoteActions } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
 import { ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
@@ -74,19 +74,24 @@ export default function ReadElsewhere() {
                   key={item.id}
                   to={page}
                   book={item}
-                  // What you marked, as History says it; the note itself is on
-                  // the book's page
+                  // What you did with it and when, as History says who had it
+                  // and when; then the same buttons History gives a book you
+                  // borrowed: your note, and a heart to give
                   line={
                     <RowLine>
-                      {/* A heart as History shows one */}
-                      {item.loved ? (
-                        <RowLoved>{item.body ? "You loved it and left a note" : "You loved it"}</RowLoved>
-                      ) : item.body ? (
-                        "You left a note"
-                      ) : (
-                        "You read it"
-                      )}
+                      {item.readAt ? "You read it" : item.body ? "You left a note" : "You loved it"}
+                      {item.readAt ? <RowSub>{rowDate(item.readAt)}</RowSub> : null}
                     </RowLine>
+                  }
+                  actions={
+                    isWork(item.workKey) ? (
+                      <YourNoteActions
+                        notes={`${page}#notes`}
+                        loveAction={page}
+                        loved={item.loved}
+                        hasNote={Boolean(item.body)}
+                      />
+                    ) : null
                   }
                 />
               );
