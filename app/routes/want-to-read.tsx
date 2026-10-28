@@ -241,7 +241,7 @@ export default function WantToRead() {
           <EmptyList
             icon={<BookmarkIcon size={28} />}
             title="Books you'd like to read"
-            action={{ to: "/search?for=want", label: "Add a book" }}
+            action={{ to: "/search?for=want", label: "Add a book", plus: true }}
           >
             Keep the ones you don&apos;t own here, and you&apos;ll hear when a
             friend has a copy to lend. Or{" "}

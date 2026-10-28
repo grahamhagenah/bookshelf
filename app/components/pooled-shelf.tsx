@@ -79,9 +79,7 @@ export default function PooledShelf({
 
   if (results.counts.all === 0 && !search.filtered) {
     return (
-      <section className="rounded-xl border border-stone-200 dark:border-stone-800 px-6 py-12 text-center">
-        {empty}
-      </section>
+      <section>{empty}</section>
     );
   }
 

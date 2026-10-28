@@ -2,8 +2,10 @@
 import { data, Link, useLoaderData, useNavigation } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
+import EmptyList from "~/components/empty-list";
 import { RailLoved, RailPeople, RailWanted } from "~/components/feed-rail";
 import { FeedPost, NotePrompt } from "~/components/friend-activity";
+import { FeedIcon } from "~/components/icons";
 import SideRail from "~/components/side-rail";
 import { sendBookRequestEmail } from "~/email.server";
 import { isNotLending } from "~/lending";
@@ -269,21 +271,20 @@ export default function Feed() {
             )}
           </div>
         ) : (
-          <div className="py-16 text-center text-stone-500 dark:text-stone-400">
-            {friendIds.length === 0 ? (
-              <>
-                <p>Add friends to see the books they add and love.</p>
-                <Link
-                  to="/friends/add"
-                  className="mt-2 inline-block text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
-                >
-                  Find friends
-                </Link>
-              </>
-            ) : (
-              <p>Nothing new from your friends lately.</p>
-            )}
-          </div>
+          friendIds.length === 0 ? (
+            <EmptyList
+              icon={<FeedIcon size={28} />}
+              title="Your feed is empty"
+              action={{ to: "/friends/add", label: "Add friends", plus: true }}
+              className="mt-2"
+            >
+              Add friends to see the books they add and love, and the notes they leave.
+            </EmptyList>
+          ) : (
+            <EmptyList icon={<FeedIcon size={28} />} title="Nothing new lately" className="mt-2">
+              When your friends add books or leave notes, they show up here.
+            </EmptyList>
+          )
         )}
       </div>
       <SideRail friends={friends} groups={groups} sticky={false}>

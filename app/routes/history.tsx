@@ -168,7 +168,11 @@ export default function History() {
         <ShelfTabs counts={{ ...counts, history: entries.length }} />
 
         {entries.length === 0 ? (
-          <EmptyList icon={<HistoryIcon size={28} />} title="Your lending history">
+          <EmptyList
+            icon={<HistoryIcon size={28} />}
+            title="Your lending history"
+            action={{ to: "/friends/books", label: "See friends' books" }}
+          >
             Every book that passes between you and a friend shows up here: what
             you&apos;ve borrowed, and what you&apos;ve lent.
           </EmptyList>

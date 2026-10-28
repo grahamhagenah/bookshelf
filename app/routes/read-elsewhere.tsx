@@ -55,7 +55,7 @@ export default function ReadElsewhere() {
           <EmptyList
             icon={<ReadIcon size={28} />}
             title="Books you've read elsewhere"
-            action={{ to: "/search", label: "Find a book" }}
+            action={{ to: "/search", label: "Find a book", plus: true }}
           >
             The ones that aren&apos;t on your shelf: from the library, borrowed
             long ago, given away. Find one, then mark it read, love it or leave

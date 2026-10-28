@@ -67,7 +67,7 @@ export default function ShelfTabs({
       <div className="-mt-1.5 hidden items-center gap-2 sm:flex">
         {sharedWith ? <SharedWith {...sharedWith} /> : null}
         {add ? <AddLink to={add.to}>{add.label}</AddLink> : null}
-        <ShareShelfButton />
+        {counts.library > 0 ? <ShareShelfButton /> : null}
       </div>
     </Tabs>
   );
