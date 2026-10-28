@@ -1,4 +1,4 @@
-import { data, useFetcher, useLoaderData } from "react-router";
+import { data, Link, useFetcher, useLoaderData } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import {
@@ -9,8 +9,10 @@ import {
   RowLine,
   RowLoved,
   RowMenu,
+  RowMenuDivider,
   rowMenuHint,
   rowMenuItem,
+  rowMenuList,
   RowSub,
   rowEmphasis,
   YourNoteActions,
@@ -112,12 +114,21 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
       book={entry.book}
       corner={
         <RowMenu label={`More for ${entry.book.title}`}>
+          <Link to={`/books/${entry.book.id}`} role="menuitem" className={rowMenuItem}>
+            Open book page
+          </Link>
+          {friendIds.includes(entry.person.id) ? (
+            <Link to={`/friend/${entry.person.id}`} role="menuitem" className={rowMenuItem}>
+              See {name}&apos;s shelf
+            </Link>
+          ) : null}
+          <RowMenuDivider />
           <hide.Form method="post" action="/history">
             <input type="hidden" name="intent" value="hide" />
             <input type="hidden" name="id" value={entry.id} />
             <input type="hidden" name="kind" value={entry.kind} />
             <button type="submit" role="menuitem" className={rowMenuItem}>
-              Hide from History
+              Hide from <span className={rowMenuList}>History</span>
               <span className={rowMenuHint}>Only from yours; {name} still sees it</span>
             </button>
           </hide.Form>

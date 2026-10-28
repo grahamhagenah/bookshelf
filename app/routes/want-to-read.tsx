@@ -7,7 +7,9 @@ import {
   bookRowGrid,
   RowLine,
   RowMenu,
+  RowMenuDivider,
   rowMenuItem,
+  rowMenuList,
   RowSub,
   rowEmphasis,
   rowPrimary,
@@ -153,11 +155,15 @@ function WantRow({
       // Taking it off the list: last and quietest, in the corner's menu
       corner={
         <RowMenu label={`More for ${item.title}`}>
+          <Link to={page} role="menuitem" className={rowMenuItem}>
+            Open book page
+          </Link>
+          <RowMenuDivider />
           <remove.Form method="post">
             <input type="hidden" name="intent" value="remove" />
             <input type="hidden" name="id" value={item.id} />
             <button type="submit" role="menuitem" className={rowMenuItem}>
-              Remove from Want to read
+              Remove from <span className={rowMenuList}>Want to read</span>
             </button>
           </remove.Form>
         </RowMenu>

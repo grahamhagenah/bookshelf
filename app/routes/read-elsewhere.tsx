@@ -1,4 +1,4 @@
-import { data, useFetcher, useLoaderData } from "react-router";
+import { data, Link, useFetcher, useLoaderData } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import {
@@ -7,8 +7,10 @@ import {
   rowDate,
   RowLine,
   RowMenu,
+  RowMenuDivider,
   rowMenuHint,
   rowMenuItem,
+  rowMenuList,
   RowSub,
   YourNoteActions,
 } from "~/components/book-row";
@@ -43,16 +45,33 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return data({ ok: true });
 };
 
-// Its ⋯: off the list, with what that clears said plainly
-function AlsoReadMenu({ id, title }: { id: string; title: string }) {
+// Its ⋯: the book's page; onto your shelf, for a book you've since got a
+// copy of (your marks go with it); and off the list, with what that
+// clears said plainly
+function AlsoReadMenu({ id, title, page }: { id: string; title: string; page: string | null }) {
   const remove = useFetcher();
+  const add = useFetcher();
   return (
     <RowMenu label={`More for ${title}`}>
+      {page ? (
+        <>
+          <Link to={page} role="menuitem" className={rowMenuItem}>
+            Open book page
+          </Link>
+          <add.Form method="post" action={page}>
+            <button type="submit" role="menuitem" className={rowMenuItem}>
+              Add to <span className={rowMenuList}>My shelf</span>
+              <span className={rowMenuHint}>Your note and heart go with it</span>
+            </button>
+          </add.Form>
+          <RowMenuDivider />
+        </>
+      ) : null}
       <remove.Form method="post" action="/read-elsewhere">
         <input type="hidden" name="intent" value="remove" />
         <input type="hidden" name="id" value={id} />
         <button type="submit" role="menuitem" className={rowMenuItem}>
-          Remove from Also read
+          Remove from <span className={rowMenuList}>Also read</span>
           <span className={rowMenuHint}>Clears your read mark, heart and note</span>
         </button>
       </remove.Form>
@@ -114,7 +133,13 @@ export default function ReadElsewhere() {
                   // What you did with it and when, as History says who had it
                   // and when; then the same buttons History gives a book you
                   // borrowed: your note, and a heart to give
-                  corner={<AlsoReadMenu id={item.id} title={item.title} />}
+                  corner={
+                    <AlsoReadMenu
+                      id={item.id}
+                      title={item.title}
+                      page={isWork(item.workKey) ? item.workKey : null}
+                    />
+                  }
                   line={
                     <RowLine>
                       {item.readAt ? "You read it" : item.body ? "You left a note" : "You loved it"}

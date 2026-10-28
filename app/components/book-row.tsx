@@ -244,3 +244,10 @@ export function RowMenu({ label, children }: { label: string; children: React.Re
 export const rowMenuItem =
   "block w-full px-3 py-2 text-left text-sm text-stone-700 hover:bg-stone-100 dark:text-stone-200 dark:hover:bg-stone-800 transition-colors";
 export const rowMenuHint = "block text-xs text-stone-400 dark:text-stone-500";
+// The list a menu item is about, in its words: "Remove from Want to read"
+export const rowMenuList = "font-semibold";
+
+// Between a menu's ways to go somewhere and its ways to take something away
+export function RowMenuDivider() {
+  return <div role="separator" className="my-1 border-t border-stone-100 dark:border-stone-800" />;
+}
