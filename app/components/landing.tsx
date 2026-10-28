@@ -104,8 +104,8 @@ export default function Landing() {
             <em className="font-serif font-semibold italic">Our</em> shelf.
           </h1>
           <p className="mt-5 max-w-lg text-balance text-xl sm:text-2xl leading-snug text-stone-600 dark:text-stone-300">
-            Catalog your home library, borrow from your friends&apos; shelves,
-            and lend yours with reminders so books come back.
+            The book you want is probably on a friend&apos;s shelf. Borrow it,
+            and lend yours knowing it&apos;ll come back.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <Link
