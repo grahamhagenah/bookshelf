@@ -2,7 +2,7 @@
 import { data, useLoaderData } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import Home, { POSTS_SHOWN } from "~/components/home";
+import Home, { POPULAR_SHOWN, POSTS_SHOWN } from "~/components/home";
 import Landing from "~/components/landing";
 import { getFriendActivity } from "~/models/activity.server";
 import { getHomeBooks } from "~/models/book.server";
@@ -72,7 +72,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getPendingFriendRequests(user.id),
     getWantToRead(user.id),
     getFriendInvite(user.id),
-    getPopularWithFriends(user.id),
+    getPopularWithFriends(user.id, POPULAR_SHOWN),
     // For a new account with no books of its own: what friends have
     countPoolBooks(friendIds),
     getMyGroups(user.id),

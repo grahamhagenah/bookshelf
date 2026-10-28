@@ -89,6 +89,8 @@ function AddButton({ to, children }: { to: string; children: string }) {
 const LOANS_SHOWN = 3;
 // And as many of friends' latest posts beside them
 export const POSTS_SHOWN = 3;
+// And of the books most lent around your friends, under them
+export const POPULAR_SHOWN = 3;
 
 // One row of a loan list: the book, who it's from or to, and when it's
 // due, with a note when something needs doing (someone's waiting for it).
