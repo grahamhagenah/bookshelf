@@ -45,11 +45,7 @@ export default function Notifications() {
         {notificationCount > 0 ? (
           <span
             aria-hidden="true"
-            // Its ring is the color behind it: the header, or the green
-            // wash while you're on this page
-            className={`absolute top-0 right-0 size-2 md:size-[7px] rounded-full bg-forest-600 dark:bg-forest-400 ring-2 ${
-              here ? "ring-[#e9f0ed] dark:ring-[#13201a]" : "ring-white dark:ring-stone-950"
-            }`}
+            className="absolute top-0 right-0 size-2 md:size-[7px] rounded-full bg-forest-600 dark:bg-forest-400 ring-2 ring-white dark:ring-stone-950"
           />
         ) : null}
       </span>

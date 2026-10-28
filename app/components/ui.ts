@@ -20,7 +20,8 @@ export const textField =
 
 export const sectionHeading = "text-lg font-semibold text-stone-900 dark:text-stone-100";
 
-// The page you're on, in the header: a soft wash of the app's green
-// behind it, the icon and name in green
+// The page you're on, in the header: a green bar under it on the
+// header's bottom edge, as tabs mark theirs, and its icon in green. Phones
+// show icons only, so there it's the icon alone
 export const hereIcon =
-  "bg-forest-600/10 text-forest-700 hover:bg-forest-600/15 dark:bg-forest-400/15 dark:text-forest-400 dark:hover:bg-forest-400/20 [&_svg]:text-forest-600 dark:[&_svg]:text-forest-400";
+  "relative text-stone-900 dark:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800 [&_svg]:text-forest-600 dark:[&_svg]:text-forest-400 md:after:absolute md:after:inset-x-2.5 md:after:-bottom-[7px] md:after:h-0.5 md:after:rounded-full md:after:bg-forest-600 dark:md:after:bg-forest-400";
