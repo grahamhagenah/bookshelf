@@ -371,7 +371,7 @@ export default function WorkPage() {
               }`}
             >
               <BookmarkIcon size={14} filled={wanted} />
-              {wanting ? "Saving…" : wanted ? "On your Want to read list" : "Want to read"}
+              {wanting ? "Saving…" : wanted ? "On your list" : "Want to read"}
             </button>
           )}
           {/* Matched by the title it went on the list with, when taken off */}
