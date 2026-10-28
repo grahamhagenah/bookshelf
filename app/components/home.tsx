@@ -7,7 +7,7 @@ import type { getHomeBooks } from "~/models/book.server";
 
 import BookCover from "./book-cover";
 import FriendActivityItem from "./friend-activity";
-import { LentIcon } from "./icons";
+import { LentIcon, SearchIcon } from "./icons";
 import { InviteButtons } from "./invite-message";
 import ShareShelfOffer from "./share-shelf-offer";
 import { sectionHeading } from "./ui";
@@ -65,19 +65,32 @@ function dueLabel(dueDate: string | Date) {
 const headingLink =
   "underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline";
 
-// A section's one action, beside its heading
-function AddButton({ to, children }: { to: string; children: string }) {
+// A section's one action, beside its heading: a + to add, a magnifying
+// glass to go looking
+function AddButton({
+  to,
+  search = false,
+  children,
+}: {
+  to: string;
+  search?: boolean;
+  children: string;
+}) {
   return (
     <Link
       to={to}
       className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
     >
-      <span
-        aria-hidden="true"
-        className="text-base leading-none text-stone-400"
-      >
-        +
-      </span>
+      {search ? (
+        <SearchIcon size={14} className="text-stone-400" />
+      ) : (
+        <span
+          aria-hidden="true"
+          className="text-base leading-none text-stone-400"
+        >
+          +
+        </span>
+      )}
       {children}
     </Link>
   );
@@ -793,7 +806,9 @@ export default function Home({
                           Want to read
                         </Link>
                       </h2>
-                      <AddButton to="/search?for=want">Find books</AddButton>
+                      <AddButton to="/search?for=want" search>
+                        Find books
+                      </AddButton>
                     </div>
                     {wanted.length > 0 ? (
                       <CoverRow

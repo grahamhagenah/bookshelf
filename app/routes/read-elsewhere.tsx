@@ -98,13 +98,13 @@ export default function ReadElsewhere() {
   return (
     <Layout title="Also read">
       <section>
-        <ShelfTabs counts={{ ...counts, elsewhere: items.length }} add={items.length > 0 ? { to: "/search", label: "Find a book" } : undefined} />
+        <ShelfTabs counts={{ ...counts, elsewhere: items.length }} add={items.length > 0 ? { to: "/search", label: "Find a book", search: true } : undefined} />
 
         {items.length === 0 ? (
           <EmptyList
             icon={<ReadIcon size={28} />}
             title="Books you've read elsewhere"
-            action={{ to: "/search", label: "Find a book", plus: true }}
+            action={{ to: "/search", label: "Find a book" }}
           >
             The ones that aren&apos;t on your shelf: from the library, borrowed
             long ago, given away. Find one, then mark it read, love it or leave
