@@ -344,6 +344,7 @@ function Actions({
   userId,
   onEdit,
   mine = false,
+  poster = null,
 }: {
   book: FeedBook;
   userId: string;
@@ -351,9 +352,12 @@ function Actions({
   onEdit?: () => void;
   // Your own post about a friend's copy: you've read it
   mine?: boolean;
+  // Whose post it is, for the way to their shelf; none on your own
+  poster?: { id: string; firstname: string } | null;
 }) {
   const borrow = useFetcher({ key: `borrow-${book.id}` });
   const giveBack = useFetcher<{ returned?: boolean }>({ key: `return-${book.id}` });
+  const want = useFetcher<{ wanted?: boolean }>({ key: `want-${book.id}` });
   const returned = giveBack.formData !== undefined || giveBack.data?.returned === true;
   const { viewer } = book;
   // Asking opens a line for a note first; the ask goes with it
@@ -366,12 +370,71 @@ function Actions({
     pendingBorrow === "leaveHold"
       ? false
       : viewer.inLine || pendingBorrow === "placeHold";
+  const wanted = viewer.wanted || want.formData !== undefined || want.data?.wanted === true;
 
   const isOwner = book.owner.id === userId;
   const isBorrower = book.borrowerId === userId;
-  // Anything to say or do beside View book; without, it shows on phones too
-  const hasAction =
-    Boolean(onEdit) || isOwner || isBorrower || mine || returned || viewer.canRequest;
+
+  // The one thing this post offers you, by where you stand with the book.
+  // Your own copy offers nothing: its card already says it's yours
+  const next = isOwner ? null : returned ? (
+    <span className={stateClass}>Returned to {book.owner.firstname}</span>
+  ) : isBorrower ? (
+    // Read it, said so: the next thing is giving it back
+    <giveBack.Form method="post" action={`/books/${book.id}`}>
+      <input type="hidden" name="intent" value="return" />
+      <input type="hidden" name="stay" value="true" />
+      <button type="submit" className={actionClass}>
+        Return to {book.owner.firstname}
+      </button>
+    </giveBack.Form>
+  ) : mine || viewer.readIt ? (
+    // Read it already: no asking for it again
+    <span className={stateClass}>You read it</span>
+  ) : viewer.onShelf ? (
+    <span className={stateClass}>On your shelf</span>
+  ) : viewer.canRequest && book.available ? (
+    requested ? (
+      <span className={stateClass}>Requested</span>
+    ) : (
+      <button
+        type="button"
+        onClick={() => setAsking(!asking)}
+        aria-expanded={asking}
+        className={`${actionClass} ${asking ? "text-stone-900 dark:text-stone-100" : ""}`}
+      >
+        Ask to borrow
+      </button>
+    )
+  ) : viewer.canRequest && !book.notLending ? (
+    // Lent out: wait your turn
+    <borrow.Form method="post">
+      <input type="hidden" name="intent" value={inLine ? "leaveHold" : "placeHold"} />
+      <input type="hidden" name="bookId" value={book.id} />
+      <button type="submit" className={actionClass}>
+        {inLine ? "In line · Leave" : "Get in line"}
+      </button>
+    </borrow.Form>
+  ) : wanted ? (
+    <span className={stateClass}>
+      <BookmarkIcon size={14} filled />
+      On your list
+    </span>
+  ) : (
+    // Not being lent, or not a friend's to ask for: keep it on your list,
+    // and hear when there's a copy you can borrow
+    <want.Form method="post">
+      <input type="hidden" name="intent" value="wantBook" />
+      <input type="hidden" name="bookId" value={book.id} />
+      <button type="submit" className={actionClass}>
+        <BookmarkIcon size={14} />
+        Want to read
+      </button>
+    </want.Form>
+  );
+  // The links across from it show on phones only when there's nothing
+  // else in the row; there the cover, title and name already lead to them
+  const links = next || onEdit ? "hidden sm:flex" : "flex";
 
   return (
     <>
@@ -382,55 +445,14 @@ function Actions({
             Edit note
           </button>
         ) : null}
+        {next}
 
-        {isOwner ? (
-          <span className={stateClass}>Your copy</span>
-        ) : returned ? (
-          <span className={stateClass}>Returned to {book.owner.firstname}</span>
-        ) : isBorrower ? (
-          // Read it, said so: the next thing is giving it back
-          <giveBack.Form method="post" action={`/books/${book.id}`}>
-            <input type="hidden" name="intent" value="return" />
-            <input type="hidden" name="stay" value="true" />
-            <button type="submit" className={actionClass}>
-              Return to {book.owner.firstname}
-            </button>
-          </giveBack.Form>
-        ) : mine ? (
-          // Back with its owner: no asking for a book you just read
-          <span className={stateClass}>You read it</span>
-        ) : viewer.canRequest && book.notLending ? (
-          <span className={stateClass}>Not lending</span>
-        ) : viewer.canRequest && book.available ? (
-          requested ? (
-            <span className={stateClass}>Requested</span>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setAsking(!asking)}
-              aria-expanded={asking}
-              className={`${actionClass} ${asking ? "text-stone-900 dark:text-stone-100" : ""}`}
-            >
-              Ask to borrow
-            </button>
-          )
-        ) : viewer.canRequest ? (
-          <borrow.Form method="post">
-            <input
-              type="hidden"
-              name="intent"
-              value={inLine ? "leaveHold" : "placeHold"}
-            />
-            <input type="hidden" name="bookId" value={book.id} />
-            <button type="submit" className={actionClass}>
-              {inLine ? "In line · Leave" : "Get in line"}
-            </button>
-          </borrow.Form>
-        ) : null}
-
-        {/* The cover and title open the book too; on phones that's enough,
-            and the row stays on one line */}
-        <span className={`ml-auto ${hasAction ? "hidden sm:block" : ""}`}>
+        <span className={`ml-auto items-center gap-x-5 ${links}`}>
+          {poster ? (
+            <Link to={`/friend/${poster.id}`} className={actionClass}>
+              {poster.firstname}&apos;s shelf
+            </Link>
+          ) : null}
           <Link to={`/books/${book.id}`} className={actionClass}>
             View book
           </Link>
@@ -698,6 +720,7 @@ export function FeedPost({
             userId={userId}
             onEdit={editable && !editing ? () => setEditing(true) : undefined}
             mine={item.friend.id === userId}
+            poster={item.friend.id === userId ? null : item.friend}
           />
         </>
       )}

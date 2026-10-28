@@ -136,6 +136,9 @@ test("feed books carry hearts, notes and where you stand with them", async () =>
     canRequest: true,
     requested: false,
     inLine: false,
+    readIt: false,
+    onShelf: false,
+    wanted: false,
   });
 });
 
@@ -379,4 +382,27 @@ test("a lender who can't be found is named by first name and can't be asked", as
 
   const [item] = await getFriendActivity(me.id);
   expect(item.kind === "loved" && item.from).toMatchObject({ name: "Stranger", canAsk: false });
+});
+
+test("says when you already have a friend's book, want it or have read it", async () => {
+  const { me, friend } = await setup();
+  const mine = await makeBook(me.id, "Piranesi");
+  const theirs = await makeBook(friend.id, "Piranesi");
+  const wanted = await makeBook(friend.id, "Middlemarch");
+  const read = await makeBook(friend.id, "Circe");
+  const plain = await makeBook(friend.id, "Dune");
+  await addWantToRead(me.id, { title: "Middlemarch", author: "", cover: "" });
+  await lendBook(read.id, me.id);
+  await prisma.book.update({ where: { id: read.id }, data: { borrowerId: null } });
+  await prisma.lendingHistory.updateMany({ where: { bookId: read.id }, data: { returnedAt: new Date() } });
+
+  const added = (await getFriendActivity(me.id)).find((item) => item.kind === "added");
+  if (added?.kind !== "added") throw new Error("no additions");
+  const viewer = (id: string) => added.books.find((book) => book.id === id)?.viewer;
+  expect(viewer(theirs.id)).toMatchObject({ onShelf: true, wanted: false, readIt: false });
+  expect(viewer(wanted.id)).toMatchObject({ onShelf: false, wanted: true });
+  expect(viewer(read.id)).toMatchObject({ readIt: true });
+  expect(viewer(plain.id)).toMatchObject({ onShelf: false, wanted: false, readIt: false });
+  // Your own copy is what made theirs "on your shelf"
+  expect(mine.title).toBe("Piranesi");
 });

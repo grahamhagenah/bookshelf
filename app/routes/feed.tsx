@@ -113,6 +113,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const book = typeof bookId === "string" ? await getBookById(bookId) : null;
   if (!book) throw new Response("Not Found", { status: 404 });
 
+  // A friend's copy you can't ask for now: on your list, to hear when you can
+  if (intent === "wantBook") {
+    await addWantToRead(userId, {
+      title: book.title,
+      author: book.author,
+      cover: book.cover,
+      openLibraryKey: book.openLibraryKey,
+    });
+    return data({ wanted: true });
+  }
+
   if (intent === "toggleLove" || intent === "note") {
     if (!(await canLeaveNote(userId, book))) {
       throw new Response("Only readers of this copy can leave notes", {

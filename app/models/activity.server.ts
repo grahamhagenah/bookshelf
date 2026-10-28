@@ -1,6 +1,7 @@
 import { prisma } from "~/db.server";
 import type { User } from "~/generated/prisma/client";
 import { isNotLending } from "~/lending";
+import { sameWork } from "~/works";
 
 import { shelfIds } from "./household.server";
 
@@ -24,6 +25,7 @@ interface FeedBook {
   title: string;
   author: string;
   cover: string;
+  openLibraryKey: string | null;
   // Whose copy it is, and whether it's on their shelf right now
   owner: { id: string; firstname: string };
   available: boolean;
@@ -42,6 +44,11 @@ interface FeedBook {
     canRequest: boolean;
     requested: boolean;
     inLine: boolean;
+    // You've borrowed this copy before
+    readIt: boolean;
+    // You have a copy of your own, or it's on your Want to read list
+    onShelf: boolean;
+    wanted: boolean;
   };
 }
 
@@ -107,6 +114,7 @@ const bookFields = {
   title: true,
   author: true,
   cover: true,
+  openLibraryKey: true,
   borrowerId: true,
   notLendingUntil: true,
   user: { select: { id: true, firstname: true } },
@@ -122,6 +130,7 @@ function feedBook({
   title: string;
   author: string;
   cover: string;
+  openLibraryKey: string | null;
   borrowerId: string | null;
   notLendingUntil: Date | null;
   user: { id: string; firstname: string };
@@ -141,6 +150,9 @@ function feedBook({
       canRequest: false,
       requested: false,
       inLine: false,
+      readIt: false,
+      onShelf: false,
+      wanted: false,
     },
   };
 }
@@ -163,7 +175,7 @@ async function enrich(
   const ids = [...new Set(books.map((book) => book.id))];
   if (ids.length === 0) return;
 
-  const [notes, pastLoans, holds, requests] = await Promise.all([
+  const [notes, pastLoans, holds, requests, shelf, wishes] = await Promise.all([
     prisma.readerNote.findMany({
       where: {
         bookId: { in: ids },
@@ -188,6 +200,16 @@ async function enrich(
       },
       select: { bookId: true },
     }),
+    // Your own shelf and list, to say when you have the book already or
+    // are waiting on it
+    prisma.book.findMany({
+      where: { userId: { in: await shelfIds(userId) } },
+      select: { title: true, openLibraryKey: true },
+    }),
+    prisma.wantToRead.findMany({
+      where: { userId },
+      select: { title: true, openLibraryKey: true },
+    }),
   ]);
   const read = new Set(pastLoans.map((loan) => loan.bookId));
   const waiting = new Set(holds.map((hold) => hold.bookId));
@@ -206,6 +228,9 @@ async function enrich(
       canRequest: !isOwner && !isBorrower && friendIds.includes(book.owner.id),
       requested: asked.has(book.id),
       inLine: waiting.has(book.id),
+      readIt: read.has(book.id),
+      onShelf: !isOwner && shelf.some((copy) => sameWork(copy, book)),
+      wanted: wishes.some((wish) => sameWork(wish, book)),
     };
   }
 }
