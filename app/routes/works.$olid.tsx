@@ -1,5 +1,5 @@
 
-import { data, Link, useFetcher, useLoaderData } from "react-router";
+import { data, Form, Link, useFetcher, useLoaderData } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import BookCover from "~/components/book-cover";
@@ -388,6 +388,18 @@ export default function WorkPage() {
             </p>
           ) : null}
         </fetcher.Form>
+        {/* Just added, but meant for the list: undone in one tap */}
+        {added ? (
+          <Form method="post" action={`/books/${added}`} className="-mt-2 text-center">
+            <input type="hidden" name="intent" value="moveToWant" />
+            <button
+              type="submit"
+              className="text-xs text-stone-500 dark:text-stone-400 underline-offset-2 hover:underline hover:text-stone-800 dark:hover:text-stone-200"
+            >
+              Meant Want to read? Move it there
+            </button>
+          </Form>
+        ) : null}
 
         {/* Borrow it instead: a friend already has a copy */}
         {data.friendCopies.length > 0 ? (

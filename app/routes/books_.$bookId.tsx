@@ -71,6 +71,7 @@ import {
   createReaderNoteNotification,
   getLoanReply,
 } from "~/models/user.server";
+import { moveToWantToRead } from "~/models/wish.server";
 import {
   adoptWorkNotes,
   getFriendsWorkNotes,
@@ -661,6 +662,19 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       }
     }
     return data({ noteSaved: true });
+  }
+
+  // Added by mistake, not owned: off the shelf and onto your list
+  if (intent === "moveToWant") {
+    if (book.userId !== userId) {
+      throw new Response("Unauthorized", { status: 403 });
+    }
+    const moved = await moveToWantToRead(userId, book.id);
+    if (moved.ok) return redirect("/want-to-read");
+    return data(
+      { error: "This copy has been lent, so it stays on your shelf. Delete it from Edit if you must." },
+      { status: 400 },
+    );
   }
 
   if (intent === "delete") {
@@ -2182,6 +2196,19 @@ export default function BookDetailsPage() {
           ) : null}
           {data.isOwner && !isEditing ? (
             <NotLendingNotice until={data.book.notLendingUntil} />
+          ) : null}
+          {/* Added by mistake: back to the list in one tap, for a copy
+              that's never been lent, so no one's History loses it */}
+          {data.book.userId === data.currentUser?.id && !isEditing && !data.book.borrower && data.lendingHistory.length === 0 ? (
+            <Form method="post" className="text-center">
+              <input type="hidden" name="intent" value="moveToWant" />
+              <button
+                type="submit"
+                className="text-xs text-stone-500 dark:text-stone-400 underline-offset-2 hover:underline hover:text-stone-800 dark:hover:text-stone-200"
+              >
+                Don&apos;t own it? Move to Want to read
+              </button>
+            </Form>
           ) : null}
           {showNotLending ? (
             <p className={`block text-center ${quietLabel}`}>
