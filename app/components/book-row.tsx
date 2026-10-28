@@ -8,6 +8,9 @@ import { quietButton } from "./ui";
 // then what you can do with it. Names and dates in the line stand out a
 // little; the thing to do next is a button, anything else quiet.
 
+// The lists' columns: one on phones, two on a tablet, three on a desktop
+export const bookRowGrid = "grid gap-x-8 md:grid-cols-2 lg:grid-cols-3";
+
 // A name, date or link inside a book's line
 export const rowEmphasis = "font-medium text-stone-700 dark:text-stone-200";
 export const rowEmphasisLink = `${rowEmphasis} underline-offset-2 hover:underline`;

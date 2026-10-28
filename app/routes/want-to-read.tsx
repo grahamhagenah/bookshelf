@@ -2,7 +2,7 @@
 import { data, Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { BookRow, RowLine, rowEmphasis, rowEmphasisLink, rowPrimary, rowSecondary } from "~/components/book-row";
+import { BookRow, bookRowGrid, RowLine, rowEmphasis, rowEmphasisLink, rowPrimary, rowSecondary } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
 import { BookmarkIcon } from "~/components/icons";
 import Layout from "~/components/layout";
@@ -191,9 +191,9 @@ export default function WantToRead() {
             from Goodreads.
           </EmptyList>
         ) : (
-          // Two columns where there's room; each row ruled underneath, so
-          // the rules line up across both
-          <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
+          // In columns where there's room; each row ruled underneath, so
+          // the rules line up across them
+          <ul className={`mt-4 ${bookRowGrid}`}>
             {items.map((item) => (
               <WantRow key={item.id} item={item} friendIds={friendIds} />
             ))}

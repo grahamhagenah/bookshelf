@@ -1,7 +1,7 @@
 import { data, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { BookRow, RowLine, rowEmphasis } from "~/components/book-row";
+import { BookRow, bookRowGrid, RowLine, rowEmphasis } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
 import { HistoryIcon } from "~/components/icons";
 import Layout from "~/components/layout";
@@ -98,9 +98,9 @@ export default function History() {
           </EmptyList>
         ) : (
           // Loans that are over, both ways, the most recently back first;
-          // what's out now is on your shelf. Two columns where there's room,
+          // what's out now is on your shelf. In columns where there's room,
           // as To read and Also read
-          <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
+          <ul className={`mt-4 ${bookRowGrid}`}>
             {entries.map((entry) => (
               <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />
             ))}

@@ -1,7 +1,7 @@
 import { data, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { BookRow, RowLine } from "~/components/book-row";
+import { BookRow, bookRowGrid, RowLine } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
 import { ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
@@ -62,8 +62,8 @@ export default function ReadElsewhere() {
             a note on its page.
           </EmptyList>
         ) : (
-          // Two columns where there's room, as To read has
-          <ul className="mt-4 grid gap-x-10 md:grid-cols-2">
+          // In columns where there's room, as To read has
+          <ul className={`mt-4 ${bookRowGrid}`}>
             {items.map((item) => {
               // One still being looked up opens a search for it
               const page = isWork(item.workKey)
