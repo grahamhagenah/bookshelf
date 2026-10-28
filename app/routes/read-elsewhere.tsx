@@ -17,7 +17,6 @@ import {
 import EmptyList from "~/components/empty-list";
 import { ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
-import { useListFilter } from "~/components/list-filter";
 import ShelfTabs from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
 import { findImportedWorks } from "~/models/import.server";
@@ -95,12 +94,6 @@ const isWork = (key: string) => key.startsWith("/works/");
 
 export default function ReadElsewhere() {
   const { items, counts } = useLoaderData<typeof loader>();
-  // By what you marked: read, loved, or wrote about
-  const { shown, chips } = useListFilter(items, [
-    { value: "read", label: "Read", test: (item) => Boolean(item.readAt) },
-    { value: "loved", label: "Loved", test: (item) => item.loved },
-    { value: "notes", label: "With a note", test: (item) => Boolean(item.body) },
-  ]);
 
   return (
     <Layout title="Also read">
@@ -113,16 +106,20 @@ export default function ReadElsewhere() {
             title="Books you've read elsewhere"
             action={{ to: "/search", label: "Find a book", search: true }}
           >
-            The ones that aren&apos;t on your shelf: from the library, borrowed
-            long ago, given away. Find one, then mark it read, love it or leave
-            a note on its page.
+            The ones that aren&apos;t on your shelf: library books, audiobooks,
+            ones you read years ago and passed on. Find one, then mark it read,
+            love it or leave a note on its page.
           </EmptyList>
         ) : (
           // In columns where there's room, as Want to read has
           <>
-            {chips}
+            {/* What belongs here, since it isn't plain from the name */}
+            <p className="text-sm text-stone-500 dark:text-stone-400">
+              Books you&apos;ve read that aren&apos;t on your shelf: library
+              books, audiobooks, ones you read years ago and passed on.
+            </p>
             <ul className={`mt-4 ${bookRowGrid}`}>
-              {shown.map((item) => {
+              {items.map((item) => {
                 // One still being looked up opens a search for it
                 const page = isWork(item.workKey)
                   ? item.workKey
