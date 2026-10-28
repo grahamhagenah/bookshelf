@@ -1,7 +1,7 @@
 import { data, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { BookRow, bookRowGrid, RowLine } from "~/components/book-row";
+import { BookRow, bookRowGrid, RowLine, RowLoved } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
 import { ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
@@ -78,13 +78,14 @@ export default function ReadElsewhere() {
                   // the book's page
                   line={
                     <RowLine>
-                      {item.body
-                        ? item.loved
-                          ? "You loved it and left a note"
-                          : "You left a note"
-                        : item.loved
-                          ? "You loved it"
-                          : "You read it"}
+                      {/* A heart as History shows one */}
+                      {item.loved ? (
+                        <RowLoved>{item.body ? "You loved it and left a note" : "You loved it"}</RowLoved>
+                      ) : item.body ? (
+                        "You left a note"
+                      ) : (
+                        "You read it"
+                      )}
                     </RowLine>
                   }
                 />

@@ -1,9 +1,9 @@
 import { data, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { BookRow, bookRowGrid, RowLine, rowEmphasis } from "~/components/book-row";
+import { BookRow, bookRowGrid, RowLine, RowLoved, rowEmphasis } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
-import { HeartIcon, HistoryIcon } from "~/components/icons";
+import { HistoryIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
@@ -67,9 +67,8 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
   // A heart, if they loved it: the borrower's on a book you lent, yours on
   // one you borrowed. Notes are on the book's page
   const loved = entry.note?.loved ? (
-    <span className="mt-2 flex items-center gap-1.5 text-stone-600 dark:text-stone-300">
-      <HeartIcon size={12} filled className="flex-shrink-0 text-rose-400" />
-      {borrowed ? "You loved it" : `${name} loved it`}
+    <span className="mt-2 block">
+      <RowLoved>{borrowed ? "You loved it" : `${name} loved it`}</RowLoved>
     </span>
   ) : null;
   return (

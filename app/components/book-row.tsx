@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 
 import BookCover from "./book-cover";
+import { HeartIcon } from "./icons";
 import { quietButton } from "./ui";
 
 // One book in one of your lists (To read, Also read, History), the same
@@ -75,4 +76,15 @@ export function BookRow({
 // Where a book stands, in a line or two of quiet words
 export function RowLine({ children }: { children: React.ReactNode }) {
   return <p className="text-sm text-stone-500 dark:text-stone-400">{children}</p>;
+}
+
+// A heart and who loved it, the same in every list: "You loved it",
+// "Maya loved it"
+export function RowLoved({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <HeartIcon size={12} filled className="flex-shrink-0 text-rose-400" />
+      {children}
+    </span>
+  );
 }
