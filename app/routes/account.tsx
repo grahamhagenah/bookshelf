@@ -44,6 +44,7 @@ import {
   getUserByEmail,
   updateUser,
   generateShareToken,
+  giveDefaultHandle,
   revokeShareToken,
   changePassword,
   setAppearance,
@@ -81,6 +82,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
     return redirect("/account?upgraded=1#plan");
   }
+  // A page shared before handles came by default gets one from the name
+  await giveDefaultHandle(userId);
   const [user, bookStats, household, plan, pins] = await Promise.all([
     getUserById(userId),
     getBookStats(userId, await shelfIds(userId)),

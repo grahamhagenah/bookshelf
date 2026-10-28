@@ -16,6 +16,8 @@ import {
   createBookDeclinedNotification,
   getLoanReply,
   generateShareToken,
+  giveDefaultHandle,
+  handleFromName,
   getSuggestedFriends,
   searchUsers,
   getFriendStatus,
@@ -225,5 +227,57 @@ describe("answering a borrow request", () => {
     const quiet = await makeBook(owner.id, "Dune");
     await createBookApprovedNotification(owner.id, borrower.id, "Maya Reader", "Dune", quiet.id, "   ");
     expect(await getLoanReply(quiet.id, borrower.id)).toBeNull();
+  });
+});
+
+describe("default handles", () => {
+  test("a name becomes letters and numbers", () => {
+    expect(handleFromName("Jordan", "Avery")).toBe("jordanavery");
+    expect(handleFromName("Zoë", "O'Brien-Smith")).toBe("zoeobriensmith");
+    expect(handleFromName("李", "")).toBe("reader");
+    expect(handleFromName("Bartholomew", "Featherstonehaugh").length).toBeLessThanOrEqual(21);
+  });
+
+  test("sharing gives the page an address from the name, numbered when taken", async () => {
+    const surname = `Q${crypto.randomUUID().slice(0, 6).replace(/[^a-z]/g, "q")}`;
+    const name = (first: string) =>
+      prisma.user.create({
+        data: {
+          email: `${crypto.randomUUID()}@example.test`,
+          firstname: first,
+          surname,
+          emailVerifiedAt: new Date(),
+        },
+      });
+    const first = await name("Robin");
+    const second = await name("Robin");
+    await generateShareToken(first.id);
+    await generateShareToken(second.id);
+    const base = handleFromName("Robin", surname);
+    const handles = await prisma.user.findMany({
+      where: { id: { in: [first.id, second.id] } },
+      select: { id: true, handle: true },
+    });
+    expect(handles.find((u) => u.id === first.id)?.handle).toBe(base);
+    expect(handles.find((u) => u.id === second.id)?.handle).toBe(`${base}2`);
+  });
+
+  test("a reserved or too-short name takes a number", async () => {
+    const admin = await prisma.user.create({
+      data: { email: `${crypto.randomUUID()}@example.test`, firstname: "Ad", surname: "Min", shareToken: crypto.randomUUID() },
+    });
+    expect(await giveDefaultHandle(admin.id)).toMatch(/^admin\d+$/);
+  });
+
+  test("not for demo accounts, nor without sharing, nor over one picked", async () => {
+    const demo = await makeUser("Demo", { demoGroup: "g1", shareToken: crypto.randomUUID() });
+    expect(await giveDefaultHandle(demo.id)).toBeNull();
+
+    const quiet = await makeUser("Quiet");
+    expect(await giveDefaultHandle(quiet.id)).toBeNull();
+
+    const picked = await makeUser("Picked", { shareToken: crypto.randomUUID() });
+    await prisma.user.update({ where: { id: picked.id }, data: { handle: `mine_${picked.id.slice(-6)}` } });
+    expect(await giveDefaultHandle(picked.id)).toBe(`mine_${picked.id.slice(-6)}`);
   });
 });
