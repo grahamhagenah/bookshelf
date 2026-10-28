@@ -58,10 +58,12 @@ export function BookRow({
           className="h-36 w-24"
         />
       </Link>
-      <div className="min-w-0 flex-1">
+      {/* As tall as the cover at least, so what you can do sits along its
+          bottom edge, row after row */}
+      <div className="flex min-h-36 min-w-0 flex-1 flex-col">
         <Link
           to={to}
-          className="font-medium text-stone-900 dark:text-stone-100 underline-offset-2 hover:underline"
+          className="self-start font-medium text-stone-900 dark:text-stone-100 underline-offset-2 hover:underline"
         >
           {book.title}
         </Link>
@@ -70,7 +72,7 @@ export function BookRow({
         ) : null}
         {line ? <div className={showAuthor ? "mt-2" : "mt-1"}>{line}</div> : null}
         {actions ? (
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+          <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 pt-3 text-sm">
             {actions}
           </div>
         ) : null}

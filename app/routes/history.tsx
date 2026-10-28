@@ -122,11 +122,7 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
       line={
         <RowLine>
           {who}
-          {/* The dates kept together, so a long name moves them whole */}
-          <span className="text-stone-400 dark:text-stone-500">
-            {" · "}
-            <span className="whitespace-nowrap">{when}</span>
-          </span>
+          <span className="block text-stone-400 dark:text-stone-500">{when}</span>
         </RowLine>
       }
       actions={actions}
