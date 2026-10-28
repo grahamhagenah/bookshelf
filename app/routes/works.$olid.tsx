@@ -396,7 +396,7 @@ export default function WorkPage() {
             <input type="hidden" name="intent" value="moveToWant" />
             <button
               type="submit"
-              className="text-xs text-stone-500 dark:text-stone-400 underline-offset-2 hover:underline hover:text-stone-800 dark:hover:text-stone-200"
+              className="-my-2 py-2 text-xs text-stone-500 dark:text-stone-400 underline-offset-2 hover:underline hover:text-stone-800 dark:hover:text-stone-200"
             >
               Meant Want to read? Move it there
             </button>

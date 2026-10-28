@@ -361,7 +361,7 @@ export default function SearchBox({
                     </span>
                   ) : (
                     <>
-                      <span className="min-w-0 truncate">
+                      <span className="min-w-0 line-clamp-2 sm:line-clamp-none sm:truncate">
                         <span className="text-stone-900 dark:text-stone-100">
                           {option.title}
                         </span>
