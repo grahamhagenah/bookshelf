@@ -81,11 +81,12 @@ export default function Groups() {
   return (
     <Layout title="Groups" header={<FriendsTabs counts={counts} />}>
       {groups.length > 0 ? (
-        <>
+        // Your groups on the left, starting another beside them
+        <div className="grid gap-10 md:grid-cols-2 md:gap-14">
           <section>
             {/* The tab above already says how many */}
             <h2 className="sr-only">Your groups</h2>
-            <ul className="grid gap-3 sm:grid-cols-2">
+            <ul className="grid gap-3">
               {groups.map((group) => (
                 <li key={group.id}>
                   <Link
@@ -114,9 +115,9 @@ export default function Groups() {
               You&apos;ll get a link to share. Everyone who joins from it becomes friends with
               everyone else, so all their shelves open up at once. Up to {maxMembers} people.
             </p>
-            {startForm("mt-4 max-w-xl")}
+            {startForm("mt-4")}
           </section>
-        </>
+        </div>
       ) : (
         // None yet: what a group is for, with the way to start one in it
         <EmptyList
