@@ -57,31 +57,12 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
       <PersonLink id={entry.person.id} name={name} friendIds={friendIds} />
     </span>
   );
-  const date = (value: string | Date) => (
-    <span className={`whitespace-nowrap ${rowEmphasis}`}>{monthDay(value)}</span>
-  );
-  // Told as a sentence: who had it, and when it went and came back
-  const story = borrowed ? (
-    entry.returnedAt ? (
-      <>
-        You borrowed it from {person} on {date(entry.borrowedAt)} and gave it
-        back {date(entry.returnedAt)}.
-      </>
-    ) : (
-      <>
-        You’ve been borrowing it from {person} since {date(entry.borrowedAt)}.
-      </>
-    )
-  ) : entry.returnedAt ? (
-    <>
-      {person} borrowed it on {date(entry.borrowedAt)} and gave it back{" "}
-      {date(entry.returnedAt)}.
-    </>
-  ) : (
-    <>
-      {person} has been borrowing it since {date(entry.borrowedAt)}.
-    </>
-  );
+  // Who, then when on a line of its own: short lines rather than one long
+  // sentence. Still out, it's "Since Oct 19"; back, the two dates
+  const who = borrowed ? <>Borrowed from {person}</> : <>Lent to {person}</>;
+  const when = entry.returnedAt
+    ? `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
+    : `Since ${monthDay(entry.borrowedAt)}`;
   // Just who had it and when: notes and hearts are on the book's page,
   // one tap away, rather than a different line for each case here
   return (
@@ -90,7 +71,8 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
       book={entry.book}
       line={
         <RowLine icon={borrowed ? <BorrowedIcon size={13} /> : <LentIcon size={13} />}>
-          {story}
+          {who}
+          <span className="block text-stone-400 dark:text-stone-500">{when}</span>
         </RowLine>
       }
     />
