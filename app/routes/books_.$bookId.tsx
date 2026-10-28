@@ -10,6 +10,7 @@ import { LentIcon, PencilIcon } from "~/components/icons";
 import OpeningLine, { openingLineType } from "~/components/opening-line";
 import PersonLink from "~/components/person-link";
 import ReaderNotes, { HideToggle, PinToggle } from "~/components/reader-notes";
+import SubjectTags from "~/components/subject-tags";
 import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
 import { importCover, isOpenLibraryCover } from "~/covers.server";
 import { daysUntil, dueText } from "~/due";
@@ -163,12 +164,12 @@ function AboutAuthor({
   const clipped = long && !open;
 
   // The first few lines of the bio, fading out, with the rest (and the
-  // links) a tap away. The name itself is already at the top of the page,
-  // and the bio usually opens with the dates, so neither repeats here.
+  // links) a tap away, under the author's own name. The bio usually opens
+  // with the dates, so they don't repeat here.
   return (
     <section className="mt-8">
       <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
-        About the author
+        {author.name}
       </h2>
       {author.bio ? (
         <p
@@ -2078,14 +2079,13 @@ export default function BookDetailsPage() {
   const showNotLending =
     !data.isOwner && !data.isBorrower && data.isFriend && notLending;
   const lendsAgainOn = lendingAgainOn(data.book.notLendingUntil);
-  // One quiet line: the year, the length and what it's about, the subjects
-  // as plain words. The publisher stays under Edit details; up here it
-  // crowded the title.
+  // One quiet line: the year and the length. What it's about goes in tags
+  // under the author; the publisher stays under Edit details, since up here
+  // it crowded the title.
   const subjects = cleanSubjects(data.book.subjects);
   const details = [
     data.book.datePublished,
     data.book.pageCount ? `${data.book.pageCount} pages` : null,
-    subjects.join(", "),
   ].filter(Boolean);
 
   // Title and details: beside the cover on phones, in the main column on
@@ -2659,6 +2659,7 @@ export default function BookDetailsPage() {
               {data.author?.bio ? (
                 <AboutAuthor author={data.author} />
               ) : null}
+              <SubjectTags subjects={subjects} title={data.book.title} className="mt-6" />
             </div>
           ) : null}
 

@@ -8,6 +8,7 @@ import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
 import OpeningLine from "~/components/opening-line";
 import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
+import SubjectTags from "~/components/subject-tags";
 import { primaryButton, quietButton } from "~/components/ui";
 import { isNotLending } from "~/lending";
 import {
@@ -286,12 +287,12 @@ export default function WorkPage() {
         ? fetcher.data.wanted
         : data.wanted;
   const subjects = cleanSubjects(work.subjects);
-  // One quiet line, subjects as plain words. No publisher: up by the title
-  // it crowded the heading.
+  // One quiet line: the year and the length. What it's about goes in tags
+  // under the author; no publisher, since up by the title it crowded the
+  // heading.
   const details = [
     work.datePublished,
     work.pageCount ? `${work.pageCount} pages` : null,
-    subjects.join(", "),
   ].filter(Boolean);
 
   const heading = (
@@ -464,7 +465,7 @@ export default function WorkPage() {
         {work.authorDetails?.bio ? (
           <section className="mt-8">
             <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
-              About the author
+              {work.authorDetails.name}
             </h2>
             <p className="max-w-150 whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
               {work.authorDetails.bio}
@@ -491,6 +492,7 @@ export default function WorkPage() {
             </p>
           </section>
         ) : null}
+        <SubjectTags subjects={subjects} title={work.title} className="mt-6" />
 
         {/* Your heart, read mark and note when it isn't on your shelf (on
             your shelf, they go on your copy), and your friends' */}
