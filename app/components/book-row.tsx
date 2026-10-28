@@ -29,7 +29,7 @@ export function BookRow({
   book,
   line,
   actions,
-  coverNote,
+  showAuthor = true,
   className = "",
 }: {
   id?: string;
@@ -40,9 +40,9 @@ export function BookRow({
   line?: React.ReactNode;
   // What you can do, in rowPrimary or rowSecondary
   actions?: React.ReactNode;
-  // A few quiet words under the cover, like History's dates, so they take
-  // no room from the lines beside it
-  coverNote?: React.ReactNode;
+  // Off where the row is about something else than the book, like
+  // History's loans: the cover and title say which book it is
+  showAuthor?: boolean;
   className?: string;
 }) {
   return (
@@ -50,19 +50,14 @@ export function BookRow({
       id={id}
       className={`flex items-start gap-4 border-b border-stone-100 dark:border-stone-800 py-4 ${className}`}
     >
-      <div className="w-24 flex-shrink-0">
-        <Link to={to} tabIndex={-1} aria-hidden="true" className="block">
-          <BookCover
-            cover={book.cover}
-            title={book.title}
-            author={book.author}
-            className="h-36 w-24"
-          />
-        </Link>
-        {coverNote ? (
-          <p className="mt-1.5 text-center text-xs text-stone-400 dark:text-stone-500">{coverNote}</p>
-        ) : null}
-      </div>
+      <Link to={to} tabIndex={-1} aria-hidden="true" className="flex-shrink-0">
+        <BookCover
+          cover={book.cover}
+          title={book.title}
+          author={book.author}
+          className="h-36 w-24"
+        />
+      </Link>
       <div className="min-w-0 flex-1">
         <Link
           to={to}
@@ -70,8 +65,10 @@ export function BookRow({
         >
           {book.title}
         </Link>
-        <p className="text-sm text-stone-500 dark:text-stone-400">{book.author}</p>
-        {line ? <div className="mt-2">{line}</div> : null}
+        {showAuthor ? (
+          <p className="text-sm text-stone-500 dark:text-stone-400">{book.author}</p>
+        ) : null}
+        {line ? <div className={showAuthor ? "mt-2" : "mt-1"}>{line}</div> : null}
         {actions ? (
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             {actions}

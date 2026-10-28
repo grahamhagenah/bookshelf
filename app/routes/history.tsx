@@ -8,7 +8,6 @@ import {
   RowLoved,
   rowEmphasis,
   rowPrimary,
-  rowSecondary,
 } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
 import { HeartIcon, HistoryIcon } from "~/components/icons";
@@ -65,66 +64,72 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
       <PersonLink id={entry.person.id} name={name} friendIds={friendIds} />
     </span>
   );
-  // Who on the line beside the cover; when, the two dates out and back,
-  // under the cover ("Since" only as a fallback)
-  // Said from your side, so which way it went is plain
+  // Said from your side, so which way it went is plain, then when: the two
+  // dates out and back ("Since" only as a fallback)
   const who = borrowed ? <>You borrowed from {person}</> : <>You lent to {person}</>;
   const when = entry.returnedAt
     ? `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
     : `Since ${monthDay(entry.borrowedAt)}`;
-  // What was said about it, as Also read says it: yours on a book you
-  // borrowed, the borrower's on one you lent. The notes are on the book's
-  // page; the row says there is one, and offers the one thing to do next
+
+  // What was said about it lives on the book's page. The row's one button
+  // goes there, with a heart in it when the book was loved: yours on a book
+  // you borrowed, the borrower's on one you lent
   const love = useFetcher();
   const body = entry.note?.body?.trim();
   // A heart given from the row shows at once
   const loved = Boolean(entry.note?.loved) || love.state !== "idle";
-  const said = borrowed ? "You" : name;
-  const marks = loved ? (
-    <RowLoved>
-      {said} loved it{body ? " and left a note" : ""}
-    </RowLoved>
-  ) : body ? (
-    `${said} left a note`
-  ) : null;
+  const heart = <HeartIcon size={13} filled className="flex-shrink-0 text-rose-400" />;
   const notes = `/books/${entry.book.id}#notes`;
-  // Yours: until you've left a note, the way to leave one, and to love it
-  // if you haven't. Theirs: the way to read the note they left
-  const actions = borrowed ? (
-    body ? null : (
-      <>
-        <Link to={notes} className={rowPrimary}>
-          Leave a note
-        </Link>
-        {loved ? null : (
-          <love.Form method="post" action={`/books/${entry.book.id}`}>
-            <input type="hidden" name="intent" value="toggleLove" />
-            <input type="hidden" name="loved" value="true" />
-            <button type="submit" className={`${rowSecondary} inline-flex items-center gap-1`}>
-              <HeartIcon size={13} />
-              Love it
-            </button>
-          </love.Form>
-        )}
-      </>
-    )
-  ) : body ? (
-    <Link to={notes} className={rowPrimary}>
-      Read {name}&apos;s note
+  const noteButton = (label: string) => (
+    <Link to={notes} className={`${rowPrimary} gap-1.5`}>
+      {loved ? heart : null}
+      {label}
     </Link>
+  );
+  const actions = borrowed ? (
+    <>
+      {noteButton(body ? "Read your note" : "Leave a note")}
+      {/* Not loved yet: a heart to give, right here */}
+      {loved ? null : (
+        <love.Form method="post" action={`/books/${entry.book.id}`}>
+          <input type="hidden" name="intent" value="toggleLove" />
+          <input type="hidden" name="loved" value="true" />
+          <button
+            type="submit"
+            aria-label="Love it"
+            title="Love it"
+            // A square the button's height, in the same outline as the button
+            className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-md border border-stone-200 text-stone-500 hover:border-stone-400 hover:text-rose-400 dark:border-stone-700 dark:text-stone-400 dark:hover:border-stone-500 transition-colors"
+          >
+            <HeartIcon size={13} />
+          </button>
+        </love.Form>
+      )}
+    </>
+  ) : body ? (
+    noteButton(`Read ${name}'s note`)
+  ) : loved ? (
+    // Loved, with nothing to read: the heart said quietly
+    <RowLoved>{name} loved it</RowLoved>
   ) : null;
+
   return (
     <BookRow
       to={`/books/${entry.book.id}`}
       book={entry.book}
+      // The cover and title say which book; the row is about the loan
+      showAuthor={false}
       line={
         <RowLine>
           {who}
-          {marks ? <span className="mt-1 block">{marks}</span> : null}
+          {/* The dates kept together, so a long name moves them whole */}
+          <span className="text-stone-400 dark:text-stone-500">
+            {" · "}
+            <span className="whitespace-nowrap">{when}</span>
+          </span>
         </RowLine>
       }
       actions={actions}
-      coverNote={when}
     />
   );
 }
