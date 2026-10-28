@@ -208,6 +208,8 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
               body:
                 intent === "saveNote" && typeof body === "string" ? body : null,
             },
+      // Rewritten from the feed: it keeps its place there
+      { keepTime: form.get("edit") === "true" },
     );
     return data(
       intent === "saveNote" || intent === "deleteNote"

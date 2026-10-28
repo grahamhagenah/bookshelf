@@ -797,10 +797,11 @@ function NoteEdit({
         <>
           <input type="hidden" name="intent" value="note" />
           <input type="hidden" name="bookId" value={item.book.id} />
-          {/* An edit, not news: the owner heard about the note already */}
-          <input type="hidden" name="edit" value="true" />
         </>
       )}
+      {/* An edit, not news: it keeps its place in the feed, and the owner
+          isn't told again */}
+      <input type="hidden" name="edit" value="true" />
       <textarea
         ref={box}
         name="body"

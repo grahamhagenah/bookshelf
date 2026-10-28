@@ -75,3 +75,23 @@ test("getLoveCounts counts only hearts", async () => {
   expect(counts.get(loved.id)).toBe(2);
   expect(counts.has(notedOnly.id)).toBe(false);
 });
+
+test("an edited note keeps its time, so the feed leaves it in place", async () => {
+  const owner = await makeUser("Owner");
+  const book = await makeBook(owner.id, "Circe");
+  const first = await saveReaderNote(owner.id, book.id, { body: "Gorgeous." });
+  await new Promise((resolve) => setTimeout(resolve, 20));
+
+  const edited = await saveReaderNote(
+    owner.id,
+    book.id,
+    { body: "Gorgeous, start to finish." },
+    { keepTime: true },
+  );
+  expect(edited.body).toBe("Gorgeous, start to finish.");
+  expect(edited.updatedAt).toEqual(first.updatedAt);
+
+  // An ordinary save still moves it on
+  const saved = await saveReaderNote(owner.id, book.id, { loved: true });
+  expect(saved.updatedAt.getTime()).toBeGreaterThan(first.updatedAt.getTime());
+});
