@@ -846,6 +846,8 @@ export const iconTone = (color: PlateColor | null) =>
 // The picture fills about three quarters of its circle: the drawings are
 // round-ish and keep clear of the box's corners, so they can run big
 const SIZES = {
+  // Inside a line of small text, beside a name
+  "2xs": { box: "w-[18px] h-[18px] text-[7px]", icon: 14 },
   xs: { box: "w-6 h-6 text-[10px]", icon: 19 },
   sm: { box: "w-8 h-8 text-xs", icon: 25 },
   // A list beside other things, like the friends page

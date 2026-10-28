@@ -6,6 +6,7 @@ import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
 
 import BookCover from "./book-cover";
+import Faces from "./faces";
 import FriendActivityItem from "./friend-activity";
 import { BorrowedIcon, LentIcon, SearchIcon } from "./icons";
 import { InviteButtons } from "./invite-message";
@@ -505,7 +506,7 @@ function PopularChart({
         </Link>
       </h2>
       <ol className="divide-y divide-stone-100 dark:divide-stone-900">
-        {popular.map((book, index) => {
+        {popular.map((book) => {
           const said =
             book.loans === 1 ? "Lent once" : `Lent ${book.loans} times`;
           return (
@@ -514,14 +515,6 @@ function PopularChart({
                 to={book.to}
                 className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
               >
-                {/* As wide as the friend icons above, so the covers line
-                    up with the activity's */}
-                <span
-                  aria-hidden="true"
-                  className="w-7 flex-shrink-0 text-center text-sm font-semibold tabular-nums text-stone-500 dark:text-stone-400"
-                >
-                  {index + 1}
-                </span>
                 <BookCover
                   cover={book.cover}
                   title={book.title}
@@ -532,9 +525,17 @@ function PopularChart({
                   <span className="line-clamp-2 font-medium leading-snug text-stone-900 dark:text-stone-100">
                     {book.title}
                   </span>
-                  <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
-                    {book.author}
-                    {book.owners ? ` · ${book.owners}` : ""}
+                  {/* Whose copies, with a small face for each: the order and
+                      the count on the right already say how popular */}
+                  <span className="flex min-w-0 items-center gap-1 text-sm text-stone-500 dark:text-stone-400">
+                    <span className="truncate">{book.author}</span>
+                    {book.owners ? (
+                      <>
+                        <span aria-hidden="true">·</span>
+                        <Faces people={book.faces} size="2xs" max={3} />
+                        <span className="whitespace-nowrap">{book.owners}</span>
+                      </>
+                    ) : null}
                   </span>
                 </span>
                 <span
@@ -578,6 +579,8 @@ interface Popular {
   loans: number;
   // "Maya and Sam have it"
   owners: string | null;
+  // And their faces, in the same order
+  faces: { id: string; firstname: string; surname: string; profileEmoji: string | null }[];
   // A friend's copy, one free to ask for first
   to: string;
 }

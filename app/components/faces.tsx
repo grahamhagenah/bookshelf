@@ -1,7 +1,7 @@
 import Avatar from "~/components/avatar";
 
 // Each face overlaps the last by about a quarter
-const OVERLAP = { xs: "-space-x-1.5", sm: "-space-x-2", md: "-space-x-2.5" } as const;
+const OVERLAP = { "2xs": "-space-x-1", xs: "-space-x-1.5", sm: "-space-x-2", md: "-space-x-2.5" } as const;
 
 // A few people side by side, each overlapping the last: a group, a shared
 // shelf. Decorative, since a name or count always sits beside it.

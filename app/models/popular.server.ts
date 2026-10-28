@@ -38,7 +38,7 @@ export async function getPopularWithFriends(userId: User["id"], limit = 5) {
         isbn: true,
         borrowerId: true,
         notLendingUntil: true,
-        user: { select: { firstname: true } },
+        user: { select: { id: true, firstname: true, surname: true, profileEmoji: true } },
         lendingHistory: { select: { borrowerId: true, borrowedAt: true } },
       },
     }),
@@ -86,6 +86,10 @@ export async function getPopularWithFriends(userId: User["id"], limit = 5) {
         owners: [
           ...new Set([lead, ...group].map((copy) => copy.user.firstname)),
         ],
+        // Their faces, in the same order, for beside the names
+        faces: [lead, ...group]
+          .map((copy) => copy.user)
+          .filter((user, i, all) => all.findIndex((u) => u.id === user.id) === i),
       };
     })
     .filter((book) => book.loans >= MIN_LOANS)
