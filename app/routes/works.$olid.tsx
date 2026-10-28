@@ -356,37 +356,26 @@ export default function WorkPage() {
               {adding ? "Adding…" : "Add to my shelf"}
             </button>
           )}
-          {added || inLibrary ? null : wanted ? (
-            // On the list, and the way off it
-            <p className="inline-flex items-center justify-center gap-1.5 py-2 text-sm text-stone-500 dark:text-stone-400">
-              <BookmarkIcon size={14} />
-              {/* The list's name, set off so its capital reads as one */}
-              <span>
-                On your{" "}
-                <span className="font-semibold text-stone-700 dark:text-stone-200">To read</span> list ·
-              </span>
-              <input type="hidden" name="title" value={work.title ?? ""} />
-              <button
-                type="submit"
-                name="intent"
-                value="unwant"
-                className="text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
-              >
-                Remove
-              </button>
-            </p>
-          ) : (
+          {/* Want to read, as a toggle: pressed while it's on your list,
+              and pressing it again takes it off */}
+          {added || inLibrary ? null : (
             <button
               type="submit"
               name="intent"
-              value="want"
+              value={wanted ? "unwant" : "want"}
+              aria-pressed={wanted}
+              title={wanted ? "Take it off your Want to read list" : undefined}
               disabled={wanting}
-              className={`${quietButton("lg")} inline-flex w-full items-center justify-center gap-1.5 disabled:opacity-60`}
+              className={`${quietButton("lg")} inline-flex w-full items-center justify-center gap-1.5 disabled:opacity-60 ${
+                wanted ? "border-transparent bg-stone-100 dark:border-transparent dark:bg-stone-800" : ""
+              }`}
             >
-              <BookmarkIcon size={14} />
-              {wanting ? "Saving…" : "Want to read"}
+              <BookmarkIcon size={14} filled={wanted} />
+              {wanting ? "Saving…" : wanted ? "On your Want to read list" : "Want to read"}
             </button>
           )}
+          {/* Matched by the title it went on the list with, when taken off */}
+          {wanted ? <input type="hidden" name="title" value={work.title ?? ""} /> : null}
           {fetcher.data?.limit ? (
             <p className="text-sm text-stone-600 dark:text-stone-300">
               {fetcher.data.limit}{" "}

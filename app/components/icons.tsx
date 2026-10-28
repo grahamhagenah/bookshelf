@@ -283,9 +283,9 @@ export function HiddenIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
-export function BookmarkIcon({ className = "", size = 24 }: IconProps) {
+export function BookmarkIcon({ className = "", size = 24, filled = false }: IconProps & { filled?: boolean }) {
   return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M6.5 3.5h11v17l-5.5-4-5.5 4z" />
     </svg>
   );
