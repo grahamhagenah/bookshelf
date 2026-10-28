@@ -323,7 +323,10 @@ function Card({
             icon={person.icon}
           />
         )}
-        <span className="absolute -bottom-1 -right-1 rounded-full ring-2 ring-white dark:ring-stone-950">
+        {/* The cut-out is one filled circle with the badge inside: a ring
+            around the badge left a hairline of the picture showing between
+            the two edges */}
+        <span className="absolute -bottom-1.5 -right-1.5 rounded-full bg-white p-0.5 dark:bg-stone-950">
           <ActivityIcon
             type={type}
             urgent={type === "OVERDUE_REMINDER" || type === "LOAN_OVERDUE"}

@@ -64,13 +64,16 @@ export default function SideRail({ friends, groups, children, sticky = true }: S
                 <Link
                   to={`/friend/${friend.id}`}
                   title={`${friend.firstname} ${friend.surname}`}
-                  className="block rounded-full ring-2 ring-transparent hover:ring-stone-300 dark:hover:ring-stone-600 transition-shadow"
+                  className="group block rounded-full"
                 >
+                  {/* On hover, a ring in their picture's own color, as the
+                      header's account button has */}
                   <Avatar
                     firstname={friend.firstname}
                     surname={friend.surname}
                     icon={friend.profileEmoji}
                     size="md"
+                    className="ring-2 ring-transparent group-hover:ring-current/25 group-focus-visible:ring-current/40 transition-shadow"
                   />
                   <span className="sr-only">
                     {friend.firstname} {friend.surname}

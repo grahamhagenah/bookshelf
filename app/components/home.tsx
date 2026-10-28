@@ -10,7 +10,6 @@ import FriendActivityItem from "./friend-activity";
 import { LentIcon } from "./icons";
 import { InviteButtons } from "./invite-message";
 import ShareShelfOffer from "./share-shelf-offer";
-import { RailGroups } from "./side-rail";
 import { sectionHeading } from "./ui";
 
 // The signed-in home page: a row of your newest books, a row from your
@@ -90,7 +89,7 @@ const LOANS_SHOWN = 3;
 // And as many of friends' latest posts beside them
 export const POSTS_SHOWN = 3;
 // And of the books most lent around your friends, under them
-export const POPULAR_SHOWN = 3;
+export const POPULAR_SHOWN = 5;
 
 // One row of a loan list: the book, who it's from or to, and when it's
 // due, with a note when something needs doing (someone's waiting for it).
@@ -652,9 +651,7 @@ export default function Home({
     setupDone || books.borrowed.length + books.lent.length + waiting.length > 0;
   const showRecent = setupDone || ownCount > 0;
   const showWanted = setupDone || wanted.length > 0;
-  // The column beside, with your groups under the feed: there for a group
-  // even before there are friends
-  const showFeed = setupDone || friendIds.length > 0 || groups.length > 0;
+  const showFeed = setupDone || friendIds.length > 0;
   const showMain = showLoans || showRecent || showWanted;
   // Every section after the first is set off by a rule
   const divided = "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6";
@@ -929,14 +926,6 @@ export default function Home({
                 popular={popular}
                 className={showMain ? "lg:pl-8" : ""}
               />
-            ) : null}
-            {/* Your groups, as beside the feed: the way to their books */}
-            {groups.length > 0 ? (
-              <div
-                className={`mt-8 border-t border-stone-200 dark:border-stone-800 pt-6 ${showMain ? "lg:pl-8" : ""}`}
-              >
-                <RailGroups groups={groups} />
-              </div>
             ) : null}
           </aside>
         ) : null}
