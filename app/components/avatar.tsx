@@ -4,7 +4,7 @@
 // replaced emoji); anything that isn't a known key, such as an emoji
 // picked earlier, falls back to initials.
 
-const ICON_PATHS = {
+export const ICON_PATHS = {
   leaf: (
     <>
       <path d="M5 19c0-8.5 5.5-14 15-14 0 9.5-5.5 15-15 14z" />
@@ -635,6 +635,87 @@ const ICON_PATHS = {
       <path d="M18.4 12h.8a2.3 2.3 0 0 1 0 4.6h-2.7" />
     </>
   ),
+  raven: (
+    <>
+      {/* Solid, as a raven is: a heavy beak, the head, a wedge of tail and
+          two legs. Quoth he */}
+      <path d="M21 8.9 17.2 7.6c-.5-1.6-2-2.7-3.8-2.7-2.3 0-4.1 1.8-4.1 4.1 0 .7.2 1.4.5 2C6.6 12 4.6 14.4 3.7 17.5L2.6 20.6l3.1-1.5h2.6c3.4 0 6.4-1.6 8-4.4.8-1.4 1.1-2.9 1-4.2z" fill="currentColor" />
+      <path d="M10.2 18.9v2.2M12.8 18.4v2.4" />
+    </>
+  ),
+  overdue: (
+    // A library's rubber stamp, set at a slant
+    <g transform="rotate(-12 12 12)">
+      <rect x="2" y="8" width="20" height="8" rx="1.2" />
+      <rect x="3.4" y="9.4" width="17.2" height="5.2" rx=".4" strokeWidth=".6" />
+      <text x="12" y="13.15" textAnchor="middle" fontFamily="system-ui, sans-serif" fontWeight="800" fontSize="3.3" fill="currentColor" stroke="none">
+        OVERDUE
+      </text>
+    </g>
+  ),
+  dogear: (
+    <>
+      {/* An open book with one page's corner folded down */}
+      <path d="M12 6.5C10.5 5 8 4.5 4 4.5v13c4 0 6.5.5 8 2" />
+      <path d="M12 6.5c1.3-1.3 3.2-1.8 5-1.95L20 7.6v9.9c-4 0-6.5.5-8 2z" />
+      <path d="M17 4.55V7.6h3z" fill="currentColor" fillOpacity=".3" />
+      <path d="M12 6.5v13" />
+    </>
+  ),
+  bookworm: (
+    <>
+      {/* Up out of an open book, in round glasses */}
+      <path d="M12 15.6c-1.3-1.1-3.4-1.5-7-1.5v5.6c3.6 0 5.7.4 7 1.5 1.3-1.1 3.4-1.5 7-1.5v-5.6c-3.6 0-5.7.4-7 1.5z" />
+      <path d="M12 15.6v5.6" />
+      <path d="M12 15.4c-.5-1.6 0-3.1.9-4.6" />
+      <circle cx="13.2" cy="7.2" r="3.5" />
+      <circle cx="12" cy="7.1" r="1.05" />
+      <circle cx="14.5" cy="7.1" r="1.05" />
+    </>
+  ),
+  sloth: (
+    <>
+      {/* Hanging from a branch: the round face, its dark eye patches */}
+      <path d="M2.5 4.5h19" />
+      <path d="M7.5 4.5v4.2M16.5 4.5v4.2" />
+      <circle cx="12" cy="14" r="6.5" />
+      <path d="M7.6 12.9c.9-1 2.6-1 3 .2.3 1-.2 2.2-1.3 2.4-1 .2-1.9-.4-2.1-1.3-.1-.4 0-.9.4-1.3zM16.4 12.9c-.9-1-2.6-1-3 .2-.3 1 .2 2.2 1.3 2.4 1 .2 1.9-.4 2.1-1.3.1-.4 0-.9-.4-1.3z" fill="currentColor" fillOpacity=".25" stroke="none" />
+      <ellipse cx="9.3" cy="13.5" rx=".7" ry=".9" fill="currentColor" stroke="none" />
+      <ellipse cx="14.7" cy="13.5" rx=".7" ry=".9" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="15.9" rx=".9" ry=".65" fill="currentColor" stroke="none" />
+      <path d="M10.6 17.6c.9.6 1.9.6 2.8 0" />
+    </>
+  ),
+  croissant: (
+    <>
+      {/* A plump middle, a lobe each side and the two tips curling in */}
+      <path d="M8.9 9.6c1.4-2.4 4.8-2.4 6.2 0 1 1.9.8 4.4-.3 6.1-1.8.7-3.8.7-5.6 0-1.1-1.7-1.3-4.2-.3-6.1z" />
+      <path d="M8.9 10.4c-2.2.2-3.9 1.6-4.5 3.6.9 1.1 2.4 1.7 4.4 1.6M15.1 10.4c2.2.2 3.9 1.6 4.5 3.6-.9 1.1-2.4 1.7-4.4 1.6" />
+      <path d="M4.4 14c-1 .7-1.5 1.9-1.3 3.2 1.6.4 3.2.1 4.4-.9M19.6 14c1 .7 1.5 1.9 1.3 3.2-1.6.4-3.2.1-4.4-.9" />
+    </>
+  ),
+  kraken: (
+    <>
+      {/* One tentacle up out of the waves, suckers along it */}
+      <path d="M3 20.5c1.5-1 3-1 4.5 0s3 1 4.5 0 3-1 4.5 0 3 1 4.5 0" />
+      <path d="M7.5 19.8C7.5 13 10 8 14.5 6.8c2.8-.7 4.8 1 4.3 3.2-.4 1.6-2.3 2.2-3.3 1.1" />
+      <path d="M11.5 19.8c0-4.8 1.4-7.6 3.8-8.7" />
+      <circle cx="9.7" cy="16.5" r=".65" fill="currentColor" stroke="none" />
+      <circle cx="10.4" cy="13.3" r=".65" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="10.6" r=".65" fill="currentColor" stroke="none" />
+    </>
+  ),
+  ufo: (
+    <>
+      {/* A saucer with its dome, three lights and a beam */}
+      <path d="M8.5 10.2a3.5 3.5 0 0 1 7 0" />
+      <ellipse cx="12" cy="12.2" rx="9" ry="2.8" />
+      <circle cx="7.5" cy="12.6" r=".6" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="13.2" r=".6" fill="currentColor" stroke="none" />
+      <circle cx="16.5" cy="12.6" r=".6" fill="currentColor" stroke="none" />
+      <path d="M9 16.5l-1.6 3.5M15 16.5l1.6 3.5M12 17v3.2" strokeDasharray="1 1.6" />
+    </>
+  ),
 };
 
 export type AvatarIcon = keyof typeof ICON_PATHS;
@@ -666,6 +747,9 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "bee",
   "butterfly",
   "paw",
+  "raven",
+  "sloth",
+  "kraken",
   // Spooky, and characters
   "ghost",
   "skull",
@@ -674,6 +758,11 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "crystal",
   "robot",
   "alien",
+  "ufo",
+  // Bookish
+  "bookworm",
+  "dogear",
+  "overdue",
   // To wear and to use
   "glasses",
   "crown",
@@ -684,6 +773,7 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "wine",
   "cutlery",
   "icecream",
+  "croissant",
   // Music and fun
   "music",
   "vinyl",

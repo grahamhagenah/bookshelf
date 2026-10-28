@@ -1465,6 +1465,29 @@ function People({ users, userId }: { users: Data["users"]; userId: string }) {
   );
 }
 
+// The profile picture icons as files, to redraw in a design app
+function IconFiles() {
+  return (
+    <section aria-labelledby="icon-files">
+      <h2 id="icon-files" className={sectionHeading}>
+        Picture icons
+      </h2>
+      <p className={`mt-1 text-sm ${mutedClass}`}>
+        Every profile picture icon as its own SVG, the retired ones in a
+        folder of their own. Edit them anywhere; send the files back to swap
+        them in.
+      </p>
+      <a
+        href="/dashboard/icons.zip"
+        download
+        className="mt-3 inline-flex h-9 items-center rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
+      >
+        Download icons (.zip)
+      </a>
+    </section>
+  );
+}
+
 function DataQuality({ quality }: { quality: Data["quality"] }) {
   const fetcher = useFetcher<typeof action>({ key: "clear-demos" });
   const clearing = fetcher.state !== "idle";
@@ -1574,6 +1597,7 @@ export default function Dashboard() {
           <Feedback feedback={feedback} />
           <Announce people={users.length} />
           <AdminEmails choices={emailChoices} />
+          <IconFiles />
         </>
       )}
     </Layout>
