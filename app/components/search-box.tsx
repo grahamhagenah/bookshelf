@@ -22,8 +22,9 @@ type Option =
 const DEBOUNCE_MS = 200;
 
 // "+ Add" on an Open Library suggestion: adds the book without leaving the
-// page, using the search page's add action. From the want-to-read list it's
-// "+ Want to read" instead, and the book goes on that list.
+// page, using the search page's add action. Beside it, "Want" puts it on
+// your Want to read list instead, for a book you don't own. From that list
+// it's only "+ Want to read".
 function AddFromSuggestion({
   book,
   want = false,
@@ -33,17 +34,21 @@ function AddFromSuggestion({
 }) {
   const fetcher = useFetcher<{
     success?: boolean;
+    wanted?: boolean;
     alreadyExists?: boolean;
     limit?: string;
   }>();
   const added = fetcher.data?.success === true;
   const owned = book.inLibrary || fetcher.data?.alreadyExists === true;
-  const adding = fetcher.state !== "idle";
+  // Which of the two was pressed, while it's saving
+  const pending = fetcher.formData ? fetcher.formData.get("intent") ?? "add" : null;
   // Every state sits in the same fixed box, so the row doesn't shift when
   // "+ Add" turns into "Adding…" and then "Added ✓"
-  const slot = `inline-flex h-6 flex-shrink-0 items-center justify-end ${
-    want ? "w-[7.5rem]" : "w-24"
+  const slot = `inline-flex h-6 flex-shrink-0 items-center justify-end gap-1.5 ${
+    want ? "w-[7.5rem]" : "w-[8.5rem]"
   }`;
+  const button =
+    "inline-flex h-6 items-center whitespace-nowrap rounded-md border border-stone-200 dark:border-stone-700 px-2 text-xs font-medium text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 disabled:opacity-60 transition-colors";
 
   // The free plan's shelf is full
   if (fetcher.data?.limit) {
@@ -66,44 +71,71 @@ function AddFromSuggestion({
       <span
         className={`${slot} whitespace-nowrap text-xs text-stone-400 dark:text-stone-500`}
       >
-        {added ? (want ? "On your list ✓" : "Added ✓") : "On your shelf"}
+        {added ? (fetcher.data?.wanted ? "On your list ✓" : "Added ✓") : "On your shelf"}
+      </span>
+    );
+  }
+
+  const submit = (event: React.MouseEvent, intent?: "want") => {
+    // Don't also run the row's search
+    event.stopPropagation();
+    fetcher.submit(
+      {
+        title: book.title,
+        author: book.author ?? "",
+        cover: book.coverId?.toString() ?? "",
+        datePublished: book.year?.toString() ?? "",
+        pageCount: book.pages?.toString() ?? "",
+        subjects: book.subjects ?? "",
+        publisher: book.publisher ?? "",
+        openLibraryKey: book.key ?? "",
+        ...(intent ? { intent } : {}),
+      },
+      { method: "post", action: "/search" },
+    );
+  };
+
+  if (want) {
+    return (
+      <span className={slot}>
+        <button
+          type="button"
+          disabled={pending !== null}
+          onClick={(event) => submit(event, "want")}
+          className={button}
+        >
+          {pending ? "Saving…" : "+ Want to read"}
+        </button>
       </span>
     );
   }
 
   return (
     <span className={slot}>
-      <button
-        type="button"
-        disabled={adding}
-        onClick={(event) => {
-          // Don't also run the row's search
-          event.stopPropagation();
-          fetcher.submit(
-            {
-              title: book.title,
-              author: book.author ?? "",
-              cover: book.coverId?.toString() ?? "",
-              datePublished: book.year?.toString() ?? "",
-              pageCount: book.pages?.toString() ?? "",
-              subjects: book.subjects ?? "",
-              publisher: book.publisher ?? "",
-              openLibraryKey: book.key ?? "",
-              ...(want ? { intent: "want" } : {}),
-            },
-            { method: "post", action: "/search" },
-          );
-        }}
-        className="inline-flex h-6 items-center whitespace-nowrap rounded-md border border-stone-200 dark:border-stone-700 px-2 text-xs font-medium text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 disabled:opacity-60 transition-colors"
-      >
-        {adding
-          ? want
-            ? "Saving…"
-            : "Adding…"
-          : want
-            ? "+ Want to read"
-            : "+ Add"}
-      </button>
+      {pending ? (
+        <span className="whitespace-nowrap text-xs text-stone-400 dark:text-stone-500">
+          {pending === "want" ? "Saving…" : "Adding…"}
+        </span>
+      ) : (
+        <>
+          <button
+            type="button"
+            title="Add to your Want to read list"
+            onClick={(event) => submit(event, "want")}
+            className={button}
+          >
+            Want
+          </button>
+          <button
+            type="button"
+            title="Add to your shelf"
+            onClick={(event) => submit(event)}
+            className={button}
+          >
+            + Add
+          </button>
+        </>
+      )}
     </span>
   );
 }

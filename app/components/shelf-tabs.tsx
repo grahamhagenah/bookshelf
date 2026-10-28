@@ -47,7 +47,7 @@ export default function ShelfTabs({
         },
         {
           to: "/want-to-read",
-          label: "To read",
+          label: "Want to read",
           count: counts.want,
         },
         {

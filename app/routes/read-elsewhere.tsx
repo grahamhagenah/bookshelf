@@ -1,14 +1,26 @@
-import { data, useLoaderData } from "react-router";
-import type { LoaderFunctionArgs, MetaFunction } from "react-router";
+import { data, Link, useFetcher, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { BookRow, bookRowGrid, RowLine, RowLoved } from "~/components/book-row";
+import {
+  BookRow,
+  bookRowGrid,
+  rowDate,
+  RowLine,
+  RowMenu,
+  RowMenuDivider,
+  rowMenuHint,
+  rowMenuItem,
+  rowMenuList,
+  RowSub,
+  YourNoteActions,
+} from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
 import { ReadIcon } from "~/components/icons";
 import Layout from "~/components/layout";
-import ShelfTabs, { AddLink } from "~/components/shelf-tabs";
+import ShelfTabs from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
 import { findImportedWorks } from "~/models/import.server";
-import { listMyWorkNotes } from "~/models/work-note.server";
+import { listMyWorkNotes, removeWorkNote } from "~/models/work-note.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
 
@@ -22,6 +34,50 @@ export const meta: MetaFunction = () =>
 export const handle = {
   breadcrumb: () => <span>Also read</span>,
 };
+
+// Taking a book off Also read: your read mark, heart and note on it
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const userId = await requireUserId(request);
+  const form = await request.formData();
+  if (form.get("intent") === "remove") {
+    await removeWorkNote(userId, String(form.get("id") ?? ""));
+  }
+  return data({ ok: true });
+};
+
+// Its ⋯: the book's page; onto your shelf, for a book you've since got a
+// copy of (your marks go with it); and off the list, with what that
+// clears said plainly
+function AlsoReadMenu({ id, title, page }: { id: string; title: string; page: string | null }) {
+  const remove = useFetcher();
+  const add = useFetcher();
+  return (
+    <RowMenu label={`More for ${title}`}>
+      {page ? (
+        <>
+          <Link to={page} role="menuitem" className={rowMenuItem}>
+            Open book page
+          </Link>
+          <add.Form method="post" action={page}>
+            <button type="submit" role="menuitem" className={rowMenuItem}>
+              Add to <span className={rowMenuList}>My shelf</span>
+              <span className={rowMenuHint}>Your note and heart go with it</span>
+            </button>
+          </add.Form>
+          <RowMenuDivider />
+        </>
+      ) : null}
+      <remove.Form method="post" action="/read-elsewhere">
+        <input type="hidden" name="intent" value="remove" />
+        <input type="hidden" name="id" value={id} />
+        <button type="submit" role="menuitem" className={rowMenuItem}>
+          Remove from <span className={rowMenuList}>Also read</span>
+          <span className={rowMenuHint}>Clears your read mark, heart and note</span>
+        </button>
+      </remove.Form>
+    </RowMenu>
+  );
+}
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -43,13 +99,6 @@ export default function ReadElsewhere() {
     <Layout title="Also read">
       <section>
         <ShelfTabs counts={{ ...counts, elsewhere: items.length }} add={items.length > 0 ? { to: "/search", label: "Find a book" } : undefined} />
-        {/* What the list is for is said only while it's empty, in its place.
-            Phones have no room beside the tabs, so the way to add is here */}
-        {items.length > 0 ? (
-          <div className="-mt-2 flex justify-end sm:hidden">
-            <AddLink to="/search">Find a book</AddLink>
-          </div>
-        ) : null}
 
         {items.length === 0 ? (
           <EmptyList
@@ -62,7 +111,7 @@ export default function ReadElsewhere() {
             a note on its page.
           </EmptyList>
         ) : (
-          // In columns where there's room, as To read has
+          // In columns where there's room, as Want to read has
           <ul className={`mt-4 ${bookRowGrid}`}>
             {items.map((item) => {
               // One still being looked up opens a search for it
@@ -74,19 +123,31 @@ export default function ReadElsewhere() {
                   key={item.id}
                   to={page}
                   book={item}
-                  // What you marked, as History says it; the note itself is on
-                  // the book's page
+                  // What you did with it and when, as History says who had it
+                  // and when; then the same buttons History gives a book you
+                  // borrowed: your note, and a heart to give
+                  corner={
+                    <AlsoReadMenu
+                      id={item.id}
+                      title={item.title}
+                      page={isWork(item.workKey) ? item.workKey : null}
+                    />
+                  }
                   line={
                     <RowLine>
-                      {/* A heart as History shows one */}
-                      {item.loved ? (
-                        <RowLoved>{item.body ? "You loved it and left a note" : "You loved it"}</RowLoved>
-                      ) : item.body ? (
-                        "You left a note"
-                      ) : (
-                        "You read it"
-                      )}
+                      {item.readAt ? "You read it" : item.body ? "You left a note" : "You loved it"}
+                      {item.readAt ? <RowSub>{rowDate(item.readAt)}</RowSub> : null}
                     </RowLine>
+                  }
+                  actions={
+                    isWork(item.workKey) ? (
+                      <YourNoteActions
+                        notes={`${page}#notes`}
+                        loveAction={page}
+                        loved={item.loved}
+                        hasNote={Boolean(item.body)}
+                      />
+                    ) : null
                   }
                 />
               );
