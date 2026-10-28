@@ -6,11 +6,11 @@ import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
 
 import BookCover from "./book-cover";
-import Faces from "./faces";
 import FriendActivityItem from "./friend-activity";
 import { LentIcon } from "./icons";
 import { InviteButtons } from "./invite-message";
 import ShareShelfOffer from "./share-shelf-offer";
+import { RailGroups } from "./side-rail";
 import { sectionHeading } from "./ui";
 
 // The signed-in home page: a row of your newest books, a row from your
@@ -34,8 +34,6 @@ export interface HomeGroup {
   id: string;
   name: string;
   memberCount: number;
-  bookCount: number;
-  path: string;
   // A few of the people in it, for their pictures
   faces: { id: string; firstname: string; surname: string; profileEmoji: string | null }[];
 }
@@ -91,6 +89,8 @@ function AddButton({ to, children }: { to: string; children: string }) {
 const LOANS_SHOWN = 3;
 // And as many of friends' latest posts beside them
 export const POSTS_SHOWN = 3;
+// And of the books most lent around your friends, under them
+export const POPULAR_SHOWN = 3;
 
 // One row of a loan list: the book, who it's from or to, and when it's
 // due, with a note when something needs doing (someone's waiting for it).
@@ -648,13 +648,13 @@ export default function Home({
     welcomeDismissed ||
     skipping ||
     (ownCount >= BOOK_GOAL && friendIds.length + requestsSent + nameCount > 0);
-  // A group's books to borrow go with the loans too
   const showLoans =
-    setupDone ||
-    books.borrowed.length + books.lent.length + waiting.length + groups.length > 0;
+    setupDone || books.borrowed.length + books.lent.length + waiting.length > 0;
   const showRecent = setupDone || ownCount > 0;
   const showWanted = setupDone || wanted.length > 0;
-  const showFeed = setupDone || friendIds.length > 0;
+  // The column beside, with your groups under the feed: there for a group
+  // even before there are friends
+  const showFeed = setupDone || friendIds.length > 0 || groups.length > 0;
   const showMain = showLoans || showRecent || showWanted;
   // Every section after the first is set off by a rule
   const divided = "mt-8 border-t border-stone-200 dark:border-stone-800 pt-6";
@@ -752,38 +752,6 @@ export default function Home({
                         empty="Everything's on your shelf."
                       />
                     </div>
-                    {/* Your groups, a line each: the way to their books */}
-                    {groups.length > 0 ? (
-                      <ul className="mt-4">
-                        {groups.map((group) => (
-                          <li key={group.id}>
-                            <Link
-                              to={group.path}
-                              className="-mx-2 flex items-center gap-2.5 rounded-md px-2 py-2 text-sm hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
-                            >
-                              <Faces people={group.faces} size="xs" max={4} />
-                              {/* One line; on phones, the details under the name */}
-                              <span className="min-w-0 text-stone-500 dark:text-stone-400 sm:truncate">
-                                <span className="block truncate font-medium text-stone-900 dark:text-stone-100 sm:inline">
-                                  {group.name}
-                                </span>
-                                <span className="hidden sm:inline"> · </span>
-                                <span className="block truncate sm:inline">
-                                {group.memberCount} {group.memberCount === 1 ? "person" : "people"} ·{" "}
-                                {/* Others' books, as the group's page counts them */}
-                                {group.bookCount === 0
-                                  ? "no books yet"
-                                  : `${group.bookCount} ${group.bookCount === 1 ? "book" : "books"}`}
-                                </span>
-                              </span>
-                              <span aria-hidden="true" className="flex-shrink-0 text-stone-400 dark:text-stone-500">
-                                →
-                              </span>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
                   </section>
                 ),
               },
@@ -961,6 +929,14 @@ export default function Home({
                 popular={popular}
                 className={showMain ? "lg:pl-8" : ""}
               />
+            ) : null}
+            {/* Your groups, as beside the feed: the way to their books */}
+            {groups.length > 0 ? (
+              <div
+                className={`mt-8 border-t border-stone-200 dark:border-stone-800 pt-6 ${showMain ? "lg:pl-8" : ""}`}
+              >
+                <RailGroups groups={groups} />
+              </div>
             ) : null}
           </aside>
         ) : null}
