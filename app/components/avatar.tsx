@@ -4,7 +4,7 @@
 // replaced emoji); anything that isn't a known key, such as an emoji
 // picked earlier, falls back to initials.
 
-const ICON_PATHS = {
+export const ICON_PATHS = {
   leaf: (
     <>
       <path d="M5 19c0-8.5 5.5-14 15-14 0 9.5-5.5 15-15 14z" />
