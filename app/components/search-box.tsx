@@ -95,7 +95,14 @@ function AddFromSuggestion({
     );
   };
 
+  const listed = (
+    <span className="whitespace-nowrap text-xs text-stone-400 dark:text-stone-500">
+      On your list
+    </span>
+  );
+
   if (want) {
+    if (book.wanted) return <span className={slot}>{listed}</span>;
     return (
       <span className={slot}>
         <button
@@ -118,14 +125,19 @@ function AddFromSuggestion({
         </span>
       ) : (
         <>
-          <button
-            type="button"
-            title="Add to your Want to read list"
-            onClick={(event) => submit(event, "want")}
-            className={button}
-          >
-            Want
-          </button>
+          {/* Already on the list: said so, and + Add for when a copy turns up */}
+          {book.wanted ? (
+            listed
+          ) : (
+            <button
+              type="button"
+              title="Add to your Want to read list"
+              onClick={(event) => submit(event, "want")}
+              className={button}
+            >
+              Want
+            </button>
+          )}
           <button
             type="button"
             title="Add to your shelf"

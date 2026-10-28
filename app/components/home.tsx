@@ -7,7 +7,7 @@ import type { getHomeBooks } from "~/models/book.server";
 
 import BookCover from "./book-cover";
 import FriendActivityItem from "./friend-activity";
-import { LentIcon } from "./icons";
+import { BorrowedIcon, LentIcon, SearchIcon } from "./icons";
 import { InviteButtons } from "./invite-message";
 import ShareShelfOffer from "./share-shelf-offer";
 import { sectionHeading } from "./ui";
@@ -65,19 +65,32 @@ function dueLabel(dueDate: string | Date) {
 const headingLink =
   "underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline";
 
-// A section's one action, beside its heading
-function AddButton({ to, children }: { to: string; children: string }) {
+// A section's one action, beside its heading: a + to add, a magnifying
+// glass to go looking
+function AddButton({
+  to,
+  search = false,
+  children,
+}: {
+  to: string;
+  search?: boolean;
+  children: string;
+}) {
   return (
     <Link
       to={to}
       className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
     >
-      <span
-        aria-hidden="true"
-        className="text-base leading-none text-stone-400"
-      >
-        +
-      </span>
+      {search ? (
+        <SearchIcon size={14} className="text-stone-400" />
+      ) : (
+        <span
+          aria-hidden="true"
+          className="text-base leading-none text-stone-400"
+        >
+          +
+        </span>
+      )}
       {children}
     </Link>
   );
@@ -150,10 +163,13 @@ export function LoanList({
   personLabel,
   empty,
   to,
+  icon,
   children,
 }: {
   id: string;
   title: string;
+  // The mark the shelf uses for these: borrowed, or lent out
+  icon?: React.ReactNode;
   // Where all of them are, which the heading links to
   to?: string;
   books: LoanEntry[];
@@ -178,7 +194,10 @@ export function LoanList({
         ) : (
           title
         )}
-        <span className="text-base font-normal text-stone-400 dark:text-stone-500">
+        {/* The count with its mark beside it, as the shelf's badges show
+            them */}
+        <span className="inline-flex items-center gap-1 self-center text-base font-normal text-stone-400 dark:text-stone-500">
+          {icon}
           {total ?? books.length}
         </span>
       </h2>
@@ -465,9 +484,9 @@ function MoreLink({ to, children, className = "" }: { to: string; children: stri
 // Friends' books, the most lent first
 const POPULAR_PATH = "/friends/books?sort=popular";
 
-// Popular with friends as a chart, the most lent first: ranked rows built
-// like the rest of the home page's lists (a small cover, the title, who
-// has it), with how many times on the right
+// Most borrowed: friends' books lent the most times, the most first. Rows
+// built like the rest of the home page's lists (a small cover, the title,
+// who has it), with how many loans on the right, in words
 function PopularChart({
   popular,
   className = "",
@@ -482,27 +501,17 @@ function PopularChart({
     >
       <h2 id="popular" className={`${sectionHeading} mb-2`}>
         <Link to={POPULAR_PATH} className={headingLink}>
-          Popular with friends
+          Most borrowed
         </Link>
       </h2>
       <ol className="divide-y divide-stone-100 dark:divide-stone-900">
-        {popular.map((book, index) => {
-          const said =
-            book.loans === 1 ? "Lent once" : `Lent ${book.loans} times`;
+        {popular.map((book) => {
           return (
             <li key={book.id}>
               <Link
                 to={book.to}
                 className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
               >
-                {/* As wide as the friend icons above, so the covers line
-                    up with the activity's */}
-                <span
-                  aria-hidden="true"
-                  className="w-7 flex-shrink-0 text-center text-sm font-semibold tabular-nums text-stone-500 dark:text-stone-400"
-                >
-                  {index + 1}
-                </span>
                 <BookCover
                   cover={book.cover}
                   title={book.title}
@@ -515,16 +524,16 @@ function PopularChart({
                   </span>
                   <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
                     {book.author}
-                    {book.owners ? ` · ${book.owners}` : ""}
+                    {book.owners.length > 0 ? (
+                      <>
+                        {" · "}
+                        <HaveIt names={book.owners} />
+                      </>
+                    ) : null}
                   </span>
                 </span>
-                <span
-                  title={said}
-                  className="inline-flex flex-shrink-0 items-center gap-1 text-sm tabular-nums text-stone-500 dark:text-stone-400"
-                >
-                  <LentIcon size={14} />
-                  <span aria-hidden="true">{book.loans}</span>
-                  <span className="sr-only">{said}</span>
+                <span className="flex-shrink-0 whitespace-nowrap text-sm tabular-nums text-stone-500 dark:text-stone-400">
+                  {book.loans} {book.loans === 1 ? "loan" : "loans"}
                 </span>
               </Link>
             </li>
@@ -535,6 +544,26 @@ function PopularChart({
         All friends&apos; books
       </MoreLink>
     </section>
+  );
+}
+
+// "Maya has it", "Maya and Sam have it", "Maya and 2 others have it",
+// with the names standing out, as Want to read's rows set them
+function HaveIt({ names }: { names: string[] }) {
+  const name = (text: string) => (
+    <span className="font-medium text-stone-700 dark:text-stone-200">{text}</span>
+  );
+  if (names.length === 1) return <>{name(names[0])} has it</>;
+  if (names.length === 2)
+    return (
+      <>
+        {name(names[0])} and {name(names[1])} have it
+      </>
+    );
+  return (
+    <>
+      {name(names[0])} and {names.length - 1} others have it
+    </>
   );
 }
 
@@ -557,8 +586,8 @@ interface Popular {
   cover: string;
   // How many times friends' copies of it have been lent
   loans: number;
-  // "Maya and Sam have it"
-  owners: string | null;
+  // Friends with a copy, by first name
+  owners: string[];
   // A friend's copy, one free to ask for first
   to: string;
 }
@@ -724,6 +753,7 @@ export default function Home({
                       <LoanList
                         id="borrowing"
                         title="Borrowing"
+                        icon={<BorrowedIcon size={14} />}
                         to="/books?status=borrowed"
                         books={books.borrowed
                           .slice(0, LOANS_SHOWN)
@@ -758,6 +788,7 @@ export default function Home({
                       <LoanList
                         id="lent-out"
                         title="Lent out"
+                        icon={<LentIcon size={14} />}
                         to="/books?status=lent"
                         books={books.lent
                           .slice(0, LOANS_SHOWN)
@@ -793,7 +824,9 @@ export default function Home({
                           Want to read
                         </Link>
                       </h2>
-                      <AddButton to="/search?for=want">Find books</AddButton>
+                      <AddButton to="/search?for=want" search>
+                        Find books
+                      </AddButton>
                     </div>
                     {wanted.length > 0 ? (
                       <CoverRow

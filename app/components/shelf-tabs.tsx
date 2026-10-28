@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 
+import { SearchIcon } from "./icons";
 import ShareShelfButton from "./share-shelf-button";
 import SharedWith from "./shared-with";
 import type { Member } from "./shared-with";
@@ -12,12 +13,17 @@ export const addButton =
   "inline-flex h-8 items-center gap-1.5 rounded-md border border-stone-200 dark:border-stone-700 px-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
 
 // The list's one way to add to it: "+ Add a book"
-export function AddLink({ to, children, className = "" }: { to: string; children: string; className?: string }) {
+// A + to add; a magnifying glass when it's for going to look
+export function AddLink({ to, search = false, children, className = "" }: { to: string; search?: boolean; children: string; className?: string }) {
   return (
     <Link to={to} className={`${addButton} ${className}`}>
-      <span aria-hidden="true" className="text-base leading-none text-stone-400 dark:text-stone-500">
-        +
-      </span>
+      {search ? (
+        <SearchIcon size={14} className="text-stone-400 dark:text-stone-500" />
+      ) : (
+        <span aria-hidden="true" className="text-base leading-none text-stone-400 dark:text-stone-500">
+          +
+        </span>
+      )}
       {children}
     </Link>
   );
@@ -33,7 +39,7 @@ export default function ShelfTabs({
   sharedWith?: { members: Member[]; viewerId: string } | null;
   // The list's own way to add to it, beside the tabs rather than on a row
   // of its own
-  add?: { to: string; label: string };
+  add?: { to: string; label: string; search?: boolean };
 }) {
   return (
     <Tabs
@@ -66,7 +72,7 @@ export default function ShelfTabs({
           carries it there */}
       <div className="-mt-1.5 hidden items-center gap-2 sm:flex">
         {sharedWith ? <SharedWith {...sharedWith} /> : null}
-        {add ? <AddLink to={add.to}>{add.label}</AddLink> : null}
+        {add ? <AddLink to={add.to} search={add.search}>{add.label}</AddLink> : null}
         {counts.library > 0 ? <ShareShelfButton /> : null}
       </div>
     </Tabs>

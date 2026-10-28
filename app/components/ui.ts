@@ -19,3 +19,9 @@ export const textField =
   "w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10 transition-colors";
 
 export const sectionHeading = "text-lg font-semibold text-stone-900 dark:text-stone-100";
+
+// The page you're on, in the header: a green bar under it on the
+// header's bottom edge, as tabs mark theirs, and its icon in green. Phones
+// show icons only, so there it's the icon alone
+export const hereIcon =
+  "relative text-stone-900 dark:text-stone-100 [&_svg]:text-forest-600 dark:[&_svg]:text-forest-400 md:after:absolute md:after:inset-x-2.5 md:after:-bottom-[7px] md:after:h-0.5 md:after:rounded-full md:after:bg-forest-600 dark:md:after:bg-forest-400";

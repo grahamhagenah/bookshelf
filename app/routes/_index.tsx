@@ -110,10 +110,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           return { id, title, author, cover, owners: haveIt(owners), to };
         }),
       // The books passed around most among friends, new to you
-      popular: popular.map(({ owners, ...book }) => ({
-        ...book,
-        owners: haveIt(owners),
-      })),
+      // Who has each, by first name; the page sets the names in bold
+      popular,
       friendIds,
       friendBookCount,
       requestsSent: sentRequests.length,

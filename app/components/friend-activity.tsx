@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useFetcher } from "react-router";
 
 import type { FriendActivity, getNotePrompts, Lender } from "~/models/activity.server";
+import { workPath } from "~/utils";
 
 import Avatar from "./avatar";
 import BookCover from "./book-cover";
-import { BookmarkIcon, HeartIcon } from "./icons";
+import { BookmarkIcon, HeartIcon, NoteIcon, PencilIcon } from "./icons";
 import PersonLink from "./person-link";
 import { primaryButton } from "./ui";
 
@@ -343,13 +344,18 @@ function Actions({
   book,
   userId,
   underNote = false,
+  onEdit,
 }: {
   book: FeedBook;
   userId: string;
   underNote?: boolean;
+  // Under your own note: rewrite it
+  onEdit?: () => void;
 }) {
   const love = useFetcher({ key: `love-${book.id}` });
   const borrow = useFetcher({ key: `borrow-${book.id}` });
+  const giveBack = useFetcher<{ returned?: boolean }>({ key: `return-${book.id}` });
+  const returned = giveBack.formData !== undefined || giveBack.data?.returned === true;
   const { viewer } = book;
   // Asking opens a line for a note first; the ask goes with it
   const [asking, setAsking] = useState(false);
@@ -370,132 +376,168 @@ function Actions({
   const isBorrower = book.borrowerId === userId;
 
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-stone-100 dark:border-stone-800 pt-2">
-      {viewer.canLove ? (
-        <love.Form method="post">
-          <input type="hidden" name="intent" value="toggleLove" />
-          <input type="hidden" name="bookId" value={book.id} />
-          <input type="hidden" name="loved" value={loved ? "false" : "true"} />
-          <button
-            type="submit"
-            aria-pressed={loved}
-            // Under a note it's the book being loved, not the note; the
-            // label says so without lengthening the row
-            title={underNote ? "Love the book" : undefined}
-            aria-label={`${loved ? "Loved" : "Love"}${underNote ? " the book" : ""}${
-              lovesText ? `, ${lovesText}` : ""
-            }`}
-            className={`${actionClass} ${loved ? "text-rose-600 dark:text-rose-400" : ""}`}
-          >
-            <HeartIcon
-              size={15}
-              filled={loved}
-              className={loved ? "text-rose-500" : ""}
-            />
-            {loved ? "Loved" : "Love"}
-            {lovesText ? (
-              <span className="min-w-[1.25rem] rounded-full bg-stone-100 dark:bg-stone-800 px-1.5 text-center text-xs font-medium leading-5 tabular-nums text-stone-500 dark:text-stone-400">
-                {lovesText}
-              </span>
-            ) : null}
-          </button>
-        </love.Form>
-      ) : lovesText ? (
-        <span
-          className={stateClass}
-          title="Hearts from people who've read this copy"
-        >
-          <HeartIcon size={15} filled className="text-rose-400" />
-          {lovesText}
-        </span>
-      ) : null}
-
-      {book.notes > 0 ? (
-        <Link to={`/books/${book.id}#notes`} className={actionClass}>
-          {book.notes} {book.notes === 1 ? "note" : "notes"}
-        </Link>
-      ) : null}
-
-      {isOwner ? (
-        <span className={stateClass}>Your copy</span>
-      ) : isBorrower ? (
-        <span className={stateClass}>You have it</span>
-      ) : viewer.canRequest && book.notLending ? (
-        <span className={stateClass}>Not lending</span>
-      ) : viewer.canRequest && book.available ? (
-        requested ? (
-          <span className={stateClass}>Requested</span>
-        ) : asking ? (
-          <borrow.Form
-            method="post"
-            className="flex w-full flex-wrap items-center gap-2"
-            onSubmit={() => setAsking(false)}
-          >
-            <input type="hidden" name="intent" value="request" />
+    <>
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-stone-100 dark:border-stone-800 pt-2">
+        {viewer.canLove ? (
+          <love.Form method="post">
+            <input type="hidden" name="intent" value="toggleLove" />
             <input type="hidden" name="bookId" value={book.id} />
-            <label htmlFor={`request-note-${book.id}`} className="sr-only">
-              A note for {book.owner.firstname}
-            </label>
-            <input
-              id={`request-note-${book.id}`}
-              name="message"
-              type="text"
-              maxLength={300}
-              placeholder={`A note for ${book.owner.firstname} (optional)`}
-              className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 py-1.5 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
-            />
+            <input type="hidden" name="loved" value={loved ? "false" : "true"} />
             <button
               type="submit"
-              className={primaryButton("md")}
+              aria-pressed={loved}
+              // Under a note it's the book being loved, not the note; the
+              // label says so without lengthening the row
+              title={underNote ? "Love the book" : undefined}
+              aria-label={`${loved ? "Loved" : "Love"}${underNote ? " the book" : ""}${
+                lovesText ? `, ${lovesText}` : ""
+              }`}
+              className={`${actionClass} ${loved ? "text-rose-600 dark:text-rose-400" : ""}`}
+            >
+              <HeartIcon
+                size={15}
+                filled={loved}
+                className={loved ? "text-rose-500" : ""}
+              />
+              {loved ? "Loved" : "Love"}
+              {lovesText ? (
+                <span className="min-w-[1.25rem] rounded-full bg-stone-100 dark:bg-stone-800 px-1.5 text-center text-xs font-medium leading-5 tabular-nums text-stone-500 dark:text-stone-400">
+                  {lovesText}
+                </span>
+              ) : null}
+            </button>
+          </love.Form>
+        ) : lovesText ? (
+          <span
+            className={stateClass}
+            title="Hearts from people who've read this copy"
+          >
+            <HeartIcon size={15} filled className="text-rose-400" />
+            {lovesText}
+          </span>
+        ) : null}
+
+        {book.notes > 0 ? (
+          <Link
+            to={`/books/${book.id}#notes`}
+            aria-label={`${book.notes} ${book.notes === 1 ? "note" : "notes"}`}
+            title={`${book.notes} ${book.notes === 1 ? "note" : "notes"}`}
+            className={actionClass}
+          >
+            <NoteIcon size={15} />
+            {book.notes}
+          </Link>
+        ) : null}
+
+        {onEdit ? (
+          <button type="button" onClick={onEdit} className={actionClass}>
+            <PencilIcon size={14} />
+            Edit note
+          </button>
+        ) : null}
+
+        {isOwner ? (
+          <span className={stateClass}>Your copy</span>
+        ) : returned ? (
+          <span className={stateClass}>Returned to {book.owner.firstname}</span>
+        ) : isBorrower ? (
+          // Read it, said so: the next thing is giving it back
+          <giveBack.Form method="post" action={`/books/${book.id}`}>
+            <input type="hidden" name="intent" value="return" />
+            <input type="hidden" name="stay" value="true" />
+            <button type="submit" className={actionClass}>
+              Return to {book.owner.firstname}
+            </button>
+          </giveBack.Form>
+        ) : viewer.canRequest && book.notLending ? (
+          <span className={stateClass}>Not lending</span>
+        ) : viewer.canRequest && book.available ? (
+          requested ? (
+            <span className={stateClass}>Requested</span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAsking(!asking)}
+              aria-expanded={asking}
+              className={`${actionClass} ${asking ? "text-stone-900 dark:text-stone-100" : ""}`}
             >
               Ask to borrow
             </button>
-            <button
-              type="button"
-              onClick={() => setAsking(false)}
-              className={actionClass}
-            >
-              Cancel
+          )
+        ) : viewer.canRequest ? (
+          <borrow.Form method="post">
+            <input
+              type="hidden"
+              name="intent"
+              value={inLine ? "leaveHold" : "placeHold"}
+            />
+            <input type="hidden" name="bookId" value={book.id} />
+            <button type="submit" className={actionClass}>
+              {inLine ? "In line · Leave" : "Get in line"}
             </button>
           </borrow.Form>
-        ) : (
+        ) : null}
+
+        {/* The cover and title open the book too; on phones that's enough,
+            and the row stays on one line */}
+        <span className="ml-auto hidden sm:block">
+          <Link to={`/books/${book.id}`} className={actionClass}>
+            View book
+          </Link>
+        </span>
+      </div>
+      {/* The ask, on a line of its own under the row, so the row keeps its
+          shape while you write */}
+      {asking && viewer.canRequest && book.available && !requested ? (
+        <borrow.Form
+          method="post"
+          className="mt-2 flex flex-wrap items-center gap-2"
+          onSubmit={() => setAsking(false)}
+        >
+          <input type="hidden" name="intent" value="request" />
+          <input type="hidden" name="bookId" value={book.id} />
+          <label htmlFor={`request-note-${book.id}`} className="sr-only">
+            A note for {book.owner.firstname}
+          </label>
+          <input
+            id={`request-note-${book.id}`}
+            name="message"
+            type="text"
+            maxLength={300}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+            placeholder={`A note for ${book.owner.firstname} (optional)`}
+            className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 py-1.5 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
+          />
+          <button type="submit" className={primaryButton("md")}>
+            Send request
+          </button>
           <button
             type="button"
-            onClick={() => setAsking(true)}
+            onClick={() => setAsking(false)}
             className={actionClass}
           >
-            Ask to borrow
-          </button>
-        )
-      ) : viewer.canRequest ? (
-        <borrow.Form method="post">
-          <input
-            type="hidden"
-            name="intent"
-            value={inLine ? "leaveHold" : "placeHold"}
-          />
-          <input type="hidden" name="bookId" value={book.id} />
-          <button type="submit" className={actionClass}>
-            {inLine ? "In line · Leave" : "Get in line"}
+            Cancel
           </button>
         </borrow.Form>
       ) : null}
-
-      {/* The cover and title open the book too; on phones that's enough,
-          and the row stays on one line */}
-      <span className="ml-auto hidden sm:block">
-        <Link to={`/books/${book.id}`} className={actionClass}>
-          View book
-        </Link>
-      </span>
-    </div>
+    </>
   );
 }
 
 // A friend's note on a book they read somewhere else. Nothing of theirs
 // to borrow, so it offers what can be done: want it, or ask a friend
 // who has a copy.
-function ElsewhereCard({ item, mine }: { item: ElsewhereItem; mine: boolean }) {
+function ElsewhereCard({
+  item,
+  mine,
+  onEdit,
+}: {
+  item: ElsewhereItem;
+  mine: boolean;
+  // Your own note: rewrite it
+  onEdit?: () => void;
+}) {
   const want = useFetcher<{ wanted?: boolean }>();
   const { ownCopyId, copies } = item.viewer;
   const wanted =
@@ -534,6 +576,12 @@ function ElsewhereCard({ item, mine }: { item: ElsewhereItem; mine: boolean }) {
         </Link>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-stone-100 dark:border-stone-800 pt-2">
+        {onEdit ? (
+          <button type="button" onClick={onEdit} className={actionClass}>
+            <PencilIcon size={14} />
+            Edit note
+          </button>
+        ) : null}
         {ownCopyId ? (
           <Link to={`/books/${ownCopyId}`} className={actionClass}>
             Open your copy
@@ -616,6 +664,12 @@ export function FeedPost({
         : [item.book];
   const more = item.kind === "added" ? item.books.length - books.length : 0;
 
+  // Your own words, editable where you see them
+  const note =
+    (item.kind === "note" || item.kind === "elsewhere") && item.body ? item : null;
+  const editable = note !== null && item.friend.id === userId;
+  const [editing, setEditing] = useState(false);
+
   return (
     <article className="rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 px-4 py-3.5">
       <header className="flex items-center gap-3">
@@ -649,14 +703,20 @@ export function FeedPost({
         </div>
       </header>
 
-      {(item.kind === "note" || item.kind === "elsewhere") && item.body ? (
+      {note && editing ? (
+        <NoteEdit item={note} onDone={() => setEditing(false)} />
+      ) : note ? (
         <blockquote className="mt-3 whitespace-pre-line text-pretty leading-relaxed text-stone-800 dark:text-stone-200">
-          &ldquo;{item.body}&rdquo;
+          &ldquo;{note.body}&rdquo;
         </blockquote>
       ) : null}
 
       {item.kind === "elsewhere" ? (
-        <ElsewhereCard item={item} mine={item.friend.id === userId} />
+        <ElsewhereCard
+          item={item}
+          mine={item.friend.id === userId}
+          onEdit={editable && !editing ? () => setEditing(true) : undefined}
+        />
       ) : item.kind === "added" && item.books.length > 1 ? (
         <>
           {/* Even columns: three across on phones, six on wider screens,
@@ -687,10 +747,80 @@ export function FeedPost({
             book={books[0]}
             userId={userId}
             underNote={item.kind === "note"}
+            onEdit={editable && !editing ? () => setEditing(true) : undefined}
           />
         </>
       )}
     </article>
+  );
+}
+
+// Your note, rewritten in place: on the copy it's about, or on the book
+// itself when you read it elsewhere. Saving an empty box takes the words
+// away and leaves the heart
+function NoteEdit({
+  item,
+  onDone,
+}: {
+  item: Exclude<FeedItem, { kind: "added" }>;
+  onDone: () => void;
+}) {
+  const fetcher = useFetcher<{ ok?: boolean }>();
+  const [body, setBody] = useState(item.body ?? "");
+  const saving = fetcher.state !== "idle";
+  const action = "work" in item ? workPath(item.work.key) : null;
+  // Opens ready to go on writing: focused, the cursor after the last word
+  const box = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
+  }, []);
+  // Back to the quote once it's saved; the feed has the new words by then
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data) onDone();
+  }, [fetcher.state, fetcher.data, onDone]);
+
+  return (
+    <fetcher.Form method="post" action={action ?? undefined} className="mt-3">
+      {"work" in item ? (
+        <input type="hidden" name="intent" value="saveNote" />
+      ) : (
+        <>
+          <input type="hidden" name="intent" value="note" />
+          <input type="hidden" name="bookId" value={item.book.id} />
+          {/* An edit, not news: the owner heard about the note already */}
+          <input type="hidden" name="edit" value="true" />
+        </>
+      )}
+      <textarea
+        ref={box}
+        name="body"
+        value={body}
+        onChange={(event) => setBody(event.target.value)}
+        rows={3}
+        maxLength={500}
+        aria-label="Your note"
+        className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-950 px-3 py-2 leading-relaxed text-stone-900 dark:text-stone-100 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
+      />
+      <div className="mt-2 flex items-center gap-3">
+        <button
+          type="submit"
+          disabled={saving}
+          className={`${primaryButton("md")} disabled:cursor-wait`}
+        >
+          {saving ? "Saving…" : "Save"}
+        </button>
+        <button
+          type="button"
+          onClick={onDone}
+          className="px-1 py-1.5 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
+        >
+          Cancel
+        </button>
+      </div>
+    </fetcher.Form>
   );
 }
 

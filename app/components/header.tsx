@@ -4,7 +4,7 @@ import { BookIcon, FeedIcon, GroupIcon } from "./icons";
 import PositionedMenu from "./menu";
 import Notifications from "./notifications";
 import Search from "./search";
-import { primaryButton } from "./ui";
+import { hereIcon, primaryButton } from "./ui";
 import Wordmark from "./wordmark";
 
 interface RootLoaderData {
@@ -19,8 +19,8 @@ const label = "sr-only lg:not-sr-only";
 const navClass = ({ isActive }: { isActive: boolean }) =>
   `inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-[15px] transition-colors ${
     isActive
-      ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
-      : "text-stone-700 dark:text-stone-200 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800"
+      ? hereIcon
+      : "text-stone-700 dark:text-stone-200 hover:text-stone-900 dark:hover:text-white hover:[&_svg]:text-forest-600 dark:hover:[&_svg]:text-forest-400"
   }`;
 
 export default function Header() {
@@ -112,7 +112,12 @@ export default function Header() {
               to="/feed"
               aria-label="Feed"
               title="Feed"
-              className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+              aria-current={pathname === "/feed" ? "page" : undefined}
+              className={`md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full transition-colors ${
+                pathname === "/feed"
+                  ? hereIcon
+                  : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:[&_svg]:text-forest-600 dark:hover:[&_svg]:text-forest-400"
+              }`}
             >
               <FeedIcon size={24} />
             </Link>

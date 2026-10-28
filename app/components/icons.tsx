@@ -203,6 +203,15 @@ export function HeartIcon({
   );
 }
 
+// A speech bubble: notes readers left on a book
+export function NoteIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20.5 11.5c0 4.14-3.8 7.5-8.5 7.5-1.1 0-2.15-.18-3.12-.52L4 20l1.3-3.6C4.17 15.1 3.5 13.36 3.5 11.5 3.5 7.36 7.3 4 12 4s8.5 3.36 8.5 7.5z"/>
+    </svg>
+  );
+}
+
 // Arrow heading out, for a book that's lent out
 // A plain check: the owner has read this one
 export function ReadIcon({ className = "", size = 24 }: IconProps) {
