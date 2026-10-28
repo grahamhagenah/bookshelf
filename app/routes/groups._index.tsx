@@ -2,6 +2,7 @@
 import { data, Form, Link, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
+import BookCover from "~/components/book-cover";
 import EmptyList from "~/components/empty-list";
 import Faces from "~/components/faces";
 import FriendsTabs from "~/components/friends-tabs";
@@ -15,7 +16,7 @@ import {
   GROUP_NAME_MAX,
   cleanGroupName,
   createGroup,
-  getMyGroups,
+  getGroupPreviews,
 } from "~/models/group.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
@@ -28,7 +29,7 @@ export const meta: MetaFunction = () => seo({ title: "Groups", noindex: true });
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [groups, counts] = await Promise.all([getMyGroups(userId), getFriendsTabCounts(userId)]);
+  const [groups, counts] = await Promise.all([getGroupPreviews(userId), getFriendsTabCounts(userId)]);
   return data({ groups, counts, nameMax: GROUP_NAME_MAX, maxMembers: GROUP_MAX_MEMBERS });
 };
 
@@ -42,6 +43,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+// "You, Maya and Sam", "You, Maya, Sam and 4 others"
+function whoIsIn(names: string[]) {
+  if (names.length <= 1) return "Just you so far";
+  const shown = names.length > 4 ? names.slice(0, 3) : names.slice(0, -1);
+  const rest = names.length > 4 ? `${names.length - 3} others` : names[names.length - 1];
+  return `${shown.join(", ")} and ${rest}`;
+}
 
 export default function Groups() {
   const { groups, counts, nameMax, maxMembers } = useLoaderData<typeof loader>();
@@ -86,36 +95,64 @@ export default function Groups() {
           <section>
             {/* The tab above already says how many */}
             <h2 className="sr-only">Your groups</h2>
-            <ul className="grid gap-3">
+            {/* As tall as the column beside: one group fills it, more share it */}
+            <ul className="grid h-full gap-3">
               {groups.map((group) => (
                 <li key={group.id}>
                   <Link
                     to={groupPath(group)}
-                    className="flex items-center gap-4 rounded-xl border border-stone-200 dark:border-stone-800 p-4 hover:border-stone-400 dark:hover:border-stone-600 transition-colors"
+                    className="flex h-full flex-col rounded-xl border border-stone-200 dark:border-stone-800 p-4 hover:border-stone-400 dark:hover:border-stone-600 transition-colors"
                   >
-                    <Faces people={group.faces} max={3} />
-                    <span className="min-w-0">
-                      <span className="block truncate font-medium text-stone-900 dark:text-stone-100">
-                        {group.name}
-                      </span>
-                      <span className="block text-sm text-stone-500 dark:text-stone-400">
-                        {plural(group.memberCount, "person", "people")} ·{" "}
-                        {plural(group.bookCount, "book", "books")}
+                    <span className="flex items-center gap-4">
+                      <Faces people={group.faces} max={3} />
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium text-stone-900 dark:text-stone-100">
+                          {group.name}
+                        </span>
+                        <span className="block text-sm text-stone-500 dark:text-stone-400">
+                          {plural(group.memberCount, "person", "people")} ·{" "}
+                          {plural(group.bookCount, "book", "books")}
+                        </span>
                       </span>
                     </span>
+                    {/* Who's in it, by first name */}
+                    <span className="mt-3 block text-sm text-stone-600 dark:text-stone-300">
+                      {whoIsIn(group.names)}
+                    </span>
+                    {/* And what's new on their shelves, along the bottom */}
+                    {group.newest.length > 0 ? (
+                      <span className="mt-auto block pt-4">
+                        <span className="block text-xs text-stone-400 dark:text-stone-500">
+                          Newest on their shelves
+                        </span>
+                        <span className="mt-1.5 flex gap-2">
+                          {group.newest.map((book) => (
+                            <BookCover
+                              key={book.id}
+                              cover={book.cover}
+                              title={book.title}
+                              author={book.author}
+                              className="h-15 w-10 flex-shrink-0"
+                            />
+                          ))}
+                        </span>
+                      </span>
+                    ) : null}
                   </Link>
                 </li>
               ))}
             </ul>
           </section>
 
-          <section>
+          {/* Stretched to the groups beside it, the form along its foot, so
+              the two columns end together */}
+          <section className="flex flex-col">
             <h2 className={sectionHeading}>Start a group</h2>
             <p className="mt-1 max-w-xl text-stone-500 dark:text-stone-400">
               You&apos;ll get a link to share. Everyone who joins from it becomes friends with
               everyone else, so all their shelves open up at once. Up to {maxMembers} people.
             </p>
-            {startForm("mt-4")}
+            {startForm("mt-auto pt-4")}
           </section>
         </div>
       ) : (
