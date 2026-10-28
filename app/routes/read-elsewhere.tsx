@@ -113,9 +113,15 @@ export default function ReadElsewhere() {
         ) : (
           // In columns where there's room, as Want to read has
           <>
-            {/* What belongs here, since it isn't plain from the name. As
-                tall as the other lists' filters, so their books start level */}
-            <p className="py-1 text-sm text-stone-500 dark:text-stone-400">
+            {/* Reached from History rather than a tab of its own, so it
+                says what it is, and what belongs here */}
+            <h2 className="font-semibold text-stone-900 dark:text-stone-100">
+              Also read{" "}
+              <span className="font-normal text-stone-400 dark:text-stone-500">
+                {items.length}
+              </span>
+            </h2>
+            <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
               Books you&apos;ve read that aren&apos;t on your shelf: library
               books, audiobooks, books you&apos;ve given away.
             </p>
