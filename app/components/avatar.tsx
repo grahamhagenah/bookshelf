@@ -635,18 +635,6 @@ export const ICON_PATHS = {
       <path d="M18.4 12h.8a2.3 2.3 0 0 1 0 4.6h-2.7" />
     </>
   ),
-  ufo: (
-    <>
-      {/* A saucer and its dome, tipped as if mid-swoop, with a tractor
-          beam shining straight down from it */}
-      <g transform="translate(0 -3.2) rotate(-14 12 12.5)">
-        <path d="M7.8 11a4.2 4.2 0 0 1 8.4 0" />
-        <path d="M2.2 13.6c2-2 5.6-3 9.8-3s7.8 1 9.8 3c-2 2-5.6 3-9.8 3s-7.8-1-9.8-3z" />
-      </g>
-      <path d="M9.9 13.6 6.4 21h11.2l-3.5-7.6z" fill="currentColor" fillOpacity=".18" stroke="none" />
-      <path d="M9.9 13.6 6.4 21M14.1 13.4l3.5 7.6" />
-    </>
-  ),
 };
 
 export type AvatarIcon = keyof typeof ICON_PATHS;
@@ -686,7 +674,6 @@ export const AVATAR_ICONS: AvatarIcon[] = [
   "crystal",
   "robot",
   "alien",
-  "ufo",
   // To wear and to use
   "glasses",
   "crown",
