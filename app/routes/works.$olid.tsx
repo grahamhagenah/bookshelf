@@ -75,7 +75,8 @@ export const handle = {
     const from = data?.ownCopyId
       ? [myShelf]
       : data?.wanted
-        ? [myShelf, { label: "To read", href: "/want-to-read" }]
+        ? // The tab is short beside the others; a trail says it in full
+          [myShelf, { label: "Want to read", href: "/want-to-read" }]
         : data?.myNote && (data.myNote.loved || data.myNote.body || data.myNote.readAt)
           ? [myShelf, { label: "Also read", href: "/read-elsewhere" }]
           : [{ label: "Search", href: "/search" }];
