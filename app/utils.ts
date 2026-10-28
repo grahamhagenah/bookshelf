@@ -380,8 +380,6 @@ export function stripMarkdown(text: string) {
 // Appearance settings, kept on the account so they follow you between devices
 export const THEMES = ["light", "dark", "system"] as const;
 export type Theme = (typeof THEMES)[number];
-export const LIBRARY_VIEWS = ["cover", "list"] as const;
-export type LibraryView = (typeof LIBRARY_VIEWS)[number];
 export const COVER_SIZES = ["large", "small"] as const;
 export type CoverSize = (typeof COVER_SIZES)[number];
 
@@ -401,12 +399,6 @@ export function themeOf(
   return oneOf(THEMES, user.theme, user.darkMode ? "dark" : "light");
 }
 
-export function libraryViewOf(
-  user: { libraryView?: string } | null | undefined,
-): LibraryView {
-  return oneOf(LIBRARY_VIEWS, user?.libraryView, "cover");
-}
-
 export function coverSizeOf(
   user: { coverSize?: string } | null | undefined,
 ): CoverSize {
@@ -415,9 +407,6 @@ export function coverSizeOf(
 
 export function isTheme(value: unknown): value is Theme {
   return THEMES.includes(value as Theme);
-}
-export function isLibraryView(value: unknown): value is LibraryView {
-  return LIBRARY_VIEWS.includes(value as LibraryView);
 }
 export function isCoverSize(value: unknown): value is CoverSize {
   return COVER_SIZES.includes(value as CoverSize);

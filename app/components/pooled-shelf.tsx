@@ -5,7 +5,7 @@ import { LentIcon, SearchIcon } from "~/components/icons";
 import { GRIDS, GridCover } from "~/components/library";
 import type { PoolWork } from "~/models/pool.server";
 import type { loadPooledShelf } from "~/pooled-shelf.server";
-import { coverSizeOf, libraryViewOf, useOptionalUser } from "~/utils";
+import { coverSizeOf, useOptionalUser } from "~/utils";
 
 // Many people's books as one shelf, looking like My shelf: a filter bar,
 // then one entry per book with whoever has it. Until you search or
@@ -48,7 +48,6 @@ export default function PooledShelf({
   empty: React.ReactNode;
 }) {
   const viewer = useOptionalUser();
-  const viewMode = libraryViewOf(viewer);
   const grid = GRIDS[coverSizeOf(viewer)];
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -221,7 +220,7 @@ export default function PooledShelf({
           <h2 id="wanted" className="mb-3 text-sm font-medium text-stone-500 dark:text-stone-400">
             From your want-to-read list
           </h2>
-          <Shelf works={wanted} grid={grid} viewMode={viewMode} />
+          <Shelf works={wanted} grid={grid} />
         </section>
       ) : null}
 
@@ -242,7 +241,7 @@ export default function PooledShelf({
             </Link>
           </div>
         ) : (
-          <Shelf works={results.works} grid={grid} viewMode={viewMode} />
+          <Shelf works={results.works} grid={grid} />
         )}
         {results.total > results.works.length ? (
           <div className="mt-8 text-center">
@@ -320,46 +319,15 @@ function Select({
   );
 }
 
-// My shelf's grid (or list, by the same setting), one entry per book. It
-// opens the copy you could borrow soonest.
+// My shelf's grid, one entry per book. It opens the copy you could borrow
+// soonest.
 function Shelf({
   works,
   grid,
-  viewMode,
 }: {
   works: ShelfWork[];
   grid: (typeof GRIDS)[keyof typeof GRIDS];
-  viewMode: string;
 }) {
-  if (viewMode === "list") {
-    return (
-      <ol className="border-t border-stone-100 dark:border-stone-800">
-        {works.map((work) => {
-          const tag = standing(work);
-          return (
-            <li key={work.key} className="border-b border-stone-100 dark:border-stone-800">
-              <NavLink
-                to={`/books/${work.copies[0].bookId}`}
-                className="flex items-center gap-3 px-2 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
-              >
-                <div className="min-w-0 flex-grow">
-                  <span className="font-medium text-stone-900 dark:text-stone-100">{work.title}</span>
-                  <span className="text-stone-400 dark:text-stone-500"> · </span>
-                  <span className="text-stone-500 dark:text-stone-400">{work.author}</span>
-                </div>
-                <span className="flex-shrink-0 truncate text-sm text-stone-500 dark:text-stone-400">{whoHasIt(work)}</span>
-                {tag ? (
-                  <span className="flex-shrink-0 rounded-full bg-stone-100 dark:bg-stone-800 px-2 py-1 text-xs text-stone-600 dark:text-stone-300">
-                    {tag}
-                  </span>
-                ) : null}
-              </NavLink>
-            </li>
-          );
-        })}
-      </ol>
-    );
-  }
   return (
     <ol className={`grid gap-3 sm:gap-4 ${grid.columns}`}>
       {works.map((work, index) => {

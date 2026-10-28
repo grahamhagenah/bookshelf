@@ -23,11 +23,9 @@ import {
   BorrowedIcon,
   CheckCircleIcon,
   ExportIcon,
-  GridViewIcon,
   GroupIcon,
   ImportIcon,
   LentIcon,
-  ListViewIcon,
 } from "~/components/icons";
 import Layout from "~/components/layout";
 import { joinNames } from "~/components/shared-with";
@@ -61,7 +59,7 @@ import { BIO_MAX, HANDLE_MAX, PIN_MAX } from "~/profile";
 import { getPins, movePin, saveProfile, unpinBook } from "~/profile.server";
 import { seo } from "~/seo";
 import { getSession, requireUserId, sessionStorage } from "~/session.server";
-import { coverSizeOf, isCoverSize, isLibraryView, isTheme, libraryViewOf, type LoaderData, themeOf } from "~/utils";
+import { coverSizeOf, isCoverSize, isTheme, type LoaderData, themeOf } from "~/utils";
 import { sendVerification } from "~/verify-email.server";
 
 export const meta: MetaFunction = () =>
@@ -217,14 +215,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
-  // Theme, library view and cover size: one at a time, whichever was sent
+  // Theme and cover size: one at a time, whichever was sent
   if (intent === "appearance") {
     const theme = formData.get("theme");
-    const libraryView = formData.get("libraryView");
     const coverSize = formData.get("coverSize");
     await setAppearance(userId, {
       theme: isTheme(theme) ? theme : undefined,
-      libraryView: isLibraryView(libraryView) ? libraryView : undefined,
       coverSize: isCoverSize(coverSize) ? coverSize : undefined,
     });
     return data({
@@ -622,16 +618,6 @@ export default function Account() {
               ["light", "Light"],
               ["dark", "Dark"],
               ["system", "Auto"],
-            ]}
-          />
-          <Choice
-            name="libraryView"
-            value={libraryViewOf(user)}
-            label="Shelf view"
-            hint="For your shelf and your friends'"
-            options={[
-              ["cover", "Covers", GridViewIcon],
-              ["list", "List", ListViewIcon],
             ]}
           />
           <Choice

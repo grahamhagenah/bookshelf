@@ -172,26 +172,6 @@ export function HistoryIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
-export function GridViewIcon({ className = "", size = 24 }: IconProps) {
-  return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/>
-      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/>
-      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/>
-      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>
-    </svg>
-  );
-}
-
-export function ListViewIcon({ className = "", size = 24 }: IconProps) {
-  return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 6h11M9 12h11M9 18h11"/>
-      <path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" strokeWidth="2.5"/>
-    </svg>
-  );
-}
-
 export function DashboardIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

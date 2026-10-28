@@ -5,7 +5,7 @@ import { prisma } from "~/db.server";
 import type { Password, User, Notification } from "~/generated/prisma/client";
 import { REQUEST_NOTE_MAX } from "~/lending";
 import { shelfIds } from "~/models/household.server";
-import type { CoverSize, LibraryView, Theme } from "~/utils";
+import type { CoverSize, Theme } from "~/utils";
 import { normalizeEmail } from "~/utils";
 
 export type { User } from "~/generated/prisma/client";
@@ -24,7 +24,6 @@ export async function getUserById(id: User["id"]) {
       isAdmin: true,
       darkMode: true,
       theme: true,
-      libraryView: true,
       coverSize: true,
       profileEmoji: true,
       emailNotifications: true,
@@ -583,7 +582,7 @@ export async function revokeShareToken(userId: string) {
 
 export async function setAppearance(
   userId: string,
-  appearance: { theme?: Theme; libraryView?: LibraryView; coverSize?: CoverSize },
+  appearance: { theme?: Theme; coverSize?: CoverSize },
 ) {
   await prisma.user.update({ where: { id: userId }, data: appearance });
 }
