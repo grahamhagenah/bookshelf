@@ -5,8 +5,8 @@ import { daysUntil, dueText } from "~/due";
 import type { FriendActivity } from "~/models/activity.server";
 import type { getHomeBooks } from "~/models/book.server";
 
+import Avatar from "./avatar";
 import BookCover from "./book-cover";
-import Faces from "./faces";
 import FriendActivityItem from "./friend-activity";
 import { BorrowedIcon, LentIcon, SearchIcon } from "./icons";
 import { InviteButtons } from "./invite-message";
@@ -515,6 +515,20 @@ function PopularChart({
                 to={book.to}
                 className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
               >
+                {/* Whose copy, in the column the activity above keeps for
+                    its friends' faces, so the two lists line up */}
+                {book.faces[0] ? (
+                  <span aria-hidden="true" className="flex w-7 flex-shrink-0 justify-center">
+                    <Avatar
+                      firstname={book.faces[0].firstname}
+                      surname={book.faces[0].surname}
+                      icon={book.faces[0].profileEmoji}
+                      size="rail"
+                    />
+                  </span>
+                ) : (
+                  <span aria-hidden="true" className="w-7 flex-shrink-0" />
+                )}
                 <BookCover
                   cover={book.cover}
                   title={book.title}
@@ -525,17 +539,9 @@ function PopularChart({
                   <span className="line-clamp-2 font-medium leading-snug text-stone-900 dark:text-stone-100">
                     {book.title}
                   </span>
-                  {/* Whose copies, with a small face for each: the order and
-                      the count on the right already say how popular */}
-                  <span className="flex min-w-0 items-center gap-1 text-sm text-stone-500 dark:text-stone-400">
-                    <span className="truncate">{book.author}</span>
-                    {book.owners ? (
-                      <>
-                        <span aria-hidden="true">·</span>
-                        <Faces people={book.faces} size="2xs" max={3} />
-                        <span className="whitespace-nowrap">{book.owners}</span>
-                      </>
-                    ) : null}
+                  <span className="block truncate text-sm text-stone-500 dark:text-stone-400">
+                    {book.author}
+                    {book.owners ? ` · ${book.owners}` : ""}
                   </span>
                 </span>
                 <span
