@@ -23,7 +23,8 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
 
 export const handle = {
   breadcrumbs: (data: { wish?: { title: string } } | undefined) => [
-    { label: "Want to read", href: "/want-to-read" },
+    { label: "My shelf", href: "/books" },
+    { label: "To read", href: "/want-to-read" },
     { label: data?.wish?.title ?? "Book" },
   ],
 };

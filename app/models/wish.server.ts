@@ -93,6 +93,18 @@ export async function addWantToRead(
   });
 }
 
+// Off your list, from the book's own page: however it got on, by its
+// Open Library work or its title
+export async function removeWantedWork(userId: User["id"], work: Work) {
+  const wishes = await prisma.wantToRead.findMany({
+    where: { userId },
+    select: { id: true, title: true, openLibraryKey: true, isbn: true },
+  });
+  const ids = wishes.filter((wish) => sameWork(wish, work)).map((wish) => wish.id);
+  if (ids.length) await prisma.wantToRead.deleteMany({ where: { id: { in: ids }, userId } });
+  return ids.length;
+}
+
 // One book on your list
 export function getWish(id: string, userId: User["id"]) {
   return prisma.wantToRead.findFirst({ where: { id, userId } });

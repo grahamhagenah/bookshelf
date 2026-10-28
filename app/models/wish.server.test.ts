@@ -8,6 +8,7 @@ import {
   getWish,
   moveToShelf,
   notifyWanters,
+  removeWantedWork,
   sameWork,
   setWishWork,
   workKeyFromFriends,
@@ -105,4 +106,21 @@ test("a book on the list without a work borrows a friend's copy's, and keeps it"
   expect(await getWish(piranesi.id, stranger.id)).toBeNull();
   await setWishWork(piranesi.id, stranger.id, "/works/OL9W");
   expect((await getWish(piranesi.id, me.id))?.openLibraryKey).toBe("/works/OL1W");
+});
+
+test("a book comes off the list from its own page, by its work or its title", async () => {
+  const dana = await makeUser("Dana");
+  await addWantToRead(dana.id, { ...wish("Martyr!"), openLibraryKey: "/works/OL1W" });
+  // On the list from an import, with no work yet
+  await addWantToRead(dana.id, wish("Hamnet"));
+  await addWantToRead(dana.id, wish("Circe"));
+
+  expect(await removeWantedWork(dana.id, { title: "Martyr!", openLibraryKey: "/works/OL1W" })).toBe(1);
+  expect(await removeWantedWork(dana.id, { title: "Hamnet", openLibraryKey: "/works/OL2W" })).toBe(1);
+  expect((await getWantToRead(dana.id)).map((item) => item.title)).toEqual(["Circe"]);
+
+  // Only your own list
+  const kim = await makeUser("Kim");
+  expect(await removeWantedWork(kim.id, { title: "Circe" })).toBe(0);
+  expect(await getWantToRead(dana.id)).toHaveLength(1);
 });

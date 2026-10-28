@@ -27,6 +27,7 @@ import {
   addWantToRead,
   isOnWantToRead,
   notifyWanters,
+  removeWantedWork,
 } from "~/models/wish.server";
 import {
   getMyWorkNote,
@@ -57,11 +58,29 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
     noindex: true,
   });
 
+// The trail goes back the way you most likely came: from your shelf, your
+// To read or Also read list when the book's on one, else from search
 export const handle = {
-  breadcrumbs: (data: { work?: { title: string } } | undefined) => [
-    { label: "Search", href: "/search" },
-    { label: data?.work?.title ?? "Book" },
-  ],
+  breadcrumbs: (
+    data:
+      | {
+          work?: { title: string };
+          ownCopyId?: string | null;
+          wanted?: boolean;
+          myNote?: { loved: boolean; body: string | null; readAt: unknown } | null;
+        }
+      | undefined,
+  ) => {
+    const myShelf = { label: "My shelf", href: "/books" };
+    const from = data?.ownCopyId
+      ? [myShelf]
+      : data?.wanted
+        ? [myShelf, { label: "To read", href: "/want-to-read" }]
+        : data?.myNote && (data.myNote.loved || data.myNote.body || data.myNote.readAt)
+          ? [myShelf, { label: "Also read", href: "/read-elsewhere" }]
+          : [{ label: "Search", href: "/search" }];
+    return [...from, { label: data?.work?.title ?? "Book" }];
+  },
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -147,6 +166,16 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const key = `/works/${olid}`;
   const form = await request.formData();
   const intent = String(form.get("intent") ?? "");
+
+  // Off your To read list. Matched by the work, or the title it was put
+  // on the list with, so Open Library needn't be asked
+  if (intent === "unwant") {
+    await removeWantedWork(userId, {
+      title: String(form.get("title") ?? ""),
+      openLibraryKey: key,
+    });
+    return data({ success: true, wanted: false });
+  }
 
   // A heart, read mark or note on a book read somewhere else. What it's
   // saved with comes from an earlier note when there is one, so Open
@@ -241,12 +270,18 @@ export default function WorkPage() {
     limit?: string;
   }>();
   const intent = fetcher.formData?.get("intent");
-  const adding = fetcher.state !== "idle" && intent !== "want";
+  const adding = fetcher.state !== "idle" && intent !== "want" && intent !== "unwant";
   const wanting = fetcher.state !== "idle" && intent === "want";
   const added = fetcher.data?.added;
   const ownCopyId = data.ownCopyId ?? fetcher.data?.ownCopyId ?? null;
   const inLibrary = ownCopyId !== null;
-  const wanted = data.wanted || fetcher.data?.wanted === true;
+  // What the last want or unwant said, until the page's own data catches up
+  const wanted =
+    fetcher.state !== "idle" && intent === "unwant"
+      ? false
+      : typeof fetcher.data?.wanted === "boolean"
+        ? fetcher.data.wanted
+        : data.wanted;
   const subjects = cleanSubjects(work.subjects);
   // One quiet line, subjects as plain words. No publisher: up by the title
   // it crowded the heading.
@@ -321,9 +356,19 @@ export default function WorkPage() {
             </button>
           )}
           {added || inLibrary ? null : wanted ? (
+            // On the list, and the way off it
             <p className="inline-flex items-center justify-center gap-1.5 py-2 text-sm text-stone-500 dark:text-stone-400">
               <BookmarkIcon size={14} />
-              On your want-to-read list
+              On your To read list ·
+              <input type="hidden" name="title" value={work.title ?? ""} />
+              <button
+                type="submit"
+                name="intent"
+                value="unwant"
+                className="text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
+              >
+                Remove
+              </button>
             </p>
           ) : (
             <button
