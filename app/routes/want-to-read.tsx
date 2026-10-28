@@ -2,9 +2,9 @@
 import { data, Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import BookCover from "~/components/book-cover";
+import { BookRow, RowLine, rowEmphasis, rowEmphasisLink, rowPrimary, rowSecondary } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
-import { BookmarkIcon } from "~/components/icons";
+import { BookmarkIcon, GroupIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
 import ShelfTabs, { AddLink } from "~/components/shelf-tabs";
@@ -68,40 +68,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 type Item = Awaited<ReturnType<typeof getWantToRead>>[number];
 
-function Cover({
-  cover,
-  title,
-  author,
-}: {
-  cover: string;
-  title: string;
-  author: string;
-}) {
-  return (
-    <BookCover
-      cover={cover}
-      title={title}
-      author={author}
-      // The same size as Also read's and History's covers
-      className="h-24 w-16 flex-shrink-0"
-    />
-  );
-}
-
-// A row's actions as words, light enough to sit under the book. Getting a
-// copy is the one it's waiting for, in the green for what comes next;
-// removing it stays quiet
-const textAction = "underline-offset-4 hover:underline transition-colors";
-const gotItAction = `${textAction} font-medium text-forest-600 decoration-forest-600/40 hover:text-forest-700 dark:text-forest-400 dark:decoration-forest-400/40`;
-const removeAction = `${textAction} text-stone-400 decoration-stone-300 hover:text-stone-700 dark:text-stone-500 dark:decoration-stone-600 dark:hover:text-stone-200`;
-
 function WantRow({
   item,
   friendIds,
 }: {
-  item: Pick<Item, "id" | "title" | "author" | "cover" | "openLibraryKey"> & {
-    copies: Item["copies"];
-  };
+  item: Item;
   friendIds: string[];
 }) {
   const remove = useFetcher({ key: `remove-${item.id}` });
@@ -116,91 +87,57 @@ function WantRow({
     (a, b) => Number(b.available) - Number(a.available),
   );
   return (
-    <li
+    <BookRow
       id={`wish-${item.id}`}
+      to={page}
+      book={item}
       // The tint reaches past the row's edges with a shadow, so nothing moves
-      className={`flex scroll-mt-24 items-start gap-4 border-b border-stone-100 dark:border-stone-800 py-4 transition-colors ${
+      className={`scroll-mt-24 transition-colors ${
         picked
           ? "bg-forest-600/[0.06] shadow-[0_0_0_10px_rgb(31_107_78/0.06)] dark:bg-forest-400/10 dark:shadow-[0_0_0_10px_rgb(58_154_116/0.1)]"
           : ""
       }`}
-    >
-      {/* The book's own page: straight there when its Open Library work
-          is known, else by way of finding it */}
-      <Link
-        to={page}
-        tabIndex={-1}
-        aria-hidden="true"
-        className="flex-shrink-0"
-      >
-        <Cover cover={item.cover} title={item.title} author={item.author} />
-      </Link>
-      <div className="min-w-0 flex-1">
-        <Link
-          to={page}
-          className="font-medium text-stone-900 dark:text-stone-100 underline-offset-2 hover:underline"
-        >
-          {item.title}
-        </Link>
-        <p className="text-sm text-stone-500 dark:text-stone-400">
-          {item.author}
-        </p>
-        <p className="mt-1.5 text-sm">
-          {copies.length === 0 ? (
-            <span className="text-stone-400 dark:text-stone-500">
-              None of your friends have it yet
-            </span>
-          ) : (
-            copies.map((copy, index) => (
-              <span
-                key={copy.bookId}
-                className="text-stone-600 dark:text-stone-300"
-              >
-                {index > 0 ? (
-                  <span className="text-stone-400 dark:text-stone-500">
-                    {" "}
-                    ·{" "}
-                  </span>
-                ) : null}
-                <PersonLink
-                  id={copy.owner.id}
-                  name={copy.owner.firstname}
-                  friendIds={friendIds}
-                />{" "}
-                has it,{" "}
-                <Link
-                  to={`/books/${copy.bookId}`}
-                  className="font-medium text-stone-800 dark:text-stone-200 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
-                >
-                  {copy.available
-                    ? "ask to borrow it"
-                    : copy.notLending
-                      ? "not lending it right now"
-                      : "lent out right now"}
-                </Link>
-              </span>
-            ))
-          )}
-        </p>
-        {/* What to do with it, quietly under the rest */}
-        <div className="mt-2 flex items-center gap-4 text-sm">
+      line={
+        <RowLine icon={<GroupIcon size={13} />}>
+          {copies.length === 0
+            ? "None of your friends have it yet"
+            : copies.map((copy, index) => (
+                <span key={copy.bookId}>
+                  {index > 0 ? " · " : null}
+                  <span className={rowEmphasis}>
+                    <PersonLink id={copy.owner.id} name={copy.owner.firstname} friendIds={friendIds} />
+                  </span>{" "}
+                  has it,{" "}
+                  <Link to={`/books/${copy.bookId}`} className={rowEmphasisLink}>
+                    {copy.available
+                      ? "ask to borrow it"
+                      : copy.notLending
+                        ? "not lending it right now"
+                        : "lent out right now"}
+                  </Link>
+                </span>
+              ))}
+        </RowLine>
+      }
+      actions={
+        <>
           <Form method="post">
             <input type="hidden" name="intent" value="gotIt" />
             <input type="hidden" name="id" value={item.id} />
-            <button type="submit" className={gotItAction} title="Move it to your shelf">
+            <button type="submit" className={rowPrimary} title="Move it to your shelf">
               Got a copy
             </button>
           </Form>
           <remove.Form method="post">
             <input type="hidden" name="intent" value="remove" />
             <input type="hidden" name="id" value={item.id} />
-            <button type="submit" className={removeAction}>
+            <button type="submit" className={rowSecondary}>
               Remove
             </button>
           </remove.Form>
-        </div>
-      </div>
-    </li>
+        </>
+      }
+    />
   );
 }
 

@@ -20,6 +20,11 @@ import type { Member } from "./shared-with";
 // Books on a shelf before it gets a filter box
 const FILTER_FROM = 12;
 
+// Where a book is, in the list view: one quiet tag for each, as the cover
+// grid's tags are
+const listTag =
+  "inline-flex flex-shrink-0 items-center gap-1 rounded bg-stone-100 dark:bg-stone-800 px-1.5 py-0.5 text-[11px] leading-4";
+
 const OPEN_LIBRARY_SIZE = /-[SML]\.jpg$/;
 
 // Open Library serves each cover as S (~45px wide), M (~180px) and L (~400px+).
@@ -476,18 +481,18 @@ export default function Library({
                       </span>
                     ) : null}
                     {book.isBorrowed ? (
-                      <span className="bg-stone-900 dark:bg-stone-100 text-white text-xs px-2 py-1 rounded-full flex-shrink-0 inline-flex items-center gap-1">
-                        <BorrowedIcon size={12} />
+                      <span className={`${listTag} text-stone-700 dark:text-stone-200`}>
+                        <BorrowedIcon size={11} />
                         Borrowed
                       </span>
                     ) : null}
                     {book.isLending ? (
-                      <span className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 text-xs px-2 py-1 rounded-full flex-shrink-0 inline-flex items-center gap-1">
-                        <LentIcon size={12} />
+                      <span className={`${listTag} text-stone-700 dark:text-stone-200`}>
+                        <LentIcon size={11} />
                         Lent out
                       </span>
                     ) : book.notLending && !book.isBorrowed ? (
-                      <span className="bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 text-xs px-2 py-1 rounded-full flex-shrink-0">
+                      <span className={`${listTag} text-stone-500 dark:text-stone-400`}>
                         Not lending
                       </span>
                     ) : null}

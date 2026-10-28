@@ -1,7 +1,7 @@
 import { data, Link, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import BookCover from "~/components/book-cover";
+import { BookRow, RowLine, rowEmphasis, rowPrimary, rowQuiet, rowSecondary } from "~/components/book-row";
 import EmptyList from "~/components/empty-list";
 import { BorrowedIcon, HeartIcon, HistoryIcon, LentIcon } from "~/components/icons";
 import Layout from "~/components/layout";
@@ -48,22 +48,17 @@ const monthDay = (date: string | Date) => {
 };
 
 
-const noteLink =
-  "font-medium text-stone-800 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:decoration-stone-500";
-
 function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] }) {
   const borrowed = entry.kind === "borrowed";
   // First names: the rows say enough without the rest, and stay short
   const name = entry.person.firstname;
   const person = (
-    <strong className="whitespace-nowrap font-semibold text-stone-800 dark:text-stone-200">
+    <span className={`whitespace-nowrap ${rowEmphasis}`}>
       <PersonLink id={entry.person.id} name={name} friendIds={friendIds} />
-    </strong>
+    </span>
   );
   const date = (value: string | Date) => (
-    <strong className="whitespace-nowrap font-semibold text-stone-800 dark:text-stone-200">
-      {monthDay(value)}
-    </strong>
+    <span className={`whitespace-nowrap ${rowEmphasis}`}>{monthDay(value)}</span>
   );
   // Told as a sentence: who had it, and when it went and came back
   const story = borrowed ? (
@@ -89,73 +84,45 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
   );
   const notes = `/books/${entry.book.id}#notes`;
   const body = entry.note?.body?.trim();
+  const loved = entry.note?.loved ? (
+    <span className={`inline-flex items-center gap-1.5 ${rowQuiet}`}>
+      <HeartIcon size={13} filled className="text-rose-400" />
+      {borrowed ? "You loved it" : `${name} loved it`}
+    </span>
+  ) : null;
 
   return (
-    // A cover the size of To read's and Also read's
-    <li className="flex gap-4 border-b border-stone-100 dark:border-stone-800 py-4">
-      <Link
-        to={`/books/${entry.book.id}`}
-        tabIndex={-1}
-        aria-hidden="true"
-        className="block flex-shrink-0"
-      >
-        <BookCover cover={entry.book.cover} title={entry.book.title} author={entry.book.author} className="h-24 w-16" />
-      </Link>
-      <div className="min-w-0 flex-1">
-        <Link
-          to={`/books/${entry.book.id}`}
-          className="font-medium text-stone-900 dark:text-stone-100 hover:underline underline-offset-2"
-        >
-          {entry.book.title}
-        </Link>
-        <p className="text-sm text-stone-500 dark:text-stone-400">{entry.book.author}</p>
-        <p className="mt-1 flex items-start gap-1.5 text-sm text-stone-600 dark:text-stone-300">
-          {borrowed ? (
-            <BorrowedIcon size={13} className="mt-[3px] flex-shrink-0 text-stone-400 dark:text-stone-500" />
-          ) : (
-            <LentIcon size={13} className="mt-[3px] flex-shrink-0 text-stone-400 dark:text-stone-500" />
-          )}
-          <span>{story}</span>
-        </p>
-
-        {/* Whether anything was said about it: that there's a note, with
-            the way to it, rather than the note itself; or a way to leave
-            yours on a book you borrowed */}
-        <div className="mt-2 text-sm">
-          {body ? (
-            <p className="flex items-center gap-1.5 text-stone-500 dark:text-stone-400">
-              {entry.note?.loved ? <HeartIcon size={13} filled className="text-rose-400" /> : null}
-              {borrowed ? "You left a note" : `${entry.person.firstname} left a note`} ·{" "}
-              <Link to={notes} className={noteLink}>
-                Read it
-              </Link>
-            </p>
-          ) : entry.note?.loved ? (
-            <p className="flex items-center gap-1.5 text-stone-500 dark:text-stone-400">
-              <HeartIcon size={13} filled className="text-rose-400" />
-              {borrowed ? (
-                <>
-                  You loved it ·{" "}
-                  <Link to={notes} className={noteLink}>
-                    Add a note
-                  </Link>
-                </>
-              ) : (
-                `${entry.person.firstname} loved it`
-              )}
-            </p>
-          ) : borrowed ? (
-            <Link to={notes} className={noteLink}>
-              Leave a note
+    <BookRow
+      to={`/books/${entry.book.id}`}
+      book={entry.book}
+      line={
+        <RowLine icon={borrowed ? <BorrowedIcon size={13} /> : <LentIcon size={13} />}>
+          {story}
+        </RowLine>
+      }
+      // Whether anything was said about it: that there's a note, with the
+      // way to it, rather than the note itself; or a way to leave yours on
+      // a book you borrowed
+      actions={
+        body ? (
+          <>
+            {loved}
+            <Link to={notes} className={rowSecondary}>
+              {borrowed ? "Read your note" : `Read ${name}'s note`}
             </Link>
-          ) : (
-            <p className="text-stone-400 dark:text-stone-500">
-              No note from {entry.person.firstname} yet
-            </p>
-          )}
-        </div>
-      </div>
-    </li>
+          </>
+        ) : borrowed ? (
+          <>
+            {loved}
+            <Link to={notes} className={rowPrimary}>
+              {loved ? "Add a note" : "Leave a note"}
+            </Link>
+          </>
+        ) : (
+          loved ?? <span className={rowQuiet}>No note from {name} yet</span>
+        )
+      }
+    />
   );
 }
 

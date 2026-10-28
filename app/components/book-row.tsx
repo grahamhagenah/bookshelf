@@ -1,0 +1,89 @@
+import { Link } from "react-router";
+
+import BookCover from "./book-cover";
+
+// One book in one of your lists (To read, Also read, History), the same
+// way in each: the cover, the title and author, a line on where it stands,
+// then what you can do with it. Names and dates in the line stand out a
+// little; the thing to do next is green, anything else quiet.
+
+// A name, date or link inside a book's line
+export const rowEmphasis = "font-medium text-stone-700 dark:text-stone-200";
+export const rowEmphasisLink = `${rowEmphasis} underline-offset-2 hover:underline`;
+
+const action = "underline-offset-4 hover:underline transition-colors";
+// What the row is waiting for: getting a copy, leaving a note
+export const rowPrimary = `${action} font-medium text-forest-600 decoration-forest-600/40 hover:text-forest-700 dark:text-forest-400 dark:decoration-forest-400/40`;
+// Anything else you can do: remove it, read a note
+export const rowSecondary = `${action} text-stone-500 decoration-stone-300 hover:text-stone-800 dark:text-stone-400 dark:decoration-stone-600 dark:hover:text-stone-100`;
+// Said rather than done: no note yet, nobody has it
+export const rowQuiet = "text-stone-400 dark:text-stone-500";
+
+export function BookRow({
+  id,
+  to,
+  book,
+  line,
+  actions,
+  className = "",
+}: {
+  id?: string;
+  // The book's own page, from its cover and title
+  to: string;
+  book: { title: string; author: string; cover: string };
+  // Where it stands: one RowLine
+  line?: React.ReactNode;
+  // What you can do, in rowPrimary or rowSecondary, or said in rowQuiet
+  actions?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <li
+      id={id}
+      className={`flex items-start gap-4 border-b border-stone-100 dark:border-stone-800 py-4 ${className}`}
+    >
+      <Link to={to} tabIndex={-1} aria-hidden="true" className="flex-shrink-0">
+        <BookCover
+          cover={book.cover}
+          title={book.title}
+          author={book.author}
+          className="h-24 w-16"
+        />
+      </Link>
+      <div className="min-w-0 flex-1">
+        <Link
+          to={to}
+          className="font-medium text-stone-900 dark:text-stone-100 underline-offset-2 hover:underline"
+        >
+          {book.title}
+        </Link>
+        <p className="text-sm text-stone-500 dark:text-stone-400">{book.author}</p>
+        {line ? <div className="mt-2">{line}</div> : null}
+        {actions ? (
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+            {actions}
+          </div>
+        ) : null}
+      </div>
+    </li>
+  );
+}
+
+// Where a book stands, after a small icon that every line has, so the
+// words in a list start in the same place
+export function RowLine({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <p className="flex items-start gap-1.5 text-sm text-stone-500 dark:text-stone-400">
+      <span className="mt-[3px] flex h-[13px] w-[13px] flex-shrink-0 items-center justify-center text-stone-400 dark:text-stone-500">
+        {icon}
+      </span>
+      <span className="min-w-0">{children}</span>
+    </p>
+  );
+}
