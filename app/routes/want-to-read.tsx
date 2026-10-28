@@ -19,7 +19,7 @@ import EmptyList from "~/components/empty-list";
 import { BookmarkIcon } from "~/components/icons";
 import Layout from "~/components/layout";
 import PersonLink from "~/components/person-link";
-import ShelfTabs, { AddLink } from "~/components/shelf-tabs";
+import ShelfTabs from "~/components/shelf-tabs";
 import { getShelfCounts } from "~/models/history.server";
 import { getUserById } from "~/models/user.server";
 import {
@@ -206,13 +206,6 @@ export default function WantToRead() {
     <Layout title="Want to read">
       <section>
         <ShelfTabs counts={{ ...counts, want: items.length }} add={items.length > 0 ? { to: "/search?for=want", label: "Add a book" } : undefined} />
-        {/* What the list is for is said only while it's empty, in its place.
-            Phones have no room beside the tabs, so the way to add is here */}
-        {items.length > 0 ? (
-          <div className="-mt-2 flex justify-end sm:hidden">
-            <AddLink to="/search?for=want">Add a book</AddLink>
-          </div>
-        ) : null}
 
         {limit ? (
           <p
