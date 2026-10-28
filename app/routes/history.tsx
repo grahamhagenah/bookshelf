@@ -60,7 +60,7 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
   // Who, then when on a line of its own: short lines rather than one long
   // sentence. The two dates, out and back ("Since" only as a fallback)
   // Said from your side, so which way it went is plain
-  const who = borrowed ? <>You borrowed it from {person}</> : <>You lent it to {person}</>;
+  const who = borrowed ? <>You borrowed from {person}</> : <>You lent to {person}</>;
   const when = entry.returnedAt
     ? `${monthDay(entry.borrowedAt)} – ${monthDay(entry.returnedAt)}`
     : `Since ${monthDay(entry.borrowedAt)}`;
