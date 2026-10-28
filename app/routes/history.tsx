@@ -165,7 +165,7 @@ export default function History() {
         ) : (
           // Loans that are over, both ways, the most recently back first;
           // what's out now is on your shelf. In columns where there's room,
-          // as To read and Also read
+          // as Want to read and Also read
           <ul className={`mt-4 ${bookRowGrid}`}>
             {entries.map((entry) => (
               <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />

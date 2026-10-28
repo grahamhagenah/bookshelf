@@ -5,7 +5,7 @@ import BookCover from "./book-cover";
 import { HeartIcon } from "./icons";
 import { quietButton } from "./ui";
 
-// One book in one of your lists (To read, Also read, History), the same
+// One book in one of your lists (Want to read, Also read, History), the same
 // way in each: the cover, the title and author, a line on where it stands,
 // then what you can do with it. Names and dates in the line stand out a
 // little; the thing to do next is a button, anything else quiet.
@@ -40,7 +40,7 @@ export function BookRow({
   line?: React.ReactNode;
   // What you can do, in rowPrimary or rowSecondary
   actions?: React.ReactNode;
-  // A small control in the top corner, like To read's ×, out of the way of
+  // A small control in the top corner, like the ⋯ menu, out of the way of
   // the title and the buttons
   corner?: React.ReactNode;
   className?: string;

@@ -59,7 +59,7 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
   });
 
 // The trail goes back the way you most likely came: from your shelf, your
-// To read or Also read list when the book's on one, else from search
+// Want to read or Also read list when the book's on one, else from search
 export const handle = {
   breadcrumbs: (
     data:
@@ -168,7 +168,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const form = await request.formData();
   const intent = String(form.get("intent") ?? "");
 
-  // Off your To read list. Matched by the work, or the title it was put
+  // Off your Want to read list. Matched by the work, or the title it was put
   // on the list with, so Open Library needn't be asked
   if (intent === "unwant") {
     await removeWantedWork(userId, {

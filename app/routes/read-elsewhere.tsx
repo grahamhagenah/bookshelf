@@ -118,7 +118,7 @@ export default function ReadElsewhere() {
             a note on its page.
           </EmptyList>
         ) : (
-          // In columns where there's room, as To read has
+          // In columns where there's room, as Want to read has
           <ul className={`mt-4 ${bookRowGrid}`}>
             {items.map((item) => {
               // One still being looked up opens a search for it
