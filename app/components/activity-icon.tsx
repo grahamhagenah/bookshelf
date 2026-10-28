@@ -125,17 +125,20 @@ export default function ActivityIcon({
   urgent?: boolean;
   size?: "xs" | "sm" | "md";
 }) {
-  const box = size === "xs" ? "w-5 h-5" : size === "sm" ? "w-7 h-7" : "w-8 h-8";
-  const icon = size === "xs" ? 11 : size === "sm" ? 14 : 16;
+  // The smallest sits on a picture's corner: a plain notch in the page's
+  // own color, with the line drawn a little heavier to read at that size
+  const badge = size === "xs";
+  const box = badge ? "w-5 h-5" : size === "sm" ? "w-7 h-7" : "w-8 h-8";
+  const icon = badge ? 12 : size === "sm" ? 14 : 16;
   return (
     <span
       aria-hidden="true"
       className={`${box} flex-shrink-0 rounded-full flex items-center justify-center ${
         urgent
           ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900"
-          : // An edge of its own, so it holds up on a white card as well
-            // as over a picture's corner
-            "bg-stone-100 text-stone-600 ring-1 ring-inset ring-stone-300 dark:bg-stone-800 dark:text-stone-300 dark:ring-stone-600"
+          : badge
+            ? "bg-white text-stone-600 dark:bg-stone-950 dark:text-stone-300"
+            : "bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300"
       }`}
     >
       <svg
@@ -144,7 +147,7 @@ export default function ActivityIcon({
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth={badge ? 2 : 1.75}
         strokeLinecap="round"
         strokeLinejoin="round"
       >
