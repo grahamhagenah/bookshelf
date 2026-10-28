@@ -50,7 +50,7 @@ export function BookRow({
           cover={book.cover}
           title={book.title}
           author={book.author}
-          className="h-30 w-20"
+          className="h-36 w-24"
         />
       </Link>
       <div className="min-w-0 flex-1">
