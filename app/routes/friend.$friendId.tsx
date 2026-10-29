@@ -4,6 +4,7 @@ import invariant from "tiny-invariant";
 
 import Library from "~/components/library";
 import { getBookListItems } from "~/models/book.server";
+import { circleOf } from "~/models/circle.server";
 import { shelfIds } from "~/models/household.server";
 import { getLoveCounts } from "~/models/note.server";
 import { getUserById } from "~/models/user.server";
@@ -37,16 +38,17 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw new Response("Not Found", { status: 404 });
   }
 
-  // Verify the current user is friends with this person
-  const currentUser = await getUserById(currentUserId);
-  const followingIds = currentUser?.following?.map((f) => f.id) ?? [];
-
-  if (!followingIds.includes(params.friendId)) {
+  // Only someone in your circle: a friend, or someone in one of your
+  // groups, who shows you their shelf without what they keep off their page
+  const circle = await circleOf(currentUserId);
+  const isFriend = circle.friends.has(params.friendId);
+  if (!isFriend && !circle.groupOnly.has(params.friendId)) {
     throw new Response("Not Found", { status: 404 });
   }
 
-  // A friend's shelf includes their household's books
-  const books = await getBookListItems(await shelfIds(user.id));
+  // Their shelf includes their household's books
+  const shelf = await getBookListItems(await shelfIds(user.id));
+  const books = isFriend ? shelf : shelf.filter((book) => !book.hiddenFromPage);
   const loveCounts = await getLoveCounts(books.map((book) => book.id));
   const bookListItems = books.map((book) => ({
     ...book,

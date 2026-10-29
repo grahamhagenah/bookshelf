@@ -35,6 +35,7 @@ import {
   getLendingHistory,
   tidySubjects,
 } from "~/models/book.server";
+import { circleOf, inCircle } from "~/models/circle.server";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import {
   getHolds,
@@ -419,9 +420,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const currentUser = await getUserById(userId);
   const followingIds = currentUser?.following?.map((friend) => friend.id) ?? [];
-  // A friend of anyone on that shelf is a friend of the shelf
+  // Someone you can borrow from: a friend of anyone on that shelf, or
+  // someone you're in a group with (unless they keep this one off their
+  // page). Named for friends, from before groups were enough.
   const ownerShelf = await shelfIds(book.userId);
-  const isFriend = ownerShelf.some((id) => followingIds.includes(id));
+  const isFriend = await inCircle(userId, book);
 
   // If not the owner, check if the owner is a friend, borrower, or has public sharing
   if (!isOwner && !isBorrower && !isFriend) {
@@ -704,6 +707,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     if (!(await canInteract(userId, book.userId))) {
       throw new Response("Not Found", { status: 404 });
     }
+    // Only from someone in your circle: a friend, or a group-mate
+    if (!(await inCircle(userId, book))) {
+      throw new Response("Not Found", { status: 404 });
+    }
 
     const currentUser = await getUserById(userId);
     if (!currentUser) {
@@ -754,10 +761,8 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       await leaveHold(book.id, userId);
       return data({ leftLine: true });
     }
-    // Only for a friend's book that someone else has right now
-    const viewer = await getUserById(userId);
-    const isFriend =
-      viewer?.following.some((friend) => friend.id === book.userId) ?? false;
+    // Only for a book in your circle that someone else has right now
+    const isFriend = await inCircle(userId, book);
     if (
       managerIds.includes(book.userId) ||
       !book.borrowerId ||
@@ -820,9 +825,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       await lendToFriend(book.id, userId, friendId, weeks);
       return data({ lentTo: friendId });
     }
+    // To a friend or someone in one of your groups
     const isFriend =
       typeof friendId === "string" &&
-      (owner?.following.some((friend) => friend.id === friendId) ?? false);
+      (await circleOf(userId)).ids.includes(friendId);
     if (!owner || !isFriend || !(await canInteract(userId, friendId))) {
       throw new Response("Not a friend", { status: 400 });
     }

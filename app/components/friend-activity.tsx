@@ -411,7 +411,7 @@ function Actions({
     )
   ) : viewer.canRequest && !book.notLending ? (
     // Lent out: wait your turn
-    <borrow.Form method="post">
+    <borrow.Form method="post" action="/feed">
       <input type="hidden" name="intent" value={inLine ? "leaveHold" : "placeHold"} />
       <input type="hidden" name="bookId" value={book.id} />
       <button type="submit" className={inLine ? actionClass : nextClass}>
@@ -426,7 +426,7 @@ function Actions({
   ) : (
     // Not being lent, or not a friend's to ask for: keep it on your list,
     // and hear when there's a copy you can borrow
-    <want.Form method="post">
+    <want.Form method="post" action="/feed">
       <input type="hidden" name="intent" value="wantBook" />
       <input type="hidden" name="bookId" value={book.id} />
       <button type="submit" className={nextClass}>
@@ -466,6 +466,7 @@ function Actions({
       {asking && viewer.canRequest && book.available && !requested ? (
         <borrow.Form
           method="post"
+          action="/feed"
           className="mt-2 flex flex-wrap items-center gap-2"
           onSubmit={() => setAsking(false)}
         >
@@ -569,7 +570,7 @@ function ElsewhereCard({
                 On your Want to read list
               </span>
             ) : (
-              <want.Form method="post">
+              <want.Form method="post" action="/feed">
                 <input type="hidden" name="intent" value="want" />
                 <input type="hidden" name="workKey" value={item.work.key} />
                 <button type="submit" className={actionClass}>
@@ -763,7 +764,7 @@ function NoteEdit({
   }, [fetcher.state, fetcher.data, onDone]);
 
   return (
-    <fetcher.Form method="post" action={action ?? undefined} className="mt-3">
+    <fetcher.Form method="post" action={action ?? "/feed"} className="mt-3">
       {"work" in item ? (
         <input type="hidden" name="intent" value="saveNote" />
       ) : (
@@ -931,6 +932,7 @@ export function NotePrompt({ books, userId }: { books: PromptBook[]; userId: str
       <div>
         <fetcher.Form
           method="post"
+          action="/feed"
           className="mt-3"
           onSubmit={(event) => {
             if (!body.trim()) {

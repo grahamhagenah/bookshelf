@@ -5,7 +5,7 @@ import type { Work } from "~/works";
 import { sameWork } from "~/works";
 
 import { createBook } from "./book.server";
-import { shelfIdsFor } from "./household.server";
+import { circleBooks, circleOf } from "./circle.server";
 import { withSharedCover } from "./shared-cover.server";
 import { saveWorkNote } from "./work-note.server";
 
@@ -26,27 +26,20 @@ export async function getWantToReadWorks(userId: User["id"]) {
   });
 }
 
-async function friendIdsOf(userId: User["id"]) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { following: { select: { id: true } } },
-  });
-  return user?.following.map((friend) => friend.id) ?? [];
-}
-
-// Everything on the list, newest first, with the friends who have a copy
+// Everything on the list, newest first, with who has a copy you could
+// borrow: friends, and the people in your groups
 export async function getWantToRead(userId: User["id"]) {
-  const [wishes, friendIds] = await Promise.all([
+  const [wishes, circle] = await Promise.all([
     prisma.wantToRead.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
     }),
-    friendIdsOf(userId),
+    circleOf(userId),
   ]);
   const friendBooks =
-    wishes.length && friendIds.length
+    wishes.length && circle.ids.length
       ? await prisma.book.findMany({
-          where: { userId: { in: await shelfIdsFor(friendIds) } },
+          where: await circleBooks(circle),
           select: {
             id: true,
             title: true,
@@ -117,12 +110,11 @@ export function getWish(id: string, userId: User["id"]) {
 // knows it. Using theirs keeps the two matched: once both have a key, only
 // the same key counts, and Open Library has duplicate works.
 export async function workKeyFromFriends(userId: User["id"], wish: Work) {
-  const friendIds = await friendIdsOf(userId);
-  if (friendIds.length === 0) return null;
+  const circle = await circleOf(userId);
+  if (circle.ids.length === 0) return null;
   const books = await prisma.book.findMany({
     where: {
-      userId: { in: await shelfIdsFor(friendIds) },
-      openLibraryKey: { startsWith: "/works/" },
+      AND: [await circleBooks(circle), { openLibraryKey: { startsWith: "/works/" } }],
     },
     select: { title: true, openLibraryKey: true, isbn: true },
   });
@@ -220,17 +212,18 @@ export async function notifyWanters(
   books: Pick<Book, "id" | "title" | "openLibraryKey" | "isbn">[],
 ) {
   if (books.length === 0) return;
-  const [owner, friendIds] = await Promise.all([
+  // Whoever can borrow from them: their friends and their group-mates
+  const [owner, circle] = await Promise.all([
     prisma.user.findUnique({
       where: { id: ownerId },
       select: { firstname: true, surname: true },
     }),
-    friendIdsOf(ownerId),
+    circleOf(ownerId),
   ]);
-  if (!owner || friendIds.length === 0) return;
+  if (!owner || circle.ids.length === 0) return;
 
   const wishes = await prisma.wantToRead.findMany({
-    where: { userId: { in: friendIds } },
+    where: { userId: { in: circle.ids } },
     select: { userId: true, title: true, openLibraryKey: true, isbn: true },
   });
   for (const wish of wishes) {

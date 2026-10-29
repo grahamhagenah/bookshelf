@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { makeBook, makeUser, prisma } from "../../test/db";
 
-import { removeFriend } from "./friend.server";
+import { circleOf, inCircle } from "./circle.server";
 import {
   GROUP_MAX_MEMBERS,
   cleanGroupName,
@@ -16,12 +16,12 @@ import {
   resetGroupLink,
 } from "./group.server";
 import { getPoolWanted, searchPool } from "./pool.server";
-import { createNotification, getFriendStatus } from "./user.server";
+import { createFriendship, createNotification, getFriendStatus } from "./user.server";
 
 const tokenOf = async (groupId: string) =>
   (await prisma.group.findUniqueOrThrow({ where: { id: groupId } })).inviteToken;
 
-test("joining makes you friends with everyone already in the group", async () => {
+test("joining opens everyone's shelves without making anyone friends", async () => {
   const ana = await makeUser("Ana");
   const ben = await makeUser("Ben");
   const cal = await makeUser("Cal");
@@ -29,14 +29,16 @@ test("joining makes you friends with everyone already in the group", async () =>
   const token = await tokenOf(group.id);
 
   expect(await joinGroup(ben.id, token)).toEqual({ ok: true, groupId: group.id });
-  expect(await getFriendStatus(ben.id, ana.id)).toBe("friends");
+  expect(await getFriendStatus(ben.id, ana.id)).not.toBe("friends");
+  // In each other's circle all the same, both ways
+  expect([...(await circleOf(ben.id)).groupOnly]).toEqual([ana.id]);
+  expect([...(await circleOf(ana.id)).groupOnly]).toEqual([ben.id]);
 
-  // A request Cal had sent Ana is settled by joining
+  // A request Cal had sent Ana is left for Ana to answer
   const request = await createNotification(cal.id, ana.id, "Cal Reader");
   await joinGroup(cal.id, token);
-  expect(await getFriendStatus(cal.id, ana.id)).toBe("friends");
-  expect(await getFriendStatus(cal.id, ben.id)).toBe("friends");
-  expect((await prisma.notification.findUniqueOrThrow({ where: { id: request.id } })).actionTaken).toBe("accepted");
+  expect(await getFriendStatus(cal.id, ana.id)).not.toBe("friends");
+  expect((await prisma.notification.findUniqueOrThrow({ where: { id: request.id } })).actionTaken).toBe(null);
 
   // Everyone already in hears about it, with the group's name and page
   const notices = await prisma.notification.findMany({
@@ -63,31 +65,40 @@ test("the group's shelf is everyone else's books, only for the people in it", as
   const lent = await makeBook(ben.id, "Dune Messiah");
   await prisma.book.update({ where: { id: lent.id }, data: { borrowerId: cal.id } });
   await makeBook(cal.id, "Dune");
+  // One Ben keeps off his page
+  const secret = await makeBook(ben.id, "Diary");
+  await prisma.book.update({ where: { id: secret.id }, data: { hiddenFromPage: true } });
   await joinGroup(ben.id, await tokenOf(group.id));
   await joinGroup(cal.id, await tokenOf(group.id));
 
   const page = await getGroup(group.id, ana.id);
   if (!page) throw new Error("no group");
-  // Ana's own book stays out of what she browses
+  // Ana's own book stays out of what she browses; nobody here is her friend,
+  // and Ben's hidden book stays out
   expect(page.openIds.sort()).toEqual([ben.id, cal.id].sort());
+  expect(page.groupOnly.sort()).toEqual([ben.id, cal.id].sort());
   expect(page).toMatchObject({ myBookCount: 1, bookCount: 3 });
-  expect(page.members.find((member) => member.id === ben.id)).toMatchObject({ isFriend: true, bookCount: 2 });
+  expect(page.members.find((member) => member.id === ben.id)).toMatchObject({ isFriend: false, bookCount: 3 });
   expect(await getGroup(group.id, outsider.id)).toBe(null);
 
   const titles = async (search: Parameters<typeof searchPool>[1]) =>
-    (await searchPool(page.openIds, search)).works.map((work) => work.title).sort();
+    (await searchPool(page.openIds, { groupOnly: page.groupOnly, ...search })).works.map((work) => work.title).sort();
   expect(await titles({ q: "dune" })).toEqual(["Dune", "Dune Messiah"]);
   expect(await titles({ q: "dune", status: "available" })).toEqual(["Dune"]);
   expect(await titles({ status: "lent" })).toEqual(["Dune Messiah"]);
-  expect((await searchPool(page.openIds, {})).counts).toEqual({ all: 3, available: 2, lent: 1 });
+  expect((await searchPool(page.openIds, { groupOnly: page.groupOnly })).counts).toEqual({ all: 3, available: 2, lent: 1 });
   expect(await titles({ who: ben.id })).toEqual(["Dune Messiah", "Middlemarch"]);
-  expect((await searchPool(page.openIds, { shown: 1 })).total).toBe(3);
+  expect((await searchPool(page.openIds, { groupOnly: page.groupOnly, shown: 1 })).total).toBe(3);
+  expect(await inCircle(ana.id, lent)).toBe(true);
+  expect(await inCircle(ana.id, { ...secret, hiddenFromPage: true })).toBe(false);
+  expect(await inCircle(outsider.id, lent)).toBe(false);
 
-  // Someone you've unfriended keeps their shelf closed to you
-  await removeFriend(ana.id, ben.id);
-  expect((await getGroup(group.id, ana.id))?.openIds).toEqual([cal.id]);
+  // Friends see the hidden one too
+  await createFriendship(ana.id, ben.id);
+  expect(await inCircle(ana.id, { ...secret, hiddenFromPage: true })).toBe(true);
+  expect((await getGroup(group.id, ana.id))?.bookCount).toBe(4);
 
-  // The link's page shows a glimpse to anyone holding it
+  // The link's page shows a glimpse to anyone holding it, nothing hidden
   expect(await getGroupByToken(await tokenOf(group.id))).toMatchObject({ name: "Office", bookCount: 4 });
 });
 
@@ -107,14 +118,15 @@ test("the top of a group's shelf: your wishes someone has, one entry each", asyn
   expect(wanted.map((work) => [work.title.toLowerCase(), work.copies.length])).toEqual([["piranesi", 2]]);
 });
 
-test("leaving keeps friendships, and the last one out ends the group", async () => {
+test("leaving closes the other shelves, and the last one out ends the group", async () => {
   const ana = await makeUser("Ana");
   const ben = await makeUser("Ben");
   const group = await createGroup(ana.id, "Family");
   await joinGroup(ben.id, await tokenOf(group.id));
+  expect((await circleOf(ben.id)).ids).toEqual([ana.id]);
 
   await leaveGroup(ben.id, group.id);
-  expect(await getFriendStatus(ben.id, ana.id)).toBe("friends");
+  expect((await circleOf(ben.id)).ids).toEqual([]);
   expect(await getGroup(group.id, ben.id)).toBe(null);
 
   await leaveGroup(ana.id, group.id);
@@ -218,15 +230,15 @@ test("whoever started the group can take people out; nobody else can", async () 
 
   expect(await removeFromGroup(ana.id, group.id, cal.id)).toBe(true);
   expect(await getGroup(group.id, cal.id)).toBe(null);
-  // Still friends, as after leaving
-  expect(await getFriendStatus(cal.id, ana.id)).toBe("friends");
+  // Out of the circle, as after leaving
+  expect((await circleOf(cal.id)).ids).toEqual([]);
 
   // When Ana leaves, Ben has been in longest and runs it
   await leaveGroup(ana.id, group.id);
   expect((await getGroup(group.id, ben.id))?.members.find((member) => member.isMe)?.isOwner).toBe(true);
 });
 
-test("whoever runs a group can delete it: friendships stay, its notices go", async () => {
+test("whoever runs a group can delete it, and its notices go", async () => {
   const ana = await makeUser("Ana");
   const ben = await makeUser("Ben");
   const group = await createGroup(ana.id, "Club");
@@ -237,7 +249,7 @@ test("whoever runs a group can delete it: friendships stay, its notices go", asy
   expect(await deleteGroup(ana.id, group.id)).toBe(true);
   expect(await prisma.group.count({ where: { id: group.id } })).toBe(0);
   expect(await prisma.notification.count({ where: { groupId: group.id } })).toBe(0);
-  expect(await getFriendStatus(ana.id, ben.id)).toBe("friends");
+  expect((await circleOf(ben.id)).ids).toEqual([]);
 });
 
 test("the last one out takes the group's notices with it", async () => {

@@ -144,8 +144,8 @@ model Book {
   firstSentence    String?
   authorKey        String?
   detailsFetchedAt DateTime?
-  // Kept off the owner's public page (and its numbers and preview);
-  // friends still see it on the shelf
+  // Kept off the owner's public page (and its numbers and preview), and
+  // from group-mates who aren't friends; friends still see it on the shelf
   hiddenFromPage   Boolean   @default(false)
   // Not lending it until this moment: friends can't ask for it or wait
   // for it till then. Far in the future means until the owner says so.
@@ -406,14 +406,25 @@ model WorkNote {
 }
 
 // People who lend to each other as a bunch: a book club, an office, a
-// family. Joining makes you friends with everyone in it, and with whoever
-// joins after, so every shelf in the group is open to you at once.
+// family. Being in one opens every member's shelf to every other, as
+// friendship does, without anyone having to friend everyone.
 model Group {
   id          String        @id @default(cuid())
   name        String
   // The link that lets anyone who has it join
   inviteToken String        @unique
   members     GroupMember[]
+
+  // What the group is reading now, picked by any member: the Open Library
+  // work (or just the title, for a book without one), with enough kept to
+  // show it, who picked it and when, and when they next meet, if set
+  pickKey    String?
+  pickTitle  String?
+  pickAuthor String?
+  pickCover  String?
+  pickedById String?
+  pickedAt   DateTime?
+  meetsAt    DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

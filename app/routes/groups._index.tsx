@@ -24,7 +24,8 @@ import { agoInWords, type LoaderData } from "~/utils";
 
 // Every group you're in, and where to start one: a book club, an office,
 // a family, where everyone can borrow from everyone. A tab of Friends,
-// since a group is a way of being friends with a bunch of people at once.
+// since a group opens shelves as friendship does, for a bunch of people
+// at once.
 
 export const meta: MetaFunction = () => seo({ title: "Groups", noindex: true });
 
@@ -206,8 +207,9 @@ export default function Groups() {
           <section>
             <h2 className={sectionHeading}>Start a group</h2>
             <p className="mt-1 max-w-xl text-stone-500 dark:text-stone-400">
-              You&apos;ll get a link to share. Everyone who joins from it becomes friends with
-              everyone else, so all their shelves open up at once. Up to {maxMembers} people.
+              You&apos;ll get a link to share. Everyone who joins from it can see and
+              borrow from everyone else&apos;s shelf, no friending needed. Up to{" "}
+              {maxMembers} people.
             </p>
             {startForm("mt-4")}
           </section>

@@ -3,6 +3,7 @@ import type { User } from "~/generated/prisma/client";
 import { isNotLending } from "~/lending";
 import { sameWork } from "~/works";
 
+import { circleOf } from "./circle.server";
 import { shelfIds } from "./household.server";
 
 // What friends have been up to lately: books they've added, hearts and
@@ -291,7 +292,8 @@ async function enrichElsewhere(
 
 // withOwnNotes adds the viewer's own written notes (not bare hearts), so
 // a note posted from the feed shows up there as friends will see it.
-// among narrows it to some of your friends, such as the people in a group.
+// among narrows it to some of the people you can borrow from, such as
+// the people in a group, friends or not.
 export async function getFriendActivity(
   userId: User["id"],
   {
@@ -301,26 +303,37 @@ export async function getFriendActivity(
     among,
   }: { days?: number; limit?: number; withOwnNotes?: boolean; among?: string[] } = {},
 ): Promise<FriendActivity[]> {
-  const me = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      following: { select: { id: true } },
-      feedMutes: { select: { mutedId: true } },
-    },
-  });
-  const friendIds = me?.following.map((friend) => friend.id) ?? [];
-  // Whose activity this is, less anyone you've hidden from your feed;
-  // who's a friend still decides what you can ask for
+  const [me, circle] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { feedMutes: { select: { mutedId: true } } },
+    }),
+    circleOf(userId),
+  ]);
+  // Who you can ask for books: friends, and the people in your groups
+  const friendIds = circle.ids;
+  // Whose activity this is: your friends, or with among, the people asked
+  // for (a group's, friends or not), less anyone you've hidden from your
+  // feed
   const hidden = new Set(me?.feedMutes.map((mute) => mute.mutedId));
-  const sourceIds = (among ? friendIds.filter((id) => among.includes(id)) : friendIds).filter(
-    (id) => !hidden.has(id),
-  );
+  const sourceIds = (
+    among ? circle.ids.filter((id) => among.includes(id)) : [...circle.friends]
+  ).filter((id) => !hidden.has(id));
   if (sourceIds.length === 0) return [];
+  // People you know only through a group keep their kept-off-page books
+  // out of it
+  const groupOnly = [...circle.groupOnly];
 
   const since = new Date(Date.now() - days * DAY);
   const [books, notes, elsewhere] = await Promise.all([
     prisma.book.findMany({
-      where: { userId: { in: sourceIds }, createdAt: { gte: since } },
+      where: {
+        createdAt: { gte: since },
+        OR: [
+          { userId: { in: sourceIds.filter((id) => !groupOnly.includes(id)) } },
+          { userId: { in: sourceIds.filter((id) => groupOnly.includes(id)) }, hiddenFromPage: false },
+        ],
+      },
       select: { ...bookFields, createdAt: true, user: person },
       orderBy: { createdAt: "desc" },
       // Several books can share one post, so look a good way back

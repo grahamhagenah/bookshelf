@@ -19,11 +19,14 @@ export async function loadPooledShelf(
   {
     lenders,
     groups = [],
+    groupOnly = [],
   }: {
     // Whose books can be picked out, in the Anyone menu
     lenders: { id: string; firstname: string; surname: string }[];
     // Groups to narrow it to, the same menu: everyone in one of them
     groups?: { id: string; name: string; memberIds: string[] }[];
+    // Who you know only through a group: their kept-off-page books stay off
+    groupOnly?: string[];
   },
 ) {
   const url = pageUrl(request);
@@ -44,7 +47,7 @@ export async function loadPooledShelf(
   const filtered = Boolean(q.trim() || who || status !== "all");
   // Until you search or filter, what's on your want-to-read list comes
   // first, and isn't repeated in the list below it
-  const wanted = filtered ? [] : (await getPoolWanted(userId, scope)).wanted.slice(0, WANTED_SHOWN);
+  const wanted = filtered ? [] : (await getPoolWanted(userId, scope, groupOnly)).wanted.slice(0, WANTED_SHOWN);
   const results = await searchPool(scope, {
     q,
     who,
@@ -52,6 +55,7 @@ export async function loadPooledShelf(
     sort,
     shown,
     exclude: wanted.map((work) => work.key),
+    groupOnly,
   });
   return {
     search: { q, who: group ? `g:${group.id}` : who, status, sort, shown, filtered },

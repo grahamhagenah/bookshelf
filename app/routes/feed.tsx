@@ -11,6 +11,7 @@ import { sendBookRequestEmail } from "~/email.server";
 import { isNotLending } from "~/lending";
 import { getFriendActivity, getNotePrompts } from "~/models/activity.server";
 import { getBookById } from "~/models/book.server";
+import { inCircle } from "~/models/circle.server";
 import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import { getMyGroups } from "~/models/group.server";
 import { leaveHold, placeHold } from "~/models/hold.server";
@@ -161,8 +162,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const viewer = await getUserById(userId);
-  const isFriend =
-    viewer?.following.some((friend) => friend.id === book.userId) ?? false;
+  // A friend's copy or a group-mate's
+  const isFriend = await inCircle(userId, book);
   if (
     !viewer ||
     book.userId === userId ||

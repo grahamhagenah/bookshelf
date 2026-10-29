@@ -228,9 +228,13 @@ const sections: {
             <Link to="/groups" className={link}>
               Friends, then Groups
             </Link>{" "}
-            and share its link. Everyone who joins becomes friends with everyone
-            else, so a whole book club, office or family can browse and borrow
-            from each other at once. Your groups show on your home page with how
+            and share its link. Everyone who joins can see and borrow from
+            everyone else&apos;s shelf, no friending needed, so a whole book club,
+            office or family can lend to each other at once. Books you keep off
+            your public page stay out of your groups too. A book club can pick
+            what it&apos;s reading from any book&apos;s page: the group&apos;s page
+            then shows who has a copy, who&apos;s finished and what they thought,
+            and when you meet. Your groups show on your home page with how
             many books there are to borrow, and a group&apos;s books can be
             sorted by the most lent.
           </>

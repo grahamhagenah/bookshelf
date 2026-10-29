@@ -21,8 +21,8 @@ import Layout from "~/components/layout";
 import { useListFilter } from "~/components/list-filter";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
+import { circleOf } from "~/models/circle.server";
 import { getShelfCounts } from "~/models/history.server";
-import { getUserById } from "~/models/user.server";
 import {
   getWantToRead,
   moveToShelf,
@@ -43,14 +43,14 @@ export const handle = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [user, items, counts] = await Promise.all([
-    getUserById(userId),
+  const [items, counts] = await Promise.all([
     getWantToRead(userId),
     getShelfCounts(userId),
   ]);
   return data({
     items,
-    friendIds: user?.following.map((friend) => friend.id) ?? [],
+    // Whose names open their shelf: friends and group-mates
+    friendIds: (await circleOf(userId)).ids,
     counts,
   });
 };

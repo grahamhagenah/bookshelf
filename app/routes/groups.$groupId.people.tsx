@@ -58,9 +58,10 @@ export default function GroupPeople() {
 type Member = NonNullable<LoaderData<GroupLayoutData>>["group"]["members"][number];
 
 // One person: who they are and how many books they bring, opening their
-// shelf. On your own card, the way out (and, for whoever runs the group,
-// the way to end it); on others', for whoever runs it, the way to take
-// them out. Each asks first.
+// shelf (being in the group is enough). On someone who isn't your friend
+// yet, a way to become one. On your own card, the way out (and, for
+// whoever runs the group, the way to end it); on others', for whoever
+// runs it, the way to take them out. Those ask first.
 function PersonCard({
   member,
   groupName,
@@ -73,7 +74,9 @@ function PersonCard({
   canRemove: boolean;
 }) {
   const fetcher = useFetcher();
+  const befriend = useFetcher<{ success?: boolean }>();
   const busy = fetcher.state !== "idle";
+  const asked = befriend.formData !== undefined || befriend.data?.success === true;
   const who = (
     <>
       <Avatar firstname={member.firstname} surname={member.surname} icon={member.profileEmoji} />
@@ -97,7 +100,7 @@ function PersonCard({
           {
             label: "Leave",
             intent: "leave",
-            ask: `Leave ${groupName}? You'll stay friends with the people you met here, and can remove friends on the Friends page.`,
+            ask: `Leave ${groupName}? Its members' shelves close to you, and yours to them, except for anyone you've become friends with.`,
           },
         ]
       : []),
@@ -106,7 +109,7 @@ function PersonCard({
           {
             label: "Delete group",
             intent: "delete",
-            ask: `Delete ${groupName} for everyone? Everyone stays friends and keeps their books; the group's page and invite link stop working.`,
+            ask: `Delete ${groupName} for everyone? Everyone keeps their books and their friends; the group's shelves close to each other, and its page and invite link stop working.`,
           },
         ]
       : []),
@@ -115,7 +118,7 @@ function PersonCard({
           {
             label: "Remove",
             intent: "remove",
-            ask: `Remove ${member.firstname} from ${groupName}? You'll stay friends. They can rejoin if they still have the invite link, so reset it if you need to.`,
+            ask: `Remove ${member.firstname} from ${groupName}? Their shelf and the group's close to each other, except between friends. They can rejoin if they still have the invite link, so reset it if you need to.`,
           },
         ]
       : []),
@@ -127,13 +130,30 @@ function PersonCard({
         busy ? "opacity-40" : ""
       }`}
     >
-      {member.isFriend ? (
+      {member.isMe ? (
+        <span className="flex min-w-0 flex-1 items-center gap-3">{who}</span>
+      ) : (
         <Link to={`/friend/${member.id}`} className="flex min-w-0 flex-1 items-center gap-3 hover:opacity-80 transition-opacity">
           {who}
         </Link>
-      ) : (
-        <span className="flex min-w-0 flex-1 items-center gap-3">{who}</span>
       )}
+      {!member.isMe && !member.isFriend ? (
+        asked ? (
+          <span className="flex-shrink-0 whitespace-nowrap px-2 py-1 text-sm text-stone-400 dark:text-stone-500">
+            Requested
+          </span>
+        ) : (
+          <befriend.Form method="post" action="/friends/add" className="flex-shrink-0">
+            <input type="hidden" name="friendId" value={member.id} />
+            <button
+              type="submit"
+              className="whitespace-nowrap rounded-md px-2 py-1 text-sm text-stone-500 dark:text-stone-400 hover:bg-stone-100 hover:text-stone-900 dark:hover:bg-stone-800 dark:hover:text-stone-100 transition-colors"
+            >
+              Add friend
+            </button>
+          </befriend.Form>
+        )
+      ) : null}
       {actions.length > 0 ? (
         <div className="flex flex-shrink-0 items-center">
           {actions.map((action) => (
@@ -180,7 +200,7 @@ function GroupInvite({ name, url, alone, path }: { name: string; url: string; al
         {alone ? "Invite people" : "Invite more people"}
       </h2>
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-        Anyone with the link can join, and becomes friends with everyone here.
+        Anyone with the link can join, and see and borrow from everyone&apos;s shelf here.
       </p>
       <input
         type="text"
