@@ -1833,6 +1833,58 @@ function NotBack({ title, name }: { title: string; name: string }) {
 
 // Everyone who has had this copy, newest first, down to the day it
 // joined the owner's shelf
+// The copy's story in a line, up near the top: whose hands it's been
+// through, with their faces, and the way down to the full history
+function LendingSummary({ data }: { data: BookData }) {
+  const seen = new Set<string>();
+  // Newest first, each person once
+  const people = data.lendingHistory.filter((entry) => {
+    if (seen.has(entry.borrower.id)) return false;
+    seen.add(entry.borrower.id);
+    return true;
+  });
+  if (people.length === 0) return null;
+  const names = people.map((entry) => (entry.isCurrentUser ? "you" : entry.borrower.firstname));
+  const named =
+    names.length <= 3
+      ? names.length === 1
+        ? names[0]
+        : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`
+      : `${names.slice(0, 2).join(", ")} and ${names.length - 2} others`;
+  const count = data.book.lendCount;
+  return (
+    <a
+      href="#lending"
+      className="group mt-8 flex max-w-150 items-center gap-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors"
+    >
+      <span className="flex -space-x-2">
+        {people.slice(0, 4).map((entry) => {
+          const person = entry.isCurrentUser && data.currentUser ? data.currentUser : entry.borrower;
+          return (
+            <Avatar
+              key={entry.id}
+              firstname={person.firstname}
+              surname={person.surname}
+              icon={person.profileEmoji}
+              size="sm"
+              className="ring-2 ring-white dark:ring-stone-950"
+            />
+          );
+        })}
+      </span>
+      <span className="min-w-0">
+        Lent {count === 1 ? "once" : count === 2 ? "twice" : `${count} times`}, to {named}
+      </span>
+      <span
+        aria-hidden="true"
+        className="text-stone-400 dark:text-stone-500 transition-transform group-hover:translate-x-0.5"
+      >
+        ↓
+      </span>
+    </a>
+  );
+}
+
 function LendingHistory({ data }: { data: BookData }) {
   const {
     book,
@@ -2130,6 +2182,20 @@ export default function BookDetailsPage() {
     </>
   );
 
+  const notes = (limit?: number, className?: string) => (
+    <ReaderNotes
+      notes={data.readerNotes}
+      myNote={data.myNote}
+      canNote={data.canNote}
+      maxLength={data.noteMaxLength}
+      friendIds={data.friendIds}
+      readAt={data.readAt}
+      limit={limit}
+      className={className}
+    />
+  );
+  // Others' notes go up top; with none, notes wait at the bottom
+  const notesUp = data.readerNotes.some((note) => note.body && note.id !== data.myNote?.id);
   return (
     <>
       <main className="flex flex-col md:flex-row gap-6 md:gap-12 lg:gap-16 xl:gap-20 px-4 md:px-8 py-8 md:py-12 w-full">
@@ -2641,6 +2707,11 @@ export default function BookDetailsPage() {
                 <OpeningLine sentence={data.book.firstSentence} />
               ) : null}
 
+              {/* What only this copy has comes before the blurb: where
+                  it's been, and what its readers thought */}
+              <LendingSummary data={data} />
+              {notesUp ? notes(2, "mt-10 max-w-150") : null}
+
               <div className="mt-8">
                 {/* Unlabeled, like a jacket's blurb; About the author keeps
                     its label */}
@@ -2675,16 +2746,7 @@ export default function BookDetailsPage() {
             </div>
           ) : null}
 
-          {!isEditing ? (
-            <ReaderNotes
-              notes={data.readerNotes}
-              myNote={data.myNote}
-              canNote={data.canNote}
-              maxLength={data.noteMaxLength}
-              friendIds={data.friendIds}
-              readAt={data.readAt}
-            />
-          ) : null}
+          {!isEditing && !notesUp ? notes() : null}
 
           {!isEditing ? (
             <div id="lending" className="mt-10">

@@ -342,6 +342,22 @@ export default function WorkPage() {
     </>
   );
 
+
+  // Your heart, read mark and note when it isn't on your shelf (on your
+  // shelf, they go on your copy), and your friends'
+  const notes = (limit?: number, className?: string) => (
+    <ReaderNotes
+      notes={data.notes}
+      myNote={data.myNote}
+      canNote={!inLibrary}
+      maxLength={data.noteMaxLength}
+      friendIds={data.friendIds}
+      readAt={data.myNote?.readAt ?? null}
+      limit={limit}
+      className={className}
+    />
+  );
+  const notesUp = data.notes.some((note) => note.body && note.id !== data.myNote?.id);
   return (
     <main className="flex w-full flex-col gap-6 px-4 py-8 md:flex-row md:gap-12 lg:gap-16 xl:gap-20 md:px-8 md:py-12">
       <section className="flex-shrink-0 space-y-4 md:w-[200px] lg:w-[240px]">
@@ -439,6 +455,11 @@ export default function WorkPage() {
           <OpeningLine sentence={work.firstSentence} />
         ) : null}
 
+        {/* What friends thought comes before the blurb any book site has,
+            when there's something to read: the first two, the rest a tap
+            away. With none, notes wait at the bottom */}
+        {notesUp ? notes(2, "mt-10 max-w-150") : null}
+
         <div className="mt-8">
           {/* Unlabeled, like a jacket's blurb; About the author keeps its
               label */}
@@ -488,16 +509,7 @@ export default function WorkPage() {
         ) : null}
         <SubjectTags subjects={subjects} title={work.title} className="mt-6" />
 
-        {/* Your heart, read mark and note when it isn't on your shelf (on
-            your shelf, they go on your copy), and your friends' */}
-        <ReaderNotes
-          notes={data.notes}
-          myNote={data.myNote}
-          canNote={!inLibrary}
-          maxLength={data.noteMaxLength}
-          friendIds={data.friendIds}
-          readAt={data.myNote?.readAt ?? null}
-        />
+        {notesUp ? null : notes()}
 
         <p className="mt-8 text-sm text-stone-400 dark:text-stone-500">
           Details from{" "}
