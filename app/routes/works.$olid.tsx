@@ -426,7 +426,7 @@ export default function WorkPage() {
           </Form>
         ) : null}
 
-        {/* Borrowing it instead: who has it, each to their copy */}
+        {/* Borrowing it instead: who has it, each to their shelf */}
         {data.friendCopies.length > 0 ? (
           <FriendCopies copies={data.friendCopies} userId={data.userId} />
         ) : null}
@@ -522,15 +522,16 @@ export function ErrorBoundary() {
 
 interface FriendCopyData {
   id: string;
+  title: string;
   borrowerId: string | null;
   notLendingUntil: string | Date | null;
   requested: boolean;
   inLine: boolean;
-  user: { firstname: string; surname: string; profileEmoji: string | null };
+  user: { id: string; firstname: string; surname: string; profileEmoji: string | null };
 }
 
-// Who you know has it, and whether it's free. Each row opens their copy,
-// where asking to borrow (or getting in line) happens.
+// Who you know has it, and whether it's free. Each row opens their shelf,
+// already looking for this book, to borrow it from there.
 function FriendCopies({ copies, userId }: { copies: FriendCopyData[]; userId: string }) {
   const status = (copy: FriendCopyData) =>
     copy.borrowerId === userId
@@ -553,7 +554,7 @@ function FriendCopies({ copies, userId }: { copies: FriendCopyData[]; userId: st
         {copies.map((copy) => (
           <li key={copy.id}>
             <Link
-              to={`/books/${copy.id}`}
+              to={`/friend/${copy.user.id}?${new URLSearchParams({ q: copy.title })}`}
               className="-mx-2 flex items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-stone-100 dark:hover:bg-stone-800/60 transition-colors"
             >
               <Avatar firstname={copy.user.firstname} surname={copy.user.surname} icon={copy.user.profileEmoji} size="sm" />
