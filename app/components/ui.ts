@@ -21,7 +21,8 @@ export const textField =
 export const sectionHeading = "text-lg font-semibold text-stone-900 dark:text-stone-100";
 
 // The page you're on, in the header: a green bar under it on the
-// header's bottom edge, as tabs mark theirs, and its icon in green. Phones
-// show icons only, so there it's the icon alone
+// header's bottom edge, as tabs mark theirs, with its icon and words in the
+// usual dark. Phones show icons only and no bar, so there the icon goes
+// green instead
 export const hereIcon =
-  "relative text-stone-900 dark:text-stone-100 [&_svg]:text-forest-600 dark:[&_svg]:text-forest-400 md:after:absolute md:after:inset-x-2.5 md:after:-bottom-[7px] md:after:h-0.5 md:after:rounded-full md:after:bg-forest-600 dark:md:after:bg-forest-400";
+  "relative text-stone-900 dark:text-stone-100 [&_svg]:text-forest-600 dark:[&_svg]:text-forest-400 md:[&_svg]:text-current dark:md:[&_svg]:text-current md:after:absolute md:after:inset-x-2.5 md:after:-bottom-[7px] md:after:h-0.5 md:after:rounded-full md:after:bg-forest-600 dark:md:after:bg-forest-400";
