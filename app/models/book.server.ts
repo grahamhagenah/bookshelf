@@ -705,7 +705,7 @@ export async function searchFriendsBooks(userId: User["id"], query: string) {
       cover: true,
       borrowerId: true,
       notLendingUntil: true,
-      user: { select: { id: true, firstname: true, surname: true } },
+      user: { select: { id: true, firstname: true, surname: true, profileEmoji: true } },
     },
     orderBy: { title: "asc" },
     take: 30,

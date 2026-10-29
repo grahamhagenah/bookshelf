@@ -1,17 +1,16 @@
 
-import { useState } from "react";
 import { data, Form, Link, useFetcher, useLoaderData } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
+import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
 import ErrorPage from "~/components/error-page";
 import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
 import OpeningLine from "~/components/opening-line";
-import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
 import SubjectTags from "~/components/subject-tags";
 import { primaryButton, quietButton } from "~/components/ui";
-import { groupPath } from "~/group-links";
+import { prisma } from "~/db.server";
 import { isNotLending } from "~/lending";
 import {
   createBook,
@@ -19,7 +18,6 @@ import {
   searchFriendsBooks,
 } from "~/models/book.server";
 import { circleOf } from "~/models/circle.server";
-import { groupsToPick } from "~/models/group-pick.server";
 import { shelfIds } from "~/models/household.server";
 import { NOTE_MAX_LENGTH } from "~/models/note.server";
 import {
@@ -126,7 +124,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   // A cover someone picked for it, over Open Library's
   work = { ...work, cover: await withSharedCover(work.cover, { openLibraryKey: key }) };
 
-  const [ownCopy, wanted, matches, myNote, notes, groups] = await Promise.all([
+  const [ownCopy, wanted, matches, myNote, notes] = await Promise.all([
     findOwnCopy(await shelfIds(userId), {
       title: work.title ?? "",
       openLibraryKey: key,
@@ -135,7 +133,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     searchFriendsBooks(userId, work.title ?? ""),
     getMyWorkNote(userId, key),
     getWorkNotes(userId, key),
-    groupsToPick(userId, { key, title: work.title ?? "" }),
   ]);
   // Friends' copies of this book, not just ones with a similar title
   const friendCopies = matches.filter((book) =>
@@ -145,13 +142,29 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     ),
   );
 
+  // Where you stand with each copy: asked for it already, or in line
+  const copyIds = friendCopies.map((copy) => copy.id);
+  const [asked, holds] = copyIds.length
+    ? await Promise.all([
+        prisma.notification.findMany({
+          where: { type: "BOOK_REQUEST", senderId: userId, bookId: { in: copyIds }, read: false },
+          select: { bookId: true },
+        }),
+        prisma.hold.findMany({ where: { userId, bookId: { in: copyIds } }, select: { bookId: true } }),
+      ])
+    : [[], []];
+
   return data({
     work,
     ownCopyId: ownCopy?.id ?? null,
     wanted,
-    friendCopies,
-    // Your groups, to make this their pick
-    groups,
+    friendCopies: friendCopies.map((copy) => ({
+      ...copy,
+      requested: asked.some((request) => request.bookId === copy.id),
+      inLine: holds.some((hold) => hold.bookId === copy.id),
+    })),
+    // To tell a copy lent to you from one lent to someone else
+    userId,
     // Whose names open their shelf: friends and group-mates
     friendIds: (await circleOf(userId)).ids,
     offline,
@@ -413,47 +426,9 @@ export default function WorkPage() {
           </Form>
         ) : null}
 
-        {/* What your group reads next */}
-        {data.groups.length > 0 ? (
-          <PickForGroup
-            groups={data.groups}
-            work={{ key: work.key, title: work.title ?? "", author: work.author ?? "", cover: work.cover ?? "" }}
-          />
-        ) : null}
-
-        {/* Borrow it instead: a friend already has a copy */}
+        {/* Borrowing it instead: who has it, each to their shelf */}
         {data.friendCopies.length > 0 ? (
-          <div className="rounded-md border border-stone-200 dark:border-stone-700 p-3 text-sm">
-            <p className="font-medium text-stone-800 dark:text-stone-200">
-              {data.friendCopies.length === 1
-                ? "A friend has it"
-                : "Friends have it"}
-            </p>
-            <ul className="mt-1.5 space-y-1">
-              {data.friendCopies.map((copy) => (
-                <li
-                  key={copy.id}
-                  className="flex items-center justify-between gap-2"
-                >
-                  <PersonLink
-                    id={copy.user.id}
-                    name={`${copy.user.firstname} ${copy.user.surname}`}
-                    friendIds={data.friendIds}
-                  />
-                  <Link
-                    to={`/books/${copy.id}`}
-                    className="text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
-                  >
-                    {copy.borrowerId
-                      ? "Lent out"
-                      : isNotLending(copy.notLendingUntil)
-                        ? "Not lending"
-                        : "Ask to borrow"}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <FriendCopies copies={data.friendCopies} userId={data.userId} />
         ) : null}
       </section>
 
@@ -545,64 +520,53 @@ export function ErrorBoundary() {
   return <ErrorPage what="book" />;
 }
 
-// Making this book what a group reads next, for someone in one or more:
-// a button for one group, a choice of them for several. Picking takes you
-// to the group, where it now sits at the top.
-function PickForGroup({
-  groups,
-  work,
-}: {
-  groups: { id: string; name: string; reading: boolean }[];
-  work: { key: string; title: string; author: string; cover: string };
-}) {
-  const [chosen, setChosen] = useState(groups.find((group) => !group.reading)?.id ?? groups[0].id);
-  const group = groups.find((g) => g.id === chosen) ?? groups[0];
-  const fields = (
-    <>
-      <input type="hidden" name="intent" value="pick" />
-      <input type="hidden" name="key" value={work.key} />
-      <input type="hidden" name="title" value={work.title} />
-      <input type="hidden" name="author" value={work.author} />
-      <input type="hidden" name="cover" value={work.cover} />
-      <input type="hidden" name="groupName" value={group.name} />
-    </>
-  );
-  if (groups.length === 1) {
-    return group.reading ? (
-      <p className="text-center text-sm text-stone-500 dark:text-stone-400">
-        {group.name} is reading this
-      </p>
-    ) : (
-      <Form method="post" action={groupPath(group)}>
-        {fields}
-        <button type="submit" className={`${quietButton("lg")} w-full`}>
-          Pick for {group.name}
-        </button>
-      </Form>
-    );
-  }
+interface FriendCopyData {
+  id: string;
+  title: string;
+  borrowerId: string | null;
+  notLendingUntil: string | Date | null;
+  requested: boolean;
+  inLine: boolean;
+  user: { id: string; firstname: string; surname: string; profileEmoji: string | null };
+}
+
+// Who you know has it, said plainly: "Anika has a copy", "Sam's copy is
+// lent out". Each opens their shelf, already looking for this book, to
+// borrow it from there.
+function FriendCopies({ copies, userId }: { copies: FriendCopyData[]; userId: string }) {
+  const say = (copy: FriendCopyData) => {
+    const name = <span className="font-medium text-stone-800 dark:text-stone-200 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 group-hover:underline">{copy.user.firstname}</span>;
+    if (copy.borrowerId === userId) return <>You&apos;re borrowing {name}&apos;s copy</>;
+    if (copy.requested) return <>You asked {name} for it</>;
+    if (copy.inLine) return <>You&apos;re in line for {name}&apos;s copy</>;
+    if (isNotLending(copy.notLendingUntil)) return <>{name} has a copy, not lending right now</>;
+    if (copy.borrowerId) return <>{name}&apos;s copy is lent out</>;
+    return <>{name} has a copy</>;
+  };
+  // Yours first, then the ones you could borrow now, then the ones that are out
+  const rank = (copy: FriendCopyData) =>
+    copy.borrowerId === userId ? 0 : copy.borrowerId || isNotLending(copy.notLendingUntil) ? 2 : 1;
   return (
-    <Form method="post" action={groupPath(group)} className="flex flex-col gap-2">
-      {fields}
-      <label htmlFor="pick-group" className="text-sm text-stone-500 dark:text-stone-400">
-        Pick for a group
-      </label>
-      <select
-        id="pick-group"
-        value={chosen}
-        onChange={(event) => setChosen(event.target.value)}
-        className="h-9 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-900 dark:text-stone-100"
-      >
-        {groups.map((g) => (
-          <option key={g.id} value={g.id}>
-            {g.name}
-            {g.reading ? " (reading it)" : ""}
-          </option>
-        ))}
-      </select>
-      <button type="submit" disabled={group.reading} className={`${quietButton("lg")} w-full disabled:opacity-50`}>
-        {group.reading ? `${group.name} is reading this` : `Pick for ${group.name}`}
-      </button>
-    </Form>
+    <ul aria-label="Friends with a copy" className="pt-1">
+      {[...copies].sort((a, b) => rank(a) - rank(b)).map((copy) => (
+        <li key={copy.id}>
+          <Link
+            to={`/friend/${copy.user.id}?${new URLSearchParams({ q: copy.title })}`}
+            // Their name underlines and an arrow points the way, as other
+            // links to a list do
+            className="group flex items-center gap-2.5 py-1.5 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors"
+          >
+            <Avatar firstname={copy.user.firstname} surname={copy.user.surname} icon={copy.user.profileEmoji} size="sm" />
+            <span className="min-w-0">{say(copy)}</span>
+            <span
+              aria-hidden="true"
+              className="-ml-1 text-stone-400 dark:text-stone-500 opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100 group-focus-visible:opacity-100"
+            >
+              →
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }

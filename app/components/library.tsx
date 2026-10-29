@@ -164,12 +164,13 @@ export default function Library({
   const viewer = useOptionalUser();
   const grid = GRIDS[coverSizeOf(viewer)];
 
-  const [query, setQuery] = useState("");
+  // A link can open on one filter, like home's Lent out (?status=lent),
+  // or already looking for a book (?q=Anxious People)
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get("q") ?? "");
   // A short shelf is read at a glance; the filter comes once there's
   // enough to look through, and stays while it's in use
   const showFilter = bookListItems.length >= FILTER_FROM || query !== "";
-  // A link can open on one filter, like home's Lent out (?status=lent)
-  const [searchParams] = useSearchParams();
   const linked = searchParams.get("status");
   const statusFromLink = (ownerName ? OTHER_STATUSES : OWN_STATUSES).some(
     ([value]) => value === linked,

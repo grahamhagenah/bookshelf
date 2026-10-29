@@ -4,11 +4,9 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import invariant from "tiny-invariant";
 
 import Faces from "~/components/faces";
-import GroupPick from "~/components/group-pick";
 import { LinkIcon, PencilIcon } from "~/components/icons";
 import { GROUP_NAME_MAX, codeFromLink, groupInvitePath, groupPath } from "~/group-links";
 import { loadGroup } from "~/group-page.server";
-import { clearGroupPick, getGroupPick, setGroupMeeting, setGroupPick } from "~/models/group-pick.server";
 import {
   cleanGroupName,
   deleteGroup,
@@ -40,7 +38,7 @@ export const handle = {
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const { userId, group } = await loadGroup(request, params);
+  const { group } = await loadGroup(request, params);
   // The address carries the group's name as it is now, for a link from
   // before a rename or one with just the id
   const url = pageUrl(request);
@@ -50,9 +48,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { inviteToken, openIds, ...rest } = group;
   return data({
     group: { ...rest, lenderCount: openIds.length },
-    // What the group is reading now
-    pick: await getGroupPick(group.id, userId),
-    userId,
     path,
     inviteUrl: `${publicOrigin(request)}${groupInvitePath(group.name, inviteToken)}`,
   });
@@ -60,8 +55,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export type GroupLayoutData = typeof loader;
 
-// Renaming, leaving and a fresh invite link, from the People tab; what
-// the group is reading, picked from a book's page, and when it meets
+// Renaming, leaving and a fresh invite link, from the People tab
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.groupId, "groupId not found");
@@ -87,28 +81,6 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     if (typeof memberId === "string") await removeFromGroup(userId, groupId, memberId);
     return data({ ok: true });
   }
-  if (intent === "pick") {
-    const text = (name: string) => String(formData.get(name) ?? "").slice(0, 300);
-    const key = text("key");
-    await setGroupPick(userId, groupId, {
-      key: /^\/works\/OL\d+W$/.test(key) ? key : null,
-      title: text("title"),
-      author: text("author"),
-      cover: text("cover"),
-    });
-    return redirect(groupPath({ id: groupId, name: text("groupName") || "group" }));
-  }
-  if (intent === "clearPick") {
-    await clearGroupPick(userId, groupId);
-    return data({ ok: true });
-  }
-  if (intent === "meeting") {
-    const value = String(formData.get("meetsAt") ?? "");
-    // A date from the picker, at noon so it's the same day everywhere
-    const date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T12:00:00`) : null;
-    await setGroupMeeting(userId, groupId, date);
-    return data({ ok: true });
-  }
   if (intent === "resetLink") {
     await resetGroupLink(userId, groupId);
     return data({ ok: true });
@@ -119,7 +91,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 export default function GroupLayout() {
-  const { group, pick, userId, path, inviteUrl } = useLoaderData<typeof loader>();
+  const { group, path, inviteUrl } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const justJoined = searchParams.get("joined") === "1";
 
@@ -166,8 +138,6 @@ export default function GroupLayout() {
           </p>
         </div>
       </div>
-
-      <GroupPick pick={pick} path={path} groupName={group.name} userId={userId} />
 
       <div className="mb-6 flex items-start gap-3 border-b border-stone-200 dark:border-stone-800">
         <nav
