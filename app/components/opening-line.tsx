@@ -1,8 +1,7 @@
-// A book's first sentence, set the way a novel opens a chapter: the first
-// few words in spaced capitals, no quote marks, so it reads as the book
-// itself. A small label says what it is, and it's as wide as the
-// description under it.
-export const openingLineType = "text-xl md:text-[1.375rem] leading-normal";
+// A book's first sentence, in the serif a printed page would use, behind a
+// hanging quote mark: the book speaking, not the app. No label; the mark
+// says what it is. As wide as the description under it.
+export const openingLineType = "font-serif text-lg md:text-xl leading-relaxed";
 
 // Long enough to be a wall at this size
 const LONG = 28;
@@ -23,34 +22,29 @@ export function trimOpening(sentence: string) {
   return `${kept.join(" ").replace(/[\s;:,—–]+$/, "")}…`;
 }
 
-// Up to three words, always leaving at least one in ordinary type
-function splitLeadIn(sentence: string) {
-  const words = sentence.trim().split(/\s+/);
-  const count = Math.min(3, words.length - 1);
-  return {
-    lead: words.slice(0, count).join(" "),
-    rest: words.slice(count).join(" "),
-  };
+// Some editions set their first words in capitals (SIR WALTER ELLIOT, of
+// Kellynch Hall); in a quote they'd shout, so they get ordinary capitals
+export function calmCapitals(sentence: string) {
+  return sentence.replace(/^(?:[A-Z][A-Z'’.-]+[\s,]+)+/, (lead) =>
+    lead.replace(/[A-Z][A-Z'’.-]+/g, (word) => word[0] + word.slice(1).toLowerCase()),
+  );
 }
 
 export default function OpeningLine({ sentence }: { sentence: string }) {
-  const { lead, rest } = splitLeadIn(trimOpening(sentence));
   return (
-    <section className="mt-10 max-w-150">
-      <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
-        First line
-      </h2>
-      <p
-        className={`${openingLineType} text-pretty text-stone-700 dark:text-stone-300`}
+    <section className="relative mt-10 max-w-150 pl-7 md:pl-8">
+      <h2 className="sr-only">First line</h2>
+      {/* The quote mark hangs in the margin and says what this is */}
+      <span
+        aria-hidden="true"
+        className="absolute left-0 -top-2 font-serif text-5xl leading-none text-stone-300 dark:text-stone-600"
       >
-        {lead ? (
-          <>
-            <span className="text-[0.82em] font-semibold uppercase tracking-[0.07em] text-stone-900 dark:text-stone-100">
-              {lead}
-            </span>{" "}
-          </>
-        ) : null}
-        {rest}
+        &ldquo;
+      </span>
+      <p
+        className={`${openingLineType} text-pretty text-stone-500 dark:text-stone-400`}
+      >
+        {calmCapitals(trimOpening(sentence))}
       </p>
     </section>
   );
