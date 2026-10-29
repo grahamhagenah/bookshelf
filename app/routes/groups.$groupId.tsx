@@ -137,6 +137,10 @@ export default function GroupLayout() {
               : "Just you so far. Invite people and their books show up here."}
           </p>
         </div>
+        {/* On phones it waits up here, so the tabs get the whole row */}
+        <div className="ml-auto flex-shrink-0 self-start sm:hidden">
+          <InviteButton name={group.name} url={inviteUrl} />
+        </div>
       </div>
 
       <div className="mb-6 flex items-start gap-3 border-b border-stone-200 dark:border-stone-800">
@@ -156,7 +160,7 @@ export default function GroupLayout() {
             <span className={count}>{group.members.length}</span>
           </NavLink>
         </nav>
-        <div className="-mt-1.5">
+        <div className="-mt-1.5 hidden sm:block">
           <InviteButton name={group.name} url={inviteUrl} />
         </div>
       </div>
@@ -266,7 +270,7 @@ function InviteButton({ name, url }: { name: string; url: string }) {
       <LinkIcon size={16} />
       {/* Both labels share one cell, so the button keeps its width. With
           a mouse it says what it does: copies the link */}
-      <span className="grid" aria-live="polite">
+      <span className="grid whitespace-nowrap" aria-live="polite">
         <span className={`col-start-1 row-start-1 ${copied ? "invisible" : ""}`}>
           <span className="pointer-coarse:hidden">Copy invite link</span>
           <span className="hidden pointer-coarse:inline">Invite</span>

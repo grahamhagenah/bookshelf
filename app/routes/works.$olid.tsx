@@ -132,7 +132,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     isOnWantToRead(userId, { title: work.title ?? "", openLibraryKey: key }),
     searchFriendsBooks(userId, work.title ?? ""),
     getMyWorkNote(userId, key),
-    getWorkNotes(userId, key),
+    getWorkNotes(userId, key, work.title ?? ""),
   ]);
   // Friends' copies of this book, not just ones with a similar title
   const friendCopies = matches.filter((book) =>

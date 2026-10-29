@@ -314,7 +314,7 @@ function Invite({ data }: { data: SharedShelfData }) {
           My shelf
         </Link>
         <Link to="/account#sharing" className={quietAction}>
-          Edit your page
+          Edit your public shelf
         </Link>
       </>
     );

@@ -260,7 +260,7 @@ export async function pinBook(
       error: "Only books from your shelf, or ones you've borrowed.",
     };
   if (book.hiddenFromPage && !ids.includes(book.userId)) {
-    return { ok: false, error: "Its owner keeps it off public pages." };
+    return { ok: false, error: "Its owner keeps it off public shelves." };
   }
   const existing = await prisma.pin.findUnique({
     where: { userId_bookId: { userId, bookId } },
@@ -271,7 +271,7 @@ export async function pinBook(
     select: { position: true },
   });
   if (pins.length >= PIN_MAX) {
-    return { ok: false, error: `Your page shows ${PIN_MAX}. Unpin one first.` };
+    return { ok: false, error: `Your public shelf shows ${PIN_MAX}. Unpin one first.` };
   }
   const position = pins.reduce(
     (max, pin) => Math.max(max, pin.position + 1),
