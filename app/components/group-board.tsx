@@ -92,7 +92,9 @@ export default function GroupBoard({
       aria-label={`${groupName}: what you're reading and when you meet`}
       className="mb-6 rounded-xl border border-stone-200 dark:border-stone-800"
     >
-      <div className={`grid gap-5 p-4 ${COLUMNS[[pick, pick, meeting, chat].filter(Boolean).length] ?? ""}`}>
+      {/* On phones the book and its copies take the width, and the meetup
+          and chat share a row */}
+      <div className={`grid grid-cols-2 gap-x-4 gap-y-5 p-4 ${COLUMNS[[pick, pick, meeting, chat].filter(Boolean).length] ?? "sm:grid-cols-1"}`}>
         {editing === "pick" ? (
           <div className="col-span-full">
             <PickSearch path={path} groupName={groupName} onDone={done} />
@@ -108,7 +110,7 @@ export default function GroupBoard({
         ) : (
           <>
             {pick ? (
-              <div className={section}>
+              <div className={`${section} col-span-2 sm:col-span-1`}>
                 {/* The cover gets the card's height; its label sits over
                     the title beside it */}
                 <div className="flex gap-4">
@@ -139,7 +141,7 @@ export default function GroupBoard({
             ) : null}
             {pick ? <CopiesColumn pick={pick} userId={userId} /> : null}
             {meeting ? (
-              <div className={section}>
+              <div className={`${section} ${chat ? "" : "col-span-2"} sm:col-span-1`}>
                 <p className={label}>{meetingPast(meeting.at) ? "Last meetup" : "Next meetup"}</p>
                 {meeting.at ? (
                   <p className="mt-2 font-semibold text-stone-900 dark:text-stone-100">{meetingWhen(meeting.at)}</p>
@@ -165,7 +167,7 @@ export default function GroupBoard({
               </div>
             ) : null}
             {chat ? (
-              <div className={section}>
+              <div className={`${section} ${meeting ? "" : "col-span-2"} sm:col-span-1`}>
                 <p className={label}>Group chat</p>
                 <a
                   href={chat.url}
@@ -254,7 +256,7 @@ function CopiesColumn({ pick, userId }: { pick: NonNullable<Board["pick"]>; user
     </li>
   );
   return (
-    <div className="min-w-0">
+    <div className="col-span-2 min-w-0 sm:col-span-1">
       <p className="text-xs font-semibold uppercase tracking-wide text-stone-400 dark:text-stone-500">Copies</p>
       {copies.length === 0 ? (
         <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">Nobody here has one yet</p>

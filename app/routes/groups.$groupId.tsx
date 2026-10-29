@@ -187,7 +187,7 @@ export default function GroupLayout() {
         </div>
         {/* On phones it waits up here, so the tabs get the whole row */}
         <div className="ml-auto flex-shrink-0 self-start sm:hidden">
-          <InviteButton name={group.name} url={inviteUrl} />
+          <InviteButton name={group.name} url={inviteUrl} short />
         </div>
       </div>
 
@@ -233,8 +233,9 @@ function GroupName({ name, path }: { name: string; path: string }) {
 
   if (!editing) {
     return (
-      <div className="flex items-center gap-1.5">
-        <h1 className="text-balance break-words text-xl font-semibold text-stone-900 dark:text-stone-100 sm:text-2xl">
+      // The pencil follows the name's last word, however it wraps
+      <div>
+        <h1 className="inline break-words text-xl font-semibold text-stone-900 dark:text-stone-100 sm:text-2xl">
           {name}
         </h1>
         <button
@@ -242,7 +243,8 @@ function GroupName({ name, path }: { name: string; path: string }) {
           onClick={() => setEditing(true)}
           aria-label="Rename the group"
           title="Rename"
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-stone-400 hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-200 transition-colors"
+          // No space before it, so it never wraps away from the last word
+          className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-md align-middle text-stone-400 hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-200 transition-colors"
         >
           <PencilIcon size={16} />
         </button>
@@ -290,7 +292,8 @@ function GroupName({ name, path }: { name: string; path: string }) {
 
 // Copies the invite link and says so, or on a phone opens the share sheet
 // with a line to send with it. The People tab shows the link itself.
-function InviteButton({ name, url }: { name: string; url: string }) {
+// short: "Invite" whatever the pointer, for the phone header's corner
+function InviteButton({ name, url, short = false }: { name: string; url: string; short?: boolean }) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -322,10 +325,10 @@ function InviteButton({ name, url }: { name: string; url: string }) {
           a mouse it says what it does: copies the link */}
       <span className="grid whitespace-nowrap" aria-live="polite">
         <span className={`col-start-1 row-start-1 ${copied ? "invisible" : ""}`}>
-          <span className="pointer-coarse:hidden">Copy invite link</span>
-          <span className="hidden pointer-coarse:inline">Invite</span>
+          <span className={short ? "hidden" : "pointer-coarse:hidden"}>Copy invite link</span>
+          <span className={short ? "inline" : "hidden pointer-coarse:inline"}>Invite</span>
         </span>
-        <span className={`col-start-1 row-start-1 ${copied ? "" : "invisible"}`}>Link copied</span>
+        <span className={`col-start-1 row-start-1 ${copied ? "" : "invisible"}`}>{short ? "Copied" : "Link copied"}</span>
       </span>
     </button>
   );
