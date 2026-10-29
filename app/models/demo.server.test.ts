@@ -37,6 +37,8 @@ describe("createDemoSandbox", () => {
       expect(visitor.following.map((f) => f.firstname).sort()).toEqual([
         "Anika",
         "Maya",
+        // A friend from outside the book club
+        "Raj",
         "Sam",
       ]);
 

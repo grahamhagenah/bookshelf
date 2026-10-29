@@ -131,6 +131,9 @@ const PERSONAS = {
   // Theo has sent the visitor a friend request; Lena shows up as a suggestion
   theo: { firstname: "Theo", surname: "Martin", profileEmoji: "discoball:ochre" },
   lena: { firstname: "Lena", surname: "Fischer", profileEmoji: "frog:forest" },
+  // A friend from outside the book club, with a copy of its book free:
+  // where to borrow it when the club's own copies are spoken for
+  raj: { firstname: "Raj", surname: "Mehta", profileEmoji: "bicycle:forest" },
   // The visitor's housemate: one shared shelf, their own notes and friends
   noah: { firstname: "Noah", surname: "Brennan", profileEmoji: "diamond:ink" },
 } as const;
@@ -661,6 +664,38 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       body: "A young bride arrives at Manderley, her husband's grand estate, and finds it still ruled by the memory of his first wife.",
     },
   ],
+  raj: [
+    {
+      title: "The Overstory",
+      author: "Richard Powers",
+      isbn: "9780393635522",
+      datePublished: "2018",
+      pageCount: 502,
+      publisher: "W. W. Norton",
+      subjects: "Literary fiction, Trees, Environmentalism",
+      body: "Nine strangers, each shaped by a tree, are drawn together into a last stand to save the remaining old-growth forests.",
+    },
+    {
+      title: "Middlemarch",
+      author: "George Eliot",
+      isbn: "9780141439549",
+      datePublished: "1871",
+      pageCount: 880,
+      publisher: "Penguin Classics",
+      subjects: "Classics, England, Marriage",
+      body: "The lives and ambitions of the people of a provincial English town intertwine over a few eventful years.",
+    },
+    {
+      title: "The Fifth Season",
+      author: "N. K. Jemisin",
+      isbn: "9780316229296",
+      datePublished: "2015",
+      pageCount: 468,
+      publisher: "Orbit",
+      subjects: "Fantasy, Science fiction, Apocalypse",
+      body: "On a continent wracked by catastrophic quakes, a woman searches for her daughter as the world ends again.",
+    },
+  ],
   noah: [
     {
       title: "Sea of Tranquility",
@@ -792,11 +827,13 @@ export async function createDemoSandbox(): Promise<User["id"]> {
               : ago((i + 1) * 3 * day),
         },
       });
-      books[book.title] = created.id;
+      // The first owner keeps the title: Raj's copies of books others have
+      // too stay out of their loans and notes
+      books[book.title] ??= created.id;
     }
   }
 
-  for (const friend of ["maya", "sam", "anika"] as const) {
+  for (const friend of ["maya", "sam", "anika", "raj"] as const) {
     await createFriendship(ids.you, ids[friend]);
   }
   await createFriendship(ids.maya, ids.sam);
