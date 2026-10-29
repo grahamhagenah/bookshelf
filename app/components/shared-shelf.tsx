@@ -49,17 +49,10 @@ const HEARTS: Record<string, string> = {
 };
 const heartOf = (color: string) => HEARTS[color] ?? HEARTS.forest;
 
-// Where each favorite's note sits: above or below its cover, overlapping
-// the edge a little, and lined up left, right or center, so each one is
-// somewhere different. Two bubbles in one column never face each other
-// across a row, whether the row is two covers wide (phones) or five.
-const BUBBLE_SPOTS = [
-  { side: "above", align: "-left-[4%]" },
-  { side: "below", align: "-right-[4%]" },
-  { side: "above", align: "left-1/2 -translate-x-1/2" },
-  { side: "below", align: "-left-[4%]" },
-  { side: "below", align: "-right-[4%]" },
-] as const;
+// A note's bubble and its tail share one fill and one solid outline, so
+// where the tail meets the bubble the outline runs on unbroken
+const bubble =
+  "border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-800";
 
 // Who the shelf belongs to, in their words, and what they love
 function ProfileHeader({ data }: { data: SharedShelfData }) {
@@ -121,17 +114,11 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
             <HeartIcon size={14} filled className={heartOf(profile.color)} />
             Favorites
           </h2>
-          <ul
-            className={`mt-3 grid grid-cols-2 gap-x-4 sm:grid-cols-5 sm:gap-x-6 ${
-              // Room for the notes that stick out above and below
-              profile.favorites.some((book) => book.note)
-                ? "gap-y-16 py-14 sm:py-11"
-                : "gap-y-4"
-            }`}
-          >
+          {/* Every other favorite sits lower, as if set down by hand, with
+              its note hanging underneath, so a note never covers a cover */}
+          <ul className="mt-4 grid grid-cols-2 items-start gap-x-5 gap-y-10 sm:grid-cols-5 sm:gap-x-7">
             {profile.favorites.map((book, i) => {
-              const spot = BUBBLE_SPOTS[i % BUBBLE_SPOTS.length];
-              const above = spot.side === "above";
+              const lower = i % 2 === 1;
               const contents = (
                 <>
                   <BookCover
@@ -140,27 +127,40 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
                     author={book.author}
                     // Five across from small tablets up, two on phones
                     sizes="(min-width: 640px) 220px, 50vw"
-                    className="aspect-[2/3] w-full transition-opacity duration-200 group-hover:opacity-90"
+                    className="aspect-[2/3] w-full shadow-md shadow-stone-900/10 transition-opacity duration-200 group-hover:opacity-90"
                   />
                   <span className="sr-only">
                     {book.title} by {book.author}
                   </span>
-                  {/* Why it's here, in the owner's words, said from the cover */}
+                  {/* Why it's here, in the owner's words, said from the
+                      cover: the tail points up at it, from one side or the
+                      other by turns, its tip just over the cover's edge */}
                   {book.note ? (
-                    <p
-                      className={`absolute z-10 w-max max-w-[108%] ${spot.align} ${
-                        above
-                          ? "bottom-[calc(100%-1.25rem)]"
-                          : "top-[calc(100%-1.25rem)]"
-                      } rounded-2xl bg-white px-3 py-2 text-[11px] leading-snug text-stone-700 shadow-[0_1px_3px_rgb(0_0_0/0.08)] ring-1 ring-stone-900/5 dark:ring-white/10 dark:bg-stone-800 dark:text-stone-200 sm:text-xs`}
+                    <span
+                      className={`relative mt-1 block ${lower ? "ml-3" : "mr-3"}`}
                     >
-                      <span className="line-clamp-4">{book.note}</span>
-                    </p>
+                      <span
+                        aria-hidden
+                        // A square turned on its point, outlined on its two
+                        // upper sides only, laid over the bubble's top edge
+                        className={`absolute -top-[6.5px] z-10 h-3 w-3 rotate-45 ${bubble} border-r-0 border-b-0 ${
+                          lower ? "left-6" : "right-6"
+                        }`}
+                      />
+                      <span
+                        className={`block rounded-2xl px-3 py-2 text-[11px] leading-snug text-stone-700 shadow-[0_1px_3px_rgb(0_0_0/0.06)] dark:text-stone-200 sm:text-xs ${bubble}`}
+                      >
+                        <span className="line-clamp-4">{book.note}</span>
+                      </span>
+                    </span>
                   ) : null}
                 </>
               );
               return (
-                <li key={book.id} className="min-w-0">
+                <li
+                  key={book.id}
+                  className={`min-w-0 ${lower ? "mt-8 sm:mt-12" : ""}`}
+                >
                   {book.onShelf ? (
                     // To the book's page, as the covers on the shelf below go
                     <Link
