@@ -262,9 +262,9 @@ const stateClass =
 // A cover with the title and author under it, as in the library grid. It
 // fills its column, at a book's 2:3 shape. Whether it's in goes unsaid
 // here: that's for the book page, and the title gets the room instead.
-function BookTile({ book }: { book: FeedBook }) {
+function BookTile({ book, className = "" }: { book: FeedBook; className?: string }) {
   return (
-    <li className="min-w-0">
+    <li className={`min-w-0 ${className}`}>
       <Link to={`/books/${book.id}`} title={book.title} className="group block">
         <FeedCover
           book={book}
@@ -633,7 +633,7 @@ export function FeedPost({
 
   const books =
     item.kind === "added"
-      ? item.books.slice(0, 6)
+      ? item.books.slice(0, 4)
       : item.kind === "elsewhere"
         ? []
         : [item.book];
@@ -694,11 +694,15 @@ export function FeedPost({
         />
       ) : item.kind === "added" && item.books.length > 1 ? (
         <>
-          {/* Even columns: three across on phones, six on wider screens,
-              so a batch of new books is a row of small covers */}
-          <ul className="mt-3 grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-6">
-            {books.map((book) => (
-              <BookTile key={book.id} book={book} />
+          {/* One row of covers big enough for their titles: three across
+              on phones, four from there; the rest are on their shelf */}
+          <ul className="mt-3 grid grid-cols-3 gap-x-4 gap-y-4 sm:grid-cols-4">
+            {books.map((book, index) => (
+              <BookTile
+                key={book.id}
+                book={book}
+                className={index === 3 ? "hidden sm:block" : ""}
+              />
             ))}
           </ul>
           <div className="mt-3 flex items-center gap-x-5 border-t border-stone-100 dark:border-stone-800 pt-2">
