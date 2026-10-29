@@ -270,6 +270,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 export default function WorkPage() {
   const data = useLoaderData<typeof loader>();
   const { work } = data;
+  // A copy you have on loan, apart from the ones you could still ask for
+  const borrowing = data.friendCopies.find((copy) => copy.borrowerId === data.userId);
+  const otherCopies = data.friendCopies.filter((copy) => copy !== borrowing);
   const fetcher = useFetcher<{
     success: boolean;
     wanted?: boolean;
@@ -409,16 +412,37 @@ export default function WorkPage() {
           </Form>
         ) : null}
 
-        {/* Borrow it instead: a friend already has a copy */}
-        {data.friendCopies.length > 0 ? (
+        {/* A copy you're borrowing, said as yours for now */}
+        {borrowing ? (
+          <Link
+            to={`/books/${borrowing.id}`}
+            className="flex items-center justify-between gap-2 rounded-md border border-stone-200 dark:border-stone-700 p-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
+          >
+            <span>
+              You&apos;re borrowing{" "}
+              <span className="font-medium text-stone-900 dark:text-stone-100">{borrowing.user.firstname}&apos;s</span>{" "}
+              copy
+            </span>
+            <span aria-hidden="true" className="text-stone-400">
+              &rarr;
+            </span>
+          </Link>
+        ) : null}
+
+        {/* Borrow it instead: someone you know has a copy */}
+        {otherCopies.length > 0 ? (
           <div className="rounded-md border border-stone-200 dark:border-stone-700 p-3 text-sm">
             <p className="font-medium text-stone-800 dark:text-stone-200">
-              {data.friendCopies.length === 1
-                ? "A friend has it"
-                : "Friends have it"}
+              {borrowing
+                ? otherCopies.length === 1
+                  ? "Another copy"
+                  : "Other copies"
+                : otherCopies.length === 1
+                  ? "A friend has it"
+                  : "Friends have it"}
             </p>
             <ul className="mt-1.5 space-y-1">
-              {data.friendCopies.map((copy) => (
+              {otherCopies.map((copy) => (
                 <li
                   key={copy.id}
                   className="flex items-center justify-between gap-2"
@@ -430,18 +454,14 @@ export default function WorkPage() {
                   />
                   {/* What you can do about this copy, on its page; not
                       lending is just said */}
-                  {copy.borrowerId !== data.userId && isNotLending(copy.notLendingUntil) ? (
+                  {isNotLending(copy.notLendingUntil) ? (
                     <span className="text-stone-400 dark:text-stone-500">Not lending</span>
                   ) : (
                     <Link
                       to={`/books/${copy.id}`}
                       className="text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
                     >
-                      {copy.borrowerId === data.userId
-                        ? "You're borrowing it"
-                        : copy.borrowerId
-                          ? "Get in line"
-                          : "Ask to borrow"}
+                      {copy.borrowerId ? "Get in line" : "Ask to borrow"}
                     </Link>
                   )}
                 </li>
