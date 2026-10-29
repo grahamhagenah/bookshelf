@@ -6,10 +6,11 @@ import EmptyList from "~/components/empty-list";
 import FriendsTabs from "~/components/friends-tabs";
 import { BookIcon } from "~/components/icons";
 import PooledShelf from "~/components/pooled-shelf";
+import { prisma } from "~/db.server";
 import { getFriendsTabCounts } from "~/friends-tabs.server";
+import { circleOf } from "~/models/circle.server";
 import { getMyGroups } from "~/models/group.server";
 import { shelfIds } from "~/models/household.server";
-import { getUserById } from "~/models/user.server";
 import { loadPooledShelf } from "~/pooled-shelf.server";
 import { seo } from "~/seo";
 import { requireUserId } from "~/session.server";
@@ -23,20 +24,25 @@ export const meta: MetaFunction = () => seo({ title: "Friends' books", noindex: 
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const [user, mine, groups, counts] = await Promise.all([
-    getUserById(userId),
+  const [mine, groups, counts] = await Promise.all([
     shelfIds(userId),
     getMyGroups(userId),
     getFriendsTabCounts(userId),
   ]);
-  // Anyone you share a shelf with is on My shelf already
-  const friends = (user?.following ?? []).filter((friend) => !mine.includes(friend.id));
-  const shelf = await loadPooledShelf(
-    request,
-    userId,
-    friends.map((friend) => friend.id),
-    { lenders: friends, groups },
-  );
+  // Your friends, and the people in your groups, less anyone you share a
+  // shelf with: they're on My shelf already
+  const circle = await circleOf(userId);
+  const openIds = circle.ids.filter((id) => !mine.includes(id));
+  const people = await prisma.user.findMany({
+    where: { id: { in: openIds } },
+    select: { id: true, firstname: true, surname: true },
+    orderBy: { firstname: "asc" },
+  });
+  const shelf = await loadPooledShelf(request, userId, openIds, {
+    lenders: people,
+    groups,
+    groupOnly: [...circle.groupOnly],
+  });
   return data({ shelf, counts });
 };
 

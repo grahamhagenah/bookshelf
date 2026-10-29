@@ -16,6 +16,7 @@ import {
   findOwnCopy,
   searchFriendsBooks,
 } from "~/models/book.server";
+import { circleOf } from "~/models/circle.server";
 import { shelfIds } from "~/models/household.server";
 import { NOTE_MAX_LENGTH } from "~/models/note.server";
 import {
@@ -24,7 +25,6 @@ import {
   lookupWorkPage,
 } from "~/models/openlibrary.server";
 import { withSharedCover } from "~/models/shared-cover.server";
-import { getUserById } from "~/models/user.server";
 import {
   addWantToRead,
   isOnWantToRead,
@@ -123,14 +123,13 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   // A cover someone picked for it, over Open Library's
   work = { ...work, cover: await withSharedCover(work.cover, { openLibraryKey: key }) };
 
-  const [ownCopy, wanted, matches, user, myNote, notes] = await Promise.all([
+  const [ownCopy, wanted, matches, myNote, notes] = await Promise.all([
     findOwnCopy(await shelfIds(userId), {
       title: work.title ?? "",
       openLibraryKey: key,
     }),
     isOnWantToRead(userId, { title: work.title ?? "", openLibraryKey: key }),
     searchFriendsBooks(userId, work.title ?? ""),
-    getUserById(userId),
     getMyWorkNote(userId, key),
     getWorkNotes(userId, key),
   ]);
@@ -147,7 +146,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     ownCopyId: ownCopy?.id ?? null,
     wanted,
     friendCopies,
-    friendIds: user?.following?.map((friend) => friend.id) ?? [],
+    // Whose names open their shelf: friends and group-mates
+    friendIds: (await circleOf(userId)).ids,
     offline,
     // Hearts and notes from you and your friends; your read mark is yours
     myNote,

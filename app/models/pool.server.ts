@@ -116,6 +116,21 @@ export interface PoolSearch {
   // Books already shown above (by work), left out of the list but still
   // counted
   exclude?: string[];
+  // People you know only through a group, whose kept-off-page books stay off
+  groupOnly?: string[];
+}
+
+// These people's books, less what the ones you know only through a group
+// keep off their page
+function ownersWhere(openIds: string[], groupOnly: string[]) {
+  const friends = openIds.filter((id) => !groupOnly.includes(id));
+  const mates = openIds.filter((id) => groupOnly.includes(id));
+  return {
+    OR: [
+      { userId: { in: friends } },
+      { userId: { in: mates }, hiddenFromPage: false },
+    ],
+  };
 }
 
 const isFree = (work: PoolWork) => work.copies.some((copy) => copy.available);
@@ -126,14 +141,14 @@ const isOut = (work: PoolWork) => !isFree(work) && work.copies.some((copy) => co
 // people's shelves can run to thousands.
 export async function searchPool(
   openIds: string[],
-  { q = "", who = null, status = "all", sort = "newest", shown = POOL_PAGE, exclude = [] }: PoolSearch,
+  { q = "", who = null, status = "all", sort = "newest", shown = POOL_PAGE, exclude = [], groupOnly = [] }: PoolSearch,
 ) {
   const ids = who ? openIds.filter((id) => id === who) : openIds;
   const term = q.trim();
   const books = await prisma.book.findMany({
     where: {
-      userId: { in: ids },
-      ...(term ? { OR: [{ title: { contains: term } }, { author: { contains: term } }] } : {}),
+      ...ownersWhere(ids, groupOnly),
+      ...(term ? { AND: { OR: [{ title: { contains: term } }, { author: { contains: term } }] } } : {}),
     },
     select: shelfBook,
     orderBy: { createdAt: "desc" },
@@ -162,14 +177,18 @@ export async function searchPool(
 
 // The top of the shelf: what's on your want-to-read list that someone
 // here owns, one entry per book, the ones you could borrow first
-export async function getPoolWanted(userId: User["id"], openIds: string[]) {
+export async function getPoolWanted(
+  userId: User["id"],
+  openIds: string[],
+  groupOnly: string[] = [],
+) {
   const [wishes, candidates] = await Promise.all([
     prisma.wantToRead.findMany({
       where: { userId },
       select: { title: true, openLibraryKey: true, isbn: true },
     }),
     prisma.book.findMany({
-      where: { userId: { in: openIds } },
+      where: ownersWhere(openIds, groupOnly),
       select: { id: true, title: true, openLibraryKey: true, isbn: true },
     }),
   ]);
@@ -190,9 +209,9 @@ export async function getPoolWanted(userId: User["id"], openIds: string[]) {
 
 // How many books there are across these shelves: books, not copies, so
 // five people's Dune is one
-export async function countPoolBooks(openIds: string[]) {
+export async function countPoolBooks(openIds: string[], groupOnly: string[] = []) {
   const books = await prisma.book.findMany({
-    where: { userId: { in: openIds } },
+    where: ownersWhere(openIds, groupOnly),
     select: { title: true, author: true },
   });
   return new Set(books.map(workKey)).size;

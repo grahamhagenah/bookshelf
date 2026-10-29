@@ -9,8 +9,8 @@ import { getGroupByToken, joinGroup } from "~/models/group.server";
 import { seo } from "~/seo";
 import { getUserId } from "~/session.server";
 
-// A group's link. Signed in, opening it puts you in the group and makes
-// you friends with everyone there. Signed out, it says who's in it and
+// A group's link. Signed in, opening it puts you in the group, where
+// everyone's shelves are open to each other. Signed out, it says who's in it and
 // what they have, and sends you to sign up (or in) and straight back here.
 
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
@@ -84,8 +84,9 @@ export default function JoinGroup() {
         {names.length === 1
           ? `${names[0]} started this group to lend books to people they know.`
           : `${whoIsIn(names)} lend books to each other here.`}{" "}
-        Join and you&apos;ll be friends with everyone in the group, free to borrow from
-        their shelves.
+        Join and everyone here can see your shelf and you theirs, free to
+        borrow from each other, no friending needed. Books you keep off your
+        page stay out of it.
       </p>
 
       {group.recent.length > 0 ? (

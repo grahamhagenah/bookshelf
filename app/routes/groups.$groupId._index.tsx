@@ -18,8 +18,13 @@ import type { GroupLayoutData } from "./groups.$groupId";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { userId, group } = await loadGroup(request, params);
-  const lenders = group.members.filter((member) => member.isFriend);
-  return data(await loadPooledShelf(request, userId, group.openIds, { lenders }));
+  const lenders = group.members.filter((member) => !member.isMe);
+  return data(
+    await loadPooledShelf(request, userId, group.openIds, {
+      lenders,
+      groupOnly: group.groupOnly,
+    }),
+  );
 };
 
 export default function GroupBooks() {
@@ -59,7 +64,7 @@ export default function GroupBooks() {
                 <InviteMessage
                   url={layout.inviteUrl}
                   title="Invite them"
-                  intro="Send this to the group. Whoever joins from the link is friends with everyone in it."
+                  intro="Send this to the group. Whoever joins from the link can see and borrow from everyone's shelf."
                   text={groupInviteText(layout.group.name, layout.inviteUrl)}
                   subject={`Join ${layout.group.name} on Stacks`}
                   className="mx-auto mt-2 max-w-md text-left"

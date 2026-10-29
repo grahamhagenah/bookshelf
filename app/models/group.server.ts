@@ -4,12 +4,12 @@ import { GROUP_NAME_MAX } from "~/group-links";
 
 import { canInteract } from "./demo.server";
 import { countPoolBooks } from "./pool.server";
-import { createFriendship } from "./user.server";
 
-// Groups: a book club, an office, a family. Joining one makes you friends
-// with everyone already in it, so all their shelves open up at once, and
-// whoever joins later becomes your friend too. Leaving keeps the
-// friendships you made; those are between people, not the group.
+// Groups: a book club, an office, a family. Being in one is enough to see
+// everyone's shelf and borrow from them, as friends can, without having to
+// friend them all (circle.server says who you can borrow from). Friend
+// anyone you like from the group's People tab; leaving keeps those
+// friendships, and closes the other members' shelves to you.
 
 export { GROUP_NAME_MAX };
 // Big enough for a club or an office, small enough that joining one
@@ -94,8 +94,9 @@ export async function getGroupPreviews(userId: User["id"]) {
 }
 
 // Everything the group's page shows about the people in it, for someone
-// in it. Whose books you can see is your friends among them: anyone
-// you've since unfriended keeps their shelf closed, as anywhere else.
+// in it. Being in it opens everyone's shelf to everyone else, friends or
+// not; the ones who aren't your friends keep what they hide off their page
+// out of it.
 export async function getGroup(groupId: Group["id"], userId: User["id"]) {
   if (!(await isMember(groupId, userId))) return null;
   const [group, me] = await Promise.all([
@@ -133,16 +134,20 @@ export async function getGroup(groupId: Group["id"], userId: User["id"]) {
     isOwner: user.id === ownerId,
   }));
   // Your own books are in the group too, but you don't come here for them
-  const openIds = members.filter((member) => member.isFriend).map((member) => member.id);
+  const openIds = members.filter((member) => !member.isMe).map((member) => member.id);
+  const groupOnly = members
+    .filter((member) => !member.isMe && !member.isFriend)
+    .map((member) => member.id);
   return {
     id: group.id,
     name: group.name,
     inviteToken: group.inviteToken,
     members,
     openIds,
+    groupOnly,
     myBookCount: members.find((member) => member.isMe)?.bookCount ?? 0,
     // Books, not copies: five people's Dune is one
-    bookCount: await countPoolBooks(openIds),
+    bookCount: await countPoolBooks(openIds, groupOnly),
   };
 }
 
@@ -159,10 +164,11 @@ export async function getGroupByToken(token: string) {
   });
   if (!group) return null;
   const ids = group.members.map((member) => member.user.id);
+  // Not what they keep off their page: whoever holds the link isn't in yet
   const [bookCount, recent] = await Promise.all([
-    prisma.book.count({ where: { userId: { in: ids } } }),
+    prisma.book.count({ where: { userId: { in: ids }, hiddenFromPage: false } }),
     prisma.book.findMany({
-      where: { userId: { in: ids } },
+      where: { userId: { in: ids }, hiddenFromPage: false },
       orderBy: { createdAt: "desc" },
       take: 6,
       select: { id: true, title: true, author: true, cover: true },
@@ -181,8 +187,8 @@ export type JoinResult =
   | { ok: true; groupId: string }
   | { ok: false; reason: "no-such-group" | "demo-boundary" | "full" };
 
-// Opening a group's link: you're in, friends with everyone in it, any
-// request between you is settled, and they each hear you've joined
+// Opening a group's link: you're in, everyone's shelves open to you and
+// yours to them, and they each hear you've joined
 export async function joinGroup(userId: User["id"], token: string): Promise<JoinResult> {
   const group = await prisma.group.findUnique({
     where: { inviteToken: token },
@@ -200,22 +206,7 @@ export async function joinGroup(userId: User["id"], token: string): Promise<Join
   await prisma.groupMember.create({ data: { groupId: group.id, userId } });
   const me = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
-    select: { firstname: true, surname: true, following: { select: { id: true } } },
-  });
-  const already = new Set(me.following.map((friend) => friend.id));
-  for (const memberId of memberIds) {
-    if (!already.has(memberId)) await createFriendship(userId, memberId);
-  }
-  await prisma.notification.updateMany({
-    where: {
-      type: "FRIEND_REQUEST",
-      actionTaken: null,
-      OR: [
-        { senderId: userId, receiverId: { in: memberIds } },
-        { senderId: { in: memberIds }, receiverId: userId },
-      ],
-    },
-    data: { read: true, actionTaken: "accepted" },
+    select: { firstname: true, surname: true },
   });
   await prisma.$transaction(
     memberIds.map((receiverId) =>

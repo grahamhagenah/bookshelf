@@ -262,7 +262,7 @@ export default function Join() {
             <strong className="font-semibold text-stone-900 dark:text-stone-100">
               {groupName}
             </strong>
-            . You&apos;ll be friends with everyone in it straight away.
+            . Everyone in it can see your shelf, and you theirs, straight away.
           </p>
         ) : null}
         {inviterName ? (

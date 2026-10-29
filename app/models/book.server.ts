@@ -4,7 +4,8 @@ import { cleanSubjects, hasTranslationSubjects } from "~/utils";
 import type { Work } from "~/works";
 import { sameWork } from "~/works";
 
-import { shelfIds, shelfIdsFor } from "./household.server";
+import { circleBooks, circleOf } from "./circle.server";
+import { shelfIds } from "./household.server";
 import { withSharedCover } from "./shared-cover.server";
 import { adoptWorkNotes } from "./work-note.server";
 
@@ -82,6 +83,7 @@ export function getBookListItems(ownerIds: User["id"][]) {
       userId: true,
       borrowerId: true,
       notLendingUntil: true,
+      hiddenFromPage: true,
       readAt: true,
       // The viewer's own read mark is picked out by the caller
       readerNotes: { select: { userId: true, readAt: true } },
@@ -682,22 +684,19 @@ export async function getLendingHistory(bookId: Book["id"]) {
   });
 }
 
-// Books on friends' shelves whose title or author matches the query
+// Books on shelves you can borrow from (friends', and group-mates')
+// whose title or author matches the query
 export async function searchFriendsBooks(userId: User["id"], query: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { following: { select: { id: true } } },
-  });
-  const friendIds = user?.following.map((friend) => friend.id) ?? [];
+  const circle = await circleOf(userId);
   const term = query.trim();
-  if (friendIds.length === 0 || !term) return [];
-  // A friend's household shares their shelf
-  const shelfOwners = await shelfIdsFor(friendIds);
+  if (circle.ids.length === 0 || !term) return [];
 
   return prisma.book.findMany({
     where: {
-      userId: { in: shelfOwners },
-      OR: [{ title: { contains: term } }, { author: { contains: term } }],
+      AND: [
+        await circleBooks(circle),
+        { OR: [{ title: { contains: term } }, { author: { contains: term } }] },
+      ],
     },
     select: {
       id: true,
