@@ -42,11 +42,13 @@ describe("createDemoSandbox", () => {
         "Sam",
       ]);
 
-      // A book club, with everyone in it friends with everyone else
+      // A book club of friends, and Omar, who isn't the visitor's friend yet
       const [club] = await getMyGroups(visitorId);
-      expect(club).toMatchObject({ name: "Thursday book club", memberCount: 4 });
+      expect(club).toMatchObject({ name: "Thursday book club", memberCount: 5 });
       const page = await getGroup(club.id, visitorId);
-      expect(page?.members.every((member) => member.isMe || member.isFriend)).toBe(true);
+      expect(
+        page?.members.filter((member) => !member.isMe && !member.isFriend).map((member) => member.firstname),
+      ).toEqual(["Omar"]);
 
       const own = await prisma.book.count({ where: { userId: visitorId } });
       const lentOut = await prisma.book.count({
