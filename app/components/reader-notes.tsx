@@ -256,6 +256,8 @@ export default function ReaderNotes({
   maxLength,
   friendIds,
   readAt,
+  limit,
+  className = "mt-12 border-t border-stone-200 dark:border-stone-800 pt-8",
 }: {
   notes: ReaderNote[];
   myNote: ReaderNote | null;
@@ -264,6 +266,9 @@ export default function ReaderNotes({
   friendIds: string[];
   // When you read it, for readers of this copy
   readAt?: string | Date | null;
+  // Up near the top of the page, the first few, with the rest a tap away
+  limit?: number;
+  className?: string;
 }) {
   const { loved } = useLoved(myNote);
   const noteFetcher = useFetcher<{ noteSaved?: boolean }>();
@@ -276,14 +281,17 @@ export default function ReaderNotes({
   }, [noteFetcher.state, noteFetcher.data]);
 
   const isSaving = noteFetcher.state !== "idle";
-  const hasNotes = notes.some((note) => note.body);
+  const written = notes.filter((note) => note.body);
+  const hasNotes = written.length > 0;
+  const [showAll, setShowAll] = useState(false);
+  const shown = limit && !showAll ? written.slice(0, limit) : written;
   // Everyone else who gave a heart, with a note or without
   const otherHearts = notes.filter(
     (note) => note.loved && note.id !== myNote?.id,
   );
 
   return (
-    <div className="mt-12 border-t border-stone-200 dark:border-stone-800 pt-8">
+    <div className={className}>
       <h2 id="notes" className={`${sectionHeading} mb-3`}>
         Reader notes
       </h2>
@@ -374,9 +382,7 @@ export default function ReaderNotes({
 
       {hasNotes ? (
         <ul className="space-y-3">
-          {notes
-            .filter((note) => note.body)
-            .map((note) => {
+          {shown.map((note) => {
               const isMine = note.id === myNote?.id;
               if (isMine && isWriting) return null;
               return (
@@ -457,6 +463,17 @@ export default function ReaderNotes({
                 </li>
               );
             })}
+          {shown.length < written.length ? (
+            <li>
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className="text-sm font-medium text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white underline-offset-4 hover:underline"
+              >
+                Show all {written.length} notes
+              </button>
+            </li>
+          ) : null}
         </ul>
       ) : !canNote && otherHearts.length === 0 ? (
         <p className="py-2 text-sm text-stone-400 dark:text-stone-500">
