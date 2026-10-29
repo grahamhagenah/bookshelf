@@ -543,9 +543,12 @@ function FriendCopies({ copies, userId }: { copies: FriendCopyData[]; userId: st
     if (copy.borrowerId) return <>{name}&apos;s copy is lent out</>;
     return <>{name} has a copy</>;
   };
+  // Yours first, then the ones you could borrow now, then the ones that are out
+  const rank = (copy: FriendCopyData) =>
+    copy.borrowerId === userId ? 0 : copy.borrowerId || isNotLending(copy.notLendingUntil) ? 2 : 1;
   return (
     <ul aria-label="Friends with a copy" className="pt-1">
-      {copies.map((copy) => (
+      {[...copies].sort((a, b) => rank(a) - rank(b)).map((copy) => (
         <li key={copy.id}>
           <Link
             to={`/friend/${copy.user.id}?${new URLSearchParams({ q: copy.title })}`}
