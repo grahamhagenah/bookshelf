@@ -150,6 +150,9 @@ model Book {
   // Not lending it until this moment: friends can't ask for it or wait
   // for it till then. Far in the future means until the owner says so.
   notLendingUntil  DateTime?
+  // The owner picked this cover by hand, so a cover someone else shares
+  // for the book never replaces it
+  coverPicked      Boolean   @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

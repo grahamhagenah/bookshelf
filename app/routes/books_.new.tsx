@@ -93,6 +93,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     body,
     title,
     cover,
+    coverPicked: true,
     author,
     datePublished:
       typeof datePublished === "string" && datePublished.length > 0

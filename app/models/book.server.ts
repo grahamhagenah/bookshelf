@@ -181,8 +181,12 @@ export async function createBook({
   openLibraryKey,
   isbn,
   userId,
+  coverPicked = false,
 }: BookInput & {
   userId: User["id"];
+  // The person gave this cover themselves, rather than it coming from
+  // Open Library or someone else's pick
+  coverPicked?: boolean;
 }) {
   const book = await prisma.book.create({
     data: {
@@ -190,7 +194,10 @@ export async function createBook({
       author,
       body,
       // A cover someone else picked for this book, over Open Library's
-      cover: await withSharedCover(cover, { isbn, openLibraryKey }),
+      cover: coverPicked
+        ? cover
+        : await withSharedCover(cover, { isbn, openLibraryKey }),
+      coverPicked,
       datePublished,
       pageCount,
       // Open Library's subject list mixes real topics with catalog codes
@@ -512,6 +519,7 @@ export function updateBookMetadata(
     title?: string;
     author?: string;
     cover?: string;
+    coverPicked?: boolean;
     datePublished?: string | null;
     pageCount?: number | null;
     subjects?: string | null;

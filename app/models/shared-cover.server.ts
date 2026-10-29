@@ -4,9 +4,9 @@ import { isbnForms } from "~/isbn";
 
 // Open Library's covers are often small or the wrong edition, and people
 // replace them. A replacement is shared: every other copy of the same book
-// that still has Open Library's cover gets it too, and so does anyone who
-// adds that book later. A cover someone picked themselves is never
-// replaced.
+// gets it too, unless its owner picked a cover themselves, and so does
+// anyone who adds that book later. A later pick replaces an earlier one
+// everywhere it was shared to.
 
 interface BookKeys {
   isbn?: string | null;
@@ -59,8 +59,8 @@ export async function withSharedCover<T extends string | null>(
 
 // Someone picked a cover for one of their books by hand: remember it for
 // the book, and give it to every other copy, wish and note of the same
-// book still showing Open Library's. Demo sandboxes keep theirs to
-// themselves.
+// book, except copies whose owners picked their own. Demo sandboxes keep
+// theirs to themselves.
 export async function shareCover(
   bookId: string,
   cover: string,
@@ -91,28 +91,41 @@ export async function shareCover(
     ),
   );
 
-  const stillOpenLibrary = {
-    OR: [{ cover: "" }, { cover: { startsWith: "https://covers.openlibrary.org/" } }],
-  };
-  // Copies known by their work, then any of this edition that aren't
+  // Each copy, wish and note that follows shared covers gets the best one
+  // for it now: its edition's, else its work's
   const sameBook = [
     ...(workKey ? [{ openLibraryKey: workKey }] : []),
     ...(isbns.length ? [{ isbn: { in: isbns } }] : []),
   ];
-  for (const where of sameBook) {
-    await prisma.book.updateMany({
-      where: { id: { not: bookId }, ...where, ...stillOpenLibrary },
-      data: { cover },
-    });
-    await prisma.wantToRead.updateMany({
-      where: { ...where, ...stillOpenLibrary },
-      data: { cover },
-    });
+  const [copies, wishes] = await Promise.all([
+    prisma.book.findMany({
+      where: { id: { not: bookId }, coverPicked: false, OR: sameBook },
+      select: { id: true, isbn: true, openLibraryKey: true },
+    }),
+    prisma.wantToRead.findMany({
+      where: { OR: sameBook },
+      select: { id: true, isbn: true, openLibraryKey: true },
+    }),
+  ]);
+  for (const [best, ids] of await groupByBestCover(copies)) {
+    await prisma.book.updateMany({ where: { id: { in: ids } }, data: { cover: best } });
+  }
+  for (const [best, ids] of await groupByBestCover(wishes)) {
+    await prisma.wantToRead.updateMany({ where: { id: { in: ids } }, data: { cover: best } });
   }
   if (workKey) {
-    await prisma.workNote.updateMany({
-      where: { workKey, ...stillOpenLibrary },
-      data: { cover },
-    });
+    await prisma.workNote.updateMany({ where: { workKey }, data: { cover } });
   }
+}
+
+// Rows by the shared cover each should show, so each cover is one update
+async function groupByBestCover(
+  rows: { id: string; isbn: string | null; openLibraryKey: string | null }[],
+) {
+  const groups = new Map<string, string[]>();
+  for (const row of rows) {
+    const best = await sharedCoverFor(row);
+    if (best) groups.set(best, [...(groups.get(best) ?? []), row.id]);
+  }
+  return groups;
 }
