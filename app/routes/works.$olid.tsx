@@ -4,9 +4,9 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
+import ClampedText from "~/components/clamped-text";
 import ErrorPage from "~/components/error-page";
 import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
-import OpeningLine from "~/components/opening-line";
 import ReaderNotes from "~/components/reader-notes";
 import SubjectTags from "~/components/subject-tags";
 import { primaryButton, quietButton } from "~/components/ui";
@@ -451,29 +451,25 @@ export default function WorkPage() {
       <section className="relative min-w-0 flex-1">
         <div className="hidden md:block">{heading}</div>
 
-        {work.firstSentence ? (
-          <OpeningLine sentence={work.firstSentence} />
-        ) : null}
-
-        {/* What friends thought comes before the blurb any book site has,
-            when there's something to read: the first two, the rest a tap
-            away. With none, notes wait at the bottom */}
-        {notesUp ? notes(2, "mt-10 max-w-150") : null}
-
         <div className="mt-8">
           {/* Unlabeled, like a jacket's blurb; About the author keeps its
-              label */}
-          <h2 className="sr-only">
-            About this book
-          </h2>
-          <p className="max-w-150 whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
-            {work.description
-              ? stripMarkdown(work.description)
-              : data.offline
+              label. Its first lines, the rest a tap away */}
+          <h2 className="sr-only">About this book</h2>
+          {work.description ? (
+            <ClampedText id="description" text={stripMarkdown(work.description)} />
+          ) : (
+            <p className="max-w-150 leading-relaxed text-stone-700 dark:text-stone-300">
+              {data.offline
                 ? "Open Library isn't answering right now, so the details are missing for the moment."
                 : "Open Library has no description for this one yet."}
-          </p>
+            </p>
+          )}
         </div>
+
+        {/* Then what friends thought, when there's something to read: the
+            first two, the rest a tap away. With none, notes wait at the
+            bottom */}
+        {notesUp ? notes(2, "mt-10 max-w-150") : null}
 
         {work.authorDetails?.bio ? (
           <section className="mt-8">

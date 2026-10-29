@@ -4,10 +4,10 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
+import ClampedText from "~/components/clamped-text";
 import CoverPlaceholder from "~/components/cover-placeholder";
 import ErrorPage from "~/components/error-page";
 import { LentIcon, PencilIcon } from "~/components/icons";
-import OpeningLine, { openingLineType } from "~/components/opening-line";
 import PersonLink from "~/components/person-link";
 import ReaderNotes, { HideToggle, PinToggle } from "~/components/reader-notes";
 import SubjectTags from "~/components/subject-tags";
@@ -2679,8 +2679,8 @@ export default function BookDetailsPage() {
             </>
           )}
 
-          {/* The opening line, the description and the author arrive as
-              one: while Open Library is asked, all three wait as
+          {/* The description and the author arrive as one: while Open
+              Library is asked, both wait as
               placeholders (even a description we already have), so the
               page fills in once instead of piece by piece */}
           {lookingUp ? (
@@ -2688,11 +2688,7 @@ export default function BookDetailsPage() {
               <p role="status" className="sr-only">
                 Looking up more about this book on Open Library…
               </p>
-              <Placeholder
-                lines={2}
-                className={`mt-10 ${openingLineType} max-w-150 pl-7 md:pl-8`}
-              />
-              <Placeholder lines={3} className="mt-8 max-w-150" />
+              <Placeholder lines={4} className="mt-8 max-w-150" />
               <Placeholder lines={3} className="mt-8 max-w-150" />
             </div>
           ) : null}
@@ -2703,39 +2699,37 @@ export default function BookDetailsPage() {
                 waitedForDetails ? "motion-safe:animate-fade-in" : undefined
               }
             >
-              {data.book.firstSentence ? (
-                <OpeningLine sentence={data.book.firstSentence} />
-              ) : null}
-
-              {/* What only this copy has comes before the blurb: where
-                  it's been, and what its readers thought */}
-              <LendingSummary data={data} />
-              {notesUp ? notes(2, "mt-10 max-w-150") : null}
-
               <div className="mt-8">
                 {/* Unlabeled, like a jacket's blurb; About the author keeps
-                    its label */}
+                    its label. Its first lines, the rest a tap away */}
                 <h2 className="sr-only">About this book</h2>
-                <p className="whitespace-pre-wrap text-stone-700 dark:text-stone-300 leading-relaxed max-w-150">
-                  {data.book.body ? (
-                    stripMarkdown(data.book.body)
-                  ) : data.isOwner ? (
-                    <>
-                      No description yet.{" "}
-                      <button
-                        type="button"
-                        onClick={() => setIsEditing(true)}
-                        className={gapLink}
-                      >
-                        Add one
-                      </button>
-                      , or refresh from Open Library.
-                    </>
-                  ) : (
-                    "No description yet."
+                {data.book.body ? (
+                  <ClampedText id="description" text={stripMarkdown(data.book.body)} />
+                ) : (
+                  <p className="whitespace-pre-wrap text-stone-700 dark:text-stone-300 leading-relaxed max-w-150">
+                    {data.isOwner ? (
+                      <>
+                        No description yet.{" "}
+                        <button
+                          type="button"
+                          onClick={() => setIsEditing(true)}
+                          className={gapLink}
+                        >
+                          Add one
+                        </button>
+                        , or refresh from Open Library.
+                      </>
+                    ) : (
+                      "No description yet."
                   )}
                 </p>
+                )}
               </div>
+
+              {/* Then what only this copy has: where it's been, and what
+                  its readers thought */}
+              <LendingSummary data={data} />
+              {notesUp ? notes(2, "mt-10 max-w-150") : null}
 
               {/* Only with something to say: a heading over a bare link
                   read like something broke */}
