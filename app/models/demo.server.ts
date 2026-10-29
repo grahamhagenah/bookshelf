@@ -1284,7 +1284,13 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       at: ago(60 * day),
     },
     // Your own shelf
-    { title: "Piranesi", by: "you", loved: true, at: ago(40 * day) },
+    {
+      title: "Piranesi",
+      by: "you",
+      loved: true,
+      body: "Go in knowing as little as you can. The House is worth getting lost in.",
+      at: ago(40 * day),
+    },
     {
       title: "Station Eleven",
       by: "you",
@@ -1345,7 +1351,13 @@ export async function createDemoSandbox(): Promise<User["id"]> {
     { title: "Pachinko", by: "you", loved: true, at: ago(220 * day) },
     // Friends' shelves
     { title: "The Martian", by: "you", loved: true, at: ago(85 * day) },
-    { title: "The Martian", by: "sam", loved: true, at: ago(400 * day) },
+    {
+      title: "The Martian",
+      by: "sam",
+      loved: true,
+      body: "Laughed out loud at the potato maths. The most fun I've had with a book about dying alone.",
+      at: ago(400 * day),
+    },
     {
       title: "Normal People",
       by: "you",
@@ -1497,6 +1509,29 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       },
       create: { bookId: books[note.title], userId: ids[note.by], ...content },
       update: content,
+    });
+  }
+
+  // Pinned to the top of each public page, in this order, so the notes on
+  // them show in bubbles by the covers: why each person would hand you it
+  const pinned: Partial<Record<OwnerKey, string[]>> = {
+    you: [
+      "Station Eleven",
+      "Piranesi",
+      "Dune",
+      "Do Androids Dream of Electric Sheep?",
+    ],
+    maya: ["The Overstory", "Lonesome Dove", "Rejection"],
+    sam: ["The Road", "The Martian"],
+    anika: ["How to Do Nothing", "Slaughterhouse-Five", "Parable of the Talents"],
+  };
+  for (const [owner, titles] of Object.entries(pinned) as [OwnerKey, string[]][]) {
+    await prisma.pin.createMany({
+      data: titles.map((title, position) => ({
+        userId: ids[owner],
+        bookId: books[title],
+        position,
+      })),
     });
   }
 
