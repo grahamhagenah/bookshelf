@@ -49,10 +49,11 @@ const HEARTS: Record<string, string> = {
 };
 const heartOf = (color: string) => HEARTS[color] ?? HEARTS.forest;
 
-// A note's bubble and its tail share one fill and one solid outline, so
-// where the tail meets the bubble the outline runs on unbroken
+// A note's bubble, and its tail in the same fill and outline
 const bubble =
   "border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-800";
+const tail =
+  "fill-white stroke-stone-200 dark:fill-stone-800 dark:stroke-stone-700";
 
 // Who the shelf belongs to, in their words, and what they love
 function ProfileHeader({ data }: { data: SharedShelfData }) {
@@ -137,16 +138,22 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
                       other by turns, its tip just over the cover's edge */}
                   {book.note ? (
                     <span
-                      className={`relative mt-1 block ${lower ? "ml-3" : "mr-3"}`}
+                      className={`relative mt-0.5 block ${lower ? "ml-3" : "mr-3"}`}
                     >
-                      <span
+                      {/* Its bottom row lies over the bubble's top border:
+                          the fill hides the border there, and the two sides
+                          end on the border's middle, so the outline runs on
+                          without a step */}
+                      <svg
                         aria-hidden
-                        // A square turned on its point, outlined on its two
-                        // upper sides only, laid over the bubble's top edge
-                        className={`absolute -top-[6.5px] z-10 h-3 w-3 rotate-45 ${bubble} border-r-0 border-b-0 ${
+                        viewBox="0 0 16 9"
+                        className={`absolute -top-2 z-10 h-[9px] w-4 ${tail} ${
                           lower ? "left-6" : "right-6"
                         }`}
-                      />
+                      >
+                        <path d="M0 9 L8 1 L16 9 Z" stroke="none" />
+                        <path d="M0 8.5 L8 0.5 L16 8.5" fill="none" strokeWidth="1" />
+                      </svg>
                       <span
                         className={`block rounded-2xl px-3 py-2 text-[11px] leading-snug text-stone-700 shadow-[0_1px_3px_rgb(0_0_0/0.06)] dark:text-stone-200 sm:text-xs ${bubble}`}
                       >
