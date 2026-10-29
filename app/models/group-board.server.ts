@@ -130,15 +130,19 @@ export function chatApp(url: string) {
 
 // Around the pick, what the group needs to read it together: the copies
 // among them (yours, friends', and group-mates' unless they keep it off
-// their page), free ones first, and who's finished it, by any read mark
+// their page), then copies anyone else you can borrow from has, since a
+// friend outside the group may have one free; and who in the group has
+// finished it, by any read mark
 async function aroundThePick(
   userId: User["id"],
   memberIds: User["id"][],
   work: { title: string; openLibraryKey: string | null },
 ) {
-  const [books, readerNotes, workNotes, asked, circle] = await Promise.all([
+  const circle = await circleOf(userId);
+  const outside = circle.ids.filter((id) => !memberIds.includes(id));
+  const [books, readerNotes, workNotes, asked] = await Promise.all([
     prisma.book.findMany({
-      where: { userId: { in: memberIds } },
+      where: { userId: { in: [...memberIds, ...outside] } },
       select: {
         id: true,
         title: true,
@@ -149,6 +153,7 @@ async function aroundThePick(
         notLendingUntil: true,
         hiddenFromPage: true,
         readAt: true,
+        user: { select: { id: true, firstname: true, surname: true, profileEmoji: true } },
       },
     }),
     prisma.readerNote.findMany({
@@ -165,7 +170,6 @@ async function aroundThePick(
       where: { type: "BOOK_REQUEST", senderId: userId, read: false, bookId: { not: null } },
       select: { bookId: true },
     }),
-    circleOf(userId),
   ]);
   const requested = new Set(asked.map((request) => request.bookId));
   const copies = books
@@ -177,17 +181,19 @@ async function aroundThePick(
         bookId: book.id,
         // As its owner has it, to find it on their shelf
         title: book.title,
-        ownerId: book.userId,
+        owner: book.user,
         mine: book.userId === userId,
+        inGroup: memberIds.includes(book.userId),
         available: book.borrowerId === null && !notLending,
         notLending,
         borrowerId: book.borrowerId,
         requested: requested.has(book.id),
       };
     })
-    .sort((a, b) => Number(b.available) - Number(a.available));
+    .sort((a, b) => Number(b.inGroup) - Number(a.inGroup) || Number(b.available) - Number(a.available));
+  const inGroup = (id: string) => memberIds.includes(id);
   const finished = new Set([
-    ...books.filter((book) => book.readAt && sameWork(work, book)).map((book) => book.userId),
+    ...books.filter((book) => book.readAt && inGroup(book.userId) && sameWork(work, book)).map((book) => book.userId),
     ...readerNotes.filter((note) => sameWork(work, note.book)).map((note) => note.userId),
     ...workNotes.map((note) => note.userId),
   ]);
@@ -234,10 +240,7 @@ export async function getGroupBoard(groupId: Group["id"], userId: User["id"]) {
         author: group.pickAuthor ?? "",
         cover: group.pickCover ?? "",
         pickedBy: nameOf(group.pickedById),
-        copies: (around?.copies ?? []).map(({ ownerId, ...copy }) => ({
-          ...copy,
-          owner: nameOf(ownerId) ?? { id: ownerId, firstname: "", surname: "", profileEmoji: null },
-        })),
+        copies: around?.copies ?? [],
         finished: members.filter((member) => around?.finished.has(member.id)),
         memberCount: members.length,
       }
