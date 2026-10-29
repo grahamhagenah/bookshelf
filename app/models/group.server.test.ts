@@ -284,3 +284,15 @@ test("anyone in a group can describe it; only whoever runs it turns its planning
   expect(await setGroupPlanning(ana.id, id, false)).toBe(true);
   expect((await getGroup(id, ben.id))?.planning).toBe(false);
 });
+
+test("the group knows who you've already asked to be friends", async () => {
+  const ana = await makeUser("Ana");
+  const ben = await makeUser("Ben");
+  const { id } = await createGroup(ana.id, "Book club");
+  await joinGroup(ben.id, await tokenOf(id));
+  const ben1 = (await getGroup(id, ana.id))?.members.find((member) => member.id === ben.id);
+  expect(ben1).toMatchObject({ isFriend: false, requested: false });
+  await createNotification(ana.id, ben.id, "Ana Reader");
+  const ben2 = (await getGroup(id, ana.id))?.members.find((member) => member.id === ben.id);
+  expect(ben2).toMatchObject({ isFriend: false, requested: true });
+});

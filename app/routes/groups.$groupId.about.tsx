@@ -39,9 +39,12 @@ export default function GroupAbout() {
         {/* Fresh for each description, so a save closes the box */}
         <Description key={group.description ?? ""} text={group.description} path={path} />
         <section aria-labelledby="people">
-          <h2 id="people" className={`${sectionHeading} mb-3`}>
-            People
-          </h2>
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h2 id="people" className={sectionHeading}>
+              People
+            </h2>
+            <BefriendAll path={path} count={group.members.filter((member) => !member.isMe && !member.isFriend && !member.requested).length} />
+          </div>
           <ul className="grid gap-3 sm:grid-cols-2">
             {group.members.map((member) => (
               <PersonCard
@@ -131,8 +134,27 @@ function Description({ text, path }: { text: string | null; path: string }) {
   );
 }
 
-const settingLabel = "text-sm font-medium text-stone-800 dark:text-stone-200";
-const settingNote = "mt-0.5 text-xs text-stone-500 dark:text-stone-400";
+// One tap to ask everyone in the group who isn't a friend yet, once there
+// are a few of them
+function BefriendAll({ path, count }: { path: string; count: number }) {
+  const fetcher = useFetcher();
+  if (count < 2) return null;
+  return (
+    <fetcher.Form method="post" action={path}>
+      <input type="hidden" name="intent" value="befriendAll" />
+      <button
+        type="submit"
+        disabled={fetcher.state !== "idle"}
+        className="text-sm font-medium text-stone-600 dark:text-stone-300 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 hover:underline hover:text-stone-900 dark:hover:text-white disabled:opacity-60"
+      >
+        {fetcher.state !== "idle" ? "Asking…" : `Add all ${count} as friends`}
+      </button>
+    </fetcher.Form>
+  );
+}
+
+const settingLabel = "text-base font-medium text-stone-800 dark:text-stone-200";
+const settingNote = "mt-0.5 text-sm text-stone-500 dark:text-stone-400";
 
 // The group's name, for anyone in it to change
 function NameSetting({ name, path }: { name: string; path: string }) {
@@ -153,7 +175,7 @@ function NameSetting({ name, path }: { name: string; path: string }) {
           onChange={(event) => setValue(event.target.value)}
           required
           maxLength={GROUP_NAME_MAX}
-          className={`${textField} h-9 min-w-0 flex-1 py-0 text-sm`}
+          className={`${textField} h-10 min-w-0 flex-1 py-0`}
         />
         {changed ? (
           <button type="submit" disabled={fetcher.state !== "idle"} className={`${quietButton("md")} flex-shrink-0`}>
@@ -161,7 +183,7 @@ function NameSetting({ name, path }: { name: string; path: string }) {
           </button>
         ) : null}
       </div>
-      {fetcher.data?.error ? <p className="mt-1 text-xs text-rose-700 dark:text-rose-400">{fetcher.data.error}</p> : null}
+      {fetcher.data?.error ? <p className="mt-1 text-sm text-rose-700 dark:text-rose-400">{fetcher.data.error}</p> : null}
     </fetcher.Form>
   );
 }
@@ -217,7 +239,7 @@ function PlanningSetting({
             </button>
           </fetcher.Form>
         ) : (
-          <span className="mt-0.5 flex-shrink-0 text-xs font-medium text-stone-500 dark:text-stone-400">{shown ? "On" : "Off"}</span>
+          <span className="mt-0.5 flex-shrink-0 text-sm font-medium text-stone-500 dark:text-stone-400">{shown ? "On" : "Off"}</span>
         )}
       </div>
     </div>
@@ -244,7 +266,7 @@ function PersonCard({
   const fetcher = useFetcher();
   const befriend = useFetcher<{ success?: boolean }>();
   const busy = fetcher.state !== "idle";
-  const asked = befriend.formData !== undefined || befriend.data?.success === true;
+  const asked = member.requested || befriend.formData !== undefined || befriend.data?.success === true;
   const who = (
     <>
       <Avatar firstname={member.firstname} surname={member.surname} icon={member.profileEmoji} />
@@ -293,10 +315,10 @@ function PersonCard({
         ) : (
           <befriend.Form method="post" action="/friends/add" className="flex-shrink-0">
             <input type="hidden" name="friendId" value={member.id} />
-            <button
-              type="submit"
-              className="whitespace-nowrap rounded-md px-2 py-1 text-sm text-stone-500 dark:text-stone-400 hover:bg-stone-100 hover:text-stone-900 dark:hover:bg-stone-800 dark:hover:text-stone-100 transition-colors"
-            >
+            <button type="submit" className={`${quietButton("sm")} inline-flex items-center gap-1 whitespace-nowrap font-medium`}>
+              <span aria-hidden="true" className="text-stone-400 dark:text-stone-500">
+                +
+              </span>
               Add friend
             </button>
           </befriend.Form>
@@ -442,7 +464,7 @@ function AlertSettings({
       <p className={settingNote}>Alert me when:</p>
       <div className="mt-2 space-y-1.5">
         {choices.map((choice) => (
-          <label key={choice.name} className="flex items-center gap-2.5 text-sm text-stone-700 dark:text-stone-300">
+          <label key={choice.name} className="flex items-center gap-2.5 text-[15px] text-stone-700 dark:text-stone-300">
             <input
               type="checkbox"
               name={choice.name}

@@ -8,6 +8,7 @@ import GroupBoard from "~/components/group-board";
 import { LinkIcon } from "~/components/icons";
 import { codeFromLink, groupInvitePath, groupPath } from "~/group-links";
 import { loadGroup } from "~/group-page.server";
+import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import {
   cleanChatUrl,
   clearGroupPick,
@@ -20,6 +21,7 @@ import {
   cleanGroupName,
   deleteGroup,
   describeGroup,
+  getGroup,
   leaveGroup,
   removeFromGroup,
   renameGroup,
@@ -27,6 +29,7 @@ import {
   setGroupAlerts,
   setGroupPlanning,
 } from "~/models/group.server";
+import { createNotification, getUserById } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
 import { pageUrl } from "~/page-url";
 import { seo } from "~/seo";
@@ -135,6 +138,21 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   }
   if (intent === "describe") {
     await describeGroup(userId, groupId, String(formData.get("description") ?? ""));
+    return data({ ok: true });
+  }
+  if (intent === "befriendAll") {
+    // A friend request to everyone in the group who isn't a friend yet
+    // and hasn't been asked
+    const group = await getGroup(groupId, userId);
+    const me = await getUserById(userId);
+    if (group && me) {
+      for (const member of group.members) {
+        if (member.isMe || member.isFriend || member.requested) continue;
+        if (!(await canInteract(userId, member.id))) continue;
+        const friendRequest = await createNotification(userId, member.id, `${me.firstname} ${me.surname}`);
+        await respondAsDemoPersona(friendRequest.id);
+      }
+    }
     return data({ ok: true });
   }
   if (intent === "alerts") {

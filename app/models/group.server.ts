@@ -99,7 +99,7 @@ export async function getGroupPreviews(userId: User["id"]) {
 // out of it.
 export async function getGroup(groupId: Group["id"], userId: User["id"]) {
   if (!(await isMember(groupId, userId))) return null;
-  const [group, me] = await Promise.all([
+  const [group, me, asked] = await Promise.all([
     prisma.group.findUnique({
       where: { id: groupId },
       select: {
@@ -124,9 +124,15 @@ export async function getGroup(groupId: Group["id"], userId: User["id"]) {
       where: { id: userId },
       select: { following: { select: { id: true } } },
     }),
+    // Friend requests you've sent that are still waiting
+    prisma.notification.findMany({
+      where: { type: "FRIEND_REQUEST", senderId: userId, actionTaken: null },
+      select: { receiverId: true },
+    }),
   ]);
   if (!group) return null;
   const friendIds = new Set(me.following.map((friend) => friend.id));
+  const requested = new Set(asked.map((request) => request.receiverId));
   // Whoever's been in longest runs it: the person who started it, until
   // they leave
   const ownerId = group.members[0]?.user.id;
@@ -137,6 +143,8 @@ export async function getGroup(groupId: Group["id"], userId: User["id"]) {
     bookCount: _count.books,
     isMe: user.id === userId,
     isFriend: friendIds.has(user.id),
+    // You've asked to be friends and they haven't answered yet
+    requested: requested.has(user.id),
     isOwner: user.id === ownerId,
   }));
   // Your own books are in the group too, but you don't come here for them
