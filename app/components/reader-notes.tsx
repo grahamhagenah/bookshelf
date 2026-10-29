@@ -266,7 +266,8 @@ export default function ReaderNotes({
   friendIds: string[];
   // When you read it, for readers of this copy
   readAt?: string | Date | null;
-  // Up near the top of the page, the first few, with the rest a tap away
+  // Up near the top of the page: the first few, with the rest a tap away,
+  // and no heading, since the notes say what they are
   limit?: number;
   className?: string;
 }) {
@@ -292,7 +293,7 @@ export default function ReaderNotes({
 
   return (
     <div className={className}>
-      <h2 id="notes" className={`${sectionHeading} mb-3`}>
+      <h2 id="notes" className={limit ? "sr-only" : `${sectionHeading} mb-3`}>
         Reader notes
       </h2>
       {/* Having read it comes first, then your heart, beside one count of
