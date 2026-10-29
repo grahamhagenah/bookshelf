@@ -2726,6 +2726,9 @@ export default function BookDetailsPage() {
                 )}
               </div>
 
+              {/* What it's about, with the description */}
+              <SubjectTags subjects={subjects} title={data.book.title} className="mt-6" />
+
               {/* Then what only this copy has: where it's been, and what
                   its readers thought */}
               <LendingSummary data={data} />
@@ -2736,7 +2739,6 @@ export default function BookDetailsPage() {
               {data.author?.bio ? (
                 <AboutAuthor author={data.author} />
               ) : null}
-              <SubjectTags subjects={subjects} title={data.book.title} className="mt-6" />
             </div>
           ) : null}
 

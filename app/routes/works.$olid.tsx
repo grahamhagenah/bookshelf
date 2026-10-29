@@ -466,6 +466,9 @@ export default function WorkPage() {
           )}
         </div>
 
+        {/* What it's about, with the description */}
+        <SubjectTags subjects={subjects} title={work.title} className="mt-6" />
+
         {/* Then what friends thought, when there's something to read: the
             first two, the rest a tap away. With none, notes wait at the
             bottom */}
@@ -496,7 +499,6 @@ export default function WorkPage() {
             ) : null}
           </section>
         ) : null}
-        <SubjectTags subjects={subjects} title={work.title} className="mt-6" />
 
         {notesUp ? null : notes()}
 
