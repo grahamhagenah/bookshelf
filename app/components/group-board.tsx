@@ -6,11 +6,20 @@ import type { SuggestResponse } from "~/routes/api.search-suggest";
 import type { LoaderData } from "~/utils";
 import { workPath } from "~/utils";
 
+import Avatar from "./avatar";
 import BookCover from "./book-cover";
 import { quietButton, textField } from "./ui";
 
 type Board = NonNullable<LoaderData<Awaited<ReturnType<typeof getGroupBoard>>>>;
 type Editing = "pick" | "meeting" | "chat" | null;
+
+// Side by side from small screens, as many as there are parts: the book,
+// its copies, the meetup, the chat
+const COLUMNS: Record<number, string> = {
+  2: "sm:grid-cols-2",
+  3: "sm:grid-cols-3",
+  4: "sm:grid-cols-2 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.8fr)]",
+};
 
 // A meetup's time as it was typed, the same for everyone: "Thu, Nov 13 ·
 // 7pm" (a time of day only when one was given)
@@ -83,17 +92,17 @@ export default function GroupBoard({
       aria-label={`${groupName}: what you're reading and when you meet`}
       className="mb-6 rounded-xl border border-stone-200 dark:border-stone-800"
     >
-      <div className="grid gap-5 p-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className={`grid gap-5 p-4 ${COLUMNS[[pick, pick, meeting, chat].filter(Boolean).length] ?? ""}`}>
         {editing === "pick" ? (
-          <div className="sm:col-span-3">
+          <div className="col-span-full">
             <PickSearch path={path} groupName={groupName} onDone={done} />
           </div>
         ) : editing === "meeting" ? (
-          <div className="sm:col-span-3">
+          <div className="col-span-full">
             <MeetingForm path={path} meeting={meeting} onDone={done} />
           </div>
         ) : editing === "chat" ? (
-          <div className="sm:col-span-3">
+          <div className="col-span-full">
             <ChatForm path={path} url={chat?.url ?? ""} onDone={done} />
           </div>
         ) : (
@@ -112,7 +121,6 @@ export default function GroupBoard({
                       {pick.title}
                     </PickLink>
                     <p className="text-sm text-stone-500 dark:text-stone-400">{pick.author}</p>
-                    <PickCopies pick={pick} userId={userId} />
                     {pick.finished.length > 0 ? (
                       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
                         {pick.finished.length} of {pick.memberCount} finished ·{" "}
@@ -129,6 +137,7 @@ export default function GroupBoard({
                 </div>
               </div>
             ) : null}
+            {pick ? <CopiesColumn pick={pick} userId={userId} /> : null}
             {meeting ? (
               <div className={section}>
                 <p className={label}>{meetingPast(meeting.at) ? "Last meetup" : "Next meetup"}</p>
@@ -197,45 +206,64 @@ const names = (people: string[]) =>
     ? people.join("")
     : `${people.slice(0, -1).join(", ")} and ${people[people.length - 1]}`;
 
-// The one thing to do about getting a copy of the group's book, from
-// someone in it, and who else has one
-function PickCopies({ pick, userId }: { pick: NonNullable<Board["pick"]>; userId: string }) {
-  const mine = pick.copies.find((copy) => copy.mine);
-  const borrowing = pick.copies.find((copy) => copy.borrowerId === userId);
-  const free = pick.copies.find((copy) => !copy.mine && copy.available);
-  const out = pick.copies.find((copy) => !copy.mine && !copy.notLending && copy.borrowerId !== userId);
-  const shown = mine ?? borrowing ?? free ?? out;
-  const others = pick.copies.filter((copy) => copy !== shown && !copy.mine);
-  const action = `${quietButton("sm")} inline-flex items-center font-medium`;
-  const state = "text-sm text-stone-500 dark:text-stone-400";
+// Everyone in the group with a copy of its book, each opening their shelf
+// already looking for it (yours, or one you're borrowing, opens the copy),
+// said plainly: "Maya has a copy", "Sam's copy is lent out"
+function CopiesColumn({ pick, userId }: { pick: NonNullable<Board["pick"]>; userId: string }) {
+  const name = (person: { firstname: string }) => (
+    <span className="font-medium text-stone-800 dark:text-stone-200 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 group-hover:underline">
+      {person.firstname}
+    </span>
+  );
+  const say = (copy: NonNullable<Board["pick"]>["copies"][number]) =>
+    copy.mine ? (
+      <>You have a copy</>
+    ) : copy.borrowerId === userId ? (
+      <>You&apos;re borrowing {name(copy.owner)}&apos;s</>
+    ) : copy.requested ? (
+      <>You asked {name(copy.owner)} for it</>
+    ) : copy.notLending ? (
+      <>{name(copy.owner)} has a copy, not lending now</>
+    ) : copy.borrowerId ? (
+      <>{name(copy.owner)}&apos;s copy is lent out</>
+    ) : (
+      <>{name(copy.owner)} has a copy</>
+    );
+  // Yours first, then the ones you could borrow now
+  const rank = (copy: NonNullable<Board["pick"]>["copies"][number]) =>
+    copy.mine || copy.borrowerId === userId ? 0 : copy.available ? 1 : 2;
+  const copies = [...pick.copies].sort((a, b) => rank(a) - rank(b));
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-      {mine ? (
-        <span className={state}>You have a copy</span>
-      ) : borrowing ? (
-        <Link to={`/books/${borrowing.bookId}`} className={`${state} underline-offset-2 hover:underline`}>
-          You&apos;re borrowing {borrowing.owner.firstname}&apos;s
-        </Link>
-      ) : free?.requested ? (
-        <Link to={`/books/${free.bookId}`} className={`${state} underline-offset-2 hover:underline`}>
-          Requested from {free.owner.firstname}
-        </Link>
-      ) : free ? (
-        <Link to={`/books/${free.bookId}`} className={action}>
-          Ask {free.owner.firstname} to borrow it
-        </Link>
-      ) : out ? (
-        <Link to={`/books/${out.bookId}`} className={action}>
-          Get in line for {out.owner.firstname}&apos;s
-        </Link>
+    <div className="min-w-0">
+      <p className="text-xs font-semibold uppercase tracking-wide text-stone-400 dark:text-stone-500">Copies</p>
+      {copies.length === 0 ? (
+        <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">Nobody here has one yet</p>
       ) : (
-        <span className={state}>Nobody here has a copy yet</span>
+        <ul className="mt-1">
+          {copies.map((copy) => (
+            <li key={copy.bookId}>
+              <Link
+                to={
+                  copy.mine || copy.borrowerId === userId
+                    ? `/books/${copy.bookId}`
+                    : `/friend/${copy.owner.id}?${new URLSearchParams({ q: copy.title })}`
+                }
+                className="group flex items-center gap-2.5 py-1 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors"
+              >
+                <span className="rounded-full bg-white dark:bg-stone-950">
+                  <Avatar
+                    firstname={copy.owner.firstname}
+                    surname={copy.owner.surname}
+                    icon={copy.owner.profileEmoji}
+                    size="xs"
+                  />
+                </span>
+                <span className="min-w-0">{say(copy)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       )}
-      {others.length > 0 ? (
-        <span className={state}>
-          {names(others.map((copy) => copy.owner.firstname))} {others.length === 1 ? "has one too" : "have copies too"}
-        </span>
-      ) : null}
     </div>
   );
 }

@@ -113,7 +113,7 @@ test("the card shows the group's copies of its book and who's finished it", asyn
 
   const board = await getGroupBoard(groupId, maya.id);
   expect(board?.pick?.copies).toEqual([
-    expect.objectContaining({ bookId: samsCopy.id, owner: { id: sam.id, firstname: "Sam" }, mine: false, available: true }),
+    expect.objectContaining({ bookId: samsCopy.id, owner: expect.objectContaining({ id: sam.id, firstname: "Sam" }), mine: false, available: true }),
   ]);
   expect(board?.pick?.finished.map((person) => person.firstname).sort()).toEqual(["Maya", "Sam"]);
   expect(board?.pick?.memberCount).toBe(2);

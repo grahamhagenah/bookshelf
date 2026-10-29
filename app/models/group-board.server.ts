@@ -175,6 +175,8 @@ async function aroundThePick(
       const notLending = isNotLending(book.notLendingUntil);
       return {
         bookId: book.id,
+        // As its owner has it, to find it on their shelf
+        title: book.title,
         ownerId: book.userId,
         mine: book.userId === userId,
         available: book.borrowerId === null && !notLending,
@@ -208,7 +210,10 @@ export async function getGroupBoard(groupId: Group["id"], userId: User["id"]) {
       chatUrl: true,
       boardById: true,
       boardAt: true,
-      members: { select: { user: { select: { id: true, firstname: true } } } },
+      members: {
+        select: { user: { select: { id: true, firstname: true, surname: true, profileEmoji: true } } },
+        orderBy: { joinedAt: "asc" },
+      },
     },
   });
   if (!group) return null;
@@ -231,7 +236,7 @@ export async function getGroupBoard(groupId: Group["id"], userId: User["id"]) {
         pickedBy: nameOf(group.pickedById),
         copies: (around?.copies ?? []).map(({ ownerId, ...copy }) => ({
           ...copy,
-          owner: nameOf(ownerId) ?? { id: ownerId, firstname: "" },
+          owner: nameOf(ownerId) ?? { id: ownerId, firstname: "", surname: "", profileEmoji: null },
         })),
         finished: members.filter((member) => around?.finished.has(member.id)),
         memberCount: members.length,
