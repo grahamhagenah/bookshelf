@@ -1338,7 +1338,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       title: "How to Do Nothing",
       by: "anika",
       loved: true,
-      body: "Read it on the porch with my phone in another room, which is the point.",
+      body: "Made me go outside and look at birds. Unironically recommend.",
       at: ago(1.5 * day),
     },
     {

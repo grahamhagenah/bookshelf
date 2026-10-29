@@ -802,7 +802,7 @@ const POSTS: [who: keyof typeof MEMBERS, name: string, title: string, cover: str
     "Anika Rao",
     "How to Do Nothing",
     COVERS.howToDoNothing,
-    "Read it on the porch with my phone in another room, which is the point.",
+    "Made me go outside and look at birds. Unironically recommend.",
   ],
 ];
 
