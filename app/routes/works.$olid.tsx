@@ -530,7 +530,7 @@ interface FriendCopyData {
   user: { id: string; firstname: string; surname: string; profileEmoji: string | null };
 }
 
-// Who you know has it, said plainly: "Anika has it", "Sam's copy is
+// Who you know has it, said plainly: "Anika has a copy", "Sam's copy is
 // lent out". Each opens their shelf, already looking for this book, to
 // borrow it from there.
 function FriendCopies({ copies, userId }: { copies: FriendCopyData[]; userId: string }) {
@@ -539,9 +539,9 @@ function FriendCopies({ copies, userId }: { copies: FriendCopyData[]; userId: st
     if (copy.borrowerId === userId) return <>You&apos;re borrowing {name}&apos;s copy</>;
     if (copy.requested) return <>You asked {name} for it</>;
     if (copy.inLine) return <>You&apos;re in line for {name}&apos;s copy</>;
-    if (isNotLending(copy.notLendingUntil)) return <>{name} has it, not lending right now</>;
+    if (isNotLending(copy.notLendingUntil)) return <>{name} has a copy, not lending right now</>;
     if (copy.borrowerId) return <>{name}&apos;s copy is lent out</>;
-    return <>{name} has it</>;
+    return <>{name} has a copy</>;
   };
   return (
     <ul aria-label="Friends with a copy" className="pt-1">
