@@ -49,12 +49,6 @@ const HEARTS: Record<string, string> = {
 };
 const heartOf = (color: string) => HEARTS[color] ?? HEARTS.forest;
 
-// A note's bubble, and its tail in the same fill and outline
-const bubble =
-  "border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-800";
-const tail =
-  "fill-white stroke-stone-200 dark:fill-stone-800 dark:stroke-stone-700";
-
 // Who the shelf belongs to, in their words, and what they love
 function ProfileHeader({ data }: { data: SharedShelfData }) {
   const { profile } = data;
@@ -115,11 +109,8 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
             <HeartIcon size={14} filled className={heartOf(profile.color)} />
             Favorites
           </h2>
-          {/* Every other favorite sits lower, as if set down by hand, with
-              its note hanging underneath, so a note never covers a cover */}
-          <ul className="mt-4 grid grid-cols-2 items-start gap-x-5 gap-y-10 sm:grid-cols-5 sm:gap-x-7">
-            {profile.favorites.map((book, i) => {
-              const lower = i % 2 === 1;
+          <ul className="mt-4 grid grid-cols-2 items-start gap-x-5 gap-y-8 sm:grid-cols-5 sm:gap-x-6">
+            {profile.favorites.map((book) => {
               const contents = (
                 <>
                   <BookCover
@@ -128,46 +119,22 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
                     author={book.author}
                     // Five across from small tablets up, two on phones
                     sizes="(min-width: 640px) 220px, 50vw"
-                    className="aspect-[2/3] w-full shadow-md shadow-stone-900/10 transition-opacity duration-200 group-hover:opacity-90"
+                    className="aspect-[2/3] w-full transition-opacity duration-200 group-hover:opacity-90"
                   />
                   <span className="sr-only">
                     {book.title} by {book.author}
                   </span>
-                  {/* Why it's here, in the owner's words, said from the
-                      cover: the tail points up at it, from one side or the
-                      other by turns, its tip just over the cover's edge */}
+                  {/* Why it's here, in the owner's words, kept to three
+                      lines so the row stays even */}
                   {book.note ? (
-                    <span
-                      className={`relative mt-0.5 block ${lower ? "ml-3" : "mr-3"}`}
-                    >
-                      {/* Its bottom row lies over the bubble's top border:
-                          the fill hides the border there, and the two sides
-                          end on the border's middle, so the outline runs on
-                          without a step */}
-                      <svg
-                        aria-hidden
-                        viewBox="0 0 16 9"
-                        className={`absolute -top-2 z-10 h-[9px] w-4 ${tail} ${
-                          lower ? "left-6" : "right-6"
-                        }`}
-                      >
-                        <path d="M0 9 L8 1 L16 9 Z" stroke="none" />
-                        <path d="M0 8.5 L8 0.5 L16 8.5" fill="none" strokeWidth="1" />
-                      </svg>
-                      <span
-                        className={`block rounded-2xl px-3 py-2 text-[11px] leading-snug text-stone-700 shadow-[0_1px_3px_rgb(0_0_0/0.06)] dark:text-stone-200 sm:text-xs ${bubble}`}
-                      >
-                        <span className="line-clamp-4">{book.note}</span>
-                      </span>
+                    <span className="mt-2 line-clamp-3 text-xs leading-snug text-stone-600 dark:text-stone-300 sm:text-sm">
+                      {book.note}
                     </span>
                   ) : null}
                 </>
               );
               return (
-                <li
-                  key={book.id}
-                  className={`min-w-0 ${lower ? "mt-8 sm:mt-12" : ""}`}
-                >
+                <li key={book.id} className="min-w-0">
                   {book.onShelf ? (
                     // To the book's page, as the covers on the shelf below go
                     <Link
