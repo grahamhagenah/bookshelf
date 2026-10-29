@@ -469,7 +469,7 @@ export default function WorkPage() {
         {/* Then what friends thought, when there's something to read: the
             first two, the rest a tap away. With none, notes wait at the
             bottom */}
-        {notesUp ? notes(2, "mt-10 max-w-150") : null}
+        {notesUp ? notes(2, "my-12 max-w-150") : null}
 
         {work.authorDetails?.bio ? (
           <section className="mt-10">

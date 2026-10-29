@@ -2729,7 +2729,7 @@ export default function BookDetailsPage() {
               {/* Then what only this copy has: where it's been, and what
                   its readers thought */}
               <LendingSummary data={data} />
-              {notesUp ? notes(2, "mt-10 max-w-150") : null}
+              {notesUp ? notes(2, "my-12 max-w-150") : null}
 
               {/* Only with something to say: a heading over a bare link
                   read like something broke */}
