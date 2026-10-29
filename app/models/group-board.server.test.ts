@@ -7,11 +7,13 @@ import {
   cleanChatUrl,
   clearGroupPick,
   getGroupBoard,
+  meetupCalendar,
   setGroupChat,
   setGroupMeeting,
   setGroupPick,
 } from "./group-board.server";
 import { createGroup } from "./group.server";
+import { createFriendship } from "./user.server";
 
 const circe = {
   key: "/works/OL20048856W",
@@ -31,7 +33,7 @@ async function club() {
 
 test("a group starts with nothing on its board, and any member can fill it in", async () => {
   const { maya, sam, outsider, groupId } = await club();
-  expect(await getGroupBoard(groupId)).toMatchObject({ pick: null, meeting: null, chat: null, changed: null });
+  expect(await getGroupBoard(groupId, maya.id)).toMatchObject({ pick: null, meeting: null, chat: null, changed: null });
 
   // Only members
   expect(await setGroupPick(outsider.id, groupId, circe)).toBe(false);
@@ -39,7 +41,7 @@ test("a group starts with nothing on its board, and any member can fill it in", 
   await setGroupMeeting(maya.id, groupId, { at: new Date("2026-11-13T19:00:00Z"), place: "  Sam's place " });
   await setGroupChat(maya.id, groupId, cleanChatUrl("chat.whatsapp.com/AbC123"));
 
-  const board = await getGroupBoard(groupId);
+  const board = await getGroupBoard(groupId, maya.id);
   expect(board?.pick).toMatchObject({ title: "Circe", pickedBy: { id: sam.id } });
   expect(board?.meeting).toEqual({ at: new Date("2026-11-13T19:00:00Z"), place: "Sam's place" });
   expect(board?.chat).toEqual({ url: "https://chat.whatsapp.com/AbC123", app: "WhatsApp" });
@@ -49,7 +51,7 @@ test("a group starts with nothing on its board, and any member can fill it in", 
   await clearGroupPick(sam.id, groupId);
   await setGroupMeeting(sam.id, groupId, { at: null, place: "" });
   await setGroupChat(sam.id, groupId, null);
-  expect(await getGroupBoard(groupId)).toMatchObject({ pick: null, meeting: null, chat: null, changed: null });
+  expect(await getGroupBoard(groupId, maya.id)).toMatchObject({ pick: null, meeting: null, chat: null, changed: null });
 });
 
 test("chat links take only web addresses, and name the app when they can", () => {
@@ -94,4 +96,53 @@ test("a new pick reaches the group's members in their feeds, with copies among t
   await setGroupPick(sam.id, groupId, circe);
   const after = await prisma.group.findUnique({ where: { id: groupId }, select: { pickedAt: true } });
   expect(after?.pickedAt).toEqual(before?.pickedAt);
+});
+
+test("the card shows the group's copies of its book and who's finished it", async () => {
+  const { maya, sam, outsider, groupId } = await club();
+  await createFriendship(maya.id, sam.id);
+  const samsCopy = await makeBook(sam.id, "Circe");
+  await prisma.book.update({ where: { id: samsCopy.id }, data: { readAt: new Date() } });
+  // A copy outside the group doesn't count
+  await makeBook(outsider.id, "Circe");
+  // Maya read it elsewhere
+  await prisma.workNote.create({
+    data: { userId: maya.id, workKey: circe.key, title: "Circe", author: circe.author, cover: "", readAt: new Date() },
+  });
+  await setGroupPick(maya.id, groupId, circe);
+
+  const board = await getGroupBoard(groupId, maya.id);
+  expect(board?.pick?.copies).toEqual([
+    expect.objectContaining({ bookId: samsCopy.id, owner: { id: sam.id, firstname: "Sam" }, mine: false, available: true }),
+  ]);
+  expect(board?.pick?.finished.map((person) => person.firstname).sort()).toEqual(["Maya", "Sam"]);
+  expect(board?.pick?.memberCount).toBe(2);
+});
+
+test("a meetup goes to a calendar as typed: 7pm floating, or all day without a time", () => {
+  const evening = meetupCalendar({
+    groupId: "g1",
+    name: "Thursday club",
+    at: new Date("2026-11-05T19:00:00Z"),
+    place: "Maya's place, 2nd floor",
+    pick: { title: "Circe", author: "Madeline Miller" },
+    url: "https://bookstacks.app/groups/thursday-club-g1",
+  });
+  expect(evening).toContain("DTSTART:20261105T190000\r\n");
+  expect(evening).toContain("DTEND:20261105T210000\r\n");
+  expect(evening).toContain("SUMMARY:Thursday club: Circe\r\n");
+  expect(evening).toContain("LOCATION:Maya's place\\, 2nd floor\r\n");
+  expect(evening).toContain("DESCRIPTION:Reading Circe by Madeline Miller\\nhttps://bookstacks.app/groups/thursday-club-g1\r\n");
+
+  const allDay = meetupCalendar({
+    groupId: "g1",
+    name: "Thursday club",
+    at: new Date("2026-11-05T00:00:00Z"),
+    place: null,
+    pick: null,
+    url: "https://bookstacks.app/groups/thursday-club-g1",
+  });
+  expect(allDay).toContain("DTSTART;VALUE=DATE:20261105\r\n");
+  expect(allDay).toContain("DTEND;VALUE=DATE:20261106\r\n");
+  expect(allDay).not.toContain("LOCATION");
 });

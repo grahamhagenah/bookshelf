@@ -7,7 +7,6 @@ import { useOptionalUser, workPath } from "~/utils";
 
 import Avatar from "./avatar";
 import BookCover from "./book-cover";
-import Faces from "./faces";
 import { meetingPast, meetingWhen } from "./group-board";
 import { BookmarkIcon, HeartIcon, PencilIcon } from "./icons";
 import PersonLink from "./person-link";
@@ -166,18 +165,22 @@ export default function FriendActivityItem({
     );
     return (
       <div className="flex items-start gap-3 py-3">
-        <span className="w-7 flex-shrink-0 pt-0.5">
-          <Faces people={item.people.slice(0, 2)} size="xs" max={2} />
-        </span>
+        <Avatar
+          firstname={item.friend.firstname}
+          surname={item.friend.surname}
+          icon={item.friend.profileEmoji}
+          size="rail"
+        />
         <div className="min-w-0 flex-1 pt-0.5">
           <p className="text-stone-800 dark:text-stone-200 leading-snug">
-            {group} is reading{" "}
+            {item.friend.id === viewer?.id ? <strong className="font-semibold">You</strong> : name} picked{" "}
             <Link
               to={pickPage(item.work)}
               className="font-semibold underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
             >
               {item.work.title}
-            </Link>
+            </Link>{" "}
+            for {group}
           </p>
           <div className="mt-2 flex items-start gap-3">
             <Link to={pickPage(item.work)} title={item.work.title} className="flex-shrink-0">
@@ -703,10 +706,9 @@ function PickCard({ item, userId }: { item: PickItem; userId: string }) {
           </span>
         </Link>
       </div>
-      <div className="mt-3 flex items-center gap-2 text-sm text-stone-500 dark:text-stone-400">
-        <Faces people={item.people} size="xs" max={6} />
-        <span className="min-w-0">With {namesOf(item.people, userId)}</span>
-      </div>
+      <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
+        With {namesOf(item.people, userId)}
+      </p>
       <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-stone-100 dark:border-stone-800 pt-2">
         {ownCopyId ? (
           <Link to={`/books/${ownCopyId}`} className={actionClass}>

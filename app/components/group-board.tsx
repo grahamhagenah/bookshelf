@@ -112,6 +112,13 @@ export default function GroupBoard({
                       {pick.title}
                     </PickLink>
                     <p className="text-sm text-stone-500 dark:text-stone-400">{pick.author}</p>
+                    <PickCopies pick={pick} userId={userId} />
+                    {pick.finished.length > 0 ? (
+                      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+                        {pick.finished.length} of {pick.memberCount} finished ·{" "}
+                        {names(pick.finished.map((person) => who(person)))}
+                      </p>
+                    ) : null}
                     <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">
                       Picked by {who(pick.pickedBy)} ·{" "}
                       <button type="button" onClick={() => setEditing("pick")} className="underline-offset-2 hover:underline hover:text-stone-700 dark:hover:text-stone-300">
@@ -131,9 +138,21 @@ export default function GroupBoard({
                 {meeting.place ? (
                   <p className={`${meeting.at ? "" : "mt-2 "}text-sm text-stone-600 dark:text-stone-300`}>{meeting.place}</p>
                 ) : null}
-                <button type="button" onClick={() => setEditing("meeting")} className="mt-1 text-xs text-stone-400 dark:text-stone-500 underline-offset-2 hover:underline hover:text-stone-700 dark:hover:text-stone-300">
-                  Change
-                </button>
+                <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">
+                  {meeting.at && !meetingPast(meeting.at) ? (
+                    <>
+                      {/* A file any calendar app opens: the date, the time
+                          as typed, the place and the book */}
+                      <a href={`${path}/meetup.ics`} download className="underline-offset-2 hover:underline hover:text-stone-700 dark:hover:text-stone-300">
+                        Add to calendar
+                      </a>
+                      {" · "}
+                    </>
+                  ) : null}
+                  <button type="button" onClick={() => setEditing("meeting")} className="underline-offset-2 hover:underline hover:text-stone-700 dark:hover:text-stone-300">
+                    Change
+                  </button>
+                </p>
               </div>
             ) : null}
             {chat ? (
@@ -169,6 +188,55 @@ export default function GroupBoard({
         </div>
       )}
     </section>
+  );
+}
+
+// "Maya", "Maya and Sam", "Maya, Sam and you"
+const names = (people: string[]) =>
+  people.length <= 1
+    ? people.join("")
+    : `${people.slice(0, -1).join(", ")} and ${people[people.length - 1]}`;
+
+// The one thing to do about getting a copy of the group's book, from
+// someone in it, and who else has one
+function PickCopies({ pick, userId }: { pick: NonNullable<Board["pick"]>; userId: string }) {
+  const mine = pick.copies.find((copy) => copy.mine);
+  const borrowing = pick.copies.find((copy) => copy.borrowerId === userId);
+  const free = pick.copies.find((copy) => !copy.mine && copy.available);
+  const out = pick.copies.find((copy) => !copy.mine && !copy.notLending && copy.borrowerId !== userId);
+  const shown = mine ?? borrowing ?? free ?? out;
+  const others = pick.copies.filter((copy) => copy !== shown && !copy.mine);
+  const action = `${quietButton("sm")} inline-flex items-center font-medium`;
+  const state = "text-sm text-stone-500 dark:text-stone-400";
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+      {mine ? (
+        <span className={state}>You have a copy</span>
+      ) : borrowing ? (
+        <Link to={`/books/${borrowing.bookId}`} className={`${state} underline-offset-2 hover:underline`}>
+          You&apos;re borrowing {borrowing.owner.firstname}&apos;s
+        </Link>
+      ) : free?.requested ? (
+        <Link to={`/books/${free.bookId}`} className={`${state} underline-offset-2 hover:underline`}>
+          Requested from {free.owner.firstname}
+        </Link>
+      ) : free ? (
+        <Link to={`/books/${free.bookId}`} className={action}>
+          Ask {free.owner.firstname} to borrow it
+        </Link>
+      ) : out ? (
+        <Link to={`/books/${out.bookId}`} className={action}>
+          Get in line for {out.owner.firstname}&apos;s
+        </Link>
+      ) : (
+        <span className={state}>Nobody here has a copy yet</span>
+      )}
+      {others.length > 0 ? (
+        <span className={state}>
+          {names(others.map((copy) => copy.owner.firstname))} {others.length === 1 ? "has one too" : "have copies too"}
+        </span>
+      ) : null}
+    </div>
   );
 }
 

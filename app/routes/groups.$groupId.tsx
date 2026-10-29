@@ -58,7 +58,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   return data({
     group: { ...rest, lenderCount: openIds.length },
     // What it's reading and when it meets, if it keeps that here
-    board: await getGroupBoard(group.id),
+    board: await getGroupBoard(group.id, userId),
     userId,
     path,
     inviteUrl: `${publicOrigin(request)}${groupInvitePath(group.name, inviteToken)}`,
