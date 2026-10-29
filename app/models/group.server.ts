@@ -1,6 +1,6 @@
 import { prisma } from "~/db.server";
 import type { Group, User } from "~/generated/prisma/client";
-import { GROUP_NAME_MAX } from "~/group-links";
+import { GROUP_DESCRIPTION_MAX, GROUP_NAME_MAX } from "~/group-links";
 
 import { canInteract } from "./demo.server";
 import { countPoolBooks } from "./pool.server";
@@ -106,6 +106,8 @@ export async function getGroup(groupId: Group["id"], userId: User["id"]) {
         id: true,
         name: true,
         inviteToken: true,
+        description: true,
+        planning: true,
         members: {
           orderBy: { joinedAt: "asc" },
           select: {
@@ -142,6 +144,8 @@ export async function getGroup(groupId: Group["id"], userId: User["id"]) {
     id: group.id,
     name: group.name,
     inviteToken: group.inviteToken,
+    description: group.description,
+    planning: group.planning,
     members,
     openIds,
     groupOnly,
@@ -159,6 +163,7 @@ export async function getGroupByToken(token: string) {
     select: {
       id: true,
       name: true,
+      description: true,
       members: { orderBy: { joinedAt: "asc" }, select: { user: { select: person } } },
     },
   });
@@ -177,6 +182,7 @@ export async function getGroupByToken(token: string) {
   return {
     id: group.id,
     name: group.name,
+    description: group.description,
     members: group.members.map((member) => member.user),
     bookCount,
     recent,
@@ -270,6 +276,23 @@ export async function removeFromGroup(userId: User["id"], groupId: Group["id"], 
 export async function renameGroup(userId: User["id"], groupId: Group["id"], name: string) {
   if (!(await isMember(groupId, userId))) return false;
   await prisma.group.update({ where: { id: groupId }, data: { name } });
+  return true;
+}
+
+// A few lines on what the group is; anyone in it can write them, as they
+// can rename it. Empty takes it away
+export async function describeGroup(userId: User["id"], groupId: Group["id"], description: string) {
+  if (!(await isMember(groupId, userId))) return false;
+  const text = description.trim().slice(0, GROUP_DESCRIPTION_MAX);
+  await prisma.group.update({ where: { id: groupId }, data: { description: text || null } });
+  return true;
+}
+
+// The planning card on or off, for the whole group, so it's for whoever
+// runs it to say
+export async function setGroupPlanning(userId: User["id"], groupId: Group["id"], on: boolean) {
+  if (!(await runsGroup(userId, groupId))) return false;
+  await prisma.group.update({ where: { id: groupId }, data: { planning: on } });
   return true;
 }
 

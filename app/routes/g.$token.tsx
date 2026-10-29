@@ -80,13 +80,19 @@ export default function JoinGroup() {
       <h1 className="mt-5 text-balance text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
         Join {group.name} on Stacks
       </h1>
+      {/* In the group's own words, when it has some */}
+      {group.description ? (
+        <p className="mx-auto mt-4 max-w-md whitespace-pre-line text-pretty text-stone-700 dark:text-stone-200">
+          {group.description}
+        </p>
+      ) : null}
       <p className="mt-3 text-pretty text-lg text-stone-600 dark:text-stone-300">
         {names.length === 1
           ? `${names[0]} started this group to lend books to people they know.`
           : `${whoIsIn(names)} lend books to each other here.`}{" "}
         Join and everyone here can see your shelf and you theirs, free to
         borrow from each other, no friending needed. Books you keep off your
-        page stay out of it.
+        public shelf stay out of it.
       </p>
 
       {group.recent.length > 0 ? (

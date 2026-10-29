@@ -4,6 +4,7 @@
 
 // The longest a group's name can be
 export const GROUP_NAME_MAX = 60;
+export const GROUP_DESCRIPTION_MAX = 300;
 
 // "Thursday Book Club!" -> "thursday-book-club"; "Café Lecture" -> "cafe-lecture"
 export function slugify(name: string) {

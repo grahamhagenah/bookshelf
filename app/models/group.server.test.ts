@@ -7,6 +7,7 @@ import {
   cleanGroupName,
   createGroup,
   deleteGroup,
+  describeGroup,
   getGroup,
   getGroupByToken,
   getMyGroups,
@@ -14,6 +15,7 @@ import {
   leaveGroup,
   removeFromGroup,
   resetGroupLink,
+  setGroupPlanning,
 } from "./group.server";
 import { getPoolWanted, searchPool } from "./pool.server";
 import { createFriendship, createNotification, getFriendStatus } from "./user.server";
@@ -260,4 +262,25 @@ test("the last one out takes the group's notices with it", async () => {
   await leaveGroup(ana.id, group.id);
   await leaveGroup(ben.id, group.id);
   expect(await prisma.notification.count({ where: { groupId: group.id } })).toBe(0);
+});
+
+test("anyone in a group can describe it; only whoever runs it turns its planning card off", async () => {
+  const ana = await makeUser("Ana");
+  const ben = await makeUser("Ben");
+  const stranger = await makeUser("Stranger");
+  const { id } = await createGroup(ana.id, "Book club");
+  await joinGroup(ben.id, await tokenOf(id));
+
+  expect(await describeGroup(stranger.id, id, "Not mine to say")).toBe(false);
+  expect(await describeGroup(ben.id, id, "  First Thursdays, mostly novels.  ")).toBe(true);
+  expect((await getGroup(id, ana.id))?.description).toBe("First Thursdays, mostly novels.");
+  // It shows on the invite too
+  expect((await getGroupByToken(await tokenOf(id)))?.description).toBe("First Thursdays, mostly novels.");
+  await describeGroup(ana.id, id, "   ");
+  expect((await getGroup(id, ana.id))?.description).toBeNull();
+
+  expect((await getGroup(id, ana.id))?.planning).toBe(true);
+  expect(await setGroupPlanning(ben.id, id, false)).toBe(false);
+  expect(await setGroupPlanning(ana.id, id, false)).toBe(true);
+  expect((await getGroup(id, ben.id))?.planning).toBe(false);
 });
