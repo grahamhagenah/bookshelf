@@ -624,17 +624,6 @@ export const ICON_PATHS = {
       <path d="M10.4 15.3V11.6M13.6 15.3V11.6" />
     </>
   ),
-  teapot: (
-    <>
-      {/* Side on: a round body, a lid with a knob, a spout up to the left
-          and a handle to the right, none of them crossing */}
-      <path d="M5.5 10.5h13c0 4.7-2.7 8.5-6.5 8.5s-6.5-3.8-6.5-8.5z" />
-      <path d="M8 10.5a4 2.6 0 0 1 8 0" />
-      <circle cx="12" cy="6.9" r="1.1" fill="currentColor" stroke="none" />
-      <path d="M5.7 12.5 2.8 9.8c.4 2.7 1.8 5.2 4.25 6.2" />
-      <path d="M18.4 12h.8a2.3 2.3 0 0 1 0 4.6h-2.7" />
-    </>
-  ),
 };
 
 export type AvatarIcon = keyof typeof ICON_PATHS;
