@@ -456,7 +456,7 @@ export default function WorkPage() {
               label. Its first lines, the rest a tap away */}
           <h2 className="sr-only">About this book</h2>
           {work.description ? (
-            <ClampedText id="description" text={stripMarkdown(work.description)} />
+            <ClampedText id="description" text={stripMarkdown(work.description)} className="text-[17px] md:text-lg" />
           ) : (
             <p className="max-w-150 leading-relaxed text-stone-700 dark:text-stone-300">
               {data.offline

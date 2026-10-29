@@ -2704,7 +2704,7 @@ export default function BookDetailsPage() {
                     its label. Its first lines, the rest a tap away */}
                 <h2 className="sr-only">About this book</h2>
                 {data.book.body ? (
-                  <ClampedText id="description" text={stripMarkdown(data.book.body)} />
+                  <ClampedText id="description" text={stripMarkdown(data.book.body)} className="text-[17px] md:text-lg" />
                 ) : (
                   <p className="whitespace-pre-wrap text-stone-700 dark:text-stone-300 leading-relaxed max-w-150">
                     {data.isOwner ? (
