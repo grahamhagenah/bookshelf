@@ -123,7 +123,7 @@ export default function PositionedMenu() {
 
       {open ? (
         // On phones: wider, with larger text and icons
-        <div className="absolute right-0 mt-1 w-72 md:w-52 bg-white dark:bg-stone-950 rounded-xl md:rounded-lg shadow-soft border border-stone-200/80 dark:border-stone-800 py-1.5 md:py-1 z-50 text-base md:text-sm [&_svg]:size-[22px] md:[&_svg]:size-[18px] [&_svg]:text-stone-600 dark:[&_svg]:text-stone-300 [&_svg]:[stroke-width:1.75]">
+        <div className="absolute right-0 top-full mt-2 w-72 md:w-52 bg-white dark:bg-stone-950 rounded-xl md:rounded-lg shadow-soft border border-stone-200/80 dark:border-stone-800 py-1.5 md:py-1 z-50 text-base md:text-sm [&_svg]:size-[22px] md:[&_svg]:size-[18px] [&_svg]:text-stone-600 dark:[&_svg]:text-stone-300 [&_svg]:[stroke-width:1.75]">
           {user ? (
             <div className="mb-1 border-b dark:border-stone-800 pb-1">
               {publicShelf ? (

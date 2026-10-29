@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { data, NavLink, Outlet, redirect, useFetcher, useLoaderData, useSearchParams } from "react-router";
+import { data, NavLink, Outlet, redirect, useLoaderData, useSearchParams } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import invariant from "tiny-invariant";
 
 import Faces from "~/components/faces";
 import GroupBoard from "~/components/group-board";
-import { LinkIcon, PencilIcon } from "~/components/icons";
-import { GROUP_NAME_MAX, codeFromLink, groupInvitePath, groupPath } from "~/group-links";
+import { LinkIcon } from "~/components/icons";
+import { codeFromLink, groupInvitePath, groupPath } from "~/group-links";
 import { loadGroup } from "~/group-page.server";
+import { canInteract, respondAsDemoPersona } from "~/models/demo.server";
 import {
   cleanChatUrl,
   clearGroupPick,
@@ -19,11 +20,16 @@ import {
 import {
   cleanGroupName,
   deleteGroup,
+  describeGroup,
+  getGroup,
   leaveGroup,
   removeFromGroup,
   renameGroup,
   resetGroupLink,
+  setGroupAlerts,
+  setGroupPlanning,
 } from "~/models/group.server";
+import { createNotification, getUserById } from "~/models/user.server";
 import { publicOrigin } from "~/origin.server";
 import { pageUrl } from "~/page-url";
 import { seo } from "~/seo";
@@ -67,8 +73,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export type GroupLayoutData = typeof loader;
 
-// Renaming, leaving and a fresh invite link, from the People tab; the
-// book, meetup and chat link on the card at the top
+// Renaming, describing, the planning card's switch, leaving and a fresh
+// invite link, from the About tab; the book, meetup and chat link on the
+// card at the top
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.groupId, "groupId not found");
@@ -129,6 +136,37 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     await setGroupChat(userId, groupId, clear ? null : cleanChatUrl(formData.get("url")));
     return data({ ok: true });
   }
+  if (intent === "describe") {
+    await describeGroup(userId, groupId, String(formData.get("description") ?? ""));
+    return data({ ok: true });
+  }
+  if (intent === "befriendAll") {
+    // A friend request to everyone in the group who isn't a friend yet
+    // and hasn't been asked
+    const group = await getGroup(groupId, userId);
+    const me = await getUserById(userId);
+    if (group && me) {
+      for (const member of group.members) {
+        if (member.isMe || member.isFriend || member.requested) continue;
+        if (!(await canInteract(userId, member.id))) continue;
+        const friendRequest = await createNotification(userId, member.id, `${me.firstname} ${me.surname}`);
+        await respondAsDemoPersona(friendRequest.id);
+      }
+    }
+    return data({ ok: true });
+  }
+  if (intent === "alerts") {
+    await setGroupAlerts(userId, groupId, {
+      picks: formData.get("picks") === "on",
+      meetups: formData.get("meetups") === "on",
+      joins: formData.get("joins") === "on",
+    });
+    return data({ ok: true });
+  }
+  if (intent === "planning") {
+    await setGroupPlanning(userId, groupId, formData.get("on") === "1");
+    return data({ ok: true });
+  }
   if (intent === "resetLink") {
     await resetGroupLink(userId, groupId);
     return data({ ok: true });
@@ -171,9 +209,10 @@ export default function GroupLayout() {
           <Faces people={group.members} size="md" max={4} />
         </div>
         <div className="min-w-0">
-          {/* Fresh for each name: a rename moves the page to the new name's
-              address, and the box closes with it */}
-          <GroupName key={group.name} name={group.name} path={path} />
+          {/* Renamed from the About tab */}
+          <h1 className="text-balance break-words text-xl font-semibold text-stone-900 dark:text-stone-100 sm:text-2xl">
+            {group.name}
+          </h1>
           <p className="text-sm text-stone-500 dark:text-stone-400">
             {group.lenderCount > 0
               ? `${plural(group.members.length, "person", "people")} · ${plural(group.bookCount, "book")}.${
@@ -187,11 +226,14 @@ export default function GroupLayout() {
         </div>
         {/* On phones it waits up here, so the tabs get the whole row */}
         <div className="ml-auto flex-shrink-0 self-start sm:hidden">
-          <InviteButton name={group.name} url={inviteUrl} />
+          <InviteButton name={group.name} url={inviteUrl} short />
         </div>
       </div>
 
-      <GroupBoard board={board} path={path} groupName={group.name} userId={userId} />
+      {/* Unless the group has turned it off, on its About tab */}
+      {group.planning ? (
+        <GroupBoard board={board} path={path} groupName={group.name} userId={userId} />
+      ) : null}
 
       <div className="mb-6 flex items-start gap-3 border-b border-stone-200 dark:border-stone-800">
         <nav
@@ -205,9 +247,8 @@ export default function GroupLayout() {
           <NavLink to={`${path}/lately`} className={tab}>
             Updates
           </NavLink>
-          <NavLink to={`${path}/people`} className={tab}>
-            People
-            <span className={count}>{group.members.length}</span>
+          <NavLink to={`${path}/about`} className={tab}>
+            About
           </NavLink>
         </nav>
         <div className="-mt-1.5 hidden sm:block">
@@ -220,77 +261,10 @@ export default function GroupLayout() {
   );
 }
 
-// The group's name, with a pencil beside it that turns it into a box to
-// rename it in place. Enter saves, Escape puts it back.
-function GroupName({ name, path }: { name: string; path: string }) {
-  const fetcher = useFetcher<{ ok?: boolean; error?: string }>();
-  const [editing, setEditing] = useState(false);
-  const saving = fetcher.state !== "idle";
-  // Back to the name once it's saved
-  useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.ok) setEditing(false);
-  }, [fetcher.state, fetcher.data]);
-
-  if (!editing) {
-    return (
-      <div className="flex items-center gap-1.5">
-        <h1 className="text-balance break-words text-xl font-semibold text-stone-900 dark:text-stone-100 sm:text-2xl">
-          {name}
-        </h1>
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          aria-label="Rename the group"
-          title="Rename"
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-stone-400 hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-200 transition-colors"
-        >
-          <PencilIcon size={16} />
-        </button>
-      </div>
-    );
-  }
-  return (
-    // The same height as the name and its pencil, so nothing below moves
-    <fetcher.Form method="post" action={path} className="relative flex items-center gap-2">
-      <input type="hidden" name="intent" value="rename" />
-      <input
-        name="name"
-        defaultValue={name}
-        required
-        maxLength={GROUP_NAME_MAX}
-        aria-label="Group name"
-        // eslint-disable-next-line jsx-a11y/no-autofocus
-        autoFocus
-        onFocus={(event) => event.currentTarget.select()}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") setEditing(false);
-        }}
-        className="h-8 min-w-0 flex-1 rounded-md border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 px-1.5 py-0 text-xl font-semibold leading-none text-stone-900 dark:text-stone-100 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-900/10 sm:text-2xl"
-      />
-      <button
-        type="submit"
-        disabled={saving}
-        className="inline-flex h-8 flex-shrink-0 items-center rounded-md bg-forest-600 px-3 text-sm font-medium text-white hover:bg-forest-700 transition-colors disabled:opacity-60"
-      >
-        {saving ? "Saving…" : "Save"}
-      </button>
-      <button
-        type="button"
-        onClick={() => setEditing(false)}
-        className="inline-flex h-8 flex-shrink-0 items-center px-1 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
-      >
-        Cancel
-      </button>
-      {fetcher.data?.error ? (
-        <p className="absolute left-0 top-full mt-1 text-sm text-rose-700 dark:text-rose-400">{fetcher.data.error}</p>
-      ) : null}
-    </fetcher.Form>
-  );
-}
-
 // Copies the invite link and says so, or on a phone opens the share sheet
-// with a line to send with it. The People tab shows the link itself.
-function InviteButton({ name, url }: { name: string; url: string }) {
+// with a line to send with it. The About tab shows the link itself.
+// short: "Invite" whatever the pointer, for the phone header's corner
+function InviteButton({ name, url, short = false }: { name: string; url: string; short?: boolean }) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -307,7 +281,7 @@ function InviteButton({ name, url }: { name: string; url: string }) {
       clearTimeout(timer.current);
       timer.current = setTimeout(() => setCopied(false), 3000);
     } catch {
-      // Clipboard can be blocked; the People tab shows the link to select
+      // Clipboard can be blocked; the About tab shows the link to select
     }
   };
   return (
@@ -322,10 +296,10 @@ function InviteButton({ name, url }: { name: string; url: string }) {
           a mouse it says what it does: copies the link */}
       <span className="grid whitespace-nowrap" aria-live="polite">
         <span className={`col-start-1 row-start-1 ${copied ? "invisible" : ""}`}>
-          <span className="pointer-coarse:hidden">Copy invite link</span>
-          <span className="hidden pointer-coarse:inline">Invite</span>
+          <span className={short ? "hidden" : "pointer-coarse:hidden"}>Copy invite link</span>
+          <span className={short ? "inline" : "hidden pointer-coarse:inline"}>Invite</span>
         </span>
-        <span className={`col-start-1 row-start-1 ${copied ? "" : "invisible"}`}>Link copied</span>
+        <span className={`col-start-1 row-start-1 ${copied ? "" : "invisible"}`}>{short ? "Copied" : "Link copied"}</span>
       </span>
     </button>
   );

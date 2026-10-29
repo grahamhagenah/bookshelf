@@ -1,6 +1,6 @@
 import { prisma } from "~/db.server";
 import type { Group, User } from "~/generated/prisma/client";
-import { GROUP_NAME_MAX } from "~/group-links";
+import { GROUP_DESCRIPTION_MAX, GROUP_NAME_MAX } from "~/group-links";
 
 import { canInteract } from "./demo.server";
 import { countPoolBooks } from "./pool.server";
@@ -99,17 +99,22 @@ export async function getGroupPreviews(userId: User["id"]) {
 // out of it.
 export async function getGroup(groupId: Group["id"], userId: User["id"]) {
   if (!(await isMember(groupId, userId))) return null;
-  const [group, me] = await Promise.all([
+  const [group, me, asked] = await Promise.all([
     prisma.group.findUnique({
       where: { id: groupId },
       select: {
         id: true,
         name: true,
         inviteToken: true,
+        description: true,
+        planning: true,
         members: {
           orderBy: { joinedAt: "asc" },
           select: {
             joinedAt: true,
+            alertPicks: true,
+            alertMeetups: true,
+            alertJoins: true,
             user: { select: { ...person, _count: { select: { books: true } } } },
           },
         },
@@ -119,18 +124,27 @@ export async function getGroup(groupId: Group["id"], userId: User["id"]) {
       where: { id: userId },
       select: { following: { select: { id: true } } },
     }),
+    // Friend requests you've sent that are still waiting
+    prisma.notification.findMany({
+      where: { type: "FRIEND_REQUEST", senderId: userId, actionTaken: null },
+      select: { receiverId: true },
+    }),
   ]);
   if (!group) return null;
   const friendIds = new Set(me.following.map((friend) => friend.id));
+  const requested = new Set(asked.map((request) => request.receiverId));
   // Whoever's been in longest runs it: the person who started it, until
   // they leave
   const ownerId = group.members[0]?.user.id;
+  const mine = group.members.find((member) => member.user.id === userId);
   const members = group.members.map(({ joinedAt, user: { _count, ...user } }) => ({
     ...user,
     joinedAt,
     bookCount: _count.books,
     isMe: user.id === userId,
     isFriend: friendIds.has(user.id),
+    // You've asked to be friends and they haven't answered yet
+    requested: requested.has(user.id),
     isOwner: user.id === ownerId,
   }));
   // Your own books are in the group too, but you don't come here for them
@@ -142,6 +156,14 @@ export async function getGroup(groupId: Group["id"], userId: User["id"]) {
     id: group.id,
     name: group.name,
     inviteToken: group.inviteToken,
+    description: group.description,
+    planning: group.planning,
+    // Which of its goings-on reach your alerts
+    myAlerts: {
+      picks: mine?.alertPicks ?? true,
+      meetups: mine?.alertMeetups ?? true,
+      joins: mine?.alertJoins ?? true,
+    },
     members,
     openIds,
     groupOnly,
@@ -159,6 +181,7 @@ export async function getGroupByToken(token: string) {
     select: {
       id: true,
       name: true,
+      description: true,
       members: { orderBy: { joinedAt: "asc" }, select: { user: { select: person } } },
     },
   });
@@ -177,6 +200,7 @@ export async function getGroupByToken(token: string) {
   return {
     id: group.id,
     name: group.name,
+    description: group.description,
     members: group.members.map((member) => member.user),
     bookCount,
     recent,
@@ -192,7 +216,7 @@ export type JoinResult =
 export async function joinGroup(userId: User["id"], token: string): Promise<JoinResult> {
   const group = await prisma.group.findUnique({
     where: { inviteToken: token },
-    select: { id: true, name: true, members: { select: { userId: true } } },
+    select: { id: true, name: true, members: { select: { userId: true, alertJoins: true } } },
   });
   if (!group) return { ok: false, reason: "no-such-group" };
   const memberIds = group.members.map((member) => member.userId);
@@ -208,8 +232,10 @@ export async function joinGroup(userId: User["id"], token: string): Promise<Join
     where: { id: userId },
     select: { firstname: true, surname: true },
   });
+  // Only to the members who want to hear about joins
+  const listening = group.members.filter((member) => member.alertJoins).map((member) => member.userId);
   await prisma.$transaction(
-    memberIds.map((receiverId) =>
+    listening.map((receiverId) =>
       prisma.notification.create({
         data: {
           type: "GROUP_JOINED",
@@ -270,6 +296,39 @@ export async function removeFromGroup(userId: User["id"], groupId: Group["id"], 
 export async function renameGroup(userId: User["id"], groupId: Group["id"], name: string) {
   if (!(await isMember(groupId, userId))) return false;
   await prisma.group.update({ where: { id: groupId }, data: { name } });
+  return true;
+}
+
+// A few lines on what the group is; anyone in it can write them, as they
+// can rename it. Empty takes it away
+export async function describeGroup(userId: User["id"], groupId: Group["id"], description: string) {
+  if (!(await isMember(groupId, userId))) return false;
+  const text = description.trim().slice(0, GROUP_DESCRIPTION_MAX);
+  await prisma.group.update({ where: { id: groupId }, data: { description: text || null } });
+  return true;
+}
+
+// The planning card on or off, for the whole group, so it's for whoever
+// runs it to say
+export async function setGroupPlanning(userId: User["id"], groupId: Group["id"], on: boolean) {
+  if (!(await runsGroup(userId, groupId))) return false;
+  await prisma.group.update({ where: { id: groupId }, data: { planning: on } });
+  return true;
+}
+
+export interface GroupAlerts {
+  picks: boolean;
+  meetups: boolean;
+  joins: boolean;
+}
+
+// Which of the group's goings-on reach your alerts: yours alone to say
+export async function setGroupAlerts(userId: User["id"], groupId: Group["id"], alerts: GroupAlerts) {
+  if (!(await isMember(groupId, userId))) return false;
+  await prisma.groupMember.update({
+    where: { groupId_userId: { groupId, userId } },
+    data: { alertPicks: alerts.picks, alertMeetups: alerts.meetups, alertJoins: alerts.joins },
+  });
   return true;
 }
 

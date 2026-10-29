@@ -418,7 +418,7 @@ function JoinedTogether({ notifications }: { notifications: ActivityNotification
         <strong className="font-semibold">
           {joinedNames(notifications.map((notification) => notification.senderName))}
         </strong>{" "}
-        joined {group}. You&apos;re friends now.
+        joined {group}.
       </Card>
     </form>
   );
@@ -632,9 +632,31 @@ function ActivityItem({
       // Someone joined a group you're in
       text = (
         <>
-          {name} joined {notification.message}. You&apos;re friends now.
+          {name} joined {notification.message}.
         </>
       );
+      actions = notification.groupId ? (
+        <a
+          href={groupPath({ id: notification.groupId, name: notification.message ?? "" })}
+          className={quietAction}
+        >
+          See the group
+        </a>
+      ) : null;
+      break;
+    case "GROUP_PICK":
+    case "GROUP_MEETUP":
+      // A new book for a group you're in, or its meetup set or moved
+      text =
+        type === "GROUP_PICK" ? (
+          <>
+            {name} picked {book} for {notification.message}
+          </>
+        ) : (
+          <>
+            {name} set the next meetup for {notification.message}
+          </>
+        );
       actions = notification.groupId ? (
         <a
           href={groupPath({ id: notification.groupId, name: notification.message ?? "" })}
@@ -842,6 +864,18 @@ const getHistoryText = (
       return (
         <>
           {name} joined {notification.message}
+        </>
+      );
+    case "GROUP_PICK":
+      return (
+        <>
+          {name} picked {book} for {notification.message}
+        </>
+      );
+    case "GROUP_MEETUP":
+      return (
+        <>
+          {name} set the next meetup for {notification.message}
         </>
       );
     case "SHELF_JOINED":

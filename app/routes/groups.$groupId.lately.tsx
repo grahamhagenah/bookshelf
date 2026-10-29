@@ -151,7 +151,7 @@ function People({ members, path, userId }: { members: Member[]; path: string; us
 
 function PersonRow({ member, isMe }: { member: Member; isMe: boolean }) {
   const befriend = useFetcher<{ success?: boolean }>();
-  const asked = befriend.formData !== undefined || befriend.data?.success === true;
+  const asked = member.requested || befriend.formData !== undefined || befriend.data?.success === true;
   const who = (
     <>
       <Avatar firstname={member.firstname} surname={member.surname} icon={member.profileEmoji} size="sm" />

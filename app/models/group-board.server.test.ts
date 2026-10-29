@@ -12,7 +12,7 @@ import {
   setGroupMeeting,
   setGroupPick,
 } from "./group-board.server";
-import { createGroup } from "./group.server";
+import { createGroup, getGroup, joinGroup, setGroupAlerts } from "./group.server";
 import { createFriendship } from "./user.server";
 
 const circe = {
@@ -163,4 +163,36 @@ test("a friend outside the group with a copy shows too, after the group's", asyn
   // Sam doesn't know Priya, so her copy isn't his to see
   const samsCopies = (await getGroupBoard(groupId, sam.id))?.pick?.copies ?? [];
   expect(samsCopies.map((copy) => copy.owner.firstname)).toEqual(["Sam"]);
+});
+
+test("a new pick and a meetup set or moved reach members' alerts, unless they've opted out", async () => {
+  const { maya, sam, groupId } = await club();
+  const ana = await makeUser("Ana");
+  await prisma.groupMember.create({ data: { groupId, userId: ana.id } });
+  await setGroupAlerts(ana.id, groupId, { picks: false, meetups: true, joins: true });
+
+  await setGroupPick(maya.id, groupId, circe);
+  const alerts = (type: string) =>
+    prisma.notification.findMany({ where: { type, groupId }, select: { receiverId: true, bookTitle: true } });
+  // Sam hears, Ana asked not to, and Maya picked it
+  expect(await alerts("GROUP_PICK")).toEqual([{ receiverId: sam.id, bookTitle: "Circe" }]);
+
+  const thursday = new Date("2026-11-05T19:00:00Z");
+  await setGroupMeeting(sam.id, groupId, { at: thursday, place: "Maya's" });
+  expect((await alerts("GROUP_MEETUP")).map((alert) => alert.receiverId).sort()).toEqual([maya.id, ana.id].sort());
+  // Saved again unchanged, or taken off: nothing new
+  await setGroupMeeting(sam.id, groupId, { at: thursday, place: "Maya's" });
+  await setGroupMeeting(sam.id, groupId, { at: null, place: "" });
+  expect(await alerts("GROUP_MEETUP")).toHaveLength(2);
+});
+
+test("joins reach only the members who want to hear about them", async () => {
+  const { maya, sam, groupId } = await club();
+  await setGroupAlerts(sam.id, groupId, { picks: true, meetups: true, joins: false });
+  const newcomer = await makeUser("Newcomer");
+  const { inviteToken } = await prisma.group.findUniqueOrThrow({ where: { id: groupId } });
+  await joinGroup(newcomer.id, inviteToken);
+  const told = await prisma.notification.findMany({ where: { type: "GROUP_JOINED", groupId }, select: { receiverId: true } });
+  expect(told).toEqual([{ receiverId: maya.id }]);
+  expect((await getGroup(groupId, sam.id))?.myAlerts).toEqual({ picks: true, meetups: true, joins: false });
 });
