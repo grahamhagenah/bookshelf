@@ -1550,14 +1550,14 @@ function PinnedFavorites({ pins }: { pins: PinItem[] }) {
   return (
     <div id="pinned" className="mt-6 scroll-mt-24">
       <p className="text-sm font-medium text-stone-800 dark:text-stone-200">
-        Favorites on your page{" "}
+        Favorites on your public shelf{" "}
         <span className="font-normal text-stone-400 dark:text-stone-500">
           {pins.length}/{PIN_MAX}
         </span>
       </p>
       <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
         {pins.length === 0
-          ? "Pin books from their pages, yours or ones you've borrowed; your note on each shows with it. Until you do, your page shows the books you've hearted."
+          ? "Pin books from their pages, yours or ones you've borrowed; your note on each shows with it. Until you do, your public shelf shows the books you've hearted."
           : "In the order they appear, each with your note on it if you've written one. Pin more from a book's page."}
       </p>
       {pins.length > 0 ? (
@@ -1580,8 +1580,8 @@ function PinnedFavorites({ pins }: { pins: PinItem[] }) {
                 <p className="truncate text-xs text-stone-500 dark:text-stone-400">
                   {pin.book.hiddenFromPage
                     ? pin.borrowed
-                      ? "Its owner keeps it off public pages, so not shown"
-                      : "Kept off your page, so not shown"
+                      ? "Its owner keeps it off public shelves, so not shown"
+                      : "Kept off your public shelf, so not shown"
                     : pin.note
                       ? `“${pin.note}”`
                       : pin.borrowed
@@ -1657,7 +1657,7 @@ function PublicPage({
 
   const heading = (
     <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">
-      Public page
+      Public shelf
     </h3>
   );
 
@@ -1751,7 +1751,7 @@ function PublicPage({
               className="mt-1.5 text-sm text-stone-500 dark:text-stone-400"
             >
               Pick a handle to get a short link with your name in it. Until
-              you do, your page has a random link, and Copy copies that.
+              you do, your public shelf has a random link, and Copy copies that.
             </p>
           )}
         </div>
@@ -1796,7 +1796,7 @@ function PublicPage({
       <Form method="post" className="mt-4">
         <input type="hidden" name="intent" value="revokeShareToken" />
         <button type="submit" className={textButton}>
-          Turn off public page
+          Turn off public shelf
         </button>
       </Form>
     </div>

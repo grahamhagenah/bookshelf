@@ -194,13 +194,13 @@ export function PinToggle({ page }: { page: PageStanding }) {
         title={
           off
             ? page.own
-              ? "It's hidden from your public page. Show it there first."
-              : "Its owner keeps it off public pages."
+              ? "It's hidden from your public shelf. Show it there first."
+              : "Its owner keeps it off public shelves."
             : full
-              ? `Your public page shows ${PIN_MAX}. Unpin one in Settings first.`
+              ? `Your public shelf shows ${PIN_MAX}. Unpin one in Settings first.`
               : pinned
                 ? undefined
-                : "Put it in the favorites at the top of your public page, with your note"
+                : "Put it in the favorites at the top of your public shelf, with your note"
         }
         className={quietAction}
       >
@@ -232,7 +232,7 @@ export function HideToggle({ page }: { page: PageStanding }) {
         title={
           hidden
             ? undefined
-            : "Keep it off your public page. Friends still see it on your shelf."
+            : "Keep it off your public shelf. Friends still see it on your shelf."
         }
         className={quietAction}
       >

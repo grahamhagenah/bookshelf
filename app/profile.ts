@@ -71,7 +71,7 @@ export function noteTip(profile: {
   return {
     text: profile.pinned
       ? "Add a note to a pinned book and it shows beside the cover, so visitors know why you love it."
-      : "Pin a book to the top of your page and add a note to it, so visitors know why you love it.",
+      : "Pin a book to the top of your public shelf and add a note to it, so visitors know why you love it.",
     link: book
       ? {
           label: profile.pinned

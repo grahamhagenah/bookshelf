@@ -192,7 +192,7 @@ const sections: {
             <Link to="/account" className={link}>
               share link
             </Link>
-            , which gives you a public page to send to anyone. Your want-to-read
+            , which gives you a public shelf to send to anyone. Your want-to-read
             list and email settings are yours alone.
           </>
         ),
@@ -231,7 +231,7 @@ const sections: {
             and share its link. Everyone who joins can see and borrow from
             everyone else&apos;s shelf, no friending needed, so a whole book club,
             office or family can lend to each other at once. Books you keep off
-            your public page stay out of your groups too. Your groups show on your home page with how
+            your public shelf stay out of your groups too. Your groups show on your home page with how
             many books there are to borrow, and a group&apos;s books can be
             sorted by the most lent.
           </>

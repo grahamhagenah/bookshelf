@@ -2768,7 +2768,7 @@ export default function BookDetailsPage() {
           ) : null}
 
           {/* Rarely needed, so they wait at the very bottom: fixing the
-              details, and this book's place on your public page */}
+              details, and this book's place on your public shelf */}
           {!isEditing && (data.isOwner || data.page) ? (
             <div className="mt-12 flex max-w-150 flex-wrap items-center gap-2">
               {data.isOwner ? (

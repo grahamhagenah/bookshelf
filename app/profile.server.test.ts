@@ -294,6 +294,6 @@ test("a borrowed book can be a favorite, with your note, no lender and no link",
   await unpinBook(me.id, gilead.id);
   expect(await pinBook(me.id, gilead.id)).toEqual({
     ok: false,
-    error: "Its owner keeps it off public pages.",
+    error: "Its owner keeps it off public shelves.",
   });
 });
