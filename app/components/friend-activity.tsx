@@ -312,7 +312,7 @@ function BookCard({
       <div className="flex items-center gap-3">
         <FeedCover
           book={book}
-          className="h-[102px] w-[68px] transition-opacity group-hover:opacity-90"
+          className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
         />
         <span className="min-w-0">
           <Link
@@ -529,7 +529,7 @@ function ElsewhereCard({
         >
           <FeedCover
             book={item.work}
-            className="h-[102px] w-[68px] transition-opacity group-hover:opacity-90"
+            className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
           />
           <span className="min-w-0">
             <span className="block font-medium leading-snug text-stone-900 dark:text-stone-100">
