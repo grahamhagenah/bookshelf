@@ -669,14 +669,14 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
   ],
   raj: [
     {
-      title: "The Overstory",
-      author: "Richard Powers",
-      isbn: "9780393635522",
-      datePublished: "2018",
-      pageCount: 502,
-      publisher: "W. W. Norton",
-      subjects: "Literary fiction, Trees, Environmentalism",
-      body: "Nine strangers, each shaped by a tree, are drawn together into a last stand to save the remaining old-growth forests.",
+      title: "Cloud Cuckoo Land",
+      author: "Anthony Doerr",
+      isbn: "9781982168438",
+      datePublished: "2021",
+      pageCount: 622,
+      publisher: "Scribner",
+      subjects: "Literary fiction, Libraries, Time",
+      body: "An ancient Greek tale links lives across centuries, from besieged Constantinople to a small-town library to a ship bound for another world.",
     },
     {
       title: "Middlemarch",
@@ -893,10 +893,10 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       // It plans here: Maya picked what they're reading a couple of days
       // ago and set the next meetup, a week or so out at 7pm, as typed.
       // No group chat link, so the visitor sees how to add one
-      pickKey: "/works/OL19074847W",
-      pickTitle: "The Overstory",
-      pickAuthor: "Richard Powers",
-      pickCover: cover("9780393635522"),
+      pickKey: "/works/OL24164954W",
+      pickTitle: "Cloud Cuckoo Land",
+      pickAuthor: "Anthony Doerr",
+      pickCover: cover("9781982168438"),
       pickedById: ids.maya,
       pickedAt: ago(2.2 * day),
       meetsAt: nextThursdayAt7(),
