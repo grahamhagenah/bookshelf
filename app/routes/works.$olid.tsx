@@ -535,7 +535,7 @@ interface FriendCopyData {
 // borrow it from there.
 function FriendCopies({ copies, userId }: { copies: FriendCopyData[]; userId: string }) {
   const say = (copy: FriendCopyData) => {
-    const name = <span className="font-medium text-stone-800 dark:text-stone-200">{copy.user.firstname}</span>;
+    const name = <span className="font-medium text-stone-800 dark:text-stone-200 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 group-hover:underline">{copy.user.firstname}</span>;
     if (copy.borrowerId === userId) return <>You&apos;re borrowing {name}&apos;s copy</>;
     if (copy.requested) return <>You asked {name} for it</>;
     if (copy.inLine) return <>You&apos;re in line for {name}&apos;s copy</>;
@@ -552,10 +552,18 @@ function FriendCopies({ copies, userId }: { copies: FriendCopyData[]; userId: st
         <li key={copy.id}>
           <Link
             to={`/friend/${copy.user.id}?${new URLSearchParams({ q: copy.title })}`}
-            className="-mx-2 flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800/60 transition-colors"
+            // Their name underlines and an arrow points the way, as other
+            // links to a list do
+            className="group flex items-center gap-2.5 py-1.5 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors"
           >
             <Avatar firstname={copy.user.firstname} surname={copy.user.surname} icon={copy.user.profileEmoji} size="sm" />
-            <span className="min-w-0 flex-1">{say(copy)}</span>
+            <span className="min-w-0">{say(copy)}</span>
+            <span
+              aria-hidden="true"
+              className="-ml-1 text-stone-400 dark:text-stone-500 opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100 group-focus-visible:opacity-100"
+            >
+              →
+            </span>
           </Link>
         </li>
       ))}
