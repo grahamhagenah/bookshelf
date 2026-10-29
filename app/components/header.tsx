@@ -20,7 +20,7 @@ const navClass = ({ isActive }: { isActive: boolean }) =>
   `inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-[15px] transition-colors ${
     isActive
       ? hereIcon
-      : "text-stone-700 dark:text-stone-200 hover:text-stone-900 dark:hover:text-white hover:[&_svg]:text-forest-600 dark:hover:[&_svg]:text-forest-400"
+      : "text-stone-700 dark:text-stone-200 hover:text-stone-900 dark:hover:text-white"
   }`;
 
 export default function Header() {
@@ -116,7 +116,7 @@ export default function Header() {
               className={`md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full transition-colors ${
                 pathname === "/feed"
                   ? hereIcon
-                  : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:[&_svg]:text-forest-600 dark:hover:[&_svg]:text-forest-400"
+                  : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white"
               }`}
             >
               <FeedIcon size={24} />
