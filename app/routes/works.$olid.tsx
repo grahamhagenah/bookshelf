@@ -530,42 +530,32 @@ interface FriendCopyData {
   user: { id: string; firstname: string; surname: string; profileEmoji: string | null };
 }
 
-// Who you know has it, and whether it's free. Each row opens their shelf,
-// already looking for this book, to borrow it from there.
+// Who you know has it, said plainly: "Anika has it", "Sam's copy is
+// lent out". Each opens their shelf, already looking for this book, to
+// borrow it from there.
 function FriendCopies({ copies, userId }: { copies: FriendCopyData[]; userId: string }) {
-  const status = (copy: FriendCopyData) =>
-    copy.borrowerId === userId
-      ? "You're borrowing it"
-      : copy.requested
-        ? "You asked"
-        : copy.inLine
-          ? "You're in line"
-          : isNotLending(copy.notLendingUntil)
-            ? "Not lending now"
-            : copy.borrowerId
-              ? "Lent out"
-              : "On the shelf";
+  const say = (copy: FriendCopyData) => {
+    const name = <span className="font-medium text-stone-800 dark:text-stone-200">{copy.user.firstname}</span>;
+    if (copy.borrowerId === userId) return <>You&apos;re borrowing {name}&apos;s copy</>;
+    if (copy.requested) return <>You asked {name} for it</>;
+    if (copy.inLine) return <>You&apos;re in line for {name}&apos;s copy</>;
+    if (isNotLending(copy.notLendingUntil)) return <>{name} has it, not lending right now</>;
+    if (copy.borrowerId) return <>{name}&apos;s copy is lent out</>;
+    return <>{name} has it</>;
+  };
   return (
-    <section aria-labelledby="friend-copies" className="pt-2">
-      <h2 id="friend-copies" className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
-        Friends with a copy
-      </h2>
-      <ul className="mt-1">
-        {copies.map((copy) => (
-          <li key={copy.id}>
-            <Link
-              to={`/friend/${copy.user.id}?${new URLSearchParams({ q: copy.title })}`}
-              className="-mx-2 flex items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-stone-100 dark:hover:bg-stone-800/60 transition-colors"
-            >
-              <Avatar firstname={copy.user.firstname} surname={copy.user.surname} icon={copy.user.profileEmoji} size="sm" />
-              <span className="min-w-0 flex-1 truncate text-sm font-medium text-stone-800 dark:text-stone-200">
-                {copy.user.firstname}
-              </span>
-              <span className="whitespace-nowrap text-xs text-stone-500 dark:text-stone-400">{status(copy)}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <ul aria-label="Friends with a copy" className="pt-1">
+      {copies.map((copy) => (
+        <li key={copy.id}>
+          <Link
+            to={`/friend/${copy.user.id}?${new URLSearchParams({ q: copy.title })}`}
+            className="-mx-2 flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800/60 transition-colors"
+          >
+            <Avatar firstname={copy.user.firstname} surname={copy.user.surname} icon={copy.user.profileEmoji} size="sm" />
+            <span className="min-w-0 flex-1">{say(copy)}</span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
