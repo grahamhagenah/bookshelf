@@ -2624,7 +2624,7 @@ export default function BookDetailsPage() {
               </p>
               <Placeholder
                 lines={2}
-                className={`mt-10 ${openingLineType} max-w-prose`}
+                className={`mt-10 ${openingLineType} max-w-150`}
               />
               <Placeholder lines={3} className="mt-8 max-w-150" />
               <Placeholder lines={3} className="mt-8 max-w-150" />
