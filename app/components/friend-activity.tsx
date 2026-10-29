@@ -6,9 +6,9 @@ import { workPath } from "~/utils";
 
 import Avatar from "./avatar";
 import BookCover from "./book-cover";
-import { BookmarkIcon, HeartIcon, NoteIcon, PencilIcon } from "./icons";
+import { BookmarkIcon, HeartIcon, PencilIcon } from "./icons";
 import PersonLink from "./person-link";
-import { primaryButton } from "./ui";
+import { primaryButton, quietButton } from "./ui";
 
 type FeedItem = FriendActivity;
 type FeedBook = Extract<FeedItem, { kind: "added" }>["books"][number];
@@ -253,15 +253,18 @@ export default function FriendActivityItem({
 
 const actionClass =
   "inline-flex items-center gap-1.5 rounded-md px-2 py-1 -mx-2 text-sm text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-900 hover:text-stone-900 dark:hover:text-stone-100 transition-colors";
+// The thing a post asks of you (borrow it, get in line, save it, give it
+// back), as a button of its own, as the lists' rows have it
+const nextClass = `${quietButton("sm")} inline-flex items-center gap-1.5 font-medium`;
 const stateClass =
   "inline-flex items-center gap-1.5 py-1 text-sm text-stone-400 dark:text-stone-500";
 
 // A cover with the title and author under it, as in the library grid. It
 // fills its column, at a book's 2:3 shape. Whether it's in goes unsaid
 // here: that's for the book page, and the title gets the room instead.
-function BookTile({ book }: { book: FeedBook }) {
+function BookTile({ book, className = "" }: { book: FeedBook; className?: string }) {
   return (
-    <li className="min-w-0">
+    <li className={`min-w-0 ${className}`}>
       <Link to={`/books/${book.id}`} title={book.title} className="group block">
         <FeedCover
           book={book}
@@ -309,7 +312,7 @@ function BookCard({
       <div className="flex items-center gap-3">
         <FeedCover
           book={book}
-          className="h-[102px] w-[68px] transition-opacity group-hover:opacity-90"
+          className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
         />
         <span className="min-w-0">
           <Link
@@ -336,157 +339,123 @@ function BookCard({
   );
 }
 
-// Hearts, notes and borrowing, done from the feed. Each form posts to
-// the feed route; the counts update when the loader comes back.
-// The heart is on the book, never the post: under someone's note it says
-// so, or it would read as liking what they wrote.
+// Borrowing, done from the feed. Each form posts to the feed route; what
+// it says updates when the loader comes back. No heart or note count:
+// beside a post they read as reactions to the post, not the book.
 function Actions({
   book,
   userId,
-  underNote = false,
   onEdit,
   mine = false,
+  poster = null,
 }: {
   book: FeedBook;
   userId: string;
-  underNote?: boolean;
   // Under your own note: rewrite it
   onEdit?: () => void;
   // Your own post about a friend's copy: you've read it
   mine?: boolean;
+  // Whose post it is, for the way to their shelf; none on your own
+  poster?: { id: string; firstname: string } | null;
 }) {
-  const love = useFetcher({ key: `love-${book.id}` });
   const borrow = useFetcher({ key: `borrow-${book.id}` });
   const giveBack = useFetcher<{ returned?: boolean }>({ key: `return-${book.id}` });
+  const want = useFetcher<{ wanted?: boolean }>({ key: `want-${book.id}` });
   const returned = giveBack.formData !== undefined || giveBack.data?.returned === true;
   const { viewer } = book;
   // Asking opens a line for a note first; the ask goes with it
   const [asking, setAsking] = useState(false);
 
   // What's shown while a change is on its way
-  const pendingLove = love.formData?.get("loved");
-  const loved = pendingLove ? pendingLove === "true" : viewer.loved;
-  const loves = book.loves + (loved ? 1 : 0) - (viewer.loved ? 1 : 0);
   const pendingBorrow = borrow.formData?.get("intent");
   const requested = viewer.requested || pendingBorrow === "request";
   const inLine =
     pendingBorrow === "leaveHold"
       ? false
       : viewer.inLine || pendingBorrow === "placeHold";
+  const wanted = viewer.wanted || want.formData !== undefined || want.data?.wanted === true;
 
-  const lovesText = loves === 0 ? null : `${loves}`;
   const isOwner = book.owner.id === userId;
   const isBorrower = book.borrowerId === userId;
+
+  // The one thing this post offers you, by where you stand with the book.
+  // Your own copy offers nothing: its card already says it's yours
+  const next = isOwner ? null : returned ? (
+    <span className={stateClass}>Returned to {book.owner.firstname}</span>
+  ) : isBorrower ? (
+    // Read it, said so: the next thing is giving it back
+    <giveBack.Form method="post" action={`/books/${book.id}`}>
+      <input type="hidden" name="intent" value="return" />
+      <input type="hidden" name="stay" value="true" />
+      <button type="submit" className={nextClass}>
+        Return to {book.owner.firstname}
+      </button>
+    </giveBack.Form>
+  ) : mine || viewer.readIt ? (
+    // Read it already: no asking for it again
+    <span className={stateClass}>You read it</span>
+  ) : viewer.onShelf ? (
+    <span className={stateClass}>On your shelf</span>
+  ) : viewer.canRequest && book.available ? (
+    requested ? (
+      <span className={stateClass}>Requested</span>
+    ) : (
+      <button
+        type="button"
+        onClick={() => setAsking(!asking)}
+        aria-expanded={asking}
+        className={`${nextClass} ${asking ? "border-stone-400 dark:border-stone-500" : ""}`}
+      >
+        Ask to borrow
+      </button>
+    )
+  ) : viewer.canRequest && !book.notLending ? (
+    // Lent out: wait your turn
+    <borrow.Form method="post">
+      <input type="hidden" name="intent" value={inLine ? "leaveHold" : "placeHold"} />
+      <input type="hidden" name="bookId" value={book.id} />
+      <button type="submit" className={inLine ? actionClass : nextClass}>
+        {inLine ? "In line · Leave" : "Get in line"}
+      </button>
+    </borrow.Form>
+  ) : wanted ? (
+    <span className={stateClass}>
+      <BookmarkIcon size={14} filled />
+      On your list
+    </span>
+  ) : (
+    // Not being lent, or not a friend's to ask for: keep it on your list,
+    // and hear when there's a copy you can borrow
+    <want.Form method="post">
+      <input type="hidden" name="intent" value="wantBook" />
+      <input type="hidden" name="bookId" value={book.id} />
+      <button type="submit" className={nextClass}>
+        <BookmarkIcon size={14} />
+        Want to read
+      </button>
+    </want.Form>
+  );
+  // The links across from it show on phones only when there's nothing
+  // else in the row; there the cover, title and name already lead to them
+  const links = next || onEdit ? "hidden sm:flex" : "flex";
 
   return (
     <>
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-stone-100 dark:border-stone-800 pt-2">
-        {viewer.canLove ? (
-          <love.Form method="post">
-            <input type="hidden" name="intent" value="toggleLove" />
-            <input type="hidden" name="bookId" value={book.id} />
-            <input type="hidden" name="loved" value={loved ? "false" : "true"} />
-            <button
-              type="submit"
-              aria-pressed={loved}
-              // Under a note it's the book being loved, not the note; the
-              // label says so without lengthening the row
-              title={underNote ? "Love the book" : undefined}
-              aria-label={`${loved ? "Loved" : "Love"}${underNote ? " the book" : ""}${
-                lovesText ? `, ${lovesText}` : ""
-              }`}
-              className={`${actionClass} ${loved ? "text-rose-600 dark:text-rose-400" : ""}`}
-            >
-              <HeartIcon
-                size={15}
-                filled={loved}
-                className={loved ? "text-rose-500" : ""}
-              />
-              {loved ? "Loved" : "Love"}
-              {lovesText ? (
-                <span className="min-w-[1.25rem] rounded-full bg-stone-100 dark:bg-stone-800 px-1.5 text-center text-xs font-medium leading-5 tabular-nums text-stone-500 dark:text-stone-400">
-                  {lovesText}
-                </span>
-              ) : null}
-            </button>
-          </love.Form>
-        ) : lovesText ? (
-          <span
-            className={stateClass}
-            title="Hearts from people who've read this copy"
-          >
-            <HeartIcon size={15} filled className="text-rose-400" />
-            {lovesText}
-          </span>
-        ) : null}
-
-        {book.notes > 0 ? (
-          <Link
-            to={`/books/${book.id}#notes`}
-            aria-label={`${book.notes} ${book.notes === 1 ? "note" : "notes"}`}
-            title={`${book.notes} ${book.notes === 1 ? "note" : "notes"}`}
-            className={actionClass}
-          >
-            <NoteIcon size={15} />
-            {book.notes}
-          </Link>
-        ) : null}
-
         {onEdit ? (
           <button type="button" onClick={onEdit} className={actionClass}>
             <PencilIcon size={14} />
             Edit note
           </button>
         ) : null}
+        {next}
 
-        {isOwner ? (
-          <span className={stateClass}>Your copy</span>
-        ) : returned ? (
-          <span className={stateClass}>Returned to {book.owner.firstname}</span>
-        ) : isBorrower ? (
-          // Read it, said so: the next thing is giving it back
-          <giveBack.Form method="post" action={`/books/${book.id}`}>
-            <input type="hidden" name="intent" value="return" />
-            <input type="hidden" name="stay" value="true" />
-            <button type="submit" className={actionClass}>
-              Return to {book.owner.firstname}
-            </button>
-          </giveBack.Form>
-        ) : mine ? (
-          // Back with its owner: no asking for a book you just read
-          <span className={stateClass}>You read it</span>
-        ) : viewer.canRequest && book.notLending ? (
-          <span className={stateClass}>Not lending</span>
-        ) : viewer.canRequest && book.available ? (
-          requested ? (
-            <span className={stateClass}>Requested</span>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setAsking(!asking)}
-              aria-expanded={asking}
-              className={`${actionClass} ${asking ? "text-stone-900 dark:text-stone-100" : ""}`}
-            >
-              Ask to borrow
-            </button>
-          )
-        ) : viewer.canRequest ? (
-          <borrow.Form method="post">
-            <input
-              type="hidden"
-              name="intent"
-              value={inLine ? "leaveHold" : "placeHold"}
-            />
-            <input type="hidden" name="bookId" value={book.id} />
-            <button type="submit" className={actionClass}>
-              {inLine ? "In line · Leave" : "Get in line"}
-            </button>
-          </borrow.Form>
-        ) : null}
-
-        {/* The cover and title open the book too; on phones that's enough,
-            and the row stays on one line */}
-        <span className="ml-auto hidden sm:block">
+        <span className={`ml-auto items-center gap-x-5 ${links}`}>
+          {poster ? (
+            <Link to={`/friend/${poster.id}`} className={actionClass}>
+              {poster.firstname}&apos;s shelf
+            </Link>
+          ) : null}
           <Link to={`/books/${book.id}`} className={actionClass}>
             View book
           </Link>
@@ -560,7 +529,7 @@ function ElsewhereCard({
         >
           <FeedCover
             book={item.work}
-            className="h-[102px] w-[68px] transition-opacity group-hover:opacity-90"
+            className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
           />
           <span className="min-w-0">
             <span className="block font-medium leading-snug text-stone-900 dark:text-stone-100">
@@ -664,7 +633,7 @@ export function FeedPost({
 
   const books =
     item.kind === "added"
-      ? item.books.slice(0, 6)
+      ? item.books.slice(0, 4)
       : item.kind === "elsewhere"
         ? []
         : [item.book];
@@ -725,11 +694,15 @@ export function FeedPost({
         />
       ) : item.kind === "added" && item.books.length > 1 ? (
         <>
-          {/* Even columns: three across on phones, six on wider screens,
-              so a batch of new books is a row of small covers */}
-          <ul className="mt-3 grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-6">
-            {books.map((book) => (
-              <BookTile key={book.id} book={book} />
+          {/* One row of covers big enough for their titles: three across
+              on phones, four from there; the rest are on their shelf */}
+          <ul className="mt-3 grid grid-cols-3 gap-x-4 gap-y-4 sm:grid-cols-4">
+            {books.map((book, index) => (
+              <BookTile
+                key={book.id}
+                book={book}
+                className={index === 3 ? "hidden sm:block" : ""}
+              />
             ))}
           </ul>
           <div className="mt-3 flex items-center gap-x-5 border-t border-stone-100 dark:border-stone-800 pt-2">
@@ -752,9 +725,9 @@ export function FeedPost({
           <Actions
             book={books[0]}
             userId={userId}
-            underNote={item.kind === "note"}
             onEdit={editable && !editing ? () => setEditing(true) : undefined}
             mine={item.friend.id === userId}
+            poster={item.friend.id === userId ? null : item.friend}
           />
         </>
       )}

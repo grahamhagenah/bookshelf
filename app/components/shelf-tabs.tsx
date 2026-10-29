@@ -56,15 +56,13 @@ export default function ShelfTabs({
           label: "Want to read",
           count: counts.want,
         },
-        {
-          to: "/read-elsewhere",
-          label: "Also read",
-          count: counts.elsewhere,
-        },
+        // Also read isn't a tab of its own: History links to it, and
+        // stays marked while you're there
         {
           to: "/history",
           label: "History",
           count: counts.history,
+          also: ["/read-elsewhere"],
         },
       ]}
     >

@@ -20,6 +20,7 @@ import {
 import EmptyList from "~/components/empty-list";
 import { HistoryIcon } from "~/components/icons";
 import Layout from "~/components/layout";
+import { useListFilter } from "~/components/list-filter";
 import PersonLink from "~/components/person-link";
 import ShelfTabs from "~/components/shelf-tabs";
 import { getHistory, getShelfCounts, hideFromHistory } from "~/models/history.server";
@@ -147,11 +148,32 @@ function HistoryRow({ entry, friendIds }: { entry: Entry; friendIds: string[] })
 
 export default function History() {
   const { entries, counts, friendIds } = useLoaderData<typeof loader>();
+  const { shown, chips } = useListFilter(entries, [
+    { value: "lent", label: "Lent", test: (entry) => entry.kind === "lent" },
+    { value: "borrowed", label: "Borrowed", test: (entry) => entry.kind === "borrowed" },
+  ]);
 
   return (
     <Layout title="History">
       <section>
         <ShelfTabs counts={{ ...counts, history: entries.length }} />
+
+        {/* The filters, and across from them the way to Also read: books
+            you've read that were never on your shelf, kept here rather
+            than in a tab of their own */}
+        <div className="flex min-h-7 items-center gap-3">
+          {chips}
+          <Link
+            to="/read-elsewhere"
+            className="ml-auto inline-flex flex-shrink-0 items-center gap-1 whitespace-nowrap text-sm text-stone-500 dark:text-stone-400 underline-offset-4 hover:text-stone-800 hover:underline dark:hover:text-stone-200"
+          >
+            Also read
+            {counts.elsewhere ? (
+              <span className="text-stone-400 dark:text-stone-500">{counts.elsewhere}</span>
+            ) : null}
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
 
         {entries.length === 0 ? (
           <EmptyList
@@ -167,7 +189,7 @@ export default function History() {
           // what's out now is on your shelf. In columns where there's room,
           // as Want to read and Also read
           <ul className={`mt-4 ${bookRowGrid}`}>
-            {entries.map((entry) => (
+            {shown.map((entry) => (
               <HistoryRow key={`${entry.kind}-${entry.id}`} entry={entry} friendIds={friendIds} />
             ))}
           </ul>

@@ -1,4 +1,4 @@
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 
 // A row of tabs over a rule, with room across from them for the page's own
 // actions: My shelf's lists, the Friends page's views. Words only: the
@@ -11,12 +11,13 @@ export interface Tab {
   count?: number | null;
   // Only the exact address, not the pages under it
   end?: boolean;
+  // Other pages it counts as, like History for Also read, which it links to
+  also?: string[];
 }
 
-// The same weight either way, so switching tabs never nudges the others.
-// A size smaller on phones, so a row of four fits without scrolling
+// The same weight either way, so switching tabs never nudges the others
 const tabClass = ({ isActive }: { isActive: boolean }) =>
-  `flex items-center gap-1 sm:gap-1.5 whitespace-nowrap border-b-2 px-0.5 sm:px-1 pb-2.5 text-sm sm:text-base font-medium transition-colors ${
+  `flex items-center gap-1.5 whitespace-nowrap border-b-2 px-1 pb-2.5 font-medium transition-colors ${
     isActive
       ? "border-stone-900 dark:border-stone-100 text-stone-900 dark:text-stone-100"
       : "border-transparent text-stone-500 dark:text-stone-400 hover:border-stone-300 dark:hover:border-stone-600 hover:text-stone-800 dark:hover:text-stone-200"
@@ -32,15 +33,23 @@ export default function Tabs({
   // Across from the tabs
   children?: React.ReactNode;
 }) {
+  const { pathname } = useLocation();
   return (
     <div className="mb-6 flex items-start gap-3 border-b border-stone-200 dark:border-stone-800">
       <nav
         aria-label={label}
         // Down over the rule, so the current tab's underline covers it
-        className="-mb-px flex min-w-0 flex-1 gap-4 sm:gap-6 overflow-x-auto [scrollbar-width:none]"
+        className="-mb-px flex min-w-0 flex-1 gap-5 sm:gap-6 overflow-x-auto [scrollbar-width:none]"
       >
         {tabs.map((tab) => (
-          <NavLink key={tab.to} to={tab.to} end={tab.end} className={tabClass}>
+          <NavLink
+            key={tab.to}
+            to={tab.to}
+            end={tab.end}
+            className={({ isActive }) =>
+              tabClass({ isActive: isActive || (tab.also?.includes(pathname) ?? false) })
+            }
+          >
             {tab.label}
             {/* No "0": an empty list's tab is just its name */}
             {tab.count ? (
