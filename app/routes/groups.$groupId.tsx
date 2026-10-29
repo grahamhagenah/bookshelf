@@ -4,9 +4,18 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import invariant from "tiny-invariant";
 
 import Faces from "~/components/faces";
+import GroupBoard from "~/components/group-board";
 import { LinkIcon, PencilIcon } from "~/components/icons";
 import { GROUP_NAME_MAX, codeFromLink, groupInvitePath, groupPath } from "~/group-links";
 import { loadGroup } from "~/group-page.server";
+import {
+  cleanChatUrl,
+  clearGroupPick,
+  getGroupBoard,
+  setGroupChat,
+  setGroupMeeting,
+  setGroupPick,
+} from "~/models/group-board.server";
 import {
   cleanGroupName,
   deleteGroup,
@@ -38,7 +47,7 @@ export const handle = {
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const { group } = await loadGroup(request, params);
+  const { userId, group } = await loadGroup(request, params);
   // The address carries the group's name as it is now, for a link from
   // before a rename or one with just the id
   const url = pageUrl(request);
@@ -48,6 +57,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { inviteToken, openIds, ...rest } = group;
   return data({
     group: { ...rest, lenderCount: openIds.length },
+    // What it's reading and when it meets, if it keeps that here
+    board: await getGroupBoard(group.id),
+    userId,
     path,
     inviteUrl: `${publicOrigin(request)}${groupInvitePath(group.name, inviteToken)}`,
   });
@@ -55,7 +67,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export type GroupLayoutData = typeof loader;
 
-// Renaming, leaving and a fresh invite link, from the People tab
+// Renaming, leaving and a fresh invite link, from the People tab; the
+// book, meetup and chat link on the card at the top
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.groupId, "groupId not found");
@@ -81,6 +94,41 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     if (typeof memberId === "string") await removeFromGroup(userId, groupId, memberId);
     return data({ ok: true });
   }
+  if (intent === "pick") {
+    const text = (name: string) => String(formData.get(name) ?? "").slice(0, 300);
+    const key = text("key");
+    await setGroupPick(userId, groupId, {
+      key: /^\/works\/OL\d+W$/.test(key) ? key : null,
+      title: text("title"),
+      author: text("author"),
+      cover: /^https:\/\/covers\.openlibrary\.org\//.test(text("cover")) ? text("cover") : "",
+    });
+    return data({ ok: true });
+  }
+  if (intent === "clearPick") {
+    await clearGroupPick(userId, groupId);
+    return data({ ok: true });
+  }
+  if (intent === "meeting") {
+    const clear = formData.get("clear") === "1";
+    const date = String(formData.get("date") ?? "");
+    const time = String(formData.get("time") ?? "");
+    // Kept as typed, the same wall-clock time for everyone
+    const at =
+      !clear && /^\d{4}-\d{2}-\d{2}$/.test(date)
+        ? new Date(`${date}T${/^\d{2}:\d{2}$/.test(time) ? time : "00:00"}:00Z`)
+        : null;
+    await setGroupMeeting(userId, groupId, {
+      at: at && !Number.isNaN(at.getTime()) ? at : null,
+      place: clear ? "" : String(formData.get("place") ?? ""),
+    });
+    return data({ ok: true });
+  }
+  if (intent === "chat") {
+    const clear = formData.get("clear") === "1";
+    await setGroupChat(userId, groupId, clear ? null : cleanChatUrl(formData.get("url")));
+    return data({ ok: true });
+  }
   if (intent === "resetLink") {
     await resetGroupLink(userId, groupId);
     return data({ ok: true });
@@ -91,7 +139,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 export default function GroupLayout() {
-  const { group, path, inviteUrl } = useLoaderData<typeof loader>();
+  const { group, board, userId, path, inviteUrl } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const justJoined = searchParams.get("joined") === "1";
 
@@ -142,6 +190,8 @@ export default function GroupLayout() {
           <InviteButton name={group.name} url={inviteUrl} />
         </div>
       </div>
+
+      <GroupBoard board={board} path={path} groupName={group.name} userId={userId} />
 
       <div className="mb-6 flex items-start gap-3 border-b border-stone-200 dark:border-stone-800">
         <nav

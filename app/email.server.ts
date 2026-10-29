@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 
+import { groupPath } from "~/group-links";
 import wordmark from "~/images/wordmark.png?url";
 import type { Digest } from "~/models/digest.server";
 import type { EmailKind } from "~/models/user.server";
@@ -506,6 +507,8 @@ function digestLines(digest: Digest) {
     }
     if (item.kind === "elsewhere")
       return `${name} wrote about ${item.work.title}: “${item.body}”`;
+    if (item.kind === "pick")
+      return `${item.group.name} is reading ${item.work.title}, picked by ${item.friend.firstname}`;
     if (item.kind === "loved") return `${name} loved ${item.book.title}`;
     return `${name} wrote about ${item.book.title}${item.body ? `: “${item.body}”` : ""}`;
   });
@@ -575,6 +578,16 @@ function activityRow(item: Digest["activity"][number]) {
     return withCover(
       item.work.cover,
       `${name} wrote about ${work}<br><span style="display: inline-block; margin-top: 6px; padding-left: 10px; border-left: 2px solid ${line}; font-style: italic; color: ${body};">“${paragraphs(item.body)}”</span>`,
+    );
+  }
+  if (item.kind === "pick") {
+    const group = `<a href="${APP_URL}${groupPath(item.group)}" style="color: ${ink}; font-weight: 600; text-decoration: none;">${esc(item.group.name)}</a>`;
+    const work = item.work.key
+      ? `<a href="${APP_URL}${item.work.key}" style="color: ${ink}; font-weight: 600; text-decoration: none;">${esc(item.work.title)}</a>`
+      : `<strong style="color: ${ink};">${esc(item.work.title)}</strong>`;
+    return withCover(
+      item.work.cover,
+      `${group} is reading ${work}<br><span style="font-size: 14px; color: ${muted};">Picked by ${esc(item.friend.firstname)}</span>`,
     );
   }
   if (item.kind === "loved") {

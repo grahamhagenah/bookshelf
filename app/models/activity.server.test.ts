@@ -101,7 +101,7 @@ test("leaves out old news and your own activity, newest first", async () => {
   const titles = feed.map((item) =>
     item.kind === "added"
       ? item.books.map((b) => b.title).join()
-      : item.kind === "elsewhere"
+      : item.kind === "elsewhere" || item.kind === "pick"
         ? item.work.title
         : item.book.title,
   );
@@ -126,7 +126,7 @@ test("feed books carry hearts, notes and where you stand with them", async () =>
   await saveReaderNote(other.id, book.id, { loved: true });
 
   const [item] = await getFriendActivity(me.id);
-  if (item.kind === "elsewhere") throw new Error("Expected a copy");
+  if (item.kind === "elsewhere" || item.kind === "pick") throw new Error("Expected a copy");
   const seen = item.kind === "added" ? item.books[0] : item.book;
   expect(seen).toMatchObject({ loves: 2, notes: 1, available: true });
   // Not a reader of this copy, but a friend of its owner
