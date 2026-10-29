@@ -112,6 +112,9 @@ const PATHS: Record<string, React.ReactNode> = {
 // Joining from an invite looks like the friend request it stands in for
 PATHS.FRIEND_JOINED = PATHS.FRIEND_REQUEST;
 PATHS.GROUP_JOINED = PATHS.FRIEND_REQUEST;
+// A group's pick, like the note on a book; its meetup, like a date due
+PATHS.GROUP_PICK = PATHS.READER_NOTE;
+PATHS.GROUP_MEETUP = PATHS.DUE_SOON_REMINDER;
 PATHS.SHELF_JOINED = PATHS.FRIEND_REQUEST;
 
 const FALLBACK = <circle cx="12" cy="12" r="2.5" />;

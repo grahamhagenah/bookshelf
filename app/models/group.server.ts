@@ -112,6 +112,9 @@ export async function getGroup(groupId: Group["id"], userId: User["id"]) {
           orderBy: { joinedAt: "asc" },
           select: {
             joinedAt: true,
+            alertPicks: true,
+            alertMeetups: true,
+            alertJoins: true,
             user: { select: { ...person, _count: { select: { books: true } } } },
           },
         },
@@ -127,6 +130,7 @@ export async function getGroup(groupId: Group["id"], userId: User["id"]) {
   // Whoever's been in longest runs it: the person who started it, until
   // they leave
   const ownerId = group.members[0]?.user.id;
+  const mine = group.members.find((member) => member.user.id === userId);
   const members = group.members.map(({ joinedAt, user: { _count, ...user } }) => ({
     ...user,
     joinedAt,
@@ -146,6 +150,12 @@ export async function getGroup(groupId: Group["id"], userId: User["id"]) {
     inviteToken: group.inviteToken,
     description: group.description,
     planning: group.planning,
+    // Which of its goings-on reach your alerts
+    myAlerts: {
+      picks: mine?.alertPicks ?? true,
+      meetups: mine?.alertMeetups ?? true,
+      joins: mine?.alertJoins ?? true,
+    },
     members,
     openIds,
     groupOnly,
@@ -198,7 +208,7 @@ export type JoinResult =
 export async function joinGroup(userId: User["id"], token: string): Promise<JoinResult> {
   const group = await prisma.group.findUnique({
     where: { inviteToken: token },
-    select: { id: true, name: true, members: { select: { userId: true } } },
+    select: { id: true, name: true, members: { select: { userId: true, alertJoins: true } } },
   });
   if (!group) return { ok: false, reason: "no-such-group" };
   const memberIds = group.members.map((member) => member.userId);
@@ -214,8 +224,10 @@ export async function joinGroup(userId: User["id"], token: string): Promise<Join
     where: { id: userId },
     select: { firstname: true, surname: true },
   });
+  // Only to the members who want to hear about joins
+  const listening = group.members.filter((member) => member.alertJoins).map((member) => member.userId);
   await prisma.$transaction(
-    memberIds.map((receiverId) =>
+    listening.map((receiverId) =>
       prisma.notification.create({
         data: {
           type: "GROUP_JOINED",
@@ -293,6 +305,22 @@ export async function describeGroup(userId: User["id"], groupId: Group["id"], de
 export async function setGroupPlanning(userId: User["id"], groupId: Group["id"], on: boolean) {
   if (!(await runsGroup(userId, groupId))) return false;
   await prisma.group.update({ where: { id: groupId }, data: { planning: on } });
+  return true;
+}
+
+export interface GroupAlerts {
+  picks: boolean;
+  meetups: boolean;
+  joins: boolean;
+}
+
+// Which of the group's goings-on reach your alerts: yours alone to say
+export async function setGroupAlerts(userId: User["id"], groupId: Group["id"], alerts: GroupAlerts) {
+  if (!(await isMember(groupId, userId))) return false;
+  await prisma.groupMember.update({
+    where: { groupId_userId: { groupId, userId } },
+    data: { alertPicks: alerts.picks, alertMeetups: alerts.meetups, alertJoins: alerts.joins },
+  });
   return true;
 }
 

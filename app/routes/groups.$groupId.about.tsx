@@ -12,10 +12,10 @@ import type { LoaderData } from "~/utils";
 
 import type { GroupLayoutData } from "./groups.$groupId";
 
-// What the group is: its description and who's in it (for whoever runs
-// it, with the way to take someone out). Beside them, the link that brings
-// more people in, the group's settings (its name, and whether its page
-// has the planning card), and the way out.
+// What the group is: its description, who's in it (for whoever runs it,
+// with the way to take someone out) and its settings: the name, whether its
+// page has the planning card, and which of its goings-on reach your alerts.
+// Beside them, the link that brings more people in, and the way out.
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await loadGroup(request, params);
@@ -54,18 +54,21 @@ export default function GroupAbout() {
             ))}
           </ul>
         </section>
+        <section aria-labelledby="settings" className="max-w-xl">
+          <h2 id="settings" className={`${sectionHeading} mb-1`}>
+            Group settings
+          </h2>
+          <div className="divide-y divide-stone-100 dark:divide-stone-800">
+            {/* Fresh for each name, so a rename settles the box */}
+            <NameSetting key={group.name} name={group.name} path={path} />
+            <PlanningSetting on={group.planning} path={path} canChange={iRunIt} founder={founder?.firstname ?? null} />
+            <AlertSettings alerts={group.myAlerts} path={path} planning={group.planning} />
+          </div>
+        </section>
       </div>
 
       <aside className="space-y-8 self-start">
         <GroupInvite name={group.name} url={inviteUrl} alone={group.members.length === 1} path={path} />
-        <section aria-labelledby="settings" className="border-t border-stone-200 dark:border-stone-800 pt-6">
-          <h2 id="settings" className={sectionHeading}>
-            Settings
-          </h2>
-          {/* Fresh for each name, so a rename settles the box */}
-          <NameSetting key={group.name} name={group.name} path={path} />
-          <PlanningSetting on={group.planning} path={path} canChange={iRunIt} founder={founder?.firstname ?? null} />
-        </section>
         <LeaveOrDelete name={group.name} path={path} runIt={iRunIt} />
       </aside>
     </div>
@@ -137,12 +140,12 @@ function NameSetting({ name, path }: { name: string; path: string }) {
   const [value, setValue] = useState(name);
   const changed = value.trim() !== name && value.trim() !== "";
   return (
-    <fetcher.Form method="post" action={path} className="mt-4">
+    <fetcher.Form method="post" action={path} className="py-4">
       <input type="hidden" name="intent" value="rename" />
       <label htmlFor="group-name" className={settingLabel}>
         Name
       </label>
-      <div className="mt-1.5 flex gap-2">
+      <div className="mt-1.5 flex max-w-sm gap-2">
         <input
           id="group-name"
           name="name"
@@ -181,7 +184,7 @@ function PlanningSetting({
   const pending = fetcher.formData?.get("on");
   const shown = pending !== undefined && pending !== null ? pending === "1" : on;
   return (
-    <div className="mt-5">
+    <div className="py-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p id="planning-label" className={settingLabel}>
@@ -395,6 +398,62 @@ function GroupInvite({ name, url, alone, path }: { name: string; url: string; al
         </button>
       </Form>
     </section>
+  );
+}
+
+// Which of the group's goings-on reach your alerts: yours alone, saved as
+// you tick them. Picks and meetups only while the group has its planning
+// card
+function AlertSettings({
+  alerts,
+  path,
+  planning,
+}: {
+  alerts: { picks: boolean; meetups: boolean; joins: boolean };
+  path: string;
+  planning: boolean;
+}) {
+  const fetcher = useFetcher();
+  const choices = [
+    ...(planning
+      ? [
+          { name: "picks", label: "A new book is picked", on: alerts.picks },
+          { name: "meetups", label: "A meetup is set or moved", on: alerts.meetups },
+        ]
+      : []),
+    { name: "joins", label: "Someone joins", on: alerts.joins },
+  ];
+  return (
+    <fetcher.Form
+      method="post"
+      action={path}
+      onChange={(event) => fetcher.submit(event.currentTarget)}
+      className="py-4"
+    >
+      <input type="hidden" name="intent" value="alerts" />
+      {/* Kept when the planning card is off, so they come back with it */}
+      {planning ? null : (
+        <>
+          {alerts.picks ? <input type="hidden" name="picks" value="on" /> : null}
+          {alerts.meetups ? <input type="hidden" name="meetups" value="on" /> : null}
+        </>
+      )}
+      <p className={settingLabel}>Your notifications</p>
+      <p className={settingNote}>Alert me when:</p>
+      <div className="mt-2 space-y-1.5">
+        {choices.map((choice) => (
+          <label key={choice.name} className="flex items-center gap-2.5 text-sm text-stone-700 dark:text-stone-300">
+            <input
+              type="checkbox"
+              name={choice.name}
+              defaultChecked={choice.on}
+              className="h-4 w-4 rounded border-stone-300 text-forest-600 focus:ring-forest-600 dark:border-stone-600"
+            />
+            {choice.label}
+          </label>
+        ))}
+      </div>
+    </fetcher.Form>
   );
 }
 

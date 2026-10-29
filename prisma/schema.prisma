@@ -451,6 +451,11 @@ model GroupMember {
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId   String
   joinedAt DateTime @default(now())
+  // Which of the group's goings-on reach this member's alerts: a new pick,
+  // a meetup set or moved, and someone joining
+  alertPicks    Boolean @default(true)
+  alertMeetups  Boolean @default(true)
+  alertJoins    Boolean @default(true)
 
   @@id([groupId, userId])
   @@index([userId])

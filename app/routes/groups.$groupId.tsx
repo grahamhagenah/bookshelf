@@ -24,6 +24,7 @@ import {
   removeFromGroup,
   renameGroup,
   resetGroupLink,
+  setGroupAlerts,
   setGroupPlanning,
 } from "~/models/group.server";
 import { publicOrigin } from "~/origin.server";
@@ -134,6 +135,14 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   }
   if (intent === "describe") {
     await describeGroup(userId, groupId, String(formData.get("description") ?? ""));
+    return data({ ok: true });
+  }
+  if (intent === "alerts") {
+    await setGroupAlerts(userId, groupId, {
+      picks: formData.get("picks") === "on",
+      meetups: formData.get("meetups") === "on",
+      joins: formData.get("joins") === "on",
+    });
     return data({ ok: true });
   }
   if (intent === "planning") {

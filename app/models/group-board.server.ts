@@ -26,6 +26,41 @@ const isMember = (groupId: Group["id"], userId: User["id"]) =>
 
 const changedBy = (userId: User["id"]) => ({ boardById: userId, boardAt: new Date() });
 
+// Tells the rest of the group, in their alerts, unless they've asked not
+// to hear about this kind of thing
+async function alertGroup(
+  userId: User["id"],
+  groupId: Group["id"],
+  kind: "picks" | "meetups",
+  extra: { bookTitle?: string },
+) {
+  const [group, me] = await Promise.all([
+    prisma.group.findUnique({
+      where: { id: groupId },
+      select: {
+        name: true,
+        members: {
+          where: { userId: { not: userId }, ...(kind === "picks" ? { alertPicks: true } : { alertMeetups: true }) },
+          select: { userId: true },
+        },
+      },
+    }),
+    prisma.user.findUnique({ where: { id: userId }, select: { firstname: true, surname: true } }),
+  ]);
+  if (!group || !me || group.members.length === 0) return;
+  await prisma.notification.createMany({
+    data: group.members.map((member) => ({
+      type: kind === "picks" ? "GROUP_PICK" : "GROUP_MEETUP",
+      senderId: userId,
+      receiverId: member.userId,
+      senderName: `${me.firstname} ${me.surname}`.trim(),
+      message: group.name,
+      groupId,
+      bookTitle: extra.bookTitle ?? null,
+    })),
+  });
+}
+
 // A new book for the group. Picking the same book again changes nothing,
 // so it isn't announced twice
 export async function setGroupPick(userId: User["id"], groupId: Group["id"], work: PickWork) {
@@ -48,6 +83,7 @@ export async function setGroupPick(userId: User["id"], groupId: Group["id"], wor
       ...changedBy(userId),
     },
   });
+  await alertGroup(userId, groupId, "picks", { bookTitle: title.slice(0, 300) });
   return true;
 }
 
@@ -76,14 +112,15 @@ export async function setGroupMeeting(
   { at, place }: { at: Date | null; place: string },
 ) {
   if (!(await isMember(groupId, userId))) return false;
+  const before = await prisma.group.findUnique({ where: { id: groupId }, select: { meetsAt: true, meetPlace: true } });
+  const meetPlace = place.trim().slice(0, PLACE_MAX) || null;
   await prisma.group.update({
     where: { id: groupId },
-    data: {
-      meetsAt: at,
-      meetPlace: place.trim().slice(0, PLACE_MAX) || null,
-      ...changedBy(userId),
-    },
+    data: { meetsAt: at, meetPlace, ...changedBy(userId) },
   });
+  // A meetup set or moved is news; one taken off, or saved unchanged, isn't
+  const moved = at !== null && (before?.meetsAt?.getTime() !== at.getTime() || before?.meetPlace !== meetPlace);
+  if (moved) await alertGroup(userId, groupId, "meetups", {});
   return true;
 }
 
