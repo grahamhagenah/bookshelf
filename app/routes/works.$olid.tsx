@@ -9,7 +9,7 @@ import ErrorPage from "~/components/error-page";
 import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
 import ReaderNotes from "~/components/reader-notes";
 import SubjectTags from "~/components/subject-tags";
-import { primaryButton, quietButton } from "~/components/ui";
+import { primaryButton, quietButton, sectionHeading } from "~/components/ui";
 import { prisma } from "~/db.server";
 import { isNotLending } from "~/lending";
 import {
@@ -472,8 +472,8 @@ export default function WorkPage() {
         {notesUp ? notes(2, "mt-10 max-w-150") : null}
 
         {work.authorDetails?.bio ? (
-          <section className="mt-8">
-            <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
+          <section className="mt-10">
+            <h2 className={`${sectionHeading} mb-2`}>
               {work.authorDetails.name
                 ? `About ${work.authorDetails.name}`
                 : "About the author"}

@@ -169,8 +169,8 @@ function AboutAuthor({
   // links) a tap away, under the author's own name. The bio usually opens
   // with the dates, so they don't repeat here.
   return (
-    <section className="mt-8">
-      <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
+    <section className="mt-10">
+      <h2 className={`${sectionHeading} mb-2`}>
         {author.name ? `About ${author.name}` : "About the author"}
       </h2>
       {author.bio ? (
