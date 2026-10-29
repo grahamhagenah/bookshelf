@@ -6,7 +6,6 @@ import BookCover from "~/components/book-cover";
 import ErrorPage from "~/components/error-page";
 import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
 import OpeningLine from "~/components/opening-line";
-import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
 import SubjectTags from "~/components/subject-tags";
 import { primaryButton, quietButton } from "~/components/ui";
@@ -412,63 +411,41 @@ export default function WorkPage() {
           </Form>
         ) : null}
 
-        {/* A copy you're borrowing, said as yours for now */}
-        {borrowing ? (
-          <Link
-            to={`/books/${borrowing.id}`}
-            className="flex items-center justify-between gap-2 rounded-md border border-stone-200 dark:border-stone-700 p-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
-          >
-            <span>
-              You&apos;re borrowing{" "}
-              <span className="font-medium text-stone-900 dark:text-stone-100">{borrowing.user.firstname}&apos;s</span>{" "}
-              copy
-            </span>
-            <span aria-hidden="true" className="text-stone-400">
-              &rarr;
-            </span>
-          </Link>
-        ) : null}
-
-        {/* Borrow it instead: someone you know has a copy */}
-        {otherCopies.length > 0 ? (
-          <div className="rounded-md border border-stone-200 dark:border-stone-700 p-3 text-sm">
-            <p className="font-medium text-stone-800 dark:text-stone-200">
-              {borrowing
-                ? otherCopies.length === 1
-                  ? "Another copy"
-                  : "Other copies"
-                : otherCopies.length === 1
-                  ? "A friend has it"
-                  : "Friends have it"}
+        {/* Copies someone you know has, a line each, saying what you'd do:
+            the one you're borrowing first */}
+        {[...(borrowing ? [borrowing] : []), ...otherCopies].map((copy) => {
+          const name = <span className="font-medium text-stone-900 dark:text-stone-100">{copy.user.firstname}</span>;
+          const paused = copy !== borrowing && isNotLending(copy.notLendingUntil);
+          const line =
+            copy === borrowing ? (
+              <>You&apos;re borrowing {name}&apos;s copy</>
+            ) : paused ? (
+              <>{name}&apos;s copy isn&apos;t being lent</>
+            ) : copy.borrowerId ? (
+              <>Get in line for {name}&apos;s copy</>
+            ) : (
+              <>Borrow from {name}</>
+            );
+          return paused ? (
+            <p
+              key={copy.id}
+              className="rounded-md border border-stone-200 dark:border-stone-700 p-3 text-sm text-stone-500 dark:text-stone-400"
+            >
+              {line}
             </p>
-            <ul className="mt-1.5 space-y-1">
-              {otherCopies.map((copy) => (
-                <li
-                  key={copy.id}
-                  className="flex items-center justify-between gap-2"
-                >
-                  <PersonLink
-                    id={copy.user.id}
-                    name={`${copy.user.firstname} ${copy.user.surname}`}
-                    friendIds={data.friendIds}
-                  />
-                  {/* What you can do about this copy, on its page; not
-                      lending is just said */}
-                  {isNotLending(copy.notLendingUntil) ? (
-                    <span className="text-stone-400 dark:text-stone-500">Not lending</span>
-                  ) : (
-                    <Link
-                      to={`/books/${copy.id}`}
-                      className="text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
-                    >
-                      {copy.borrowerId ? "Get in line" : "Ask to borrow"}
-                    </Link>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
+          ) : (
+            <Link
+              key={copy.id}
+              to={`/books/${copy.id}`}
+              className="flex items-center justify-between gap-2 rounded-md border border-stone-200 dark:border-stone-700 p-3 text-sm text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
+            >
+              <span>{line}</span>
+              <span aria-hidden="true" className="text-stone-400">
+                &rarr;
+              </span>
+            </Link>
+          );
+        })}
       </section>
 
       <section className="relative min-w-0 flex-1">
