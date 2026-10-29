@@ -124,11 +124,20 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
                   <span className="sr-only">
                     {book.title} by {book.author}
                   </span>
-                  {/* Why it's here, in the owner's words, kept to three
+                  {/* Why it's here, quoted in the owner's words under a
+                      big opening mark in the heart's color, kept to three
                       lines so the row stays even */}
                   {book.note ? (
-                    <span className="mt-2 line-clamp-3 text-xs leading-snug text-stone-600 dark:text-stone-300 sm:text-sm">
-                      {book.note}
+                    <span className="mt-3 block">
+                      <span
+                        aria-hidden
+                        className={`block h-6 font-serif text-5xl leading-none ${heartOf(profile.color)}`}
+                      >
+                        “
+                      </span>
+                      <span className="line-clamp-3 font-serif text-[13px] leading-snug text-stone-700 italic dark:text-stone-300 sm:text-sm">
+                        {book.note}
+                      </span>
                     </span>
                   ) : null}
                 </>
