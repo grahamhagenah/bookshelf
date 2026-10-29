@@ -9,7 +9,7 @@ import CoverPlaceholder from "~/components/cover-placeholder";
 import ErrorPage from "~/components/error-page";
 import { LentIcon, PencilIcon } from "~/components/icons";
 import PersonLink from "~/components/person-link";
-import ReaderNotes, { HideToggle, PinToggle } from "~/components/reader-notes";
+import ReaderNotes, { HideToggle, PinToggle, quietAction } from "~/components/reader-notes";
 import SubjectTags from "~/components/subject-tags";
 import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
 import { importCover, isOpenLibraryCover } from "~/covers.server";
@@ -2751,7 +2751,7 @@ export default function BookDetailsPage() {
           {/* Rarely needed, so they wait at the very bottom: fixing the
               details, and this book's place on your public page */}
           {!isEditing && (data.isOwner || data.page) ? (
-            <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2">
+            <div className="mt-12 flex max-w-150 flex-wrap items-center gap-2">
               {data.isOwner ? (
                 <button
                   type="button"
@@ -2760,12 +2760,10 @@ export default function BookDetailsPage() {
                     setIsEditing(true);
                     window.scrollTo({ top: 0 });
                   }}
-                  className="inline-flex items-center gap-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+                  className={quietAction}
                 >
                   <PencilIcon size={14} />
-                  <span className="underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600">
-                    Edit details or cover
-                  </span>
+                  Edit details or cover
                 </button>
               ) : null}
               {data.page ? <PinToggle page={data.page} /> : null}
