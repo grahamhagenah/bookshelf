@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { trimOpening } from "./opening-line";
+import { calmCapitals, trimOpening } from "./opening-line";
 
 describe("trimOpening", () => {
   it("keeps a short first line whole", () => {
@@ -31,5 +31,18 @@ describe("trimOpening", () => {
     withComma[15] = "w15,";
     expect(trimOpening(withComma.join(" "))).toBe(`${words.slice(0, 16).join(" ")}…`);
     expect(trimOpening(words.join(" "))).toBe(words.join(" "));
+  });
+});
+
+describe("calmCapitals", () => {
+  it("gives first words in capitals ordinary ones", () => {
+    expect(calmCapitals("SIR WALTER ELLIOT, of Kellynch Hall, was a man")).toBe(
+      "Sir Walter Elliot, of Kellynch Hall, was a man",
+    );
+  });
+
+  it("leaves a sentence that starts normally alone", () => {
+    expect(calmCapitals("I am an invisible man.")).toBe("I am an invisible man.");
+    expect(calmCapitals("The sky above the port")).toBe("The sky above the port");
   });
 });
