@@ -6,11 +6,20 @@ import type { SuggestResponse } from "~/routes/api.search-suggest";
 import type { LoaderData } from "~/utils";
 import { workPath } from "~/utils";
 
+import Avatar from "./avatar";
 import BookCover from "./book-cover";
 import { quietButton, textField } from "./ui";
 
 type Board = NonNullable<LoaderData<Awaited<ReturnType<typeof getGroupBoard>>>>;
 type Editing = "pick" | "meeting" | "chat" | null;
+
+// Side by side from small screens, as many as there are parts: the book,
+// its copies, the meetup, the chat
+const COLUMNS: Record<number, string> = {
+  2: "sm:grid-cols-2",
+  3: "sm:grid-cols-3",
+  4: "sm:grid-cols-2 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.8fr)]",
+};
 
 // A meetup's time as it was typed, the same for everyone: "Thu, Nov 13 ·
 // 7pm" (a time of day only when one was given)
@@ -25,6 +34,11 @@ export function meetingWhen(at: string | Date) {
     .toLowerCase();
   return `${day} · ${time}`;
 }
+
+// Over once its day is: a meetup keeps the time it was typed with, so
+// it counts as past only after that whole day, wherever you are
+export const meetingPast = (at: string | Date | null) =>
+  at !== null && new Date(at).getTime() + 24 * 60 * 60 * 1000 < Date.now();
 
 const shortDate = (at: string | Date) =>
   new Date(at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -78,33 +92,41 @@ export default function GroupBoard({
       aria-label={`${groupName}: what you're reading and when you meet`}
       className="mb-6 rounded-xl border border-stone-200 dark:border-stone-800"
     >
-      <div className="grid gap-5 p-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className={`grid gap-5 p-4 ${COLUMNS[[pick, pick, meeting, chat].filter(Boolean).length] ?? ""}`}>
         {editing === "pick" ? (
-          <div className="sm:col-span-3">
+          <div className="col-span-full">
             <PickSearch path={path} groupName={groupName} onDone={done} />
           </div>
         ) : editing === "meeting" ? (
-          <div className="sm:col-span-3">
+          <div className="col-span-full">
             <MeetingForm path={path} meeting={meeting} onDone={done} />
           </div>
         ) : editing === "chat" ? (
-          <div className="sm:col-span-3">
+          <div className="col-span-full">
             <ChatForm path={path} url={chat?.url ?? ""} onDone={done} />
           </div>
         ) : (
           <>
             {pick ? (
               <div className={section}>
-                <p className={label}>Reading</p>
-                <div className="mt-2 flex gap-3">
+                {/* The cover gets the card's height; its label sits over
+                    the title beside it */}
+                <div className="flex gap-4">
                   <PickLink pick={pick}>
-                    <BookCover cover={pick.cover} title={pick.title} author={pick.author} compact className="h-[69px] w-[46px] flex-shrink-0" />
+                    <BookCover cover={pick.cover} title={pick.title} author={pick.author} className="h-[105px] w-[70px] flex-shrink-0" />
                   </PickLink>
                   <div className="min-w-0">
+                    <p className={`${label} mb-1`}>Reading</p>
                     <PickLink pick={pick} className="font-semibold leading-snug text-stone-900 dark:text-stone-100 underline-offset-2 hover:underline">
                       {pick.title}
                     </PickLink>
                     <p className="text-sm text-stone-500 dark:text-stone-400">{pick.author}</p>
+                    {pick.finished.length > 0 ? (
+                      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+                        {pick.finished.length} of {pick.memberCount} finished ·{" "}
+                        {names(pick.finished.map((person) => who(person)))}
+                      </p>
+                    ) : null}
                     <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">
                       Picked by {who(pick.pickedBy)} ·{" "}
                       <button type="button" onClick={() => setEditing("pick")} className="underline-offset-2 hover:underline hover:text-stone-700 dark:hover:text-stone-300">
@@ -115,18 +137,31 @@ export default function GroupBoard({
                 </div>
               </div>
             ) : null}
+            {pick ? <CopiesColumn pick={pick} userId={userId} /> : null}
             {meeting ? (
               <div className={section}>
-                <p className={label}>Next meetup</p>
+                <p className={label}>{meetingPast(meeting.at) ? "Last meetup" : "Next meetup"}</p>
                 {meeting.at ? (
                   <p className="mt-2 font-semibold text-stone-900 dark:text-stone-100">{meetingWhen(meeting.at)}</p>
                 ) : null}
                 {meeting.place ? (
                   <p className={`${meeting.at ? "" : "mt-2 "}text-sm text-stone-600 dark:text-stone-300`}>{meeting.place}</p>
                 ) : null}
-                <button type="button" onClick={() => setEditing("meeting")} className="mt-1 text-xs text-stone-400 dark:text-stone-500 underline-offset-2 hover:underline hover:text-stone-700 dark:hover:text-stone-300">
-                  Change
-                </button>
+                <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">
+                  {meeting.at && !meetingPast(meeting.at) ? (
+                    <>
+                      {/* A file any calendar app opens: the date, the time
+                          as typed, the place and the book */}
+                      <a href={`${path}/meetup.ics`} download className="underline-offset-2 hover:underline hover:text-stone-700 dark:hover:text-stone-300">
+                        Add to calendar
+                      </a>
+                      {" · "}
+                    </>
+                  ) : null}
+                  <button type="button" onClick={() => setEditing("meeting")} className="underline-offset-2 hover:underline hover:text-stone-700 dark:hover:text-stone-300">
+                    Change
+                  </button>
+                </p>
               </div>
             ) : null}
             {chat ? (
@@ -162,6 +197,74 @@ export default function GroupBoard({
         </div>
       )}
     </section>
+  );
+}
+
+// "Maya", "Maya and Sam", "Maya, Sam and you"
+const names = (people: string[]) =>
+  people.length <= 1
+    ? people.join("")
+    : `${people.slice(0, -1).join(", ")} and ${people[people.length - 1]}`;
+
+// Everyone in the group with a copy of its book, each opening their shelf
+// already looking for it (yours, or one you're borrowing, opens the copy),
+// said plainly: "Maya has a copy", "Sam's copy is lent out"
+function CopiesColumn({ pick, userId }: { pick: NonNullable<Board["pick"]>; userId: string }) {
+  const name = (person: { firstname: string }) => (
+    <span className="font-medium text-stone-800 dark:text-stone-200 underline-offset-4 decoration-stone-300 dark:decoration-stone-600 group-hover:underline">
+      {person.firstname}
+    </span>
+  );
+  const say = (copy: NonNullable<Board["pick"]>["copies"][number]) =>
+    copy.mine ? (
+      <>You have a copy</>
+    ) : copy.borrowerId === userId ? (
+      <>You&apos;re borrowing {name(copy.owner)}&apos;s</>
+    ) : copy.requested ? (
+      <>You asked {name(copy.owner)} for it</>
+    ) : copy.notLending ? (
+      <>{name(copy.owner)} has a copy, not lending now</>
+    ) : copy.borrowerId ? (
+      <>{name(copy.owner)}&apos;s copy is lent out</>
+    ) : (
+      <>{name(copy.owner)} has a copy</>
+    );
+  // Yours first, then the ones you could borrow now
+  const rank = (copy: NonNullable<Board["pick"]>["copies"][number]) =>
+    copy.mine || copy.borrowerId === userId ? 0 : copy.available ? 1 : 2;
+  const copies = [...pick.copies].sort((a, b) => rank(a) - rank(b));
+  return (
+    <div className="min-w-0">
+      <p className="text-xs font-semibold uppercase tracking-wide text-stone-400 dark:text-stone-500">Copies</p>
+      {copies.length === 0 ? (
+        <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">Nobody here has one yet</p>
+      ) : (
+        <ul className="mt-1">
+          {copies.map((copy) => (
+            <li key={copy.bookId}>
+              <Link
+                to={
+                  copy.mine || copy.borrowerId === userId
+                    ? `/books/${copy.bookId}`
+                    : `/friend/${copy.owner.id}?${new URLSearchParams({ q: copy.title })}`
+                }
+                className="group flex items-center gap-2.5 py-1 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors"
+              >
+                <span className="rounded-full bg-white dark:bg-stone-950">
+                  <Avatar
+                    firstname={copy.owner.firstname}
+                    surname={copy.owner.surname}
+                    icon={copy.owner.profileEmoji}
+                    size="xs"
+                  />
+                </span>
+                <span className="min-w-0">{say(copy)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

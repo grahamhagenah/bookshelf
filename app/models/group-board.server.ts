@@ -1,5 +1,9 @@
 import { prisma } from "~/db.server";
 import type { Group, User } from "~/generated/prisma/client";
+import { isNotLending } from "~/lending";
+import { sameWork } from "~/works";
+
+import { circleOf } from "./circle.server";
 
 // What a group can choose to keep on its page, if it plans here rather
 // than in its chat: the book it's reading, when and where it next meets,
@@ -124,9 +128,75 @@ export function chatApp(url: string) {
   return apps.find(([pattern]) => pattern.test(host))?.[1] ?? null;
 }
 
+// Around the pick, what the group needs to read it together: the copies
+// among them (yours, friends', and group-mates' unless they keep it off
+// their page), free ones first, and who's finished it, by any read mark
+async function aroundThePick(
+  userId: User["id"],
+  memberIds: User["id"][],
+  work: { title: string; openLibraryKey: string | null },
+) {
+  const [books, readerNotes, workNotes, asked, circle] = await Promise.all([
+    prisma.book.findMany({
+      where: { userId: { in: memberIds } },
+      select: {
+        id: true,
+        title: true,
+        openLibraryKey: true,
+        isbn: true,
+        userId: true,
+        borrowerId: true,
+        notLendingUntil: true,
+        hiddenFromPage: true,
+        readAt: true,
+      },
+    }),
+    prisma.readerNote.findMany({
+      where: { userId: { in: memberIds }, readAt: { not: null } },
+      select: { userId: true, book: { select: { title: true, openLibraryKey: true, isbn: true } } },
+    }),
+    work.openLibraryKey
+      ? prisma.workNote.findMany({
+          where: { userId: { in: memberIds }, workKey: work.openLibraryKey, readAt: { not: null } },
+          select: { userId: true },
+        })
+      : Promise.resolve([]),
+    prisma.notification.findMany({
+      where: { type: "BOOK_REQUEST", senderId: userId, read: false, bookId: { not: null } },
+      select: { bookId: true },
+    }),
+    circleOf(userId),
+  ]);
+  const requested = new Set(asked.map((request) => request.bookId));
+  const copies = books
+    .filter((book) => sameWork(work, book))
+    .filter((book) => book.userId === userId || !book.hiddenFromPage || circle.friends.has(book.userId))
+    .map((book) => {
+      const notLending = isNotLending(book.notLendingUntil);
+      return {
+        bookId: book.id,
+        // As its owner has it, to find it on their shelf
+        title: book.title,
+        ownerId: book.userId,
+        mine: book.userId === userId,
+        available: book.borrowerId === null && !notLending,
+        notLending,
+        borrowerId: book.borrowerId,
+        requested: requested.has(book.id),
+      };
+    })
+    .sort((a, b) => Number(b.available) - Number(a.available));
+  const finished = new Set([
+    ...books.filter((book) => book.readAt && sameWork(work, book)).map((book) => book.userId),
+    ...readerNotes.filter((note) => sameWork(work, note.book)).map((note) => note.userId),
+    ...workNotes.map((note) => note.userId),
+  ]);
+  return { copies, finished };
+}
+
 // The board as the group's page shows it to a member, or null when
 // nothing's been set
-export async function getGroupBoard(groupId: Group["id"]) {
+export async function getGroupBoard(groupId: Group["id"], userId: User["id"]) {
   const group = await prisma.group.findUnique({
     where: { id: groupId },
     select: {
@@ -140,12 +210,23 @@ export async function getGroupBoard(groupId: Group["id"]) {
       chatUrl: true,
       boardById: true,
       boardAt: true,
-      members: { select: { user: { select: { id: true, firstname: true } } } },
+      members: {
+        select: { user: { select: { id: true, firstname: true, surname: true, profileEmoji: true } } },
+        orderBy: { joinedAt: "asc" },
+      },
     },
   });
   if (!group) return null;
   const nameOf = (id: string | null) =>
     group.members.find((member) => member.user.id === id)?.user ?? null;
+  const members = group.members.map((member) => member.user);
+  const around = group.pickTitle
+    ? await aroundThePick(
+        userId,
+        members.map((member) => member.id),
+        { title: group.pickTitle, openLibraryKey: group.pickKey },
+      )
+    : null;
   const pick = group.pickTitle
     ? {
         key: group.pickKey,
@@ -153,6 +234,12 @@ export async function getGroupBoard(groupId: Group["id"]) {
         author: group.pickAuthor ?? "",
         cover: group.pickCover ?? "",
         pickedBy: nameOf(group.pickedById),
+        copies: (around?.copies ?? []).map(({ ownerId, ...copy }) => ({
+          ...copy,
+          owner: nameOf(ownerId) ?? { id: ownerId, firstname: "", surname: "", profileEmoji: null },
+        })),
+        finished: members.filter((member) => around?.finished.has(member.id)),
+        memberCount: members.length,
       }
     : null;
   const meeting =
@@ -168,4 +255,50 @@ export async function getGroupBoard(groupId: Group["id"]) {
         ? { by: nameOf(group.boardById), at: group.boardAt }
         : null,
   };
+}
+
+// The meetup as a calendar file (.ics), for a member's own calendar. Its
+// time is kept as typed, so it goes in "floating": 7pm wherever the
+// calendar is. A date without a time is an all-day event.
+export function meetupCalendar({
+  groupId,
+  name,
+  at,
+  place,
+  pick,
+  url,
+}: {
+  groupId: string;
+  name: string;
+  at: Date;
+  place: string | null;
+  pick: { title: string; author: string } | null;
+  url: string;
+}) {
+  const text = (value: string) =>
+    value.replace(/\\/g, "\\\\").replace(/([,;])/g, "\\$1").replace(/\r?\n/g, "\\n");
+  const stamp = (date: Date) => date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const day = (date: Date) => date.toISOString().slice(0, 10).replace(/-/g, "");
+  const allDay = at.getUTCHours() === 0 && at.getUTCMinutes() === 0;
+  // Two hours, as a book club's evening goes
+  const end = new Date(at.getTime() + (allDay ? 24 : 2) * 60 * 60 * 1000);
+  const floating = (date: Date) => stamp(date).replace(/Z$/, "");
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Stacks//Group meetup//EN",
+    "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT",
+    `UID:${groupId}-${stamp(at)}@bookstacks.app`,
+    `DTSTAMP:${stamp(new Date())}`,
+    allDay ? `DTSTART;VALUE=DATE:${day(at)}` : `DTSTART:${floating(at)}`,
+    allDay ? `DTEND;VALUE=DATE:${day(end)}` : `DTEND:${floating(end)}`,
+    `SUMMARY:${text(pick ? `${name}: ${pick.title}` : name)}`,
+    ...(place ? [`LOCATION:${text(place)}`] : []),
+    `DESCRIPTION:${text([pick ? `Reading ${pick.title}${pick.author ? ` by ${pick.author}` : ""}` : null, url].filter(Boolean).join("\n"))}`,
+    `URL:${url}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ];
+  return `${lines.join("\r\n")}\r\n`;
 }
