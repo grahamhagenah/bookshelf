@@ -1096,10 +1096,13 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       coverToSave = local;
     }
 
+    const coverChanged = !!coverToSave && coverToSave !== book.cover;
     await updateBookMetadata(book.id, {
       title: typeof title === "string" ? title : undefined,
       author: typeof author === "string" ? author : undefined,
       cover: coverToSave,
+      // Theirs now: someone else's shared cover won't replace it
+      ...(coverChanged ? { coverPicked: true } : {}),
       body: typeof body === "string" ? body : undefined,
       datePublished:
         typeof datePublished === "string" && datePublished
@@ -1112,9 +1115,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       publisher: typeof publisher === "string" && publisher ? publisher : null,
       subjects: typeof subjects === "string" && subjects ? subjects : null,
     });
-    // A cover picked by hand goes to every other copy of the book still
-    // showing Open Library's
-    if (coverToSave && coverToSave !== book.cover) {
+    // A cover picked by hand goes to every other copy of the book whose
+    // owner hasn't picked their own
+    if (coverToSave && coverChanged) {
       await shareCover(book.id, coverToSave, userId);
     }
 
