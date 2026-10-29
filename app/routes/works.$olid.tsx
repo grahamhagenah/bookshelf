@@ -481,8 +481,9 @@ export default function WorkPage() {
             <p className="max-w-150 whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
               {work.authorDetails.bio}
             </p>
-            <p className="mt-2 flex gap-4 text-sm">
-              {work.authorDetails.wikipedia ? (
+            {/* Open Library gets its link once, in the credit below */}
+            {work.authorDetails.wikipedia ? (
+              <p className="mt-2 text-sm">
                 <a
                   href={work.authorDetails.wikipedia}
                   target="_blank"
@@ -491,16 +492,8 @@ export default function WorkPage() {
                 >
                   Wikipedia
                 </a>
-              ) : null}
-              <a
-                href={`https://openlibrary.org/authors/${work.authorDetails.key}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={quietLink}
-              >
-                More on Open Library
-              </a>
-            </p>
+              </p>
+            ) : null}
           </section>
         ) : null}
         <SubjectTags subjects={subjects} title={work.title} className="mt-6" />
