@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
-// A long passage cut to its first few lines, fading out, with Read more
-// for the rest. Guessed long from its length first (so the server and the
+// A long passage cut to its first four lines, fading out (cut by height,
+// so no ellipsis), with Read more for the rest. Guessed long from its length first (so the server and the
 // first paint agree), then measured once it's on screen.
 export default function ClampedText({
   id,
@@ -28,7 +28,7 @@ export default function ClampedText({
         id={id}
         className={`max-w-150 whitespace-pre-wrap text-pretty leading-relaxed text-stone-700 dark:text-stone-300 ${
           clipped
-            ? "line-clamp-4 [mask-image:linear-gradient(to_bottom,black_55%,transparent)]"
+            ? "max-h-[6.5em] overflow-hidden [mask-image:linear-gradient(to_bottom,black_55%,transparent)]"
             : ""
         } ${className}`}
       >

@@ -179,7 +179,7 @@ function AboutAuthor({
           id={`bio-${author.key}`}
           className={`summary max-w-150 text-pretty leading-relaxed text-stone-700 dark:text-stone-300 ${
             clipped
-              ? "line-clamp-3 [mask-image:linear-gradient(to_bottom,black_45%,transparent)]"
+              ? "max-h-[4.875em] overflow-hidden [mask-image:linear-gradient(to_bottom,black_45%,transparent)]"
               : ""
           }`}
         >
