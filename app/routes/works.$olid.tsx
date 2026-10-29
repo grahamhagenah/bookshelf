@@ -8,7 +8,6 @@ import BookCover from "~/components/book-cover";
 import ErrorPage from "~/components/error-page";
 import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
 import OpeningLine from "~/components/opening-line";
-import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
 import SubjectTags from "~/components/subject-tags";
 import { primaryButton, quietButton } from "~/components/ui";
@@ -289,9 +288,6 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 export default function WorkPage() {
   const data = useLoaderData<typeof loader>();
   const { work } = data;
-  // A copy you have on loan, apart from the ones you could still ask for
-  const borrowing = data.friendCopies.find((copy) => copy.borrowerId === data.userId);
-  const otherCopies = data.friendCopies.filter((copy) => copy !== borrowing);
   const fetcher = useFetcher<{
     success: boolean;
     wanted?: boolean;
@@ -431,21 +427,9 @@ export default function WorkPage() {
           </Form>
         ) : null}
 
-        {/* Who you know has it, with their faces, and what you can do
-            about each copy right here: no second page to ask from */}
+        {/* Borrowing it instead, from someone you know, right here */}
         {data.friendCopies.length > 0 ? (
-          <section aria-labelledby="friend-copies" className="pt-2">
-            <h2 id="friend-copies" className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
-              {/* Whose copies they are, not who has them now: one may be
-                  with you */}
-              {data.friendCopies.length === 1 ? "A friend's copy" : "Friends' copies"}
-            </h2>
-            <ul className="mt-2 divide-y divide-stone-100 dark:divide-stone-800">
-              {[...(borrowing ? [borrowing] : []), ...otherCopies].map((copy) => (
-                <FriendCopy key={copy.id} copy={copy} userId={data.userId} friendIds={data.friendIds} />
-              ))}
-            </ul>
-          </section>
+          <BorrowPanel copies={data.friendCopies} userId={data.userId} />
         ) : null}
       </section>
 
@@ -537,95 +521,135 @@ export function ErrorBoundary() {
   return <ErrorPage what="book" />;
 }
 
-// One copy someone you know has: their face and name (to their shelf),
-// and the thing to do about it, done here. Asking opens a line for a note
-// to go with it, as the feed's does.
-function FriendCopy({
-  copy,
-  userId,
-  friendIds,
-}: {
-  copy: {
-    id: string;
-    borrowerId: string | null;
-    notLendingUntil: string | Date | null;
-    requested: boolean;
-    inLine: boolean;
-    user: { id: string; firstname: string; surname: string; profileEmoji: string | null };
-  };
-  userId: string;
-  friendIds: string[];
-}) {
+interface FriendCopyData {
+  id: string;
+  borrowerId: string | null;
+  notLendingUntil: string | Date | null;
+  requested: boolean;
+  inLine: boolean;
+  user: { id: string; firstname: string; surname: string; profileEmoji: string | null };
+}
+
+// Borrowing a copy someone you know has, without leaving the page: one
+// button for the friend to ask ("Borrow from Maya"), faces to pick another
+// when several have it free, then a note and Send. With none free, the
+// line for one that's out; with one already yours, where it is.
+function BorrowPanel({ copies, userId }: { copies: FriendCopyData[]; userId: string }) {
   const ask = useFetcher<{ success?: boolean }>();
   const line = useFetcher<{ joinedLine?: boolean; leftLine?: boolean }>();
-  const [asking, setAsking] = useState(false);
-  const requested = copy.requested || ask.data?.success === true || ask.state !== "idle";
-  const pendingLine = line.formData?.get("intent");
-  const inLine = pendingLine ? pendingLine === "placeHold" : line.data ? line.data.joinedLine === true : copy.inLine;
-  const mine = copy.borrowerId === userId;
-  const action = "inline-flex h-7 items-center whitespace-nowrap rounded-md border border-stone-200 dark:border-stone-700 px-2.5 text-sm font-medium text-stone-700 dark:text-stone-200 hover:border-stone-400 dark:hover:border-stone-500 transition-colors";
-  const state = "whitespace-nowrap text-sm text-stone-400 dark:text-stone-500";
+  const borrowing = copies.find((copy) => copy.borrowerId === userId);
+  const free = copies.filter((copy) => !copy.borrowerId && !isNotLending(copy.notLendingUntil));
+  const out = copies.find(
+    (copy) => copy.borrowerId && copy.borrowerId !== userId && !isNotLending(copy.notLendingUntil),
+  );
+  const [chosenId, setChosenId] = useState(free[0]?.id ?? null);
+  const [writing, setWriting] = useState(false);
+  // Asked just now, before the page knows
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const chosen = free.find((copy) => copy.id === chosenId) ?? free[0];
+  const asked = (copy: FriendCopyData) => copy.requested || sentTo === copy.id;
+  const button = `${quietButton("lg")} inline-flex w-full items-center justify-center gap-1.5 font-medium`;
+  const note = "text-center text-sm text-stone-500 dark:text-stone-400";
 
-  return (
-    <li className="py-2">
-      <div className="flex items-center gap-2.5">
-        <Avatar firstname={copy.user.firstname} surname={copy.user.surname} icon={copy.user.profileEmoji} size="sm" />
-        <span className="min-w-0 flex-1 truncate text-sm">
-          <PersonLink id={copy.user.id} name={copy.user.firstname} friendIds={friendIds} />
-        </span>
-        {mine ? (
-          <Link to={`/books/${copy.id}`} className="whitespace-nowrap text-sm text-stone-600 dark:text-stone-300 underline underline-offset-2">
-            You&apos;re borrowing it
-          </Link>
-        ) : isNotLending(copy.notLendingUntil) ? (
-          <span className={state}>Not lending</span>
-        ) : copy.borrowerId ? (
-          <line.Form method="post" action={`/books/${copy.id}`}>
-            <input type="hidden" name="intent" value={inLine ? "leaveHold" : "placeHold"} />
-            {inLine ? (
-              <button type="submit" title="Leave the line" className={`${state} hover:text-stone-700 dark:hover:text-stone-300`}>
-                In line
+  if (borrowing) {
+    return (
+      <Link to={`/books/${borrowing.id}`} className={button}>
+        You&apos;re borrowing {borrowing.user.firstname}&apos;s copy
+      </Link>
+    );
+  }
+
+  if (chosen) {
+    return (
+      <div className="flex flex-col gap-2">
+        {free.length > 1 ? (
+          // Who to ask, when there's a choice
+          <div role="radiogroup" aria-label="Borrow from" className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-0.5 text-xs text-stone-500 dark:text-stone-400">From</span>
+            {free.map((copy) => (
+              <button
+                key={copy.id}
+                type="button"
+                role="radio"
+                aria-checked={copy.id === chosen.id}
+                onClick={() => setChosenId(copy.id)}
+                className={`inline-flex items-center gap-1.5 rounded-full py-0.5 pl-0.5 pr-2.5 text-sm transition-colors ${
+                  copy.id === chosen.id
+                    ? "bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900"
+                    : "border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-stone-400"
+                }`}
+              >
+                <Avatar firstname={copy.user.firstname} surname={copy.user.surname} icon={copy.user.profileEmoji} size="xs" />
+                {copy.user.firstname}
               </button>
-            ) : (
-              <button type="submit" className={action}>
-                Get in line
-              </button>
-            )}
-          </line.Form>
-        ) : requested ? (
-          <span className={state}>Requested</span>
+            ))}
+          </div>
+        ) : null}
+        {asked(chosen) ? (
+          <p className={note}>Requested from {chosen.user.firstname}</p>
+        ) : writing ? (
+          <ask.Form
+            method="post"
+            action={`/books/${chosen.id}`}
+            className="flex flex-col gap-2"
+            onSubmit={() => {
+              setWriting(false);
+              setSentTo(chosen.id);
+            }}
+          >
+            <input type="hidden" name="intent" value="request" />
+            <label htmlFor="borrow-note" className="sr-only">
+              A note for {chosen.user.firstname}
+            </label>
+            <textarea
+              id="borrow-note"
+              name="message"
+              rows={2}
+              maxLength={300}
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus
+              placeholder={`A note for ${chosen.user.firstname} (optional)`}
+              className="w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 py-2 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:border-stone-400"
+            />
+            <button type="submit" className={`${primaryButton("lg")} w-full`}>
+              Send request to {chosen.user.firstname}
+            </button>
+            <button type="button" onClick={() => setWriting(false)} className="text-sm text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200">
+              Cancel
+            </button>
+          </ask.Form>
         ) : (
-          <button type="button" onClick={() => setAsking(!asking)} aria-expanded={asking} className={action}>
-            Ask to borrow
+          <button type="button" onClick={() => setWriting(true)} className={button}>
+            Borrow from {chosen.user.firstname}
           </button>
         )}
       </div>
-      {asking && !requested ? (
-        <ask.Form method="post" action={`/books/${copy.id}`} className="mt-2 flex flex-col gap-2" onSubmit={() => setAsking(false)}>
-          <input type="hidden" name="intent" value="request" />
-          <label htmlFor={`note-${copy.id}`} className="sr-only">
-            A note for {copy.user.firstname}
-          </label>
-          <input
-            id={`note-${copy.id}`}
-            name="message"
-            type="text"
-            maxLength={300}
-            // eslint-disable-next-line jsx-a11y/no-autofocus
-            autoFocus
-            placeholder={`A note for ${copy.user.firstname} (optional)`}
-            className="h-9 w-full rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:border-stone-400"
-          />
-          <div className="flex items-center gap-2">
-            <button type="submit" className={primaryButton("md")}>
-              Send request
+    );
+  }
+
+  if (out) {
+    // Everyone's is out: wait for one
+    const pending = line.formData?.get("intent");
+    const inLine = pending ? pending === "placeHold" : line.data ? line.data.joinedLine === true : out.inLine;
+    return (
+      <line.Form method="post" action={`/books/${out.id}`} className="flex flex-col gap-1.5">
+        <input type="hidden" name="intent" value={inLine ? "leaveHold" : "placeHold"} />
+        {inLine ? (
+          <p className={note}>
+            In line for {out.user.firstname}&apos;s copy ·{" "}
+            <button type="submit" className="underline underline-offset-2 hover:text-stone-800 dark:hover:text-stone-200">
+              Leave
             </button>
-            <button type="button" onClick={() => setAsking(false)} className="text-sm text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200">
-              Cancel
-            </button>
-          </div>
-        </ask.Form>
-      ) : null}
-    </li>
-  );
+          </p>
+        ) : (
+          <button type="submit" className={button}>
+            Get in line for {out.user.firstname}&apos;s copy
+          </button>
+        )}
+      </line.Form>
+    );
+  }
+
+  // Only copies their owners aren't lending now
+  return <p className={note}>{copies[0].user.firstname}&apos;s copy isn&apos;t being lent right now</p>;
 }
