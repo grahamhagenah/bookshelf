@@ -313,7 +313,7 @@ export default function WorkPage() {
   // under the author; no publisher, since up by the title it crowded the
   // heading.
   const details = [
-    work.datePublished,
+    work.datePublished ? `Published ${work.datePublished}` : null,
     work.pageCount ? `${work.pageCount} pages` : null,
   ].filter(Boolean);
 

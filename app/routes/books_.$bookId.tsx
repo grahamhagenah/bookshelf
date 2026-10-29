@@ -2148,7 +2148,7 @@ export default function BookDetailsPage() {
   // it crowded the title.
   const subjects = cleanSubjects(data.book.subjects);
   const details = [
-    data.book.datePublished,
+    data.book.datePublished ? `Published ${data.book.datePublished}` : null,
     data.book.pageCount ? `${data.book.pageCount} pages` : null,
   ].filter(Boolean);
 
