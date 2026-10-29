@@ -146,3 +146,21 @@ test("a meetup goes to a calendar as typed: 7pm floating, or all day without a t
   expect(allDay).toContain("DTEND;VALUE=DATE:20261106\r\n");
   expect(allDay).not.toContain("LOCATION");
 });
+
+test("a friend outside the group with a copy shows too, after the group's", async () => {
+  const { maya, sam, groupId } = await club();
+  const priya = await makeUser("Priya");
+  await createFriendship(maya.id, priya.id);
+  await makeBook(priya.id, "Circe");
+  await makeBook(sam.id, "Circe");
+  await setGroupPick(maya.id, groupId, circe);
+
+  const copies = (await getGroupBoard(groupId, maya.id))?.pick?.copies ?? [];
+  expect(copies.map((copy) => [copy.owner.firstname, copy.inGroup])).toEqual([
+    ["Sam", true],
+    ["Priya", false],
+  ]);
+  // Sam doesn't know Priya, so her copy isn't his to see
+  const samsCopies = (await getGroupBoard(groupId, sam.id))?.pick?.copies ?? [];
+  expect(samsCopies.map((copy) => copy.owner.firstname)).toEqual(["Sam"]);
+});

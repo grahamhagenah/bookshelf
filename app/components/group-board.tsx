@@ -232,38 +232,41 @@ function CopiesColumn({ pick, userId }: { pick: NonNullable<Board["pick"]>; user
   // Yours first, then the ones you could borrow now
   const rank = (copy: NonNullable<Board["pick"]>["copies"][number]) =>
     copy.mine || copy.borrowerId === userId ? 0 : copy.available ? 1 : 2;
-  const copies = [...pick.copies].sort((a, b) => rank(a) - rank(b));
+  const sorted = [...pick.copies].sort((a, b) => rank(a) - rank(b));
+  const copies = sorted.filter((copy) => copy.inGroup || copy.mine);
+  // Friends outside the group with one, for when the group's are spoken for
+  const outside = sorted.filter((copy) => !copy.inGroup && !copy.mine);
+  const row = (copy: NonNullable<Board["pick"]>["copies"][number]) => (
+    <li key={copy.bookId}>
+      <Link
+        to={
+          copy.mine || copy.borrowerId === userId
+            ? `/books/${copy.bookId}`
+            : `/friend/${copy.owner.id}?${new URLSearchParams({ q: copy.title })}`
+        }
+        className="group flex items-center gap-2.5 py-1 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors"
+      >
+        <span className="rounded-full bg-white dark:bg-stone-950">
+          <Avatar firstname={copy.owner.firstname} surname={copy.owner.surname} icon={copy.owner.profileEmoji} size="xs" />
+        </span>
+        <span className="min-w-0">{say(copy)}</span>
+      </Link>
+    </li>
+  );
   return (
     <div className="min-w-0">
       <p className="text-xs font-semibold uppercase tracking-wide text-stone-400 dark:text-stone-500">Copies</p>
       {copies.length === 0 ? (
         <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">Nobody here has one yet</p>
       ) : (
-        <ul className="mt-1">
-          {copies.map((copy) => (
-            <li key={copy.bookId}>
-              <Link
-                to={
-                  copy.mine || copy.borrowerId === userId
-                    ? `/books/${copy.bookId}`
-                    : `/friend/${copy.owner.id}?${new URLSearchParams({ q: copy.title })}`
-                }
-                className="group flex items-center gap-2.5 py-1 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors"
-              >
-                <span className="rounded-full bg-white dark:bg-stone-950">
-                  <Avatar
-                    firstname={copy.owner.firstname}
-                    surname={copy.owner.surname}
-                    icon={copy.owner.profileEmoji}
-                    size="xs"
-                  />
-                </span>
-                <span className="min-w-0">{say(copy)}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <ul className="mt-1">{copies.map(row)}</ul>
       )}
+      {outside.length > 0 ? (
+        <>
+          <p className="mt-3 text-xs text-stone-400 dark:text-stone-500">Friends outside the group</p>
+          <ul className="mt-0.5">{outside.slice(0, 3).map(row)}</ul>
+        </>
+      ) : null}
     </div>
   );
 }
