@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { data, Form, Link, useFetcher, useLoaderData } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 
@@ -10,6 +11,7 @@ import PersonLink from "~/components/person-link";
 import ReaderNotes from "~/components/reader-notes";
 import SubjectTags from "~/components/subject-tags";
 import { primaryButton, quietButton } from "~/components/ui";
+import { groupPath } from "~/group-links";
 import { isNotLending } from "~/lending";
 import {
   createBook,
@@ -17,6 +19,7 @@ import {
   searchFriendsBooks,
 } from "~/models/book.server";
 import { circleOf } from "~/models/circle.server";
+import { groupsToPick } from "~/models/group-pick.server";
 import { shelfIds } from "~/models/household.server";
 import { NOTE_MAX_LENGTH } from "~/models/note.server";
 import {
@@ -123,7 +126,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   // A cover someone picked for it, over Open Library's
   work = { ...work, cover: await withSharedCover(work.cover, { openLibraryKey: key }) };
 
-  const [ownCopy, wanted, matches, myNote, notes] = await Promise.all([
+  const [ownCopy, wanted, matches, myNote, notes, groups] = await Promise.all([
     findOwnCopy(await shelfIds(userId), {
       title: work.title ?? "",
       openLibraryKey: key,
@@ -132,6 +135,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     searchFriendsBooks(userId, work.title ?? ""),
     getMyWorkNote(userId, key),
     getWorkNotes(userId, key),
+    groupsToPick(userId, { key, title: work.title ?? "" }),
   ]);
   // Friends' copies of this book, not just ones with a similar title
   const friendCopies = matches.filter((book) =>
@@ -146,6 +150,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     ownCopyId: ownCopy?.id ?? null,
     wanted,
     friendCopies,
+    // Your groups, to make this their pick
+    groups,
     // Whose names open their shelf: friends and group-mates
     friendIds: (await circleOf(userId)).ids,
     offline,
@@ -407,6 +413,14 @@ export default function WorkPage() {
           </Form>
         ) : null}
 
+        {/* What your group reads next */}
+        {data.groups.length > 0 ? (
+          <PickForGroup
+            groups={data.groups}
+            work={{ key: work.key, title: work.title ?? "", author: work.author ?? "", cover: work.cover ?? "" }}
+          />
+        ) : null}
+
         {/* Borrow it instead: a friend already has a copy */}
         {data.friendCopies.length > 0 ? (
           <div className="rounded-md border border-stone-200 dark:border-stone-700 p-3 text-sm">
@@ -529,4 +543,66 @@ export default function WorkPage() {
 
 export function ErrorBoundary() {
   return <ErrorPage what="book" />;
+}
+
+// Making this book what a group reads next, for someone in one or more:
+// a button for one group, a choice of them for several. Picking takes you
+// to the group, where it now sits at the top.
+function PickForGroup({
+  groups,
+  work,
+}: {
+  groups: { id: string; name: string; reading: boolean }[];
+  work: { key: string; title: string; author: string; cover: string };
+}) {
+  const [chosen, setChosen] = useState(groups.find((group) => !group.reading)?.id ?? groups[0].id);
+  const group = groups.find((g) => g.id === chosen) ?? groups[0];
+  const fields = (
+    <>
+      <input type="hidden" name="intent" value="pick" />
+      <input type="hidden" name="key" value={work.key} />
+      <input type="hidden" name="title" value={work.title} />
+      <input type="hidden" name="author" value={work.author} />
+      <input type="hidden" name="cover" value={work.cover} />
+      <input type="hidden" name="groupName" value={group.name} />
+    </>
+  );
+  if (groups.length === 1) {
+    return group.reading ? (
+      <p className="text-center text-sm text-stone-500 dark:text-stone-400">
+        {group.name} is reading this
+      </p>
+    ) : (
+      <Form method="post" action={groupPath(group)}>
+        {fields}
+        <button type="submit" className={`${quietButton("lg")} w-full`}>
+          Pick for {group.name}
+        </button>
+      </Form>
+    );
+  }
+  return (
+    <Form method="post" action={groupPath(group)} className="flex flex-col gap-2">
+      {fields}
+      <label htmlFor="pick-group" className="text-sm text-stone-500 dark:text-stone-400">
+        Pick for a group
+      </label>
+      <select
+        id="pick-group"
+        value={chosen}
+        onChange={(event) => setChosen(event.target.value)}
+        className="h-9 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 text-sm text-stone-900 dark:text-stone-100"
+      >
+        {groups.map((g) => (
+          <option key={g.id} value={g.id}>
+            {g.name}
+            {g.reading ? " (reading it)" : ""}
+          </option>
+        ))}
+      </select>
+      <button type="submit" disabled={group.reading} className={`${quietButton("lg")} w-full disabled:opacity-50`}>
+        {group.reading ? `${group.name} is reading this` : `Pick for ${group.name}`}
+      </button>
+    </Form>
+  );
 }

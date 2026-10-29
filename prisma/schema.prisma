@@ -415,6 +415,17 @@ model Group {
   inviteToken String        @unique
   members     GroupMember[]
 
+  // What the group is reading now, picked by any member: the Open Library
+  // work (or just the title, for a book without one), with enough kept to
+  // show it, who picked it and when, and when they next meet, if set
+  pickKey    String?
+  pickTitle  String?
+  pickAuthor String?
+  pickCover  String?
+  pickedById String?
+  pickedAt   DateTime?
+  meetsAt    DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
