@@ -2116,6 +2116,9 @@ export default function BookDetailsPage() {
     navigation.state === "submitting" &&
     navigation.formData?.get("intent") === "edit";
   const requestSent = actionData?.success === true;
+  // Asking with a note: the box opens under Ask to borrow
+  const [writingNote, setWritingNote] = useState(false);
+  const ownerName = data.book.user?.firstname ?? "the owner";
   const friendRequestSent = actionData?.friendRequestSent === true;
   const refreshResult = actionData?.refreshed !== undefined ? actionData : null;
 
@@ -2304,34 +2307,35 @@ export default function BookDetailsPage() {
           ) : null}
           {canRequestBook ? (
             <div ref={actionRef}>
-              <Form method="post" className="space-y-2">
+              <Form id="request-form" method="post" className="space-y-2">
                 <input type="hidden" name="intent" value="request" />
-                {/* A word for the owner goes with the ask: when, how long, where */}
-                {requestSent ? null : (
+                {/* One click to ask. A note is a tap away for anyone with
+                    something to say (when, how long, where), and then the
+                    button says who it goes to */}
+                {writingNote && !requestSent ? (
                   <>
                     <label htmlFor="request-message" className="sr-only">
-                      A note for {data.book.user?.firstname ?? "the owner"}
+                      A note for {ownerName}
                     </label>
                     <textarea
                       id="request-message"
                       name="message"
-                      // One line until the note needs more, then it grows
-                      // with it (up to a few lines, then it scrolls)
-                      rows={1}
+                      // A couple of lines to start, growing with the note
+                      // (up to a few lines, then it scrolls)
+                      rows={2}
                       onInput={(event) => {
                         const box = event.currentTarget;
                         box.style.height = "auto";
                         box.style.height = `${box.scrollHeight + box.offsetHeight - box.clientHeight}px`;
                       }}
                       maxLength={REQUEST_NOTE_MAX}
-                      // No name in the hint, so it stays on one line in the
-                      // narrow column whatever the owner is called; the label
-                      // names them
-                      placeholder={`Note to ${data.book.user?.firstname ?? "the owner"} (optional)`}
+                      // eslint-disable-next-line jsx-a11y/no-autofocus
+                      autoFocus
+                      placeholder={`Note to ${ownerName}`}
                       className="block max-h-40 w-full resize-none overflow-y-auto rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
                     />
                   </>
-                )}
+                ) : null}
                 <button
                   type="submit"
                   disabled={isSubmitting || requestSent}
@@ -2347,8 +2351,19 @@ export default function BookDetailsPage() {
                     ? "Request sent"
                     : isSubmitting
                       ? "Asking…"
-                      : "Ask to borrow"}
+                      : writingNote
+                        ? `Send request to ${ownerName}`
+                        : "Ask to borrow"}
                 </button>
+                {requestSent || isSubmitting ? null : (
+                  <button
+                    type="button"
+                    onClick={() => setWritingNote(!writingNote)}
+                    className="block w-full text-center text-sm text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
+                  >
+                    {writingNote ? "Cancel" : "Add a note"}
+                  </button>
+                )}
               </Form>
             </div>
           ) : null}
@@ -2790,6 +2805,8 @@ export default function BookDetailsPage() {
           target={actionRef}
           label="Ask to borrow"
           className={primaryButton("lg")}
+          // Sends it, like the button it stands in for
+          form="request-form"
         />
       ) : data.isBorrower && !isEditing ? (
         <ActionBar
@@ -2810,11 +2827,14 @@ function ActionBar({
   label,
   className,
   onClick,
+  form,
 }: {
   target: React.RefObject<HTMLElement | null>;
   label: string;
   className: string;
   onClick?: () => void;
+  // The form it submits, when it does the thing rather than scrolling to it
+  form?: string;
 }) {
   const [away, setAway] = useState(false);
   const [atFooter, setAtFooter] = useState(false);
@@ -2852,8 +2872,10 @@ function ActionBar({
       }`}
     >
       <button
-        type="button"
+        type={form ? "submit" : "button"}
+        form={form}
         onClick={() => {
+          if (form) return;
           onClick?.();
           // After the form opens, so it lands in view whole. A jump, not a
           // glide: the form growing above the screen cut a smooth scroll short
