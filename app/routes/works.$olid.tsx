@@ -146,6 +146,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     ownCopyId: ownCopy?.id ?? null,
     wanted,
     friendCopies,
+    // To tell a copy lent to you from one lent to someone else
+    userId,
     // Whose names open their shelf: friends and group-mates
     friendIds: (await circleOf(userId)).ids,
     offline,
@@ -426,16 +428,22 @@ export default function WorkPage() {
                     name={`${copy.user.firstname} ${copy.user.surname}`}
                     friendIds={data.friendIds}
                   />
-                  <Link
-                    to={`/books/${copy.id}`}
-                    className="text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
-                  >
-                    {copy.borrowerId
-                      ? "Lent out"
-                      : isNotLending(copy.notLendingUntil)
-                        ? "Not lending"
-                        : "Ask to borrow"}
-                  </Link>
+                  {/* What you can do about this copy, on its page; not
+                      lending is just said */}
+                  {copy.borrowerId !== data.userId && isNotLending(copy.notLendingUntil) ? (
+                    <span className="text-stone-400 dark:text-stone-500">Not lending</span>
+                  ) : (
+                    <Link
+                      to={`/books/${copy.id}`}
+                      className="text-stone-500 dark:text-stone-400 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
+                    >
+                      {copy.borrowerId === data.userId
+                        ? "You're borrowing it"
+                        : copy.borrowerId
+                          ? "Get in line"
+                          : "Ask to borrow"}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
