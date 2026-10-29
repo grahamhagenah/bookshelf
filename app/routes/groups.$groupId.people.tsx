@@ -5,16 +5,16 @@ import type { LoaderFunctionArgs } from "react-router";
 import Avatar from "~/components/avatar";
 import CopyButton from "~/components/copy-button";
 import { mailtoInvite } from "~/components/invite-message";
-import { sectionHeading } from "~/components/ui";
+import { quietButton, sectionHeading } from "~/components/ui";
 import { groupInviteText } from "~/group-links";
 import { loadGroup } from "~/group-page.server";
 import type { LoaderData } from "~/utils";
 
 import type { GroupLayoutData } from "./groups.$groupId";
 
-// Who's in the group, each with the way out (your own) or, for whoever
-// runs the group, the way to take them out, and the link that brings
-// more people in. Renaming is beside the name at the top.
+// Who's in the group (for whoever runs it, with the way to take someone
+// out), and beside them the link that brings more people in, then the
+// way out of the group. Renaming is beside the name at the top.
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await loadGroup(request, params);
@@ -50,6 +50,7 @@ export default function GroupPeople() {
 
       <aside className="self-start lg:sticky lg:top-24">
         <GroupInvite name={group.name} url={inviteUrl} alone={group.members.length === 1} path={path} />
+        <LeaveOrDelete name={group.name} path={path} runIt={iRunIt} />
       </aside>
     </div>
   );
@@ -59,9 +60,8 @@ type Member = NonNullable<LoaderData<GroupLayoutData>>["group"]["members"][numbe
 
 // One person: who they are and how many books they bring, opening their
 // shelf (being in the group is enough). On someone who isn't your friend
-// yet, a way to become one. On your own card, the way out (and, for
-// whoever runs the group, the way to end it); on others', for whoever
-// runs it, the way to take them out. Those ask first.
+// yet, a way to become one; for whoever runs the group, the way to take
+// them out, which asks first.
 function PersonCard({
   member,
   groupName,
@@ -92,37 +92,17 @@ function PersonCard({
       </span>
     </>
   );
-  // What this card lets you do: leave (and, if you run it, end the group)
-  // on your own; take someone out on theirs, if you run it
-  const actions = [
-    ...(member.isMe
-      ? [
-          {
-            label: "Leave",
-            intent: "leave",
-            ask: `Leave ${groupName}? Its members' shelves close to you, and yours to them, except for anyone you've become friends with.`,
-          },
-        ]
-      : []),
-    ...(member.isMe && member.isOwner
-      ? [
-          {
-            label: "Delete group",
-            intent: "delete",
-            ask: `Delete ${groupName} for everyone? Everyone keeps their books and their friends; the group's shelves close to each other, and its page and invite link stop working.`,
-          },
-        ]
-      : []),
-    ...(canRemove
-      ? [
-          {
-            label: "Remove",
-            intent: "remove",
-            ask: `Remove ${member.firstname} from ${groupName}? Their shelf and the group's close to each other, except between friends. They can rejoin if they still have the invite link, so reset it if you need to.`,
-          },
-        ]
-      : []),
-  ];
+  // Taking someone out, for whoever runs it. Leaving and ending the group
+  // are in the side column
+  const actions = canRemove
+    ? [
+        {
+          label: "Remove",
+          intent: "remove",
+          ask: `Remove ${member.firstname} from ${groupName}? Their shelf and the group's close to each other, except between friends. They can rejoin if they still have the invite link, so reset it if you need to.`,
+        },
+      ]
+    : [];
 
   return (
     <li
@@ -250,5 +230,49 @@ function GroupInvite({ name, url, alone, path }: { name: string; url: string; al
         </button>
       </Form>
     </section>
+  );
+}
+
+// Leaving the group, and for whoever runs it, ending it for everyone.
+// Rarely wanted, so quiet, under the invite; both ask first.
+function LeaveOrDelete({ name, path, runIt }: { name: string; path: string; runIt: boolean }) {
+  const choices = [
+    {
+      label: "Leave group",
+      intent: "leave",
+      ask: `Leave ${name}? Its members' shelves close to you, and yours to them, except for anyone you've become friends with.`,
+    },
+    ...(runIt
+      ? [
+          {
+            label: "Delete group",
+            intent: "delete",
+            ask: `Delete ${name} for everyone? Everyone keeps their books and their friends; the group's shelves close to each other, and its page and invite link stop working.`,
+          },
+        ]
+      : []),
+  ];
+  return (
+    <div className="mt-8 flex flex-wrap gap-2 border-t border-stone-200 dark:border-stone-800 pt-6">
+      {choices.map((choice) => (
+        <Form
+          key={choice.intent}
+          method="post"
+          action={path}
+          onSubmit={(event) => {
+            if (!confirm(choice.ask)) event.preventDefault();
+          }}
+        >
+          <button
+            type="submit"
+            name="intent"
+            value={choice.intent}
+            className={`${quietButton("md")} hover:text-rose-700 dark:hover:text-rose-400`}
+          >
+            {choice.label}
+          </button>
+        </Form>
+      ))}
+    </div>
   );
 }
