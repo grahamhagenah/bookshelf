@@ -206,7 +206,7 @@ export function PinToggle({ page }: { page: PageStanding }) {
       >
         <PinIcon size={14} filled={pinned} />
         <span>
-          {pinned ? "Unpin from top of my page" : "Pin to top of my page"}
+          {pinned ? "Unpin from my public shelf" : "Pin to my public shelf"}
         </span>
       </button>
       {fetcher.data?.pinError ? (
@@ -238,7 +238,7 @@ export function HideToggle({ page }: { page: PageStanding }) {
       >
         <HiddenIcon size={14} />
         <span>
-          {hidden ? "Show on my page" : "Hide from my page"}
+          {hidden ? "Show on my public shelf" : "Hide from my public shelf"}
         </span>
       </button>
     </fetcher.Form>
