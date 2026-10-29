@@ -134,6 +134,9 @@ const PERSONAS = {
   // A friend from outside the book club, with a copy of its book free:
   // where to borrow it when the club's own copies are spoken for
   raj: { firstname: "Raj", surname: "Mehta", profileEmoji: "bicycle:forest" },
+  // In the book club through Maya, but not the visitor's friend: his shelf
+  // is open to them all the same, and he's one tap from a friend request
+  omar: { firstname: "Omar", surname: "Haddad", profileEmoji: "teapot:ochre" },
   // The visitor's housemate: one shared shelf, their own notes and friends
   noah: { firstname: "Noah", surname: "Brennan", profileEmoji: "diamond:ink" },
 } as const;
@@ -696,6 +699,28 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       body: "On a continent wracked by catastrophic quakes, a woman searches for her daughter as the world ends again.",
     },
   ],
+  omar: [
+    {
+      title: "Martyr!",
+      author: "Kaveh Akbar",
+      isbn: "9780593537619",
+      datePublished: "2024",
+      pageCount: 352,
+      publisher: "Knopf",
+      subjects: "Literary fiction, Grief, Poets",
+      body: "A young poet, newly sober in Indiana, sets out to find meaning in a life shaped by his mother's death on a plane shot down over the Gulf.",
+    },
+    {
+      title: "Demon Copperhead",
+      author: "Barbara Kingsolver",
+      isbn: "9780063251922",
+      datePublished: "2022",
+      pageCount: 560,
+      publisher: "Harper",
+      subjects: "Literary fiction, Appalachia, Coming of age",
+      body: "A boy born to a teenage mother in a trailer in the Appalachian mountains tells how he made it through foster care, opioids and the long odds against him.",
+    },
+  ],
   noah: [
     {
       title: "Sea of Tranquility",
@@ -843,10 +868,12 @@ export async function createDemoSandbox(): Promise<User["id"]> {
   await createFriendship(ids.noah, ids.maya);
   await createFriendship(ids.noah, ids.anika);
 
-  // A book club the visitor started: everyone in it is friends with
-  // everyone else, so Maya and Anika are too. Lena (a suggestion) and Theo
-  // (a friend request) stay out of it.
+  // A book club the visitor started: the first four are all friends, so
+  // Maya and Anika are too. Omar joined later and knows only Maya. Lena (a
+  // suggestion) and Theo (a friend request) stay out of it.
   await createFriendship(ids.maya, ids.anika);
+  // Omar came in through Maya; the visitor hasn't friended him yet
+  await createFriendship(ids.maya, ids.omar);
   await prisma.group.create({
     data: {
       name: "Thursday book club",
@@ -859,6 +886,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
             ["maya", 44],
             ["sam", 30],
             ["anika", 12],
+            ["omar", 8],
           ] as const
         ).map(([key, days]) => ({ userId: ids[key], joinedAt: ago(days * day) })),
       },
