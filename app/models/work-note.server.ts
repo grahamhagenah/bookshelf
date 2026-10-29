@@ -1,5 +1,6 @@
 import { prisma } from "~/db.server";
 import type { Book, User } from "~/generated/prisma/client";
+import { sameWork } from "~/works";
 
 import { shelfIds } from "./household.server";
 import { NOTE_MAX_LENGTH } from "./note.server";
@@ -45,12 +46,18 @@ export function getMyWorkNote(userId: User["id"], workKey: string) {
 
 // Hearts and notes on this work from the reader and their friends: on
 // copies friends have had, and on the book itself read elsewhere. Newest
-// first, one per person (a note beats a bare heart).
-export async function getWorkNotes(userId: User["id"], workKey: string) {
+// first, one per person (a note beats a bare heart). A copy Open Library
+// never placed counts when its title is this work's, so a friend's note on
+// it isn't lost.
+export async function getWorkNotes(
+  userId: User["id"],
+  workKey: string,
+  title?: string,
+) {
   const friendIds = await friendIdsOf(userId);
   const people = [userId, ...friendIds];
   const said = { OR: [{ loved: true }, { body: { not: null } }] };
-  const [elsewhere, onCopies] = await Promise.all([
+  const [elsewhere, onCopies, unplaced] = await Promise.all([
     prisma.workNote.findMany({
       where: { workKey, userId: { in: people }, ...said },
       select: {
@@ -76,9 +83,40 @@ export async function getWorkNotes(userId: User["id"], workKey: string) {
         user: noteUser,
       },
     }),
+    title
+      ? prisma.readerNote.findMany({
+          where: {
+            book: { openLibraryKey: null },
+            userId: { in: friendIds },
+            ...said,
+          },
+          select: {
+            id: true,
+            loved: true,
+            body: true,
+            updatedAt: true,
+            user: noteUser,
+            book: { select: { title: true } },
+          },
+        })
+      : [],
   ]);
+  const onUnplaced = unplaced
+    .filter((note) =>
+      sameWork(
+        { title: note.book.title, openLibraryKey: null },
+        { title: title ?? "", openLibraryKey: null },
+      ),
+    )
+    .map((note) => ({
+      id: note.id,
+      loved: note.loved,
+      body: note.body,
+      updatedAt: note.updatedAt,
+      user: note.user,
+    }));
   const byPerson = new Map<string, (typeof elsewhere)[number]>();
-  for (const note of [...elsewhere, ...onCopies]) {
+  for (const note of [...elsewhere, ...onCopies, ...onUnplaced]) {
     const seen = byPerson.get(note.user.id);
     if (
       !seen ||

@@ -94,6 +94,28 @@ test("hearts and notes reach friends, from elsewhere and from their copies, neve
   expect(elsewhere.map((note) => note.user.firstname)).toEqual(["Priya"]);
 });
 
+test("a friend's note on a copy Open Library never placed still shows, matched by title", async () => {
+  const me = await makeUser("Me");
+  const maya = await makeUser("Maya");
+  await createFriendship(me.id, maya.id);
+  // No Open Library key on Maya's copy, and its title says it a little
+  // differently
+  const mayasCopy = await makeBook(maya.id, "Fantastic Mr. Fox");
+  await prisma.readerNote.create({
+    data: { bookId: mayasCopy.id, userId: maya.id, body: "Unplaced, still mine" },
+  });
+  // Her other books with no key don't come along
+  const other = await makeBook(maya.id, "Matilda");
+  await prisma.readerNote.create({
+    data: { bookId: other.id, userId: maya.id, body: "Not this one" },
+  });
+
+  const notes = await getWorkNotes(me.id, fox.key, fox.title);
+  expect(notes.map((note) => note.body)).toEqual(["Unplaced, still mine"]);
+  // Without a title to go on, only placed copies count
+  expect(await getWorkNotes(me.id, fox.key)).toEqual([]);
+});
+
 test("a book read elsewhere and hearted is among the page's favorites, unlinked", async () => {
   const me = await makeUser("Me");
   await makeBook(me.id, "Dune");
