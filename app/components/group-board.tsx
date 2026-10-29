@@ -95,12 +95,13 @@ export default function GroupBoard({
           <>
             {pick ? (
               <div className={section}>
-                <p className={label}>Reading</p>
-                <div className="mt-2 flex gap-3">
+                {/* The cover says what it is; the room goes to it */}
+                <p className="sr-only">Reading</p>
+                <div className="flex gap-4">
                   <PickLink pick={pick}>
-                    <BookCover cover={pick.cover} title={pick.title} author={pick.author} compact className="h-[69px] w-[46px] flex-shrink-0" />
+                    <BookCover cover={pick.cover} title={pick.title} author={pick.author} className="h-[105px] w-[70px] flex-shrink-0" />
                   </PickLink>
-                  <div className="min-w-0">
+                  <div className="min-w-0 pt-1">
                     <PickLink pick={pick} className="font-semibold leading-snug text-stone-900 dark:text-stone-100 underline-offset-2 hover:underline">
                       {pick.title}
                     </PickLink>
