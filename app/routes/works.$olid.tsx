@@ -4,12 +4,12 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
+import ClampedText from "~/components/clamped-text";
 import ErrorPage from "~/components/error-page";
 import { BookmarkIcon, CheckCircleIcon } from "~/components/icons";
-import OpeningLine from "~/components/opening-line";
 import ReaderNotes from "~/components/reader-notes";
 import SubjectTags from "~/components/subject-tags";
-import { primaryButton, quietButton } from "~/components/ui";
+import { primaryButton, quietButton, sectionHeading } from "~/components/ui";
 import { prisma } from "~/db.server";
 import { isNotLending } from "~/lending";
 import {
@@ -313,16 +313,16 @@ export default function WorkPage() {
   // under the author; no publisher, since up by the title it crowded the
   // heading.
   const details = [
-    work.datePublished,
+    work.datePublished ? `Published ${work.datePublished}` : null,
     work.pageCount ? `${work.pageCount} pages` : null,
   ].filter(Boolean);
 
   const heading = (
     <>
-      <h1 className="text-2xl md:text-4xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
+      <h1 className="text-[1.75rem] md:text-5xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
         {work.title}
       </h1>
-      <p className="mt-1 md:text-xl text-stone-500 dark:text-stone-400">
+      <p className="mt-1.5 text-lg md:mt-2 md:text-2xl text-stone-500 dark:text-stone-400">
         {/* More by them, from Open Library */}
         {work.author ? (
           <Link
@@ -451,33 +451,32 @@ export default function WorkPage() {
       <section className="relative min-w-0 flex-1">
         <div className="hidden md:block">{heading}</div>
 
-        {work.firstSentence ? (
-          <OpeningLine sentence={work.firstSentence} />
-        ) : null}
-
-        {/* What friends thought comes before the blurb any book site has,
-            when there's something to read: the first two, the rest a tap
-            away. With none, notes wait at the bottom */}
-        {notesUp ? notes(2, "mt-10 max-w-150") : null}
-
         <div className="mt-8">
           {/* Unlabeled, like a jacket's blurb; About the author keeps its
-              label */}
-          <h2 className="sr-only">
-            About this book
-          </h2>
-          <p className="max-w-150 whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
-            {work.description
-              ? stripMarkdown(work.description)
-              : data.offline
+              label. Its first lines, the rest a tap away */}
+          <h2 className="sr-only">About this book</h2>
+          {work.description ? (
+            <ClampedText id="description" text={stripMarkdown(work.description)} className="text-[17px] md:text-lg" />
+          ) : (
+            <p className="max-w-150 leading-relaxed text-stone-700 dark:text-stone-300">
+              {data.offline
                 ? "Open Library isn't answering right now, so the details are missing for the moment."
                 : "Open Library has no description for this one yet."}
-          </p>
+            </p>
+          )}
         </div>
 
+        {/* What it's about, with the description */}
+        <SubjectTags subjects={subjects} title={work.title} className="mt-6" />
+
+        {/* Then what friends thought, when there's something to read: the
+            first two, the rest a tap away. With none, notes wait at the
+            bottom */}
+        {notesUp ? notes(2, "my-12 max-w-150") : null}
+
         {work.authorDetails?.bio ? (
-          <section className="mt-8">
-            <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
+          <section className="mt-10">
+            <h2 className={`${sectionHeading} mb-2`}>
               {work.authorDetails.name
                 ? `About ${work.authorDetails.name}`
                 : "About the author"}
@@ -485,8 +484,9 @@ export default function WorkPage() {
             <p className="max-w-150 whitespace-pre-wrap leading-relaxed text-stone-700 dark:text-stone-300">
               {work.authorDetails.bio}
             </p>
-            <p className="mt-2 flex gap-4 text-sm">
-              {work.authorDetails.wikipedia ? (
+            {/* Open Library gets its link once, in the credit below */}
+            {work.authorDetails.wikipedia ? (
+              <p className="mt-2 text-sm">
                 <a
                   href={work.authorDetails.wikipedia}
                   target="_blank"
@@ -495,19 +495,10 @@ export default function WorkPage() {
                 >
                   Wikipedia
                 </a>
-              ) : null}
-              <a
-                href={`https://openlibrary.org/authors/${work.authorDetails.key}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={quietLink}
-              >
-                More on Open Library
-              </a>
-            </p>
+              </p>
+            ) : null}
           </section>
         ) : null}
-        <SubjectTags subjects={subjects} title={work.title} className="mt-6" />
 
         {notesUp ? null : notes()}
 

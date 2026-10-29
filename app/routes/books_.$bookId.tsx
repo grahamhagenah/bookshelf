@@ -4,12 +4,12 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import invariant from "tiny-invariant";
 
 import Avatar from "~/components/avatar";
+import ClampedText from "~/components/clamped-text";
 import CoverPlaceholder from "~/components/cover-placeholder";
 import ErrorPage from "~/components/error-page";
 import { LentIcon, PencilIcon } from "~/components/icons";
-import OpeningLine, { openingLineType } from "~/components/opening-line";
 import PersonLink from "~/components/person-link";
-import ReaderNotes, { HideToggle, PinToggle } from "~/components/reader-notes";
+import ReaderNotes, { HideToggle, PinToggle, quietAction } from "~/components/reader-notes";
 import SubjectTags from "~/components/subject-tags";
 import { primaryButton, quietButton, sectionHeading, textField } from "~/components/ui";
 import { importCover, isOpenLibraryCover } from "~/covers.server";
@@ -169,8 +169,8 @@ function AboutAuthor({
   // links) a tap away, under the author's own name. The bio usually opens
   // with the dates, so they don't repeat here.
   return (
-    <section className="mt-8">
-      <h2 className="mb-2 text-sm font-semibold text-stone-500 dark:text-stone-400">
+    <section className="mt-10">
+      <h2 className={`${sectionHeading} mb-2`}>
         {author.name ? `About ${author.name}` : "About the author"}
       </h2>
       {author.bio ? (
@@ -179,7 +179,7 @@ function AboutAuthor({
           id={`bio-${author.key}`}
           className={`summary max-w-150 text-pretty leading-relaxed text-stone-700 dark:text-stone-300 ${
             clipped
-              ? "line-clamp-3 [mask-image:linear-gradient(to_bottom,black_45%,transparent)]"
+              ? "max-h-[4.875em] overflow-hidden [mask-image:linear-gradient(to_bottom,black_45%,transparent)]"
               : ""
           }`}
         >
@@ -2148,7 +2148,7 @@ export default function BookDetailsPage() {
   // it crowded the title.
   const subjects = cleanSubjects(data.book.subjects);
   const details = [
-    data.book.datePublished,
+    data.book.datePublished ? `Published ${data.book.datePublished}` : null,
     data.book.pageCount ? `${data.book.pageCount} pages` : null,
   ].filter(Boolean);
 
@@ -2156,10 +2156,10 @@ export default function BookDetailsPage() {
   // larger screens
   const heading = (
     <>
-      <h1 className="text-2xl md:text-4xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
+      <h1 className="text-[1.75rem] md:text-5xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
         {data.book.title}
       </h1>
-      <p className="mt-1 md:text-xl text-stone-500 dark:text-stone-400">
+      <p className="mt-1.5 text-lg md:mt-2 md:text-2xl text-stone-500 dark:text-stone-400">
         {/* More by them, from Open Library */}
         {data.book.author ? (
           <Link
@@ -2679,8 +2679,8 @@ export default function BookDetailsPage() {
             </>
           )}
 
-          {/* The opening line, the description and the author arrive as
-              one: while Open Library is asked, all three wait as
+          {/* The description and the author arrive as one: while Open
+              Library is asked, both wait as
               placeholders (even a description we already have), so the
               page fills in once instead of piece by piece */}
           {lookingUp ? (
@@ -2688,11 +2688,7 @@ export default function BookDetailsPage() {
               <p role="status" className="sr-only">
                 Looking up more about this book on Open Library…
               </p>
-              <Placeholder
-                lines={2}
-                className={`mt-10 ${openingLineType} max-w-150 pl-7 md:pl-8`}
-              />
-              <Placeholder lines={3} className="mt-8 max-w-150" />
+              <Placeholder lines={4} className="mt-8 max-w-150" />
               <Placeholder lines={3} className="mt-8 max-w-150" />
             </div>
           ) : null}
@@ -2703,53 +2699,53 @@ export default function BookDetailsPage() {
                 waitedForDetails ? "motion-safe:animate-fade-in" : undefined
               }
             >
-              {data.book.firstSentence ? (
-                <OpeningLine sentence={data.book.firstSentence} />
-              ) : null}
-
-              {/* What only this copy has comes before the blurb: where
-                  it's been, and what its readers thought */}
-              <LendingSummary data={data} />
-              {notesUp ? notes(2, "mt-10 max-w-150") : null}
-
               <div className="mt-8">
                 {/* Unlabeled, like a jacket's blurb; About the author keeps
-                    its label */}
+                    its label. Its first lines, the rest a tap away */}
                 <h2 className="sr-only">About this book</h2>
-                <p className="whitespace-pre-wrap text-stone-700 dark:text-stone-300 leading-relaxed max-w-150">
-                  {data.book.body ? (
-                    stripMarkdown(data.book.body)
-                  ) : data.isOwner ? (
-                    <>
-                      No description yet.{" "}
-                      <button
-                        type="button"
-                        onClick={() => setIsEditing(true)}
-                        className={gapLink}
-                      >
-                        Add one
-                      </button>
-                      , or refresh from Open Library.
-                    </>
-                  ) : (
-                    "No description yet."
+                {data.book.body ? (
+                  <ClampedText id="description" text={stripMarkdown(data.book.body)} className="text-[17px] md:text-lg" />
+                ) : (
+                  <p className="whitespace-pre-wrap text-stone-700 dark:text-stone-300 leading-relaxed max-w-150">
+                    {data.isOwner ? (
+                      <>
+                        No description yet.{" "}
+                        <button
+                          type="button"
+                          onClick={() => setIsEditing(true)}
+                          className={gapLink}
+                        >
+                          Add one
+                        </button>
+                        , or refresh from Open Library.
+                      </>
+                    ) : (
+                      "No description yet."
                   )}
                 </p>
+                )}
               </div>
+
+              {/* What it's about, with the description */}
+              <SubjectTags subjects={subjects} title={data.book.title} className="mt-6" />
+
+              {/* Then what only this copy has: where it's been, and what
+                  its readers thought */}
+              <LendingSummary data={data} />
+              {notesUp ? notes(2, "my-12 max-w-150") : null}
 
               {/* Only with something to say: a heading over a bare link
                   read like something broke */}
               {data.author?.bio ? (
                 <AboutAuthor author={data.author} />
               ) : null}
-              <SubjectTags subjects={subjects} title={data.book.title} className="mt-6" />
             </div>
           ) : null}
 
           {!isEditing && !notesUp ? notes() : null}
 
           {!isEditing ? (
-            <div id="lending" className="mt-10">
+            <div id="lending" className="mt-10 max-w-150">
               <LendingHistory data={data} />
             </div>
           ) : null}
@@ -2757,7 +2753,7 @@ export default function BookDetailsPage() {
           {/* Rarely needed, so they wait at the very bottom: fixing the
               details, and this book's place on your public page */}
           {!isEditing && (data.isOwner || data.page) ? (
-            <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2">
+            <div className="mt-12 flex max-w-150 flex-wrap items-center gap-2">
               {data.isOwner ? (
                 <button
                   type="button"
@@ -2766,12 +2762,10 @@ export default function BookDetailsPage() {
                     setIsEditing(true);
                     window.scrollTo({ top: 0 });
                   }}
-                  className="inline-flex items-center gap-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+                  className={quietAction}
                 >
                   <PencilIcon size={14} />
-                  <span className="underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600">
-                    Edit details or cover
-                  </span>
+                  Edit details or cover
                 </button>
               ) : null}
               {data.page ? <PinToggle page={data.page} /> : null}

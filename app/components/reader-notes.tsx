@@ -7,7 +7,7 @@ import { PIN_MAX } from "~/profile";
 import Avatar from "./avatar";
 import { HeartIcon, HiddenIcon, PinIcon, ReadIcon } from "./icons";
 import PersonLink from "./person-link";
-import { sectionHeading } from "./ui";
+import { quietButton, sectionHeading } from "./ui";
 
 interface ReaderNote {
   id: string;
@@ -176,11 +176,8 @@ function usePageStanding(page: PageStanding) {
 }
 
 // This book's place on your public page, from the bottom of the book page:
-// rarely needed, so quiet links beside Edit details rather than buttons
-const quietAction =
-  "inline-flex items-center gap-1.5 text-sm text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 transition-colors disabled:cursor-not-allowed disabled:opacity-50";
-const quietLabel =
-  "underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600";
+// small outlined buttons in a row with Edit details
+export const quietAction = `${quietButton("md")} inline-flex items-center gap-1.5 disabled:cursor-not-allowed [&_svg]:text-stone-400 dark:[&_svg]:text-stone-500`;
 
 // Pinning it to the favorites at the top of your public page. Your note
 // on it is what shows there with it.
@@ -208,7 +205,7 @@ export function PinToggle({ page }: { page: PageStanding }) {
         className={quietAction}
       >
         <PinIcon size={14} filled={pinned} />
-        <span className={quietLabel}>
+        <span>
           {pinned ? "Unpin from top of my page" : "Pin to top of my page"}
         </span>
       </button>
@@ -240,7 +237,7 @@ export function HideToggle({ page }: { page: PageStanding }) {
         className={quietAction}
       >
         <HiddenIcon size={14} />
-        <span className={quietLabel}>
+        <span>
           {hidden ? "Show on my page" : "Hide from my page"}
         </span>
       </button>
