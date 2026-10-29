@@ -1861,14 +1861,16 @@ function LendingSummary({ data }: { data: BookData }) {
         {people.slice(0, 4).map((entry) => {
           const person = entry.isCurrentUser && data.currentUser ? data.currentUser : entry.borrower;
           return (
-            <Avatar
-              key={entry.id}
-              firstname={person.firstname}
-              surname={person.surname}
-              icon={person.profileEmoji}
-              size="sm"
-              className="ring-2 ring-white dark:ring-stone-950"
-            />
+            // A solid disc under each tinted face, so the one behind
+            // doesn't show through where they overlap
+            <span key={entry.id} className="rounded-full bg-white dark:bg-stone-950 ring-2 ring-white dark:ring-stone-950">
+              <Avatar
+                firstname={person.firstname}
+                surname={person.surname}
+                icon={person.profileEmoji}
+                size="sm"
+              />
+            </span>
           );
         })}
       </span>
@@ -2325,7 +2327,7 @@ export default function BookDetailsPage() {
                       // No name in the hint, so it stays on one line in the
                       // narrow column whatever the owner is called; the label
                       // names them
-                      placeholder="A note: when, and for how long?"
+                      placeholder={`Note to ${data.book.user?.firstname ?? "the owner"} (optional)`}
                       className="block max-h-40 w-full resize-none overflow-y-auto rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
                     />
                   </>
