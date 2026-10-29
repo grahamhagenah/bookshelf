@@ -8,7 +8,7 @@ import { useOptionalUser, workPath } from "~/utils";
 import Avatar from "./avatar";
 import BookCover from "./book-cover";
 import Faces from "./faces";
-import { meetingWhen } from "./group-board";
+import { meetingPast, meetingWhen } from "./group-board";
 import { BookmarkIcon, HeartIcon, PencilIcon } from "./icons";
 import PersonLink from "./person-link";
 import { primaryButton, quietButton } from "./ui";
@@ -186,7 +186,9 @@ export default function FriendActivityItem({
             <div className="min-w-0 text-sm leading-snug text-stone-600 dark:text-stone-300">
               <p>With {namesOf(item.people, viewer?.id ?? null)}</p>
               <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">
-                {item.meeting?.at ? `Meets ${meetingWhen(item.meeting.at)}` : formatDate(item.at)}
+                {item.meeting?.at
+                  ? `${meetingPast(item.meeting.at) ? "Met" : "Meets"} ${meetingWhen(item.meeting.at)}`
+                  : formatDate(item.at)}
               </p>
             </div>
           </div>
@@ -692,7 +694,7 @@ function PickCard({ item, userId }: { item: PickItem; userId: string }) {
             </span>
             {item.meeting ? (
               <span className="mt-2 block text-sm text-stone-600 dark:text-stone-300">
-                Meets{" "}
+                {meetingPast(item.meeting.at) ? "Met" : "Meets"}{" "}
                 {[item.meeting.at ? meetingWhen(item.meeting.at) : null, item.meeting.place]
                   .filter(Boolean)
                   .join(" · ")}

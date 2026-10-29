@@ -26,6 +26,11 @@ export function meetingWhen(at: string | Date) {
   return `${day} · ${time}`;
 }
 
+// Over once its day is: a meetup keeps the time it was typed with, so
+// it counts as past only after that whole day, wherever you are
+export const meetingPast = (at: string | Date | null) =>
+  at !== null && new Date(at).getTime() + 24 * 60 * 60 * 1000 < Date.now();
+
 const shortDate = (at: string | Date) =>
   new Date(at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
@@ -95,13 +100,14 @@ export default function GroupBoard({
           <>
             {pick ? (
               <div className={section}>
-                {/* The cover says what it is; the room goes to it */}
-                <p className="sr-only">Reading</p>
+                {/* The cover gets the card's height; its label sits over
+                    the title beside it */}
                 <div className="flex gap-4">
                   <PickLink pick={pick}>
                     <BookCover cover={pick.cover} title={pick.title} author={pick.author} className="h-[105px] w-[70px] flex-shrink-0" />
                   </PickLink>
-                  <div className="min-w-0 pt-1">
+                  <div className="min-w-0">
+                    <p className={`${label} mb-1`}>Reading</p>
                     <PickLink pick={pick} className="font-semibold leading-snug text-stone-900 dark:text-stone-100 underline-offset-2 hover:underline">
                       {pick.title}
                     </PickLink>
@@ -118,7 +124,7 @@ export default function GroupBoard({
             ) : null}
             {meeting ? (
               <div className={section}>
-                <p className={label}>Next meetup</p>
+                <p className={label}>{meetingPast(meeting.at) ? "Last meetup" : "Next meetup"}</p>
                 {meeting.at ? (
                   <p className="mt-2 font-semibold text-stone-900 dark:text-stone-100">{meetingWhen(meeting.at)}</p>
                 ) : null}
