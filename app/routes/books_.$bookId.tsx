@@ -2749,7 +2749,7 @@ export default function BookDetailsPage() {
           {!isEditing && !notesUp ? notes() : null}
 
           {!isEditing ? (
-            <div id="lending" className="mt-10">
+            <div id="lending" className="mt-10 max-w-150">
               <LendingHistory data={data} />
             </div>
           ) : null}
