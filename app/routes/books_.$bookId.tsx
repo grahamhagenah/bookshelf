@@ -2710,7 +2710,7 @@ export default function BookDetailsPage() {
               {/* What only this copy has comes before the blurb: where
                   it's been, and what its readers thought */}
               <LendingSummary data={data} />
-              {notesUp ? notes(2, "mt-10") : null}
+              {notesUp ? notes(2, "mt-10 max-w-150") : null}
 
               <div className="mt-8">
                 {/* Unlabeled, like a jacket's blurb; About the author keeps

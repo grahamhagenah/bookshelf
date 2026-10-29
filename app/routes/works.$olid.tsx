@@ -458,7 +458,7 @@ export default function WorkPage() {
         {/* What friends thought comes before the blurb any book site has,
             when there's something to read: the first two, the rest a tap
             away. With none, notes wait at the bottom */}
-        {notesUp ? notes(2, "mt-10") : null}
+        {notesUp ? notes(2, "mt-10 max-w-150") : null}
 
         <div className="mt-8">
           {/* Unlabeled, like a jacket's blurb; About the author keeps its

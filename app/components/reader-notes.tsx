@@ -257,7 +257,7 @@ export default function ReaderNotes({
   friendIds,
   readAt,
   limit,
-  className = "mt-12 border-t border-stone-200 dark:border-stone-800 pt-8",
+  className = "mt-12 max-w-150 border-t border-stone-200 dark:border-stone-800 pt-8",
 }: {
   notes: ReaderNote[];
   myNote: ReaderNote | null;
