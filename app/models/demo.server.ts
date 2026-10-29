@@ -773,8 +773,13 @@ export async function createDemoSandbox(): Promise<User["id"]> {
           ...book,
           cover: cover(isbn),
           userId: ids[owner],
-          // Spread the "added" dates out so the shelf has a natural order
-          createdAt: ago((i + 1) * 3 * day),
+          // Spread the "added" dates out so the shelf has a natural order.
+          // Sam's newest few came in yesterday, so the feed shows a friend
+          // simply adding books among the notes and hearts
+          createdAt:
+            owner === "sam" && i < 3
+              ? ago(1.2 * day + i * 2 * hour)
+              : ago((i + 1) * 3 * day),
         },
       });
       books[book.title] = created.id;
@@ -1333,7 +1338,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
       title: "How to Do Nothing",
       by: "anika",
       loved: true,
-      body: "Read it on the porch with my phone in another room, which is the point.",
+      body: "Made me go outside and look at birds. Unironically recommend.",
       at: ago(1.5 * day),
     },
     {
