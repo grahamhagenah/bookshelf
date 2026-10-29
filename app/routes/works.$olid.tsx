@@ -319,10 +319,10 @@ export default function WorkPage() {
 
   const heading = (
     <>
-      <h1 className="text-2xl md:text-4xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
+      <h1 className="text-[1.75rem] md:text-5xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">
         {work.title}
       </h1>
-      <p className="mt-1 md:text-xl text-stone-500 dark:text-stone-400">
+      <p className="mt-1.5 text-lg md:mt-2 md:text-2xl text-stone-500 dark:text-stone-400">
         {/* More by them, from Open Library */}
         {work.author ? (
           <Link
