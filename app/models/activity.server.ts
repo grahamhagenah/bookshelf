@@ -93,7 +93,35 @@ export type FriendActivity =
           available: boolean;
         }[];
       };
-    };
+    }
+  | PickPost;
+
+// A group the viewer is in picked a book to read together: the group, who
+// picked it, everyone in it, and where the viewer stands with a copy
+export interface PickPost {
+  kind: "pick";
+  id: string;
+  at: Date;
+  // Who picked it
+  friend: FeedPerson;
+  group: { id: string; name: string };
+  // Everyone in the group, the viewer too
+  people: FeedPerson[];
+  work: { key: string | null; title: string; author: string; cover: string };
+  meeting: { at: Date | null; place: string | null } | null;
+  viewer: {
+    ownCopyId: string | null;
+    wanted: boolean;
+    // Copies in the group, the ones that can be asked for first
+    copies: {
+      bookId: string;
+      owner: { id: string; firstname: string };
+      available: boolean;
+      // You've asked for it already
+      requested: boolean;
+    }[];
+  };
+}
 
 // The owner of a book a friend borrowed, as the person looking knows them:
 // you, a friend of yours, or someone else. Someone else is named in full,
@@ -165,11 +193,14 @@ async function enrich(
   userId: User["id"],
   friendIds: string[],
 ) {
-  await enrichElsewhere(items, userId, friendIds);
+  await Promise.all([
+    enrichElsewhere(items, userId, friendIds),
+    enrichPicks(items, userId),
+  ]);
   const books = items.flatMap((item) =>
     item.kind === "added"
       ? item.books
-      : item.kind === "elsewhere"
+      : item.kind === "elsewhere" || item.kind === "pick"
         ? []
         : [item.book],
   );
@@ -290,6 +321,65 @@ async function enrichElsewhere(
   }
 }
 
+// For a group's pick: whether the viewer has it, wants it, or can borrow
+// it from someone in the group, matched by work or, failing that, title
+async function enrichPicks(items: FriendActivity[], userId: User["id"]) {
+  const picks = items.filter((item): item is PickPost => item.kind === "pick");
+  if (picks.length === 0) return;
+  const others = [
+    ...new Set(
+      picks.flatMap((item) =>
+        item.people.map((member) => member.id).filter((id) => id !== userId),
+      ),
+    ),
+  ];
+  const [own, wants, copies, asked] = await Promise.all([
+    prisma.book.findMany({
+      where: { userId: { in: await shelfIds(userId) } },
+      select: { id: true, title: true, openLibraryKey: true },
+    }),
+    prisma.wantToRead.findMany({
+      where: { userId },
+      select: { title: true, openLibraryKey: true },
+    }),
+    prisma.book.findMany({
+      where: { userId: { in: others } },
+      select: {
+        id: true,
+        title: true,
+        openLibraryKey: true,
+        borrowerId: true,
+        notLendingUntil: true,
+        hiddenFromPage: true,
+        user: { select: { id: true, firstname: true } },
+      },
+    }),
+    prisma.notification.findMany({
+      where: { type: "BOOK_REQUEST", senderId: userId, read: false, bookId: { not: null } },
+      select: { bookId: true },
+    }),
+  ]);
+  const requested = new Set(asked.map((request) => request.bookId));
+  for (const item of picks) {
+    const work = { title: item.work.title, openLibraryKey: item.work.key };
+    const inGroup = new Set(item.people.map((member) => member.id));
+    item.viewer = {
+      ownCopyId: own.find((book) => sameWork(book, work))?.id ?? null,
+      wanted: wants.some((wish) => sameWork(wish, work)),
+      copies: copies
+        .filter((book) => inGroup.has(book.user.id) && sameWork(book, work))
+        .map((book) => ({
+          bookId: book.id,
+          owner: book.user,
+          available:
+            book.borrowerId === null && !isNotLending(book.notLendingUntil),
+          requested: requested.has(book.id),
+        }))
+        .sort((a, b) => Number(b.available) - Number(a.available)),
+    };
+  }
+}
+
 // withOwnNotes adds the viewer's own written notes (not bare hearts), so
 // a note posted from the feed shows up there as friends will see it.
 // among narrows it to some of the people you can borrow from, such as
@@ -301,7 +391,15 @@ export async function getFriendActivity(
     limit = 20,
     withOwnNotes = false,
     among,
-  }: { days?: number; limit?: number; withOwnNotes?: boolean; among?: string[] } = {},
+    groups,
+  }: {
+    days?: number;
+    limit?: number;
+    withOwnNotes?: boolean;
+    among?: string[];
+    // Whose picks to announce: these groups, or else every group you're in
+    groups?: string[];
+  } = {},
 ): Promise<FriendActivity[]> {
   const [me, circle] = await Promise.all([
     prisma.user.findUnique({
@@ -319,13 +417,13 @@ export async function getFriendActivity(
   const sourceIds = (
     among ? circle.ids.filter((id) => among.includes(id)) : [...circle.friends]
   ).filter((id) => !hidden.has(id));
-  if (sourceIds.length === 0) return [];
+  // With nobody to follow, your groups' picks still come through
   // People you know only through a group keep their kept-off-page books
   // out of it
   const groupOnly = [...circle.groupOnly];
 
   const since = new Date(Date.now() - days * DAY);
-  const [books, notes, elsewhere] = await Promise.all([
+  const [books, notes, elsewhere, picked] = await Promise.all([
     prisma.book.findMany({
       where: {
         createdAt: { gte: since },
@@ -384,6 +482,28 @@ export async function getFriendActivity(
       orderBy: { updatedAt: "desc" },
       take: limit,
     }),
+    // Books your groups picked to read together
+    prisma.group.findMany({
+      where: {
+        members: { some: { userId } },
+        pickedAt: { gte: since },
+        pickTitle: { not: null },
+        ...(groups ? { id: { in: groups } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        pickKey: true,
+        pickTitle: true,
+        pickAuthor: true,
+        pickCover: true,
+        pickedById: true,
+        pickedAt: true,
+        meetsAt: true,
+        meetPlace: true,
+        members: { select: { user: person }, orderBy: { joinedAt: "asc" } },
+      },
+    }),
   ]);
 
   // Gather each friend's additions into batches, newest first
@@ -435,7 +555,35 @@ export async function getFriendActivity(
     viewer: { ownCopyId: null, wanted: false, copies: [] },
   }));
 
-  const feed = [...added, ...reactions, ...readElsewhere]
+  const picks: PickPost[] = picked.flatMap((group) => {
+    const people = group.members.map((member) => member.user);
+    const picker = people.find((member) => member.id === group.pickedById);
+    if (!picker || !group.pickedAt || !group.pickTitle) return [];
+    if (picker.id !== userId && hidden.has(picker.id)) return [];
+    return [
+      {
+        kind: "pick" as const,
+        id: `pick-${group.id}-${group.pickedAt.getTime()}`,
+        at: group.pickedAt,
+        friend: picker,
+        group: { id: group.id, name: group.name },
+        people,
+        work: {
+          key: group.pickKey,
+          title: group.pickTitle,
+          author: group.pickAuthor ?? "",
+          cover: group.pickCover ?? "",
+        },
+        meeting:
+          group.meetsAt || group.meetPlace
+            ? { at: group.meetsAt, place: group.meetPlace }
+            : null,
+        viewer: { ownCopyId: null, wanted: false, copies: [] },
+      },
+    ];
+  });
+
+  const feed = [...added, ...reactions, ...readElsewhere, ...picks]
     .sort((a, b) => b.at.getTime() - a.at.getTime())
     .slice(0, limit);
   await enrich(feed, userId, friendIds);

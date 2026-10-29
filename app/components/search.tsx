@@ -31,7 +31,7 @@ export default function Search({ as }: { as: "box" | "icon" }) {
       className={`md:hidden inline-flex items-center justify-center w-11 h-11 md:w-9 md:h-9 rounded-full transition-colors ${
         here
           ? hereIcon
-          : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:[&_svg]:text-forest-600 dark:hover:[&_svg]:text-forest-400"
+          : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white"
       }`}
     >
       <SearchIcon size={24} />

@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useFetcher } from "react-router";
 
+import { groupPath } from "~/group-links";
 import type { FriendActivity, getNotePrompts, Lender } from "~/models/activity.server";
-import { workPath } from "~/utils";
+import { useOptionalUser, workPath } from "~/utils";
 
 import Avatar from "./avatar";
 import BookCover from "./book-cover";
+import Faces from "./faces";
+import { meetingWhen } from "./group-board";
 import { BookmarkIcon, HeartIcon, PencilIcon } from "./icons";
 import PersonLink from "./person-link";
 import { primaryButton, quietButton } from "./ui";
@@ -13,6 +16,7 @@ import { primaryButton, quietButton } from "./ui";
 type FeedItem = FriendActivity;
 type FeedBook = Extract<FeedItem, { kind: "added" }>["books"][number];
 type ElsewhereItem = Extract<FeedItem, { kind: "elsewhere" }>;
+type PickItem = Extract<FeedItem, { kind: "pick" }>;
 
 const formatDate = (date: string | Date) =>
   new Date(date).toLocaleDateString(undefined, {
@@ -85,6 +89,22 @@ function CoverBeside({
   );
 }
 
+// "you", "you and Maya", "you, Maya and Sam": the people in a group,
+// the viewer first
+function namesOf(people: { id: string; firstname: string }[], userId: string | null) {
+  const names = [
+    ...people.filter((person) => person.id === userId).map(() => "you"),
+    ...people.filter((person) => person.id !== userId).map((person) => person.firstname),
+  ];
+  return names.length <= 1
+    ? names.join("")
+    : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+// Where a group's pick goes: the book's own page, or a search for it
+const pickPage = (work: PickItem["work"]) =>
+  workPath(work.key) ?? `/search?${new URLSearchParams({ q: `${work.title} ${work.author}`.trim() })}`;
+
 // A title's last word and what follows it (a heart) stay on one line, so
 // the heart never wraps onto a line by itself
 function KeepWithLast({
@@ -123,6 +143,8 @@ export default function FriendActivityItem({
   item: FeedItem;
   friendIds: string[];
 }) {
+  // Who's looking, to call them "you" among a group's people
+  const viewer = useOptionalUser();
   const name = (
     <strong className="font-semibold">
       <PersonLink
@@ -132,6 +154,46 @@ export default function FriendActivityItem({
       />
     </strong>
   );
+  // A group picked a book: the group's faces, what it's reading, and who's in
+  if (item.kind === "pick") {
+    const group = (
+      <Link
+        to={groupPath(item.group)}
+        className="font-semibold underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+      >
+        {item.group.name}
+      </Link>
+    );
+    return (
+      <div className="flex items-start gap-3 py-3">
+        <span className="w-7 flex-shrink-0 pt-0.5">
+          <Faces people={item.people.slice(0, 2)} size="xs" max={2} />
+        </span>
+        <div className="min-w-0 flex-1 pt-0.5">
+          <p className="text-stone-800 dark:text-stone-200 leading-snug">
+            {group} is reading{" "}
+            <Link
+              to={pickPage(item.work)}
+              className="font-semibold underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+            >
+              {item.work.title}
+            </Link>
+          </p>
+          <div className="mt-2 flex items-start gap-3">
+            <Link to={pickPage(item.work)} title={item.work.title} className="flex-shrink-0">
+              <FeedCover book={item.work} className="h-15 w-10 hover:opacity-90 transition-opacity" />
+            </Link>
+            <div className="min-w-0 text-sm leading-snug text-stone-600 dark:text-stone-300">
+              <p>With {namesOf(item.people, viewer?.id ?? null)}</p>
+              <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">
+                {item.meeting?.at ? `Meets ${meetingWhen(item.meeting.at)}` : formatDate(item.at)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   // A note on a book read somewhere else: the book's own page, not a copy
   if (item.kind === "elsewhere") {
     return (
@@ -598,6 +660,94 @@ function ElsewhereCard({
   );
 }
 
+// A group the viewer is in picked a book to read together: the book, when
+// they meet, and everyone in it, with the one thing to do about a copy
+function PickCard({ item, userId }: { item: PickItem; userId: string }) {
+  const want = useFetcher<{ wanted?: boolean }>();
+  const { ownCopyId, copies } = item.viewer;
+  const wanted =
+    item.viewer.wanted || want.formData !== undefined || want.data?.wanted === true;
+  const copy = copies[0];
+  const page = pickPage(item.work);
+  return (
+    <>
+      <div className="mt-3">
+        <Link
+          to={page}
+          className="group -mx-2 flex items-center gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+        >
+          <FeedCover
+            book={item.work}
+            className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
+          />
+          <span className="min-w-0">
+            <span className="block text-xs font-semibold uppercase tracking-wide text-stone-400 dark:text-stone-500">
+              {item.group.name} is reading
+            </span>
+            <span className="mt-0.5 block font-medium leading-snug text-stone-900 dark:text-stone-100">
+              {item.work.title}
+            </span>
+            <span className="mt-0.5 block text-sm text-stone-500 dark:text-stone-400">
+              {item.work.author}
+            </span>
+            {item.meeting ? (
+              <span className="mt-2 block text-sm text-stone-600 dark:text-stone-300">
+                Meets{" "}
+                {[item.meeting.at ? meetingWhen(item.meeting.at) : null, item.meeting.place]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+            ) : null}
+          </span>
+        </Link>
+      </div>
+      <div className="mt-3 flex items-center gap-2 text-sm text-stone-500 dark:text-stone-400">
+        <Faces people={item.people} size="xs" max={6} />
+        <span className="min-w-0">With {namesOf(item.people, userId)}</span>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-stone-100 dark:border-stone-800 pt-2">
+        {ownCopyId ? (
+          <Link to={`/books/${ownCopyId}`} className={actionClass}>
+            You have a copy
+          </Link>
+        ) : copy?.requested ? (
+          <Link to={`/books/${copy.bookId}`} className={stateClass}>
+            Requested from {copy.owner.firstname}
+          </Link>
+        ) : copy ? (
+          <Link to={`/books/${copy.bookId}`} className={nextClass}>
+            {copy.available
+              ? `Ask ${copy.owner.firstname} to borrow it`
+              : `${copy.owner.firstname}'s copy is out`}
+          </Link>
+        ) : null}
+        {!ownCopyId && item.work.key ? (
+          wanted ? (
+            <span className={stateClass}>
+              <BookmarkIcon size={14} />
+              On your Want to read list
+            </span>
+          ) : (
+            <want.Form method="post" action="/feed">
+              <input type="hidden" name="intent" value="want" />
+              <input type="hidden" name="workKey" value={item.work.key} />
+              <button type="submit" className={actionClass}>
+                <BookmarkIcon size={14} />
+                Want to read
+              </button>
+            </want.Form>
+          )
+        ) : null}
+        <span className="ml-auto">
+          <Link to={groupPath(item.group)} className={actionClass}>
+            Open the group
+          </Link>
+        </span>
+      </div>
+    </>
+  );
+}
+
 export function FeedPost({
   item,
   friendIds,
@@ -628,14 +778,16 @@ export function FeedPost({
         : `added ${item.books.length} books`
       : item.kind === "elsewhere"
         ? `wrote about ${item.work.title}`
-        : item.kind === "loved"
+        : item.kind === "pick"
+          ? `picked ${item.work.title} for ${item.group.name}`
+          : item.kind === "loved"
           ? `loved ${item.book.title}`
           : `wrote about ${item.book.title}`;
 
   const books =
     item.kind === "added"
       ? item.books.slice(0, 4)
-      : item.kind === "elsewhere"
+      : item.kind === "elsewhere" || item.kind === "pick"
         ? []
         : [item.book];
   const more = item.kind === "added" ? item.books.length - books.length : 0;
@@ -687,7 +839,9 @@ export function FeedPost({
         </blockquote>
       ) : null}
 
-      {item.kind === "elsewhere" ? (
+      {item.kind === "pick" ? (
+        <PickCard item={item} userId={userId} />
+      ) : item.kind === "elsewhere" ? (
         <ElsewhereCard
           item={item}
           mine={item.friend.id === userId}
@@ -743,7 +897,7 @@ function NoteEdit({
   item,
   onDone,
 }: {
-  item: Exclude<FeedItem, { kind: "added" }>;
+  item: Exclude<FeedItem, { kind: "added" | "pick" }>;
   onDone: () => void;
 }) {
   const fetcher = useFetcher<{ ok?: boolean }>();

@@ -415,6 +415,26 @@ model Group {
   inviteToken String        @unique
   members     GroupMember[]
 
+  // What a group can choose to keep here, if it plans here rather than in
+  // its chat, all optional and for any member to set. The book it's
+  // reading: the Open Library work (or just the title, for a book without
+  // one), with enough kept to show it, who picked it and when
+  pickKey    String?
+  pickTitle  String?
+  pickAuthor String?
+  pickCover  String?
+  pickedById String?
+  pickedAt   DateTime?
+  // When and where it next meets
+  meetsAt   DateTime?
+  meetPlace String?
+  // A link to its group chat (WhatsApp, Signal, Discord…), seen only by
+  // members
+  chatUrl String?
+  // Who last changed any of it, and when
+  boardById String?
+  boardAt   DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

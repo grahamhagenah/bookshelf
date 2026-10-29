@@ -101,6 +101,16 @@ function cover(isbn: string) {
 
 const day = 24 * 60 * 60 * 1000;
 const hour = 60 * 60 * 1000;
+
+// A Thursday a week or two out, at 7pm as typed (meetups keep the time
+// they're given, the same for everyone)
+function nextThursdayAt7() {
+  const date = new Date();
+  const ahead = ((4 - date.getUTCDay() + 7) % 7) + 7;
+  date.setUTCDate(date.getUTCDate() + ahead);
+  date.setUTCHours(19, 0, 0, 0);
+  return date;
+}
 const ago = (ms: number) => new Date(Date.now() - ms);
 const fromNow = (ms: number) => new Date(Date.now() + ms);
 
@@ -815,6 +825,19 @@ export async function createDemoSandbox(): Promise<User["id"]> {
           ] as const
         ).map(([key, days]) => ({ userId: ids[key], joinedAt: ago(days * day) })),
       },
+      // It plans here: Maya picked what they're reading a couple of days
+      // ago and set the next meetup, a week or so out at 7pm, as typed.
+      // No group chat link, so the visitor sees how to add one
+      pickKey: "/works/OL19074847W",
+      pickTitle: "The Overstory",
+      pickAuthor: "Richard Powers",
+      pickCover: cover("9780393635522"),
+      pickedById: ids.maya,
+      pickedAt: ago(2.2 * day),
+      meetsAt: nextThursdayAt7(),
+      meetPlace: "Maya's place",
+      boardById: ids.maya,
+      boardAt: ago(2.2 * day),
     },
   });
 

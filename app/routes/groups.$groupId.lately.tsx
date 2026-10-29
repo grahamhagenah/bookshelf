@@ -13,7 +13,7 @@ import { getUserById } from "~/models/user.server";
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { userId, group } = await loadGroup(request, params);
   const [activity, user] = await Promise.all([
-    getFriendActivity(userId, { among: group.openIds, days: 365, limit: 30 }),
+    getFriendActivity(userId, { among: group.openIds, groups: [group.id], days: 365, limit: 30 }),
     getUserById(userId),
   ]);
   return data({

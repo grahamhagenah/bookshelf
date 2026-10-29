@@ -1975,7 +1975,8 @@ function LendingHistory({ data }: { data: BookData }) {
                     name
                   )}
                 </p>
-                <p className="text-sm text-stone-500 dark:text-stone-400">
+                {/* A div, not a paragraph: it can hold Not back yet's form */}
+                <div className="text-sm text-stone-500 dark:text-stone-400">
                   {entry.returnedAt ? (
                     <>
                       {monthDay(entry.borrowedAt)} –{" "}
@@ -1996,7 +1997,7 @@ function LendingHistory({ data }: { data: BookData }) {
                       <CurrentLoan data={data} />
                     </>
                   )}
-                </p>
+                </div>
               </div>
             </li>
           );
