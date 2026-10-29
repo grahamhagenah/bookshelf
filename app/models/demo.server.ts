@@ -134,9 +134,9 @@ const PERSONAS = {
   // A friend from outside the book club, with a copy of its book free:
   // where to borrow it when the club's own copies are spoken for
   raj: { firstname: "Raj", surname: "Mehta", profileEmoji: "bicycle:forest" },
-  // In the book club through Maya, but not the visitor's friend: his shelf
-  // is open to them all the same, and he's one tap from a friend request
-  omar: { firstname: "Omar", surname: "Haddad", profileEmoji: "teapot:ochre" },
+  // In the book club through Maya, but not the visitor's friend: their
+  // shelf is open to the visitor all the same, a tap from a friend request
+  jules: { firstname: "Jules", surname: "Carter", profileEmoji: "compass:ochre" },
   // The visitor's housemate: one shared shelf, their own notes and friends
   noah: { firstname: "Noah", surname: "Brennan", profileEmoji: "diamond:ink" },
 } as const;
@@ -699,7 +699,7 @@ const LIBRARIES: Record<OwnerKey, DemoBook[]> = {
       body: "On a continent wracked by catastrophic quakes, a woman searches for her daughter as the world ends again.",
     },
   ],
-  omar: [
+  jules: [
     {
       title: "Martyr!",
       author: "Kaveh Akbar",
@@ -869,11 +869,11 @@ export async function createDemoSandbox(): Promise<User["id"]> {
   await createFriendship(ids.noah, ids.anika);
 
   // A book club the visitor started: the first four are all friends, so
-  // Maya and Anika are too. Omar joined later and knows only Maya. Lena (a
+  // Maya and Anika are too. Jules joined later and knows only Maya. Lena (a
   // suggestion) and Theo (a friend request) stay out of it.
   await createFriendship(ids.maya, ids.anika);
-  // Omar came in through Maya; the visitor hasn't friended him yet
-  await createFriendship(ids.maya, ids.omar);
+  // Jules came in through Maya; the visitor hasn't friended them yet
+  await createFriendship(ids.maya, ids.jules);
   await prisma.group.create({
     data: {
       name: "Thursday book club",
@@ -886,7 +886,7 @@ export async function createDemoSandbox(): Promise<User["id"]> {
             ["maya", 44],
             ["sam", 30],
             ["anika", 12],
-            ["omar", 8],
+            ["jules", 8],
           ] as const
         ).map(([key, days]) => ({ userId: ids[key], joinedAt: ago(days * day) })),
       },

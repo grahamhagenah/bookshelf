@@ -85,7 +85,7 @@ function Description({ text, path }: { text: string | null; path: string }) {
   const [editing, setEditing] = useState(false);
   if (editing) {
     return (
-      <fetcher.Form method="post" action={path} onSubmit={() => setEditing(false)} className="max-w-150 space-y-2">
+      <fetcher.Form method="post" action={path} onSubmit={() => setEditing(false)} className="space-y-2">
         <input type="hidden" name="intent" value="describe" />
         <label htmlFor="group-description" className="sr-only">
           About the group
@@ -117,7 +117,7 @@ function Description({ text, path }: { text: string | null; path: string }) {
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="block w-full max-w-150 rounded-xl border border-dashed border-stone-300 dark:border-stone-700 px-4 py-3 text-left text-sm text-stone-500 dark:text-stone-400 hover:border-stone-400 hover:text-stone-800 dark:hover:border-stone-500 dark:hover:text-stone-200 transition-colors"
+        className="block w-full rounded-xl border border-dashed border-stone-300 dark:border-stone-700 px-4 py-3 text-left text-sm text-stone-500 dark:text-stone-400 hover:border-stone-400 hover:text-stone-800 dark:hover:border-stone-500 dark:hover:text-stone-200 transition-colors"
       >
         <span className="font-medium text-stone-700 dark:text-stone-200">Add a description.</span> What the group reads, how
         often it meets, who it&apos;s for. It shows on the invite too.
