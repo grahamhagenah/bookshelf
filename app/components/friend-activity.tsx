@@ -353,7 +353,9 @@ function BookTile({ book, className = "" }: { book: FeedBook; className?: string
 // at the very size of a tile's, and what's beside it takes the rest
 const bookRow = "grid grid-cols-3 gap-x-4 sm:grid-cols-4";
 const coverColumn = "block min-w-0";
-const besideCover = "col-span-2 min-w-0 sm:col-span-3";
+// Beside the cover, as tall as it: a note at the top, and where the copy
+// is at the foot, level with the cover's
+const besideCover = "col-span-2 flex min-w-0 flex-col sm:col-span-3";
 const bigCover = "aspect-[2/3] w-full transition-opacity group-hover:opacity-90";
 
 
@@ -361,7 +363,8 @@ const bigCover = "aspect-[2/3] w-full transition-opacity group-hover:opacity-90"
 // with the book they're about, as on the home page
 function NoteBeside({ body }: { body: string }) {
   return (
-    <span className="mb-2 block whitespace-pre-line text-pretty leading-relaxed text-stone-800 dark:text-stone-200">
+    // Big enough to be what the post is about, beside a cover its height
+    <span className="mb-3 block whitespace-pre-line text-pretty text-lg leading-snug text-stone-800 dark:text-stone-200 sm:text-xl">
       &ldquo;{body}&rdquo;
     </span>
   );
@@ -399,7 +402,7 @@ function BookCard({
   );
   return (
     <div className="group relative -mx-2 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors">
-      <div className={`${bookRow} items-start`}>
+      <div className={`${bookRow} items-stretch`}>
         <div className={coverColumn}>
           <FeedCover book={book} className={bigCover} />
           {/* Named in the post's headline; this is the way to its page,
@@ -415,7 +418,7 @@ function BookCard({
         </div>
         <span className={`${besideCover} pt-0.5`}>
           {note ? <NoteBeside body={note} /> : null}
-          <span className="block text-sm text-stone-500 dark:text-stone-400">
+          <span className="mt-auto block text-sm text-stone-500 dark:text-stone-400">
             {whose}
             {book.available
               ? "Available"
@@ -630,7 +633,7 @@ function ElsewhereCard({
       <div className="mt-3">
         <Link
           to={item.work.key}
-          className={`group -mx-2 ${bookRow} items-start rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors`}
+          className={`group -mx-2 ${bookRow} items-stretch rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors`}
         >
           <span className={coverColumn}>
             <FeedCover book={item.work} className={bigCover} />
@@ -640,7 +643,7 @@ function ElsewhereCard({
           </span>
           <span className={`${besideCover} pt-0.5`}>
             {note ? <NoteBeside body={note} /> : null}
-            <span className="block text-sm text-stone-500 dark:text-stone-400">
+            <span className="mt-auto block text-sm text-stone-500 dark:text-stone-400">
               {ownCopyId
                 ? "On your shelf"
                 : mine
