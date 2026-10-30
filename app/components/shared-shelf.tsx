@@ -1,10 +1,13 @@
 
+import { useEffect, useRef, useState } from "react";
 import { Link, useFetcher, useLocation } from "react-router";
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
 import { HeartIcon, StacksLogo } from "~/components/icons";
 import Library from "~/components/library";
+import { coverColor } from "~/cover-color";
+import type { CoverColor } from "~/cover-color";
 import type { FriendStatus } from "~/models/user.server";
 import { noteTip } from "~/profile";
 import type { loadSharedShelf } from "~/share.server";
@@ -48,6 +51,86 @@ const HEARTS: Record<string, string> = {
   ink: "text-stone-700 dark:text-stone-300",
 };
 const heartOf = (color: string) => HEARTS[color] ?? HEARTS.forest;
+
+type Favorite = SharedShelfData["profile"]["favorites"][number];
+
+// One favorite. With a note, it's a card in its cover's own color, running
+// on from the cover's foot to hold the note; without one, just the cover.
+function FavoriteCard({ book }: { book: Favorite }) {
+  const card = useRef<HTMLDivElement>(null);
+  const [color, setColor] = useState<CoverColor | null>(null);
+  useEffect(() => {
+    const element = card.current;
+    if (!element || !book.note) return;
+    const read = () => {
+      const img = element.querySelector("img");
+      if (img) setColor(coverColor(img));
+    };
+    // The cover may have loaded already; if not, its load is caught on
+    // the way down, as it doesn't bubble
+    read();
+    element.addEventListener("load", read, true);
+    return () => element.removeEventListener("load", read, true);
+  }, [book.note]);
+
+  const cover = (
+    <BookCover
+      cover={book.cover}
+      title={book.title}
+      author={book.author}
+      // Five across from small tablets up, two on phones
+      sizes="(min-width: 640px) 220px, 50vw"
+      // In a card the card has the corners and the edge
+      className={`aspect-[2/3] w-full transition-opacity duration-200 group-hover:opacity-90 ${
+        book.note ? "rounded-none! ring-0!" : ""
+      }`}
+    />
+  );
+  const contents = book.note ? (
+    <div
+      ref={card}
+      className="flex h-full flex-col overflow-hidden rounded-sm bg-stone-100 ring-1 ring-stone-900/5 transition-colors duration-300 dark:bg-stone-800 dark:ring-white/10"
+      style={color ? { backgroundColor: color.background } : undefined}
+    >
+      {cover}
+      {/* Why it's here, in the owner's words, kept to three lines (cut
+          inside the padding, so a fourth can't show through it) */}
+      <p
+        className={`px-3 py-2.5 text-[13px] leading-snug italic sm:text-sm ${
+          !color
+            ? "text-stone-700 dark:text-stone-300"
+            : color.dark
+              ? "text-white/90"
+              : "text-stone-900/80"
+        }`}
+      >
+        <span className="line-clamp-3">{book.note}</span>
+      </p>
+    </div>
+  ) : (
+    cover
+  );
+
+  const name = (
+    <span className="sr-only">
+      {book.title} by {book.author}
+    </span>
+  );
+  return book.onShelf ? (
+    // To the book's page, as the covers on the shelf below go
+    <Link to={`/books/${book.id}`} className="group relative block h-full">
+      {contents}
+      {name}
+    </Link>
+  ) : (
+    // Borrowed from a friend: their book's page isn't one a visitor can
+    // open, so it's just the cover
+    <div className="relative h-full">
+      {contents}
+      {name}
+    </div>
+  );
+}
 
 // Who the shelf belongs to, in their words, and what they love
 function ProfileHeader({ data }: { data: SharedShelfData }) {
@@ -109,58 +192,13 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
             <HeartIcon size={14} filled className={heartOf(profile.color)} />
             Favorites
           </h2>
-          <ul className="mt-4 grid grid-cols-2 items-start gap-x-5 gap-y-8 sm:grid-cols-5 sm:gap-x-6">
-            {profile.favorites.map((book) => {
-              const contents = (
-                <>
-                  <BookCover
-                    cover={book.cover}
-                    title={book.title}
-                    author={book.author}
-                    // Five across from small tablets up, two on phones
-                    sizes="(min-width: 640px) 220px, 50vw"
-                    className="aspect-[2/3] w-full transition-opacity duration-200 group-hover:opacity-90"
-                  />
-                  <span className="sr-only">
-                    {book.title} by {book.author}
-                  </span>
-                  {/* Why it's here, quoted in the owner's words, opening
-                      with a larger serif mark in the heart's color, kept to
-                      three lines so the row stays even. The mark takes no
-                      line height, so the first line is as tall as the
-                      others. (The serif is only loaded semibold, too heavy
-                      for the words themselves.) */}
-                  {book.note ? (
-                    <span className="mt-2.5 line-clamp-3 text-[13px] leading-snug text-stone-600 italic dark:text-stone-400 sm:text-sm">
-                      <span
-                        aria-hidden
-                        className={`mr-0.5 align-[-0.3em] font-serif text-[1.9em] leading-[0] not-italic ${heartOf(profile.color)}`}
-                      >
-                        “
-                      </span>
-                      {book.note}
-                    </span>
-                  ) : null}
-                </>
-              );
-              return (
-                <li key={book.id} className="min-w-0">
-                  {book.onShelf ? (
-                    // To the book's page, as the covers on the shelf below go
-                    <Link
-                      to={`/books/${book.id}`}
-                      className="group relative block"
-                    >
-                      {contents}
-                    </Link>
-                  ) : (
-                    // Borrowed from a friend: their book's page isn't one
-                    // a visitor can open, so it's just the cover
-                    <div className="relative">{contents}</div>
-                  )}
-                </li>
-              );
-            })}
+          {/* Cards in a row stretch to the tallest, so their feet line up */}
+          <ul className="mt-4 grid grid-cols-2 gap-x-5 gap-y-6 sm:grid-cols-5 sm:gap-x-6">
+            {profile.favorites.map((book) => (
+              <li key={book.id} className="min-w-0">
+                <FavoriteCard book={book} />
+              </li>
+            ))}
           </ul>
         </section>
       ) : null}
