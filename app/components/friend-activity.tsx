@@ -348,6 +348,16 @@ function BookTile({ book, className = "" }: { book: FeedBook; className?: string
   );
 }
 
+// What someone wrote about a book, set beside its cover above the title,
+// so the words sit with the book they're about, as on the home page
+function NoteBeside({ body }: { body: string }) {
+  return (
+    <span className="mb-2 block whitespace-pre-line text-pretty leading-relaxed text-stone-800 dark:text-stone-200">
+      &ldquo;{body}&rdquo;
+    </span>
+  );
+}
+
 // One book beside its details. Says whose copy it is when it isn't the
 // friend's own, and who lent it to them when they borrowed it. The title's
 // link covers the card, with the lender's name over it as its own link.
@@ -356,11 +366,14 @@ function BookCard({
   friendId,
   userId,
   from = null,
+  note = null,
 }: {
   book: FeedBook;
   friendId: string;
   userId: string;
   from?: Lender | null;
+  // The post's words, beside the cover
+  note?: string | null;
 }) {
   const [asking, setAsking] = useState(false);
   const whose = from ? (
@@ -376,12 +389,13 @@ function BookCard({
   );
   return (
     <div className="group relative -mx-2 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors">
-      <div className="flex items-center gap-3">
+      <div className={`flex gap-3 ${note ? "items-start" : "items-center"}`}>
         <FeedCover
           book={book}
-          className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
+          className="h-[123px] w-[82px] flex-shrink-0 transition-opacity group-hover:opacity-90"
         />
         <span className="min-w-0">
+          {note ? <NoteBeside body={note} /> : null}
           <Link
             to={`/books/${book.id}`}
             className="block font-medium leading-snug text-stone-900 dark:text-stone-100 after:absolute after:inset-0 after:content-['']"
@@ -575,9 +589,12 @@ function ElsewhereCard({
   item,
   mine,
   onEdit,
+  note = null,
 }: {
   item: ElsewhereItem;
   mine: boolean;
+  // The post's words, beside the cover
+  note?: string | null;
   // Your own note: rewrite it
   onEdit?: () => void;
 }) {
@@ -593,13 +610,16 @@ function ElsewhereCard({
       <div className="mt-3">
         <Link
           to={item.work.key}
-          className="group -mx-2 flex items-center gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+          className={`group -mx-2 flex gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors ${
+            note ? "items-start" : "items-center"
+          }`}
         >
           <FeedCover
             book={item.work}
-            className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
+            className="h-[123px] w-[82px] flex-shrink-0 transition-opacity group-hover:opacity-90"
           />
           <span className="min-w-0">
+            {note ? <NoteBeside body={note} /> : null}
             <span className="block font-medium leading-snug text-stone-900 dark:text-stone-100">
               {item.work.title}
             </span>
@@ -835,12 +855,10 @@ export function FeedPost({
         </div>
       </header>
 
+      {/* Being rewritten, the note gets the card's width; otherwise it
+          sits beside its book */}
       {note && editing ? (
         <NoteEdit item={note} onDone={() => setEditing(false)} />
-      ) : note ? (
-        <blockquote className="mt-3 whitespace-pre-line text-pretty leading-relaxed text-stone-800 dark:text-stone-200">
-          &ldquo;{note.body}&rdquo;
-        </blockquote>
       ) : null}
 
       {item.kind === "pick" ? (
@@ -850,6 +868,7 @@ export function FeedPost({
           item={item}
           mine={item.friend.id === userId}
           onEdit={editable && !editing ? () => setEditing(true) : undefined}
+          note={note && !editing ? note.body : null}
         />
       ) : item.kind === "added" && item.books.length > 1 ? (
         <>
@@ -879,6 +898,7 @@ export function FeedPost({
               friendId={item.friend.id}
               userId={userId}
               from={item.kind === "loved" || item.kind === "note" ? item.from : null}
+              note={note && !editing ? note.body : null}
             />
           </div>
           <Actions
