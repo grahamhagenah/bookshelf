@@ -3,7 +3,7 @@ import { makeBook, makeUser, prisma } from "../test/db";
 import { bodyOf, routeArgs, statusOf } from "../test/route";
 
 import { getPublicBookListItems } from "./models/book.server";
-import { generateShareToken } from "./models/user.server";
+import { createFriendship, generateShareToken } from "./models/user.server";
 import { handleProblem, normalizeHandle } from "./profile";
 import {
   getShelfProfile,
@@ -15,6 +15,7 @@ import {
 } from "./profile.server";
 import { loader as profilePage } from "./routes/$profile";
 import { loader as sharePage } from "./routes/share.$token";
+import { sessionStorage } from "./session.server";
 
 vi.hoisted(() => {
   process.env.SESSION_SECRET ??= "test-secret";
@@ -296,4 +297,52 @@ test("a borrowed book can be a favorite, with your note, no lender and no link",
     ok: false,
     error: "Its owner keeps it off public shelves.",
   });
+});
+
+test("a friend sees which books are out or kept back; anyone else doesn't", async () => {
+  const owner = await makeUser("Maya");
+  const friend = await makeUser("Sam");
+  const stranger = await makeUser("Lee");
+  await createFriendship(owner.id, friend.id);
+  const free = await makeBook(owner.id, "Persuasion");
+  const out = await makeBook(owner.id, "Middlemarch");
+  const kept = await makeBook(owner.id, "Jane Eyre");
+  await prisma.book.update({ where: { id: out.id }, data: { borrowerId: friend.id } });
+  await prisma.book.update({
+    where: { id: kept.id },
+    data: { notLendingUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
+  });
+  await generateShareToken(owner.id);
+  const { handle } = await prisma.user.findUniqueOrThrow({ where: { id: owner.id } });
+
+  const shelfAs = async (viewerId?: string) => {
+    const headers = new Headers();
+    if (viewerId) {
+      const session = await sessionStorage.getSession();
+      session.set("userId", viewerId);
+      headers.set("Cookie", await sessionStorage.commitSession(session));
+    }
+    const page = await profilePage(
+      routeArgs(new Request(`http://localhost/@${handle}`, { headers }), { profile: `@${handle}` }),
+    );
+    const { bookListItems } = (await bodyOf(page)) as {
+      bookListItems: { id: string; isLending?: boolean; notLending?: boolean; borrowerId?: string }[];
+    };
+    return new Map(bookListItems.map((book) => [book.id, book]));
+  };
+
+  const asFriend = await shelfAs(friend.id);
+  expect(asFriend.get(free.id)).toMatchObject({ isLending: false, notLending: false });
+  expect(asFriend.get(out.id)).toMatchObject({ isLending: true, notLending: false });
+  expect(asFriend.get(kept.id)).toMatchObject({ isLending: false, notLending: true });
+  // Whether it's out, never who has it
+  expect(asFriend.get(out.id)).not.toHaveProperty("borrowerId");
+
+  for (const viewer of [stranger.id, undefined]) {
+    for (const book of (await shelfAs(viewer)).values()) {
+      expect(book).not.toHaveProperty("isLending");
+      expect(book).not.toHaveProperty("notLending");
+      expect(book).not.toHaveProperty("borrowerId");
+    }
+  }
 });
