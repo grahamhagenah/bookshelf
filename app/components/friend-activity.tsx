@@ -546,6 +546,32 @@ function Actions({
       </button>
     </want.Form>
   );
+  // Beside asking for a friend's copy (or waiting for it), a quieter way
+  // to keep it for later, as a group's pick has
+  const askable =
+    !isOwner &&
+    !returned &&
+    !isBorrower &&
+    !mine &&
+    !viewer.readIt &&
+    !viewer.onShelf &&
+    viewer.canRequest &&
+    (book.available || !book.notLending);
+  const later = !askable ? null : wanted ? (
+    <span className={stateClass}>
+      <BookmarkIcon size={14} filled />
+      On your list
+    </span>
+  ) : (
+    <want.Form method="post" action="/feed">
+      <input type="hidden" name="intent" value="wantBook" />
+      <input type="hidden" name="bookId" value={book.id} />
+      <button type="submit" className={actionClass}>
+        <BookmarkIcon size={14} />
+        Want to read
+      </button>
+    </want.Form>
+  );
   // Beside the cover, at its foot, by where the copy is: no row of links,
   // since the cover leads to the book and the name to their shelf
   return (
@@ -557,6 +583,7 @@ function Actions({
         </button>
       ) : null}
       {next}
+      {later}
       {/* The ask, on a line of its own under the action, so the line keeps
           its shape while you write */}
       {asking && viewer.canRequest && book.available && !requested ? (
