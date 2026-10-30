@@ -694,8 +694,9 @@ function ElsewhereCard({
   );
 }
 
-// A group the viewer is in picked a book to read together: the book, when
-// they meet, and everyone in it, with the one thing to do about a copy
+// A group the viewer is in picked a book to read together, named in the
+// post's headline: its cover, and beside it when they meet and who's in
+// it, with what to do about a copy at the cover's foot, as a note post has
 function PickCard({ item, userId }: { item: PickItem; userId: string }) {
   const want = useFetcher<{ wanted?: boolean }>();
   const { ownCopyId, copies } = item.viewer;
@@ -704,77 +705,64 @@ function PickCard({ item, userId }: { item: PickItem; userId: string }) {
   const copy = copies[0];
   const page = pickPage(item.work);
   return (
-    <>
-      <div className="mt-3">
-        <Link
-          to={page}
-          className={`group -mx-2 ${bookRow} items-center rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors`}
-        >
-          <FeedCover book={item.work} className={bigCover} />
-          <span className={besideCover}>
-            <span className="block text-xs font-semibold uppercase tracking-wide text-stone-400 dark:text-stone-500">
-              {item.group.name} is reading
-            </span>
-            <span className="mt-0.5 block font-medium leading-snug text-stone-900 dark:text-stone-100">
-              {item.work.title}
-            </span>
-            <span className="mt-0.5 block text-sm text-stone-500 dark:text-stone-400">
-              {item.work.author}
-            </span>
-            {item.meeting ? (
-              <span className="mt-2 block text-sm text-stone-600 dark:text-stone-300">
-                {meetingPast(item.meeting.at) ? "Met" : "Meets"}{" "}
-                {[item.meeting.at ? meetingWhen(item.meeting.at) : null, item.meeting.place]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </span>
-            ) : null}
-          </span>
-        </Link>
-      </div>
-      <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
-        With {namesOf(item.people, userId)}
-      </p>
-      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-stone-100 dark:border-stone-800 pt-2">
-        {ownCopyId ? (
-          <Link to={`/books/${ownCopyId}`} className={actionClass}>
-            You have a copy
-          </Link>
-        ) : copy?.requested ? (
-          <Link to={`/books/${copy.bookId}`} className={stateClass}>
-            Requested from {copy.owner.firstname}
-          </Link>
-        ) : copy ? (
-          <Link to={`/books/${copy.bookId}`} className={nextClass}>
-            {copy.available
-              ? `Ask ${copy.owner.firstname} to borrow it`
-              : `${copy.owner.firstname}'s copy is out`}
-          </Link>
+    <div className={`mt-3 ${bookRow} items-stretch`}>
+      <Link to={page} title={item.work.title} className="group block min-w-0">
+        <FeedCover book={item.work} className={bigCover} />
+      </Link>
+      <div className={`${besideCover} pt-0.5`}>
+        {item.meeting ? (
+          <p className="mb-1 text-lg leading-snug text-stone-800 dark:text-stone-200 sm:text-xl">
+            {meetingPast(item.meeting.at) ? "Met" : "Meets"}{" "}
+            {[item.meeting.at ? meetingWhen(item.meeting.at) : null, item.meeting.place]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
         ) : null}
-        {!ownCopyId && item.work.key ? (
-          wanted ? (
-            <span className={stateClass}>
-              <BookmarkIcon size={14} />
-              On your Want to read list
-            </span>
-          ) : (
-            <want.Form method="post" action="/feed">
-              <input type="hidden" name="intent" value="want" />
-              <input type="hidden" name="workKey" value={item.work.key} />
-              <button type="submit" className={actionClass}>
+        <p className="mb-3 text-sm text-stone-500 dark:text-stone-400">
+          <Link
+            to={groupPath(item.group)}
+            className="font-medium text-stone-700 dark:text-stone-200 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+          >
+            {item.group.name}
+          </Link>
+          : with {namesOf(item.people, userId)}
+        </p>
+        <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1">
+          {ownCopyId ? (
+            <Link to={`/books/${ownCopyId}`} className={actionClass}>
+              You have a copy
+            </Link>
+          ) : copy?.requested ? (
+            <Link to={`/books/${copy.bookId}`} className={stateClass}>
+              Requested from {copy.owner.firstname}
+            </Link>
+          ) : copy ? (
+            <Link to={`/books/${copy.bookId}`} className={nextClass}>
+              {copy.available
+                ? `Ask ${copy.owner.firstname} to borrow it`
+                : `${copy.owner.firstname}'s copy is out`}
+            </Link>
+          ) : null}
+          {!ownCopyId && item.work.key ? (
+            wanted ? (
+              <span className={stateClass}>
                 <BookmarkIcon size={14} />
-                Want to read
-              </button>
-            </want.Form>
-          )
-        ) : null}
-        <span className="ml-auto">
-          <Link to={groupPath(item.group)} className={actionClass}>
-            Open the group
-          </Link>
-        </span>
+                On your Want to read list
+              </span>
+            ) : (
+              <want.Form method="post" action="/feed">
+                <input type="hidden" name="intent" value="want" />
+                <input type="hidden" name="workKey" value={item.work.key} />
+                <button type="submit" className={actionClass}>
+                  <BookmarkIcon size={14} />
+                  Want to read
+                </button>
+              </want.Form>
+            )
+          ) : null}
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -813,7 +801,7 @@ export function FeedPost({
       : item.kind === "elsewhere"
         ? `wrote about ${titled(item.work)}`
         : item.kind === "pick"
-          ? `picked ${item.work.title} for ${item.group.name}`
+          ? `picked ${titled(item.work)} for ${item.group.name}`
           : item.kind === "loved"
           ? `loved ${titled(item.book)}`
           : `wrote about ${titled(item.book)}`;
