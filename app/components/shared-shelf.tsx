@@ -193,10 +193,14 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
         </aside>
       ) : null}
 
-      <h2 className="mt-8 text-sm font-semibold text-stone-500 dark:text-stone-400">
-        {setAside ? "More on the shelf" : "On the shelf"}{" "}
-        <span className="font-normal">
-          {(setAside ? rest : stats.books).toLocaleString()}
+      {/* Where the shelf starts: well clear of the favorites, and a
+          heading of its own, so it reads as the next part of the page */}
+      <h2 className="mt-16 text-lg font-semibold tracking-tight text-stone-900 dark:text-stone-100 sm:mt-20">
+        {setAside
+          ? `The rest of ${data.ownerFirstname}'s shelf`
+          : `${data.ownerFirstname}'s shelf`}{" "}
+        <span className="text-base font-normal text-stone-500 dark:text-stone-400">
+          {plural(setAside ? rest : stats.books, "book")}
         </span>
       </h2>
     </header>
