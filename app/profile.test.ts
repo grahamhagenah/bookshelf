@@ -16,7 +16,7 @@ test("the favorites tip shows until something's pinned, offering a book only whe
   expect(favoritesTip({ pinned: false, favorites: [] })?.link).toBeNull();
   // Hearts fill the row: how to choose instead, and no book to start with
   expect(favoritesTip({ pinned: false, favorites: [{}] }, dune)).toEqual({
-    text: expect.stringMatching(/^Your favorites show the books you've loved/),
+    text: expect.stringMatching(/^Showing the books you loved/),
     link: null,
   });
   // Pinned: nothing more to say

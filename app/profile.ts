@@ -70,12 +70,12 @@ export function favoritesTip(
   if (profile.pinned) return null;
   if (profile.favorites.length > 0) {
     return {
-      text: "Your favorites show the books you've loved most recently. To choose which ones visitors see first, and in what order, pin up to five from their pages.",
+      text: "Showing the books you loved most recently. Pin up to five from their pages to pick your own.",
       link: null,
     };
   }
   return {
-    text: "Pin up to five books from their pages and they'll sit at the top of your public shelf, the first thing visitors see.",
+    text: "Pin up to five books from their pages to feature them here.",
     link: firstBook
       ? { label: `Start with ${firstBook.title}`, to: `/books/${firstBook.id}` }
       : null,
