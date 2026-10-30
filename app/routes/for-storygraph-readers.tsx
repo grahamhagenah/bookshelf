@@ -3,7 +3,7 @@ import { data, Link, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { GuidePage, GuideSection, proseLink } from "~/components/guide";
-import { ShowcaseFriends } from "~/components/showcase";
+import { ShowcaseBorrow } from "~/components/showcase";
 import { FREE_LIMITS } from "~/plan";
 import { seo } from "~/seo";
 import { getUserId } from "~/session.server";
@@ -124,7 +124,7 @@ export default function ForStoryGraphReaders() {
           ))}
         </ul>
         <div className="pt-4">
-          <ShowcaseFriends />
+          <ShowcaseBorrow />
         </div>
       </GuideSection>
 

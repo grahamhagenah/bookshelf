@@ -10,6 +10,7 @@ import {
   HeartIcon,
   LentIcon,
   SearchIcon,
+  ShelfIcon,
 } from "./icons";
 import Wordmark from "./wordmark";
 
@@ -332,76 +333,80 @@ export default function ShowcaseLending({
   );
 }
 
-// Search across friends' shelves, and browse one of them
-export function ShowcaseFriends() {
-  return (
-    <Stage height="h-[450px] sm:h-[470px]">
-      <div className={`${panel} left-[3%] right-0 top-0 z-30 rotate-1 p-3`}>
-        <div className="flex h-8 items-center gap-2 rounded-md bg-stone-100 dark:bg-stone-800 px-2.5 text-sm text-stone-800 dark:text-stone-200">
-          <SearchIcon size={14} />
-          ishiguro
-          <span className="-ml-1.5 h-4 w-px bg-stone-500" />
-        </div>
-        <p className="mt-2.5 text-[11px] font-semibold uppercase tracking-wide text-stone-400">
-          On your friends&apos; shelves
-        </p>
-        <div className="mt-1.5 flex items-center gap-2.5">
-          <Cover src={COVERS.neverLetMeGo} className="w-7" />
-          <p className="min-w-0 flex-1 text-sm leading-tight text-stone-800 dark:text-stone-200">
-            <span className="font-medium">Never Let Me Go</span>
-            <span className="block text-xs text-stone-500 dark:text-stone-400">
-              Anika Rao
-            </span>
-          </p>
-          <span className="rounded-md bg-forest-600 px-2 py-0.5 text-xs font-medium text-white">
-            Ask to borrow
-          </span>
-        </div>
-        <p className="mt-2.5 text-[11px] font-semibold uppercase tracking-wide text-stone-400">
-          Add to your shelf
-        </p>
-        <div className="mt-1.5 flex items-center gap-2.5">
-          <Cover src={COVERS.klara} className="w-7" />
-          <p className="min-w-0 flex-1 text-sm leading-tight text-stone-800 dark:text-stone-200">
-            <span className="font-medium">Klara and the Sun</span>
-            <span className="block text-xs text-stone-500 dark:text-stone-400">
-              2021
-            </span>
-          </p>
-          <span className="rounded-md border border-stone-200 dark:border-stone-700 px-2 py-0.5 text-xs text-stone-700 dark:text-stone-200">
-            + Add
-          </span>
-        </div>
-      </div>
+// Borrow: every friend's books as one shelf, the ones you want first,
+// who has each, and what's out on loan
+const BORROW_WANTED: [cover: string, who: string][] = [
+  [COVERS.overstory, "Maya has it"],
+  [COVERS.martyr, "Theo has it"],
+  [COVERS.nineteenEightyFour, "Anika has it"],
+  [COVERS.rejection, "Sam has it"],
+];
+const BORROW_EVERYTHING: [cover: string, who: string, lent?: boolean][] = [
+  [COVERS.exhalation, "Sam has it"],
+  [COVERS.evicted, "Sam has it", true],
+  [COVERS.lonesomeDove, "Maya has it"],
+  [COVERS.howToDoNothing, "Anika has it"],
+];
 
-      <div
-        className={`${panel} left-0 right-[7%] top-[46%] z-20 -rotate-2 p-3.5`}
-      >
-        <div className="flex items-center gap-2.5">
-          <Face who="anika" />
-          <p className="text-sm text-stone-800 dark:text-stone-200">
-            <span className="font-semibold">Anika Rao&apos;s shelf</span>
-            <span className="text-stone-500 dark:text-stone-400">
-              {" "}
-              · 5 books
-            </span>
-          </p>
+function BorrowCover({ src, who, lent = false }: { src: string; who: string; lent?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <div className="relative">
+        <Cover src={src} className="w-full" sizes="(min-width: 640px) 90px, 22vw" />
+        {lent ? (
+          <span className="absolute left-1 top-1 inline-flex items-center gap-1 rounded bg-white/95 dark:bg-stone-950/90 px-1 py-px text-[9px] leading-4 text-stone-700 dark:text-stone-200 shadow-sm">
+            <LentIcon size={9} />
+            Lent out
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-1 truncate text-[10px] text-stone-500 dark:text-stone-400">{who}</p>
+    </div>
+  );
+}
+
+export function ShowcaseBorrow() {
+  return (
+    // As tall as the window, however wide it is, with room under it for
+    // the note that overlaps its foot
+    <Stage height="pb-6">
+      <div className={`${skin} relative z-20 rotate-1 overflow-hidden p-3.5`}>
+        <p className="flex items-center gap-1.5 border-b border-stone-200 pb-2 text-sm dark:border-stone-800">
+          <ShelfIcon size={15} className="text-forest-600 dark:text-forest-400" />
+          <span className="font-semibold text-stone-900 dark:text-stone-100">Borrow from friends</span>
+          <span className="text-stone-400 dark:text-stone-500">214</span>
+        </p>
+        <div className="mt-2.5 flex gap-1 text-[11px]">
+          <span className="rounded-full bg-stone-100 px-2 py-0.5 text-stone-900 dark:bg-stone-800 dark:text-stone-100">
+            All <span className="text-stone-400">214</span>
+          </span>
+          <span className="px-2 py-0.5 text-stone-500 dark:text-stone-400">
+            Available <span className="text-stone-400 dark:text-stone-500">189</span>
+          </span>
+          <span className="px-2 py-0.5 text-stone-500 dark:text-stone-400">
+            Lent out <span className="text-stone-400 dark:text-stone-500">25</span>
+          </span>
         </div>
-        <div className="mt-3 grid grid-cols-4 gap-2">
-          {[
-            COVERS.jonathanStrange,
-            COVERS.parableTalents,
-            COVERS.neverLetMeGo,
-            COVERS.anxiousPeople,
-          ].map((src) => (
-            <Cover key={src} src={src} className="w-full" />
+        <p className="mt-3 text-[11px] font-medium text-stone-500 dark:text-stone-400">
+          From your Want to read list
+        </p>
+        <div className="mt-1.5 grid grid-cols-4 gap-2">
+          {BORROW_WANTED.map(([src, who]) => (
+            <BorrowCover key={src} src={src} who={who} />
+          ))}
+        </div>
+        <p className="mt-3 text-[11px] font-medium text-stone-500 dark:text-stone-400">Everything</p>
+        {/* Cut off at the window's edge: there's plenty more below */}
+        <div className="mt-1.5 grid h-24 grid-cols-4 gap-2 overflow-hidden">
+          {BORROW_EVERYTHING.map(([src, who, lent]) => (
+            <BorrowCover key={src} src={src} who={who} lent={lent} />
           ))}
         </div>
       </div>
 
-      <div className="absolute bottom-0 right-0 z-30 flex rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white shadow-soft">
+      <div className="absolute bottom-0 right-[3%] z-30 flex -rotate-2 items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-3.5 py-2 text-xs font-medium text-white dark:text-stone-900 shadow-soft">
         <Check />
-        Asked Anika for Never Let Me Go
+        Asked Maya for The Overstory
       </div>
     </Stage>
   );
@@ -673,12 +678,12 @@ function BrowserBar({ children }: { children: React.ReactNode }) {
 // Your shelf's own page, as anyone with the link sees it: a browser window
 // at your address, with your bookplate, a line about you, your favorites
 // and the shelf beneath
-// The favorites on Maya's page, and what she says about two of them
-const FAVORITES: { src: string; note?: string; above?: boolean }[] = [
-  { src: COVERS.circe, note: "Gods are petty. Witches are not.", above: true },
-  { src: COVERS.piranesi },
-  { src: COVERS.hailMary, note: "Made me laugh out loud on a plane." },
-  { src: COVERS.klara },
+// The favorites Maya pinned to the top of her page
+const FAVORITES: { src: string; title: string; author: string }[] = [
+  { src: COVERS.circe, title: "Circe", author: "Madeline Miller" },
+  { src: COVERS.piranesi, title: "Piranesi", author: "Susanna Clarke" },
+  { src: COVERS.hailMary, title: "Project Hail Mary", author: "Andy Weir" },
+  { src: COVERS.klara, title: "Klara and the Sun", author: "Kazuo Ishiguro" },
 ];
 
 export function ShowcasePage() {
@@ -720,38 +725,39 @@ export function ShowcasePage() {
             <Heart size={11} />
             Favorites
           </p>
-          {/* Pinned favorites, two with a line on why, as the real page
-              shows them: round bubbles over the top or bottom of the cover */}
-          <div className="mt-1 grid grid-cols-4 gap-2 pt-7 pb-7">
-            {FAVORITES.map(({ src, note, above }) => (
-              <div key={src} className="relative">
-                <Cover src={src} className="w-full" />
-                {note ? (
-                  <p
-                    className={`absolute z-10 w-max max-w-[190%] text-balance rounded-xl bg-white px-2 py-1 text-[10px] leading-snug text-stone-700 shadow-[0_1px_3px_rgb(0_0_0/0.08)] ring-1 ring-stone-900/5 dark:bg-stone-800 dark:text-stone-200 dark:ring-white/10 ${
-                      above
-                        ? "-left-[4%] bottom-[calc(100%-0.75rem)]"
-                        : "-right-[4%] top-[calc(100%-0.75rem)]"
-                    }`}
-                  >
-                    {note}
-                  </p>
-                ) : null}
+          {/* Pinned favorites, bigger than the shelf's covers and lifted
+              off the page, with title and author, as the real page shows
+              them */}
+          <div className="mt-2 grid grid-cols-4 gap-2.5">
+            {FAVORITES.map(({ src, title, author }) => (
+              <div key={src} className="min-w-0">
+                <Cover
+                  src={src}
+                  className="w-full shadow-[0_1px_2px_rgb(0_0_0/0.08),0_6px_14px_-6px_rgb(0_0_0/0.35)]"
+                />
+                <p className="mt-1 truncate text-[10px] font-medium leading-tight text-stone-800 dark:text-stone-200">
+                  {title}
+                </p>
+                <p className="truncate text-[9px] leading-tight text-stone-500 dark:text-stone-400">
+                  {author}
+                </p>
               </div>
             ))}
           </div>
 
-          <p className="mt-4 text-xs font-semibold text-stone-500 dark:text-stone-400">
-            On the shelf <span className="font-normal">142</span>
+          <p className="mt-4 flex items-baseline gap-1.5 text-xs font-semibold text-stone-900 dark:text-stone-100">
+            Maya&apos;s shelf
+            <span className="font-normal text-stone-500 dark:text-stone-400">138 more</span>
           </p>
           {/* Cut off at the window's edge, as a long shelf would be */}
-          <div className="mt-2 grid h-16 grid-cols-5 gap-2 overflow-hidden">
+          <div className="mt-2 grid h-12 grid-cols-6 gap-1.5 overflow-hidden">
             {[
               COVERS.dune,
               COVERS.stationEleven,
               COVERS.overstory,
               COVERS.cityWalls,
               COVERS.neverLetMeGo,
+              COVERS.pachinko,
             ].map((src) => (
               <Cover key={src} src={src} className="w-full" />
             ))}
@@ -860,6 +866,7 @@ export function ShowcaseHome() {
           {(
             [
               [<BookIcon key="shelf" size={14} />, "My shelf"],
+              [<ShelfIcon key="borrow" size={14} />, "Borrow"],
               [<FeedIcon key="feed" size={14} strokeWidth={1.5} />, "Feed"],
               [<GroupIcon key="friends" size={14} />, "Friends"],
               [<BellIcon key="alerts" size={14} />, "Alerts"],
