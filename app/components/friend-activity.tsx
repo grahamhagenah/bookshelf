@@ -804,8 +804,10 @@ export function FeedPost({
               book: item.book,
               to: `/books/${item.book.id}`,
             };
+  // A heart wherever they loved it: a loved post, or a note with one
   const heart =
-    (item.kind === "note" || item.kind === "elsewhere") && item.loved ? (
+    item.kind === "loved" ||
+    ((item.kind === "note" || item.kind === "elsewhere") && item.loved) ? (
       <SmallHeart size={13} />
     ) : null;
   // What follows the title: who wrote it, and the group a pick is for
