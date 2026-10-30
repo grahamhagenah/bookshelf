@@ -349,13 +349,13 @@ function BookTile({ book, className = "" }: { book: FeedBook; className?: string
 }
 
 // One book's row on the same grid as an "added 3 books" post's tiles,
-// three across on phones and four from there: the cover takes a column,
+// three across on phones and five from there: the cover takes a column,
 // at the very size of a tile's, and what's beside it takes the rest
-const bookRow = "grid grid-cols-3 gap-x-4 sm:grid-cols-4";
+const bookRow = "grid grid-cols-3 gap-x-4 sm:grid-cols-5";
 const coverColumn = "block min-w-0";
 // Beside the cover, as tall as it: a note at the top, and where the copy
 // is at the foot, level with the cover's
-const besideCover = "col-span-2 flex min-w-0 flex-col sm:col-span-3";
+const besideCover = "col-span-2 flex min-w-0 flex-col sm:col-span-4";
 const bigCover = "aspect-[2/3] w-full transition-opacity group-hover:opacity-90";
 
 
@@ -856,7 +856,7 @@ export function FeedPost({
 
   const books =
     item.kind === "added"
-      ? item.books.slice(0, 4)
+      ? item.books.slice(0, 5)
       : item.kind === "elsewhere" || item.kind === "pick"
         ? []
         : [item.book];
@@ -910,13 +910,13 @@ export function FeedPost({
       ) : item.kind === "added" && item.books.length > 1 ? (
         <>
           {/* One row of covers big enough for their titles: three across
-              on phones, four from there; the rest are on their shelf */}
-          <ul className="mt-4 grid grid-cols-3 gap-x-4 gap-y-4 sm:grid-cols-4">
+              on phones, five from there; the rest are on their shelf */}
+          <ul className="mt-4 grid grid-cols-3 gap-x-4 gap-y-4 sm:grid-cols-5">
             {books.map((book, index) => (
               <BookTile
                 key={book.id}
                 book={book}
-                className={index === 3 ? "hidden sm:block" : ""}
+                className={index >= 3 ? "hidden sm:block" : ""}
               />
             ))}
           </ul>
@@ -1138,7 +1138,7 @@ export function NotePrompt({ books, userId }: { books: PromptBook[]; userId: str
             </Link>
             ?
           </p>
-          <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
+          <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
             {book.read
               ? book.owner.id === userId
                 ? "You marked it read. Friends who borrow it will see your note."
