@@ -158,7 +158,7 @@ export default function Landing() {
 
       <div className="mt-20 space-y-20 md:mt-28 md:space-y-28">
         <Feature
-          title="Every friend's shelf, as one."
+          title="Your friends' books, together at last."
           visual={<ShowcaseBorrow />}
         >
           Browse everything your friends own in one place, with the books on
