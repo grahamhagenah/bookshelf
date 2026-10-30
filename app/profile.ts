@@ -58,27 +58,26 @@ export function shelfPath(user: { handle?: string | null; shareToken?: string | 
   return user.handle ? `/@${user.handle}` : `/share/${user.shareToken}`;
 }
 
-// A tip for the owner on their own public page while none of their
-// favorites says anything: a note shows in a bubble beside a pinned cover,
-// telling visitors why it's there. Null once one does. It points to a
-// favorite from their own shelf, where the pin and the note are.
-export function noteTip(profile: {
-  pinned: boolean;
-  favorites: { id: string; title: string; onShelf: boolean; note: string | null }[];
-}) {
-  if (profile.favorites.some((book) => book.note)) return null;
-  const book = profile.favorites.find((favorite) => favorite.onShelf);
+// A tip for the owner on their own public page until they've pinned a
+// favorite: what pinning does, and where. With nothing among their
+// favorites yet, it offers a book from their shelf to start with (its
+// page is where the pin is); once hearts fill the row, it says how to
+// choose instead.
+export function favoritesTip(
+  profile: { pinned: boolean; favorites: unknown[] },
+  firstBook?: { id: string; title: string },
+) {
+  if (profile.pinned) return null;
+  if (profile.favorites.length > 0) {
+    return {
+      text: "Your favorites show the books you've loved most recently. To choose which ones visitors see first, and in what order, pin up to five from their pages.",
+      link: null,
+    };
+  }
   return {
-    text: profile.pinned
-      ? "Add a note to a pinned book and it shows beside the cover, so visitors know why you love it."
-      : "Pin a book to the top of your public shelf and add a note to it, so visitors know why you love it.",
-    link: book
-      ? {
-          label: profile.pinned
-            ? `Write one on ${book.title}`
-            : `Start with ${book.title}`,
-          to: `/books/${book.id}`,
-        }
+    text: "Pin up to five books from their pages and they'll sit at the top of your public shelf, the first thing visitors see.",
+    link: firstBook
+      ? { label: `Start with ${firstBook.title}`, to: `/books/${firstBook.id}` }
       : null,
   };
 }
