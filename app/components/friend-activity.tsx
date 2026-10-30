@@ -387,15 +387,14 @@ function BookCard({
   note?: string | null;
 }) {
   const [asking, setAsking] = useState(false);
-  const whose = from ? (
+  // Your own copy is said in the row under the card, so not here too
+  const whose = from?.relation === "you" || book.owner.id === userId ? null : from ? (
     <>
       Borrowed from{" "}
       <LenderName from={from} asking={asking} onAsk={() => setAsking((was) => !was)} />
       {" · "}
     </>
-  ) : book.owner.id === friendId ? null : book.owner.id === userId ? (
-    "Your copy · "
-  ) : (
+  ) : book.owner.id === friendId ? null : (
     `${book.owner.firstname}'s copy · `
   );
   return (
@@ -440,9 +439,12 @@ function Actions({
   onEdit,
   mine = false,
   poster = null,
+  from = null,
 }: {
   book: FeedBook;
   userId: string;
+  // Who the poster borrowed it from, when they did
+  from?: Lender | null;
   // Under your own note: rewrite it
   onEdit?: () => void;
   // Your own post about a friend's copy: you've read it
@@ -471,8 +473,15 @@ function Actions({
   const isBorrower = book.borrowerId === userId;
 
   // The one thing this post offers you, by where you stand with the book.
-  // Your own copy offers nothing: its card already says it's yours
-  const next = isOwner ? null : returned ? (
+  // Your own copy offers nothing to do, so the row says it's yours, and
+  // that they had it from you when they did
+  const next = isOwner ? (
+    <span className={stateClass}>
+      {from?.relation === "you" && poster
+        ? `${poster.firstname} borrowed it from you`
+        : "Your copy"}
+    </span>
+  ) : returned ? (
     <span className={stateClass}>Returned to {book.owner.firstname}</span>
   ) : isBorrower ? (
     // Read it, said so: the next thing is giving it back
@@ -913,6 +922,7 @@ export function FeedPost({
             onEdit={editable && !editing ? () => setEditing(true) : undefined}
             mine={item.friend.id === userId}
             poster={item.friend.id === userId ? null : item.friend}
+            from={item.kind === "loved" || item.kind === "note" ? item.from : null}
           />
         </>
       )}
