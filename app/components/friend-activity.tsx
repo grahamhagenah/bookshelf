@@ -645,7 +645,7 @@ function ElsewhereCard({
   const copy = copies[0];
   return (
     <>
-      <div className="mt-3">
+      <div className="mt-4">
         <Link
           to={item.work.key}
           className={`group -mx-2 ${bookRow} items-stretch rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors`}
@@ -728,7 +728,7 @@ function PickCard({ item, userId }: { item: PickItem; userId: string }) {
   const copy = copies[0];
   const page = pickPage(item.work);
   return (
-    <div className={`mt-3 ${bookRow} items-stretch`}>
+    <div className={`mt-4 ${bookRow} items-stretch`}>
       <Link to={page} title={item.work.title} className="group block min-w-0">
         <FeedCover book={item.work} className={bigCover} />
       </Link>
@@ -911,7 +911,7 @@ export function FeedPost({
         <>
           {/* One row of covers big enough for their titles: three across
               on phones, four from there; the rest are on their shelf */}
-          <ul className="mt-3 grid grid-cols-3 gap-x-4 gap-y-4 sm:grid-cols-4">
+          <ul className="mt-4 grid grid-cols-3 gap-x-4 gap-y-4 sm:grid-cols-4">
             {books.map((book, index) => (
               <BookTile
                 key={book.id}
@@ -929,7 +929,7 @@ export function FeedPost({
         </>
       ) : (
         <>
-          <div className="mt-3">
+          <div className="mt-4">
             <BookCard
               book={books[0]}
               friendId={item.friend.id}
