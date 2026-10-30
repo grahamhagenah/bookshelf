@@ -393,15 +393,16 @@ function BookCard({
   actions?: React.ReactNode;
 }) {
   const [asking, setAsking] = useState(false);
-  // Your own copy is said in the row under the card, so not here too
+  // Whose copy it is, when it isn't the friend's own; your own copy is
+  // said by the action beside it. Whether it's free to borrow is on the
+  // book's page; the action already says what you can do
   const whose = from?.relation === "you" || book.owner.id === userId ? null : from ? (
     <>
       Borrowed from{" "}
       <LenderName from={from} asking={asking} onAsk={() => setAsking((was) => !was)} />
-      {" · "}
     </>
   ) : book.owner.id === friendId ? null : (
-    `${book.owner.firstname}'s copy · `
+    `${book.owner.firstname}'s copy`
   );
   return (
     <div className="group relative -mx-2 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors">
@@ -424,14 +425,9 @@ function BookCard({
           {/* Over the card's link, so its buttons can be pressed */}
           <span className="relative z-10 mt-auto flex flex-wrap items-center gap-x-3 gap-y-1">
             {actions}
-            <span className="text-sm text-stone-500 dark:text-stone-400">
-              {whose}
-              {book.available
-                ? "Available"
-                : book.notLending
-                  ? "Not lending"
-                  : "Lent out"}
-            </span>
+            {whose ? (
+              <span className="text-sm text-stone-500 dark:text-stone-400">{whose}</span>
+            ) : null}
           </span>
         </span>
       </div>
