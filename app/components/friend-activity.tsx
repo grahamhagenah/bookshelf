@@ -790,21 +790,44 @@ export function FeedPost({
     </strong>
   );
   // A single book is named here, with who wrote it, so its card can be
-  // just the cover and what was said about it
-  const titled = (book: { title: string; author: string | null }) =>
-    book.author ? `${book.title} by ${book.author}` : book.title;
-  const did =
+  // just the cover and what was said about it. The title is a link to the
+  // book, set apart from the words around it.
+  const named =
     item.kind === "added"
-      ? item.books.length === 1
-        ? "added a book"
-        : `added ${item.books.length} books`
+      ? null
       : item.kind === "elsewhere"
-        ? `wrote about ${titled(item.work)}`
+        ? { verb: "wrote about", book: item.work, to: item.work.key }
         : item.kind === "pick"
-          ? `picked ${titled(item.work)} for ${item.group.name}`
-          : item.kind === "loved"
-          ? `loved ${titled(item.book)}`
-          : `wrote about ${titled(item.book)}`;
+          ? { verb: "picked", book: item.work, to: pickPage(item.work) }
+          : {
+              verb: item.kind === "loved" ? "loved" : "wrote about",
+              book: item.book,
+              to: `/books/${item.book.id}`,
+            };
+  const heart =
+    (item.kind === "note" || item.kind === "elsewhere") && item.loved ? (
+      <SmallHeart size={13} />
+    ) : null;
+  // What follows the title: who wrote it, and the group a pick is for
+  const afterTitle = named
+    ? `${named.book.author ? ` by ${named.book.author}` : ""}${
+        item.kind === "pick" ? ` for ${item.group.name}` : ""
+      }`
+    : "";
+  const did = named ? (
+    <>
+      {named.verb}{" "}
+      <Link
+        to={named.to}
+        className="font-medium text-stone-800 dark:text-stone-100 underline decoration-stone-300 dark:decoration-stone-600 underline-offset-2 hover:decoration-current"
+      >
+        {afterTitle ? named.book.title : <KeepWithLast text={named.book.title} after={heart} />}
+      </Link>
+      {afterTitle ? <KeepWithLast text={afterTitle} after={heart} /> : null}
+    </>
+  ) : item.kind === "added" ? (
+    item.books.length === 1 ? "added a book" : `added ${item.books.length} books`
+  ) : null;
 
   const books =
     item.kind === "added"
@@ -831,16 +854,7 @@ export function FeedPost({
         />
         <div className="min-w-0 flex-1">
           <p className="leading-snug text-stone-600 dark:text-stone-300">
-            {name}{" "}
-            <KeepWithLast
-              text={did}
-              after={
-                (item.kind === "note" || item.kind === "elsewhere") &&
-                item.loved ? (
-                  <SmallHeart size={13} />
-                ) : null
-              }
-            />
+            {name} {did}
             <span className="text-stone-400 dark:text-stone-500"> · </span>
             <time
               dateTime={new Date(item.at).toISOString()}
