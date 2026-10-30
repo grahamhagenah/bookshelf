@@ -130,14 +130,14 @@ export function LogoutIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
-// Books standing on a shelf, one leaning: everyone's books together
+// Books on a shelf, one leaning: everyone's books together. Lucide's
+// library-big, like Feed's newspaper and the others here
 export function ShelfIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 20.5h18"/>
-      <rect x="4.5" y="6" width="3.5" height="14.5" rx="0.5"/>
-      <rect x="8" y="8.5" width="3.5" height="12" rx="0.5"/>
-      <path d="M13.2 9.6l3.3-.9 3.2 11.4-3.3.9z"/>
+      <rect width="8" height="18" x="3" y="3" rx="1"/>
+      <path d="M7 3v18"/>
+      <path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/>
     </svg>
   );
 }
