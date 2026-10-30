@@ -2313,13 +2313,13 @@ export default function BookDetailsPage() {
             <div ref={actionRef}>
               <Form id="request-form" method="post" className="space-y-2">
                 <input type="hidden" name="intent" value="request" />
-                {/* One click to ask. A note is a tap away for anyone with
-                    something to say (when, how long, where), and then the
-                    button says who it goes to */}
+                {/* One click to ask. A message is a tap away for anyone
+                    with something to say (when, how long, where), and then
+                    the button says who it goes to */}
                 {writingNote && !requestSent ? (
                   <>
                     <label htmlFor="request-message" className="sr-only">
-                      A note for {ownerName}
+                      A message for {ownerName}
                     </label>
                     <textarea
                       id="request-message"
@@ -2335,7 +2335,7 @@ export default function BookDetailsPage() {
                       maxLength={REQUEST_NOTE_MAX}
                       // eslint-disable-next-line jsx-a11y/no-autofocus
                       autoFocus
-                      placeholder={`Note to ${ownerName}`}
+                      placeholder={`Message to ${ownerName}`}
                       className="block max-h-40 w-full resize-none overflow-y-auto rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm leading-relaxed text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10 dark:focus:ring-white/10"
                     />
                   </>
@@ -2365,7 +2365,7 @@ export default function BookDetailsPage() {
                     onClick={() => setWritingNote(!writingNote)}
                     className="block w-full text-center text-sm text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
                   >
-                    {writingNote ? "Cancel" : "Add a note"}
+                    {writingNote ? "Cancel" : "Add a message"}
                   </button>
                 )}
               </Form>

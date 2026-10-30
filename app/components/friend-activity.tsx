@@ -540,7 +540,7 @@ function Actions({
           <input type="hidden" name="intent" value="request" />
           <input type="hidden" name="bookId" value={book.id} />
           <label htmlFor={`request-note-${book.id}`} className="sr-only">
-            A note for {book.owner.firstname}
+            A message for {book.owner.firstname}
           </label>
           <input
             id={`request-note-${book.id}`}
@@ -549,7 +549,7 @@ function Actions({
             maxLength={300}
             // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
-            placeholder={`A note for ${book.owner.firstname} (optional)`}
+            placeholder={`A message for ${book.owner.firstname} (optional)`}
             className="min-w-0 flex-1 rounded-md border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-2.5 py-1.5 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
           />
           <button type="submit" className={primaryButton("md")}>
