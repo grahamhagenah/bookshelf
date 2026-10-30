@@ -125,7 +125,12 @@ function LoanRows({ entries, personLabel }: { entries: LoanEntry[]; personLabel:
               to={`/books/${book.id}`}
               className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
             >
-              <BookCover cover={book.cover} title={book.title} className="w-10 h-15" />
+              {/* Bigger on a phone, where the row has the width to spare */}
+              <BookCover
+                cover={book.cover}
+                title={book.title}
+                className="w-14 h-21 flex-shrink-0 sm:w-10 sm:h-15"
+              />
               <span className="min-w-0 flex-1">
                 {/* Up to two lines: still shorter than the cover, so rows keep their height */}
                 <span className="line-clamp-2 font-medium leading-snug text-stone-900 dark:text-stone-100">
@@ -515,7 +520,7 @@ function PopularChart({
                 <BookCover
                   cover={book.cover}
                   title={book.title}
-                  className="w-10 h-15 flex-shrink-0"
+                  className="w-14 h-21 flex-shrink-0 sm:w-10 sm:h-15"
                 />
                 {/* Set like the loan rows, whose covers are the same size */}
                 <span className="min-w-0 flex-1">

@@ -34,6 +34,10 @@ function ago(date: string | Date) {
   return formatDate(date);
 }
 
+// A small cover beside words: bigger on a phone, where the feed has the
+// width to spare, as the home page's loan rows are
+const smallCover = "h-21 w-14 sm:h-15 sm:w-10";
+
 function FeedCover({
   book,
   className,
@@ -69,7 +73,7 @@ function CoverBeside({
       <Link to={to} title={book.title} className="flex-shrink-0">
         <FeedCover
           book={book}
-          className="h-15 w-10 hover:opacity-90 transition-opacity"
+          className={`${smallCover} hover:opacity-90 transition-opacity`}
         />
       </Link>
       <div className="min-w-0">
@@ -184,7 +188,7 @@ export default function FriendActivityItem({
           </p>
           <div className="mt-2 flex items-start gap-3">
             <Link to={pickPage(item.work)} title={item.work.title} className="flex-shrink-0">
-              <FeedCover book={item.work} className="h-15 w-10 hover:opacity-90 transition-opacity" />
+              <FeedCover book={item.work} className={`${smallCover} hover:opacity-90 transition-opacity`} />
             </Link>
             <div className="min-w-0 text-sm leading-snug text-stone-600 dark:text-stone-300">
               <p>With {namesOf(item.people, viewer?.id ?? null)}</p>
@@ -299,7 +303,7 @@ export default function FriendActivityItem({
                 <Link key={book.id} to={`/books/${book.id}`} title={book.title}>
                   <FeedCover
                     book={book}
-                    className="h-15 w-10 hover:opacity-90 transition-opacity"
+                    className={`${smallCover} hover:opacity-90 transition-opacity`}
                   />
                 </Link>
               ))}
