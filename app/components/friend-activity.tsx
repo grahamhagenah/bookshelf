@@ -381,6 +381,7 @@ function BookCard({
   userId,
   from = null,
   note = null,
+  actions = null,
 }: {
   book: FeedBook;
   friendId: string;
@@ -388,6 +389,8 @@ function BookCard({
   from?: Lender | null;
   // The post's words, beside the cover
   note?: string | null;
+  // What the post offers you, at the cover's foot beside where the copy is
+  actions?: React.ReactNode;
 }) {
   const [asking, setAsking] = useState(false);
   // Your own copy is said in the row under the card, so not here too
@@ -418,13 +421,17 @@ function BookCard({
         </div>
         <span className={`${besideCover} pt-0.5`}>
           {note ? <NoteBeside body={note} /> : null}
-          <span className="mt-auto block text-sm text-stone-500 dark:text-stone-400">
-            {whose}
-            {book.available
-              ? "Available"
-              : book.notLending
-                ? "Not lending"
-                : "Lent out"}
+          {/* Over the card's link, so its buttons can be pressed */}
+          <span className="relative z-10 mt-auto flex flex-wrap items-center gap-x-3 gap-y-1">
+            {actions}
+            <span className="text-sm text-stone-500 dark:text-stone-400">
+              {whose}
+              {book.available
+                ? "Available"
+                : book.notLending
+                  ? "Not lending"
+                  : "Lent out"}
+            </span>
           </span>
         </span>
       </div>
@@ -539,39 +546,24 @@ function Actions({
       </button>
     </want.Form>
   );
-  // The links across from it show on phones only when there's nothing
-  // else in the row; there the cover, title and name already lead to them
-  const links = next || onEdit ? "hidden sm:flex" : "flex";
-
+  // Beside the cover, at its foot, by where the copy is: no row of links,
+  // since the cover leads to the book and the name to their shelf
   return (
     <>
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-stone-100 dark:border-stone-800 pt-2">
-        {onEdit ? (
-          <button type="button" onClick={onEdit} className={actionClass}>
-            <PencilIcon size={14} />
-            Edit note
-          </button>
-        ) : null}
-        {next}
-
-        <span className={`ml-auto items-center gap-x-5 ${links}`}>
-          {poster ? (
-            <Link to={`/friend/${poster.id}`} className={actionClass}>
-              {poster.firstname}&apos;s shelf
-            </Link>
-          ) : null}
-          <Link to={`/books/${book.id}`} className={actionClass}>
-            View book
-          </Link>
-        </span>
-      </div>
-      {/* The ask, on a line of its own under the row, so the row keeps its
-          shape while you write */}
+      {onEdit ? (
+        <button type="button" onClick={onEdit} className={actionClass}>
+          <PencilIcon size={14} />
+          Edit note
+        </button>
+      ) : null}
+      {next}
+      {/* The ask, on a line of its own under the action, so the line keeps
+          its shape while you write */}
       {asking && viewer.canRequest && book.available && !requested ? (
         <borrow.Form
           method="post"
           action="/feed"
-          className="mt-2 flex flex-wrap items-center gap-2"
+          className="order-last flex basis-full flex-wrap items-center gap-2 pt-1"
           onSubmit={() => setAsking(false)}
         >
           <input type="hidden" name="intent" value="request" />
@@ -917,16 +909,18 @@ export function FeedPost({
               userId={userId}
               from={item.kind === "loved" || item.kind === "note" ? item.from : null}
               note={note && !editing ? note.body : null}
+              actions={
+                <Actions
+                  book={books[0]}
+                  userId={userId}
+                  onEdit={editable && !editing ? () => setEditing(true) : undefined}
+                  mine={item.friend.id === userId}
+                  poster={item.friend.id === userId ? null : item.friend}
+                  from={item.kind === "loved" || item.kind === "note" ? item.from : null}
+                />
+              }
             />
           </div>
-          <Actions
-            book={books[0]}
-            userId={userId}
-            onEdit={editable && !editing ? () => setEditing(true) : undefined}
-            mine={item.friend.id === userId}
-            poster={item.friend.id === userId ? null : item.friend}
-            from={item.kind === "loved" || item.kind === "note" ? item.from : null}
-          />
         </>
       )}
     </article>
