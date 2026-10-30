@@ -795,18 +795,17 @@ export function FeedPost({
       )}
     </strong>
   );
+  // The book itself is named on the card below, so not here too
   const did =
     item.kind === "added"
       ? item.books.length === 1
         ? "added a book"
         : `added ${item.books.length} books`
-      : item.kind === "elsewhere"
-        ? `wrote about ${item.work.title}`
-        : item.kind === "pick"
-          ? `picked ${item.work.title} for ${item.group.name}`
-          : item.kind === "loved"
-          ? `loved ${item.book.title}`
-          : `wrote about ${item.book.title}`;
+      : item.kind === "pick"
+        ? `picked a book for ${item.group.name}`
+        : item.kind === "loved"
+          ? "loved a book"
+          : "wrote about a book";
 
   const books =
     item.kind === "added"
