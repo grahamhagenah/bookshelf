@@ -40,7 +40,7 @@ const control =
 export type PooledShelfData = Awaited<ReturnType<typeof loadPooledShelf>>;
 
 export default function PooledShelf({
-  data: { search, results, wanted, lenders, groups, group, pageSize },
+  data: { search, results, wanted, lenders, groups, pageSize },
   empty,
 }: {
   data: PooledShelfData;
@@ -201,19 +201,6 @@ export default function PooledShelf({
           />
         </div>
       </div>
-
-      {/* Narrowed to a group: say so, with the way to its page */}
-      {group ? (
-        <p className="-mt-2 mb-6 text-sm text-stone-500 dark:text-stone-400">
-          Just {group.name}.{" "}
-          <Link
-            to={group.path}
-            className="text-stone-700 dark:text-stone-200 underline underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:text-stone-900 dark:hover:text-white"
-          >
-            Go to the group
-          </Link>
-        </p>
-      ) : null}
 
       {wanted.length > 0 ? (
         <section aria-labelledby="wanted" className="mb-8">
