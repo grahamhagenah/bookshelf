@@ -922,12 +922,15 @@ export function FeedPost({
               />
             ))}
           </ul>
-          <div className="mt-3 flex items-center gap-x-5 border-t border-stone-100 dark:border-stone-800 pt-2">
-            <Link to={`/friend/${item.friend.id}`} className={actionClass}>
-              {more > 0 ? `+${more} more on ` : "See "}
-              {item.friend.firstname}&apos;s shelf
-            </Link>
-          </div>
+          {/* The name leads to their shelf; a link here only when there
+              are more than these to find there */}
+          {more > 0 ? (
+            <div className="mt-3 flex items-center gap-x-5 border-t border-stone-100 dark:border-stone-800 pt-2">
+              <Link to={`/friend/${item.friend.id}`} className={actionClass}>
+                +{more} more on {item.friend.firstname}&apos;s shelf
+              </Link>
+            </div>
+          ) : null}
         </>
       ) : (
         <>
