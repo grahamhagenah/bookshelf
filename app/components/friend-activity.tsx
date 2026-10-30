@@ -355,10 +355,7 @@ const bookRow = "grid grid-cols-3 gap-x-4 sm:grid-cols-4";
 const coverColumn = "block min-w-0";
 const besideCover = "col-span-2 min-w-0 sm:col-span-3";
 const bigCover = "aspect-[2/3] w-full transition-opacity group-hover:opacity-90";
-// The cover's title and author under it, as a tile has them
-const titleUnder =
-  "mt-1.5 line-clamp-2 text-sm font-medium leading-snug text-stone-900 dark:text-stone-100";
-const authorUnder = "mt-0.5 block truncate text-xs text-stone-500 dark:text-stone-400";
+
 
 // What someone wrote about a book, beside its cover, so the words sit
 // with the book they're about, as on the home page
@@ -370,10 +367,10 @@ function NoteBeside({ body }: { body: string }) {
   );
 }
 
-// One book, its title and author under the cover, and beside it the
+// One book's cover, named in the post's headline, and beside it the
 // post's note and where the copy is. Says whose copy it is when it isn't
-// the friend's own, and who lent it to them when they borrowed it. The
-// title's link covers the card, with the lender's name over it as its own
+// the friend's own, and who lent it to them when they borrowed it. A link
+// to the book covers the card, with the lender's name over it as its own
 // link.
 function BookCard({
   book,
@@ -406,13 +403,16 @@ function BookCard({
       <div className={`${bookRow} items-start`}>
         <div className={coverColumn}>
           <FeedCover book={book} className={bigCover} />
+          {/* Named in the post's headline; this is the way to its page,
+              across the whole card */}
           <Link
             to={`/books/${book.id}`}
-            className={`${titleUnder} after:absolute after:inset-0 after:content-['']`}
+            className="after:absolute after:inset-0 after:content-['']"
           >
-            {book.title}
+            <span className="sr-only">
+              {book.title} by {book.author}
+            </span>
           </Link>
-          <span className={authorUnder}>{book.author}</span>
         </div>
         <span className={`${besideCover} pt-0.5`}>
           {note ? <NoteBeside body={note} /> : null}
@@ -625,8 +625,9 @@ function ElsewhereCard({
         >
           <span className={coverColumn}>
             <FeedCover book={item.work} className={bigCover} />
-            <span className={titleUnder}>{item.work.title}</span>
-            <span className={authorUnder}>{item.work.author}</span>
+            <span className="sr-only">
+              {item.work.title} by {item.work.author}
+            </span>
           </span>
           <span className={`${besideCover} pt-0.5`}>
             {note ? <NoteBeside body={note} /> : null}
@@ -796,18 +797,22 @@ export function FeedPost({
       )}
     </strong>
   );
+  // A single book is named here, with who wrote it, so its card can be
+  // just the cover and what was said about it
+  const titled = (book: { title: string; author: string | null }) =>
+    book.author ? `${book.title} by ${book.author}` : book.title;
   const did =
     item.kind === "added"
       ? item.books.length === 1
         ? "added a book"
         : `added ${item.books.length} books`
       : item.kind === "elsewhere"
-        ? `wrote about ${item.work.title}`
+        ? `wrote about ${titled(item.work)}`
         : item.kind === "pick"
           ? `picked ${item.work.title} for ${item.group.name}`
           : item.kind === "loved"
-          ? `loved ${item.book.title}`
-          : `wrote about ${item.book.title}`;
+          ? `loved ${titled(item.book)}`
+          : `wrote about ${titled(item.book)}`;
 
   const books =
     item.kind === "added"
