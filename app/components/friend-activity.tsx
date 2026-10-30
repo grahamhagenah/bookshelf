@@ -348,11 +348,16 @@ function BookTile({ book, className = "" }: { book: FeedBook; className?: string
   );
 }
 
-// The cover, with its title and author under it as on a shelf's spine
-// label, so what's beside it can be what someone said about it
-const coverColumn = "block w-[82px] flex-shrink-0";
+// One book's row on the same grid as an "added 3 books" post's tiles,
+// three across on phones and four from there: the cover takes a column,
+// at the very size of a tile's, and what's beside it takes the rest
+const bookRow = "grid grid-cols-3 gap-x-4 sm:grid-cols-4";
+const coverColumn = "block min-w-0";
+const besideCover = "col-span-2 min-w-0 sm:col-span-3";
+const bigCover = "aspect-[2/3] w-full transition-opacity group-hover:opacity-90";
+// The cover's title and author under it, as a tile has them
 const titleUnder =
-  "mt-1.5 line-clamp-2 text-xs font-medium leading-snug text-stone-900 dark:text-stone-100";
+  "mt-1.5 line-clamp-2 text-sm font-medium leading-snug text-stone-900 dark:text-stone-100";
 const authorUnder = "mt-0.5 block truncate text-xs text-stone-500 dark:text-stone-400";
 
 // What someone wrote about a book, beside its cover, so the words sit
@@ -398,12 +403,9 @@ function BookCard({
   );
   return (
     <div className="group relative -mx-2 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors">
-      <div className="flex items-start gap-3">
+      <div className={`${bookRow} items-start`}>
         <div className={coverColumn}>
-          <FeedCover
-            book={book}
-            className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
-          />
+          <FeedCover book={book} className={bigCover} />
           <Link
             to={`/books/${book.id}`}
             className={`${titleUnder} after:absolute after:inset-0 after:content-['']`}
@@ -412,7 +414,7 @@ function BookCard({
           </Link>
           <span className={authorUnder}>{book.author}</span>
         </div>
-        <span className="min-w-0 flex-1 pt-0.5">
+        <span className={`${besideCover} pt-0.5`}>
           {note ? <NoteBeside body={note} /> : null}
           <span className="block text-sm text-stone-500 dark:text-stone-400">
             {whose}
@@ -619,17 +621,14 @@ function ElsewhereCard({
       <div className="mt-3">
         <Link
           to={item.work.key}
-          className="group -mx-2 flex items-start gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+          className={`group -mx-2 ${bookRow} items-start rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors`}
         >
           <span className={coverColumn}>
-            <FeedCover
-              book={item.work}
-              className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
-            />
+            <FeedCover book={item.work} className={bigCover} />
             <span className={titleUnder}>{item.work.title}</span>
             <span className={authorUnder}>{item.work.author}</span>
           </span>
-          <span className="min-w-0 flex-1 pt-0.5">
+          <span className={`${besideCover} pt-0.5`}>
             {note ? <NoteBeside body={note} /> : null}
             <span className="block text-sm text-stone-500 dark:text-stone-400">
               {ownCopyId
@@ -704,13 +703,10 @@ function PickCard({ item, userId }: { item: PickItem; userId: string }) {
       <div className="mt-3">
         <Link
           to={page}
-          className="group -mx-2 flex items-center gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+          className={`group -mx-2 ${bookRow} items-center rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors`}
         >
-          <FeedCover
-            book={item.work}
-            className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
-          />
-          <span className="min-w-0">
+          <FeedCover book={item.work} className={bigCover} />
+          <span className={besideCover}>
             <span className="block text-xs font-semibold uppercase tracking-wide text-stone-400 dark:text-stone-500">
               {item.group.name} is reading
             </span>
