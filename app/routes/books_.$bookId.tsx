@@ -2376,9 +2376,9 @@ export default function BookDetailsPage() {
           ) : null}
           {/* Not their friend: borrowing is still what this page is for,
               so its button is here, just not yet usable, with the way to
-              make it usable under it */}
+              make it usable under it and why, last */}
           {needsFriendship && data.book.user ? (
-            <div className={`${panel} space-y-3`}>
+            <div className={`${panel} space-y-2`}>
               <button
                 type="button"
                 disabled
@@ -2387,13 +2387,6 @@ export default function BookDetailsPage() {
               >
                 Ask to borrow
               </button>
-              <p
-                id="borrow-needs-friend"
-                className="text-center text-stone-600 dark:text-stone-300"
-              >
-                Only {data.book.user.firstname}&rsquo;s friends can borrow
-                their books.
-              </p>
               <Form method="post">
                 <input type="hidden" name="intent" value="friendRequest" />
                 <button
@@ -2414,6 +2407,13 @@ export default function BookDetailsPage() {
                       : `Add ${data.book.user.firstname} as a friend`}
                 </button>
               </Form>
+              <p
+                id="borrow-needs-friend"
+                className="pt-1 text-center text-stone-500 dark:text-stone-400"
+              >
+                Only {data.book.user.firstname}&rsquo;s friends can borrow
+                their books.
+              </p>
             </div>
           ) : null}
           {/* What the lender said when they agreed: where, when */}
