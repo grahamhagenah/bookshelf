@@ -2374,15 +2374,19 @@ export default function BookDetailsPage() {
           {canWaitInLine && !isEditing ? (
             <WaitInLine position={data.linePosition} />
           ) : null}
+          {/* Not their friend: borrowing is still what this page is for,
+              so its button is here, just not yet usable, with the way to
+              make it usable under it and why, last */}
           {needsFriendship && data.book.user ? (
-            <div className={panel}>
-              <p className="text-stone-600 dark:text-stone-300 mb-3">
-                Add{" "}
-                <span className="font-semibold text-stone-900 dark:text-stone-100">
-                  {data.book.user.firstname} {data.book.user.surname}
-                </span>{" "}
-                as a friend to borrow their books.
-              </p>
+            <div className={`${panel} space-y-2`}>
+              <button
+                type="button"
+                disabled
+                aria-describedby="borrow-needs-friend"
+                className={`w-full ${primaryButton("lg")} cursor-not-allowed disabled:hover:bg-forest-600`}
+              >
+                Ask to borrow
+              </button>
               <Form method="post">
                 <input type="hidden" name="intent" value="friendRequest" />
                 <button
@@ -2392,17 +2396,24 @@ export default function BookDetailsPage() {
                     friendRequestSent
                       ? quietLabel
                       : isSendingFriendRequest
-                        ? `${primaryButton("lg")} opacity-60 cursor-wait`
-                        : primaryButton("lg")
+                        ? `${quietButton("lg")} opacity-60 cursor-wait`
+                        : quietButton("lg")
                   }`}
                 >
                   {friendRequestSent
                     ? "Friend request sent"
                     : isSendingFriendRequest
                       ? "Sending…"
-                      : "Add friend"}
+                      : `Add ${data.book.user.firstname} as a friend`}
                 </button>
               </Form>
+              <p
+                id="borrow-needs-friend"
+                // One line under the buttons, for most names
+                className="pt-1 text-center text-xs text-stone-500 dark:text-stone-400"
+              >
+                Only {data.book.user.firstname}&rsquo;s friends can borrow.
+              </p>
             </div>
           ) : null}
           {/* What the lender said when they agreed: where, when */}
