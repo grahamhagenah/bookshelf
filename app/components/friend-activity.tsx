@@ -374,6 +374,23 @@ function NoteBeside({ body }: { body: string }) {
   );
 }
 
+// Beside a heart with nothing written: who has written about this copy,
+// or that nobody has yet. The notes themselves are on the book's page.
+function NotesSoFar({ writers }: { writers: string[] }) {
+  const named = writers.map((name) => (name === "you" ? "You" : name));
+  const text =
+    named.length === 0
+      ? "No one has left a note yet"
+      : named.length === 1
+        ? `${named[0]} left a note`
+        : named.length === 2
+          ? `${named[0]} and ${named[1] === "You" ? "you" : named[1]} left notes`
+          : `${named[0]} and ${named.length - 1} others left notes`;
+  return (
+    <span className="mb-3 block text-sm text-stone-500 dark:text-stone-400">{text}</span>
+  );
+}
+
 // One book's cover, named in the post's headline, and beside it the
 // post's note and where the copy is. Says whose copy it is when it isn't
 // the friend's own, and who lent it to them when they borrowed it. A link
@@ -386,6 +403,7 @@ function BookCard({
   from = null,
   note = null,
   actions = null,
+  notesSoFar = false,
 }: {
   book: FeedBook;
   friendId: string;
@@ -395,6 +413,8 @@ function BookCard({
   note?: string | null;
   // What the post offers you, at the cover's foot beside where the copy is
   actions?: React.ReactNode;
+  // A heart with no words: say who has written about it instead
+  notesSoFar?: boolean;
 }) {
   const [asking, setAsking] = useState(false);
   // Whose copy it is, when it isn't the friend's own; your own copy is
@@ -425,7 +445,11 @@ function BookCard({
           </Link>
         </div>
         <span className={`${besideCover} pt-0.5`}>
-          {note ? <NoteBeside body={note} /> : null}
+          {note ? (
+            <NoteBeside body={note} />
+          ) : notesSoFar ? (
+            <NotesSoFar writers={book.noteWriters} />
+          ) : null}
           {/* Over the card's link, so its buttons can be pressed */}
           <span className="relative z-10 mt-auto flex flex-wrap items-center gap-x-3 gap-y-1">
             {actions}
@@ -945,6 +969,7 @@ export function FeedPost({
               userId={userId}
               from={item.kind === "loved" || item.kind === "note" ? item.from : null}
               note={note && !editing ? note.body : null}
+              notesSoFar={item.kind === "loved"}
               actions={
                 <Actions
                   book={books[0]}
