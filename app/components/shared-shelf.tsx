@@ -3,7 +3,7 @@ import { Link, useFetcher, useLocation } from "react-router";
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
-import { HeartIcon, NoteIcon, StacksLogo } from "~/components/icons";
+import { HeartIcon, StacksLogo } from "~/components/icons";
 import Library from "~/components/library";
 import type { FriendStatus } from "~/models/user.server";
 import { noteTip } from "~/profile";
@@ -48,6 +48,11 @@ const HEARTS: Record<string, string> = {
   ink: "text-stone-700 dark:text-stone-300",
 };
 const heartOf = (color: string) => HEARTS[color] ?? HEARTS.forest;
+
+// Favorites stand a little off the page, like books on a table, where the
+// shelf's covers below lie flat
+const lifted =
+  "shadow-[0_1px_2px_rgb(0_0_0/0.08),0_10px_24px_-8px_rgb(0_0_0/0.35)] dark:shadow-[0_1px_2px_rgb(0_0_0/0.4),0_10px_24px_-8px_rgb(0_0_0/0.7)]";
 
 // Who the shelf belongs to, in their words, and what they love
 function ProfileHeader({ data }: { data: SharedShelfData }) {
@@ -109,7 +114,14 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
             <HeartIcon size={14} filled className={heartOf(profile.color)} />
             Favorites
           </h2>
-          <ul className="mt-4 grid grid-cols-2 items-start gap-x-5 gap-y-8 sm:grid-cols-5 sm:gap-x-6">
+          {/* Four across, bigger than the shelf's covers, so they're what
+              a visitor sees first; five when there are five, so none sits
+              alone on a row */}
+          <ul
+            className={`mt-5 grid grid-cols-2 items-start gap-x-5 gap-y-8 sm:gap-x-8 ${
+              profile.favorites.length > 4 ? "sm:grid-cols-5" : "sm:grid-cols-4"
+            }`}
+          >
             {profile.favorites.map((book) => {
               const contents = (
                 <>
@@ -117,24 +129,18 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
                     cover={book.cover}
                     title={book.title}
                     author={book.author}
-                    // Five across from small tablets up, two on phones
-                    sizes="(min-width: 640px) 220px, 50vw"
-                    className="aspect-[2/3] w-full transition-opacity duration-200 group-hover:opacity-90"
+                    // Four or five across from small tablets up, two on phones
+                    sizes="(min-width: 640px) 240px, 50vw"
+                    className={`aspect-[2/3] w-full transition-opacity duration-200 group-hover:opacity-90 ${lifted}`}
                   />
-                  {/* Its title, and a mark when the owner has written a
-                      note on it: the note itself is on the book's page */}
-                  <span className="mt-2 flex items-start gap-1.5">
-                    <span className="line-clamp-2 min-w-0 flex-1 text-sm leading-snug font-medium text-stone-800 dark:text-stone-200">
+                  <span className="mt-3 block text-sm leading-snug">
+                    <span className="line-clamp-2 font-medium text-stone-800 dark:text-stone-200">
                       {book.title}
-                      <span className="sr-only"> by {book.author}</span>
                     </span>
-                    {book.note ? (
-                      <span title="Has a note" className="mt-0.5 shrink-0">
-                        <NoteIcon
-                          size={16}
-                          className="text-stone-400 dark:text-stone-500"
-                        />
-                        <span className="sr-only">, has a note</span>
+                    {book.author ? (
+                      <span className="mt-0.5 line-clamp-1 text-stone-500 dark:text-stone-400">
+                        <span className="sr-only">by </span>
+                        {book.author}
                       </span>
                     ) : null}
                   </span>
