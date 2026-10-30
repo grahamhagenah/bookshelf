@@ -58,13 +58,6 @@ const lifted =
 function ProfileHeader({ data }: { data: SharedShelfData }) {
   const { profile } = data;
   const { stats } = profile;
-  // The favorites on this shelf are shown first and not again below, so
-  // the grid is the rest of it (unless that's nothing, when it's all)
-  const favoriteIds = new Set(profile.favorites.map((book) => book.id));
-  const rest = data.bookListItems.filter(
-    (book) => !favoriteIds.has(book.id),
-  ).length;
-  const setAside = rest > 0 && rest < data.bookListItems.length;
   // On your own page only
   const tip = data.friendStatus === "self" ? noteTip(profile) : null;
   const facts = [
@@ -193,16 +186,30 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
         </aside>
       ) : null}
 
-      {/* Where the shelf starts: well clear of the favorites, and a
-          heading of its own, so it reads as the next part of the page */}
-      <h2 className="mt-16 flex flex-wrap items-baseline gap-x-2.5 text-lg font-semibold tracking-tight text-stone-900 dark:text-stone-100 sm:mt-20">
-        {data.ownerFirstname}&rsquo;s shelf{" "}
-        {/* With the favorites shown above, these are the others */}
-        <span className="text-base font-normal tracking-normal text-stone-500 dark:text-stone-400">
-          {setAside ? `${rest.toLocaleString()} more` : plural(stats.books, "book")}
-        </span>
-      </h2>
     </header>
+  );
+}
+
+// Where the shelf starts, under the favorites: its own heading, so it
+// reads as the next part of the page
+function ShelfHeading({ data }: { data: SharedShelfData }) {
+  // The favorites on this shelf are shown first and not again below, so
+  // the grid is the rest of it (unless that's nothing, when it's all)
+  const favoriteIds = new Set(data.profile.favorites.map((book) => book.id));
+  const rest = data.bookListItems.filter(
+    (book) => !favoriteIds.has(book.id),
+  ).length;
+  const setAside = rest > 0 && rest < data.bookListItems.length;
+  return (
+    <h2 className="flex flex-wrap items-baseline gap-x-2.5 text-lg font-semibold tracking-tight text-stone-900 dark:text-stone-100">
+      {data.ownerFirstname}&rsquo;s shelf{" "}
+      {/* With the favorites shown above, these are the others */}
+      <span className="text-base font-normal tracking-normal text-stone-500 dark:text-stone-400">
+        {setAside
+          ? `${rest.toLocaleString()} more`
+          : plural(data.profile.stats.books, "book")}
+      </span>
+    </h2>
   );
 }
 
@@ -363,6 +370,9 @@ export default function SharedShelf({ data }: { data: SharedShelfData }) {
         header={<ProfileHeader data={data} />}
         // The favorites are already at the top of the page
         shownAbove={data.profile.favorites.map((book) => book.id)}
+        shelfHeading={<ShelfHeading data={data} />}
+        // A few rows, so a big library doesn't bury the favorites
+        preview={24}
       />
       {/* Signed in, they've already got one */}
       {data.signedIn ? null : <MakeYourOwn />}
