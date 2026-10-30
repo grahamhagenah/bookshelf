@@ -352,56 +352,86 @@ function BookTile({ book, className = "" }: { book: FeedBook; className?: string
   );
 }
 
-// One book beside its details. Says whose copy it is when it isn't the
-// friend's own, and who lent it to them when they borrowed it. The title's
-// link covers the card, with the lender's name over it as its own link.
+// One book's row on the same grid as an "added 3 books" post's tiles,
+// three across on phones and five from there: the cover takes a column,
+// at the very size of a tile's, and what's beside it takes the rest
+const bookRow = "grid grid-cols-3 gap-x-4 sm:grid-cols-5";
+const coverColumn = "block min-w-0";
+// Beside the cover, as tall as it: a note at the top, and where the copy
+// is at the foot, level with the cover's
+const besideCover = "col-span-2 flex min-w-0 flex-col sm:col-span-4";
+const bigCover = "aspect-[2/3] w-full transition-opacity group-hover:opacity-90";
+
+
+// What someone wrote about a book, beside its cover, so the words sit
+// with the book they're about, as on the home page
+function NoteBeside({ body }: { body: string }) {
+  return (
+    // A size up from the rest on wider screens, as what the post is about
+    <span className="mb-3 block whitespace-pre-line text-pretty leading-snug text-stone-800 dark:text-stone-200 sm:text-lg">
+      &ldquo;{body}&rdquo;
+    </span>
+  );
+}
+
+// One book's cover, named in the post's headline, and beside it the
+// post's note and where the copy is. Says whose copy it is when it isn't
+// the friend's own, and who lent it to them when they borrowed it. A link
+// to the book covers the card, with the lender's name over it as its own
+// link.
 function BookCard({
   book,
   friendId,
   userId,
   from = null,
+  note = null,
+  actions = null,
 }: {
   book: FeedBook;
   friendId: string;
   userId: string;
   from?: Lender | null;
+  // The post's words, beside the cover
+  note?: string | null;
+  // What the post offers you, at the cover's foot beside where the copy is
+  actions?: React.ReactNode;
 }) {
   const [asking, setAsking] = useState(false);
-  const whose = from ? (
+  // Whose copy it is, when it isn't the friend's own; your own copy is
+  // said by the action beside it. Whether it's free to borrow is on the
+  // book's page; the action already says what you can do
+  const whose = from?.relation === "you" || book.owner.id === userId ? null : from ? (
     <>
       Borrowed from{" "}
       <LenderName from={from} asking={asking} onAsk={() => setAsking((was) => !was)} />
-      {" · "}
     </>
-  ) : book.owner.id === friendId ? null : book.owner.id === userId ? (
-    "Your copy · "
-  ) : (
-    `${book.owner.firstname}'s copy · `
+  ) : book.owner.id === friendId ? null : (
+    `${book.owner.firstname}'s copy`
   );
   return (
     <div className="group relative -mx-2 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors">
-      <div className="flex items-center gap-3">
-        <FeedCover
-          book={book}
-          className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
-        />
-        <span className="min-w-0">
+      <div className={`${bookRow} items-stretch`}>
+        <div className={coverColumn}>
+          <FeedCover book={book} className={bigCover} />
+          {/* Named in the post's headline; this is the way to its page,
+              across the whole card */}
           <Link
             to={`/books/${book.id}`}
-            className="block font-medium leading-snug text-stone-900 dark:text-stone-100 after:absolute after:inset-0 after:content-['']"
+            className="after:absolute after:inset-0 after:content-['']"
           >
-            {book.title}
+            <span className="sr-only">
+              {book.title} by {book.author}
+            </span>
           </Link>
-          <span className="mt-0.5 block text-sm text-stone-500 dark:text-stone-400">
-            {book.author}
-          </span>
-          <span className="mt-2 block text-sm text-stone-500 dark:text-stone-400">
-            {whose}
-            {book.available
-              ? "Available"
-              : book.notLending
-                ? "Not lending"
-                : "Lent out"}
+        </div>
+        <span className={`${besideCover} pt-0.5`}>
+          {note ? <NoteBeside body={note} /> : null}
+          {/* Over the card's link, so its buttons can be pressed */}
+          <span className="relative z-10 mt-auto flex flex-wrap items-center gap-x-3 gap-y-1">
+            {actions}
+            {whose ? (
+              <span className="text-sm text-stone-500 dark:text-stone-400">{whose}</span>
+            ) : null}
           </span>
         </span>
       </div>
@@ -419,9 +449,12 @@ function Actions({
   onEdit,
   mine = false,
   poster = null,
+  from = null,
 }: {
   book: FeedBook;
   userId: string;
+  // Who the poster borrowed it from, when they did
+  from?: Lender | null;
   // Under your own note: rewrite it
   onEdit?: () => void;
   // Your own post about a friend's copy: you've read it
@@ -450,8 +483,15 @@ function Actions({
   const isBorrower = book.borrowerId === userId;
 
   // The one thing this post offers you, by where you stand with the book.
-  // Your own copy offers nothing: its card already says it's yours
-  const next = isOwner ? null : returned ? (
+  // Your own copy offers nothing to do, so the row says it's yours, and
+  // that they had it from you when they did
+  const next = isOwner ? (
+    <span className={stateClass}>
+      {from?.relation === "you" && poster
+        ? `${poster.firstname} borrowed it from you`
+        : "Your copy"}
+    </span>
+  ) : returned ? (
     <span className={stateClass}>Returned to {book.owner.firstname}</span>
   ) : isBorrower ? (
     // Read it, said so: the next thing is giving it back
@@ -506,39 +546,51 @@ function Actions({
       </button>
     </want.Form>
   );
-  // The links across from it show on phones only when there's nothing
-  // else in the row; there the cover, title and name already lead to them
-  const links = next || onEdit ? "hidden sm:flex" : "flex";
-
+  // Beside asking for a friend's copy (or waiting for it), a quieter way
+  // to keep it for later, as a group's pick has
+  const askable =
+    !isOwner &&
+    !returned &&
+    !isBorrower &&
+    !mine &&
+    !viewer.readIt &&
+    !viewer.onShelf &&
+    viewer.canRequest &&
+    (book.available || !book.notLending);
+  const later = !askable ? null : wanted ? (
+    <span className={stateClass}>
+      <BookmarkIcon size={14} filled />
+      On your list
+    </span>
+  ) : (
+    <want.Form method="post" action="/feed">
+      <input type="hidden" name="intent" value="wantBook" />
+      <input type="hidden" name="bookId" value={book.id} />
+      <button type="submit" className={actionClass}>
+        <BookmarkIcon size={14} />
+        Want to read
+      </button>
+    </want.Form>
+  );
+  // Beside the cover, at its foot, by where the copy is: no row of links,
+  // since the cover leads to the book and the name to their shelf
   return (
     <>
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-stone-100 dark:border-stone-800 pt-2">
-        {onEdit ? (
-          <button type="button" onClick={onEdit} className={actionClass}>
-            <PencilIcon size={14} />
-            Edit note
-          </button>
-        ) : null}
-        {next}
-
-        <span className={`ml-auto items-center gap-x-5 ${links}`}>
-          {poster ? (
-            <Link to={`/friend/${poster.id}`} className={actionClass}>
-              {poster.firstname}&apos;s shelf
-            </Link>
-          ) : null}
-          <Link to={`/books/${book.id}`} className={actionClass}>
-            View book
-          </Link>
-        </span>
-      </div>
-      {/* The ask, on a line of its own under the row, so the row keeps its
-          shape while you write */}
+      {onEdit ? (
+        <button type="button" onClick={onEdit} className={actionClass}>
+          <PencilIcon size={14} />
+          Edit note
+        </button>
+      ) : null}
+      {next}
+      {later}
+      {/* The ask, on a line of its own under the action, so the line keeps
+          its shape while you write */}
       {asking && viewer.canRequest && book.available && !requested ? (
         <borrow.Form
           method="post"
           action="/feed"
-          className="mt-2 flex flex-wrap items-center gap-2"
+          className="order-last flex basis-full flex-wrap items-center gap-2 pt-1"
           onSubmit={() => setAsking(false)}
         >
           <input type="hidden" name="intent" value="request" />
@@ -579,9 +631,12 @@ function ElsewhereCard({
   item,
   mine,
   onEdit,
+  note = null,
 }: {
   item: ElsewhereItem;
   mine: boolean;
+  // The post's words, beside the cover
+  note?: string | null;
   // Your own note: rewrite it
   onEdit?: () => void;
 }) {
@@ -594,23 +649,20 @@ function ElsewhereCard({
   const copy = copies[0];
   return (
     <>
-      <div className="mt-3">
+      <div className="mt-4">
         <Link
           to={item.work.key}
-          className="group -mx-2 flex items-center gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
+          className={`group -mx-2 ${bookRow} items-stretch rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors`}
         >
-          <FeedCover
-            book={item.work}
-            className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
-          />
-          <span className="min-w-0">
-            <span className="block font-medium leading-snug text-stone-900 dark:text-stone-100">
-              {item.work.title}
+          <span className={coverColumn}>
+            <FeedCover book={item.work} className={bigCover} />
+            <span className="sr-only">
+              {item.work.title} by {item.work.author}
             </span>
-            <span className="mt-0.5 block text-sm text-stone-500 dark:text-stone-400">
-              {item.work.author}
-            </span>
-            <span className="mt-2 block text-sm text-stone-500 dark:text-stone-400">
+          </span>
+          <span className={`${besideCover} pt-0.5`}>
+            {note ? <NoteBeside body={note} /> : null}
+            <span className="mt-auto block text-sm text-stone-500 dark:text-stone-400">
               {ownCopyId
                 ? "On your shelf"
                 : mine
@@ -669,8 +721,9 @@ function ElsewhereCard({
   );
 }
 
-// A group the viewer is in picked a book to read together: the book, when
-// they meet, and everyone in it, with the one thing to do about a copy
+// A group the viewer is in picked a book to read together, named in the
+// post's headline: its cover, and beside it when they meet and who's in
+// it, with what to do about a copy at the cover's foot, as a note post has
 function PickCard({ item, userId }: { item: PickItem; userId: string }) {
   const want = useFetcher<{ wanted?: boolean }>();
   const { ownCopyId, copies } = item.viewer;
@@ -679,80 +732,66 @@ function PickCard({ item, userId }: { item: PickItem; userId: string }) {
   const copy = copies[0];
   const page = pickPage(item.work);
   return (
-    <>
-      <div className="mt-3">
-        <Link
-          to={page}
-          className="group -mx-2 flex items-center gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
-        >
-          <FeedCover
-            book={item.work}
-            className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
-          />
-          <span className="min-w-0">
-            <span className="block text-xs font-semibold uppercase tracking-wide text-stone-400 dark:text-stone-500">
-              {item.group.name} is reading
-            </span>
-            <span className="mt-0.5 block font-medium leading-snug text-stone-900 dark:text-stone-100">
-              {item.work.title}
-            </span>
-            <span className="mt-0.5 block text-sm text-stone-500 dark:text-stone-400">
-              {item.work.author}
-            </span>
-            {item.meeting ? (
-              <span className="mt-2 block text-sm text-stone-600 dark:text-stone-300">
-                {meetingPast(item.meeting.at) ? "Met" : "Meets"}{" "}
-                {[item.meeting.at ? meetingWhen(item.meeting.at) : null, item.meeting.place]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </span>
-            ) : null}
-          </span>
-        </Link>
-      </div>
-      <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
-        With {namesOf(item.people, userId)}
-      </p>
-      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-stone-100 dark:border-stone-800 pt-2">
-        {ownCopyId ? (
-          <Link to={`/books/${ownCopyId}`} className={actionClass}>
-            You have a copy
-          </Link>
-        ) : copy?.requested ? (
-          <Link to={`/books/${copy.bookId}`} className={stateClass}>
-            Requested from {copy.owner.firstname}
-          </Link>
-        ) : copy ? (
-          <Link to={`/books/${copy.bookId}`} className={nextClass}>
-            {copy.available
-              ? `Ask ${copy.owner.firstname} to borrow it`
-              : `${copy.owner.firstname}'s copy is out`}
-          </Link>
+    // The same gap under the headline as the other posts', whose rows
+    // carry a little padding of their own
+    <div className={`mt-5 ${bookRow} items-stretch`}>
+      <Link to={page} title={item.work.title} className="group block min-w-0">
+        <FeedCover book={item.work} className={bigCover} />
+      </Link>
+      <div className={`${besideCover} pt-0.5`}>
+        {item.meeting ? (
+          <p className="mb-1 leading-snug text-stone-800 dark:text-stone-200 sm:text-lg">
+            {meetingPast(item.meeting.at) ? "Met" : "Meets"}{" "}
+            {[item.meeting.at ? meetingWhen(item.meeting.at) : null, item.meeting.place]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
         ) : null}
-        {!ownCopyId && item.work.key ? (
-          wanted ? (
-            <span className={stateClass}>
-              <BookmarkIcon size={14} />
-              On your Want to read list
-            </span>
-          ) : (
-            <want.Form method="post" action="/feed">
-              <input type="hidden" name="intent" value="want" />
-              <input type="hidden" name="workKey" value={item.work.key} />
-              <button type="submit" className={actionClass}>
+        <p className="mb-3 text-sm text-stone-500 dark:text-stone-400">
+          <Link
+            to={groupPath(item.group)}
+            className="font-medium text-stone-700 dark:text-stone-200 underline-offset-2 decoration-stone-300 dark:decoration-stone-600 hover:underline"
+          >
+            {item.group.name}
+          </Link>
+          : with {namesOf(item.people, userId)}
+        </p>
+        <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1">
+          {ownCopyId ? (
+            <Link to={`/books/${ownCopyId}`} className={actionClass}>
+              You have a copy
+            </Link>
+          ) : copy?.requested ? (
+            <Link to={`/books/${copy.bookId}`} className={stateClass}>
+              Requested from {copy.owner.firstname}
+            </Link>
+          ) : copy ? (
+            <Link to={`/books/${copy.bookId}`} className={nextClass}>
+              {copy.available
+                ? `Ask ${copy.owner.firstname} to borrow it`
+                : `${copy.owner.firstname}'s copy is out`}
+            </Link>
+          ) : null}
+          {!ownCopyId && item.work.key ? (
+            wanted ? (
+              <span className={stateClass}>
                 <BookmarkIcon size={14} />
-                Want to read
-              </button>
-            </want.Form>
-          )
-        ) : null}
-        <span className="ml-auto">
-          <Link to={groupPath(item.group)} className={actionClass}>
-            Open the group
-          </Link>
-        </span>
+                On your Want to read list
+              </span>
+            ) : (
+              <want.Form method="post" action="/feed">
+                <input type="hidden" name="intent" value="want" />
+                <input type="hidden" name="workKey" value={item.work.key} />
+                <button type="submit" className={actionClass}>
+                  <BookmarkIcon size={14} />
+                  Want to read
+                </button>
+              </want.Form>
+            )
+          ) : null}
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -779,22 +818,51 @@ export function FeedPost({
       )}
     </strong>
   );
-  const did =
+  // A single book is named here, with who wrote it, so its card can be
+  // just the cover and what was said about it. The title is a link to the
+  // book, set apart from the words around it.
+  const named =
     item.kind === "added"
-      ? item.books.length === 1
-        ? "added a book"
-        : `added ${item.books.length} books`
+      ? null
       : item.kind === "elsewhere"
-        ? `wrote about ${item.work.title}`
+        ? { verb: "wrote about", book: item.work, to: item.work.key }
         : item.kind === "pick"
-          ? `picked ${item.work.title} for ${item.group.name}`
-          : item.kind === "loved"
-          ? `loved ${item.book.title}`
-          : `wrote about ${item.book.title}`;
+          ? { verb: "picked", book: item.work, to: pickPage(item.work) }
+          : {
+              verb: item.kind === "loved" ? "loved" : "wrote about",
+              book: item.book,
+              to: `/books/${item.book.id}`,
+            };
+  // A heart wherever they loved it: a loved post, or a note with one
+  const heart =
+    item.kind === "loved" ||
+    ((item.kind === "note" || item.kind === "elsewhere") && item.loved) ? (
+      <SmallHeart size={13} />
+    ) : null;
+  // What follows the title: who wrote it, and the group a pick is for
+  const afterTitle = named
+    ? `${named.book.author ? ` by ${named.book.author}` : ""}${
+        item.kind === "pick" ? ` for ${item.group.name}` : ""
+      }`
+    : "";
+  const did = named ? (
+    <>
+      {named.verb}{" "}
+      <Link
+        to={named.to}
+        className="font-medium text-stone-800 dark:text-stone-100 underline decoration-stone-300 dark:decoration-stone-600 underline-offset-2 hover:decoration-current"
+      >
+        {afterTitle ? named.book.title : <KeepWithLast text={named.book.title} after={heart} />}
+      </Link>
+      {afterTitle ? <KeepWithLast text={afterTitle} after={heart} /> : null}
+    </>
+  ) : item.kind === "added" ? (
+    item.books.length === 1 ? "added a book" : `added ${item.books.length} books`
+  ) : null;
 
   const books =
     item.kind === "added"
-      ? item.books.slice(0, 4)
+      ? item.books.slice(0, 5)
       : item.kind === "elsewhere" || item.kind === "pick"
         ? []
         : [item.book];
@@ -817,16 +885,7 @@ export function FeedPost({
         />
         <div className="min-w-0 flex-1">
           <p className="leading-snug text-stone-600 dark:text-stone-300">
-            {name}{" "}
-            <KeepWithLast
-              text={did}
-              after={
-                (item.kind === "note" || item.kind === "elsewhere") &&
-                item.loved ? (
-                  <SmallHeart size={13} />
-                ) : null
-              }
-            />
+            {name} {did}
             <span className="text-stone-400 dark:text-stone-500"> · </span>
             <time
               dateTime={new Date(item.at).toISOString()}
@@ -839,12 +898,10 @@ export function FeedPost({
         </div>
       </header>
 
+      {/* Being rewritten, the note gets the card's width; otherwise it
+          sits beside its book */}
       {note && editing ? (
         <NoteEdit item={note} onDone={() => setEditing(false)} />
-      ) : note ? (
-        <blockquote className="mt-3 whitespace-pre-line text-pretty leading-relaxed text-stone-800 dark:text-stone-200">
-          &ldquo;{note.body}&rdquo;
-        </blockquote>
       ) : null}
 
       {item.kind === "pick" ? (
@@ -854,44 +911,52 @@ export function FeedPost({
           item={item}
           mine={item.friend.id === userId}
           onEdit={editable && !editing ? () => setEditing(true) : undefined}
+          note={note && !editing ? note.body : null}
         />
       ) : item.kind === "added" && item.books.length > 1 ? (
         <>
           {/* One row of covers big enough for their titles: three across
-              on phones, four from there; the rest are on their shelf */}
-          <ul className="mt-3 grid grid-cols-3 gap-x-4 gap-y-4 sm:grid-cols-4">
+              on phones, five from there; the rest are on their shelf */}
+          <ul className="mt-5 grid grid-cols-3 gap-x-4 gap-y-4 sm:grid-cols-5">
             {books.map((book, index) => (
               <BookTile
                 key={book.id}
                 book={book}
-                className={index === 3 ? "hidden sm:block" : ""}
+                className={index >= 3 ? "hidden sm:block" : ""}
               />
             ))}
           </ul>
-          <div className="mt-3 flex items-center gap-x-5 border-t border-stone-100 dark:border-stone-800 pt-2">
-            <Link to={`/friend/${item.friend.id}`} className={actionClass}>
-              {more > 0 ? `+${more} more on ` : "See "}
-              {item.friend.firstname}&apos;s shelf
-            </Link>
-          </div>
+          {/* The name leads to their shelf; a link here only when there
+              are more than these to find there */}
+          {more > 0 ? (
+            <div className="mt-3 flex items-center gap-x-5 border-t border-stone-100 dark:border-stone-800 pt-2">
+              <Link to={`/friend/${item.friend.id}`} className={actionClass}>
+                +{more} more on {item.friend.firstname}&apos;s shelf
+              </Link>
+            </div>
+          ) : null}
         </>
       ) : (
         <>
-          <div className="mt-3">
+          <div className="mt-4">
             <BookCard
               book={books[0]}
               friendId={item.friend.id}
               userId={userId}
               from={item.kind === "loved" || item.kind === "note" ? item.from : null}
+              note={note && !editing ? note.body : null}
+              actions={
+                <Actions
+                  book={books[0]}
+                  userId={userId}
+                  onEdit={editable && !editing ? () => setEditing(true) : undefined}
+                  mine={item.friend.id === userId}
+                  poster={item.friend.id === userId ? null : item.friend}
+                  from={item.kind === "loved" || item.kind === "note" ? item.from : null}
+                />
+              }
             />
           </div>
-          <Actions
-            book={books[0]}
-            userId={userId}
-            onEdit={editable && !editing ? () => setEditing(true) : undefined}
-            mine={item.friend.id === userId}
-            poster={item.friend.id === userId ? null : item.friend}
-          />
         </>
       )}
     </article>
@@ -1082,7 +1147,7 @@ export function NotePrompt({ books, userId }: { books: PromptBook[]; userId: str
             </Link>
             ?
           </p>
-          <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
+          <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
             {book.read
               ? book.owner.id === userId
                 ? "You marked it read. Friends who borrow it will see your note."
