@@ -348,8 +348,15 @@ function BookTile({ book, className = "" }: { book: FeedBook; className?: string
   );
 }
 
-// What someone wrote about a book, set beside its cover above the title,
-// so the words sit with the book they're about, as on the home page
+// The cover, with its title and author under it as on a shelf's spine
+// label, so what's beside it can be what someone said about it
+const coverColumn = "block w-[82px] flex-shrink-0";
+const titleUnder =
+  "mt-1.5 line-clamp-2 text-xs font-medium leading-snug text-stone-900 dark:text-stone-100";
+const authorUnder = "mt-0.5 block truncate text-xs text-stone-500 dark:text-stone-400";
+
+// What someone wrote about a book, beside its cover, so the words sit
+// with the book they're about, as on the home page
 function NoteBeside({ body }: { body: string }) {
   return (
     <span className="mb-2 block whitespace-pre-line text-pretty leading-relaxed text-stone-800 dark:text-stone-200">
@@ -358,9 +365,11 @@ function NoteBeside({ body }: { body: string }) {
   );
 }
 
-// One book beside its details. Says whose copy it is when it isn't the
-// friend's own, and who lent it to them when they borrowed it. The title's
-// link covers the card, with the lender's name over it as its own link.
+// One book, its title and author under the cover, and beside it the
+// post's note and where the copy is. Says whose copy it is when it isn't
+// the friend's own, and who lent it to them when they borrowed it. The
+// title's link covers the card, with the lender's name over it as its own
+// link.
 function BookCard({
   book,
   friendId,
@@ -389,23 +398,23 @@ function BookCard({
   );
   return (
     <div className="group relative -mx-2 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors">
-      <div className={`flex gap-3 ${note ? "items-start" : "items-center"}`}>
-        <FeedCover
-          book={book}
-          className="h-[123px] w-[82px] flex-shrink-0 transition-opacity group-hover:opacity-90"
-        />
-        <span className="min-w-0">
-          {note ? <NoteBeside body={note} /> : null}
+      <div className="flex items-start gap-3">
+        <div className={coverColumn}>
+          <FeedCover
+            book={book}
+            className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
+          />
           <Link
             to={`/books/${book.id}`}
-            className="block font-medium leading-snug text-stone-900 dark:text-stone-100 after:absolute after:inset-0 after:content-['']"
+            className={`${titleUnder} after:absolute after:inset-0 after:content-['']`}
           >
             {book.title}
           </Link>
-          <span className="mt-0.5 block text-sm text-stone-500 dark:text-stone-400">
-            {book.author}
-          </span>
-          <span className="mt-2 block text-sm text-stone-500 dark:text-stone-400">
+          <span className={authorUnder}>{book.author}</span>
+        </div>
+        <span className="min-w-0 flex-1 pt-0.5">
+          {note ? <NoteBeside body={note} /> : null}
+          <span className="block text-sm text-stone-500 dark:text-stone-400">
             {whose}
             {book.available
               ? "Available"
@@ -610,23 +619,19 @@ function ElsewhereCard({
       <div className="mt-3">
         <Link
           to={item.work.key}
-          className={`group -mx-2 flex gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors ${
-            note ? "items-start" : "items-center"
-          }`}
+          className="group -mx-2 flex items-start gap-3 rounded-md px-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors"
         >
-          <FeedCover
-            book={item.work}
-            className="h-[123px] w-[82px] flex-shrink-0 transition-opacity group-hover:opacity-90"
-          />
-          <span className="min-w-0">
+          <span className={coverColumn}>
+            <FeedCover
+              book={item.work}
+              className="h-[123px] w-[82px] transition-opacity group-hover:opacity-90"
+            />
+            <span className={titleUnder}>{item.work.title}</span>
+            <span className={authorUnder}>{item.work.author}</span>
+          </span>
+          <span className="min-w-0 flex-1 pt-0.5">
             {note ? <NoteBeside body={note} /> : null}
-            <span className="block font-medium leading-snug text-stone-900 dark:text-stone-100">
-              {item.work.title}
-            </span>
-            <span className="mt-0.5 block text-sm text-stone-500 dark:text-stone-400">
-              {item.work.author}
-            </span>
-            <span className="mt-2 block text-sm text-stone-500 dark:text-stone-400">
+            <span className="block text-sm text-stone-500 dark:text-stone-400">
               {ownCopyId
                 ? "On your shelf"
                 : mine
@@ -795,17 +800,18 @@ export function FeedPost({
       )}
     </strong>
   );
-  // The book itself is named on the card below, so not here too
   const did =
     item.kind === "added"
       ? item.books.length === 1
         ? "added a book"
         : `added ${item.books.length} books`
-      : item.kind === "pick"
-        ? `picked a book for ${item.group.name}`
-        : item.kind === "loved"
-          ? "loved a book"
-          : "wrote about a book";
+      : item.kind === "elsewhere"
+        ? `wrote about ${item.work.title}`
+        : item.kind === "pick"
+          ? `picked ${item.work.title} for ${item.group.name}`
+          : item.kind === "loved"
+          ? `loved ${item.book.title}`
+          : `wrote about ${item.book.title}`;
 
   const books =
     item.kind === "added"
