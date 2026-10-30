@@ -1,4 +1,4 @@
-import { noteTip, shelfPath } from "./profile";
+import { favoritesTip, shelfPath } from "./profile";
 
 test("a shelf is shared by its handle, else its link, and not at all when sharing is off", () => {
   expect(shelfPath({ handle: "maya", shareToken: "abc" })).toBe("/@maya");
@@ -6,24 +6,19 @@ test("a shelf is shared by its handle, else its link, and not at all when sharin
   expect(shelfPath({ handle: "maya", shareToken: null })).toBeNull();
 });
 
-test("the note tip shows until a favorite has a note, pointing to one on the shelf", () => {
-  const book = (id: string, onShelf: boolean, note: string | null = null) => ({
-    id,
-    title: `Book ${id}`,
-    onShelf,
-    note,
+test("the favorites tip shows until something's pinned, offering a book only when there are no favorites", () => {
+  const dune = { id: "dune", title: "Dune" };
+  // Nothing pinned or loved: pin one, starting with a book from the shelf
+  expect(favoritesTip({ pinned: false, favorites: [] }, dune)).toEqual({
+    text: expect.stringMatching(/^Pin up to five books/),
+    link: { label: "Start with Dune", to: "/books/dune" },
   });
-
-  // Pinned, no notes: to the first one from the shelf
-  const tip = noteTip({ pinned: true, favorites: [book("a", false), book("b", true)] });
-  expect(tip?.text).toMatch(/^Add a note to a pinned book/);
-  expect(tip?.link).toEqual({ label: "Write one on Book b", to: "/books/b" });
-  // Not pinned yet: pin one first
-  expect(noteTip({ pinned: false, favorites: [] })).toEqual({
-    text: expect.stringMatching(/^Pin a book/),
+  expect(favoritesTip({ pinned: false, favorites: [] })?.link).toBeNull();
+  // Hearts fill the row: how to choose instead, and no book to start with
+  expect(favoritesTip({ pinned: false, favorites: [{}] }, dune)).toEqual({
+    text: expect.stringMatching(/^Showing the books you loved/),
     link: null,
   });
-  expect(noteTip({ pinned: false, favorites: [book("c", true)] })?.link?.label).toBe("Start with Book c");
-  // A note on any favorite: no tip
-  expect(noteTip({ pinned: true, favorites: [book("a", true), book("b", true, "Loved it")] })).toBeNull();
+  // Pinned: nothing more to say
+  expect(favoritesTip({ pinned: true, favorites: [{}] }, dune)).toBeNull();
 });

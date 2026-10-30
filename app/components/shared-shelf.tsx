@@ -6,7 +6,7 @@ import BookCover from "~/components/book-cover";
 import { HeartIcon, StacksLogo } from "~/components/icons";
 import Library from "~/components/library";
 import type { FriendStatus } from "~/models/user.server";
-import { noteTip } from "~/profile";
+import { favoritesTip } from "~/profile";
 import type { loadSharedShelf } from "~/share.server";
 import type { LoaderData } from "~/utils";
 
@@ -59,7 +59,10 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
   const { profile } = data;
   const { stats } = profile;
   // On your own page only
-  const tip = data.friendStatus === "self" ? noteTip(profile) : null;
+  const tip =
+    data.friendStatus === "self"
+      ? favoritesTip(profile, data.bookListItems[0])
+      : null;
   const facts = [
     plural(stats.books, "book"),
     // How generous the shelf has been, rather than how much anyone's read
