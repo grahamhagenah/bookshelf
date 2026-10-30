@@ -4,13 +4,14 @@ import { Link } from "react-router";
 import Tabs from "./tabs";
 
 // The Friends page's views, side by side as My shelf's tabs are: the
-// people, every book they have between them, and the groups you're in.
+// people and the groups you're in. Every book they have between them is
+// Borrow, in the header.
 // Across from them, where My shelf has its share button, the way to add
 // more.
 export default function FriendsTabs({
   counts,
 }: {
-  counts: { friends: number; books: number; groups: number };
+  counts: { friends: number; groups: number };
 }) {
   return (
     <Tabs
@@ -23,18 +24,13 @@ export default function FriendsTabs({
           count: counts.friends,
         },
         {
-          to: "/friends/books",
-          label: "Books",
-          count: counts.books,
-        },
-        {
           to: "/groups",
           label: "Groups",
           count: counts.groups,
         },
       ]}
     >
-      {/* Just the + on phones, so the three tabs keep their room */}
+      {/* Just the + on phones, so the tabs keep their room */}
       <Link
         to="/friends/add"
         aria-label="Add friends"

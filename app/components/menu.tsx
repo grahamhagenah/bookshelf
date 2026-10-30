@@ -10,6 +10,7 @@ import {
   SettingsIcon,
   CheckoutIcon,
   GroupIcon,
+  ShelfIcon,
   LogoutIcon,
   DashboardIcon,
 } from "./icons";
@@ -160,6 +161,14 @@ export default function PositionedMenu() {
           >
             <BookIcon size={18} />
             <span>My shelf</span>
+          </Link>
+          <Link
+            to="/friends/books"
+            onClick={() => setOpen(false)}
+            className={`md:hidden ${item}`}
+          >
+            <ShelfIcon size={18} />
+            <span>Borrow</span>
           </Link>
           <Link
             to="/friends"

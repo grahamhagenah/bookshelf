@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation, useMatches } from "react-router";
 
-import { BookIcon, FeedIcon, GroupIcon } from "./icons";
+import { BookIcon, FeedIcon, GroupIcon, ShelfIcon } from "./icons";
 import PositionedMenu from "./menu";
 import Notifications from "./notifications";
 import Search from "./search";
@@ -84,18 +84,28 @@ export default function Header() {
                 <BookIcon size={18} />
                 <span className={label}>My shelf</span>
               </NavLink>
+              {/* Every friend's book as one shelf: what you could borrow */}
+              <NavLink title="Borrow" to="/friends/books" className={navClass}>
+                <ShelfIcon size={18} />
+                <span className={label}>Borrow</span>
+              </NavLink>
               <NavLink title="Feed" to="/feed" className={navClass}>
                 <FeedIcon size={18} strokeWidth={1.5} />
                 <span className={label}>Feed</span>
               </NavLink>
-              {/* Friends, their books and your groups, and a friend's own page */}
+              {/* Friends and your groups, and a friend's own page; their
+                  books are Borrow */}
               <NavLink
                 title="Friends"
                 to="/friends"
-                className={({ isActive }) =>
+                // Only /friends itself is "the page" to screen readers; the
+                // look covers the rest of its section, less Borrow
+                end
+                className={() =>
                   navClass({
                     isActive:
-                      isActive ||
+                      (pathname.startsWith("/friends") &&
+                        !pathname.startsWith("/friends/books")) ||
                       pathname.startsWith("/friend/") ||
                       pathname.startsWith("/groups"),
                   })
@@ -107,6 +117,21 @@ export default function Header() {
             </nav>
           ) : null}
           {user ? <Search as="icon" /> : null}
+          {user ? (
+            <Link
+              to="/friends/books"
+              aria-label="Borrow"
+              title="Borrow"
+              aria-current={pathname === "/friends/books" ? "page" : undefined}
+              className={`md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full transition-colors ${
+                pathname === "/friends/books"
+                  ? hereIcon
+                  : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white"
+              }`}
+            >
+              <ShelfIcon size={24} />
+            </Link>
+          ) : null}
           {user ? (
             <Link
               to="/feed"
