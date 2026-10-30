@@ -728,7 +728,9 @@ function PickCard({ item, userId }: { item: PickItem; userId: string }) {
   const copy = copies[0];
   const page = pickPage(item.work);
   return (
-    <div className={`mt-4 ${bookRow} items-stretch`}>
+    // The same gap under the headline as the other posts', whose rows
+    // carry a little padding of their own
+    <div className={`mt-5 ${bookRow} items-stretch`}>
       <Link to={page} title={item.work.title} className="group block min-w-0">
         <FeedCover book={item.work} className={bigCover} />
       </Link>
@@ -911,7 +913,7 @@ export function FeedPost({
         <>
           {/* One row of covers big enough for their titles: three across
               on phones, five from there; the rest are on their shelf */}
-          <ul className="mt-4 grid grid-cols-3 gap-x-4 gap-y-4 sm:grid-cols-5">
+          <ul className="mt-5 grid grid-cols-3 gap-x-4 gap-y-4 sm:grid-cols-5">
             {books.map((book, index) => (
               <BookTile
                 key={book.id}
