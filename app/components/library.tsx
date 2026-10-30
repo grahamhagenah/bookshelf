@@ -16,6 +16,7 @@ import {
 import ShareShelfButton from "./share-shelf-button";
 import SharedWith from "./shared-with";
 import type { Member } from "./shared-with";
+import { quietButton } from "./ui";
 
 // Books on a shelf before it gets a filter box
 const FILTER_FROM = 12;
@@ -120,7 +121,16 @@ interface LibraryProps {
   // out while browsing, so nothing shows twice, and back in any search or
   // filter, so those still find them
   shownAbove?: string[];
+  // The shelf's heading, at the start of the filter bar, so the two make
+  // one line on wider screens
+  shelfHeading?: React.ReactNode;
+  // Browsing, how many books show before a "Show all" button; a search or
+  // filter always looks through all of them
+  preview?: number;
 }
+
+// A "Show all" that reveals only a handful more isn't worth the click
+const PREVIEW_SLACK = 6;
 
 // The grid's cover, with a 2x candidate for sharp screens
 export function GridCover({
@@ -159,6 +169,8 @@ export default function Library({
   header,
   sharedWith,
   shownAbove = [],
+  shelfHeading,
+  preview,
 }: LibraryProps) {
   // Set on the account page, and the same on every shelf you look at
   const viewer = useOptionalUser();
@@ -207,6 +219,13 @@ export default function Library({
   const notAbove = visibleBooks.filter((book) => !shownAbove.includes(book.id));
   const shelfBooks =
     !isFiltered && notAbove.length > 0 ? notAbove : visibleBooks;
+  const [showAll, setShowAll] = useState(false);
+  const cut =
+    preview !== undefined &&
+    !showAll &&
+    !isFiltered &&
+    shelfBooks.length > preview + PREVIEW_SLACK;
+  const gridBooks = cut ? shelfBooks.slice(0, preview) : shelfBooks;
 
   return (
     <>
@@ -251,7 +270,16 @@ export default function Library({
           {/* Filter bar: find, narrow and switch views, in one line on
               wider screens. On phones the pills drop to a second line of
               their own (and scroll if they run out of room) */}
-          <div className="mb-6 flex flex-wrap md:flex-nowrap items-center gap-2">
+          <div
+            className={`mb-6 flex flex-wrap md:flex-nowrap items-center gap-2 ${
+              shelfHeading ? "mt-16 gap-y-3 sm:mt-20" : ""
+            }`}
+          >
+            {shelfHeading ? (
+              <div className="w-full min-w-0 md:w-auto md:flex-1">
+                {shelfHeading}
+              </div>
+            ) : null}
             {showFilter ? (
               <div className="relative min-w-0 flex-1 md:w-56 md:flex-none">
                 <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400">
@@ -334,9 +362,15 @@ export default function Library({
           ) : null}
 
           <ol className={`grid gap-3 sm:gap-4 ${grid.columns}`}>
-            {shelfBooks.map((book, index) => (
+            {gridBooks.map((book, index) => (
               <li key={book.id}>
-                <NavLink to={`/books/${book.id}`} className="group block">
+                <NavLink
+                  to={`/books/${book.id}`}
+                  className="group block"
+                  // The whole title, and who wrote it, when the line under
+                  // the cover cuts it short
+                  title={book.author ? `${book.title} by ${book.author}` : book.title}
+                >
                   <div className="relative">
                     <GridCover
                       cover={book.cover}
@@ -396,6 +430,17 @@ export default function Library({
               </li>
             ))}
           </ol>
+          {cut ? (
+            <div className="mt-8 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className={quietButton("sm")}
+              >
+                Show all {shelfBooks.length.toLocaleString()} books
+              </button>
+            </div>
+          ) : null}
         </main>
       )}
     </>

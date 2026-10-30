@@ -49,29 +49,15 @@ const HEARTS: Record<string, string> = {
 };
 const heartOf = (color: string) => HEARTS[color] ?? HEARTS.forest;
 
-// Where each favorite's note sits: above or below its cover, overlapping
-// the edge a little, and lined up left, right or center, so each one is
-// somewhere different. Two bubbles in one column never face each other
-// across a row, whether the row is two covers wide (phones) or five.
-const BUBBLE_SPOTS = [
-  { side: "above", align: "-left-[4%]" },
-  { side: "below", align: "-right-[4%]" },
-  { side: "above", align: "left-1/2 -translate-x-1/2" },
-  { side: "below", align: "-left-[4%]" },
-  { side: "below", align: "-right-[4%]" },
-] as const;
+// Favorites stand a little off the page, like books on a table, where the
+// shelf's covers below lie flat
+const lifted =
+  "shadow-[0_1px_2px_rgb(0_0_0/0.08),0_10px_24px_-8px_rgb(0_0_0/0.35)] dark:shadow-[0_1px_2px_rgb(0_0_0/0.4),0_10px_24px_-8px_rgb(0_0_0/0.7)]";
 
 // Who the shelf belongs to, in their words, and what they love
 function ProfileHeader({ data }: { data: SharedShelfData }) {
   const { profile } = data;
   const { stats } = profile;
-  // The favorites on this shelf are shown first and not again below, so
-  // the grid is the rest of it (unless that's nothing, when it's all)
-  const favoriteIds = new Set(profile.favorites.map((book) => book.id));
-  const rest = data.bookListItems.filter(
-    (book) => !favoriteIds.has(book.id),
-  ).length;
-  const setAside = rest > 0 && rest < data.bookListItems.length;
   // On your own page only
   const tip = data.friendStatus === "self" ? noteTip(profile) : null;
   const facts = [
@@ -121,42 +107,36 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
             <HeartIcon size={14} filled className={heartOf(profile.color)} />
             Favorites
           </h2>
+          {/* Four across, bigger than the shelf's covers, so they're what
+              a visitor sees first; five when there are five, so none sits
+              alone on a row */}
           <ul
-            className={`mt-3 grid grid-cols-2 gap-x-4 sm:grid-cols-5 sm:gap-x-6 ${
-              // Room for the notes that stick out above and below
-              profile.favorites.some((book) => book.note)
-                ? "gap-y-16 py-14 sm:py-11"
-                : "gap-y-4"
+            className={`mt-5 grid grid-cols-2 items-start gap-x-5 gap-y-8 sm:gap-x-8 ${
+              profile.favorites.length > 4 ? "sm:grid-cols-5" : "sm:grid-cols-4"
             }`}
           >
-            {profile.favorites.map((book, i) => {
-              const spot = BUBBLE_SPOTS[i % BUBBLE_SPOTS.length];
-              const above = spot.side === "above";
+            {profile.favorites.map((book) => {
               const contents = (
                 <>
                   <BookCover
                     cover={book.cover}
                     title={book.title}
                     author={book.author}
-                    // Five across from small tablets up, two on phones
-                    sizes="(min-width: 640px) 220px, 50vw"
-                    className="aspect-[2/3] w-full transition-opacity duration-200 group-hover:opacity-90"
+                    // Four or five across from small tablets up, two on phones
+                    sizes="(min-width: 640px) 240px, 50vw"
+                    className={`aspect-[2/3] w-full transition-opacity duration-200 group-hover:opacity-90 ${lifted}`}
                   />
-                  <span className="sr-only">
-                    {book.title} by {book.author}
+                  <span className="mt-3 block text-sm leading-snug">
+                    <span className="line-clamp-2 font-medium text-stone-800 dark:text-stone-200">
+                      {book.title}
+                    </span>
+                    {book.author ? (
+                      <span className="mt-0.5 line-clamp-1 text-stone-500 dark:text-stone-400">
+                        <span className="sr-only">by </span>
+                        {book.author}
+                      </span>
+                    ) : null}
                   </span>
-                  {/* Why it's here, in the owner's words, said from the cover */}
-                  {book.note ? (
-                    <p
-                      className={`absolute z-10 w-max max-w-[108%] ${spot.align} ${
-                        above
-                          ? "bottom-[calc(100%-1.25rem)]"
-                          : "top-[calc(100%-1.25rem)]"
-                      } rounded-2xl bg-white px-3 py-2 text-[11px] leading-snug text-stone-700 shadow-[0_1px_3px_rgb(0_0_0/0.08)] ring-1 ring-stone-900/5 dark:ring-white/10 dark:bg-stone-800 dark:text-stone-200 sm:text-xs`}
-                    >
-                      <span className="line-clamp-4">{book.note}</span>
-                    </p>
-                  ) : null}
                 </>
               );
               return (
@@ -206,13 +186,30 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
         </aside>
       ) : null}
 
-      <h2 className="mt-8 text-sm font-semibold text-stone-500 dark:text-stone-400">
-        {setAside ? "More on the shelf" : "On the shelf"}{" "}
-        <span className="font-normal">
-          {(setAside ? rest : stats.books).toLocaleString()}
-        </span>
-      </h2>
     </header>
+  );
+}
+
+// Where the shelf starts, under the favorites: its own heading, so it
+// reads as the next part of the page
+function ShelfHeading({ data }: { data: SharedShelfData }) {
+  // The favorites on this shelf are shown first and not again below, so
+  // the grid is the rest of it (unless that's nothing, when it's all)
+  const favoriteIds = new Set(data.profile.favorites.map((book) => book.id));
+  const rest = data.bookListItems.filter(
+    (book) => !favoriteIds.has(book.id),
+  ).length;
+  const setAside = rest > 0 && rest < data.bookListItems.length;
+  return (
+    <h2 className="flex flex-wrap items-baseline gap-x-2.5 text-lg font-semibold tracking-tight text-stone-900 dark:text-stone-100">
+      {data.ownerFirstname}&rsquo;s shelf{" "}
+      {/* With the favorites shown above, these are the others */}
+      <span className="text-base font-normal tracking-normal text-stone-500 dark:text-stone-400">
+        {setAside
+          ? `${rest.toLocaleString()} more`
+          : plural(data.profile.stats.books, "book")}
+      </span>
+    </h2>
   );
 }
 
@@ -373,6 +370,9 @@ export default function SharedShelf({ data }: { data: SharedShelfData }) {
         header={<ProfileHeader data={data} />}
         // The favorites are already at the top of the page
         shownAbove={data.profile.favorites.map((book) => book.id)}
+        shelfHeading={<ShelfHeading data={data} />}
+        // A few rows, so a big library doesn't bury the favorites
+        preview={24}
       />
       {/* Signed in, they've already got one */}
       {data.signedIn ? null : <MakeYourOwn />}
