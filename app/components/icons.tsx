@@ -139,6 +139,16 @@ export function BookIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
+// A speech bubble with lines in it: someone wrote something about this
+export function NoteIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5.5 4h13A1.5 1.5 0 0120 5.5v9a1.5 1.5 0 01-1.5 1.5H10l-4 4v-4h-.5A1.5 1.5 0 014 14.5v-9A1.5 1.5 0 015.5 4z"/>
+      <path d="M8 8.5h8M8 12h5"/>
+    </svg>
+  );
+}
+
 export function LinkIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
