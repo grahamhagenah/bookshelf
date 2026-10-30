@@ -195,12 +195,11 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
 
       {/* Where the shelf starts: well clear of the favorites, and a
           heading of its own, so it reads as the next part of the page */}
-      <h2 className="mt-16 text-lg font-semibold tracking-tight text-stone-900 dark:text-stone-100 sm:mt-20">
-        {setAside
-          ? `The rest of ${data.ownerFirstname}'s shelf`
-          : `${data.ownerFirstname}'s shelf`}{" "}
-        <span className="text-base font-normal text-stone-500 dark:text-stone-400">
-          {plural(setAside ? rest : stats.books, "book")}
+      <h2 className="mt-16 flex flex-wrap items-baseline gap-x-2.5 text-lg font-semibold tracking-tight text-stone-900 dark:text-stone-100 sm:mt-20">
+        {data.ownerFirstname}&rsquo;s shelf{" "}
+        {/* With the favorites shown above, these are the others */}
+        <span className="text-base font-normal tracking-normal text-stone-500 dark:text-stone-400">
+          {setAside ? `${rest.toLocaleString()} more` : plural(stats.books, "book")}
         </span>
       </h2>
     </header>
