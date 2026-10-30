@@ -2409,10 +2409,10 @@ export default function BookDetailsPage() {
               </Form>
               <p
                 id="borrow-needs-friend"
-                className="pt-1 text-center text-stone-500 dark:text-stone-400"
+                // One line under the buttons, for most names
+                className="pt-1 text-center text-xs text-stone-500 dark:text-stone-400"
               >
-                Only {data.book.user.firstname}&rsquo;s friends can borrow
-                their books.
+                Only {data.book.user.firstname}&rsquo;s friends can borrow.
               </p>
             </div>
           ) : null}
