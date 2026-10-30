@@ -363,8 +363,8 @@ const bigCover = "aspect-[2/3] w-full transition-opacity group-hover:opacity-90"
 // with the book they're about, as on the home page
 function NoteBeside({ body }: { body: string }) {
   return (
-    // Big enough to be what the post is about, beside a cover its height
-    <span className="mb-3 block whitespace-pre-line text-pretty text-lg leading-snug text-stone-800 dark:text-stone-200 sm:text-xl">
+    // A size up from the rest on wider screens, as what the post is about
+    <span className="mb-3 block whitespace-pre-line text-pretty leading-snug text-stone-800 dark:text-stone-200 sm:text-lg">
       &ldquo;{body}&rdquo;
     </span>
   );
@@ -711,7 +711,7 @@ function PickCard({ item, userId }: { item: PickItem; userId: string }) {
       </Link>
       <div className={`${besideCover} pt-0.5`}>
         {item.meeting ? (
-          <p className="mb-1 text-lg leading-snug text-stone-800 dark:text-stone-200 sm:text-xl">
+          <p className="mb-1 leading-snug text-stone-800 dark:text-stone-200 sm:text-lg">
             {meetingPast(item.meeting.at) ? "Met" : "Meets"}{" "}
             {[item.meeting.at ? meetingWhen(item.meeting.at) : null, item.meeting.place]
               .filter(Boolean)
