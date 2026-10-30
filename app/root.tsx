@@ -25,7 +25,7 @@ import VerifyEmailBanner from "./components/verify-email-banner";
 export const meta: MetaFunction = () => seo({ noindex: true });
 
 // Bump when the favicon or app icons change
-const ICON_VERSION = 2;
+const ICON_VERSION = 3;
 
 export const links: LinksFunction = () => [
   // Start the body font straight away instead of after the stylesheet
