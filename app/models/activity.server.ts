@@ -36,6 +36,9 @@ interface FeedBook {
   // Hearts and written notes on this copy, from everyone
   loves: number;
   notes: number;
+  // Who wrote those notes, newest first: first names, the viewer's own
+  // as "you"
+  noteWriters: string[];
   // Where the person looking stands with this copy
   viewer: {
     loved: boolean;
@@ -173,6 +176,7 @@ function feedBook({
     borrowerId,
     loves: 0,
     notes: 0,
+    noteWriters: [],
     viewer: {
       loved: false,
       canLove: false,
@@ -213,7 +217,14 @@ async function enrich(
         bookId: { in: ids },
         OR: [{ loved: true }, { body: { not: null } }],
       },
-      select: { bookId: true, userId: true, loved: true, body: true },
+      select: {
+        bookId: true,
+        userId: true,
+        loved: true,
+        body: true,
+        user: { select: { firstname: true } },
+      },
+      orderBy: { updatedAt: "desc" },
     }),
     prisma.lendingHistory.findMany({
       where: { bookId: { in: ids }, borrowerId: userId },
@@ -252,6 +263,9 @@ async function enrich(
     const mine = own.find((note) => note.userId === userId);
     book.loves = own.filter((note) => note.loved).length;
     book.notes = own.filter((note) => note.body).length;
+    book.noteWriters = own
+      .filter((note) => note.body)
+      .map((note) => (note.userId === userId ? "you" : note.user.firstname));
     const isOwner = book.owner.id === userId;
     const isBorrower = book.borrowerId === userId;
     book.viewer = {

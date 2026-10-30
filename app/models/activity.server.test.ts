@@ -128,7 +128,8 @@ test("feed books carry hearts, notes and where you stand with them", async () =>
   const [item] = await getFriendActivity(me.id);
   if (item.kind === "elsewhere" || item.kind === "pick") throw new Error("Expected a copy");
   const seen = item.kind === "added" ? item.books[0] : item.book;
-  expect(seen).toMatchObject({ loves: 2, notes: 1, available: true });
+  // Who wrote, not who only hearted it
+  expect(seen).toMatchObject({ loves: 2, notes: 1, noteWriters: ["Maya"], available: true });
   // Not a reader of this copy, but a friend of its owner
   expect(seen.viewer).toEqual({
     loved: false,
