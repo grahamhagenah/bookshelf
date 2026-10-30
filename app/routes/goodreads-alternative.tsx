@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import type { MetaFunction } from "react-router";
 
 import { GuidePage, GuideSection, proseLink } from "~/components/guide";
-import { ShowcaseFriends } from "~/components/showcase";
+import { ShowcaseBorrow } from "~/components/showcase";
 import { seo } from "~/seo";
 
 // For people looking for something other than Goodreads: an honest
@@ -129,7 +129,7 @@ export default function GoodreadsAlternative() {
           </li>
         </ul>
         <div className="pt-4">
-          <ShowcaseFriends />
+          <ShowcaseBorrow />
         </div>
       </GuideSection>
 

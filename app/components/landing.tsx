@@ -5,8 +5,8 @@ import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
 
 import DemoButton from "./demo-button";
 import Showcase, {
+  ShowcaseBorrow,
   ShowcaseDesk,
-  ShowcaseFriends,
   ShowcaseGroups,
   ShowcaseHome,
   ShowcaseNotes,
@@ -158,12 +158,14 @@ export default function Landing() {
 
       <div className="mt-20 space-y-20 md:mt-28 md:space-y-28">
         <Feature
-          title="Want a book? See which friend has it."
-          visual={<ShowcaseFriends />}
+          title="Your friends' books, together at last."
+          visual={<ShowcaseBorrow />}
         >
-          One search covers every friend&apos;s shelf. Ask to borrow with a
-          tap, and if nobody has it yet, add it to your want-to-read list:
-          you&apos;ll hear the moment a friend does.
+          Browse everything your friends own in one place, with the books on
+          your want-to-read list first and what&apos;s free to borrow right
+          now. Ask with a tap. Looking for one book? Search every shelf at
+          once, and if nobody has it yet, you&apos;ll hear the moment a friend
+          does.
         </Feature>
 
         <Feature
@@ -190,9 +192,9 @@ export default function Landing() {
           visual={<ShowcasePage />}
           flip
         >
-          Your shelf gets its own page, with a line about you and the favorites
-          you pin, each with a note on why you love it. Anyone can browse it
-          without an account, and friends can ask to borrow.
+          Your shelf gets its own page, with a line about you and the
+          favorites you pin up top. Anyone can browse it without an account,
+          and friends can see what&apos;s free and ask to borrow.
         </Feature>
 
         <Feature title="Books with a history." visual={<ShowcaseNotes />}>
