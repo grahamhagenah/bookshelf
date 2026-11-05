@@ -19,6 +19,9 @@ model User {
   // about yourself at its top; both show only while sharing is on
   handle               String?    @unique
   bio                  String?
+  // Where they are, in their own words ("Portland, Oregon"), shown under
+  // their name on the public shelf
+  location             String?
   // A personal link that makes whoever opens it your friend straight away
   friendInvite         String?    @unique
   isAdmin              Boolean    @default(false)
