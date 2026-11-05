@@ -3,6 +3,7 @@
 export const HANDLE_MIN = 3;
 export const HANDLE_MAX = 24;
 export const BIO_MAX = 160;
+export const LOCATION_MAX = 40;
 // Books pinned to the top of a public page
 export const PIN_MAX = 5;
 

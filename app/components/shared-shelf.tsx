@@ -3,12 +3,12 @@ import { Link, useFetcher, useLocation } from "react-router";
 
 import Avatar from "~/components/avatar";
 import BookCover from "~/components/book-cover";
-import { HeartIcon, StacksLogo } from "~/components/icons";
+import { HeartIcon, LocationIcon, StacksLogo } from "~/components/icons";
 import Library from "~/components/library";
 import type { FriendStatus } from "~/models/user.server";
 import { favoritesTip } from "~/profile";
 import type { loadSharedShelf } from "~/share.server";
-import type { LoaderData } from "~/utils";
+import { agoInWords, type LoaderData } from "~/utils";
 
 import { primaryButton, quietButton } from "./ui";
 
@@ -54,6 +54,80 @@ const heartOf = (color: string) => HEARTS[color] ?? HEARTS.forest;
 const lifted =
   "shadow-[0_1px_2px_rgb(0_0_0/0.08),0_10px_24px_-8px_rgb(0_0_0/0.35)] dark:shadow-[0_1px_2px_rgb(0_0_0/0.4),0_10px_24px_-8px_rgb(0_0_0/0.7)]";
 
+// A section's name in small capitals over a hairline, so the parts of the
+// page read as parts
+function SectionHeading({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <h2
+      id={id}
+      className="flex items-center gap-1.5 border-b border-stone-200 pb-2 text-xs font-semibold uppercase tracking-[0.12em] text-stone-500 dark:border-stone-800 dark:text-stone-400"
+    >
+      {children}
+    </h2>
+  );
+}
+
+// What they've added and loved lately: one row of covers, newest first,
+// each saying which and when
+function RecentActivity({ data }: { data: SharedShelfData }) {
+  const { recent, color } = data.profile;
+  if (recent.length === 0) return null;
+  return (
+    <section aria-labelledby="recent" className="mt-10">
+      <SectionHeading id="recent">Recent activity</SectionHeading>
+      {/* One row, like a shelf: four across on a phone, six on a wider
+          screen, smaller than the favorites above */}
+      <ul className="mt-5 grid grid-cols-4 items-start gap-x-3 sm:grid-cols-6 sm:gap-x-5">
+        {recent.map((book, index) => {
+          const cover = (
+            <BookCover
+              cover={book.cover}
+              title={book.title}
+              author={book.author}
+              sizes="(min-width: 640px) 150px, 25vw"
+              className="aspect-[2/3] w-full transition-opacity duration-200 group-hover:opacity-90"
+            />
+          );
+          return (
+            <li
+              key={`${book.kind}-${book.id}`}
+              className={`min-w-0 ${index >= 4 ? "hidden sm:block" : ""}`}
+            >
+              {book.onShelf ? (
+                <Link to={`/books/${book.id}`} className="group block">
+                  {cover}
+                  <span className="sr-only">{book.title}</span>
+                </Link>
+              ) : (
+                <div aria-label={book.title} role="img">
+                  {cover}
+                </div>
+              )}
+              <p className="mt-2 flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
+                {book.kind === "loved" ? (
+                  <HeartIcon size={12} filled className={`flex-shrink-0 ${heartOf(color)}`} />
+                ) : null}
+                <span className="truncate">
+                  <span className="sr-only sm:not-sr-only">
+                    {book.kind === "loved" ? "Loved " : "Added "}
+                  </span>
+                  {agoInWords(book.at)}
+                </span>
+              </p>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 // Who the shelf belongs to, in their words, and what they love
 function ProfileHeader({ data }: { data: SharedShelfData }) {
   const { profile } = data;
@@ -63,53 +137,77 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
     data.friendStatus === "self"
       ? favoritesTip(profile, data.bookListItems[0])
       : null;
-  const facts = [
-    plural(stats.books, "book"),
-    // How generous the shelf has been, rather than how much anyone's read
-    stats.timesLent ? `lent ${plural(stats.timesLent, "time")}` : null,
-    stats.mostLent && stats.mostLent.times > 1
-      ? `most borrowed: ${stats.mostLent.title}`
-      : null,
-  ].filter(Boolean);
+  // How generous the shelf has been, rather than how much anyone's read
+  const mostLent =
+    stats.mostLent && stats.mostLent.times > 1 ? stats.mostLent.title : null;
+  const numbers = [
+    { label: stats.books === 1 ? "Book" : "Books", value: stats.books },
+    { label: "Lent", value: stats.timesLent },
+    { label: stats.friends === 1 ? "Friend" : "Friends", value: stats.friends },
+  ];
 
   return (
     <header className="pb-2">
-      {/* One compact block, so the books start high on the page: the
-          picture beside the name, bio and numbers */}
-      <div className="flex items-start gap-3 sm:gap-4">
-        <Avatar
-          firstname={data.ownerFirstname}
-          surname={data.ownerSurname}
-          icon={data.ownerIcon}
-          size="md"
-          // Bigger from tablet width up; on a phone the bio gets the room
-          className="sm:h-16 sm:w-16 sm:text-xl"
-        />
-        <div className="min-w-0">
-          {/* The handle is already in the address, so it isn't repeated here */}
-          <h1 className="text-balance text-xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-2xl">
-            {data.ownerName}
-          </h1>
-          {profile.bio ? (
-            <p className="mt-1 max-w-xl text-pretty text-stone-700 dark:text-stone-300">
-              {profile.bio}
-            </p>
-          ) : null}
-          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-            {facts.join(" · ")}
-          </p>
+      {/* Who they are on the left, their numbers on the right; on a phone
+          the numbers go under, so the name has the width */}
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <Avatar
+            firstname={data.ownerFirstname}
+            surname={data.ownerSurname}
+            icon={data.ownerIcon}
+            size="md"
+            // Bigger from tablet width up; on a phone the bio gets the room
+            className="sm:h-16 sm:w-16 sm:text-xl"
+          />
+          <div className="min-w-0">
+            {/* The handle is already in the address, so it isn't repeated here */}
+            <h1 className="text-balance text-xl font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-2xl">
+              {data.ownerName}
+            </h1>
+            {profile.location ? (
+              <p className="mt-1 flex items-center gap-1 text-sm text-stone-500 dark:text-stone-400">
+                <LocationIcon size={14} className="flex-shrink-0" />
+                <span className="truncate">{profile.location}</span>
+              </p>
+            ) : null}
+            {profile.bio ? (
+              <p className="mt-2 max-w-xl text-pretty text-stone-700 dark:text-stone-300">
+                {profile.bio}
+              </p>
+            ) : null}
+            {mostLent ? (
+              <p className="mt-1.5 text-sm text-stone-500 dark:text-stone-400">
+                Most borrowed: {mostLent}
+              </p>
+            ) : null}
+          </div>
         </div>
+
+        {/* The numbers, each over its name, with a hairline between */}
+        <dl className="flex flex-shrink-0 divide-x divide-stone-200 dark:divide-stone-800">
+          {numbers.map(({ label, value }) => (
+            <div
+              key={label}
+              className="flex flex-col-reverse px-4 text-center first:pl-0 last:pr-0 sm:px-5"
+            >
+              <dt className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.12em] text-stone-500 dark:text-stone-400">
+                {label}
+              </dt>
+              <dd className="text-xl font-semibold tabular-nums text-stone-900 dark:text-stone-50">
+                {value.toLocaleString()}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </div>
 
       {profile.favorites.length > 0 ? (
         <section aria-labelledby="favorites" className="mt-10">
-          <h2
-            id="favorites"
-            className="flex items-center gap-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400"
-          >
-            <HeartIcon size={14} filled className={heartOf(profile.color)} />
+          <SectionHeading id="favorites">
+            <HeartIcon size={13} filled className={heartOf(profile.color)} />
             Favorites
-          </h2>
+          </SectionHeading>
           {/* Four across, bigger than the shelf's covers, so they're what
               a visitor sees first; five when there are five, so none sits
               alone on a row */}
@@ -163,6 +261,8 @@ function ProfileHeader({ data }: { data: SharedShelfData }) {
           </ul>
         </section>
       ) : null}
+
+      <RecentActivity data={data} />
 
       {tip ? (
         <aside

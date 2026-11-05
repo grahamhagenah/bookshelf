@@ -56,7 +56,7 @@ import { publicOrigin } from "~/origin.server";
 import { pageUrl } from "~/page-url";
 import { FREE_LIMITS, PLUS_PRICES } from "~/plan";
 import { getPlanUsage } from "~/plan.server";
-import { BIO_MAX, HANDLE_MAX, PIN_MAX } from "~/profile";
+import { BIO_MAX, HANDLE_MAX, LOCATION_MAX, PIN_MAX } from "~/profile";
 import { getPins, movePin, saveProfile, unpinBook } from "~/profile.server";
 import { seo } from "~/seo";
 import { getSession, requireUserId, sessionStorage } from "~/session.server";
@@ -178,6 +178,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const result = await saveProfile(userId, {
       handle: String(formData.get("handle") ?? ""),
       bio: String(formData.get("bio") ?? ""),
+      location: String(formData.get("location") ?? ""),
     });
     return data(
       {
@@ -700,6 +701,7 @@ export default function Account() {
           <PublicPage
             handle={user?.handle ?? null}
             bio={user?.bio ?? null}
+            location={user?.location ?? null}
             origin={data.origin}
             shareUrl={shareUrl}
             pins={data.pins}
@@ -1634,12 +1636,14 @@ function PinnedFavorites({ pins }: { pins: PinItem[] }) {
 function PublicPage({
   handle,
   bio,
+  location,
   origin,
   shareUrl,
   pins,
 }: {
   handle: string | null;
   bio: string | null;
+  location: string | null;
   origin: string;
   shareUrl: string | null;
   pins: PinItem[];
@@ -1770,6 +1774,18 @@ function PublicPage({
             onChange={(event) => setBioText(event.target.value)}
             placeholder="Sci-fi, slow mornings, always happy to lend"
             className={`mt-1 resize-none ${textField}`}
+          />
+        </label>
+        <label className="block text-sm text-stone-700 dark:text-stone-300">
+          Location{" "}
+          <span className="text-stone-400 dark:text-stone-500">(optional)</span>
+          <input
+            name="location"
+            defaultValue={location ?? ""}
+            maxLength={LOCATION_MAX}
+            autoComplete="off"
+            placeholder="Portland, Oregon"
+            className={`mt-1 ${textField}`}
           />
         </label>
         <div className="flex flex-wrap items-center gap-3">

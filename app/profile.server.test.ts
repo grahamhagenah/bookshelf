@@ -94,9 +94,51 @@ test("favorites are the shelf's books you've hearted; stats count books and lend
   // Reads stay private: the numbers are about lending
   expect(profile.stats).toEqual({
     books: 3,
+    friends: 0,
     timesLent: 3,
     mostLent: { title: "Dune", times: 3 },
   });
+});
+
+test("the page says where they are, how many friends, and what they've added and loved lately", async () => {
+  const me = await makeUser("Me");
+  const friend = await makeUser("Friend");
+  await createFriendship(me.id, friend.id);
+  await saveProfile(me.id, { handle: "", bio: "", location: "  Portland,   Oregon " });
+
+  const day = 24 * 60 * 60 * 1000;
+  const at = (daysAgo: number) => new Date(Date.now() - daysAgo * day);
+  const book = async (title: string, daysAgo: number, data = {}) =>
+    prisma.book.update({
+      where: { id: (await makeBook(me.id, title)).id },
+      data: { createdAt: at(daysAgo), ...data },
+    });
+  const dune = await book("Dune", 10);
+  await book("Circe", 5);
+  await book("Kept Back", 1, { hiddenFromPage: true });
+  await book("Piranesi", 3);
+  await book("Hamnet", 7);
+  await book("Old One", 30);
+  // Added ten days ago, loved yesterday: shows once, as loved
+  await prisma.readerNote.create({
+    data: { bookId: dune.id, userId: me.id, loved: true, updatedAt: at(1) },
+  });
+
+  const profile = await getShelfProfile(me.id);
+  expect(profile.location).toBe("Portland, Oregon");
+  expect(profile.stats.friends).toBe(1);
+  // Newest first, nothing kept off the page
+  expect(profile.recent.map((item) => [item.title, item.kind])).toEqual([
+    ["Dune", "loved"],
+    ["Piranesi", "added"],
+    ["Circe", "added"],
+    ["Hamnet", "added"],
+    ["Old One", "added"],
+  ]);
+
+  // Saving the address alone leaves the location as it was
+  await saveProfile(me.id, { handle: "", bio: "" });
+  expect((await getShelfProfile(me.id)).location).toBe("Portland, Oregon");
 });
 
 test("a shelf is at /@handle only while sharing is on, and its old link moves there", async () => {

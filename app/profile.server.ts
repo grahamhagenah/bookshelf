@@ -3,7 +3,13 @@ import { plateColorFor, plateColorOf } from "~/components/avatar";
 import { prisma } from "~/db.server";
 import type { User } from "~/generated/prisma/client";
 import { shelfIds } from "~/models/household.server";
-import { BIO_MAX, PIN_MAX, handleProblem, normalizeHandle } from "~/profile";
+import {
+  BIO_MAX,
+  LOCATION_MAX,
+  PIN_MAX,
+  handleProblem,
+  normalizeHandle,
+} from "~/profile";
 
 // A shared shelf's own page: its @handle address, a line about its owner,
 // the books they've loved most recently, and a few numbers
@@ -15,13 +21,20 @@ export async function getUserByHandle(handle: string) {
   });
 }
 
-// Saves a handle and bio; says what's wrong instead when it can't
+// One line of their own words, tidied and cut to length
+const oneLine = (text: string, max: number) =>
+  text.trim().replace(/\s+/g, " ").slice(0, max);
+
+// Saves a handle, bio and location; says what's wrong instead when it
+// can't
 export async function saveProfile(
   userId: User["id"],
-  input: { handle: string; bio: string },
+  input: { handle: string; bio: string; location?: string },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const handle = normalizeHandle(input.handle);
-  const bio = input.bio.trim().replace(/\s+/g, " ").slice(0, BIO_MAX);
+  const bio = oneLine(input.bio, BIO_MAX);
+  const location =
+    input.location === undefined ? undefined : oneLine(input.location, LOCATION_MAX);
   if (handle) {
     const problem = handleProblem(handle);
     if (problem) return { ok: false, error: problem };
@@ -33,12 +46,19 @@ export async function saveProfile(
   }
   await prisma.user.update({
     where: { id: userId },
-    data: { handle: handle || null, bio: bio || null },
+    data: {
+      handle: handle || null,
+      bio: bio || null,
+      ...(location === undefined ? {} : { location: location || null }),
+    },
   });
   return { ok: true };
 }
 
 const FAVORITES = PIN_MAX;
+// One row of covers under the favorites: six on a wide screen, the first
+// four on a phone
+const RECENT = 6;
 
 // A note in a bubble on the public page: its opening paragraph, which
 // ends where the writer chose to, rather than wherever the bubble runs out
@@ -68,16 +88,26 @@ const canFavorite = (ids: string[], userId: User["id"]) => ({
 // The header for a shared shelf
 export async function getShelfProfile(userId: User["id"]) {
   const ids = await shelfIds(userId);
-  const [user, pins, loved, lovedElsewhere, lends, mostLent, books] =
-    await Promise.all([
+  const [
+    user,
+    pins,
+    loved,
+    lovedElsewhere,
+    lends,
+    mostLent,
+    books,
+    recentlyAdded,
+  ] = await Promise.all([
       prisma.user.findUniqueOrThrow({
         where: { id: userId },
         select: {
           handle: true,
           bio: true,
+          location: true,
           firstname: true,
           surname: true,
           profileEmoji: true,
+          _count: { select: { following: true } },
         },
       }),
       // The books they've pinned, in their order, each with their own
@@ -138,10 +168,48 @@ export async function getShelfProfile(userId: User["id"]) {
         select: { title: true, lendCount: true },
       }),
       prisma.book.count({ where: onPage(ids) }),
+      // The newest books on the shelf, for its recent activity
+      prisma.book.findMany({
+        where: onPage(ids),
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: RECENT,
+        select: { id: true, title: true, author: true, cover: true, createdAt: true },
+      }),
     ]);
+  // Hearts are already public here, as favorites; notes and read marks
+  // are for friends and themselves, so recent activity is what they've
+  // added and what they've loved
+  const recent = [
+    ...recentlyAdded.map(({ createdAt, ...book }) => ({
+      ...book,
+      kind: "added" as const,
+      at: createdAt,
+      onShelf: true,
+    })),
+    ...loved.map(({ updatedAt, book: { userId: ownerId, ...book } }) => ({
+      ...book,
+      kind: "loved" as const,
+      at: updatedAt,
+      onShelf: ids.includes(ownerId),
+    })),
+    ...lovedElsewhere.map(({ updatedAt, ...work }) => ({
+      ...work,
+      kind: "loved" as const,
+      at: updatedAt,
+      onShelf: false,
+    })),
+  ]
+    .sort((a, b) => b.at.getTime() - a.at.getTime())
+    // A book added and then loved shows once, as loved
+    .filter(
+      (item, index, all) =>
+        all.findIndex((other) => other.id === item.id) === index,
+    )
+    .slice(0, RECENT);
   return {
     handle: user.handle,
     bio: user.bio,
+    location: user.location,
     // The page's color: their bookplate's, or the one their name gives
     color:
       plateColorOf(user.profileEmoji) ??
@@ -176,8 +244,10 @@ export async function getShelfProfile(userId: User["id"]) {
               onShelf,
               note: null as string | null,
             })),
+    recent,
     stats: {
       books,
+      friends: user._count.following,
       timesLent: lends._sum.lendCount ?? 0,
       mostLent: mostLent
         ? { title: mostLent.title, times: mostLent.lendCount }
