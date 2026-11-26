@@ -268,8 +268,10 @@ function FriendCard({ friend }: { friend: Friend }) {
   const more = friend.bookCount - covers.length;
 
   return (
+    // min-w-0: a grid item otherwise grows to fit its longest line, and the
+    // email line doesn't wrap, so on a phone the card ran off the screen
     <li
-      className={`flex flex-col rounded-xl border border-stone-200 dark:border-stone-800 p-4 transition-opacity ${
+      className={`flex min-w-0 flex-col rounded-xl border border-stone-200 dark:border-stone-800 p-4 transition-opacity ${
         removing ? "opacity-40" : ""
       }`}
     >
@@ -431,7 +433,7 @@ function IncomingRequest({
     const answer =
       "inline-flex h-8 flex-1 items-center justify-center rounded-md text-sm transition-colors disabled:opacity-50";
     return (
-      <li className="rounded-xl border border-stone-200 dark:border-stone-800 p-3">
+      <li className="min-w-0 rounded-xl border border-stone-200 dark:border-stone-800 p-3">
         <div className="flex items-center gap-3">
           <Avatar
             firstname={request.sender.firstname}
@@ -471,7 +473,7 @@ function IncomingRequest({
     );
   }
   return (
-    <li className="flex items-center gap-3 rounded-xl border border-stone-200 dark:border-stone-800 p-4">
+    <li className="flex min-w-0 items-center gap-3 rounded-xl border border-stone-200 dark:border-stone-800 p-4">
       <Avatar
         firstname={request.sender.firstname}
         surname={request.sender.surname}
